@@ -46,6 +46,16 @@ to_msg__CIError(const CIError *self)
             return "invalid escape";
         case CI_ERROR_KIND_UNCLOSED_STRING_LITERAL:
             return "unclosed string literal";
+        case CI_ERROR_KIND_REQUIRED_C95_OR_LATER:
+            return "required C95 or later standard";
+        case CI_ERROR_KIND_REQUIRED_C99_OR_LATER:
+            return "required C99 or later standard";
+        case CI_ERROR_KIND_REQUIRED_C11_OR_LATER:
+            return "required C11 or later standard";
+        case CI_ERROR_KIND_REQUIRED_C17_OR_LATER:
+            return "required C17 or later standard";
+        case CI_ERROR_KIND_REQUIRED_C23_OR_LATER:
+            return "required C23 or later standard";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -65,6 +75,16 @@ to_code__CIError(const CIError *self)
             return "0004";
         case CI_ERROR_KIND_UNCLOSED_STRING_LITERAL:
             return "0005";
+        case CI_ERROR_KIND_REQUIRED_C95_OR_LATER:
+            return "0006";
+        case CI_ERROR_KIND_REQUIRED_C99_OR_LATER:
+            return "0007";
+        case CI_ERROR_KIND_REQUIRED_C11_OR_LATER:
+            return "0008";
+        case CI_ERROR_KIND_REQUIRED_C17_OR_LATER:
+            return "0009";
+        case CI_ERROR_KIND_REQUIRED_C23_OR_LATER:
+            return "0010";
         default:
             UNREACHABLE("unknown variant");
     }
