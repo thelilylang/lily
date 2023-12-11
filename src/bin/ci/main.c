@@ -30,9 +30,38 @@ int
 main(int argc, char **argv)
 {
     // TODO: implement a real CLI, like in bin/lily/main.c, bin/lilyc/main.c
-    if (argc == 1) {
-        printf("Hello\n");
+    if (argc == 3) {
+        enum CIStandard standard;
+
+        if (!strcmp(argv[1], "c89")) {
+            standard = CI_STANDARD_89;
+        } else if (!strcmp(argv[1], "c95")) {
+            standard = CI_STANDARD_95;
+        } else if (!strcmp(argv[1], "c99")) {
+            standard = CI_STANDARD_99;
+        } else if (!strcmp(argv[1], "c11")) {
+            standard = CI_STANDARD_11;
+        } else if (!strcmp(argv[1], "c17")) {
+            standard = CI_STANDARD_17;
+        } else if (!strcmp(argv[1], "c23")) {
+            standard = CI_STANDARD_23;
+        } else {
+            UNREACHABLE("unknown standard");
+        }
+
+        char *file_content = read_file__File(argv[2]);
+        Usize count_error = 0;
+        File file = NEW(File, argv[2], file_content);
+        CIScanner scanner = NEW(CIScanner,
+                                NEW(Source, NEW(Cursor, file_content), &file),
+                                &count_error,
+                                standard);
+
+        run__CIScanner(&scanner, true);
+
+        FREE(CIScanner, &scanner);
+        FREE(File, &file);
     } else {
-        printf("ci [ci_file]\n");
+        printf("ci [standard] [ci_file]\n");
     }
 }
