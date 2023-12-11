@@ -175,7 +175,7 @@ check_standard(CIScanner *self, CIToken *token);
 static CIToken *
 get_token__CIScanner(CIScanner *self, bool check_match);
 
-static CIFeature tokens_feature[] = {
+static CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
     [CI_TOKEN_KIND_AMPERSAND] = { .since = CI_STANDARD_NONE,
                                   .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_AMPERSAND_AMPERSAND] = { .since = CI_STANDARD_NONE,
@@ -279,6 +279,10 @@ static CIFeature tokens_feature[] = {
                                     .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_LONG] = { .since = CI_STANDARD_NONE,
                                      .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_LONG_INT] = { .since = CI_STANDARD_NONE,
+                                         .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_LONG_LONG_INT] = { .since = CI_STANDARD_99,
+                                              .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_NULLPTR] = { .since = CI_STANDARD_23,
                                         .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_REGISTER] = { .since = CI_STANDARD_NONE,
@@ -289,8 +293,12 @@ static CIFeature tokens_feature[] = {
                                        .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_SHORT] = { .since = CI_STANDARD_NONE,
                                       .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_SHORT_INT] = { .since = CI_STANDARD_NONE,
+                                          .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_SIGNED] = { .since = CI_STANDARD_NONE,
                                        .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_SIGNED_CHAR] = { .since = CI_STANDARD_NONE,
+                                            .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_SIZEOF] = { .since = CI_STANDARD_NONE,
                                        .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_STATIC] = { .since = CI_STANDARD_NONE,
@@ -315,6 +323,17 @@ static CIFeature tokens_feature[] = {
                                       .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_UNSIGNED] = { .since = CI_STANDARD_NONE,
                                          .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_UNSIGNED_CHAR] = { .since = CI_STANDARD_NONE,
+                                              .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_UNSIGNED_INT] = { .since = CI_STANDARD_NONE,
+                                             .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_INT] = { .since = CI_STANDARD_NONE,
+                                                  .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG_INT] = { .since = CI_STANDARD_99,
+                                                       .until =
+                                                         CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT_INT] = { .since = CI_STANDARD_NONE,
+                                                   .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_VOID] = { .since = CI_STANDARD_NONE,
                                      .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_VOLATILE] = { .since = CI_STANDARD_NONE,
