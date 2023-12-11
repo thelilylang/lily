@@ -877,6 +877,6 @@ DESTRUCTOR(CIToken, CIToken *self)
             FREE_VARIANT(CIToken, literal_constant_string, self);
             break;
         default:
-            FREE(CIToken, self);
+            lily_free(self);
     }
 }
