@@ -5,6 +5,8 @@ project(
   HOMEPAGE_URL "https://github.com/thelilylang/lily"
   LANGUAGES C CXX)
 
+include(${CMAKE_SOURCE_DIR}/cmake/Lily.cmake)
+
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)

@@ -1,3 +1,5 @@
+include(${CMAKE_SOURCE_DIR}/cmake/Lily.cmake)
+
 set(CI_DIAGNOSTIC_SRC ${CMAKE_SOURCE_DIR}/src/core/cc/ci/diagnostic/error.c
                       ${CMAKE_SOURCE_DIR}/src/core/cc/ci/diagnostic/warning.c)
 
