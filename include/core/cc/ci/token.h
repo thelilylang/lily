@@ -277,7 +277,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
  * @note This function is only used to show the token in the parser.
  */
 String *
-to_string__LilyToken(CIToken *self);
+to_string__CIToken(CIToken *self);
 
 /**
  *

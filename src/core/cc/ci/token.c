@@ -211,7 +211,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
 }
 
 String *
-to_string__LilyToken(CIToken *self)
+to_string__CIToken(CIToken *self)
 {
     switch (self->kind) {
         case CI_TOKEN_KIND_AMPERSAND:

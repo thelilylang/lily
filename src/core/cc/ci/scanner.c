@@ -1836,7 +1836,7 @@ run__CIScanner(CIScanner *self, bool dump_scanner)
         printf("====Scanner(%s)====\n", self->base.source.file->name);
 
         for (Usize i = 0; i < self->tokens->len; ++i) {
-            PRINTLN("{Sr}", to_string__LilyToken(get__Vec(self->tokens, i)));
+            PRINTLN("{Sr}", to_string__CIToken(get__Vec(self->tokens, i)));
         }
     }
 
