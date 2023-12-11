@@ -175,7 +175,7 @@ check_standard(CIScanner *self, CIToken *token);
 static CIToken *
 get_token__CIScanner(CIScanner *self, bool check_match);
 
-static CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
+static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
     [CI_TOKEN_KIND_AMPERSAND] = { .since = CI_STANDARD_NONE,
                                   .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_AMPERSAND_AMPERSAND] = { .since = CI_STANDARD_NONE,
