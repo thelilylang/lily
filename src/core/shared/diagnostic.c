@@ -1299,7 +1299,7 @@ to_string__Diagnostic(const Diagnostic *self)
             break;
         }
         case DIAGNOSTIC_LEVEL_KIND_CC_NOTE: {
-            char *s = format("note: {S}", self->level.cc_note);
+            char *s = format("{sa}: {S}", CYAN("note"), self->level.cc_note);
 
             PUSH_STR_AND_FREE(res, s);
 
@@ -1320,7 +1320,7 @@ to_string__Diagnostic(const Diagnostic *self)
             break;
         }
         case DIAGNOSTIC_LEVEL_KIND_CI_NOTE: {
-            char *s = format("note: {S}", self->level.ci_note);
+            char *s = format("{sa}: {S}", CYAN("note"), self->level.ci_note);
 
             PUSH_STR_AND_FREE(res, s);
 
@@ -1341,7 +1341,7 @@ to_string__Diagnostic(const Diagnostic *self)
             break;
         }
         case DIAGNOSTIC_LEVEL_KIND_CPP_NOTE: {
-            char *s = format("note: {S}", self->level.cpp_note);
+            char *s = format("{sa}: {S}", CYAN("note"), self->level.cpp_note);
 
             PUSH_STR_AND_FREE(res, s);
 
@@ -1362,7 +1362,7 @@ to_string__Diagnostic(const Diagnostic *self)
             break;
         }
         case DIAGNOSTIC_LEVEL_KIND_LILY_NOTE: {
-            char *s = format("note: {S}", self->level.lily_note);
+            char *s = format("{sa}: {S}", CYAN("note"), self->level.lily_note);
 
             PUSH_STR_AND_FREE(res, s);
 
