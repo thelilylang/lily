@@ -16,6 +16,7 @@ debug:
 	@mkdir -p build && cd build && cmake -H. -BDebug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_EXPORT_COMPILE_COMMANDS=YES .. -G Ninja && ln -s Debug/compile_commands.json .
 
 format:
+	${CMAKE_FORMAT} ./cmake/*.cmake
 	${CLANG_FORMAT} ./include/base/*.h	
 	${CLANG_FORMAT} ./include/base/cli/*.h	
 	${CLANG_FORMAT} ./include/base/cli/result/*.h	
