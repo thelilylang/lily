@@ -23,6 +23,7 @@
  */
 
 #include <base/assert.h>
+#include <base/print.h>
 
 #include <core/cc/ci/scanner.h>
 #include <core/shared/diagnostic.h>
@@ -1381,7 +1382,7 @@ check_standard(CIScanner *self, CIToken *token)
 
         switch (feature->since) {
             case CI_STANDARD_NONE:
-                UNREACHABLE("since: no error with None standard");
+                return;
             case CI_STANDARD_KR:
                 UNREACHABLE("since: no error with K&R standard");
             case CI_STANDARD_89:
@@ -1426,7 +1427,7 @@ check_standard(CIScanner *self, CIToken *token)
 
         switch (feature->until) {
             case CI_STANDARD_NONE:
-                UNREACHABLE("since: no error with None standard");
+                return;
             case CI_STANDARD_KR:
                 UNREACHABLE("since: no error with K&R standard");
             case CI_STANDARD_89:
@@ -1626,8 +1627,9 @@ get_token__CIScanner(CIScanner *self, bool check_match)
                                        identifier,
                                        clone__Location(&self->base.location),
                                        id);
-                // case CI_TOKEN_KIND_KEYWORD_
                 default:
+                    FREE(String, id);
+
                     return NEW(
                       CIToken, kind, clone__Location(&self->base.location));
             }
@@ -1712,6 +1714,11 @@ get_token__CIScanner(CIScanner *self, bool check_match)
 
             return NEW(CIToken,
                        CI_TOKEN_KIND_LSHIFT,
+                       clone__Location(&self->base.location));
+
+        case ';':
+            return NEW(CIToken,
+                       CI_TOKEN_KIND_SEMICOLON,
                        clone__Location(&self->base.location));
 
         case IS_ZERO:
@@ -1824,6 +1831,14 @@ run__CIScanner(CIScanner *self, bool dump_scanner)
     push_token__CIScanner(
       self,
       NEW(CIToken, CI_TOKEN_KIND_EOF, clone__Location(&self->base.location)));
+
+    if (dump_scanner) {
+        printf("====Scanner(%s)====\n", self->base.source.file->name);
+
+        for (Usize i = 0; i < self->tokens->len; ++i) {
+            PRINTLN("{Sr}", to_string__LilyToken(get__Vec(self->tokens, i)));
+        }
+    }
 
     if (*self->base.count_error > 0) {
         exit(1);
