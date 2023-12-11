@@ -1312,6 +1312,27 @@ to_string__Diagnostic(const Diagnostic *self)
 
             break;
         }
+        case DIAGNOSTIC_LEVEL_KIND_CI_ERROR: {
+            char *s = to_string__CIError(&self->level.ci_error);
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case DIAGNOSTIC_LEVEL_KIND_CI_NOTE: {
+            char *s = format("note: {S}", self->level.ci_note);
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
+        case DIAGNOSTIC_LEVEL_KIND_CI_WARNING: {
+            char *s = to_string__CIWarning(&self->level.ci_warning);
+
+            PUSH_STR_AND_FREE(res, s);
+
+            break;
+        }
         case DIAGNOSTIC_LEVEL_KIND_CPP_ERROR: {
             char *s = to_string__CppError(&self->level.cpp_error);
 
