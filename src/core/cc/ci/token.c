@@ -312,6 +312,10 @@ to_string__CIToken(CIToken *self)
             return from__String("int");
         case CI_TOKEN_KIND_KEYWORD_LONG:
             return from__String("long");
+        case CI_TOKEN_KIND_KEYWORD_LONG_INT:
+            return from__String("long int");
+        case CI_TOKEN_KIND_KEYWORD_LONG_LONG_INT:
+            return from__String("long long int");
         case CI_TOKEN_KIND_KEYWORD_NULLPTR:
             return from__String("nullptr");
         case CI_TOKEN_KIND_KEYWORD_REGISTER:
@@ -322,8 +326,12 @@ to_string__CIToken(CIToken *self)
             return from__String("return");
         case CI_TOKEN_KIND_KEYWORD_SHORT:
             return from__String("short");
+        case CI_TOKEN_KIND_KEYWORD_SHORT_INT:
+            return from__String("short int");
         case CI_TOKEN_KIND_KEYWORD_SIGNED:
             return from__String("signed");
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_CHAR:
+            return from__String("signed char");
         case CI_TOKEN_KIND_KEYWORD_SIZEOF:
             return from__String("sizeof");
         case CI_TOKEN_KIND_KEYWORD_STATIC:
@@ -348,6 +356,16 @@ to_string__CIToken(CIToken *self)
             return from__String("union");
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED:
             return from__String("unsigned");
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_CHAR:
+            return from__String("unsigned char");
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_INT:
+            return from__String("unsigned int");
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_INT:
+            return from__String("unsigned long int");
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG_INT:
+            return from__String("unsigned long long int");
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT_INT:
+            return from__String("unsigned short int");
         case CI_TOKEN_KIND_KEYWORD_VOID:
             return from__String("void");
         case CI_TOKEN_KIND_KEYWORD_VOLATILE:
@@ -571,6 +589,10 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_KEYWORD_INT";
         case CI_TOKEN_KIND_KEYWORD_LONG:
             return "CI_TOKEN_KIND_KEYWORD_LONG";
+        case CI_TOKEN_KIND_KEYWORD_LONG_INT:
+            return "CI_TOKEN_KIND_KEYWORD_LONG_INT";
+        case CI_TOKEN_KIND_KEYWORD_LONG_LONG_INT:
+            return "CI_TOKEN_KIND_KEYWORD_LONG_LONG_INT";
         case CI_TOKEN_KIND_KEYWORD_NULLPTR:
             return "CI_TOKEN_KIND_KEYWORD_NULLPTR";
         case CI_TOKEN_KIND_KEYWORD_REGISTER:
@@ -581,8 +603,12 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_KEYWORD_RETURN";
         case CI_TOKEN_KIND_KEYWORD_SHORT:
             return "CI_TOKEN_KIND_KEYWORD_SHORT";
+        case CI_TOKEN_KIND_KEYWORD_SHORT_INT:
+            return "CI_TOKEN_KIND_KEYWORD_SHORT_INT";
         case CI_TOKEN_KIND_KEYWORD_SIGNED:
             return "CI_TOKEN_KIND_KEYWORD_SIGNED";
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_CHAR:
+            return "CI_TOKEN_KIND_KEYWORD_SIGNED_CHAR";
         case CI_TOKEN_KIND_KEYWORD_SIZEOF:
             return "CI_TOKEN_KIND_KEYWORD_SIZEOF";
         case CI_TOKEN_KIND_KEYWORD_STATIC:
@@ -607,6 +633,16 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_KEYWORD_UNION";
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED:
             return "CI_TOKEN_KIND_KEYWORD_UNSIGNED";
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_CHAR:
+            return "CI_TOKEN_KIND_KEYWORD_UNSIGNED_CHAR";
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_INT:
+            return "CI_TOKEN_KIND_KEYWORD_UNSIGNED_INT";
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_INT:
+            return "CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_INT";
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG_INT:
+            return "CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG_INT";
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT_INT:
+            return "CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT_INT";
         case CI_TOKEN_KIND_KEYWORD_VOID:
             return "CI_TOKEN_KIND_KEYWORD_VOID";
         case CI_TOKEN_KIND_KEYWORD_VOLATILE:
