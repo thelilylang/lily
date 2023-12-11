@@ -336,6 +336,8 @@ to_string__CIToken(CIToken *self)
             return from__String("switch");
         case CI_TOKEN_KIND_KEYWORD_THREAD_LOCAL:
             return from__String("thread_local");
+        case CI_TOKEN_KIND_KEYWORD_TRUE:
+            return from__String("true");
         case CI_TOKEN_KIND_KEYWORD_TYPEDEF:
             return from__String("typedef");
         case CI_TOKEN_KIND_KEYWORD_TYPEOF:
@@ -593,6 +595,8 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_KEYWORD_SWITCH";
         case CI_TOKEN_KIND_KEYWORD_THREAD_LOCAL:
             return "CI_TOKEN_KIND_KEYWORD_THREAD_LOCAL";
+        case CI_TOKEN_KIND_KEYWORD_TRUE:
+            return "CI_TOKEN_KIND_KEYWORD_TRUE";
         case CI_TOKEN_KIND_KEYWORD_TYPEDEF:
             return "CI_TOKEN_KIND_KEYWORD_TYPEDEF";
         case CI_TOKEN_KIND_KEYWORD_TYPEOF:
