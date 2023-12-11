@@ -303,6 +303,8 @@ static CIFeature tokens_feature[] = {
                                        .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_THREAD_LOCAL] = { .since = CI_STANDARD_23,
                                              .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_TRUE] = { .since = CI_STANDARD_23,
+                                     .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_TYPEDEF] = { .since = CI_STANDARD_NONE,
                                         .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_TYPEOF] = { .since = CI_STANDARD_23,
@@ -708,6 +710,8 @@ get_keyword__CIScanner(const char *id)
         return CI_TOKEN_KIND_KEYWORD_SWITCH;
     if (!strcmp(id, "thread_local"))
         return CI_TOKEN_KIND_KEYWORD_THREAD_LOCAL;
+    if (!strcmp(id, "true"))
+        return CI_TOKEN_KIND_KEYWORD_TRUE;
     if (!strcmp(id, "typedef"))
         return CI_TOKEN_KIND_KEYWORD_TYPEDEF;
     if (!strcmp(id, "typeof"))
@@ -1422,7 +1426,7 @@ check_standard(CIScanner *self, CIToken *token)
                                      NULL,
                                      NULL),
                          self->base.count_error);
-    } else if (self->standard > feature->until) {
+    } else if (self->standard >= feature->until) {
         String *note = NULL;
 
         switch (feature->until) {
@@ -1627,11 +1631,25 @@ get_token__CIScanner(CIScanner *self, bool check_match)
                                        identifier,
                                        clone__Location(&self->base.location),
                                        id);
-                default:
+                default: {
+                    const CIFeature *feature = &tokens_feature[kind];
+
+                    // Check if the keyword is available for the user-defined
+                    // standard. If not, it returns an identifier instead of a
+                    // keyword.
+                    if (self->standard < feature->since) {
+                        return NEW_VARIANT(
+                          CIToken,
+                          identifier,
+                          clone__Location(&self->base.location),
+                          id);
+                    }
+
                     FREE(String, id);
 
                     return NEW(
                       CIToken, kind, clone__Location(&self->base.location));
+                }
             }
         }
         // ?
