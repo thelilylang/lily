@@ -366,6 +366,8 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                     .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_LONG] = { .since = CI_STANDARD_NONE,
                                      .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE] = { .since = CI_STANDARD_NONE,
+                                            .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_LONG_INT] = { .since = CI_STANDARD_NONE,
                                          .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_LONG_LONG] = { .since = CI_STANDARD_99,
@@ -1102,6 +1104,9 @@ get_keyword_part2__CIScanner(CIScanner *self, struct CITokenKindWithID *part1)
             switch (part1->kind) {
                 case CI_TOKEN_KIND_KEYWORD_LONG:
                     switch (unmerged_kind) {
+                        case CI_TOKEN_KIND_KEYWORD_DOUBLE:
+                            merged_kind = CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE;
+                            break;
                         case CI_TOKEN_KIND_KEYWORD_INT:
                             merged_kind = CI_TOKEN_KIND_KEYWORD_LONG_INT;
                             break;
