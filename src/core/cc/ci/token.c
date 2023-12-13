@@ -314,6 +314,8 @@ to_string__CIToken(CIToken *self)
             return from__String("long");
         case CI_TOKEN_KIND_KEYWORD_LONG_INT:
             return from__String("long int");
+        case CI_TOKEN_KIND_KEYWORD_LONG_LONG:
+            return from__String("long long");
         case CI_TOKEN_KIND_KEYWORD_LONG_LONG_INT:
             return from__String("long long int");
         case CI_TOKEN_KIND_KEYWORD_NULLPTR:
@@ -332,6 +334,20 @@ to_string__CIToken(CIToken *self)
             return from__String("signed");
         case CI_TOKEN_KIND_KEYWORD_SIGNED_CHAR:
             return from__String("signed char");
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_INT:
+            return from__String("signed int");
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_LONG:
+            return from__String("signed long");
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_LONG_INT:
+            return from__String("signed long int");
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_LONG_LONG:
+            return from__String("signed long long");
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_LONG_LONG_INT:
+            return from__String("signed long long int");
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_SHORT:
+            return from__String("signed short");
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_SHORT_INT:
+            return from__String("signed short int");
         case CI_TOKEN_KIND_KEYWORD_SIZEOF:
             return from__String("sizeof");
         case CI_TOKEN_KIND_KEYWORD_STATIC:
@@ -360,10 +376,16 @@ to_string__CIToken(CIToken *self)
             return from__String("unsigned char");
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_INT:
             return from__String("unsigned int");
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG:
+            return from__String("unsigned long");
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_INT:
             return from__String("unsigned long int");
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG:
+            return from__String("unsigned long long");
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG_INT:
             return from__String("unsigned long long int");
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT:
+            return from__String("unsigned short");
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT_INT:
             return from__String("unsigned short int");
         case CI_TOKEN_KIND_KEYWORD_VOID:
@@ -591,6 +613,8 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_KEYWORD_LONG";
         case CI_TOKEN_KIND_KEYWORD_LONG_INT:
             return "CI_TOKEN_KIND_KEYWORD_LONG_INT";
+        case CI_TOKEN_KIND_KEYWORD_LONG_LONG:
+            return "CI_TOKEN_KIND_KEYWORD_LONG_LONG";
         case CI_TOKEN_KIND_KEYWORD_LONG_LONG_INT:
             return "CI_TOKEN_KIND_KEYWORD_LONG_LONG_INT";
         case CI_TOKEN_KIND_KEYWORD_NULLPTR:
@@ -609,6 +633,20 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_KEYWORD_SIGNED";
         case CI_TOKEN_KIND_KEYWORD_SIGNED_CHAR:
             return "CI_TOKEN_KIND_KEYWORD_SIGNED_CHAR";
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_INT:
+            return "CI_TOKEN_KIND_KEYWORD_SIGNED_INT";
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_LONG:
+            return "CI_TOKEN_KIND_KEYWORD_SIGNED_LONG";
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_LONG_INT:
+            return "CI_TOKEN_KIND_KEYWORD_SIGNED_LONG_INT";
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_LONG_LONG:
+            return "CI_TOKEN_KIND_KEYWORD_SIGNED_LONG_LONG";
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_LONG_LONG_INT:
+            return "CI_TOKEN_KIND_KEYWORD_SIGNED_LONG_LONG_INT";
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_SHORT:
+            return "CI_TOKEN_KIND_KEYWORD_SIGNED_SHORT";
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_SHORT_INT:
+            return "CI_TOKEN_KIND_KEYWORD_SIGNED_SHORT_INT";
         case CI_TOKEN_KIND_KEYWORD_SIZEOF:
             return "CI_TOKEN_KIND_KEYWORD_SIZEOF";
         case CI_TOKEN_KIND_KEYWORD_STATIC:
@@ -637,10 +675,16 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_KEYWORD_UNSIGNED_CHAR";
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_INT:
             return "CI_TOKEN_KIND_KEYWORD_UNSIGNED_INT";
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG:
+            return "CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG";
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_INT:
             return "CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_INT";
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG:
+            return "CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG";
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG_INT:
             return "CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG_INT";
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT:
+            return "CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT";
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT_INT:
             return "CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT_INT";
         case CI_TOKEN_KIND_KEYWORD_VOID:
