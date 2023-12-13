@@ -374,6 +374,8 @@ to_string__CIToken(CIToken *self)
             return from__String("int");
         case CI_TOKEN_KIND_KEYWORD_LONG:
             return from__String("long");
+        case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE:
+            return from__String("long double");
         case CI_TOKEN_KIND_KEYWORD_LONG_INT:
             return from__String("long int");
         case CI_TOKEN_KIND_KEYWORD_LONG_LONG:
@@ -689,6 +691,8 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_KEYWORD_INT";
         case CI_TOKEN_KIND_KEYWORD_LONG:
             return "CI_TOKEN_KIND_KEYWORD_LONG";
+        case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE:
+            return "CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE";
         case CI_TOKEN_KIND_KEYWORD_LONG_INT:
             return "CI_TOKEN_KIND_KEYWORD_LONG_INT";
         case CI_TOKEN_KIND_KEYWORD_LONG_LONG:
