@@ -145,6 +145,10 @@ can_run_keyword_part3__CIScanner(enum CITokenKind part2);
 static inline bool
 can_run_keyword_part4__CIScanner(enum CITokenKind part3);
 
+/// @brief Get attribute from id.
+static enum CITokenKind
+get_attribute__CIScanner(const char *id);
+
 /// @brief Get keyword from id.
 static enum CITokenKind
 get_keyword__CIScanner(const char *id);
@@ -174,6 +178,11 @@ get_keyword_part4__CIScanner(CIScanner *self, struct CITokenKindWithID *part3);
 /// @example long int, long long, unsigned long long, ...
 static CIToken *
 scan_multi_part_keyword__CIScanner(CIScanner *self);
+
+/// @brief Scan attribute.
+/// @example [[maybe_unused]], ...
+static CIToken *
+scan_attribute__CIScanner(CIScanner *self);
 
 /// @brief Skip comment line.
 static void
@@ -246,6 +255,22 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                      .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_ARROW] = { .since = CI_STANDARD_NONE,
                               .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED] = { .since = CI_STANDARD_23,
+                                             .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_ATTRIBUTE_FALLTHROUGH] = { .since = CI_STANDARD_23,
+                                              .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_ATTRIBUTE_MAYBE_UNUSED] = { .since = CI_STANDARD_23,
+                                               .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_ATTRIBUTE_NODISCARD] = { .since = CI_STANDARD_23,
+                                            .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_ATTRIBUTE_NORETURN] = { .since = CI_STANDARD_23,
+                                           .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_ATTRIBUTE__NORETURN] = { .since = CI_STANDARD_23,
+                                            .until = CI_STANDARD_23 },
+    [CI_TOKEN_KIND_ATTRIBUTE_UNSEQUENCED] = { .since = CI_STANDARD_23,
+                                              .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_ATTRIBUTE_REPRODUCIBLE] = { .since = CI_STANDARD_23,
+                                               .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_BANG] = { .since = CI_STANDARD_NONE,
                              .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_BANG_EQ] = { .since = CI_STANDARD_NONE,
@@ -845,6 +870,29 @@ can_run_keyword_part4__CIScanner(enum CITokenKind part3)
 }
 
 enum CITokenKind
+get_attribute__CIScanner(const char *id)
+{
+    if (!strcmp(id, "deprecated"))
+        return CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED;
+    if (!strcmp(id, "fallthrough"))
+        return CI_TOKEN_KIND_ATTRIBUTE_FALLTHROUGH;
+    if (!strcmp(id, "maybe_unused"))
+        return CI_TOKEN_KIND_ATTRIBUTE_MAYBE_UNUSED;
+    if (!strcmp(id, "nodiscard"))
+        return CI_TOKEN_KIND_ATTRIBUTE_NODISCARD;
+    if (!strcmp(id, "noreturn"))
+        return CI_TOKEN_KIND_ATTRIBUTE_NORETURN;
+    if (!strcmp(id, "_Noreturn"))
+        return CI_TOKEN_KIND_ATTRIBUTE__NORETURN;
+    if (!strcmp(id, "unsequenced"))
+        return CI_TOKEN_KIND_ATTRIBUTE_UNSEQUENCED;
+    if (!strcmp(id, "reproducible"))
+        return CI_TOKEN_KIND_ATTRIBUTE_REPRODUCIBLE;
+
+    return CI_TOKEN_KIND_IDENTIFIER;
+}
+
+enum CITokenKind
 get_keyword__CIScanner(const char *id)
 {
     if (!strcmp(id, "alignas"))
@@ -1384,6 +1432,76 @@ scan_multi_part_keyword__CIScanner(CIScanner *self)
     }
 
     return last_token;
+}
+
+CIToken *
+scan_attribute__CIScanner(CIScanner *self)
+{
+    // TODO: Add function to expect a character.
+
+    // Skip `[[`
+    jump__CIScanner(self, 2);
+
+    String *attribute = scan_identifier__CIScanner(self);
+    enum CITokenKind kind = get_attribute__CIScanner(attribute->buffer);
+    CIToken *res = NULL;
+
+    FREE(String, attribute);
+
+    next_char__CIScanner(self);
+
+    switch (kind) {
+        case CI_TOKEN_KIND_IDENTIFIER:
+            FAILED("unknown standard attribute");
+        case CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED:
+        case CI_TOKEN_KIND_ATTRIBUTE_NODISCARD: {
+            String *attribute_value = NULL;
+
+            if (self->base.source.cursor.current == '(' &&
+                peek_char__CIScanner(self, 1) == (char *)'\"') {
+                next_char__CIScanner(self);
+                attribute_value = scan_string__CIScanner(self);
+
+                next_char__CIScanner(self);
+
+                if (self->base.source.cursor.current == ')') {
+                    next_char__CIScanner(self);
+                } else {
+                    FAILED("expected `)`");
+                }
+            }
+
+            switch (kind) {
+                case CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED:
+                    res = NEW_VARIANT(CIToken,
+                                      attribute_deprecated,
+                                      clone__Location(&self->base.location),
+                                      attribute_value);
+                    break;
+                case CI_TOKEN_KIND_ATTRIBUTE_NODISCARD:
+                    res = NEW_VARIANT(CIToken,
+                                      attribute_nodiscard,
+                                      clone__Location(&self->base.location),
+                                      attribute_value);
+                    break;
+                default:
+                    UNREACHABLE("this situation is impossible");
+            }
+
+            break;
+        }
+        default:
+            res = NEW(CIToken, kind, clone__Location(&self->base.location));
+    }
+
+    if (self->base.source.cursor.current == ']' &&
+        peek_char__CIScanner(self, 1) == (char *)']') {
+        next_char__CIScanner(self);
+    } else {
+        FAILED("expected `]]` to close attribute");
+    }
+
+    return res;
 }
 
 void
@@ -2007,7 +2125,7 @@ check_standard(CIScanner *self, CIToken *token)
     Location location_error = clone__Location(&token->location);
     const CIFeature *feature = &tokens_feature[token->kind];
 
-    if (self->standard < feature->since) {
+    CHECK_STANDARD_SINCE(feature->since, {
         enum CIErrorKind error_kind;
 
         switch (feature->since) {
@@ -2052,7 +2170,9 @@ check_standard(CIScanner *self, CIToken *token)
                                      NULL,
                                      NULL),
                          self->base.count_error);
-    } else if (self->standard >= feature->until) {
+    });
+
+    CHECK_STANDARD_UNTIL(feature->until, {
         String *note = NULL;
 
         switch (feature->until) {
@@ -2096,7 +2216,7 @@ check_standard(CIScanner *self, CIToken *token)
                                           NULL,
                                           NULL,
                                           NULL));
-    }
+    });
 }
 
 CIToken *
@@ -2269,6 +2389,11 @@ get_token__CIScanner(CIScanner *self, bool check_match)
 
                     break;
                 case '[':
+                    // Scan attribute
+                    if (c1 == (char *)'[') {
+                        return scan_attribute__CIScanner(self);
+                    }
+
                     token = NEW(CIToken,
                                 CI_TOKEN_KIND_LHOOK,
                                 clone__Location(&self->base.location));
