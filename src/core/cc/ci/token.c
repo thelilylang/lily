@@ -352,6 +352,8 @@ to_string__CIToken(CIToken *self)
             return from__String("do");
         case CI_TOKEN_KIND_KEYWORD_DOUBLE:
             return from__String("double");
+        case CI_TOKEN_KIND_KEYWORD_DOUBLE__COMPLEX:
+            return from__String("double _Complex");
         case CI_TOKEN_KIND_KEYWORD_ELSE:
             return from__String("else");
         case CI_TOKEN_KIND_KEYWORD_ENUM:
@@ -362,6 +364,8 @@ to_string__CIToken(CIToken *self)
             return from__String("false");
         case CI_TOKEN_KIND_KEYWORD_FLOAT:
             return from__String("float");
+        case CI_TOKEN_KIND_KEYWORD_FLOAT__COMPLEX:
+            return from__String("float _Complex");
         case CI_TOKEN_KIND_KEYWORD_FOR:
             return from__String("for");
         case CI_TOKEN_KIND_KEYWORD_GOTO:
@@ -376,6 +380,8 @@ to_string__CIToken(CIToken *self)
             return from__String("long");
         case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE:
             return from__String("long double");
+        case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__COMPLEX:
+            return from__String("long double _Complex");
         case CI_TOKEN_KIND_KEYWORD_LONG_INT:
             return from__String("long int");
         case CI_TOKEN_KIND_KEYWORD_LONG_LONG:
@@ -669,6 +675,8 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_KEYWORD_DO";
         case CI_TOKEN_KIND_KEYWORD_DOUBLE:
             return "CI_TOKEN_KIND_KEYWORD_DOUBLE";
+        case CI_TOKEN_KIND_KEYWORD_DOUBLE__COMPLEX:
+            return "CI_TOKEN_KIND_KEYWORD_DOUBLE__COMPLEX";
         case CI_TOKEN_KIND_KEYWORD_ELSE:
             return "CI_TOKEN_KIND_KEYWORD_ELSE";
         case CI_TOKEN_KIND_KEYWORD_ENUM:
@@ -679,6 +687,8 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_KEYWORD_FALSE";
         case CI_TOKEN_KIND_KEYWORD_FLOAT:
             return "CI_TOKEN_KIND_KEYWORD_FLOAT";
+        case CI_TOKEN_KIND_KEYWORD_FLOAT__COMPLEX:
+            return "CI_TOKEN_KIND_KEYWORD_FLOAT__COMPLEX";
         case CI_TOKEN_KIND_KEYWORD_FOR:
             return "CI_TOKEN_KIND_KEYWORD_FOR";
         case CI_TOKEN_KIND_KEYWORD_GOTO:
@@ -693,6 +703,8 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_KEYWORD_LONG";
         case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE:
             return "CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE";
+        case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__COMPLEX:
+            return "CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__COMPLEX";
         case CI_TOKEN_KIND_KEYWORD_LONG_INT:
             return "CI_TOKEN_KIND_KEYWORD_LONG_INT";
         case CI_TOKEN_KIND_KEYWORD_LONG_LONG:
