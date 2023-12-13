@@ -346,6 +346,8 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                        .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_DOUBLE__COMPLEX] = { .since = CI_STANDARD_99,
                                                 .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_DOUBLE__IMAGINARY] = { .since = CI_STANDARD_99,
+                                                  .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_ELSE] = { .since = CI_STANDARD_NONE,
                                      .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_ENUM] = { .since = CI_STANDARD_NONE,
@@ -358,6 +360,8 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                       .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_FLOAT__COMPLEX] = { .since = CI_STANDARD_99,
                                                .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_FLOAT__IMAGINARY] = { .since = CI_STANDARD_99,
+                                                 .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_FOR] = { .since = CI_STANDARD_NONE,
                                     .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_GOTO] = { .since = CI_STANDARD_NONE,
@@ -375,6 +379,9 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
     [CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__COMPLEX] = { .since = CI_STANDARD_99,
                                                      .until =
                                                        CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__IMAGINARY] = { .since = CI_STANDARD_99,
+                                                       .until =
+                                                         CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_LONG_INT] = { .since = CI_STANDARD_NONE,
                                          .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_LONG_LONG] = { .since = CI_STANDARD_99,
