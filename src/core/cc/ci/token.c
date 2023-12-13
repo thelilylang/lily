@@ -36,6 +36,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// Free CIToken type (CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED).
+static VARIANT_DESTRUCTOR(CIToken, attribute_deprecated, CIToken *self);
+
+// Free CIToken type (CI_TOKEN_KIND_ATTRIBUTE_NODISCARD).
+static VARIANT_DESTRUCTOR(CIToken, attribute_nodiscard, CIToken *self);
+
 // Free CIToken type (CI_TOKEN_KIND_COMMENT_DOC).
 static VARIANT_DESTRUCTOR(CIToken, comment_doc, CIToken *self);
 
@@ -965,6 +971,24 @@ IMPL_FOR_DEBUG(debug, CIToken, const CIToken *self)
 }
 #endif
 
+VARIANT_DESTRUCTOR(CIToken, attribute_deprecated, CIToken *self)
+{
+    if (self->attribute_deprecated) {
+        FREE(String, self->attribute_deprecated);
+    }
+
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIToken, attribute_nodiscard, CIToken *self)
+{
+    if (self->attribute_nodiscard) {
+        FREE(String, self->attribute_nodiscard);
+    }
+
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(CIToken, comment_doc, CIToken *self)
 {
     FREE(String, self->comment_doc);
@@ -1021,6 +1045,12 @@ VARIANT_DESTRUCTOR(CIToken, literal_constant_string, CIToken *self)
 DESTRUCTOR(CIToken, CIToken *self)
 {
     switch (self->kind) {
+        case CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED:
+            FREE_VARIANT(CIToken, attribute_deprecated, self);
+            break;
+        case CI_TOKEN_KIND_ATTRIBUTE_NODISCARD:
+            FREE_VARIANT(CIToken, attribute_nodiscard, self);
+            break;
         case CI_TOKEN_KIND_COMMENT_DOC:
             FREE_VARIANT(CIToken, comment_doc, self);
             break;
