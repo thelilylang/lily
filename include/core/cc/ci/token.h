@@ -38,6 +38,14 @@ enum CITokenKind
     CI_TOKEN_KIND_AMPERSAND_AMPERSAND,
     CI_TOKEN_KIND_AMPERSAND_EQ,
     CI_TOKEN_KIND_ARROW,
+    CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED,
+    CI_TOKEN_KIND_ATTRIBUTE_FALLTHROUGH,
+    CI_TOKEN_KIND_ATTRIBUTE_MAYBE_UNUSED,
+    CI_TOKEN_KIND_ATTRIBUTE_NODISCARD,
+    CI_TOKEN_KIND_ATTRIBUTE_NORETURN,
+    CI_TOKEN_KIND_ATTRIBUTE__NORETURN,
+    CI_TOKEN_KIND_ATTRIBUTE_UNSEQUENCED,
+    CI_TOKEN_KIND_ATTRIBUTE_REPRODUCIBLE,
     CI_TOKEN_KIND_BANG,
     CI_TOKEN_KIND_BANG_EQ,
     CI_TOKEN_KIND_BAR,
@@ -185,6 +193,8 @@ typedef struct CIToken
     Location location;
     union
     {
+        String *attribute_deprecated; // String*?
+        String *attribute_nodiscard;  // String*?
         String *comment_doc;
         String *identifier;
         String *literal_constant_int;
@@ -202,6 +212,28 @@ typedef struct CIToken
  * @brief Construct CIToken type.
  */
 CONSTRUCTOR(CIToken *, CIToken, enum CITokenKind kind, Location location);
+
+/**
+ *
+ * @brief Construct CIToken type (CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED).
+ * @param attribute_deprecated String*?
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    attribute_deprecated,
+                    Location location,
+                    String *attribute_deprecated);
+
+/**
+ *
+ * @brief Construct CIToken type (CI_TOKEN_KIND_ATTRIBUTE_NODISCARD).
+ * @param attribute_nodiscard String*?
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    attribute_nodiscard,
+                    Location location,
+                    String *attribute_nodiscard);
 
 /**
  *

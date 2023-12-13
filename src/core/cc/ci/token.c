@@ -92,6 +92,36 @@ VARIANT_CONSTRUCTOR(CIToken *,
 
 VARIANT_CONSTRUCTOR(CIToken *,
                     CIToken,
+                    attribute_deprecated,
+                    Location location,
+                    String *attribute_deprecated)
+{
+    CIToken *self = lily_malloc(sizeof(CIToken));
+
+    self->kind = CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED;
+    self->location = location;
+    self->attribute_deprecated = attribute_deprecated;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    attribute_nodiscard,
+                    Location location,
+                    String *attribute_nodiscard)
+{
+    CIToken *self = lily_malloc(sizeof(CIToken));
+
+    self->kind = CI_TOKEN_KIND_ATTRIBUTE_NODISCARD;
+    self->location = location;
+    self->attribute_nodiscard = attribute_nodiscard;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
                     identifier,
                     Location location,
                     String *identifier)
@@ -222,6 +252,32 @@ to_string__CIToken(CIToken *self)
             return from__String("&=");
         case CI_TOKEN_KIND_ARROW:
             return from__String("->");
+        case CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED:
+            if (self->attribute_deprecated) {
+                return format__String("[[deprecated(\"{S}\")]]",
+                                      self->attribute_deprecated);
+            }
+
+            return from__String("[[deprecated]]");
+        case CI_TOKEN_KIND_ATTRIBUTE_FALLTHROUGH:
+            return from__String("[[fallthrough]]");
+        case CI_TOKEN_KIND_ATTRIBUTE_MAYBE_UNUSED:
+            return from__String("[[maybe_unused]]");
+        case CI_TOKEN_KIND_ATTRIBUTE_NODISCARD:
+            if (self->attribute_nodiscard) {
+                return format__String("[[nodiscard(\"{S}\")]]",
+                                      self->attribute_nodiscard);
+            }
+
+            return from__String("[[nodiscard]]");
+        case CI_TOKEN_KIND_ATTRIBUTE_NORETURN:
+            return from__String("[[noreturn]]");
+        case CI_TOKEN_KIND_ATTRIBUTE__NORETURN:
+            return from__String("[[_Noreturn]]");
+        case CI_TOKEN_KIND_ATTRIBUTE_UNSEQUENCED:
+            return from__String("[[unsequenced]]");
+        case CI_TOKEN_KIND_ATTRIBUTE_REPRODUCIBLE:
+            return from__String("[[reproducible]]");
         case CI_TOKEN_KIND_BANG:
             return from__String("!");
         case CI_TOKEN_KIND_BANG_EQ:
@@ -521,6 +577,22 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_AMPERSAND_EQ";
         case CI_TOKEN_KIND_ARROW:
             return "CI_TOKEN_KIND_ARROW";
+        case CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED:
+            return "CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED";
+        case CI_TOKEN_KIND_ATTRIBUTE_FALLTHROUGH:
+            return "CI_TOKEN_KIND_ATTRIBUTE_FALLTHROUGH";
+        case CI_TOKEN_KIND_ATTRIBUTE_MAYBE_UNUSED:
+            return "CI_TOKEN_KIND_ATTRIBUTE_MAYBE_UNUSED";
+        case CI_TOKEN_KIND_ATTRIBUTE_NODISCARD:
+            return "CI_TOKEN_KIND_ATTRIBUTE_NODISCARD";
+        case CI_TOKEN_KIND_ATTRIBUTE_NORETURN:
+            return "CI_TOKEN_KIND_ATTRIBUTE_NORETURN";
+        case CI_TOKEN_KIND_ATTRIBUTE__NORETURN:
+            return "CI_TOKEN_KIND_ATTRIBUTE__NORETURN";
+        case CI_TOKEN_KIND_ATTRIBUTE_UNSEQUENCED:
+            return "CI_TOKEN_KIND_ATTRIBUTE_UNSEQUENCED";
+        case CI_TOKEN_KIND_ATTRIBUTE_REPRODUCIBLE:
+            return "CI_TOKEN_KIND_ATTRIBUTE_REPRODUCIBLE";
         case CI_TOKEN_KIND_BANG:
             return "CI_TOKEN_KIND_BANG";
         case CI_TOKEN_KIND_BANG_EQ:
@@ -806,6 +878,22 @@ char *
 IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
 {
     switch (self->kind) {
+        case CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED:
+            return format("LilyToken{{ kind = {s}, location = {sa}, "
+                          "attribute_deprecated = {s} }",
+                          CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
+                          CALL_DEBUG_IMPL(to_string, Location, &self->location),
+                          self->attribute_deprecated
+                            ? self->attribute_deprecated->buffer
+                            : "NULL");
+        case CI_TOKEN_KIND_ATTRIBUTE_NODISCARD:
+            return format("LilyToken{{ kind = {s}, location = {sa}, "
+                          "attribute_nodiscard = {s} }",
+                          CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
+                          CALL_DEBUG_IMPL(to_string, Location, &self->location),
+                          self->attribute_nodiscard
+                            ? self->attribute_nodiscard->buffer
+                            : "NULL");
         case CI_TOKEN_KIND_COMMENT_DOC:
             return format(
               "LilyToken{{ kind = {s}, location = {sa}, comment_doc = {S} }",
