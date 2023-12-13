@@ -1124,8 +1124,13 @@ get_keyword_part2__CIScanner(CIScanner *self, struct CITokenKindWithID *part1)
                         case CI_TOKEN_KIND_KEYWORD__COMPLEX:
                             merged_kind = CI_TOKEN_KIND_KEYWORD_DOUBLE__COMPLEX;
                             break;
+                        case CI_TOKEN_KIND_KEYWORD__IMAGINARY:
+                            merged_kind =
+                              CI_TOKEN_KIND_KEYWORD_DOUBLE__IMAGINARY;
+                            break;
                         default:
-                            FAILED("error, expected _Complex after double");
+                            FAILED("error, expected _Complex or _Imaginary "
+                                   "after double");
                     }
 
                     break;
@@ -1134,8 +1139,13 @@ get_keyword_part2__CIScanner(CIScanner *self, struct CITokenKindWithID *part1)
                         case CI_TOKEN_KIND_KEYWORD__COMPLEX:
                             merged_kind = CI_TOKEN_KIND_KEYWORD_FLOAT__COMPLEX;
                             break;
+                        case CI_TOKEN_KIND_KEYWORD__IMAGINARY:
+                            merged_kind =
+                              CI_TOKEN_KIND_KEYWORD_FLOAT__IMAGINARY;
+                            break;
                         default:
-                            FAILED("error, expected _Complex after float");
+                            FAILED("error, expected _Complex or _Imaginary "
+                                   "after float");
                     }
 
                     break;
@@ -1250,9 +1260,13 @@ get_keyword_part3__CIScanner(CIScanner *self, struct CITokenKindWithID *part2)
                             merged_kind =
                               CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__COMPLEX;
                             break;
+                        case CI_TOKEN_KIND_KEYWORD__IMAGINARY:
+                            merged_kind =
+                              CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__IMAGINARY;
+                            break;
                         default:
-                            FAILED(
-                              "error, expected _Complex after long double");
+                            FAILED("error, expected _Complex or _Imaginary "
+                                   "after long double");
                     }
 
                     break;
