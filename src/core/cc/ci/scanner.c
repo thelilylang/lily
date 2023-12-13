@@ -130,14 +130,18 @@ next_char_by_token__CIScanner(CIScanner *self, const CIToken *token);
 static enum CITokenKind
 standarize_keyword__CIScanner(enum CITokenKind kind);
 
+/// @brief Check whether we can execute the keyword part 1.
 static inline bool can_run_keyword_part1__CIScanner(enum CITokenKind);
 
+/// @brief Check whether we can execute the keyword part 2.
 static inline bool
 can_run_keyword_part2__CIScanner(enum CITokenKind part1);
 
+/// @brief Check whether we can execute the keyword part 3.
 static inline bool
 can_run_keyword_part3__CIScanner(enum CITokenKind part2);
 
+/// @brief Check whether we can execute the keyword part 4.
 static inline bool
 can_run_keyword_part4__CIScanner(enum CITokenKind part3);
 
@@ -165,6 +169,11 @@ get_keyword_part3__CIScanner(CIScanner *self, struct CITokenKindWithID *part2);
 /// @example unsigned long long int, ...
 static struct CITokenKindWithID
 get_keyword_part4__CIScanner(CIScanner *self, struct CITokenKindWithID *part3);
+
+/// @brief Scan multi-part keyword.
+/// @example long int, long long, unsigned long long, ...
+static CIToken *
+scan_multi_part_keyword__CIScanner(CIScanner *self);
 
 /// @brief Skip comment line.
 static void
@@ -960,8 +969,31 @@ get_keyword__CIScanner(const char *id)
     return CI_TOKEN_KIND_IDENTIFIER;
 }
 
-//  TODO: For get_keyword_part*__CIScanner functions, perhaps optimize and make
-//  the function less redundant.
+// TODO: For get_keyword_part*__CIScanner functions, perhaps optimize and make
+// the function less redundant.
+
+// FIXME: e.g. signed long long int
+// input: signed long long int
+// standard=c89
+//
+// expected:
+// long int
+// long int
+//
+// obtained:
+// long int
+// long int
+// int
+//
+// Bug: There's a problem with merging types, for example when the standard is
+// C89, because the `signed long long int` type is not available in this
+// standard (since C99). On the other hand, I don't think this is such a serious
+// bug.
+//
+// Potential fix: To fix the bug, you'd probably have to use the
+// get_multi_part_keyword__CIScanner function, just after checking the standard
+// in the get_keyword_part*__CIScanner functions, if the keyword is not
+// available in this standard.
 
 struct CITokenKindWithID
 get_keyword_part1__CIScanner(CIScanner *self,
@@ -977,11 +1009,18 @@ get_keyword_part1__CIScanner(CIScanner *self,
                          self->base.source.cursor.column,
                          self->base.source.cursor.position);
 
-    return (struct CITokenKindWithID){ .id = id,
-                                       .is_merged = false,
-                                       .location =
-                                         clone__Location(&self->base.location),
-                                       .kind = kind };
+    struct CITokenKindWithID res =
+      (struct CITokenKindWithID){ .id = id,
+                                  .is_merged = false,
+                                  .location =
+                                    clone__Location(&self->base.location),
+                                  .kind = kind };
+    const CIFeature *feature = &tokens_feature[res.kind];
+
+    CHECK_STANDARD_SINCE(feature->since,
+                         { res.kind = CI_TOKEN_KIND_IDENTIFIER; });
+
+    return res;
 }
 
 struct CITokenKindWithID
@@ -1275,6 +1314,76 @@ get_keyword_part4__CIScanner(CIScanner *self, struct CITokenKindWithID *part3)
             return res;
         }
     }
+}
+
+CIToken *
+scan_multi_part_keyword__CIScanner(CIScanner *self)
+{
+#define MAX_KEYWORD_PART 4
+    struct CITokenKindWithID (*const get_keyword_part[MAX_KEYWORD_PART])(
+      CIScanner *, struct CITokenKindWithID *) = {
+        &get_keyword_part1__CIScanner,
+        &get_keyword_part2__CIScanner,
+        &get_keyword_part3__CIScanner,
+        &get_keyword_part4__CIScanner,
+    };
+    bool (*const can_run_keyword_part[MAX_KEYWORD_PART])(
+      enum CITokenKind) = { &can_run_keyword_part1__CIScanner,
+                            &can_run_keyword_part2__CIScanner,
+                            &can_run_keyword_part3__CIScanner,
+                            &can_run_keyword_part4__CIScanner };
+    struct CITokenKindWithID token_kind_with_id_s[MAX_KEYWORD_PART] = { 0 };
+    Usize part = 0;
+
+    for (;
+         part < MAX_KEYWORD_PART && is_start_ident__CIScanner(self) &&
+         can_run_keyword_part[part](
+           part == 0 ? CI_TOKEN_KIND_MAX : token_kind_with_id_s[part - 1].kind);
+         ++part,
+         next_char__CIScanner(self),
+         skip_one_blank_space__CIScanner(self)) {
+        const struct CITokenKindWithID token_kind_with_id =
+          get_keyword_part[part](
+            self, part == 0 ? NULL : &token_kind_with_id_s[part - 1]);
+
+        token_kind_with_id_s[part] = token_kind_with_id;
+    }
+
+    previous_char__CIScanner(self);
+
+    CIToken *last_token = NULL;
+
+    for (Usize i = 0; i < part; ++i) {
+        struct CITokenKindWithID *current = &token_kind_with_id_s[i];
+
+        if (current->is_merged) {
+            FREE(String, current->id);
+            continue;
+        }
+
+        CIToken *current_token = NULL;
+
+        switch (current->kind) {
+            case CI_TOKEN_KIND_IDENTIFIER:
+                current_token = NEW_VARIANT(
+                  CIToken, identifier, current->location, current->id);
+                break;
+            default:
+                FREE(String, current->id);
+                current_token =
+                  NEW(CIToken,
+                      standarize_keyword__CIScanner(current->kind),
+                      current->location);
+        }
+
+        if (i + 1 == part) {
+            last_token = current_token;
+        } else {
+            push_token__CIScanner(self, current_token);
+        }
+    }
+
+    return last_token;
 }
 
 void
@@ -2138,76 +2247,8 @@ get_token__CIScanner(CIScanner *self, bool check_match)
                        CI_TOKEN_KIND_HAT,
                        clone__Location(&self->base.location));
         // IDENTIFIER
-        case IS_ID: {
-#define MAX_KEYWORD_PART 4
-            struct CITokenKindWithID (
-                *const get_keyword_part[MAX_KEYWORD_PART])(
-              CIScanner *, struct CITokenKindWithID *) = {
-                &get_keyword_part1__CIScanner,
-                &get_keyword_part2__CIScanner,
-                &get_keyword_part3__CIScanner,
-                &get_keyword_part4__CIScanner,
-            };
-            bool (*const can_run_keyword_part[MAX_KEYWORD_PART])(
-              enum CITokenKind) = { &can_run_keyword_part1__CIScanner,
-                                    &can_run_keyword_part2__CIScanner,
-                                    &can_run_keyword_part3__CIScanner,
-                                    &can_run_keyword_part4__CIScanner };
-            struct CITokenKindWithID token_kind_with_id_s[MAX_KEYWORD_PART] = {
-                0
-            };
-            Usize part = 0;
-
-            for (; part < MAX_KEYWORD_PART && is_start_ident__CIScanner(self) &&
-                   can_run_keyword_part[part](
-                     part == 0 ? CI_TOKEN_KIND_MAX
-                               : token_kind_with_id_s[part - 1].kind);
-                 ++part,
-                 next_char__CIScanner(self),
-                 skip_one_blank_space__CIScanner(self)) {
-                const struct CITokenKindWithID token_kind_with_id =
-                  get_keyword_part[part](
-                    self, part == 0 ? NULL : &token_kind_with_id_s[part - 1]);
-
-                token_kind_with_id_s[part] = token_kind_with_id;
-            }
-
-            previous_char__CIScanner(self);
-
-            CIToken *last_token = NULL;
-
-            for (Usize i = 0; i < part; ++i) {
-                struct CITokenKindWithID *current = &token_kind_with_id_s[i];
-
-                if (current->is_merged) {
-                    FREE(String, current->id);
-                    continue;
-                }
-
-                CIToken *current_token = NULL;
-
-                switch (current->kind) {
-                    case CI_TOKEN_KIND_IDENTIFIER:
-                        current_token = NEW_VARIANT(
-                          CIToken, identifier, current->location, current->id);
-                        break;
-                    default:
-                        FREE(String, current->id);
-                        current_token =
-                          NEW(CIToken,
-                              standarize_keyword__CIScanner(current->kind),
-                              current->location);
-                }
-
-                if (i + 1 == part) {
-                    last_token = current_token;
-                } else {
-                    push_token__CIScanner(self, current_token);
-                }
-            }
-
-            return last_token;
-        }
+        case IS_ID:
+            return scan_multi_part_keyword__CIScanner(self);
         // ?
         case '?':
             return NEW(CIToken,
