@@ -126,6 +126,14 @@ push_token__CIScanner(CIScanner *self, CIToken *token);
 static void
 next_char_by_token__CIScanner(CIScanner *self, const CIToken *token);
 
+/// @brief Get attribute from id.
+static enum CITokenKind
+get_attribute__CIScanner(const char *id);
+
+/// @brief Get keyword from id.
+static enum CITokenKind
+get_keyword__CIScanner(const char *id);
+
 /// @example long => long int, long int => long int, signed long => long int
 static enum CITokenKind
 standarize_keyword__CIScanner(enum CITokenKind kind);
@@ -144,14 +152,6 @@ can_run_keyword_part3__CIScanner(enum CITokenKind part2);
 /// @brief Check whether we can execute the keyword part 4.
 static inline bool
 can_run_keyword_part4__CIScanner(enum CITokenKind part3);
-
-/// @brief Get attribute from id.
-static enum CITokenKind
-get_attribute__CIScanner(const char *id);
-
-/// @brief Get keyword from id.
-static enum CITokenKind
-get_keyword__CIScanner(const char *id);
 
 /// @brief Get keyword in on part.
 /// @example int, long, ...
@@ -344,6 +344,8 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                    .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_DOUBLE] = { .since = CI_STANDARD_NONE,
                                        .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_DOUBLE__COMPLEX] = { .since = CI_STANDARD_99,
+                                                .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_ELSE] = { .since = CI_STANDARD_NONE,
                                      .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_ENUM] = { .since = CI_STANDARD_NONE,
@@ -354,6 +356,8 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                       .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_FLOAT] = { .since = CI_STANDARD_NONE,
                                       .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_FLOAT__COMPLEX] = { .since = CI_STANDARD_99,
+                                               .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_FOR] = { .since = CI_STANDARD_NONE,
                                     .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_GOTO] = { .since = CI_STANDARD_NONE,
@@ -368,6 +372,9 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                      .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE] = { .since = CI_STANDARD_NONE,
                                             .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__COMPLEX] = { .since = CI_STANDARD_99,
+                                                     .until =
+                                                       CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_LONG_INT] = { .since = CI_STANDARD_NONE,
                                          .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_LONG_LONG] = { .since = CI_STANDARD_99,
@@ -795,83 +802,6 @@ next_char_by_token__CIScanner(CIScanner *self, const CIToken *token)
 }
 
 enum CITokenKind
-standarize_keyword__CIScanner(enum CITokenKind kind)
-{
-    switch (kind) {
-        case CI_TOKEN_KIND_KEYWORD_SHORT:
-        case CI_TOKEN_KIND_KEYWORD_SIGNED_SHORT:
-        case CI_TOKEN_KIND_KEYWORD_SIGNED_SHORT_INT:
-            return CI_TOKEN_KIND_KEYWORD_SHORT_INT;
-        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT:
-            return CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT_INT;
-        case CI_TOKEN_KIND_KEYWORD_SIGNED:
-        case CI_TOKEN_KIND_KEYWORD_SIGNED_INT:
-            return CI_TOKEN_KIND_KEYWORD_INT;
-        case CI_TOKEN_KIND_KEYWORD_LONG:
-        case CI_TOKEN_KIND_KEYWORD_SIGNED_LONG:
-        case CI_TOKEN_KIND_KEYWORD_SIGNED_LONG_INT:
-            return CI_TOKEN_KIND_KEYWORD_LONG_INT;
-        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG:
-            return CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_INT;
-        case CI_TOKEN_KIND_KEYWORD_LONG_LONG:
-        case CI_TOKEN_KIND_KEYWORD_SIGNED_LONG_LONG:
-        case CI_TOKEN_KIND_KEYWORD_SIGNED_LONG_LONG_INT:
-            return CI_TOKEN_KIND_KEYWORD_LONG_LONG_INT;
-        case CI_TOKEN_KIND_KEYWORD_UNSIGNED:
-            return CI_TOKEN_KIND_KEYWORD_UNSIGNED_INT;
-        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG:
-            return CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG_INT;
-        default:
-            return kind;
-    }
-}
-
-bool can_run_keyword_part1__CIScanner(enum CITokenKind)
-{
-    return true;
-}
-
-bool
-can_run_keyword_part2__CIScanner(enum CITokenKind part1)
-{
-    switch (part1) {
-        case CI_TOKEN_KIND_KEYWORD_SIGNED:
-        case CI_TOKEN_KIND_KEYWORD_UNSIGNED:
-        case CI_TOKEN_KIND_KEYWORD_LONG:
-            return true;
-        default:
-            return false;
-    }
-}
-
-bool
-can_run_keyword_part3__CIScanner(enum CITokenKind part2)
-{
-    switch (part2) {
-        case CI_TOKEN_KIND_KEYWORD_SIGNED_SHORT:
-        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT:
-        case CI_TOKEN_KIND_KEYWORD_SIGNED_LONG:
-        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG:
-        case CI_TOKEN_KIND_KEYWORD_LONG_LONG:
-            return true;
-        default:
-            return false;
-    }
-}
-
-bool
-can_run_keyword_part4__CIScanner(enum CITokenKind part3)
-{
-    switch (part3) {
-        case CI_TOKEN_KIND_KEYWORD_SIGNED_LONG_LONG:
-        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG:
-            return true;
-        default:
-            return false;
-    }
-}
-
-enum CITokenKind
 get_attribute__CIScanner(const char *id)
 {
     if (!strcmp(id, "deprecated"))
@@ -1019,6 +949,86 @@ get_keyword__CIScanner(const char *id)
     return CI_TOKEN_KIND_IDENTIFIER;
 }
 
+enum CITokenKind
+standarize_keyword__CIScanner(enum CITokenKind kind)
+{
+    switch (kind) {
+        case CI_TOKEN_KIND_KEYWORD_SHORT:
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_SHORT:
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_SHORT_INT:
+            return CI_TOKEN_KIND_KEYWORD_SHORT_INT;
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT:
+            return CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT_INT;
+        case CI_TOKEN_KIND_KEYWORD_SIGNED:
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_INT:
+            return CI_TOKEN_KIND_KEYWORD_INT;
+        case CI_TOKEN_KIND_KEYWORD_LONG:
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_LONG:
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_LONG_INT:
+            return CI_TOKEN_KIND_KEYWORD_LONG_INT;
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG:
+            return CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_INT;
+        case CI_TOKEN_KIND_KEYWORD_LONG_LONG:
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_LONG_LONG:
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_LONG_LONG_INT:
+            return CI_TOKEN_KIND_KEYWORD_LONG_LONG_INT;
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED:
+            return CI_TOKEN_KIND_KEYWORD_UNSIGNED_INT;
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG:
+            return CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG_INT;
+        default:
+            return kind;
+    }
+}
+
+bool can_run_keyword_part1__CIScanner(enum CITokenKind)
+{
+    return true;
+}
+
+bool
+can_run_keyword_part2__CIScanner(enum CITokenKind part1)
+{
+    switch (part1) {
+        case CI_TOKEN_KIND_KEYWORD_DOUBLE:
+        case CI_TOKEN_KIND_KEYWORD_FLOAT:
+        case CI_TOKEN_KIND_KEYWORD_SIGNED:
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED:
+        case CI_TOKEN_KIND_KEYWORD_LONG:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool
+can_run_keyword_part3__CIScanner(enum CITokenKind part2)
+{
+    switch (part2) {
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_SHORT:
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT:
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_LONG:
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG:
+        case CI_TOKEN_KIND_KEYWORD_LONG_LONG:
+        case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool
+can_run_keyword_part4__CIScanner(enum CITokenKind part3)
+{
+    switch (part3) {
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_LONG_LONG:
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG:
+            return true;
+        default:
+            return false;
+    }
+}
+
 // TODO: For get_keyword_part*__CIScanner functions, perhaps optimize and make
 // the function less redundant.
 
@@ -1102,6 +1112,26 @@ get_keyword_part2__CIScanner(CIScanner *self, struct CITokenKindWithID *part1)
             enum CITokenKind merged_kind;
 
             switch (part1->kind) {
+                case CI_TOKEN_KIND_KEYWORD_DOUBLE:
+                    switch (unmerged_kind) {
+                        case CI_TOKEN_KIND_KEYWORD__COMPLEX:
+                            merged_kind = CI_TOKEN_KIND_KEYWORD_DOUBLE__COMPLEX;
+                            break;
+                        default:
+                            FAILED("error, expected _Complex after double");
+                    }
+
+                    break;
+                case CI_TOKEN_KIND_KEYWORD_FLOAT:
+                    switch (unmerged_kind) {
+                        case CI_TOKEN_KIND_KEYWORD__COMPLEX:
+                            merged_kind = CI_TOKEN_KIND_KEYWORD_FLOAT__COMPLEX;
+                            break;
+                        default:
+                            FAILED("error, expected _Complex after float");
+                    }
+
+                    break;
                 case CI_TOKEN_KIND_KEYWORD_LONG:
                     switch (unmerged_kind) {
                         case CI_TOKEN_KIND_KEYWORD_DOUBLE:
@@ -1207,6 +1237,18 @@ get_keyword_part3__CIScanner(CIScanner *self, struct CITokenKindWithID *part2)
             enum CITokenKind merged_kind;
 
             switch (part2->kind) {
+                case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE:
+                    switch (unmerged_kind) {
+                        case CI_TOKEN_KIND_KEYWORD__COMPLEX:
+                            merged_kind =
+                              CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__COMPLEX;
+                            break;
+                        default:
+                            FAILED(
+                              "error, expected _Complex after long double");
+                    }
+
+                    break;
                 case CI_TOKEN_KIND_KEYWORD_SIGNED_SHORT:
                     switch (unmerged_kind) {
                         case CI_TOKEN_KIND_KEYWORD_INT:
