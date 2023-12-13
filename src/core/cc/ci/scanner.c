@@ -986,9 +986,9 @@ get_keyword__CIScanner(const char *id)
 // int
 //
 // Bug: There's a problem with merging types, for example when the standard is
-// C89, because the `signed long long int` type is not available in this
-// standard (since C99). On the other hand, I don't think this is such a serious
-// bug.
+// C89, because the `signed long long int` keyword (type) is not available in
+// this standard (since C99). On the other hand, I don't think this is such a
+// serious bug.
 //
 // Potential fix: To fix the bug, you'd probably have to use the
 // get_multi_part_keyword__CIScanner function, just after checking the standard
