@@ -2389,7 +2389,6 @@ get_token__CIScanner(CIScanner *self, bool check_match)
 
                     break;
                 case '[':
-                    // Scan attribute
                     if (c1 == (char *)'[') {
                         return scan_attribute__CIScanner(self);
                     }
