@@ -1167,9 +1167,9 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_PREPROCESSOR_ELIF";
         case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:
             return "CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF";
-        case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF return "CI_TOKEN_KIND_"
-                                                        "PREPROCESSOR_ELIFNDEF";
-          case CI_TOKEN_KIND_PREPROCESSOR_EMBED:
+        case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:
+            return "CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF";
+        case CI_TOKEN_KIND_PREPROCESSOR_EMBED:
             return "CI_TOKEN_KIND_PREPROCESSOR_EMBED";
         case CI_TOKEN_KIND_PREPROCESSOR_ERROR:
             return "CI_TOKEN_KIND_PREPROCESSOR_ERROR";
@@ -1189,7 +1189,6 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_PREPROCESSOR_UNDEF";
         case CI_TOKEN_KIND_PREPROCESSOR_WARNING:
             return "CI_TOKEN_KIND_PREPROCESSOR_WARNING";
-        case CI_TOKEN_KIND_PREPROCESSOR_WARNING:
         case CI_TOKEN_KIND_RBRACE:
             return "CI_TOKEN_KIND_RBRACE";
         case CI_TOKEN_KIND_RHOOK:
