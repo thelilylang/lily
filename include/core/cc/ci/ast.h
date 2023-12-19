@@ -26,6 +26,7 @@
 #define LILY_CORE_CC_CI_AST_H
 
 #include <base/string.h>
+#include <base/types.h>
 
 typedef struct CIExpr CIExpr;
 
