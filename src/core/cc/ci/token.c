@@ -24,7 +24,6 @@
 
 #include <base/alloc.h>
 #include <base/macros.h>
-#include <base/new.h>
 
 #ifdef ENV_DEBUG
 #include <base/format.h>
@@ -70,6 +69,210 @@ static inline VARIANT_DESTRUCTOR(CIToken,
 
 // Free CIToken type (CI_TOKEN_KIND_LITERAL_CONSTANT_STRING).
 static VARIANT_DESTRUCTOR(CIToken, literal_constant_string, CIToken *self);
+
+// Free CIToken type (CI_TOKEN_KIND_PREPROCESSOR_DEFINE).
+static VARIANT_DESTRUCTOR(CIToken, preprocessor_define, CIToken *self);
+
+// Free CIToken type (CI_TOKEN_KIND_PREPROCESSOR_EMBED).
+static VARIANT_DESTRUCTOR(CIToken, preprocessor_embed, CIToken *self);
+
+// Free CIToken type (CI_TOKEN_KIND_PREPROCESSOR_INCLUDE).
+static VARIANT_DESTRUCTOR(CIToken, preprocessor_include, CIToken *self);
+
+// Free CIToken type (CI_TOKEN_KIND_PREPROCESSOR_LINE).
+static VARIANT_DESTRUCTOR(CIToken, preprocessor_line, CIToken *self);
+
+String *
+to_string__CITokenPreprocessorDefine(const CITokenPreprocessorDefine *self)
+{
+    String *res = format__String("#define {S}", self->name);
+
+    if (self->params) {
+        push_str__String(res, "(");
+
+        for (Usize i = 0; i < self->params->len; ++i) {
+            append__String(res, get__Vec(self->params, i));
+
+            if (i + 1 != self->params->len) {
+                push_str__String(res, ", ");
+            }
+        }
+
+        push_str__String(res, ")");
+    }
+
+    if (self->tokens) {
+        for (Usize i = 0; i < self->tokens->len; ++i) {
+            push_str__String(res, "\\\n");
+
+            const Vec *tokens_line = get__Vec(self->tokens, i);
+
+            for (Usize j = 0; j < tokens_line->len; ++j) {
+                String *token_string =
+                  to_string__CIToken(get__Vec(tokens_line, j));
+
+                APPEND_AND_FREE(res, token_string);
+            }
+        }
+    }
+
+    return res;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CITokenPreprocessorDefine,
+               const CITokenPreprocessorDefine *self)
+{
+    String *res = format__String(
+      "CITokenPreprocessorDefine{{ name = {S}, params =", self->name);
+
+    if (self->params) {
+        push_str__String(res, " {");
+
+        for (Usize i = 0; i < self->params->len; ++i) {
+            append__String(res, get__Vec(self->params, i));
+
+            if (i + 1 != self->params->len) {
+                push_str__String(res, ", ");
+            }
+        }
+
+        push_str__String(res, " }");
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, ", tokens =");
+
+    if (self->tokens) {
+        DEBUG_VEC_STR_2(self->tokens, res, CIToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CITokenPreprocessorDefine, const CITokenPreprocessorDefine *self)
+{
+    FREE(String, self->name);
+
+    if (self->params) {
+        FREE_BUFFER_ITEMS(self->params->buffer, self->params->len, String);
+        FREE(Vec, self->params);
+    }
+
+    if (self->tokens) {
+        FREE_BUFFER_ITEMS_2(self->tokens->buffer, self->tokens->len, CIToken);
+        FREE(Vec, self->tokens);
+    }
+}
+
+String *
+to_string__CITokenPreprocessorEmbed(const CITokenPreprocessorEmbed *self)
+{
+    String *res = from__String("#embed");
+
+    if (self->tokens) {
+        for (Usize i = 0; i < self->tokens->len; ++i) {
+            push_str__String(res, "\\\n");
+
+            const Vec *tokens_line = get__Vec(self->tokens, i);
+
+            for (Usize j = 0; j < tokens_line->len; ++j) {
+                String *token_string =
+                  to_string__CIToken(get__Vec(tokens_line, j));
+
+                APPEND_AND_FREE(res, token_string);
+            }
+        }
+    }
+
+    return res;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CITokenPreprocessorEmbed,
+               const CITokenPreprocessorEmbed *self)
+{
+    String *res = from__String("CITokenPreprocessorEmbed{ tokens =");
+
+    if (self->tokens) {
+        DEBUG_VEC_STR_2(self->tokens, res, CIToken);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CITokenPreprocessorEmbed, const CITokenPreprocessorEmbed *self)
+{
+    FREE_BUFFER_ITEMS(self->tokens->buffer, self->tokens->len, CIToken);
+    FREE(Vec, self->tokens);
+}
+
+String *
+to_string__CITokenPreprocessorLine(const CITokenPreprocessorLine *self)
+{
+    if (self->filename) {
+        return format__String("#line {zu}", self->line);
+    }
+
+    return format__String("#line {zu} \"{S}\"", self->line, self->filename);
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CITokenPreprocessorLine,
+               const CITokenPreprocessorLine *self)
+{
+    if (self->filename) {
+        return format__String(
+          "CITokenPreprocessorLine{{ line = {zu}, filename = {S} }",
+          self->line,
+          self->filename);
+    }
+
+    return format__String(
+      "CITokenPreprocessorLine{{ line = {zu}, filename = NULL }", self->line);
+}
+#endif
+
+DESTRUCTOR(CITokenPreprocessorLine, const CITokenPreprocessorLine *self)
+{
+    if (self->filename) {
+        FREE(String, self->filename);
+    }
+}
+
+String *
+to_string__CITokenPreprocessorInclude(const CITokenPreprocessorInclude *self)
+{
+    return format__String("#include \"{S}\"", self->value);
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CITokenPreprocessorInclude,
+               const CITokenPreprocessorInclude *self)
+{
+    return format__String("CITokenPreprocessorInclude{{ value = {S} }",
+                          self->value);
+}
+#endif
 
 CONSTRUCTOR(CIToken *, CIToken, enum CITokenKind kind, Location location)
 {
@@ -242,6 +445,66 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_LITERAL_CONSTANT_STRING;
     self->location = location;
     self->literal_constant_string = literal_constant_string;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    preprocessor_define,
+                    Location location,
+                    CITokenPreprocessorDefine preprocessor_define)
+{
+    CIToken *self = lily_malloc(sizeof(CIToken));
+
+    self->kind = CI_TOKEN_KIND_PREPROCESSOR_DEFINE;
+    self->location = location;
+    self->preprocessor_define = preprocessor_define;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    preprocessor_embed,
+                    Location location,
+                    CITokenPreprocessorEmbed preprocessor_embed)
+{
+    CIToken *self = lily_malloc(sizeof(CIToken));
+
+    self->kind = CI_TOKEN_KIND_PREPROCESSOR_EMBED;
+    self->location = location;
+    self->preprocessor_embed = preprocessor_embed;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    preprocessor_include,
+                    Location location,
+                    CITokenPreprocessorInclude preprocessor_include)
+{
+    CIToken *self = lily_malloc(sizeof(CIToken));
+
+    self->kind = CI_TOKEN_KIND_PREPROCESSOR_INCLUDE;
+    self->location = location;
+    self->preprocessor_include = preprocessor_include;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    preprocessor_line,
+                    Location location,
+                    CITokenPreprocessorLine preprocessor_line)
+{
+    CIToken *self = lily_malloc(sizeof(CIToken));
+
+    self->kind = CI_TOKEN_KIND_PREPROCESSOR_LINE;
+    self->location = location;
+    self->preprocessor_line = preprocessor_line;
 
     return self;
 }
@@ -549,6 +812,33 @@ to_string__CIToken(CIToken *self)
             return from__String("+=");
         case CI_TOKEN_KIND_PLUS_PLUS:
             return from__String("++");
+        case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:
+            return format__String(
+              "{Sr}",
+              to_string__CITokenPreprocessorDefine(&self->preprocessor_define));
+        case CI_TOKEN_KIND_PREPROCESSOR_ELIF:
+            return from__String("#elif <cond>");
+        case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:
+            return from__String("#elifdef <defined_macro>");
+        case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:
+            return from__String("#elifndef <undefined_macro>");
+        case CI_TOKEN_KIND_PREPROCESSOR_EMBED:
+            return format__String(
+              "{Sr}",
+              to_string__CITokenPreprocessorEmbed(&self->preprocessor_embed));
+        case CI_TOKEN_KIND_PREPROCESSOR_ERROR:
+            return from__String("#error <msg>");
+        case CI_TOKEN_KIND_PREPROCESSOR_IF:
+            return from__String("#if <cond>");
+        case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
+            return from__String("#ifdef <defined_macro>");
+        case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:
+            return from__String("#ifndef <defined_macro>");
+        case CI_TOKEN_KIND_PREPROCESSOR_INCLUDE:
+            return to_string__CITokenPreprocessorInclude(
+              &self->preprocessor_include);
+        case CI_TOKEN_KIND_PREPROCESSOR_LINE:
+            return to_string__CITokenPreprocessorLine(&self->preprocessor_line);
         case CI_TOKEN_KIND_RBRACE:
             return from__String("}");
         case CI_TOKEN_KIND_RHOOK:
@@ -871,6 +1161,35 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_PLUS_EQ";
         case CI_TOKEN_KIND_PLUS_PLUS:
             return "CI_TOKEN_KIND_PLUS_PLUS";
+        case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:
+            return "CI_TOKEN_KIND_PREPROCESSOR_DEFINE";
+        case CI_TOKEN_KIND_PREPROCESSOR_ELIF:
+            return "CI_TOKEN_KIND_PREPROCESSOR_ELIF";
+        case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:
+            return "CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF";
+        case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF return "CI_TOKEN_KIND_"
+                                                        "PREPROCESSOR_ELIFNDEF";
+          case CI_TOKEN_KIND_PREPROCESSOR_EMBED:
+            return "CI_TOKEN_KIND_PREPROCESSOR_EMBED";
+        case CI_TOKEN_KIND_PREPROCESSOR_ERROR:
+            return "CI_TOKEN_KIND_PREPROCESSOR_ERROR";
+        case CI_TOKEN_KIND_PREPROCESSOR_IF:
+            return "CI_TOKEN_KIND_PREPROCESSOR_IF";
+        case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
+            return "CI_TOKEN_KIND_PREPROCESSOR_IFDEF";
+        case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:
+            return "CI_TOKEN_KIND_PREPROCESSOR_IFNDEF";
+        case CI_TOKEN_KIND_PREPROCESSOR_INCLUDE:
+            return "CI_TOKEN_KIND_PREPROCESSOR_INCLUDE";
+        case CI_TOKEN_KIND_PREPROCESSOR_LINE:
+            return "CI_TOKEN_KIND_PREPROCESSOR_LINE";
+        case CI_TOKEN_KIND_PREPROCESSOR_PRAGMA:
+            return "CI_TOKEN_KIND_PREPROCESSOR_PRAGMA";
+        case CI_TOKEN_KIND_PREPROCESSOR_UNDEF:
+            return "CI_TOKEN_KIND_PREPROCESSOR_UNDEF";
+        case CI_TOKEN_KIND_PREPROCESSOR_WARNING:
+            return "CI_TOKEN_KIND_PREPROCESSOR_WARNING";
+        case CI_TOKEN_KIND_PREPROCESSOR_WARNING:
         case CI_TOKEN_KIND_RBRACE:
             return "CI_TOKEN_KIND_RBRACE";
         case CI_TOKEN_KIND_RHOOK:
@@ -982,6 +1301,38 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_constant_character);
+        case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:
+            return format("LilyToken{{ kind = {s}, location = {sa}, "
+                          "preprocessor_include = {Sr} }",
+                          CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
+                          CALL_DEBUG_IMPL(to_string, Location, &self->location),
+                          CALL_DEBUG_IMPL(to_string,
+                                          CITokenPreprocessorDefine,
+                                          &self->preprocessor_define));
+        case CI_TOKEN_KIND_PREPROCESSOR_EMBED:
+            return format("LilyToken{{ kind = {s}, location = {sa}, "
+                          "preprocessor_embed = {Sr} }",
+                          CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
+                          CALL_DEBUG_IMPL(to_string, Location, &self->location),
+                          CALL_DEBUG_IMPL(to_string,
+                                          CITokenPreprocessorEmbed,
+                                          &self->preprocessor_embed));
+        case CI_TOKEN_KIND_PREPROCESSOR_INCLUDE:
+            return format("LilyToken{{ kind = {s}, location = {sa}, "
+                          "preprocessor_include = {Sr} }",
+                          CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
+                          CALL_DEBUG_IMPL(to_string, Location, &self->location),
+                          CALL_DEBUG_IMPL(to_string,
+                                          CITokenPreprocessorInclude,
+                                          &self->preprocessor_include));
+        case CI_TOKEN_KIND_PREPROCESSOR_LINE:
+            return format("LilyToken{{ kind = {s}, location = {sa}, "
+                          "preprocessor_line = {Sr} }",
+                          CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
+                          CALL_DEBUG_IMPL(to_string, Location, &self->location),
+                          CALL_DEBUG_IMPL(to_string,
+                                          CITokenPreprocessorLine,
+                                          &self->preprocessor_line));
         default:
             return format(
               "LilyToken{{ kind = {s}, location = {sa} }",
@@ -1070,6 +1421,30 @@ VARIANT_DESTRUCTOR(CIToken, literal_constant_string, CIToken *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(CIToken, preprocessor_define, CIToken *self)
+{
+    FREE(CITokenPreprocessorDefine, &self->preprocessor_define);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIToken, preprocessor_embed, CIToken *self)
+{
+    FREE(CITokenPreprocessorEmbed, &self->preprocessor_embed);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIToken, preprocessor_include, CIToken *self)
+{
+    FREE(CITokenPreprocessorInclude, &self->preprocessor_include);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIToken, preprocessor_line, CIToken *self)
+{
+    FREE(CITokenPreprocessorLine, &self->preprocessor_line);
+    lily_free(self);
+}
+
 DESTRUCTOR(CIToken, CIToken *self)
 {
     switch (self->kind) {
@@ -1105,6 +1480,18 @@ DESTRUCTOR(CIToken, CIToken *self)
             break;
         case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
             FREE_VARIANT(CIToken, literal_constant_string, self);
+            break;
+        case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:
+            FREE_VARIANT(CIToken, preprocessor_define, self);
+            break;
+        case CI_TOKEN_KIND_PREPROCESSOR_EMBED:
+            FREE_VARIANT(CIToken, preprocessor_embed, self);
+            break;
+        case CI_TOKEN_KIND_PREPROCESSOR_INCLUDE:
+            FREE_VARIANT(CIToken, preprocessor_include, self);
+            break;
+        case CI_TOKEN_KIND_PREPROCESSOR_LINE:
+            FREE_VARIANT(CIToken, preprocessor_line, self);
             break;
         default:
             lily_free(self);

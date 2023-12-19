@@ -26,12 +26,15 @@
 #define LILY_CORE_CC_CI_TOKEN_H
 
 #include <base/macros.h>
+#include <base/new.h>
 #include <base/string.h>
+#include <base/vec.h>
 
 #include <core/cc/ci/features.h>
 #include <core/shared/location.h>
 
 // NOTE#1: Used only in the scanner
+// NOTE#2: It's only used in the scanner, then simplified later in the scanner.
 enum CITokenKind
 {
     CI_TOKEN_KIND_AMPERSAND,
@@ -175,6 +178,20 @@ enum CITokenKind
     CI_TOKEN_KIND_PLUS,
     CI_TOKEN_KIND_PLUS_EQ,
     CI_TOKEN_KIND_PLUS_PLUS,
+    CI_TOKEN_KIND_PREPROCESSOR_DEFINE,
+    CI_TOKEN_KIND_PREPROCESSOR_ELIF,     // NOTE: #2
+    CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF,  // NOTE: #2
+    CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF, // NOTE: #2
+    CI_TOKEN_KIND_PREPROCESSOR_EMBED,
+    CI_TOKEN_KIND_PREPROCESSOR_ERROR,  // NOTE: #2
+    CI_TOKEN_KIND_PREPROCESSOR_IF,     // NOTE: #2
+    CI_TOKEN_KIND_PREPROCESSOR_IFDEF,  // NOTE: #2
+    CI_TOKEN_KIND_PREPROCESSOR_IFNDEF, // NOTE: #2
+    CI_TOKEN_KIND_PREPROCESSOR_INCLUDE,
+    CI_TOKEN_KIND_PREPROCESSOR_LINE,
+    CI_TOKEN_KIND_PREPROCESSOR_PRAGMA,
+    CI_TOKEN_KIND_PREPROCESSOR_UNDEF,   // NOTE: #2
+    CI_TOKEN_KIND_PREPROCESSOR_WARNING, // NOTE: #2
     CI_TOKEN_KIND_RBRACE,
     CI_TOKEN_KIND_RHOOK,
     CI_TOKEN_KIND_RPAREN,
@@ -194,6 +211,182 @@ enum CITokenKind
     CI_TOKEN_KIND_MAX
 };
 
+typedef struct CITokenPreprocessorDefine
+{
+    String *name;
+    Vec *params; // Vec<String*>*?
+    Vec *tokens; // Vec<Vec<CIToken*>*>*?
+} CITokenPreprocessorDefine;
+
+/**
+ *
+ * @brief Construct CITokenPreprocessorDefine type.
+ */
+inline CONSTRUCTOR(CITokenPreprocessorDefine,
+                   CITokenPreprocessorDefine,
+                   String *name,
+                   Vec *params,
+                   Vec *tokens)
+{
+    return (CITokenPreprocessorDefine){ .name = name,
+                                        .params = params,
+                                        .tokens = tokens };
+}
+
+/**
+ *
+ * @brief Convert to string CITokenPreprocessorDefine type.
+ */
+String *
+to_string__CITokenPreprocessorDefine(const CITokenPreprocessorDefine *self);
+
+/**
+ *
+ * @brief Convert CITokenPreprocessorDefine in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CITokenPreprocessorDefine,
+               const CITokenPreprocessorDefine *self);
+#endif
+
+/**
+ *
+ * @brief Free CITokenPreprocessorDefine type.
+ */
+DESTRUCTOR(CITokenPreprocessorDefine, const CITokenPreprocessorDefine *self);
+
+typedef struct CITokenPreprocessorEmbed
+{
+    Vec *tokens;
+} CITokenPreprocessorEmbed;
+
+/**
+ *
+ * @brief Construct CITokenPreprocessorEmbed type.
+ */
+inline CONSTRUCTOR(CITokenPreprocessorEmbed,
+                   CITokenPreprocessorEmbed,
+                   Vec *tokens)
+{
+    return (CITokenPreprocessorEmbed){ .tokens = tokens };
+}
+
+/**
+ *
+ * @brief Convert to string CITokenPreprocessorEmbed type.
+ */
+String *
+to_string__CITokenPreprocessorEmbed(const CITokenPreprocessorEmbed *self);
+
+/**
+ *
+ * @brief Convert CITokenPreprocessorEmbed in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CITokenPreprocessorEmbed,
+               const CITokenPreprocessorEmbed *self);
+#endif
+
+/**
+ *
+ * @brief Free CITokenPreprocessorEmbed type.
+ */
+DESTRUCTOR(CITokenPreprocessorEmbed, const CITokenPreprocessorEmbed *self);
+
+typedef struct CITokenPreprocessorLine
+{
+    Usize line;
+    String *filename; // String*?
+} CITokenPreprocessorLine;
+
+/**
+ *
+ * @brief Construct CITokenPreprocessorLine type.
+ */
+inline CONSTRUCTOR(CITokenPreprocessorLine,
+                   CITokenPreprocessorLine,
+                   Usize line,
+                   String *filename)
+{
+    return (CITokenPreprocessorLine){ .line = line, .filename = filename };
+}
+
+/**
+ *
+ * @brief Convert to string CITokenPreprocessorLine type.
+ */
+String *
+to_string__CITokenPreprocessorLine(const CITokenPreprocessorLine *self);
+
+/**
+ *
+ * @brief Convert CITokenPreprocessorLine in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CITokenPreprocessorLine,
+               const CITokenPreprocessorLine *self);
+#endif
+
+/**
+ *
+ * @brief Free CITokenPreprocessorLine type.
+ */
+DESTRUCTOR(CITokenPreprocessorLine, const CITokenPreprocessorLine *self);
+
+typedef struct CITokenPreprocessorInclude
+{
+    String *value;
+} CITokenPreprocessorInclude;
+
+/**
+ *
+ * @brief Construct CITokenPreprocessorInclude type.
+ */
+inline CONSTRUCTOR(CITokenPreprocessorInclude,
+                   CITokenPreprocessorInclude,
+                   String *value)
+{
+    return (CITokenPreprocessorInclude){ .value = value };
+}
+
+/**
+ *
+ * @brief Convert to string CITokenPreprocessorInclude type.
+ */
+String *
+to_string__CITokenPreprocessorInclude(const CITokenPreprocessorInclude *self);
+
+/**
+ *
+ * @brief Convert CITokenPreprocessorInclude in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CITokenPreprocessorInclude,
+               const CITokenPreprocessorInclude *self);
+#endif
+
+/**
+ *
+ * @brief Free CITokenPreprocessorInclude type.
+ */
+inline DESTRUCTOR(CITokenPreprocessorInclude,
+                  const CITokenPreprocessorInclude *self)
+{
+    FREE(String, self->value);
+}
+
 typedef struct CIToken
 {
     enum CITokenKind kind;
@@ -203,6 +396,10 @@ typedef struct CIToken
         String *attribute_deprecated; // String*?
         String *attribute_nodiscard;  // String*?
         String *comment_doc;
+        CITokenPreprocessorDefine preprocessor_define;
+        CITokenPreprocessorEmbed preprocessor_embed;
+        CITokenPreprocessorInclude preprocessor_include;
+        CITokenPreprocessorLine preprocessor_line;
         String *identifier;
         String *literal_constant_int;
         String *literal_constant_float;
@@ -331,6 +528,46 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     literal_constant_string,
                     Location location,
                     String *literal_constant_string);
+
+/**
+ *
+ * @brief Construct CIToken type (CI_TOKEN_KIND_PREPROCESSOR_DEFINE).
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    preprocessor_define,
+                    Location location,
+                    CITokenPreprocessorDefine preprocessor_define);
+
+/**
+ *
+ * @brief Construct CIToken type (CI_TOKEN_KIND_PREPROCESSOR_EMBED).
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    preprocessor_embed,
+                    Location location,
+                    CITokenPreprocessorEmbed preprocessor_embed);
+
+/**
+ *
+ * @brief Construct CIToken type (CI_TOKEN_KIND_PREPROCESSOR_INCLUDE).
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    preprocessor_include,
+                    Location location,
+                    CITokenPreprocessorInclude preprocessor_include);
+
+/**
+ *
+ * @brief Construct CIToken type (CI_TOKEN_KIND_PREPROCESSOR_LINE).
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    preprocessor_line,
+                    Location location,
+                    CITokenPreprocessorLine preprocessor_line);
 
 /**
  *
