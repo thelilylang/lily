@@ -98,6 +98,8 @@ Example:
 Output: no errors
  */
 
+// TODO: Improve (and at) keyword scanning with a lookup table.
+
 /// @brief Get keyword from id.
 static enum LilyTokenKind
 get_keyword__LilyScanner(const char *id);
@@ -1839,6 +1841,12 @@ get_token__LilyScanner(LilyScanner *self)
 
         // @
         case '@':
+            // NOTE: If a new keyword at with a new start character, please
+            // update this macro.
+#define START_AT_KEYWORD(c1)                                       \
+    c1 == (char *)'b' || c1 == (char *)'c' || c1 == (char *)'h' || \
+      c1 == (char *)'l' || c1 == (char *)'s'
+
             if (c1 == (char *)'\"') {
                 next_char__LilyScanner(self);
 
@@ -1854,10 +1862,11 @@ get_token__LilyScanner(LilyScanner *self)
                 }
 
                 return NULL;
-            } else if ((c1 >= (char *)'a' && c1 <= (char *)'z')) {
+            } else if (START_AT_KEYWORD(c1)) {
+                // TODO: Refactor this block of code in functions.
                 String *at_keyword = NEW(String);
                 Usize i = 1;
-                char *peeked = peek_char__LilyScanner(self, 1);
+                char *peeked = c1;
 
                 while (peeked >= (char *)'a' && peeked <= (char *)'z') {
                     push__String(at_keyword, (char)(Uptr)peeked);
