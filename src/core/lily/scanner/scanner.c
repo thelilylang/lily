@@ -25,6 +25,7 @@
 #include <base/atof.h>
 #include <base/atoi.h>
 #include <base/print.h>
+#include <base/sized_str.h>
 
 #include <core/lily/diagnostic/error.h>
 #include <core/lily/lily.h>
@@ -102,7 +103,7 @@ Output: no errors
 
 /// @brief Get keyword from id.
 static enum LilyTokenKind
-get_keyword__LilyScanner(const char *id);
+get_keyword__LilyScanner(String *id);
 
 /// @brief Move next one character.
 /// @see `include/core/shared/scanner.h`
@@ -258,6 +259,82 @@ verify_identifier_string__LilyScanner(
 
 static LilyToken *
 get_token__LilyScanner(LilyScanner *self);
+
+// NOTE: This table must be sorted in ascending order.
+static const SizedStr lily_keywords[LILY_N_KEYWORD] = {
+    SIZED_STR_FROM_RAW("Object"),   SIZED_STR_FROM_RAW("Self"),
+    SIZED_STR_FROM_RAW("alias"),    SIZED_STR_FROM_RAW("and"),
+    SIZED_STR_FROM_RAW("as"),       SIZED_STR_FROM_RAW("asm"),
+    SIZED_STR_FROM_RAW("async"),    SIZED_STR_FROM_RAW("await"),
+    SIZED_STR_FROM_RAW("begin"),    SIZED_STR_FROM_RAW("break"),
+    SIZED_STR_FROM_RAW("cast"),     SIZED_STR_FROM_RAW("catch"),
+    SIZED_STR_FROM_RAW("class"),    SIZED_STR_FROM_RAW("close"),
+    SIZED_STR_FROM_RAW("comptime"), SIZED_STR_FROM_RAW("defer"),
+    SIZED_STR_FROM_RAW("do"),       SIZED_STR_FROM_RAW("drop"),
+    SIZED_STR_FROM_RAW("elif"),     SIZED_STR_FROM_RAW("else"),
+    SIZED_STR_FROM_RAW("end"),      SIZED_STR_FROM_RAW("enum"),
+    SIZED_STR_FROM_RAW("error"),    SIZED_STR_FROM_RAW("false"),
+    SIZED_STR_FROM_RAW("for"),      SIZED_STR_FROM_RAW("fun"),
+    SIZED_STR_FROM_RAW("get"),      SIZED_STR_FROM_RAW("global"),
+    SIZED_STR_FROM_RAW("if"),       SIZED_STR_FROM_RAW("impl"),
+    SIZED_STR_FROM_RAW("import"),   SIZED_STR_FROM_RAW("in"),
+    SIZED_STR_FROM_RAW("include"),  SIZED_STR_FROM_RAW("inherit"),
+    SIZED_STR_FROM_RAW("is"),       SIZED_STR_FROM_RAW("lib"),
+    SIZED_STR_FROM_RAW("macro"),    SIZED_STR_FROM_RAW("match"),
+    SIZED_STR_FROM_RAW("module"),   SIZED_STR_FROM_RAW("mut"),
+    SIZED_STR_FROM_RAW("next"),     SIZED_STR_FROM_RAW("nil"),
+    SIZED_STR_FROM_RAW("none"),     SIZED_STR_FROM_RAW("not"),
+    SIZED_STR_FROM_RAW("object"),   SIZED_STR_FROM_RAW("or"),
+    SIZED_STR_FROM_RAW("package"),  SIZED_STR_FROM_RAW("pub"),
+    SIZED_STR_FROM_RAW("raise"),    SIZED_STR_FROM_RAW("record"),
+    SIZED_STR_FROM_RAW("ref"),      SIZED_STR_FROM_RAW("req"),
+    SIZED_STR_FROM_RAW("return"),   SIZED_STR_FROM_RAW("self"),
+    SIZED_STR_FROM_RAW("set"),      SIZED_STR_FROM_RAW("test"),
+    SIZED_STR_FROM_RAW("trace"),    SIZED_STR_FROM_RAW("trait"),
+    SIZED_STR_FROM_RAW("true"),     SIZED_STR_FROM_RAW("try"),
+    SIZED_STR_FROM_RAW("type"),     SIZED_STR_FROM_RAW("undef"),
+    SIZED_STR_FROM_RAW("unsafe"),   SIZED_STR_FROM_RAW("use"),
+    SIZED_STR_FROM_RAW("val"),      SIZED_STR_FROM_RAW("when"),
+    SIZED_STR_FROM_RAW("while"),    SIZED_STR_FROM_RAW("xor"),
+};
+
+// NOTE: This array must have the same order as the lily_keyword array.
+static const enum LilyTokenKind lily_keyword_ids[LILY_N_KEYWORD] = {
+    LILY_TOKEN_KIND_KEYWORD_OBJECT,   LILY_TOKEN_KIND_KEYWORD_SELF,
+    LILY_TOKEN_KIND_KEYWORD_ALIAS,    LILY_TOKEN_KIND_KEYWORD_AND,
+    LILY_TOKEN_KIND_KEYWORD_AS,       LILY_TOKEN_KIND_KEYWORD_ASM,
+    LILY_TOKEN_KIND_KEYWORD_ASYNC,    LILY_TOKEN_KIND_KEYWORD_AWAIT,
+    LILY_TOKEN_KIND_KEYWORD_BEGIN,    LILY_TOKEN_KIND_KEYWORD_BREAK,
+    LILY_TOKEN_KIND_KEYWORD_CAST,     LILY_TOKEN_KIND_KEYWORD_CATCH,
+    LILY_TOKEN_KIND_KEYWORD_CLASS,    LILY_TOKEN_KIND_KEYWORD_CLOSE,
+    LILY_TOKEN_KIND_KEYWORD_COMPTIME, LILY_TOKEN_KIND_KEYWORD_DEFER,
+    LILY_TOKEN_KIND_KEYWORD_DO,       LILY_TOKEN_KIND_KEYWORD_DROP,
+    LILY_TOKEN_KIND_KEYWORD_ELIF,     LILY_TOKEN_KIND_KEYWORD_ELSE,
+    LILY_TOKEN_KIND_KEYWORD_END,      LILY_TOKEN_KIND_KEYWORD_ENUM,
+    LILY_TOKEN_KIND_KEYWORD_ERROR,    LILY_TOKEN_KIND_KEYWORD_FALSE,
+    LILY_TOKEN_KIND_KEYWORD_FOR,      LILY_TOKEN_KIND_KEYWORD_FUN,
+    LILY_TOKEN_KIND_KEYWORD_GET,      LILY_TOKEN_KIND_KEYWORD_GLOBAL,
+    LILY_TOKEN_KIND_KEYWORD_IF,       LILY_TOKEN_KIND_KEYWORD_IMPL,
+    LILY_TOKEN_KIND_KEYWORD_IMPORT,   LILY_TOKEN_KIND_KEYWORD_IN,
+    LILY_TOKEN_KIND_KEYWORD_INCLUDE,  LILY_TOKEN_KIND_KEYWORD_INHERIT,
+    LILY_TOKEN_KIND_KEYWORD_IS,       LILY_TOKEN_KIND_KEYWORD_LIB,
+    LILY_TOKEN_KIND_KEYWORD_MACRO,    LILY_TOKEN_KIND_KEYWORD_MATCH,
+    LILY_TOKEN_KIND_KEYWORD_MODULE,   LILY_TOKEN_KIND_KEYWORD_MUT,
+    LILY_TOKEN_KIND_KEYWORD_NEXT,     LILY_TOKEN_KIND_KEYWORD_NIL,
+    LILY_TOKEN_KIND_KEYWORD_NONE,     LILY_TOKEN_KIND_KEYWORD_NOT,
+    LILY_TOKEN_KIND_KEYWORD_object,   LILY_TOKEN_KIND_KEYWORD_OR,
+    LILY_TOKEN_KIND_KEYWORD_PACKAGE,  LILY_TOKEN_KIND_KEYWORD_PUB,
+    LILY_TOKEN_KIND_KEYWORD_RAISE,    LILY_TOKEN_KIND_KEYWORD_RECORD,
+    LILY_TOKEN_KIND_KEYWORD_REF,      LILY_TOKEN_KIND_KEYWORD_REQ,
+    LILY_TOKEN_KIND_KEYWORD_RETURN,   LILY_TOKEN_KIND_KEYWORD_self,
+    LILY_TOKEN_KIND_KEYWORD_SET,      LILY_TOKEN_KIND_KEYWORD_TEST,
+    LILY_TOKEN_KIND_KEYWORD_TRACE,    LILY_TOKEN_KIND_KEYWORD_TRAIT,
+    LILY_TOKEN_KIND_KEYWORD_TRUE,     LILY_TOKEN_KIND_KEYWORD_TRY,
+    LILY_TOKEN_KIND_KEYWORD_TYPE,     LILY_TOKEN_KIND_KEYWORD_UNDEF,
+    LILY_TOKEN_KIND_KEYWORD_UNSAFE,   LILY_TOKEN_KIND_KEYWORD_USE,
+    LILY_TOKEN_KIND_KEYWORD_VAL,      LILY_TOKEN_KIND_KEYWORD_WHEN,
+    LILY_TOKEN_KIND_KEYWORD_WHILE,    LILY_TOKEN_KIND_KEYWORD_XOR,
+};
 
 #define IS_ZERO '0'
 
@@ -664,144 +741,53 @@ get_token__LilyScanner(LilyScanner *self);
     }
 
 enum LilyTokenKind
-get_keyword__LilyScanner(const char *id)
+get_keyword__LilyScanner(String *id)
 {
-    if (!strcmp(id, "alias"))
-        return LILY_TOKEN_KIND_KEYWORD_ALIAS;
-    if (!strcmp(id, "and"))
-        return LILY_TOKEN_KIND_KEYWORD_AND;
-    if (!strcmp(id, "as"))
-        return LILY_TOKEN_KIND_KEYWORD_AS;
-    if (!strcmp(id, "asm"))
-        return LILY_TOKEN_KIND_KEYWORD_ASM;
-    if (!strcmp(id, "async"))
-        return LILY_TOKEN_KIND_KEYWORD_ASYNC;
-    if (!strcmp(id, "await"))
-        return LILY_TOKEN_KIND_KEYWORD_AWAIT;
-    if (!strcmp(id, "begin"))
-        return LILY_TOKEN_KIND_KEYWORD_BEGIN;
-    if (!strcmp(id, "break"))
-        return LILY_TOKEN_KIND_KEYWORD_BREAK;
-    if (!strcmp(id, "cast"))
-        return LILY_TOKEN_KIND_KEYWORD_CAST;
-    if (!strcmp(id, "catch"))
-        return LILY_TOKEN_KIND_KEYWORD_CATCH;
-    if (!strcmp(id, "class"))
-        return LILY_TOKEN_KIND_KEYWORD_CLASS;
-    if (!strcmp(id, "close"))
-        return LILY_TOKEN_KIND_KEYWORD_CLOSE;
-    if (!strcmp(id, "comptime"))
-        return LILY_TOKEN_KIND_KEYWORD_COMPTIME;
-    if (!strcmp(id, "defer"))
-        return LILY_TOKEN_KIND_KEYWORD_DEFER;
-    if (!strcmp(id, "do"))
-        return LILY_TOKEN_KIND_KEYWORD_DO;
-    if (!strcmp(id, "drop"))
-        return LILY_TOKEN_KIND_KEYWORD_DROP;
-    if (!strcmp(id, "elif"))
-        return LILY_TOKEN_KIND_KEYWORD_ELIF;
-    if (!strcmp(id, "else"))
-        return LILY_TOKEN_KIND_KEYWORD_ELSE;
-    if (!strcmp(id, "end"))
-        return LILY_TOKEN_KIND_KEYWORD_END;
-    if (!strcmp(id, "enum"))
-        return LILY_TOKEN_KIND_KEYWORD_ENUM;
-    if (!strcmp(id, "error"))
-        return LILY_TOKEN_KIND_KEYWORD_ERROR;
-    if (!strcmp(id, "false"))
-        return LILY_TOKEN_KIND_KEYWORD_FALSE;
-    if (!strcmp(id, "for"))
-        return LILY_TOKEN_KIND_KEYWORD_FOR;
-    if (!strcmp(id, "fun"))
-        return LILY_TOKEN_KIND_KEYWORD_FUN;
-    if (!strcmp(id, "get"))
-        return LILY_TOKEN_KIND_KEYWORD_GET;
-    if (!strcmp(id, "global"))
-        return LILY_TOKEN_KIND_KEYWORD_GLOBAL;
-    if (!strcmp(id, "if"))
-        return LILY_TOKEN_KIND_KEYWORD_IF;
-    if (!strcmp(id, "impl"))
-        return LILY_TOKEN_KIND_KEYWORD_IMPL;
-    if (!strcmp(id, "import"))
-        return LILY_TOKEN_KIND_KEYWORD_IMPORT;
-    if (!strcmp(id, "in"))
-        return LILY_TOKEN_KIND_KEYWORD_IN;
-    if (!strcmp(id, "include"))
-        return LILY_TOKEN_KIND_KEYWORD_INCLUDE;
-    if (!strcmp(id, "inherit"))
-        return LILY_TOKEN_KIND_KEYWORD_INHERIT;
-    if (!strcmp(id, "is"))
-        return LILY_TOKEN_KIND_KEYWORD_IS;
-    if (!strcmp(id, "lib"))
-        return LILY_TOKEN_KIND_KEYWORD_LIB;
-    if (!strcmp(id, "macro"))
-        return LILY_TOKEN_KIND_KEYWORD_MACRO;
-    if (!strcmp(id, "match"))
-        return LILY_TOKEN_KIND_KEYWORD_MATCH;
-    if (!strcmp(id, "module"))
-        return LILY_TOKEN_KIND_KEYWORD_MODULE;
-    if (!strcmp(id, "mut"))
-        return LILY_TOKEN_KIND_KEYWORD_MUT;
-    if (!strcmp(id, "next"))
-        return LILY_TOKEN_KIND_KEYWORD_NEXT;
-    if (!strcmp(id, "nil"))
-        return LILY_TOKEN_KIND_KEYWORD_NIL;
-    if (!strcmp(id, "none"))
-        return LILY_TOKEN_KIND_KEYWORD_NONE;
-    if (!strcmp(id, "not"))
-        return LILY_TOKEN_KIND_KEYWORD_NOT;
-    if (!strcmp(id, "object"))
-        return LILY_TOKEN_KIND_KEYWORD_object;
-    if (!strcmp(id, "Object"))
-        return LILY_TOKEN_KIND_KEYWORD_OBJECT;
-    if (!strcmp(id, "or"))
-        return LILY_TOKEN_KIND_KEYWORD_OR;
-    if (!strcmp(id, "package"))
-        return LILY_TOKEN_KIND_KEYWORD_PACKAGE;
-    if (!strcmp(id, "pub"))
-        return LILY_TOKEN_KIND_KEYWORD_PUB;
-    if (!strcmp(id, "raise"))
-        return LILY_TOKEN_KIND_KEYWORD_RAISE;
-    if (!strcmp(id, "record"))
-        return LILY_TOKEN_KIND_KEYWORD_RECORD;
-    if (!strcmp(id, "ref"))
-        return LILY_TOKEN_KIND_KEYWORD_REF;
-    if (!strcmp(id, "req"))
-        return LILY_TOKEN_KIND_KEYWORD_REQ;
-    if (!strcmp(id, "return"))
-        return LILY_TOKEN_KIND_KEYWORD_RETURN;
-    if (!strcmp(id, "self"))
-        return LILY_TOKEN_KIND_KEYWORD_self;
-    if (!strcmp(id, "Self"))
-        return LILY_TOKEN_KIND_KEYWORD_SELF;
-    if (!strcmp(id, "set"))
-        return LILY_TOKEN_KIND_KEYWORD_SET;
-    if (!strcmp(id, "test"))
-        return LILY_TOKEN_KIND_KEYWORD_TEST;
-    if (!strcmp(id, "trace"))
-        return LILY_TOKEN_KIND_KEYWORD_TRACE;
-    if (!strcmp(id, "trait"))
-        return LILY_TOKEN_KIND_KEYWORD_TRAIT;
-    if (!strcmp(id, "true"))
-        return LILY_TOKEN_KIND_KEYWORD_TRUE;
-    if (!strcmp(id, "try"))
-        return LILY_TOKEN_KIND_KEYWORD_TRY;
-    if (!strcmp(id, "type"))
-        return LILY_TOKEN_KIND_KEYWORD_TYPE;
-    if (!strcmp(id, "undef"))
-        return LILY_TOKEN_KIND_KEYWORD_UNDEF;
-    if (!strcmp(id, "unsafe"))
-        return LILY_TOKEN_KIND_KEYWORD_UNSAFE;
-    if (!strcmp(id, "use"))
-        return LILY_TOKEN_KIND_KEYWORD_USE;
-    if (!strcmp(id, "val"))
-        return LILY_TOKEN_KIND_KEYWORD_VAL;
-    if (!strcmp(id, "when"))
-        return LILY_TOKEN_KIND_KEYWORD_WHEN;
-    if (!strcmp(id, "while"))
-        return LILY_TOKEN_KIND_KEYWORD_WHILE;
-    if (!strcmp(id, "xor"))
-        return LILY_TOKEN_KIND_KEYWORD_XOR;
+    Usize pointer = 0;
+    bool locked = false;
+    char first_id_letter = get__String(id, 0);
+    const SizedStr *current_pointer = &lily_keywords[pointer];
+    char first_current_pointer_letter = current_pointer->buffer[0];
+
+    // Try matching the first_id_letter with the first_current_pointer_letter.
+    while (first_id_letter > first_current_pointer_letter &&
+           pointer + 1 < LILY_N_KEYWORD) {
+        current_pointer = &lily_keywords[++pointer];
+        first_current_pointer_letter = current_pointer->buffer[0];
+    }
+
+    while (first_id_letter == first_current_pointer_letter) {
+        bool unmatch = false;
+
+        if (current_pointer->len == id->len) {
+            for (Usize i = 1; i < id->len; ++i) {
+                if (current_pointer->buffer[i] != get__String(id, i)) {
+                    unmatch = true;
+                    break;
+                }
+            }
+        } else {
+            unmatch = true;
+        }
+
+        if (unmatch) {
+            if (pointer + 1 < LILY_N_KEYWORD) {
+                current_pointer = &lily_keywords[++pointer];
+                first_current_pointer_letter = current_pointer->buffer[0];
+
+                continue;
+            }
+
+            break;
+        } else {
+            locked = true;
+            break;
+        }
+    }
+
+    if (locked) {
+        return lily_keyword_ids[pointer];
+    }
 
     return LILY_TOKEN_KIND_IDENTIFIER_NORMAL;
 }
@@ -1337,16 +1323,16 @@ scan_line : {
 
         APPEND_AND_FREE(res, c);
     }
-
-    skip_space__LilyScanner(self);
 }
 
     // Check if the multiline string literal is not closed. If the current
     // character is equal to `\\` and the next character is equal to `\\`, we
     // continue to scan the multiline string literal.
-    if (self->base.source.cursor.current == '\\' &&
-        peek_char__LilyScanner(self, 1) == (char *)'\\') {
+    if (peek_char__LilyScanner(self, 1) == (char *)'\\' &&
+        peek_char__LilyScanner(self, 2) == (char *)'\\') {
+        next_char__LilyScanner(self);
         push_str__String(res, "\\n");
+
         goto scan_line;
     }
 
@@ -2559,7 +2545,7 @@ get_token__LilyScanner(LilyScanner *self)
                 return NULL;
             } else {
                 String *id = scan_identifier__LilyScanner(self);
-                enum LilyTokenKind kind = get_keyword__LilyScanner(id->buffer);
+                enum LilyTokenKind kind = get_keyword__LilyScanner(id);
 
                 switch (kind) {
                     case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
