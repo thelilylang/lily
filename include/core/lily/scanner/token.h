@@ -32,6 +32,8 @@
 
 #include <core/shared/location.h>
 
+#define LILY_N_KEYWORD 68
+
 enum LilyTokenKind
 {
     LILY_TOKEN_KIND_AMPERSAND_EQ,
