@@ -118,6 +118,7 @@ peek_char__Scanner(const Scanner *self, const Usize n);
 /**
  *
  * @brief Generic function for obtaining a keyword from any scanner.
+ * @param keywords Expect an array sorted in ascending order.
  * @return If the return value is -1, this means that the function has not found
  * a keyword, or that this is an identifier.
  */
