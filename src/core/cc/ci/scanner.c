@@ -131,7 +131,7 @@ next_char_by_token__CIScanner(CIScanner *self, const CIToken *token);
 
 /// @brief Get attribute from id.
 static enum CITokenKind
-get_attribute__CIScanner(const char *id);
+get_attribute__CIScanner(const String *id);
 
 /// @brief Get single keyword from id.
 static enum CITokenKind
@@ -723,6 +723,22 @@ static const enum CITokenKind ci_single_keyword_ids[CI_N_SINGLE_KEYWORD] = {
     CI_TOKEN_KIND_KEYWORD_WHILE
 };
 
+// NOTE: This table must be sorted in ascending order.
+static const SizedStr ci_attributes[CI_N_ATTRIBUTE] = {
+    SIZED_STR_FROM_RAW("_Noreturn"),    SIZED_STR_FROM_RAW("deprecated"),
+    SIZED_STR_FROM_RAW("fallthrough"),  SIZED_STR_FROM_RAW("maybe_unused"),
+    SIZED_STR_FROM_RAW("nodiscard"),    SIZED_STR_FROM_RAW("noreturn"),
+    SIZED_STR_FROM_RAW("reproducible"), SIZED_STR_FROM_RAW("unsequenced"),
+};
+
+// NOTE: This array must have the same order as the ci_attributes array.
+static const enum CITokenKind ci_attribute_ids[CI_N_ATTRIBUTE] = {
+    CI_TOKEN_KIND_ATTRIBUTE__NORETURN,    CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED,
+    CI_TOKEN_KIND_ATTRIBUTE_FALLTHROUGH,  CI_TOKEN_KIND_ATTRIBUTE_MAYBE_UNUSED,
+    CI_TOKEN_KIND_ATTRIBUTE_NODISCARD,    CI_TOKEN_KIND_ATTRIBUTE_NORETURN,
+    CI_TOKEN_KIND_ATTRIBUTE_REPRODUCIBLE, CI_TOKEN_KIND_ATTRIBUTE_UNSEQUENCED,
+};
+
 #define IS_ZERO '0'
 
 #define IS_DIGIT_WITHOUT_ZERO \
@@ -971,26 +987,16 @@ next_char_by_token__CIScanner(CIScanner *self, const CIToken *token)
 }
 
 enum CITokenKind
-get_attribute__CIScanner(const char *id)
+get_attribute__CIScanner(const String *id)
 {
-    if (!strcmp(id, "deprecated"))
-        return CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED;
-    if (!strcmp(id, "fallthrough"))
-        return CI_TOKEN_KIND_ATTRIBUTE_FALLTHROUGH;
-    if (!strcmp(id, "maybe_unused"))
-        return CI_TOKEN_KIND_ATTRIBUTE_MAYBE_UNUSED;
-    if (!strcmp(id, "nodiscard"))
-        return CI_TOKEN_KIND_ATTRIBUTE_NODISCARD;
-    if (!strcmp(id, "noreturn"))
-        return CI_TOKEN_KIND_ATTRIBUTE_NORETURN;
-    if (!strcmp(id, "_Noreturn"))
-        return CI_TOKEN_KIND_ATTRIBUTE__NORETURN;
-    if (!strcmp(id, "unsequenced"))
-        return CI_TOKEN_KIND_ATTRIBUTE_UNSEQUENCED;
-    if (!strcmp(id, "reproducible"))
-        return CI_TOKEN_KIND_ATTRIBUTE_REPRODUCIBLE;
+    Int32 res = get_keyword__Scanner(
+      id, ci_attributes, (const Int32 *)ci_attribute_ids, CI_N_ATTRIBUTE);
 
-    return CI_TOKEN_KIND_IDENTIFIER;
+    if (res == -1) {
+        return CI_TOKEN_KIND_IDENTIFIER;
+    }
+
+    return (enum CITokenKind)res;
 }
 
 enum CITokenKind
@@ -1563,7 +1569,7 @@ scan_attribute__CIScanner(CIScanner *self)
     jump__CIScanner(self, 2);
 
     String *attribute = scan_identifier__CIScanner(self);
-    enum CITokenKind kind = get_attribute__CIScanner(attribute->buffer);
+    enum CITokenKind kind = get_attribute__CIScanner(attribute);
     CIToken *res = NULL;
 
     FREE(String, attribute);

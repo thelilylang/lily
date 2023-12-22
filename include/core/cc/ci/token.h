@@ -37,6 +37,8 @@
 // e.g. unsigned int, unsigned long long int, ...
 #define CI_N_SINGLE_KEYWORD 60
 
+#define CI_N_ATTRIBUTE 8
+
 // NOTE#1: Used only in the scanner
 // NOTE#2: It's only used in the scanner, then simplified later in the scanner.
 enum CITokenKind
