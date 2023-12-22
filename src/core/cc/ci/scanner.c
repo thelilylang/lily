@@ -996,8 +996,10 @@ get_attribute__CIScanner(const char *id)
 enum CITokenKind
 get_single_keyword__CIScanner(const String *id)
 {
-    Int32 res = get_keyword__Scanner(
-      id, ci_single_keywords, (const Int32 *)ci_single_keyword_ids, CI_N_SINGLE_KEYWORD);
+    Int32 res = get_keyword__Scanner(id,
+                                     ci_single_keywords,
+                                     (const Int32 *)ci_single_keyword_ids,
+                                     CI_N_SINGLE_KEYWORD);
 
     if (res == -1) {
         return CI_TOKEN_KIND_IDENTIFIER;
