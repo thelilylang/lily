@@ -743,53 +743,14 @@ static const enum LilyTokenKind lily_keyword_ids[LILY_N_KEYWORD] = {
 enum LilyTokenKind
 get_keyword__LilyScanner(String *id)
 {
-    Usize pointer = 0;
-    bool locked = false;
-    char first_id_letter = get__String(id, 0);
-    const SizedStr *current_pointer = &lily_keywords[pointer];
-    char first_current_pointer_letter = current_pointer->buffer[0];
+    Int32 res = get_keyword__Scanner(
+      id, lily_keywords, (const Int32 *)lily_keyword_ids, LILY_N_KEYWORD);
 
-    // Try matching the first_id_letter with the first_current_pointer_letter.
-    while (first_id_letter > first_current_pointer_letter &&
-           pointer + 1 < LILY_N_KEYWORD) {
-        current_pointer = &lily_keywords[++pointer];
-        first_current_pointer_letter = current_pointer->buffer[0];
+    if (res == -1) {
+        return LILY_TOKEN_KIND_IDENTIFIER_NORMAL;
     }
 
-    while (first_id_letter == first_current_pointer_letter) {
-        bool unmatch = false;
-
-        if (current_pointer->len == id->len) {
-            for (Usize i = 1; i < id->len; ++i) {
-                if (current_pointer->buffer[i] != get__String(id, i)) {
-                    unmatch = true;
-                    break;
-                }
-            }
-        } else {
-            unmatch = true;
-        }
-
-        if (unmatch) {
-            if (pointer + 1 < LILY_N_KEYWORD) {
-                current_pointer = &lily_keywords[++pointer];
-                first_current_pointer_letter = current_pointer->buffer[0];
-
-                continue;
-            }
-
-            break;
-        } else {
-            locked = true;
-            break;
-        }
-    }
-
-    if (locked) {
-        return lily_keyword_ids[pointer];
-    }
-
-    return LILY_TOKEN_KIND_IDENTIFIER_NORMAL;
+    return (enum LilyTokenKind)res;
 }
 
 void
