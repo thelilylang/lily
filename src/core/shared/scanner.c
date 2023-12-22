@@ -46,7 +46,10 @@ jump__Scanner(Scanner *self, Usize n)
 }
 
 void
-start_token__Scanner(Scanner *self, Usize line, Usize column, Usize position)
+start_token__Scanner(Scanner *self,
+                     const Usize line,
+                     const Usize column,
+                     const Usize position)
 {
     self->location.start_line = line;
     self->location.start_column = column;
@@ -54,7 +57,10 @@ start_token__Scanner(Scanner *self, Usize line, Usize column, Usize position)
 }
 
 void
-end_token__Scanner(Scanner *self, Usize line, Usize column, Usize position)
+end_token__Scanner(Scanner *self,
+                   const Usize line,
+                   const Usize column,
+                   const Usize position)
 {
     ASSERT(self->location.start_line <= line);
     ASSERT(self->location.start_column <= column ||
@@ -66,7 +72,7 @@ end_token__Scanner(Scanner *self, Usize line, Usize column, Usize position)
 }
 
 char *
-peek_char__Scanner(const Scanner *self, Usize n)
+peek_char__Scanner(const Scanner *self, const Usize n)
 {
     if (self->source.cursor.position < self->source.file->len - 1) {
         return (char *)(Uptr)
@@ -74,4 +80,46 @@ peek_char__Scanner(const Scanner *self, Usize n)
     }
 
     return NULL;
+}
+
+Int32
+get_keyword__Scanner(const String *id,
+                     const SizedStr keywords[],
+                     const Int32 keyword_ids[],
+                     const Usize keywords_len)
+{
+    Usize pointer = 0;
+    bool locked = false;
+    char first_id_letter = get__String(id, 0);
+    const SizedStr *current_pointer = &keywords[pointer];
+    char first_current_pointer_letter = current_pointer->buffer[0];
+
+    // Try matching the first_id_letter with the first_current_pointer_letter.
+    while (first_id_letter > first_current_pointer_letter &&
+           pointer + 1 < keywords_len) {
+        current_pointer = &keywords[++pointer];
+        first_current_pointer_letter = current_pointer->buffer[0];
+    }
+
+    while (first_id_letter == first_current_pointer_letter) {
+        if (!strcmp(current_pointer->buffer, id->buffer)) {
+            locked = true;
+            break;
+        } else {
+            if (pointer + 1 < keywords_len) {
+                current_pointer = &keywords[++pointer];
+                first_current_pointer_letter = current_pointer->buffer[0];
+
+                continue;
+            }
+
+            break;
+        }
+    }
+
+    if (locked) {
+        return keyword_ids[pointer];
+    }
+
+    return -1;
 }

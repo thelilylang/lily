@@ -25,6 +25,8 @@
 #ifndef LILY_CORE_SHARED_SCANNER_H
 #define LILY_CORE_SHARED_SCANNER_H
 
+#include <base/sized_str.h>
+
 #include <core/shared/cursor.h>
 #include <core/shared/location.h>
 #include <core/shared/source.h>
@@ -89,7 +91,10 @@ jump__Scanner(Scanner *self, Usize n);
  * field.
  */
 void
-start_token__Scanner(Scanner *self, Usize line, Usize column, Usize position);
+start_token__Scanner(Scanner *self,
+                     const Usize line,
+                     const Usize column,
+                     const Usize position);
 
 /**
  *
@@ -97,7 +102,10 @@ start_token__Scanner(Scanner *self, Usize line, Usize column, Usize position);
  * field.
  */
 void
-end_token__Scanner(Scanner *self, Usize line, Usize column, Usize position);
+end_token__Scanner(Scanner *self,
+                   const Usize line,
+                   const Usize column,
+                   const Usize position);
 
 /**
  *
@@ -105,6 +113,19 @@ end_token__Scanner(Scanner *self, Usize line, Usize column, Usize position);
  * @return char*? (&)
  */
 char *
-peek_char__Scanner(const Scanner *self, Usize n);
+peek_char__Scanner(const Scanner *self, const Usize n);
+
+/**
+ *
+ * @brief Generic function for obtaining a keyword from any scanner.
+ * @param keywords Expect an array sorted in ascending order.
+ * @return If the return value is -1, this means that the function has not found
+ * a keyword, or that this is an identifier.
+ */
+Int32
+get_keyword__Scanner(const String *id,
+                     const SizedStr keywords[],
+                     const Int32 keyword_ids[],
+                     const Usize keywords_len);
 
 #endif // LILY_CORE_SHARED_SCANNER_H

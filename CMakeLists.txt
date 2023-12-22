@@ -305,6 +305,7 @@ set(BASE_SRC
     ${CMAKE_SOURCE_DIR}/src/base/result.c
     ${CMAKE_SOURCE_DIR}/src/base/singleton.c
     ${CMAKE_SOURCE_DIR}/src/base/sized_array.c
+    ${CMAKE_SOURCE_DIR}/src/base/sized_str.c
     ${CMAKE_SOURCE_DIR}/src/base/stack.c
     ${CMAKE_SOURCE_DIR}/src/base/str.c
     ${CMAKE_SOURCE_DIR}/src/base/string.c
