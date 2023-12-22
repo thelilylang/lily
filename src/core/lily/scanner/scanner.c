@@ -104,6 +104,10 @@ Output: no errors
 static enum LilyTokenKind
 get_keyword__LilyScanner(const String *id);
 
+/// @brief Get at keyword from id.
+static enum LilyTokenKind
+get_at_keyword__LilyScanner(const String *id);
+
 /// @brief Move next one character.
 /// @see `include/core/shared/scanner.h`
 static inline void
@@ -159,9 +163,32 @@ push_token__LilyScanner(LilyScanner *self, LilyToken *token);
 static inline bool
 is_digit__LilyScanner(const LilyScanner *self);
 
+/// @brief Check if current can be a start identifier.
+static inline bool
+is_start_ident__LilyScanner(const LilyScanner *self);
+
 /// @brief Check if current can be an identifier.
 static inline bool
 is_ident__LilyScanner(const LilyScanner *self);
+
+/// @brief Check if `c` can be a digit with peeked char (used with
+/// peek_char__LilyScanner function).
+/// @param c char*?
+static inline bool
+is_digit_with_peeked_char__LilyScanner(const LilyScanner *self, const char *c);
+
+/// @brief Check if `c` can be a start identifier with peeked char (used
+/// with peek_char__LilyScanner function).
+/// @param c char*?
+static inline bool
+is_start_ident_with_peeked_char__LilyScanner(const LilyScanner *self,
+                                             const char *c);
+
+/// @brief Check if `c` can be an identifier with peeked char (used with
+/// peek_char__LilyScanner function).
+/// @param c char*?
+static inline bool
+is_ident_with_peeked_char__LilyScanner(const LilyScanner *self, const char *c);
 
 /// @brief Check if current can be an hexadecimal.
 static inline bool
@@ -204,6 +231,11 @@ scan_comment_doc__LilyScanner(LilyScanner *self);
 /// @brief Scan identifier.
 static String *
 scan_identifier__LilyScanner(LilyScanner *self);
+
+/// @brief Scan identifier with peek_char function (without use
+/// next_char__LilyScanner).
+static String *
+scan_identifier_with_peek_char__LilyScanner(const LilyScanner *self);
 
 /// @brief  Scan char literal.
 static char *
@@ -333,6 +365,22 @@ static const enum LilyTokenKind lily_keyword_ids[LILY_N_KEYWORD] = {
     LILY_TOKEN_KIND_KEYWORD_UNSAFE,   LILY_TOKEN_KIND_KEYWORD_USE,
     LILY_TOKEN_KIND_KEYWORD_VAL,      LILY_TOKEN_KIND_KEYWORD_WHEN,
     LILY_TOKEN_KIND_KEYWORD_WHILE,    LILY_TOKEN_KIND_KEYWORD_XOR,
+};
+
+// NOTE: This table must be sorted in ascending order.
+static const SizedStr lily_at_keywords[LILY_N_AT_KEYWORD] = {
+    SIZED_STR_FROM_RAW("builtin"), SIZED_STR_FROM_RAW("cc"),
+    SIZED_STR_FROM_RAW("cpp"),     SIZED_STR_FROM_RAW("hide"),
+    SIZED_STR_FROM_RAW("hideout"), SIZED_STR_FROM_RAW("len"),
+    SIZED_STR_FROM_RAW("sys"),
+};
+
+// NOTE: This array must have the same order as the lily_at_keyword array.
+static const enum LilyTokenKind lily_at_keyword_ids[LILY_N_AT_KEYWORD] = {
+    LILY_TOKEN_KIND_KEYWORD_AT_BUILTIN, LILY_TOKEN_KIND_KEYWORD_AT_CC,
+    LILY_TOKEN_KIND_KEYWORD_AT_CPP,     LILY_TOKEN_KIND_KEYWORD_AT_HIDE,
+    LILY_TOKEN_KIND_KEYWORD_AT_HIDEOUT, LILY_TOKEN_KIND_KEYWORD_AT_LEN,
+    LILY_TOKEN_KIND_KEYWORD_AT_SYS,
 };
 
 #define IS_ZERO '0'
@@ -752,6 +800,21 @@ get_keyword__LilyScanner(const String *id)
     return (enum LilyTokenKind)res;
 }
 
+enum LilyTokenKind
+get_at_keyword__LilyScanner(const String *id)
+{
+    Int32 res = get_keyword__Scanner(id,
+                                     lily_at_keywords,
+                                     (const Int32 *)lily_at_keyword_ids,
+                                     LILY_N_AT_KEYWORD);
+
+    if (res == -1) {
+        return LILY_TOKEN_KIND_IDENTIFIER_NORMAL;
+    }
+
+    return (enum LilyTokenKind)res;
+}
+
 void
 next_char__LilyScanner(LilyScanner *self)
 {
@@ -879,15 +942,45 @@ push_token__LilyScanner(LilyScanner *self, LilyToken *token)
 bool
 is_digit__LilyScanner(const LilyScanner *self)
 {
-    return isdigit(self->base.source.cursor.current);
+    return self->base.source.cursor.current >= '0' &&
+           self->base.source.cursor.current <= '9';
+}
+
+bool
+is_start_ident__LilyScanner(const LilyScanner *self)
+{
+    return (self->base.source.cursor.current >= 'a' &&
+            self->base.source.cursor.current <= 'z') ||
+           (self->base.source.cursor.current >= 'A' &&
+            self->base.source.cursor.current <= 'Z') ||
+           self->base.source.cursor.current == '_';
 }
 
 bool
 is_ident__LilyScanner(const LilyScanner *self)
 {
-    return is_digit__LilyScanner(self) ||
-           isalpha(self->base.source.cursor.current) ||
-           self->base.source.cursor.current == '_';
+    return is_start_ident__LilyScanner(self) || is_digit__LilyScanner(self);
+}
+
+bool
+is_digit_with_peeked_char__LilyScanner(const LilyScanner *self, const char *c)
+{
+    return c >= (char *)'0' && c <= (char *)'9';
+}
+
+bool
+is_start_ident_with_peeked_char__LilyScanner(const LilyScanner *self,
+                                             const char *c)
+{
+    return (c >= (char *)'a' && c <= (char *)'z') ||
+           (c >= (char *)'A' && c <= (char *)'Z') || c == (char *)'_';
+}
+
+bool
+is_ident_with_peeked_char__LilyScanner(const LilyScanner *self, const char *c)
+{
+    return is_start_ident_with_peeked_char__LilyScanner(self, c) ||
+           is_digit_with_peeked_char__LilyScanner(self, c);
 }
 
 bool
@@ -1111,6 +1204,20 @@ scan_identifier__LilyScanner(LilyScanner *self)
     previous_char__LilyScanner(self);
 
     return id;
+}
+
+String *
+scan_identifier_with_peek_char__LilyScanner(const LilyScanner *self)
+{
+    String *res = NEW(String);
+    char *peeked = peek_char__LilyScanner(self, 1);
+
+    for (Usize i = 1; is_ident_with_peeked_char__LilyScanner(self, peeked);) {
+        push__String(res, (char)(Uptr)peeked);
+        peeked = peek_char__LilyScanner(self, ++i);
+    }
+
+    return res;
 }
 
 char *
@@ -1787,12 +1894,6 @@ get_token__LilyScanner(LilyScanner *self)
 
         // @
         case '@':
-            // NOTE: If a new keyword at with a new start character, please
-            // update this macro.
-#define START_AT_KEYWORD(c1)                                       \
-    c1 == (char *)'b' || c1 == (char *)'c' || c1 == (char *)'h' || \
-      c1 == (char *)'l' || c1 == (char *)'s'
-
             if (c1 == (char *)'\"') {
                 next_char__LilyScanner(self);
 
@@ -1808,75 +1909,42 @@ get_token__LilyScanner(LilyScanner *self)
                 }
 
                 return NULL;
-            } else if (START_AT_KEYWORD(c1)) {
-                // TODO: Refactor this block of code in functions.
-                String *at_keyword = NEW(String);
-                Usize i = 1;
-                char *peeked = c1;
+            } else if (is_start_ident_with_peeked_char__LilyScanner(self, c1)) {
+                String *id = scan_identifier_with_peek_char__LilyScanner(self);
+                enum LilyTokenKind kind = get_at_keyword__LilyScanner(id);
 
-                while (peeked >= (char *)'a' && peeked <= (char *)'z') {
-                    push__String(at_keyword, (char)(Uptr)peeked);
-                    peeked = peek_char__LilyScanner(self, ++i);
-                }
+                switch (kind) {
+                    case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
+                        end__Location(&self->base.location,
+                                      self->base.source.cursor.line,
+                                      self->base.source.cursor.column,
+                                      self->base.source.cursor.position);
+                        push_token__LilyScanner(
+                          self,
+                          NEW(LilyToken,
+                              LILY_TOKEN_KIND_AT,
+                              clone__Location(&self->base.location)));
+                        next_char__LilyScanner(self);
 
-                if (!strcmp(at_keyword->buffer, "builtin")) {
-                    FREE(String, at_keyword);
+                        start_token__LilyScanner(
+                          self,
+                          self->base.source.cursor.line,
+                          self->base.source.cursor.column,
+                          self->base.source.cursor.position);
+                        jump__LilyScanner(self, id->len - 1);
 
-                    jump__LilyScanner(self, 7);
+                        return NEW_VARIANT(
+                          LilyToken,
+                          identifier_normal,
+                          clone__Location(&self->base.location),
+                          id);
+                    default:
+                        jump__LilyScanner(self, id->len);
+                        FREE(String, id);
 
-                    return NEW(LilyToken,
-                               LILY_TOKEN_KIND_KEYWORD_AT_BUILTIN,
-                               clone__Location(&self->base.location));
-                } else if (!strcmp(at_keyword->buffer, "cc")) {
-                    FREE(String, at_keyword);
-
-                    jump__LilyScanner(self, 2);
-
-                    return NEW(LilyToken,
-                               LILY_TOKEN_KIND_KEYWORD_AT_CC,
-                               clone__Location(&self->base.location));
-                } else if (!strcmp(at_keyword->buffer, "cpp")) {
-                    FREE(String, at_keyword);
-
-                    jump__LilyScanner(self, 3);
-
-                    return NEW(LilyToken,
-                               LILY_TOKEN_KIND_KEYWORD_AT_CPP,
-                               clone__Location(&self->base.location));
-                } else if (!strcmp(at_keyword->buffer, "hide")) {
-                    FREE(String, at_keyword);
-
-                    jump__LilyScanner(self, 4);
-
-                    return NEW(LilyToken,
-                               LILY_TOKEN_KIND_KEYWORD_AT_HIDE,
-                               clone__Location(&self->base.location));
-                } else if (!strcmp(at_keyword->buffer, "hideout")) {
-                    FREE(String, at_keyword);
-
-                    jump__LilyScanner(self, 7);
-
-                    return NEW(LilyToken,
-                               LILY_TOKEN_KIND_KEYWORD_AT_HIDEOUT,
-                               clone__Location(&self->base.location));
-                } else if (!strcmp(at_keyword->buffer, "len")) {
-                    FREE(String, at_keyword);
-
-                    jump__LilyScanner(self, 3);
-
-                    return NEW(LilyToken,
-                               LILY_TOKEN_KIND_KEYWORD_AT_LEN,
-                               clone__Location(&self->base.location));
-                } else if (!strcmp(at_keyword->buffer, "sys")) {
-                    FREE(String, at_keyword);
-
-                    jump__LilyScanner(self, 3);
-
-                    return NEW(LilyToken,
-                               LILY_TOKEN_KIND_KEYWORD_AT_SYS,
-                               clone__Location(&self->base.location));
-                } else {
-                    FREE(String, at_keyword);
+                        return NEW(LilyToken,
+                                   kind,
+                                   clone__Location(&self->base.location));
                 }
             }
 
