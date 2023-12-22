@@ -329,7 +329,7 @@ static const SizedStr lily_keywords[LILY_N_KEYWORD] = {
     SIZED_STR_FROM_RAW("while"),    SIZED_STR_FROM_RAW("xor"),
 };
 
-// NOTE: This array must have the same order as the lily_keyword array.
+// NOTE: This array must have the same order as the lily_keywords array.
 static const enum LilyTokenKind lily_keyword_ids[LILY_N_KEYWORD] = {
     LILY_TOKEN_KIND_KEYWORD_OBJECT,   LILY_TOKEN_KIND_KEYWORD_SELF,
     LILY_TOKEN_KIND_KEYWORD_ALIAS,    LILY_TOKEN_KIND_KEYWORD_AND,
