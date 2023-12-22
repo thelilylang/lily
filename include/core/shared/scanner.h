@@ -25,6 +25,8 @@
 #ifndef LILY_CORE_SHARED_SCANNER_H
 #define LILY_CORE_SHARED_SCANNER_H
 
+#include <base/sized_str.h>
+
 #include <core/shared/cursor.h>
 #include <core/shared/location.h>
 #include <core/shared/source.h>
@@ -106,5 +108,17 @@ end_token__Scanner(Scanner *self, Usize line, Usize column, Usize position);
  */
 char *
 peek_char__Scanner(const Scanner *self, Usize n);
+
+/**
+ *
+ * @brief Generic function for obtaining a keyword from any scanner.
+ * @return If the return value is -1, this means that the function has not found
+ * a keyword, or that this is an identifier.
+ */
+Int32
+get_keyword__Scanner(String *id,
+                     const SizedStr keywords[],
+                     const Int32 keyword_ids[],
+                     Usize keywords_len);
 
 #endif // LILY_CORE_SHARED_SCANNER_H
