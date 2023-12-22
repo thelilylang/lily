@@ -89,7 +89,6 @@ get_keyword__Scanner(const String *id,
                      const Usize keywords_len)
 {
     Usize pointer = 0;
-    bool locked = false;
     char first_id_letter = get__String(id, 0);
     const SizedStr *current_pointer = &keywords[pointer];
     char first_current_pointer_letter = current_pointer->buffer[0];
@@ -103,8 +102,7 @@ get_keyword__Scanner(const String *id,
 
     while (first_id_letter == first_current_pointer_letter) {
         if (!strcmp(current_pointer->buffer, id->buffer)) {
-            locked = true;
-            break;
+            return keyword_ids[pointer];
         } else {
             if (pointer + 1 < keywords_len) {
                 current_pointer = &keywords[++pointer];
@@ -113,12 +111,8 @@ get_keyword__Scanner(const String *id,
                 continue;
             }
 
-            break;
+            return -1;
         }
-    }
-
-    if (locked) {
-        return keyword_ids[pointer];
     }
 
     return -1;
