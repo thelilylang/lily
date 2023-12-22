@@ -102,20 +102,10 @@ get_keyword__Scanner(const String *id,
     }
 
     while (first_id_letter == first_current_pointer_letter) {
-        bool unmatch = false;
-
-        if (current_pointer->len == id->len) {
-            for (Usize i = 1; i < id->len; ++i) {
-                if (current_pointer->buffer[i] != get__String(id, i)) {
-                    unmatch = true;
-                    break;
-                }
-            }
+        if (!strcmp(current_pointer->buffer, id->buffer)) {
+            locked = true;
+            break;
         } else {
-            unmatch = true;
-        }
-
-        if (unmatch) {
             if (pointer + 1 < keywords_len) {
                 current_pointer = &keywords[++pointer];
                 first_current_pointer_letter = current_pointer->buffer[0];
@@ -123,9 +113,6 @@ get_keyword__Scanner(const String *id,
                 continue;
             }
 
-            break;
-        } else {
-            locked = true;
             break;
         }
     }
