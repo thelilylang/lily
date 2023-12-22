@@ -133,9 +133,9 @@ next_char_by_token__CIScanner(CIScanner *self, const CIToken *token);
 static enum CITokenKind
 get_attribute__CIScanner(const char *id);
 
-/// @brief Get keyword from id.
+/// @brief Get single keyword from id.
 static enum CITokenKind
-get_keyword__CIScanner(const char *id);
+get_single_keyword__CIScanner(const String *id);
 
 /// @example long => long int, long int => long int, signed long => long int
 static enum CITokenKind
@@ -595,6 +595,134 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                 .until = CI_STANDARD_NONE },
 };
 
+// NOTE: This table must be sorted in ascending order.
+static const SizedStr ci_single_keywords[CI_N_SINGLE_KEYWORD] = {
+    SIZED_STR_FROM_RAW("_Alignas"),
+    SIZED_STR_FROM_RAW("_Alignof"),
+    SIZED_STR_FROM_RAW("_Atomic"),
+    SIZED_STR_FROM_RAW("_BitInt"),
+    SIZED_STR_FROM_RAW("_Bool"),
+    SIZED_STR_FROM_RAW("_Complex"),
+    SIZED_STR_FROM_RAW("_Decimal128"),
+    SIZED_STR_FROM_RAW("_Decimal32"),
+    SIZED_STR_FROM_RAW("_Decimal64"),
+    SIZED_STR_FROM_RAW("_Generic"),
+    SIZED_STR_FROM_RAW("_Imaginary"),
+    SIZED_STR_FROM_RAW("_Noreturn"),
+    SIZED_STR_FROM_RAW("_Static_assert"),
+    SIZED_STR_FROM_RAW("_Thread_local"),
+    SIZED_STR_FROM_RAW("alignas"),
+    SIZED_STR_FROM_RAW("alignof"),
+    SIZED_STR_FROM_RAW("asm"),
+    SIZED_STR_FROM_RAW("auto"),
+    SIZED_STR_FROM_RAW("bool"),
+    SIZED_STR_FROM_RAW("break"),
+    SIZED_STR_FROM_RAW("case"),
+    SIZED_STR_FROM_RAW("char"),
+    SIZED_STR_FROM_RAW("const"),
+    SIZED_STR_FROM_RAW("constexpr"),
+    SIZED_STR_FROM_RAW("continue"),
+    SIZED_STR_FROM_RAW("default"),
+    SIZED_STR_FROM_RAW("do"),
+    SIZED_STR_FROM_RAW("double"),
+    SIZED_STR_FROM_RAW("else"),
+    SIZED_STR_FROM_RAW("enum"),
+    SIZED_STR_FROM_RAW("extern"),
+    SIZED_STR_FROM_RAW("false"),
+    SIZED_STR_FROM_RAW("float"),
+    SIZED_STR_FROM_RAW("for"),
+    SIZED_STR_FROM_RAW("goto"),
+    SIZED_STR_FROM_RAW("if"),
+    SIZED_STR_FROM_RAW("inline"),
+    SIZED_STR_FROM_RAW("int"),
+    SIZED_STR_FROM_RAW("long"),
+    SIZED_STR_FROM_RAW("nullptr"),
+    SIZED_STR_FROM_RAW("register"),
+    SIZED_STR_FROM_RAW("restrict"),
+    SIZED_STR_FROM_RAW("return"),
+    SIZED_STR_FROM_RAW("short"),
+    SIZED_STR_FROM_RAW("signed"),
+    SIZED_STR_FROM_RAW("sizeof"),
+    SIZED_STR_FROM_RAW("static"),
+    SIZED_STR_FROM_RAW("static_assert"),
+    SIZED_STR_FROM_RAW("struct"),
+    SIZED_STR_FROM_RAW("switch"),
+    SIZED_STR_FROM_RAW("thread_local"),
+    SIZED_STR_FROM_RAW("true"),
+    SIZED_STR_FROM_RAW("typedef"),
+    SIZED_STR_FROM_RAW("typeof"),
+    SIZED_STR_FROM_RAW("typeof_unqual"),
+    SIZED_STR_FROM_RAW("union"),
+    SIZED_STR_FROM_RAW("unsigned"),
+    SIZED_STR_FROM_RAW("void"),
+    SIZED_STR_FROM_RAW("volatile"),
+    SIZED_STR_FROM_RAW("while"),
+};
+
+// NOTE: This array must have the same order as the ci_single_keywords array.
+static const enum CITokenKind ci_single_keyword_ids[CI_N_SINGLE_KEYWORD] = {
+    CI_TOKEN_KIND_KEYWORD__ALIGNAS,
+    CI_TOKEN_KIND_KEYWORD__ALIGNOF,
+    CI_TOKEN_KIND_KEYWORD__ATOMIC,
+    CI_TOKEN_KIND_KEYWORD__BITINT,
+    CI_TOKEN_KIND_KEYWORD__BOOL,
+    CI_TOKEN_KIND_KEYWORD__COMPLEX,
+    CI_TOKEN_KIND_KEYWORD__DECIMAL128,
+    CI_TOKEN_KIND_KEYWORD__DECIMAL32,
+    CI_TOKEN_KIND_KEYWORD__DECIMAL64,
+    CI_TOKEN_KIND_KEYWORD__GENERIC,
+    CI_TOKEN_KIND_KEYWORD__IMAGINARY,
+    CI_TOKEN_KIND_KEYWORD__NORETURN,
+    CI_TOKEN_KIND_KEYWORD__STATIC_ASSERT,
+    CI_TOKEN_KIND_KEYWORD__THREAD_LOCAL,
+    CI_TOKEN_KIND_KEYWORD_ALIGNAS,
+    CI_TOKEN_KIND_KEYWORD_ALIGNOF,
+    CI_TOKEN_KIND_KEYWORD_ASM,
+    CI_TOKEN_KIND_KEYWORD_AUTO,
+    CI_TOKEN_KIND_KEYWORD_BOOL,
+    CI_TOKEN_KIND_KEYWORD_BREAK,
+    CI_TOKEN_KIND_KEYWORD_CASE,
+    CI_TOKEN_KIND_KEYWORD_CHAR,
+    CI_TOKEN_KIND_KEYWORD_CONST,
+    CI_TOKEN_KIND_KEYWORD_CONSTEXPR,
+    CI_TOKEN_KIND_KEYWORD_CONTINUE,
+    CI_TOKEN_KIND_KEYWORD_DEFAULT,
+    CI_TOKEN_KIND_KEYWORD_DO,
+    CI_TOKEN_KIND_KEYWORD_DOUBLE,
+    CI_TOKEN_KIND_KEYWORD_ELSE,
+    CI_TOKEN_KIND_KEYWORD_ENUM,
+    CI_TOKEN_KIND_KEYWORD_EXTERN,
+    CI_TOKEN_KIND_KEYWORD_FALSE,
+    CI_TOKEN_KIND_KEYWORD_FLOAT,
+    CI_TOKEN_KIND_KEYWORD_FOR,
+    CI_TOKEN_KIND_KEYWORD_GOTO,
+    CI_TOKEN_KIND_KEYWORD_IF,
+    CI_TOKEN_KIND_KEYWORD_INLINE,
+    CI_TOKEN_KIND_KEYWORD_INT,
+    CI_TOKEN_KIND_KEYWORD_LONG,
+    CI_TOKEN_KIND_KEYWORD_NULLPTR,
+    CI_TOKEN_KIND_KEYWORD_REGISTER,
+    CI_TOKEN_KIND_KEYWORD_RESTRICT,
+    CI_TOKEN_KIND_KEYWORD_RETURN,
+    CI_TOKEN_KIND_KEYWORD_SHORT,
+    CI_TOKEN_KIND_KEYWORD_SIGNED,
+    CI_TOKEN_KIND_KEYWORD_SIZEOF,
+    CI_TOKEN_KIND_KEYWORD_STATIC,
+    CI_TOKEN_KIND_KEYWORD_STATIC_ASSERT,
+    CI_TOKEN_KIND_KEYWORD_STRUCT,
+    CI_TOKEN_KIND_KEYWORD_SWITCH,
+    CI_TOKEN_KIND_KEYWORD_THREAD_LOCAL,
+    CI_TOKEN_KIND_KEYWORD_TRUE,
+    CI_TOKEN_KIND_KEYWORD_TYPEDEF,
+    CI_TOKEN_KIND_KEYWORD_TYPEOF,
+    CI_TOKEN_KIND_KEYWORD_TYPEOF_UNQUAL,
+    CI_TOKEN_KIND_KEYWORD_UNION,
+    CI_TOKEN_KIND_KEYWORD_UNSIGNED,
+    CI_TOKEN_KIND_KEYWORD_VOID,
+    CI_TOKEN_KIND_KEYWORD_VOLATILE,
+    CI_TOKEN_KIND_KEYWORD_WHILE
+};
+
 #define IS_ZERO '0'
 
 #define IS_DIGIT_WITHOUT_ZERO \
@@ -866,128 +994,16 @@ get_attribute__CIScanner(const char *id)
 }
 
 enum CITokenKind
-get_keyword__CIScanner(const char *id)
+get_single_keyword__CIScanner(const String *id)
 {
-    if (!strcmp(id, "alignas"))
-        return CI_TOKEN_KIND_KEYWORD_ALIGNAS;
-    if (!strcmp(id, "alignof"))
-        return CI_TOKEN_KIND_KEYWORD_ALIGNOF;
-    if (!strcmp(id, "asm"))
-        return CI_TOKEN_KIND_KEYWORD_ASM;
-    if (!strcmp(id, "auto"))
-        return CI_TOKEN_KIND_KEYWORD_AUTO;
-    if (!strcmp(id, "bool"))
-        return CI_TOKEN_KIND_KEYWORD_BOOL;
-    if (!strcmp(id, "break"))
-        return CI_TOKEN_KIND_KEYWORD_BREAK;
-    if (!strcmp(id, "case"))
-        return CI_TOKEN_KIND_KEYWORD_CASE;
-    if (!strcmp(id, "const"))
-        return CI_TOKEN_KIND_KEYWORD_CONST;
-    if (!strcmp(id, "constexpr"))
-        return CI_TOKEN_KIND_KEYWORD_CONSTEXPR;
-    if (!strcmp(id, "continue"))
-        return CI_TOKEN_KIND_KEYWORD_CONTINUE;
-    if (!strcmp(id, "default"))
-        return CI_TOKEN_KIND_KEYWORD_DEFAULT;
-    if (!strcmp(id, "do"))
-        return CI_TOKEN_KIND_KEYWORD_DO;
-    if (!strcmp(id, "double"))
-        return CI_TOKEN_KIND_KEYWORD_DOUBLE;
-    if (!strcmp(id, "else"))
-        return CI_TOKEN_KIND_KEYWORD_ELSE;
-    if (!strcmp(id, "enum"))
-        return CI_TOKEN_KIND_KEYWORD_ENUM;
-    if (!strcmp(id, "extern"))
-        return CI_TOKEN_KIND_KEYWORD_EXTERN;
-    if (!strcmp(id, "false"))
-        return CI_TOKEN_KIND_KEYWORD_FALSE;
-    if (!strcmp(id, "float"))
-        return CI_TOKEN_KIND_KEYWORD_FLOAT;
-    if (!strcmp(id, "for"))
-        return CI_TOKEN_KIND_KEYWORD_FOR;
-    if (!strcmp(id, "goto"))
-        return CI_TOKEN_KIND_KEYWORD_GOTO;
-    if (!strcmp(id, "if"))
-        return CI_TOKEN_KIND_KEYWORD_IF;
-    if (!strcmp(id, "inline"))
-        return CI_TOKEN_KIND_KEYWORD_INLINE;
-    if (!strcmp(id, "int"))
-        return CI_TOKEN_KIND_KEYWORD_INT;
-    if (!strcmp(id, "long"))
-        return CI_TOKEN_KIND_KEYWORD_LONG;
-    if (!strcmp(id, "nullptr"))
-        return CI_TOKEN_KIND_KEYWORD_NULLPTR;
-    if (!strcmp(id, "register"))
-        return CI_TOKEN_KIND_KEYWORD_REGISTER;
-    if (!strcmp(id, "restrict"))
-        return CI_TOKEN_KIND_KEYWORD_RESTRICT;
-    if (!strcmp(id, "return"))
-        return CI_TOKEN_KIND_KEYWORD_RETURN;
-    if (!strcmp(id, "short"))
-        return CI_TOKEN_KIND_KEYWORD_SHORT;
-    if (!strcmp(id, "signed"))
-        return CI_TOKEN_KIND_KEYWORD_SIGNED;
-    if (!strcmp(id, "sizeof"))
-        return CI_TOKEN_KIND_KEYWORD_SIZEOF;
-    if (!strcmp(id, "static"))
-        return CI_TOKEN_KIND_KEYWORD_STATIC;
-    if (!strcmp(id, "static_assert"))
-        return CI_TOKEN_KIND_KEYWORD_STATIC_ASSERT;
-    if (!strcmp(id, "struct"))
-        return CI_TOKEN_KIND_KEYWORD_STRUCT;
-    if (!strcmp(id, "switch"))
-        return CI_TOKEN_KIND_KEYWORD_SWITCH;
-    if (!strcmp(id, "thread_local"))
-        return CI_TOKEN_KIND_KEYWORD_THREAD_LOCAL;
-    if (!strcmp(id, "true"))
-        return CI_TOKEN_KIND_KEYWORD_TRUE;
-    if (!strcmp(id, "typedef"))
-        return CI_TOKEN_KIND_KEYWORD_TYPEDEF;
-    if (!strcmp(id, "typeof"))
-        return CI_TOKEN_KIND_KEYWORD_TYPEOF;
-    if (!strcmp(id, "typeof_unqual"))
-        return CI_TOKEN_KIND_KEYWORD_TYPEOF_UNQUAL;
-    if (!strcmp(id, "union"))
-        return CI_TOKEN_KIND_KEYWORD_UNION;
-    if (!strcmp(id, "unsigned"))
-        return CI_TOKEN_KIND_KEYWORD_UNSIGNED;
-    if (!strcmp(id, "void"))
-        return CI_TOKEN_KIND_KEYWORD_VOID;
-    if (!strcmp(id, "volatile"))
-        return CI_TOKEN_KIND_KEYWORD_VOLATILE;
-    if (!strcmp(id, "while"))
-        return CI_TOKEN_KIND_KEYWORD_WHILE;
-    if (!strcmp(id, "_Alignas"))
-        return CI_TOKEN_KIND_KEYWORD__ALIGNAS;
-    if (!strcmp(id, "_Alignof"))
-        return CI_TOKEN_KIND_KEYWORD__ALIGNOF;
-    if (!strcmp(id, "_Atomic"))
-        return CI_TOKEN_KIND_KEYWORD__ATOMIC;
-    if (!strcmp(id, "_BitInt"))
-        return CI_TOKEN_KIND_KEYWORD__BITINT;
-    if (!strcmp(id, "_Bool"))
-        return CI_TOKEN_KIND_KEYWORD__BOOL;
-    if (!strcmp(id, "_Complex"))
-        return CI_TOKEN_KIND_KEYWORD__COMPLEX;
-    if (!strcmp(id, "_Decimal128"))
-        return CI_TOKEN_KIND_KEYWORD__DECIMAL128;
-    if (!strcmp(id, "_Decimal32"))
-        return CI_TOKEN_KIND_KEYWORD__DECIMAL32;
-    if (!strcmp(id, "_Decimal64"))
-        return CI_TOKEN_KIND_KEYWORD__DECIMAL64;
-    if (!strcmp(id, "_Generic"))
-        return CI_TOKEN_KIND_KEYWORD__GENERIC;
-    if (!strcmp(id, "_Imaginary"))
-        return CI_TOKEN_KIND_KEYWORD__IMAGINARY;
-    if (!strcmp(id, "_Noreturn"))
-        return CI_TOKEN_KIND_KEYWORD__NORETURN;
-    if (!strcmp(id, "_Static_assert"))
-        return CI_TOKEN_KIND_KEYWORD__STATIC_ASSERT;
-    if (!strcmp(id, "_Thread_local"))
-        return CI_TOKEN_KIND_KEYWORD__THREAD_LOCAL;
+    Int32 res = get_keyword__Scanner(
+      id, ci_single_keywords, (const Int32 *)ci_single_keyword_ids, CI_N_SINGLE_KEYWORD);
 
-    return CI_TOKEN_KIND_IDENTIFIER;
+    if (res == -1) {
+        return CI_TOKEN_KIND_IDENTIFIER;
+    }
+
+    return (enum CITokenKind)res;
 }
 
 enum CITokenKind
@@ -1103,7 +1119,7 @@ get_keyword_part1__CIScanner(CIScanner *self,
     ASSERT(is_start_ident__CIScanner(self));
 
     String *id = scan_identifier__CIScanner(self);
-    enum CITokenKind kind = get_keyword__CIScanner(id->buffer);
+    enum CITokenKind kind = get_single_keyword__CIScanner(id);
 
     end_token__CIScanner(self,
                          self->base.source.cursor.line,
@@ -1135,7 +1151,7 @@ get_keyword_part2__CIScanner(CIScanner *self, struct CITokenKindWithID *part1)
                            self->base.source.cursor.position);
 
     String *id = scan_identifier__CIScanner(self);
-    enum CITokenKind unmerged_kind = get_keyword__CIScanner(id->buffer);
+    enum CITokenKind unmerged_kind = get_single_keyword__CIScanner(id);
 
     end_token__CIScanner(self,
                          self->base.source.cursor.line,
@@ -1270,7 +1286,7 @@ get_keyword_part3__CIScanner(CIScanner *self, struct CITokenKindWithID *part2)
                            self->base.source.cursor.position);
 
     String *id = scan_identifier__CIScanner(self);
-    enum CITokenKind unmerged_kind = get_keyword__CIScanner(id->buffer);
+    enum CITokenKind unmerged_kind = get_single_keyword__CIScanner(id);
 
     end_token__CIScanner(self,
                          self->base.source.cursor.line,
@@ -1402,7 +1418,7 @@ get_keyword_part4__CIScanner(CIScanner *self, struct CITokenKindWithID *part3)
                            self->base.source.cursor.position);
 
     String *id = scan_identifier__CIScanner(self);
-    enum CITokenKind unmerged_kind = get_keyword__CIScanner(id->buffer);
+    enum CITokenKind unmerged_kind = get_single_keyword__CIScanner(id);
 
     end_token__CIScanner(self,
                          self->base.source.cursor.line,
