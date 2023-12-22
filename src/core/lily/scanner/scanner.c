@@ -25,7 +25,6 @@
 #include <base/atof.h>
 #include <base/atoi.h>
 #include <base/print.h>
-#include <base/sized_str.h>
 
 #include <core/lily/diagnostic/error.h>
 #include <core/lily/lily.h>
@@ -103,7 +102,7 @@ Output: no errors
 
 /// @brief Get keyword from id.
 static enum LilyTokenKind
-get_keyword__LilyScanner(String *id);
+get_keyword__LilyScanner(const String *id);
 
 /// @brief Move next one character.
 /// @see `include/core/shared/scanner.h`
@@ -123,34 +122,34 @@ skip_space__LilyScanner(LilyScanner *self);
 /// @brief Next char n times.
 /// @see `include/core/shared/scanner.h`
 static inline void
-jump__LilyScanner(LilyScanner *self, Usize n);
+jump__LilyScanner(LilyScanner *self, const Usize n);
 
 /// @brief Assign to line and column to start_line and start_column Location's
 /// field.
 /// @see `include/core/shared/scanner.h`
 static inline void
 start_token__LilyScanner(LilyScanner *self,
-                         Usize line,
-                         Usize column,
-                         Usize position);
+                         const Usize line,
+                         const Usize column,
+                         const Usize position);
 
 /// @brief Assign to line and column to end_line and end_column Location's
 /// field.
 /// @see `include/core/shared/scanner.h`
 static inline void
 end_token__LilyScanner(LilyScanner *self,
-                       Usize line,
-                       Usize column,
-                       Usize position);
+                       const Usize line,
+                       const Usize column,
+                       const Usize position);
 
 /// @brief Get character at position + n.
 /// @see `include/core/shared/scanner.h`
 static inline char *
-peek_char__LilyScanner(const LilyScanner *self, Usize n);
+peek_char__LilyScanner(const LilyScanner *self, const Usize n);
 
 /// @brief Next char according the token.
 static void
-next_char_by_token__LilyScanner(LilyScanner *self, LilyToken *token);
+next_char_by_token__LilyScanner(LilyScanner *self, const LilyToken *token);
 
 /// @brief Push token to tokens.
 static inline void
@@ -741,7 +740,7 @@ static const enum LilyTokenKind lily_keyword_ids[LILY_N_KEYWORD] = {
     }
 
 enum LilyTokenKind
-get_keyword__LilyScanner(String *id)
+get_keyword__LilyScanner(const String *id)
 {
     Int32 res = get_keyword__Scanner(
       id, lily_keywords, (const Int32 *)lily_keyword_ids, LILY_N_KEYWORD);
@@ -772,37 +771,37 @@ skip_space__LilyScanner(LilyScanner *self)
 }
 
 void
-jump__LilyScanner(LilyScanner *self, Usize n)
+jump__LilyScanner(LilyScanner *self, const Usize n)
 {
     return jump__Scanner(&self->base, n);
 }
 
 void
 start_token__LilyScanner(LilyScanner *self,
-                         Usize line,
-                         Usize column,
-                         Usize position)
+                         const Usize line,
+                         const Usize column,
+                         const Usize position)
 {
     return start_token__Scanner(&self->base, line, column, position);
 }
 
 void
 end_token__LilyScanner(LilyScanner *self,
-                       Usize line,
-                       Usize column,
-                       Usize position)
+                       const Usize line,
+                       const Usize column,
+                       const Usize position)
 {
     return end_token__Scanner(&self->base, line, column, position);
 }
 
 char *
-peek_char__LilyScanner(const LilyScanner *self, Usize n)
+peek_char__LilyScanner(const LilyScanner *self, const Usize n)
 {
     return peek_char__Scanner(&self->base, n);
 }
 
 void
-next_char_by_token__LilyScanner(LilyScanner *self, LilyToken *token)
+next_char_by_token__LilyScanner(LilyScanner *self, const LilyToken *token)
 {
     switch (token->kind) {
         case LILY_TOKEN_KIND_COMMENT_BLOCK:

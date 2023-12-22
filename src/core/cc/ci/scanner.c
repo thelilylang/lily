@@ -62,27 +62,30 @@ skip_one_blank_space__CIScanner(CIScanner *self);
 /// @brief Next char n times.
 /// @see `include/core/shared/scanner.h`
 static inline void
-jump__CIScanner(CIScanner *self, Usize n);
+jump__CIScanner(CIScanner *self, const Usize n);
 
 /// @brief Assign to line and column to start_line and start_column Location's
 /// field.
 /// @see `include/core/shared/scanner.h`
 static inline void
 start_token__CIScanner(CIScanner *self,
-                       Usize line,
-                       Usize column,
-                       Usize position);
+                       const Usize line,
+                       const Usize column,
+                       const Usize position);
 
 /// @brief Assign to line and column to end_line and end_column Location's
 /// field.
 /// @see `include/core/shared/scanner.h`
 static inline void
-end_token__CIScanner(CIScanner *self, Usize line, Usize column, Usize position);
+end_token__CIScanner(CIScanner *self,
+                     const Usize line,
+                     const Usize column,
+                     const Usize position);
 
 /// @brief Get character at position + n.
 /// @see `include/core/shared/scanner.h`
 static inline char *
-peek_char__CIScanner(const CIScanner *self, Usize n);
+peek_char__CIScanner(const CIScanner *self, const Usize n);
 
 /// @brief Scan and append characters to res while is_valid return true.
 static void
@@ -695,28 +698,31 @@ skip_one_blank_space__CIScanner(CIScanner *self)
 }
 
 void
-jump__CIScanner(CIScanner *self, Usize n)
+jump__CIScanner(CIScanner *self, const Usize n)
 {
     return jump__Scanner(&self->base, n);
 }
 
 void
 start_token__CIScanner(CIScanner *self,
-                       Usize line,
-                       Usize column,
-                       Usize position)
+                       const Usize line,
+                       const Usize column,
+                       const Usize position)
 {
     return start_token__Scanner(&self->base, line, column, position);
 }
 
 void
-end_token__CIScanner(CIScanner *self, Usize line, Usize column, Usize position)
+end_token__CIScanner(CIScanner *self,
+                     const Usize line,
+                     const Usize column,
+                     const Usize position)
 {
     return end_token__Scanner(&self->base, line, column, position);
 }
 
 char *
-peek_char__CIScanner(const CIScanner *self, Usize n)
+peek_char__CIScanner(const CIScanner *self, const Usize n)
 {
     return peek_char__Scanner(&self->base, n);
 }
