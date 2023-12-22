@@ -91,7 +91,10 @@ jump__Scanner(Scanner *self, Usize n);
  * field.
  */
 void
-start_token__Scanner(Scanner *self, Usize line, Usize column, Usize position);
+start_token__Scanner(Scanner *self,
+                     const Usize line,
+                     const Usize column,
+                     const Usize position);
 
 /**
  *
@@ -99,7 +102,10 @@ start_token__Scanner(Scanner *self, Usize line, Usize column, Usize position);
  * field.
  */
 void
-end_token__Scanner(Scanner *self, Usize line, Usize column, Usize position);
+end_token__Scanner(Scanner *self,
+                   const Usize line,
+                   const Usize column,
+                   const Usize position);
 
 /**
  *
@@ -107,7 +113,7 @@ end_token__Scanner(Scanner *self, Usize line, Usize column, Usize position);
  * @return char*? (&)
  */
 char *
-peek_char__Scanner(const Scanner *self, Usize n);
+peek_char__Scanner(const Scanner *self, const Usize n);
 
 /**
  *
@@ -116,9 +122,9 @@ peek_char__Scanner(const Scanner *self, Usize n);
  * a keyword, or that this is an identifier.
  */
 Int32
-get_keyword__Scanner(String *id,
+get_keyword__Scanner(const String *id,
                      const SizedStr keywords[],
                      const Int32 keyword_ids[],
-                     Usize keywords_len);
+                     const Usize keywords_len);
 
 #endif // LILY_CORE_SHARED_SCANNER_H
