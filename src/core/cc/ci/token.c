@@ -822,6 +822,8 @@ to_string__CIToken(CIToken *self)
             return from__String("#elifdef <defined_macro>");
         case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:
             return from__String("#elifndef <undefined_macro>");
+        case CI_TOKEN_KIND_PREPROCESSOR_ELSE:
+            return from__String("#else");
         case CI_TOKEN_KIND_PREPROCESSOR_EMBED:
             return format__String(
               "{Sr}",
@@ -1169,8 +1171,12 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF";
         case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:
             return "CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF";
+        case CI_TOKEN_KIND_PREPROCESSOR_ELSE:
+            return "CI_TOKEN_KIND_PREPROCESSOR_ELSE";
         case CI_TOKEN_KIND_PREPROCESSOR_EMBED:
             return "CI_TOKEN_KIND_PREPROCESSOR_EMBED";
+        case CI_TOKEN_KIND_PREPROCESSOR_ENDIF:
+            return "CI_TOKEN_KIND_PREPROCESSOR_ENDIF";
         case CI_TOKEN_KIND_PREPROCESSOR_ERROR:
             return "CI_TOKEN_KIND_PREPROCESSOR_ERROR";
         case CI_TOKEN_KIND_PREPROCESSOR_IF:

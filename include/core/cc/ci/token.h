@@ -39,6 +39,8 @@
 
 #define CI_N_ATTRIBUTE 8
 
+#define CI_N_PREPROCESSOR 16
+
 // NOTE#1: Used only in the scanner
 // NOTE#2: It's only used in the scanner, then simplified later in the scanner.
 enum CITokenKind
@@ -188,7 +190,9 @@ enum CITokenKind
     CI_TOKEN_KIND_PREPROCESSOR_ELIF,     // NOTE: #2
     CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF,  // NOTE: #2
     CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF, // NOTE: #2
+    CI_TOKEN_KIND_PREPROCESSOR_ELSE,     // NOTE: #2
     CI_TOKEN_KIND_PREPROCESSOR_EMBED,
+    CI_TOKEN_KIND_PREPROCESSOR_ENDIF,  // NOTE: #2
     CI_TOKEN_KIND_PREPROCESSOR_ERROR,  // NOTE: #2
     CI_TOKEN_KIND_PREPROCESSOR_IF,     // NOTE: #2
     CI_TOKEN_KIND_PREPROCESSOR_IFDEF,  // NOTE: #2
