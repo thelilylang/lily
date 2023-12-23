@@ -53,12 +53,12 @@ typedef struct Location
 inline CONSTRUCTOR(Location,
                    Location,
                    const char *filename,
-                   Usize start_line,
-                   Usize end_line,
-                   Usize start_column,
-                   Usize end_column,
-                   Usize start_position,
-                   Usize end_position)
+                   const Usize start_line,
+                   const Usize end_line,
+                   const Usize start_column,
+                   const Usize end_column,
+                   const Usize start_position,
+                   const Usize end_position)
 {
     return (Location){ .filename = filename,
                        .start_line = start_line,
