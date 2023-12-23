@@ -91,14 +91,20 @@ default__Location(const char *filename)
  * @brief Set start_line and start_column.
  */
 void
-start__Location(Location *self, Usize line, Usize column, Usize position);
+start__Location(Location *self,
+                const Usize line,
+                const Usize column,
+                const Usize position);
 
 /**
  *
  * @brief Set end_line and end_column.
  */
 void
-end__Location(Location *self, Usize line, Usize column, Usize position);
+end__Location(Location *self,
+              const Usize line,
+              const Usize column,
+              const Usize position);
 
 /**
  *

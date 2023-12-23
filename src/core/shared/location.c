@@ -30,7 +30,10 @@
 #endif
 
 void
-start__Location(Location *self, Usize line, Usize column, Usize position)
+start__Location(Location *self,
+                const Usize line,
+                const Usize column,
+                const Usize position)
 {
     self->start_line = line;
     self->start_column = column;
@@ -38,7 +41,10 @@ start__Location(Location *self, Usize line, Usize column, Usize position)
 }
 
 void
-end__Location(Location *self, Usize line, Usize column, Usize position)
+end__Location(Location *self,
+              const Usize line,
+              const Usize column,
+              const Usize position)
 {
     self->end_line = line;
     self->end_column = column;
