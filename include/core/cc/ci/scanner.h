@@ -67,4 +67,23 @@ run__CIScanner(CIScanner *self, bool dump_scanner);
  */
 DESTRUCTOR(CIScanner, const CIScanner *self);
 
+typedef struct CIScannerContext
+{
+    bool in_macro;
+    bool in_prepro_cond;
+} CIScannerContext;
+
+/**
+ *
+ * @brief Construct CIScannerContext type.
+ */
+inline CONSTRUCTOR(CIScannerContext,
+                   CIScannerContext,
+                   bool in_macro,
+                   bool in_prepro_cond)
+{
+    return (CIScannerContext){ .in_macro = in_macro,
+                               .in_prepro_cond = in_prepro_cond };
+}
+
 #endif // LILY_CORE_CC_CI_SCANNER_H

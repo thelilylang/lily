@@ -97,13 +97,32 @@ scan_and_append_chars__CIScanner(CIScanner *self,
 static inline bool
 is_digit__CIScanner(const CIScanner *self);
 
+/// @brief Check if current can be a start of identifier.
+static inline bool
+is_start_ident__CIScanner(const CIScanner *self);
+
 /// @brief Check if current can be an identifier.
 static inline bool
 is_ident__CIScanner(const CIScanner *self);
 
-/// @brief Check if current can be a start of identifier.
+/// @brief Check if `c` can be a digit with peeked char (used with
+/// peek_char__CIScanner function).
+/// @param c char*?
 static inline bool
-is_start_ident__CIScanner(const CIScanner *self);
+is_digit_with_peeked_char__CIScanner(const CIScanner *self, const char *c);
+
+/// @brief Check if `c` can be a start identifier with peeked char (used
+/// with peek_char__CIScanner function).
+/// @param c char*?
+static inline bool
+is_start_ident_with_peeked_char__CIScanner(const CIScanner *self,
+                                           const char *c);
+
+/// @brief Check if `c` can be an identifier with peeked char (used with
+/// peek_char__CIScanner function).
+/// @param c char*?
+static inline bool
+is_ident_with_peeked_char__CIScanner(const CIScanner *self, const char *c);
 
 /// @brief Check if current can be an hexadecimal.
 static inline bool
@@ -132,6 +151,10 @@ next_char_by_token__CIScanner(CIScanner *self, const CIToken *token);
 /// @brief Get attribute from id.
 static enum CITokenKind
 get_attribute__CIScanner(const String *id);
+
+/// @brief Get preprocessor from id.
+static enum CITokenKind
+get_preprocessor__CIScanner(const String *id);
 
 /// @brief Get single keyword from id.
 static enum CITokenKind
@@ -207,6 +230,11 @@ get_character__CIScanner(CIScanner *self, char previous);
 static String *
 scan_identifier__CIScanner(CIScanner *self);
 
+/// @brief Scan identifier with peek_char function (without use
+/// next_char__CIScanner).
+static String *
+scan_identifier_with_peek_char__CIScanner(const CIScanner *self);
+
 /// @brief Scan character constant literal.
 static char *
 scan_character__CIScanner(CIScanner *self);
@@ -228,6 +256,50 @@ scan_octal_or_binary__CIScanner(CIScanner *self);
 static CIToken *
 scan_num__CIScanner(CIScanner *self);
 
+/// @brief Scan define preprocessor.
+static CIToken *
+scan_define_preprocessor__CIScanner(CIScanner *self);
+
+/// @brief Scan embed preprocessor.
+static CIToken *
+scan_embed_preprocessor__CIScanner(CIScanner *self);
+
+/// @brief Scan error preprocessor.
+static CIToken *
+scan_error_preprocessor__CIScanner(CIScanner *self);
+
+/// @brief Scan if preprocessor.
+static CIToken *
+scan_if_preprocessor__CIScanner(CIScanner *self);
+
+/// @brief Scan ifdef preprocessor.
+static CIToken *
+scan_ifdef_preprocessor__CIScanner(CIScanner *self);
+
+/// @brief Scan ifndef preprocessor.
+static CIToken *
+scan_ifndef_preprocessor__CIScanner(CIScanner *self);
+
+/// @brief Scan include preprocessor.
+static CIToken *
+scan_include_preprocessor__CIScanner(CIScanner *self);
+
+/// @brief Scan line preprocessor.
+static CIToken *
+scan_line_preprocessor__CIScanner(CIScanner *self);
+
+/// @brief Scan pragma preprocessor.
+static CIToken *
+scan_pragma_preprocessor__CIScanner(CIScanner *self);
+
+/// @brief Scan undef preprocessor.
+static CIToken *
+scan_undef_preprocessor__CIScanner(CIScanner *self);
+
+/// @brief Scan warning preprocessor.
+static CIToken *
+scan_warning_preprocessor__CIScanner(CIScanner *self);
+
 /// @brief Scan all numbers (hexadecimal, octal, binary, decimal and float).
 static CIToken *
 get_num__CIScanner(CIScanner *self);
@@ -246,8 +318,12 @@ static void
 check_standard(CIScanner *self, CIToken *token);
 
 /// @brief Get token from characters.
+/// @param in_macro If `in_macro` is true, the scanner checks whether the
+/// paren, brace or bracket are closed.
+/// @param in_prepro_cond If `in_prepro_cond` is true, the scanner allow to use
+/// #elif, #elifdef, #elifndef, #else.
 static CIToken *
-get_token__CIScanner(CIScanner *self, bool check_match);
+get_token__CIScanner(CIScanner *self, const CIScannerContext ctx);
 
 static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
     [CI_TOKEN_KIND_AMPERSAND] = { .since = CI_STANDARD_NONE,
@@ -545,7 +621,11 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                              .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF] = { .since = CI_STANDARD_23,
                                               .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_PREPROCESSOR_ELSE] = { .since = CI_STANDARD_NONE,
+                                          .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_PREPROCESSOR_EMBED] = { .since = CI_STANDARD_23,
+                                           .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_PREPROCESSOR_ENDIF] = { .since = CI_STANDARD_NONE,
                                            .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_PREPROCESSOR_ERROR] = { .since = CI_STANDARD_NONE,
                                            .until = CI_STANDARD_NONE },
@@ -739,6 +819,30 @@ static const enum CITokenKind ci_attribute_ids[CI_N_ATTRIBUTE] = {
     CI_TOKEN_KIND_ATTRIBUTE_REPRODUCIBLE, CI_TOKEN_KIND_ATTRIBUTE_UNSEQUENCED,
 };
 
+// NOTE: This table must be sorted in ascending order.
+static const SizedStr ci_preprocessors[CI_N_PREPROCESSOR] = {
+    SIZED_STR_FROM_RAW("define"),  SIZED_STR_FROM_RAW("elif"),
+    SIZED_STR_FROM_RAW("elifdef"), SIZED_STR_FROM_RAW("elifndef"),
+    SIZED_STR_FROM_RAW("else"),    SIZED_STR_FROM_RAW("embed"),
+    SIZED_STR_FROM_RAW("endif"),   SIZED_STR_FROM_RAW("error"),
+    SIZED_STR_FROM_RAW("if"),      SIZED_STR_FROM_RAW("ifdef"),
+    SIZED_STR_FROM_RAW("ifndef"),  SIZED_STR_FROM_RAW("include"),
+    SIZED_STR_FROM_RAW("line"),    SIZED_STR_FROM_RAW("pragma"),
+    SIZED_STR_FROM_RAW("undef"),   SIZED_STR_FROM_RAW("warning"),
+};
+
+// NOTE: This array must have the same order as the ci_preprocessors array.
+static const enum CITokenKind ci_preprocessor_ids[CI_N_PREPROCESSOR] = {
+    CI_TOKEN_KIND_PREPROCESSOR_DEFINE,  CI_TOKEN_KIND_PREPROCESSOR_ELIF,
+    CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF, CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF,
+    CI_TOKEN_KIND_PREPROCESSOR_ELSE,    CI_TOKEN_KIND_PREPROCESSOR_EMBED,
+    CI_TOKEN_KIND_PREPROCESSOR_ENDIF,   CI_TOKEN_KIND_PREPROCESSOR_ERROR,
+    CI_TOKEN_KIND_PREPROCESSOR_IF,      CI_TOKEN_KIND_PREPROCESSOR_IFDEF,
+    CI_TOKEN_KIND_PREPROCESSOR_IFNDEF,  CI_TOKEN_KIND_PREPROCESSOR_INCLUDE,
+    CI_TOKEN_KIND_PREPROCESSOR_LINE,    CI_TOKEN_KIND_PREPROCESSOR_PRAGMA,
+    CI_TOKEN_KIND_PREPROCESSOR_UNDEF,   CI_TOKEN_KIND_PREPROCESSOR_WARNING,
+};
+
 #define IS_ZERO '0'
 
 #define IS_DIGIT_WITHOUT_ZERO \
@@ -892,10 +996,9 @@ is_digit__CIScanner(const CIScanner *self)
 }
 
 bool
-is_ident__CIScanner(const CIScanner *self)
+is_start_ident__CIScanner(const CIScanner *self)
 {
-    return is_digit__CIScanner(self) ||
-           (self->base.source.cursor.current >= 'a' &&
+    return (self->base.source.cursor.current >= 'a' &&
             self->base.source.cursor.current <= 'z') ||
            (self->base.source.cursor.current >= 'A' &&
             self->base.source.cursor.current <= 'Z') ||
@@ -904,13 +1007,30 @@ is_ident__CIScanner(const CIScanner *self)
 }
 
 bool
-is_start_ident__CIScanner(const CIScanner *self)
+is_ident__CIScanner(const CIScanner *self)
 {
-    return (self->base.source.cursor.current >= 'a' &&
-            self->base.source.cursor.current <= 'z') ||
-           (self->base.source.cursor.current >= 'A' &&
-            self->base.source.cursor.current <= 'Z') ||
-           self->base.source.cursor.current == '_';
+    return is_digit__CIScanner(self) || is_start_ident__CIScanner(self);
+}
+
+bool
+is_digit_with_peeked_char__CIScanner(const CIScanner *self, const char *c)
+{
+    return c >= (char *)'0' && c <= (char *)'9';
+}
+
+bool
+is_start_ident_with_peeked_char__CIScanner(const CIScanner *self, const char *c)
+{
+    return (c >= (char *)'a' && c <= (char *)'z') ||
+           (c >= (char *)'A' && c <= (char *)'Z') || c == (char *)'_' ||
+           c == (char *)'$';
+}
+
+bool
+is_ident_with_peeked_char__CIScanner(const CIScanner *self, const char *c)
+{
+    return is_digit_with_peeked_char__CIScanner(self, c) ||
+           is_start_ident_with_peeked_char__CIScanner(self, c);
 }
 
 bool
@@ -991,6 +1111,21 @@ get_attribute__CIScanner(const String *id)
 {
     Int32 res = get_keyword__Scanner(
       id, ci_attributes, (const Int32 *)ci_attribute_ids, CI_N_ATTRIBUTE);
+
+    if (res == -1) {
+        return CI_TOKEN_KIND_IDENTIFIER;
+    }
+
+    return (enum CITokenKind)res;
+}
+
+enum CITokenKind
+get_preprocessor__CIScanner(const String *id)
+{
+    Int32 res = get_keyword__Scanner(id,
+                                     ci_preprocessors,
+                                     (const Int32 *)ci_preprocessor_ids,
+                                     CI_N_PREPROCESSOR);
 
     if (res == -1) {
         return CI_TOKEN_KIND_IDENTIFIER;
@@ -1828,6 +1963,20 @@ scan_identifier__CIScanner(CIScanner *self)
     return id;
 }
 
+String *
+scan_identifier_with_peek_char__CIScanner(const CIScanner *self)
+{
+    String *res = NEW(String);
+    char *peeked = peek_char__CIScanner(self, 1);
+
+    for (Usize i = 1; is_ident_with_peeked_char__CIScanner(self, peeked);) {
+        push__String(res, (char)(Uptr)peeked);
+        peeked = peek_char__CIScanner(self, ++i);
+    }
+
+    return res;
+}
+
 char *
 scan_character__CIScanner(CIScanner *self)
 {
@@ -2131,6 +2280,61 @@ scan_num__CIScanner(CIScanner *self)
 }
 
 CIToken *
+scan_define_preprocessor__CIScanner(CIScanner *self)
+{
+}
+
+CIToken *
+scan_embed_preprocessor__CIScanner(CIScanner *self)
+{
+}
+
+CIToken *
+scan_error_preprocessor__CIScanner(CIScanner *self)
+{
+}
+
+CIToken *
+scan_if_preprocessor__CIScanner(CIScanner *self)
+{
+}
+
+CIToken *
+scan_ifdef_preprocessor__CIScanner(CIScanner *self)
+{
+}
+
+CIToken *
+scan_ifndef_preprocessor__CIScanner(CIScanner *self)
+{
+}
+
+CIToken *
+scan_include_preprocessor__CIScanner(CIScanner *self)
+{
+}
+
+CIToken *
+scan_line_preprocessor__CIScanner(CIScanner *self)
+{
+}
+
+CIToken *
+scan_pragma_preprocessor__CIScanner(CIScanner *self)
+{
+}
+
+CIToken *
+scan_undef_preprocessor__CIScanner(CIScanner *self)
+{
+}
+
+CIToken *
+scan_warning_preprocessor__CIScanner(CIScanner *self)
+{
+}
+
+CIToken *
 get_num__CIScanner(CIScanner *self)
 {
     switch (self->base.source.cursor.current) {
@@ -2188,7 +2392,8 @@ get_closing__CIScanner(CIScanner *self, char target)
             return NULL;
         }
 
-        CIToken *token = get_token__CIScanner(self, true);
+        CIToken *token =
+          get_token__CIScanner(self, NEW(CIScannerContext, false, false));
 
         if (token) {
             next_char_by_token__CIScanner(self, token);
@@ -2346,7 +2551,7 @@ check_standard(CIScanner *self, CIToken *token)
 }
 
 CIToken *
-get_token__CIScanner(CIScanner *self, bool check_match)
+get_token__CIScanner(CIScanner *self, const CIScannerContext ctx)
 {
     char *c1 = peek_char__CIScanner(self, 1);
     char *c2 = peek_char__CIScanner(self, 2);
@@ -2477,10 +2682,102 @@ get_token__CIScanner(CIScanner *self, bool check_match)
             return NEW(
               CIToken, CI_TOKEN_KIND_EQ, clone__Location(&self->base.location));
         // #
-        case '#':
+        case '#': {
+            if (is_start_ident_with_peeked_char__CIScanner(self, c1)) {
+                String *id = scan_identifier_with_peek_char__CIScanner(self);
+                enum CITokenKind kind = get_preprocessor__CIScanner(id);
+
+                switch (kind) {
+                    case CI_TOKEN_KIND_IDENTIFIER: {
+                        end__Location(&self->base.location,
+                                      self->base.source.cursor.line,
+                                      self->base.source.cursor.column,
+                                      self->base.source.cursor.position);
+                        push_token__CIScanner(
+                          self,
+                          NEW(CIToken,
+                              CI_TOKEN_KIND_HASHTAG,
+                              clone__Location(&self->base.location)));
+                        next_char__CIScanner(self);
+
+                        start_token__CIScanner(
+                          self,
+                          self->base.source.cursor.line,
+                          self->base.source.cursor.column,
+                          self->base.source.cursor.position);
+                        jump__CIScanner(self, id->len - 1);
+
+                        return NEW_VARIANT(
+                          CIToken,
+                          identifier,
+                          clone__Location(&self->base.location),
+                          id);
+                    }
+                    default:
+                        jump__CIScanner(self, id->len + 1);
+
+                        switch (kind) {
+                            case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:
+                                return scan_define_preprocessor__CIScanner(
+                                  self);
+                            case CI_TOKEN_KIND_PREPROCESSOR_ELIF:
+                                if (!ctx.in_prepro_cond) {
+                                    FAILED("#elif preprocessor is not expected "
+                                           "here");
+                                }
+                            case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:
+                                if (!ctx.in_prepro_cond) {
+                                    FAILED("#elifdef preprocessor is not "
+                                           "expected here");
+                                }
+                            case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:
+                                if (!ctx.in_prepro_cond) {
+                                    FAILED(
+                                      "#elifndef preprocessor is not expected "
+                                      "here");
+                                }
+                            case CI_TOKEN_KIND_PREPROCESSOR_ELSE:
+                                if (!ctx.in_prepro_cond) {
+                                    FAILED("#else preprocessor is not expected "
+                                           "here");
+                                }
+                            case CI_TOKEN_KIND_PREPROCESSOR_EMBED:
+                                return scan_embed_preprocessor__CIScanner(self);
+                            case CI_TOKEN_KIND_PREPROCESSOR_ERROR:
+                                return scan_error_preprocessor__CIScanner(self);
+                            case CI_TOKEN_KIND_PREPROCESSOR_IF:
+                                return scan_if_preprocessor__CIScanner(self);
+                            case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
+                                return scan_ifdef_preprocessor__CIScanner(self);
+                            case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:
+                                return scan_ifndef_preprocessor__CIScanner(
+                                  self);
+                            case CI_TOKEN_KIND_PREPROCESSOR_INCLUDE:
+                                return scan_include_preprocessor__CIScanner(
+                                  self);
+                            case CI_TOKEN_KIND_PREPROCESSOR_LINE:
+                                return scan_line_preprocessor__CIScanner(self);
+                            case CI_TOKEN_KIND_PREPROCESSOR_PRAGMA:
+                                return scan_pragma_preprocessor__CIScanner(
+                                  self);
+                            case CI_TOKEN_KIND_PREPROCESSOR_UNDEF:
+                                return scan_undef_preprocessor__CIScanner(self);
+                            case CI_TOKEN_KIND_PREPROCESSOR_WARNING:
+                                return scan_warning_preprocessor__CIScanner(
+                                  self);
+                            default:
+                                UNREACHABLE("this situation is impossible");
+                        }
+
+                        return NEW(
+                          CIToken, kind, clone__Location(&self->base.location));
+                }
+            }
+
             return NEW(CIToken,
                        CI_TOKEN_KIND_HASHTAG,
                        clone__Location(&self->base.location));
+        }
         // ^=, ^
         case '^':
             if (c1 == (char *)'=') {
@@ -2534,7 +2831,7 @@ get_token__CIScanner(CIScanner *self, bool check_match)
                     UNREACHABLE("this situation is impossible");
             }
 
-            if (check_match) {
+            if (!ctx.in_macro) {
                 end_token__CIScanner(self,
                                      self->base.source.cursor.line,
                                      self->base.source.cursor.column,
@@ -2656,7 +2953,8 @@ run__CIScanner(CIScanner *self, bool dump_scanner)
                 break;
             }
 
-            CIToken *token = get_token__CIScanner(self, true);
+            CIToken *token =
+              get_token__CIScanner(self, NEW(CIScannerContext, false, false));
 
             if (token) {
                 next_char_by_token__CIScanner(self, token);
