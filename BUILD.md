@@ -4,7 +4,7 @@ If you only want to use `Lily` locally to try it out, run:<br>
 NOTE: Currently there is no script to install Lily on the machine.
 
 ```bash
-./scripts/enable_local.sh
+./scripts/patches/enable_local.sh
 ```
 
 ## Linux
