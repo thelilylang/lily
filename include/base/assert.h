@@ -25,6 +25,9 @@
 #ifndef LILY_BASE_ASSERT_H
 #define LILY_BASE_ASSERT_H
 
+#include <base/macros.h>
+
+#if defined(ENV_DEBUG) || defined(ENV_ASSERT) || defined(ENV_SAFE)
 #define ASSERT_EQ(a, b)                                                \
     do {                                                               \
         if (a != b) {                                                  \
@@ -32,15 +35,27 @@
             exit(1);                                                   \
         }                                                              \
     } while (0)
+#else
+#define ASSERT_EQ(a, b) \
+    (void)(a);          \
+    (void)(b)
+#endif
 
-#define ASSERT_NE(a, b)                                                 \
-    do {                                                                \
-        if (a == b) {                                                   \
-            printf("ASSERT_NEQ failed: (%s:%d)\n", __FILE__, __LINE__); \
-            exit(1);                                                    \
-        }                                                               \
+#if defined(ENV_DEBUG) || defined(ENV_ASSERT) || defined(ENV_SAFE)
+#define ASSERT_NE(a, b)                                                \
+    do {                                                               \
+        if (a == b) {                                                  \
+            printf("ASSERT_NE failed: (%s:%d)\n", __FILE__, __LINE__); \
+            exit(1);                                                   \
+        }                                                              \
     } while (0)
+#else
+#define ASSERT_NE(a, b) \
+    (void)(a);          \
+    (void)(b)
+#endif
 
+#if defined(ENV_DEBUG) || defined(ENV_ASSERT) || defined(ENV_SAFE)
 #define ASSERT(a)                                                   \
     do {                                                            \
         if (!(a)) {                                                 \
@@ -48,5 +63,8 @@
             exit(1);                                                \
         }                                                           \
     } while (0)
+#else
+#define ASSERT(a) (void)(a)
+#endif
 
 #endif // LILY_BASE_ASSERT_H
