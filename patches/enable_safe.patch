@@ -1,0 +1,11 @@
+--- ../include/base/macros.h	2023-12-24 14:17:46.112723083 -0500
++++ macros.h	2023-12-24 14:29:05.784782940 -0500
+@@ -38,7 +38,7 @@
+ #undef ENV_LOCAL
+ 
+ #define ENV_SAFE
+-#undef ENV_SAFE
++// #undef ENV_SAFE
+ 
+ #if defined(__GNUC__) && !defined(__clang_major__)
+ #define GCC_VERSION \
