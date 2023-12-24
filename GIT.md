@@ -90,6 +90,7 @@ lily/shared
 
 lsp
 
+patches
 scripts
 shared
 ...
