@@ -2,13 +2,14 @@
 #include <base/macros.h>
 #include <base/memory/global.h>
 #include <base/new.h>
+#include <base/test.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
-void
-test_alloc__MemoryGlobal()
-{
+SUITE(memory_global);
+
+CASE(memory_global_alloc, {
     char *s = MEMORY_GLOBAL_ALLOC(char, 5);
 
     s[0] = 'a';
@@ -18,7 +19,7 @@ test_alloc__MemoryGlobal()
     s[4] = 'e';
 
     for (int i = 0; i < 5; ++i) {
-        ASSERT_EQ(s[i], 'a' + i);
+        TEST_ASSERT_EQ(s[i], 'a' + i);
     }
 
     // s = MEMORY_GLOBAL_RESIZE(char, s, 10);
@@ -30,7 +31,7 @@ test_alloc__MemoryGlobal()
     // s[9] = 'j';
 
     // for (int i = 0; i < 10; ++i) {
-    // 	ASSERT_EQ(s[i], 'a' + i);
+    // 	TEST_ASSERT_EQ(s[i], 'a' + i);
     // }
 
     // char *s2 = MEMORY_GLOBAL_ALLOC(char, 6);
@@ -45,4 +46,4 @@ test_alloc__MemoryGlobal()
     // MEMORY_GLOBAL_FREE(s2);
 
     // print_stat__MemoryGlobal(&global);
-}
+});

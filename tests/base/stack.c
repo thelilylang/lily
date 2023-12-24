@@ -1,49 +1,44 @@
 #include <base/assert.h>
 #include <base/new.h>
 #include <base/stack.h>
+#include <base/test.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
-void
-test_new__Stack()
-{
+SUITE(stack);
+
+CASE(stack_new, {
     Stack *s = NEW(Stack, 1024);
 
     FREE(Stack, s);
-}
+});
 
-void
-test_push__Stack()
-{
-    Stack *s = NEW(Stack, 1024);
-
-    push__Stack(s, (int *)10);
-    push__Stack(s, (int *)20);
-    push__Stack(s, (int *)30);
-
-    FREE(Stack, s);
-}
-
-void
-test_pop__Stack()
-{
+CASE(stack_push, {
     Stack *s = NEW(Stack, 1024);
 
     push__Stack(s, (int *)10);
     push__Stack(s, (int *)20);
     push__Stack(s, (int *)30);
 
-    ASSERT_EQ(pop__Stack(s), (int *)30);
-    ASSERT_EQ(pop__Stack(s), (int *)20);
-    ASSERT_EQ(pop__Stack(s), (int *)10);
+    FREE(Stack, s);
+});
+
+CASE(stack_pop, {
+    Stack *s = NEW(Stack, 1024);
+
+    push__Stack(s, (int *)10);
+    push__Stack(s, (int *)20);
+    push__Stack(s, (int *)30);
+
+    TEST_ASSERT_EQ(pop__Stack(s), (int *)30);
+    TEST_ASSERT_EQ(pop__Stack(s), (int *)20);
+    TEST_ASSERT_EQ(pop__Stack(s), (int *)10);
 
     FREE(Stack, s);
-}
+});
 
-void
-test_empty__Stack()
-{
+CASE(stack_empty, {
     Stack *s = NEW(Stack, 1024);
 
     push__Stack(s, (int *)10);
@@ -54,7 +49,7 @@ test_empty__Stack()
     pop__Stack(s);
     pop__Stack(s);
 
-    ASSERT(empty__Stack(s));
+    TEST_ASSERT(empty__Stack(s));
 
     FREE(Stack, s);
-}
+});

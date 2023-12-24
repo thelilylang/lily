@@ -2,13 +2,14 @@
 #include <base/macros.h>
 #include <base/memory/arena.h>
 #include <base/new.h>
+#include <base/test.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
-void
-test_alloc__MemoryArena()
-{
+SUITE(memory_arena);
+
+CASE(memory_arena_alloc, {
     MemoryArena arena = NEW(MemoryArena, 1024);
 
     int *arr = MEMORY_ARENA_ALLOC(int, &arena, 5);
@@ -20,7 +21,7 @@ test_alloc__MemoryArena()
     arr[4] = 5;
 
     for (int i = 0; i < 5; ++i) {
-        ASSERT_EQ(i + 1, arr[i]);
+        TEST_ASSERT_EQ(i + 1, arr[i]);
     }
 
     arr = MEMORY_ARENA_RESIZE(int, &arena, arr, 10);
@@ -32,10 +33,10 @@ test_alloc__MemoryArena()
     arr[9] = 10;
 
     for (int i = 0; i < 10; ++i) {
-        ASSERT_EQ(i + 1, arr[i]);
+        TEST_ASSERT_EQ(i + 1, arr[i]);
     }
 
     destroy__MemoryArena(&arena);
 
     // print_stat__MemoryArena(&arena);
-}
+});

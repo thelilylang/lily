@@ -1,15 +1,16 @@
 #include <base/assert.h>
 #include <base/buffer.h>
 #include <base/new.h>
+#include <base/test.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
 typedef Buffer(int) BufferInt;
 
-void
-test_push__Buffer()
-{
+SUITE(buffer);
+
+CASE(buffer_push, {
     Allocator allocator = GLOBAL_ALLOCATOR();
     BufferInt buffer = __new__Buffer(&allocator, 4, 2);
 
@@ -20,7 +21,7 @@ test_push__Buffer()
     push__Buffer(buffer, 5);
 
     for (Usize i = 0; i < buffer.len; ++i) {
-        ASSERT_EQ(buffer.mem[i], i + 1);
+        TEST_ASSERT_EQ(buffer.mem[i], i + 1);
     }
 
     push__Buffer(buffer, 6);
@@ -30,6 +31,6 @@ test_push__Buffer()
     push__Buffer(buffer, 10);
 
     for (Usize i = 0; i < buffer.len; ++i) {
-        ASSERT_EQ(buffer.mem[i], i + 1);
+        TEST_ASSERT_EQ(buffer.mem[i], i + 1);
     }
-}
+});

@@ -2,13 +2,14 @@
 #include <base/macros.h>
 #include <base/memory/page.h>
 #include <base/new.h>
+#include <base/test.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
-void
-test_alloc__MemoryPage()
-{
+SUITE(memory_page);
+
+CASE(memory_page_alloc, {
     MemoryPage page = NEW(MemoryPage);
 
     char *s = MEMORY_PAGE_ALLOC(char, &page, 5);
@@ -20,7 +21,7 @@ test_alloc__MemoryPage()
     s[4] = 'e';
 
     for (int i = 0; i < 5; ++i) {
-        ASSERT_EQ(s[i], 'a' + i);
+        TEST_ASSERT_EQ(s[i], 'a' + i);
     }
 
     s = MEMORY_PAGE_RESIZE(char, &page, 10);
@@ -32,6 +33,6 @@ test_alloc__MemoryPage()
     s[9] = 'j';
 
     for (int i = 0; i < 10; ++i) {
-        ASSERT_EQ(s[i], 'a' + i);
+        TEST_ASSERT_EQ(s[i], 'a' + i);
     }
-}
+});

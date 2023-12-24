@@ -2,13 +2,14 @@
 #include <base/assert.h>
 #include <base/macros.h>
 #include <base/new.h>
+#include <base/test.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
-void
-test_alloc__Allocator()
-{
+SUITE(allocator);
+
+CASE(allocator_alloc, {
     Allocator alloc = ARENA_ALLOCATOR(1024);
 
     char *s = A_ALLOC(char, alloc, 5);
@@ -20,7 +21,7 @@ test_alloc__Allocator()
     s[4] = 'e';
 
     for (int i = 0; i < 5; ++i) {
-        ASSERT_EQ(s[i], 'a' + i);
+        TEST_ASSERT_EQ(s[i], 'a' + i);
     }
 
     A_RESIZE(char, alloc, s, 10);
@@ -32,8 +33,8 @@ test_alloc__Allocator()
     s[9] = 'j';
 
     for (int i = 0; i < 10; ++i) {
-        ASSERT_EQ(s[i], 'a' + i);
+        TEST_ASSERT_EQ(s[i], 'a' + i);
     }
 
     A_FREE(alloc, s);
-}
+});
