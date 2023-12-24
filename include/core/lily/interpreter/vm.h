@@ -25,7 +25,7 @@
 #ifndef LILY_CORE_LILY_INTERPRETER_VM_H
 #define LILY_CORE_LILY_INTERPRETER_VM_H
 
-#ifdef ENV_DEBUG
+#if defined(ENV_DEBUG) || defined(ENV_ASSERT) || defined(ENV_SAFE)
 #define LILY_FULL_ASSERT_VM
 #endif
 
