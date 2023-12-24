@@ -25,6 +25,9 @@
 #ifndef LILY_BASE_MACROS_H
 #define LILY_BASE_MACROS_H
 
+#define ENV_ASSERT
+#undef ENV_ASSERT
+
 #define ENV_DEBUG
 #undef ENV_DEBUG
 
