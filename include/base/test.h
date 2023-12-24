@@ -37,15 +37,15 @@
 #define TEST_SKIP -1
 
 #define TEST_ASSERT_EQ(x, y) \
-    if (x != y)              \
+    if ((x) != (y))          \
         return TEST_FAIL;
 
 #define TEST_ASSERT_NE(x, y) \
-    if (x == y)              \
+    if ((x) == (y))          \
         return TEST_FAIL;
 
 #define TEST_ASSERT(x) \
-    if (!x)            \
+    if (!(x))          \
         return TEST_FAIL;
 
 #define CASE(name, block)   \
