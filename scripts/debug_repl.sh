@@ -86,13 +86,13 @@ do
 			do_nothing
 			;;
 		"dd")
-			cd patches && patch ../include/base/macros.h disable_debug.patch && cd ..
+		 	./scripts/patches/disable_debug.sh
 			;;
 		"dir")
 			do_nothing
 			;;
 		"dl")
-			cd patches && patch ../include/base/macros.h disable_local.patch && cd ..
+		 	./scripts/patches/disable_local.sh
 			;;
 		"dp")
 			do_nothing
@@ -107,10 +107,10 @@ do
 			do_nothing
 			;;
 		"ed")
-			cd patches && patch ../include/base/macros.h enable_debug.patch && cd ..
+		 	./scripts/patches/enable_debug.sh
 			;;
 		"el")
-			cd patches && patch ../include/base/macros.h enable_local.patch && cd ..
+		 	./scripts/patches/enable_local.sh
 			;;
 		"#e")
 			break
