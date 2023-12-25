@@ -1644,6 +1644,7 @@ scan_multi_part_keyword__CIScanner(CIScanner *self)
     struct CITokenKindWithID token_kind_with_id_s[MAX_KEYWORD_PART] = { 0 };
     Usize part = 0;
 
+    // Parse the different parts of keyword.
     for (;
          part < MAX_KEYWORD_PART && is_start_ident__CIScanner(self) &&
          can_run_keyword_part[part](
@@ -1662,6 +1663,11 @@ scan_multi_part_keyword__CIScanner(CIScanner *self)
 
     CIToken *last_token = NULL;
 
+    // Check whether the current token is merged or not. If it is merged, it
+    // moves on to the next token, otherwise create the token from the token's
+    // kind and push the token onto the tokens vector if it's not the last one.
+    // Finally, if it is the last token, it reserves it so that it can be
+    // returned.
     for (Usize i = 0; i < part; ++i) {
         struct CITokenKindWithID *current = &token_kind_with_id_s[i];
 
