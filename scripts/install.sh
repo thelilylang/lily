@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 BASH_CONFIG="$HOME/.bashrc"
 ZSH_CONFIG="$HOME/.zshrc"

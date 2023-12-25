@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # Check build
 cd patches && patch -r ../include/base/macros.h disable_debug.patch > /dev/null

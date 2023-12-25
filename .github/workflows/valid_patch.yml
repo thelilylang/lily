@@ -1,0 +1,17 @@
+name: Valid patch
+
+on:
+  pull_request:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Valid patch
+      working-directory: ${{github.workspace}}
+      run: ./scripts/ci/valid_patch.sh

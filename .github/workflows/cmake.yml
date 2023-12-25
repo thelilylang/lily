@@ -1,9 +1,8 @@
 name: CMake
 
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
+  push:
     branches: [ "main" ]
 
 env:
@@ -31,7 +30,7 @@ jobs:
       run: cd ${{github.workspace}} && pip install -r requirements.txt
 
     - name: Setup for Local
-      run: cd ${{github.workspace}} && ./scripts/enable_local.sh
+      run: cd ${{github.workspace}} && ./scripts/patches/enable_local.sh
 
     - name: Configure CMake
       # Configure CMake in a 'build/Debug' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
@@ -66,7 +65,7 @@ jobs:
     - name: Setup for Local
       run: |
         brew install gpatch
-        cd ${{github.workspace}} && ./scripts/enable_local.sh
+        cd ${{github.workspace}} && ./scripts/patches/enable_local.sh
 
     - name: Setup LLVM & Configure CMake
       run: |
