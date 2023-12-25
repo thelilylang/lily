@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 STATUS_CODE=0
 

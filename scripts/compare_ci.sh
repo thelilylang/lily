@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # NOTE:
 # This script checks whether CI (C Improved) is fully compatible

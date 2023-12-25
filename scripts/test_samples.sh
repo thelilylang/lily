@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 COMMAND="./bin/lilyc"
 FILES_EXCLUDED=("./tests/samples/package/a.lily" "./tests/samples/package/b.lily")

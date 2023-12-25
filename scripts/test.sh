@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 make clean > /dev/null
 make debug > /dev/null

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 ENABLE_PATCH=./scripts/patches/enable_*.sh
 DISABLE_PATCH=./scripts/patches/disable_*.sh
