@@ -327,16 +327,26 @@ DESTRUCTOR(CIDataType, CIDataType *self);
 
 enum CIStorageClass
 {
-    CI_VISIBILITY_AUTO = 1 << 0,
-    CI_VISIBILITY_CONST = 1 << 1,
-    CI_VISIBILITY_CONSTEXPR = 1 << 2,
-    CI_VISIBILITY_EXTERN = 1 << 3,
-    CI_VISIBILITY_INLINE = 1 << 4,
-    CI_VISIBILITY_REGISTER = 1 << 5,
-    CI_VISIBILITY_STATIC = 1 << 6,
-    CI_VISIBILITY_THREAD_LOCAL = 1 << 7,
-    CI_VISIBILITY_TYPEDEF = 1 << 8
+    CI_STORAGE_CLASS_AUTO = 1 << 0,
+    CI_STORAGE_CLASS_CONST = 1 << 1,
+    CI_STORAGE_CLASS_CONSTEXPR = 1 << 2,
+    CI_STORAGE_CLASS_EXTERN = 1 << 3,
+    CI_STORAGE_CLASS_INLINE = 1 << 4,
+    CI_STORAGE_CLASS_REGISTER = 1 << 5,
+    CI_STORAGE_CLASS_STATIC = 1 << 6,
+    CI_STORAGE_CLASS_THREAD_LOCAL = 1 << 7,
+    CI_STORAGE_CLASS_TYPEDEF = 1 << 8
 };
+
+/**
+ *
+ * @brief Convert CIStorageClass in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, CIStorageClass, int storage_class_flag);
+#endif
 
 /**
  *
@@ -350,14 +360,35 @@ enum CIDeclKind
     CI_DECL_KIND_ENUM,
     CI_DECL_KIND_FUNCTION,
     CI_DECL_KIND_STRUCT,
-    CI_DECL_KIND_VARIABLE
+    CI_DECL_KIND_UNION,
+    CI_DECL_KIND_VARIABLE,
 };
+
+/**
+ *
+ * @brief Convert CIDeclKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, CIDeclKind, enum CIDeclKind self);
+#endif
 
 enum CIDeclEnumVariantKind
 {
     CI_DECL_ENUM_VARIANT_KIND_DEFAULT,
     CI_DECL_ENUM_VARIANT_KIND_CUSTOM
 };
+
+/**
+ *
+ * @brief Convert CIDeclEnumVariantKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, CIDeclEnumVariantKind, enum CIDeclEnumVariantKind self);
+#endif
 
 typedef struct CIDeclEnumVariant
 {

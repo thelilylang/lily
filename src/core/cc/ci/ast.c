@@ -406,61 +406,167 @@ DESTRUCTOR(CIDataType, CIDataType *self)
     }
 }
 
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, CIStorageClass, int storage_class_flag)
+{
+    switch (storage_class_flag) {
+        case CI_STORAGE_CLASS_AUTO:
+            return "CI_STORAGE_CLASS_AUTO";
+        case CI_STORAGE_CLASS_CONST:
+            return "CI_STORAGE_CLASS_CONST";
+        case CI_STORAGE_CLASS_CONSTEXPR:
+            return "CI_STORAGE_CLASS_CONSTEXPR";
+        case CI_STORAGE_CLASS_EXTERN:
+            return "CI_STORAGE_CLASS_EXTERN";
+        case CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_AUTO:
+            return "CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_AUTO";
+        case CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_AUTO |
+          CI_STORAGE_CLASS_REGISTER:
+            return "CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_AUTO | "
+                   "CI_STORAGE_CLASS_REGISTER";
+        case CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_STATIC |
+          CI_STORAGE_CLASS_AUTO:
+            return "CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_STATIC | "
+                   "CI_STORAGE_CLASS_AUTO";
+        case CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_STATIC |
+          CI_STORAGE_CLASS_REGISTER:
+            return "CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_STATIC | "
+                   "CI_STORAGE_CLASS_REGISTER";
+        case CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_STATIC |
+          CI_STORAGE_CLASS_AUTO | CI_STORAGE_CLASS_REGISTER:
+            return "CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_STATIC | "
+                   "CI_STORAGE_CLASS_AUTO | CI_STORAGE_CLASS_REGISTER";
+        case CI_STORAGE_CLASS_INLINE:
+            return "CI_STORAGE_CLASS_INLINE";
+        case CI_STORAGE_CLASS_REGISTER:
+            return "CI_STORAGE_CLASS_REGISTER";
+        case CI_STORAGE_CLASS_REGISTER | CI_STORAGE_CLASS_AUTO:
+            return "CI_STORAGE_CLASS_REGISTER | CI_STORAGE_CLASS_AUTO";
+        case CI_STORAGE_CLASS_STATIC:
+            return "CI_STORAGE_CLASS_STATIC";
+        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_AUTO:
+            return "CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_AUTO";
+        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_CONST:
+            return "CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_CONST";
+        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_CONSTEXPR:
+            return "CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_CONSTEXPR";
+        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_EXTERN:
+            return "CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_EXTERN";
+        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_INLINE:
+            return "CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_INLINE";
+        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_REGISTER:
+            return "CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_REGISTER";
+        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_THREAD_LOCAL:
+            return "CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_THREAD_LOCAL";
+        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_TYPEDEF:
+            return "CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_TYPEDEF";
+        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_AUTO |
+          CI_STORAGE_CLASS_REGISTER:
+            return "CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_AUTO | "
+                   "CI_STORAGE_CLASS_REGISTER";
+        case CI_STORAGE_CLASS_THREAD_LOCAL:
+            return "CI_STORAGE_CLASS_THREAD_LOCAL";
+        case CI_STORAGE_CLASS_TYPEDEF:
+            return "CI_STORAGE_CLASS_TYPEDEF";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
 char *
 to_string__CIStorageClass(int storage_class_flag)
 {
     switch (storage_class_flag) {
-        case CI_VISIBILITY_AUTO:
+        case CI_STORAGE_CLASS_AUTO:
             return "auto";
-        case CI_VISIBILITY_CONST:
+        case CI_STORAGE_CLASS_CONST:
             return "const";
-        case CI_VISIBILITY_CONSTEXPR:
+        case CI_STORAGE_CLASS_CONSTEXPR:
             return "constexpr";
-        case CI_VISIBILITY_EXTERN:
+        case CI_STORAGE_CLASS_EXTERN:
             return "extern";
-        case CI_VISIBILITY_EXTERN | CI_VISIBILITY_AUTO:
+        case CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_AUTO:
             return "extern auto";
-        case CI_VISIBILITY_EXTERN | CI_VISIBILITY_AUTO | CI_VISIBILITY_REGISTER:
+        case CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_AUTO |
+          CI_STORAGE_CLASS_REGISTER:
             return "extern auto register";
-        case CI_VISIBILITY_EXTERN | CI_VISIBILITY_STATIC | CI_VISIBILITY_AUTO:
+        case CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_STATIC |
+          CI_STORAGE_CLASS_AUTO:
             return "extern static auto";
-        case CI_VISIBILITY_EXTERN | CI_VISIBILITY_STATIC |
-          CI_VISIBILITY_REGISTER:
+        case CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_STATIC |
+          CI_STORAGE_CLASS_REGISTER:
             return "extern static register";
-        case CI_VISIBILITY_EXTERN | CI_VISIBILITY_STATIC | CI_VISIBILITY_AUTO |
-          CI_VISIBILITY_REGISTER:
+        case CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_STATIC |
+          CI_STORAGE_CLASS_AUTO | CI_STORAGE_CLASS_REGISTER:
             return "extern static auto register";
-        case CI_VISIBILITY_INLINE:
+        case CI_STORAGE_CLASS_INLINE:
             return "inline";
-        case CI_VISIBILITY_REGISTER:
+        case CI_STORAGE_CLASS_REGISTER:
             return "register";
-        case CI_VISIBILITY_REGISTER | CI_VISIBILITY_AUTO:
+        case CI_STORAGE_CLASS_REGISTER | CI_STORAGE_CLASS_AUTO:
             return "register auto";
-        case CI_VISIBILITY_STATIC:
+        case CI_STORAGE_CLASS_STATIC:
             return "static";
-        case CI_VISIBILITY_STATIC | CI_VISIBILITY_AUTO:
+        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_AUTO:
             return "static auto";
-        case CI_VISIBILITY_STATIC | CI_VISIBILITY_CONST:
+        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_CONST:
             return "static const";
-        case CI_VISIBILITY_STATIC | CI_VISIBILITY_CONSTEXPR:
+        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_CONSTEXPR:
             return "static constexpr";
-        case CI_VISIBILITY_STATIC | CI_VISIBILITY_EXTERN:
+        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_EXTERN:
             return "static extern";
-        case CI_VISIBILITY_STATIC | CI_VISIBILITY_INLINE:
+        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_INLINE:
             return "static inline";
-        case CI_VISIBILITY_STATIC | CI_VISIBILITY_REGISTER:
+        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_REGISTER:
             return "static register";
-        case CI_VISIBILITY_STATIC | CI_VISIBILITY_THREAD_LOCAL:
+        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_THREAD_LOCAL:
             return "static thread_local";
-        case CI_VISIBILITY_STATIC | CI_VISIBILITY_TYPEDEF:
+        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_TYPEDEF:
             return "static typedef";
-        case CI_VISIBILITY_STATIC | CI_VISIBILITY_AUTO | CI_VISIBILITY_REGISTER:
+        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_AUTO |
+          CI_STORAGE_CLASS_REGISTER:
             return "static auto register";
-        case CI_VISIBILITY_THREAD_LOCAL:
+        case CI_STORAGE_CLASS_THREAD_LOCAL:
             return "thread_local";
-        case CI_VISIBILITY_TYPEDEF:
+        case CI_STORAGE_CLASS_TYPEDEF:
             return "typedef";
         default:
             UNREACHABLE("unknown variant");
     }
 }
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, CIDeclKind, enum CIDeclKind self)
+{
+    switch (self) {
+        case CI_DECL_KIND_ENUM:
+            return "CI_DECL_KIND_ENUM";
+        case CI_DECL_KIND_FUNCTION:
+            return "CI_DECL_KIND_FUNCTION";
+        case CI_DECL_KIND_STRUCT:
+            return "CI_DECL_KIND_STRUCT";
+        case CI_DECL_KIND_UNION:
+            return "CI_DECL_KIND_UNION";
+        case CI_DECL_KIND_VARIABLE:
+            return "CI_DECL_KIND_VARIABLE";
+    }
+}
+#endif
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, CIDeclEnumVariantKind, enum CIDeclEnumVariantKind self)
+{
+	switch (self) {
+		case CI_DECL_ENUM_VARIANT_KIND_CUSTOM:
+			return "CI_DECL_ENUM_VARIANT_KIND_CUSTOM";
+		case CI_DECL_ENUM_VARIANT_KIND_DEFAULT:
+			return "CI_DECL_ENUM_VARIANT_KIND_DEFAULT";
+		default:
+			UNREACHABLE("unknown variant");
+	}
+}
+#endif
