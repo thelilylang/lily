@@ -27,8 +27,10 @@
 
 #include <base/string.h>
 #include <base/types.h>
+#include <base/vec.h>
 
 typedef struct CIExpr CIExpr;
+typedef struct CIDataType CIDataType;
 
 enum CIDataTypeKind
 {
@@ -63,11 +65,31 @@ enum CIDataTypeKind
     CI_DATA_TYPE_KIND_VOID,
 };
 
+/**
+ *
+ * @brief Convert CIDataTypeKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, CIDataTypeKind, enum CIDataTypeKind self);
+#endif
+
 enum CIDataTypeArrayKind
 {
     CI_DATA_TYPE_ARRAY_KIND_SIZED,
     CI_DATA_TYPE_ARRAY_KIND_NONE,
 };
+
+/**
+ *
+ * @brief Convert CIDataTypeArrayKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, CIDataTypeArrayKind, enum CIDataTypeArrayKind self);
+#endif
 
 typedef struct CIDataTypeArray
 {
@@ -79,23 +101,154 @@ typedef struct CIDataTypeArray
     };
 } CIDataTypeArray;
 
+/**
+ *
+ * @brief Construct CIDataTypeArray type (CI_DATA_TYPE_ARRAY_KIND_SIZED).
+ */
+inline VARIANT_CONSTRUCTOR(CIDataTypeArray,
+                           CIDataTypeArray,
+                           sized,
+                           struct CIDataType *data_type,
+                           Usize size)
+{
+    return (CIDataTypeArray){ .kind = CI_DATA_TYPE_ARRAY_KIND_SIZED,
+                              .data_type = data_type,
+                              .size = size };
+}
+
+/**
+ *
+ * @brief Construct CIDataTypeArray type (CI_DATA_TYPE_ARRAY_KIND_NONE).
+ */
+inline VARIANT_CONSTRUCTOR(CIDataTypeArray,
+                           CIDataTypeArray,
+                           none,
+                           struct CIDataType *data_type)
+{
+    return (CIDataTypeArray){
+        .kind = CI_DATA_TYPE_ARRAY_KIND_NONE,
+        .data_type = data_type,
+    };
+}
+
+/**
+ *
+ * @brief Convert CIDataTypeArray in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDataTypeArray, const CIDataTypeArray *self);
+#endif
+
+/**
+ *
+ * @brief Free CIDataTypeArray type.
+ */
+DESTRUCTOR(CIDataTypeArray, const CIDataTypeArray *self);
+
 typedef struct CIDataTypeFunction
 {
     Vec *params; // Vec<CIDataType*>*
     struct CIDataType *return_data_type;
 } CIDataTypeFunction;
 
+/**
+ *
+ * @brief Construct CIDataTypeFunction type.
+ */
+inline CONSTRUCTOR(CIDataTypeFunction,
+                   CIDataTypeFunction,
+                   Vec *params,
+                   struct CIDataType *return_data_type)
+{
+    return (CIDataTypeFunction){ .params = params,
+                                 .return_data_type = return_data_type };
+}
+
+/**
+ *
+ * @brief Convert CIDataTypeFunction in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDataTypeFunction, const CIDataTypeFunction *self);
+#endif
+
+/**
+ *
+ * @brief Free CIDataTypeFunction type.
+ */
+DESTRUCTOR(CIDataTypeFunction, const CIDataTypeFunction *self);
+
 typedef struct CIDataTypeStruct
 {
-    String *name;
+    String *name;        // String* (&)
     Vec *generic_params; // Vec<CIDataType*>*?
 } CIDataTypeStruct;
 
+/**
+ *
+ * @brief Construct CIDataTypeStruct type.
+ */
+inline CONSTRUCTOR(CIDataTypeStruct,
+                   CIDataTypeStruct,
+                   String *name,
+                   Vec *generic_params)
+{
+    return (CIDataTypeStruct){ .name = name, .generic_params = generic_params };
+}
+
+/**
+ *
+ * @brief Convert CIDataTypeStruct in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDataTypeStruct, const CIDataTypeStruct *self);
+#endif
+
+/**
+ *
+ * @brief Free CIDataTypeStruct type.
+ */
+DESTRUCTOR(CIDataTypeStruct, const CIDataTypeStruct *self);
+
 typedef struct CIDataTypeUnion
 {
-    String *name;
+    String *name;        // String* (&)
     Vec *generic_params; // Vec<CIDataType*>*?
 } CIDataTypeUnion;
+
+/**
+ *
+ * @brief Construct CIDataTypeUnion type.
+ */
+inline CONSTRUCTOR(CIDataTypeUnion,
+                   CIDataTypeUnion,
+                   String *name,
+                   Vec *generic_params)
+{
+    return (CIDataTypeUnion){ .name = name, .generic_params = generic_params };
+}
+
+/**
+ *
+ * @brief Convert CIDataTypeUnion in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDataTypeUnion, const CIDataTypeUnion *self);
+#endif
+
+/**
+ *
+ * @brief Free CIDataTypeUnion type.
+ */
+DESTRUCTOR(CIDataTypeUnion, const CIDataTypeUnion *self);
 
 typedef struct CIDataType
 {
@@ -110,6 +263,67 @@ typedef struct CIDataType
         CIDataTypeUnion union_;
     };
 } CIDataType;
+
+/**
+ *
+ * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_ARRAY).
+ */
+VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, array, CIDataTypeArray array);
+
+/**
+ *
+ * @brief Construct CIDataType type (CI_DATA_TYPE_KIND__ATOMIC).
+ */
+VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, _atomic, CIDataType *_atomic);
+
+/**
+ *
+ * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_FUNCTION).
+ */
+VARIANT_CONSTRUCTOR(CIDataType *,
+                    CIDataType,
+                    function,
+                    CIDataTypeFunction function);
+
+/**
+ *
+ * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_PTR).
+ */
+VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, ptr, CIDataType *ptr);
+
+/**
+ *
+ * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_STRUCT).
+ */
+VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, struct, CIDataTypeStruct struct_);
+
+/**
+ *
+ * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_UNION).
+ */
+VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, union, CIDataTypeUnion union_);
+
+/**
+ *
+ * @brief Construct CIDataType type.
+ */
+CONSTRUCTOR(CIDataType *, CIDataType, enum CIDataTypeKind kind);
+
+/**
+ *
+ * @brief Convert CIDataType in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDataType, const CIDataType *self);
+#endif
+
+/**
+ *
+ * @brief Free CIDataType type.
+ */
+DESTRUCTOR(CIDataType, CIDataType *self);
 
 enum CIStorageClass
 {
