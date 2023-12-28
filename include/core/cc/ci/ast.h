@@ -338,6 +338,13 @@ enum CIStorageClass
     CI_VISIBILITY_TYPEDEF = 1 << 8
 };
 
+/**
+ *
+ * @brief Convert CIStorageClass in string.
+ */
+char *
+to_string__CIStorageClass(int storage_class_flag);
+
 enum CIDeclKind
 {
     CI_DECL_KIND_ENUM,

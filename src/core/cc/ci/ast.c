@@ -405,3 +405,62 @@ DESTRUCTOR(CIDataType, CIDataType *self)
             lily_free(self);
     }
 }
+
+char *
+to_string__CIStorageClass(int storage_class_flag)
+{
+    switch (storage_class_flag) {
+        case CI_VISIBILITY_AUTO:
+            return "auto";
+        case CI_VISIBILITY_CONST:
+            return "const";
+        case CI_VISIBILITY_CONSTEXPR:
+            return "constexpr";
+        case CI_VISIBILITY_EXTERN:
+            return "extern";
+        case CI_VISIBILITY_EXTERN | CI_VISIBILITY_AUTO:
+            return "extern auto";
+        case CI_VISIBILITY_EXTERN | CI_VISIBILITY_AUTO | CI_VISIBILITY_REGISTER:
+            return "extern auto register";
+        case CI_VISIBILITY_EXTERN | CI_VISIBILITY_STATIC | CI_VISIBILITY_AUTO:
+            return "extern static auto";
+        case CI_VISIBILITY_EXTERN | CI_VISIBILITY_STATIC |
+          CI_VISIBILITY_REGISTER:
+            return "extern static register";
+        case CI_VISIBILITY_EXTERN | CI_VISIBILITY_STATIC | CI_VISIBILITY_AUTO |
+          CI_VISIBILITY_REGISTER:
+            return "extern static auto register";
+        case CI_VISIBILITY_INLINE:
+            return "inline";
+        case CI_VISIBILITY_REGISTER:
+            return "register";
+        case CI_VISIBILITY_REGISTER | CI_VISIBILITY_AUTO:
+            return "register auto";
+        case CI_VISIBILITY_STATIC:
+            return "static";
+        case CI_VISIBILITY_STATIC | CI_VISIBILITY_AUTO:
+            return "static auto";
+        case CI_VISIBILITY_STATIC | CI_VISIBILITY_CONST:
+            return "static const";
+        case CI_VISIBILITY_STATIC | CI_VISIBILITY_CONSTEXPR:
+            return "static constexpr";
+        case CI_VISIBILITY_STATIC | CI_VISIBILITY_EXTERN:
+            return "static extern";
+        case CI_VISIBILITY_STATIC | CI_VISIBILITY_INLINE:
+            return "static inline";
+        case CI_VISIBILITY_STATIC | CI_VISIBILITY_REGISTER:
+            return "static register";
+        case CI_VISIBILITY_STATIC | CI_VISIBILITY_THREAD_LOCAL:
+            return "static thread_local";
+        case CI_VISIBILITY_STATIC | CI_VISIBILITY_TYPEDEF:
+            return "static typedef";
+        case CI_VISIBILITY_STATIC | CI_VISIBILITY_AUTO | CI_VISIBILITY_REGISTER:
+            return "static auto register";
+        case CI_VISIBILITY_THREAD_LOCAL:
+            return "thread_local";
+        case CI_VISIBILITY_TYPEDEF:
+            return "typedef";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
