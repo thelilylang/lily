@@ -825,6 +825,114 @@ IMPL_FOR_DEBUG(to_string, CIExprBinary, const CIExprBinary *self);
  */
 DESTRUCTOR(CIExprBinary, const CIExprBinary *self);
 
+enum CIExprLiteralKind
+{
+    CI_EXPR_LITERAL_KIND_BOOL, // NOTE: since C23
+    CI_EXPR_LITERAL_KIND_CHAR,
+    CI_EXPR_LITERAL_KIND_FLOAT,
+    CI_EXPR_LITERAL_KIND_SIGNED_INT,
+    CI_EXPR_LITERAL_KIND_STRING,
+    CI_EXPR_LITERAL_KIND_UNSIGNED_INT,
+};
+
+/**
+ *
+ * @brief Convert CIExprLiteral in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, CIExprLiteralKind, enum CIExprLiteralKind self);
+#endif
+
+typedef struct CIExprLiteral
+{
+    enum CIExprLiteralKind kind;
+    union
+    {
+        bool bool_;
+        char char_;
+        double float_;
+        Isize signed_int;
+        String *string; // String* (&)
+        Usize unsigned_int;
+    };
+} CIExprLiteral;
+
+/**
+ *
+ * @brief Construct CIExprLiteral type (CI_EXPR_LITERAL_KIND_BOOL).
+ */
+inline VARIANT_CONSTRUCTOR(CIExprLiteral, CIExprLiteral, bool, bool bool_)
+{
+    return (CIExprLiteral){ .kind = CI_EXPR_LITERAL_KIND_BOOL, .bool_ = bool_ };
+}
+
+/**
+ *
+ * @brief Construct CIExprLiteral type (CI_EXPR_LITERAL_KIND_CHAR).
+ */
+inline VARIANT_CONSTRUCTOR(CIExprLiteral, CIExprLiteral, char, char char_)
+{
+    return (CIExprLiteral){ .kind = CI_EXPR_LITERAL_KIND_CHAR, .char_ = char_ };
+}
+
+/**
+ *
+ * @brief Construct CIExprLiteral type (CI_EXPR_LITERAL_KIND_FLOAT).
+ */
+inline VARIANT_CONSTRUCTOR(CIExprLiteral, CIExprLiteral, float, double float_)
+{
+    return (CIExprLiteral){ .kind = CI_EXPR_LITERAL_KIND_FLOAT,
+                            .float_ = float_ };
+}
+
+/**
+ *
+ * @brief Construct CIExprLiteral type (CI_EXPR_LITERAL_KIND_SIGNED_INT).
+ */
+inline VARIANT_CONSTRUCTOR(CIExprLiteral,
+                           CIExprLiteral,
+                           signed_int,
+                           Isize signed_int)
+{
+    return (CIExprLiteral){ .kind = CI_EXPR_LITERAL_KIND_SIGNED_INT,
+                            .signed_int = signed_int };
+}
+
+/**
+ *
+ * @brief Construct CIExprLiteral type (CI_EXPR_LITERAL_KIND_STRING).
+ */
+inline VARIANT_CONSTRUCTOR(CIExprLiteral, CIExprLiteral, string, String *string)
+{
+    return (CIExprLiteral){ .kind = CI_EXPR_LITERAL_KIND_STRING,
+                            .string = string };
+}
+
+/**
+ *
+ * @brief Construct CIExprLiteral type (CI_EXPR_LITERAL_KIND_UNSIGNED_INT).
+ */
+inline VARIANT_CONSTRUCTOR(CIExprLiteral,
+                           CIExprLiteral,
+                           unsigned_int,
+                           Usize unsigned_int)
+{
+    return (CIExprLiteral){ .kind = CI_EXPR_LITERAL_KIND_UNSIGNED_INT,
+                            .unsigned_int = unsigned_int };
+}
+
+/**
+ *
+ * @brief Convert CIExprLiteral in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIExprLiteral, const CIExprLiteral *self);
+#endif
+
 enum CIExprUnaryKind
 {
     CI_EXPR_UNARY_KIND_PRE_INCREMENT,  // ++<expr>
@@ -956,6 +1064,7 @@ enum CIExprKind
     CI_EXPR_KIND_BINARY,
     CI_EXPR_KIND_CAST,
     CI_EXPR_KIND_DATA_TYPE,
+    CI_EXPR_KIND_LITERAL,
     CI_EXPR_KIND_SIZEOF,
     CI_EXPR_KIND_TERNARY,
     CI_EXPR_KIND_UNARY,
@@ -980,6 +1089,7 @@ struct CIExpr
         CIExprBinary binary;
         CIExprCast cast;
         CIDataType *data_type;
+        CIExprLiteral literal;
         CIExpr *sizeof_;
         CIExprTernary ternary;
         CIExprUnary unary;
@@ -1009,6 +1119,12 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, cast, CIExprCast cast);
  * @brief Construct CIExpr type (CI_EXPR_KIND_DATA_TYPE).
  */
 VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, data_type, CIDataType *data_type);
+
+/**
+ *
+ * @brief Construct CIExpr type (CI_EXPR_KIND_LITERAL).
+ */
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, literal, CIExprLiteral literal);
 
 /**
  *

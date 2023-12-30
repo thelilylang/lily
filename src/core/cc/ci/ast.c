@@ -74,6 +74,9 @@ static VARIANT_DESTRUCTOR(CIExpr, cast, CIExpr *self);
 /// @brief Free CIExpr type (CI_EXPR_KIND_DATA_TYPE).
 static VARIANT_DESTRUCTOR(CIExpr, data_type, CIExpr *self);
 
+/// @brief Free CIExpr type (CI_EXPR_KIND_LITERAL).
+static inline VARIANT_DESTRUCTOR(CIExpr, literal, CIExpr *self);
+
 /// @brief Free CIExpr type (CI_EXPR_KIND_SIZEOF).
 static VARIANT_DESTRUCTOR(CIExpr, sizeof, CIExpr *self);
 
@@ -1121,6 +1124,71 @@ DESTRUCTOR(CIExprBinary, const CIExprBinary *self)
 
 #ifdef ENV_DEBUG
 char *
+IMPL_FOR_DEBUG(to_string, CIExprLiteralKind, enum CIExprLiteralKind self)
+{
+    switch (self) {
+        case CI_EXPR_LITERAL_KIND_BOOL:
+            return "CI_EXPR_LITERAL_KIND_BOOL";
+        case CI_EXPR_LITERAL_KIND_CHAR:
+            return "CI_EXPR_LITERAL_KIND_CHAR";
+        case CI_EXPR_LITERAL_KIND_FLOAT:
+            return "CI_EXPR_LITERAL_KIND_FLOAT";
+        case CI_EXPR_LITERAL_KIND_SIGNED_INT:
+            return "CI_EXPR_LITERAL_KIND_SIGNED_INT";
+        case CI_EXPR_LITERAL_KIND_STRING:
+            return "CI_EXPR_LITERAL_KIND_STRING";
+        case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:
+            return "CI_EXPR_LITERAL_KIND_UNSIGNED_INT";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIExprLiteral, const CIExprLiteral *self)
+{
+    switch (self->kind) {
+        case CI_EXPR_LITERAL_KIND_BOOL:
+            return format__String(
+              "CIExprLiteral{{ kind = {s}, bool_ = {b} }",
+              to_string__Debug__CIExprLiteralKind(self->kind),
+              self->bool_);
+        case CI_EXPR_LITERAL_KIND_CHAR:
+            return format__String(
+              "CIExprLiteral{{ kind = {s}, char_ = {c} }",
+              to_string__Debug__CIExprLiteralKind(self->kind),
+              self->char_);
+        case CI_EXPR_LITERAL_KIND_FLOAT:
+            return format__String(
+              "CIExprLiteral{{ kind = {s}, float_ = {f} }",
+              to_string__Debug__CIExprLiteralKind(self->kind),
+              self->float_);
+        case CI_EXPR_LITERAL_KIND_SIGNED_INT:
+            // TODO: Update {d} format specifier.
+            return format__String(
+              "CIExprLiteral{{ kind = {s}, signed_int = {d} }",
+              to_string__Debug__CIExprLiteralKind(self->kind),
+              self->signed_int);
+        case CI_EXPR_LITERAL_KIND_STRING:
+            return format__String(
+              "CIExprLiteral{{ kind = {s}, string = {S} }",
+              to_string__Debug__CIExprLiteralKind(self->kind),
+              self->string);
+        case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:
+            return format__String(
+              "CIExprLiteral{{ kind = {s}, unsigned_int = {zu} }",
+              to_string__Debug__CIExprLiteralKind(self->kind),
+              self->unsigned_int);
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+#ifdef ENV_DEBUG
+char *
 IMPL_FOR_DEBUG(to_string, CIExprUnaryKind, enum CIExprUnaryKind self)
 {
     switch (self) {
@@ -1213,6 +1281,8 @@ IMPL_FOR_DEBUG(to_string, CIExprKind, enum CIExprKind self)
             return "CI_EXPR_KIND_CAST";
         case CI_EXPR_KIND_DATA_TYPE:
             return "CI_EXPR_KIND_DATA_TYPE";
+        case CI_EXPR_KIND_LITERAL:
+            return "CI_EXPR_KIND_LITERAL";
         case CI_EXPR_KIND_SIZEOF:
             return "CI_EXPR_KIND_SIZEOF";
         case CI_EXPR_KIND_TERNARY:
@@ -1261,6 +1331,16 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, data_type, CIDataType *data_type)
 
     self->kind = CI_EXPR_KIND_DATA_TYPE;
     self->data_type = data_type;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, literal, CIExprLiteral literal)
+{
+    CIExpr *self = lily_malloc(sizeof(CIExpr));
+
+    self->kind = CI_EXPR_KIND_LITERAL;
+    self->literal = literal;
 
     return self;
 }
@@ -1318,6 +1398,11 @@ IMPL_FOR_DEBUG(to_string, CIExpr, const CIExpr *self)
               "CIExpr{{ kind = {s}, data_type = {Sr} }",
               to_string__Debug__CIExprKind(self->kind),
               to_string__Debug__CIDataType(self->data_type));
+        case CI_EXPR_KIND_LITERAL:
+            return format__String(
+              "CIExpr{{ kind = {s}, literal = {Sr} }",
+              to_string__Debug__CIExprKind(self->kind),
+              to_string__Debug__CIExprLiteral(&self->literal));
         case CI_EXPR_KIND_SIZEOF:
             return format__String("CIExpr{{ kind = {s}, sizeof_ = {Sr} }",
                                   to_string__Debug__CIExprKind(self->kind),
@@ -1361,6 +1446,11 @@ VARIANT_DESTRUCTOR(CIExpr, data_type, CIExpr *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(CIExpr, literal, CIExpr *self)
+{
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(CIExpr, sizeof, CIExpr *self)
 {
     FREE(CIExpr, self->sizeof_);
@@ -1393,6 +1483,9 @@ DESTRUCTOR(CIExpr, CIExpr *self)
             break;
         case CI_EXPR_KIND_DATA_TYPE:
             FREE_VARIANT(CIExpr, data_type, self);
+            break;
+        case CI_EXPR_KIND_LITERAL:
+            FREE_VARIANT(CIExpr, literal, self);
             break;
         case CI_EXPR_KIND_SIZEOF:
             FREE_VARIANT(CIExpr, sizeof, self);
