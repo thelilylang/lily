@@ -22,7 +22,6 @@
  * SOFTWARE.
  */
 
-#include <base/alloc.h>
 #include <base/new.h>
 
 #include <core/cc/ci/ast.h>
@@ -47,6 +46,69 @@ static VARIANT_DESTRUCTOR(CIDataType, struct, CIDataType *self);
 
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_UNION).
 static VARIANT_DESTRUCTOR(CIDataType, union, CIDataType *self);
+
+/// @brief Free CIDecl type (CI_DECL_KIND_ENUM).
+static VARIANT_DESTRUCTOR(CIDecl, enum, CIDecl *self);
+
+/// @brief Free CIDecl type (CI_DECL_KIND_FUNCTION).
+static VARIANT_DESTRUCTOR(CIDecl, function, CIDecl *self);
+
+/// @brief Free CIDecl type (CI_DECL_KIND_STRUCT).
+static VARIANT_DESTRUCTOR(CIDecl, struct, CIDecl *self);
+
+/// @brief Free CIDecl type (CI_DECL_KIND_UNION).
+static VARIANT_DESTRUCTOR(CIDecl, union, CIDecl *self);
+
+/// @brief Free CIDecl type (CI_DECL_KIND_VARIABLE).
+static VARIANT_DESTRUCTOR(CIDecl, variable, CIDecl *self);
+
+/// @brief Free CIExpr type (CI_EXPR_KIND_ALIGNOF).
+static VARIANT_DESTRUCTOR(CIExpr, alignof, CIExpr *self);
+
+/// @brief Free CIExpr type (CI_EXPR_KIND_BINARY).
+static VARIANT_DESTRUCTOR(CIExpr, binary, CIExpr *self);
+
+/// @brief Free CIExpr type (CI_EXPR_KIND_CAST).
+static VARIANT_DESTRUCTOR(CIExpr, cast, CIExpr *self);
+
+/// @brief Free CIExpr type (CI_EXPR_KIND_DATA_TYPE).
+static VARIANT_DESTRUCTOR(CIExpr, data_type, CIExpr *self);
+
+/// @brief Free CIExpr type (CI_EXPR_KIND_SIZEOF).
+static VARIANT_DESTRUCTOR(CIExpr, sizeof, CIExpr *self);
+
+/// @brief Free CIExpr type (CI_EXPR_KIND_TERNARY).
+static VARIANT_DESTRUCTOR(CIExpr, ternary, CIExpr *self);
+
+/// @brief Free CIExpr type (CI_EXPR_KIND_UNARY).
+static VARIANT_DESTRUCTOR(CIExpr, unary, CIExpr *self);
+
+/// @brief Free CIStmt type (CI_STMT_KIND_DO_WHILE).
+static inline VARIANT_DESTRUCTOR(CIStmt, do_while, const CIStmt *self);
+
+/// @brief Free CIStmt type (CI_STMT_KIND_FOR).
+static inline VARIANT_DESTRUCTOR(CIStmt, for, const CIStmt *self);
+
+/// @brief Free CIStmt type (CI_STMT_KIND_IF).
+static inline VARIANT_DESTRUCTOR(CIStmt, if, const CIStmt *self);
+
+/// @brief Free CIStmt type (CI_STMT_KIND_RETURN).
+static inline VARIANT_DESTRUCTOR(CIStmt, return, const CIStmt *self);
+
+/// @brief Free CIStmt type (CI_STMT_KIND_SWITCH).
+static inline VARIANT_DESTRUCTOR(CIStmt, switch, const CIStmt *self);
+
+/// @brief Free CIStmt type (CI_STMT_KIND_WHILE).
+static inline VARIANT_DESTRUCTOR(CIStmt, while, const CIStmt *self);
+
+/// @brief Free CIDeclFunctionItem type (CI_DECL_FUNCTION_ITEM_KIND_DECL).
+static VARIANT_DESTRUCTOR(CIDeclFunctionItem, decl, CIDeclFunctionItem *self);
+
+/// @brief Free CIDeclFunctionItem type (CI_DECL_FUNCTION_ITEM_KIND_EXPR).
+static VARIANT_DESTRUCTOR(CIDeclFunctionItem, expr, CIDeclFunctionItem *self);
+
+/// @brief Free CIDeclFunctionItem type (CI_DECL_FUNCTION_ITEM_KIND_STMT).
+static VARIANT_DESTRUCTOR(CIDeclFunctionItem, stmt, CIDeclFunctionItem *self);
 
 #ifdef ENV_DEBUG
 char *
@@ -558,15 +620,1298 @@ IMPL_FOR_DEBUG(to_string, CIDeclKind, enum CIDeclKind self)
 
 #ifdef ENV_DEBUG
 char *
-IMPL_FOR_DEBUG(to_string, CIDeclEnumVariantKind, enum CIDeclEnumVariantKind self)
+IMPL_FOR_DEBUG(to_string,
+               CIDeclEnumVariantKind,
+               enum CIDeclEnumVariantKind self)
 {
-	switch (self) {
-		case CI_DECL_ENUM_VARIANT_KIND_CUSTOM:
-			return "CI_DECL_ENUM_VARIANT_KIND_CUSTOM";
-		case CI_DECL_ENUM_VARIANT_KIND_DEFAULT:
-			return "CI_DECL_ENUM_VARIANT_KIND_DEFAULT";
-		default:
-			UNREACHABLE("unknown variant");
-	}
+    switch (self) {
+        case CI_DECL_ENUM_VARIANT_KIND_CUSTOM:
+            return "CI_DECL_ENUM_VARIANT_KIND_CUSTOM";
+        case CI_DECL_ENUM_VARIANT_KIND_DEFAULT:
+            return "CI_DECL_ENUM_VARIANT_KIND_DEFAULT";
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }
 #endif
+
+VARIANT_CONSTRUCTOR(CIDeclEnumVariant *,
+                    CIDeclEnumVariant,
+                    custom,
+                    String *name,
+                    Isize value)
+{
+    CIDeclEnumVariant *self = lily_malloc(sizeof(CIDeclEnumVariant));
+
+    self->kind = CI_DECL_ENUM_VARIANT_KIND_CUSTOM;
+    self->name = name;
+    self->value = value;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIDeclEnumVariant *,
+                    CIDeclEnumVariant,
+                    default,
+                    String *name)
+{
+    CIDeclEnumVariant *self = lily_malloc(sizeof(CIDeclEnumVariant));
+
+    self->kind = CI_DECL_ENUM_VARIANT_KIND_DEFAULT;
+    self->name = name;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclEnumVariant, const CIDeclEnumVariant *self)
+{
+    switch (self->kind) {
+        case CI_DECL_ENUM_VARIANT_KIND_CUSTOM:
+            // TODO: change {d} format specifier.
+            return format__String(
+              "CIDeclEnumVariant{{ kind = {s}, name = {S}, value = {d} }",
+              to_string__Debug__CIDeclEnumVariantKind(self->kind),
+              self->name,
+              self->value);
+        case CI_DECL_ENUM_VARIANT_KIND_DEFAULT:
+            return format__String(
+              "CIDeclEnumVariant{{ kind = {s}, name = {S} }",
+              to_string__Debug__CIDeclEnumVariantKind(self->kind),
+              self->name);
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclEnum, const CIDeclEnum *self)
+{
+    String *res =
+      format__String("CIDeclEnum{{ name = {S}, variants =", self->name);
+
+    DEBUG_VEC_STRING(self->variants, res, CIDeclEnumVariant);
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CIDeclEnum, const CIDeclEnum *self)
+{
+    FREE_BUFFER_ITEMS(
+      self->variants->buffer, self->variants->len, CIDeclEnumVariant);
+    FREE(Vec, self->variants);
+}
+
+CONSTRUCTOR(CIDeclFunctionParam *,
+            CIDeclFunctionParam,
+            String *name,
+            CIDataType *data_type)
+{
+    CIDeclFunctionParam *self = lily_malloc(sizeof(CIDeclFunctionParam));
+
+    self->name = name;
+    self->data_type = data_type;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclFunctionParam, const CIDeclFunctionParam *self)
+{
+    return format__String(
+      "CIDeclFunctionParam{{ name = {S}, data_type = {Sr} }",
+      self->name,
+      to_string__Debug__CIDataType(self->data_type));
+}
+#endif
+
+DESTRUCTOR(CIDeclFunctionParam, CIDeclFunctionParam *self)
+{
+    FREE(CIDataType, self->data_type);
+    lily_free(self);
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclFunction, const CIDeclFunction *self)
+{
+    String *res = format__String("CIDeclFunction{{ name = {S}, params =");
+
+    DEBUG_VEC_STRING(self->params, res, CIDeclFunctionParam);
+    push_str__String(res, ", body =");
+
+    DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CIDeclFunction, const CIDeclFunction *self)
+{
+    FREE_BUFFER_ITEMS(
+      self->params->buffer, self->params->len, CIDeclFunctionParam);
+    FREE(Vec, self->params);
+    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, CIDeclFunctionItem);
+    FREE(Vec, self->body);
+}
+
+CONSTRUCTOR(CIDeclStructField *,
+            CIDeclStructField,
+            String *name,
+            CIDataType *data_type)
+{
+    CIDeclStructField *self = lily_malloc(sizeof(CIDeclStructField));
+
+    self->name = name;
+    self->data_type = data_type;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclStructField, const CIDeclStructField *self)
+{
+    return format__String("CIDeclStructField{{ name = {S}, data_type = {Sr} }",
+                          self->name,
+                          to_string__Debug__CIDataType(self->data_type));
+}
+#endif
+
+DESTRUCTOR(CIDeclStructField, CIDeclStructField *self)
+{
+    FREE(CIDataType, self->data_type);
+    lily_free(self);
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclStruct, const CIDeclStruct *self)
+{
+    String *res =
+      format__String("CIDeclStruct{{ name = {S}, fields =", self->name);
+
+    DEBUG_VEC_STRING(self->fields, res, CIDeclStructField);
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CIDeclStruct, const CIDeclStruct *self)
+{
+    FREE_BUFFER_ITEMS(
+      self->fields->buffer, self->fields->len, CIDeclStructField);
+    FREE(Vec, self->fields);
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclUnion, const CIDeclUnion *self)
+{
+    String *res =
+      format__String("CIDeclUnion{{ name = {S}, fields =", self->name);
+
+    DEBUG_VEC_STRING(self->fields, res, CIDeclStructField);
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CIDeclUnion, const CIDeclUnion *self)
+{
+    FREE_BUFFER_ITEMS(
+      self->fields->buffer, self->fields->len, CIDeclStructField);
+    FREE(Vec, self->fields);
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclVariable, const CIDeclVariable *self)
+{
+    if (self->expr) {
+        return format__String("CIDeclVariable{{ name = {S}, expr = {Sr} }",
+                              self->name,
+                              to_string__Debug__CIExpr(self->expr));
+    }
+
+    return format__String("CIDeclVariable{{ name = {S}, expr = NULL }",
+                          self->name);
+}
+#endif
+
+DESTRUCTOR(CIDeclVariable, const CIDeclVariable *self)
+{
+    if (self->expr) {
+        FREE(CIExpr, self->expr);
+    }
+}
+
+VARIANT_CONSTRUCTOR(CIDecl *,
+                    CIDecl,
+                    enum,
+                    int storage_class_flag,
+                    CIDeclEnum enum_)
+{
+    CIDecl *self = lily_malloc(sizeof(CIDecl));
+
+    self->kind = CI_DECL_KIND_ENUM;
+    self->storage_class_flag = storage_class_flag;
+    self->enum_ = enum_;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIDecl *,
+                    CIDecl,
+                    function,
+                    int storage_class_flag,
+                    CIDeclFunction function)
+{
+    CIDecl *self = lily_malloc(sizeof(CIDecl));
+
+    self->kind = CI_DECL_KIND_FUNCTION;
+    self->storage_class_flag = storage_class_flag;
+    self->function = function;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIDecl *,
+                    CIDecl,
+                    struct,
+                    int storage_class_flag,
+                    CIDeclStruct struct_)
+{
+    CIDecl *self = lily_malloc(sizeof(CIDecl));
+
+    self->kind = CI_DECL_KIND_STRUCT;
+    self->storage_class_flag = storage_class_flag;
+    self->struct_ = struct_;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIDecl *,
+                    CIDecl,
+                    union,
+                    int storage_class_flag,
+                    CIDeclUnion union_)
+{
+    CIDecl *self = lily_malloc(sizeof(CIDecl));
+
+    self->kind = CI_DECL_KIND_UNION;
+    self->storage_class_flag = storage_class_flag;
+    self->union_ = union_;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIDecl *,
+                    CIDecl,
+                    variable,
+                    int storage_class_flag,
+                    CIDeclVariable variable)
+{
+    CIDecl *self = lily_malloc(sizeof(CIDecl));
+
+    self->kind = CI_DECL_KIND_VARIABLE;
+    self->storage_class_flag = storage_class_flag;
+    self->variable = variable;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)
+{
+    switch (self->kind) {
+        case CI_DECL_KIND_ENUM:
+            return format__String(
+              "CIDecl{{ kind = {s}, storage_class_flag = {s}, enum_ = {Sr} }",
+              to_string__Debug__CIDeclKind(self->kind),
+              to_string__Debug__CIStorageClass(self->storage_class_flag),
+              to_string__Debug__CIDeclEnum(&self->enum_));
+        case CI_DECL_KIND_FUNCTION:
+            return format__String(
+              "CIDecl{{ kind = {s}, storage_class_flag = {s}, function = {Sr} "
+              "}",
+              to_string__Debug__CIDeclKind(self->kind),
+              to_string__Debug__CIStorageClass(self->storage_class_flag),
+              to_string__Debug__CIDeclFunction(&self->function));
+        case CI_DECL_KIND_STRUCT:
+            return format__String(
+              "CIDecl{{ kind = {s}, storage_class_flag = {s}, struct_ = {Sr} "
+              "}",
+              to_string__Debug__CIDeclKind(self->kind),
+              to_string__Debug__CIStorageClass(self->storage_class_flag),
+              to_string__Debug__CIDeclStruct(&self->struct_));
+        case CI_DECL_KIND_VARIABLE:
+            return format__String(
+              "CIDecl{{ kind = {s}, storage_class_flag = {s}, variable = {Sr} "
+              "}",
+              to_string__Debug__CIDeclKind(self->kind),
+              to_string__Debug__CIStorageClass(self->storage_class_flag),
+              to_string__Debug__CIDeclVariable(&self->variable));
+        case CI_DECL_KIND_UNION:
+            return format__String(
+              "CIDecl{{ kind = {s}, storage_class_flag = {s}, union_ = {Sr} "
+              "}",
+              to_string__Debug__CIDeclKind(self->kind),
+              to_string__Debug__CIStorageClass(self->storage_class_flag),
+              to_string__Debug__CIDeclUnion(&self->union_));
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+VARIANT_DESTRUCTOR(CIDecl, enum, CIDecl *self)
+{
+    FREE(CIDeclEnum, &self->enum_);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIDecl, function, CIDecl *self)
+{
+    FREE(CIDeclFunction, &self->function);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIDecl, struct, CIDecl *self)
+{
+    FREE(CIDeclStruct, &self->struct_);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIDecl, union, CIDecl *self)
+{
+    FREE(CIDeclUnion, &self->union_);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIDecl, variable, CIDecl *self)
+{
+    FREE(CIDeclVariable, &self->variable);
+    lily_free(self);
+}
+
+DESTRUCTOR(CIDecl, CIDecl *self)
+{
+    switch (self->kind) {
+        case CI_DECL_KIND_ENUM:
+            FREE_VARIANT(CIDecl, enum, self);
+            break;
+        case CI_DECL_KIND_FUNCTION:
+            FREE_VARIANT(CIDecl, function, self);
+            break;
+        case CI_DECL_KIND_STRUCT:
+            FREE_VARIANT(CIDecl, struct, self);
+            break;
+        case CI_DECL_KIND_UNION:
+            FREE_VARIANT(CIDecl, union, self);
+            break;
+        case CI_DECL_KIND_VARIABLE:
+            FREE_VARIANT(CIDecl, variable, self);
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, CIExprBinaryKind, enum CIExprBinaryKind self)
+{
+    switch (self) {
+        case CI_EXPR_BINARY_KIND_ASSIGN:
+            return "CI_EXPR_BINARY_KIND_ASSIGN";
+        case CI_EXPR_BINARY_KIND_ASSIGN_ADD:
+            return "CI_EXPR_BINARY_KIND_ASSIGN_ADD";
+        case CI_EXPR_BINARY_KIND_ASSIGN_SUB:
+            return "CI_EXPR_BINARY_KIND_ASSIGN_SUB";
+        case CI_EXPR_BINARY_KIND_ASSIGN_MUL:
+            return "CI_EXPR_BINARY_KIND_ASSIGN_MUL";
+        case CI_EXPR_BINARY_KIND_ASSIGN_DIV:
+            return "CI_EXPR_BINARY_KIND_ASSIGN_DIV";
+        case CI_EXPR_BINARY_KIND_ASSIGN_MOD:
+            return "CI_EXPR_BINARY_KIND_ASSIGN_MOD";
+        case CI_EXPR_BINARY_KIND_ASSIGN_BIT_AND:
+            return "CI_EXPR_BINARY_KIND_ASSIGN_BIT_AND";
+        case CI_EXPR_BINARY_KIND_ASSIGN_BIT_OR:
+            return "CI_EXPR_BINARY_KIND_ASSIGN_BIT_OR";
+        case CI_EXPR_BINARY_KIND_ASSIGN_XOR:
+            return "CI_EXPR_BINARY_KIND_ASSIGN_XOR";
+        case CI_EXPR_BINARY_KIND_ASSIGN_BIT_LSHIFT:
+            return "CI_EXPR_BINARY_KIND_ASSIGN_BIT_LSHIFT";
+        case CI_EXPR_BINARY_KIND_ASSIGN_BIT_RSHIFT:
+            return "CI_EXPR_BINARY_KIND_ASSIGN_BIT_RSHIFT";
+        case CI_EXPR_BINARY_KIND_ADD:
+            return "CI_EXPR_BINARY_KIND_ADD";
+        case CI_EXPR_BINARY_KIND_SUB:
+            return "CI_EXPR_BINARY_KIND_SUB";
+        case CI_EXPR_BINARY_KIND_MUL:
+            return "CI_EXPR_BINARY_KIND_MUL";
+        case CI_EXPR_BINARY_KIND_DIV:
+            return "CI_EXPR_BINARY_KIND_DIV";
+        case CI_EXPR_BINARY_KIND_MOD:
+            return "CI_EXPR_BINARY_KIND_MOD";
+        case CI_EXPR_BINARY_KIND_BIT_AND:
+            return "CI_EXPR_BINARY_KIND_BIT_AND";
+        case CI_EXPR_BINARY_KIND_BIT_OR:
+            return "CI_EXPR_BINARY_KIND_BIT_OR";
+        case CI_EXPR_BINARY_KIND_BIT_XOR:
+            return "CI_EXPR_BINARY_KIND_BIT_XOR";
+        case CI_EXPR_BINARY_KIND_BIT_LSHIFT:
+            return "CI_EXPR_BINARY_KIND_BIT_LSHIFT";
+        case CI_EXPR_BINARY_KIND_BIT_RSHIFT:
+            return "CI_EXPR_BINARY_KIND_BIT_RSHIFT";
+        case CI_EXPR_BINARY_KIND_AND:
+            return "CI_EXPR_BINARY_KIND_AND";
+        case CI_EXPR_BINARY_KIND_OR:
+            return "CI_EXPR_BINARY_KIND_OR";
+        case CI_EXPR_BINARY_KIND_EQ:
+            return "CI_EXPR_BINARY_KIND_EQ";
+        case CI_EXPR_BINARY_KIND_NE:
+            return "CI_EXPR_BINARY_KIND_NE";
+        case CI_EXPR_BINARY_KIND_LESS:
+            return "CI_EXPR_BINARY_KIND_LESS";
+        case CI_EXPR_BINARY_KIND_GREATER:
+            return "CI_EXPR_BINARY_KIND_GREATER";
+        case CI_EXPR_BINARY_KIND_LESS_EQ:
+            return "CI_EXPR_BINARY_KIND_LESS_EQ";
+        case CI_EXPR_BINARY_KIND_GREATER_EQ:
+            return "CI_EXPR_BINARY_KIND_GREATER_EQ";
+        case CI_EXPR_BINARY_KIND_DOT:
+            return "CI_EXPR_BINARY_KIND_DOT";
+        case CI_EXPR_BINARY_KIND_ARROW:
+            return "CI_EXPR_BINARY_KIND_ARROW";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIExprBinary, const CIExprBinary *self)
+{
+    return format__String(
+      "CIExprBinary{{ kind = {s}, left = {Sr}, right = {Sr} }",
+      to_string__Debug__CIExprBinaryKind(self->kind),
+      to_string__Debug__CIExpr(self->left),
+      to_string__Debug__CIExpr(self->right));
+}
+#endif
+
+DESTRUCTOR(CIExprBinary, const CIExprBinary *self)
+{
+    FREE(CIExpr, self->left);
+    FREE(CIExpr, self->right);
+}
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, CIExprUnaryKind, enum CIExprUnaryKind self)
+{
+    switch (self) {
+        case CI_EXPR_UNARY_KIND_PRE_INCREMENT:
+            return "CI_EXPR_UNARY_KIND_PRE_INCREMENT";
+        case CI_EXPR_UNARY_KIND_PRE_DECREMENT:
+            return "CI_EXPR_UNARY_KIND_PRE_DECREMENT";
+        case CI_EXPR_UNARY_KIND_POST_INCREMENT:
+            return "CI_EXPR_UNARY_KIND_POST_INCREMENT";
+        case CI_EXPR_UNARY_KIND_POST_DECREMENT:
+            return "CI_EXPR_UNARY_KIND_POST_DECREMENT";
+        case CI_EXPR_UNARY_KIND_POSITIVE:
+            return "CI_EXPR_UNARY_KIND_POSITIVE";
+        case CI_EXPR_UNARY_KIND_NEGATIVE:
+            return "CI_EXPR_UNARY_KIND_NEGATIVE";
+        case CI_EXPR_UNARY_KIND_BIT_NOT:
+            return "CI_EXPR_UNARY_KIND_BIT_NOT";
+        case CI_EXPR_UNARY_KIND_NOT:
+            return "CI_EXPR_UNARY_KIND_NOT";
+        case CI_EXPR_UNARY_KIND_DEREFERENCE:
+            return "CI_EXPR_UNARY_KIND_DEREFERENCE";
+        case CI_EXPR_UNARY_KIND_REF:
+            return "CI_EXPR_UNARY_KIND_REF";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIExprUnary, const CIExprUnary *self)
+{
+    return format__String("CIExprUnary{{ kind = {s}, expr = {Sr} }",
+                          to_string__Debug__CIExprUnaryKind(self->kind),
+                          to_string__Debug__CIExpr(self->expr));
+}
+#endif
+
+DESTRUCTOR(CIExprUnary, const CIExprUnary *self)
+{
+    FREE(CIExpr, self->expr);
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIExprTernary, const CIExprTernary *self)
+{
+    return format__String(
+      "CIExprTernary{{ cond = {Sr}, if_ = {Sr}, else_ = {Sr} }",
+      to_string__Debug__CIExpr(self->cond),
+      to_string__Debug__CIExpr(self->if_),
+      to_string__Debug__CIExpr(self->else_));
+}
+#endif
+
+DESTRUCTOR(CIExprTernary, const CIExprTernary *self)
+{
+    FREE(CIExpr, self->cond);
+    FREE(CIExpr, self->if_);
+    FREE(CIExpr, self->else_);
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIExprCast, const CIExprCast *self)
+{
+    return format__String("CIExprCast{{ data_type = {Sr}, expr = {Sr} }",
+                          to_string__Debug__CIDataType(self->data_type),
+                          to_string__Debug__CIExpr(self->expr));
+}
+#endif
+
+DESTRUCTOR(CIExprCast, const CIExprCast *self)
+{
+    FREE(CIDataType, self->data_type);
+    FREE(CIExpr, self->expr);
+}
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, CIExprKind, enum CIExprKind self)
+{
+    switch (self) {
+        case CI_EXPR_KIND_ALIGNOF:
+            return "CI_EXPR_KIND_ALIGNOF";
+        case CI_EXPR_KIND_BINARY:
+            return "CI_EXPR_KIND_BINARY";
+        case CI_EXPR_KIND_CAST:
+            return "CI_EXPR_KIND_CAST";
+        case CI_EXPR_KIND_DATA_TYPE:
+            return "CI_EXPR_KIND_DATA_TYPE";
+        case CI_EXPR_KIND_SIZEOF:
+            return "CI_EXPR_KIND_SIZEOF";
+        case CI_EXPR_KIND_TERNARY:
+            return "CI_EXPR_KIND_TERNARY";
+        case CI_EXPR_KIND_UNARY:
+            return "CI_EXPR_KIND_UNARY";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, alignof, CIDataType *alignof_)
+{
+    CIExpr *self = lily_malloc(sizeof(CIExpr));
+
+    self->kind = CI_EXPR_KIND_ALIGNOF;
+    self->alignof_ = alignof_;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, binary, CIExprBinary binary)
+{
+    CIExpr *self = lily_malloc(sizeof(CIExpr));
+
+    self->kind = CI_EXPR_KIND_BINARY;
+    self->binary = binary;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, cast, CIExprCast cast)
+{
+    CIExpr *self = lily_malloc(sizeof(CIExpr));
+
+    self->kind = CI_EXPR_KIND_CAST;
+    self->cast = cast;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, data_type, CIDataType *data_type)
+{
+    CIExpr *self = lily_malloc(sizeof(CIExpr));
+
+    self->kind = CI_EXPR_KIND_DATA_TYPE;
+    self->data_type = data_type;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, sizeof, CIExpr *sizeof_)
+{
+    CIExpr *self = lily_malloc(sizeof(CIExpr));
+
+    self->kind = CI_EXPR_KIND_SIZEOF;
+    self->sizeof_ = sizeof_;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, ternary, CIExprTernary ternary)
+{
+    CIExpr *self = lily_malloc(sizeof(CIExpr));
+
+    self->kind = CI_EXPR_KIND_TERNARY;
+    self->ternary = ternary;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, unary, CIExprUnary unary)
+{
+    CIExpr *self = lily_malloc(sizeof(CIExpr));
+
+    self->kind = CI_EXPR_KIND_UNARY;
+    self->unary = unary;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIExpr, const CIExpr *self)
+{
+    switch (self->kind) {
+        case CI_EXPR_KIND_ALIGNOF:
+            return format__String("CIExpr{{ kind = {s}, alignof_ = {Sr} }",
+                                  to_string__Debug__CIExprKind(self->kind),
+                                  to_string__Debug__CIDataType(self->alignof_));
+        case CI_EXPR_KIND_BINARY:
+            return format__String(
+              "CIExpr{{ kind = {s}, binary = {Sr} }",
+              to_string__Debug__CIExprKind(self->kind),
+              to_string__Debug__CIExprBinary(&self->binary));
+        case CI_EXPR_KIND_CAST:
+            return format__String("CIExpr{{ kind = {s}, cast = {Sr} }",
+                                  to_string__Debug__CIExprKind(self->kind),
+                                  to_string__Debug__CIExprCast(&self->cast));
+        case CI_EXPR_KIND_DATA_TYPE:
+            return format__String(
+              "CIExpr{{ kind = {s}, data_type = {Sr} }",
+              to_string__Debug__CIExprKind(self->kind),
+              to_string__Debug__CIDataType(self->data_type));
+        case CI_EXPR_KIND_SIZEOF:
+            return format__String("CIExpr{{ kind = {s}, sizeof_ = {Sr} }",
+                                  to_string__Debug__CIExprKind(self->kind),
+                                  to_string__Debug__CIExpr(self->sizeof_));
+        case CI_EXPR_KIND_TERNARY:
+            return format__String(
+              "CIExpr{{ kind = {s}, ternary = {Sr} }",
+              to_string__Debug__CIExprKind(self->kind),
+              to_string__Debug__CIExprTernary(&self->ternary));
+        case CI_EXPR_KIND_UNARY:
+            return format__String("CIExpr{{ kind = {s}, unary = {Sr} }",
+                                  to_string__Debug__CIExprKind(self->kind),
+                                  to_string__Debug__CIExprUnary(&self->unary));
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+VARIANT_DESTRUCTOR(CIExpr, alignof, CIExpr *self)
+{
+    FREE(CIDataType, self->alignof_);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIExpr, binary, CIExpr *self)
+{
+    FREE(CIExprBinary, &self->binary);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIExpr, cast, CIExpr *self)
+{
+    FREE(CIExprCast, &self->cast);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIExpr, data_type, CIExpr *self)
+{
+    FREE(CIDataType, self->data_type);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIExpr, sizeof, CIExpr *self)
+{
+    FREE(CIExpr, self->sizeof_);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIExpr, ternary, CIExpr *self)
+{
+    FREE(CIExprTernary, &self->ternary);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIExpr, unary, CIExpr *self)
+{
+    FREE(CIExprUnary, &self->unary);
+    lily_free(self);
+}
+
+DESTRUCTOR(CIExpr, CIExpr *self)
+{
+    switch (self->kind) {
+        case CI_EXPR_KIND_ALIGNOF:
+            FREE_VARIANT(CIExpr, alignof, self);
+            break;
+        case CI_EXPR_KIND_BINARY:
+            FREE_VARIANT(CIExpr, binary, self);
+            break;
+        case CI_EXPR_KIND_CAST:
+            FREE_VARIANT(CIExpr, cast, self);
+            break;
+        case CI_EXPR_KIND_DATA_TYPE:
+            FREE_VARIANT(CIExpr, data_type, self);
+            break;
+        case CI_EXPR_KIND_SIZEOF:
+            FREE_VARIANT(CIExpr, sizeof, self);
+            break;
+        case CI_EXPR_KIND_TERNARY:
+            FREE_VARIANT(CIExpr, ternary, self);
+            break;
+        case CI_EXPR_KIND_UNARY:
+            FREE_VARIANT(CIExpr, unary, self);
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, CIStmtKind, enum CIStmtKind self)
+{
+    switch (self) {
+        case CI_STMT_KIND_BREAK:
+            return "CI_STMT_KIND_BREAK";
+        case CI_STMT_KIND_CONTINUE:
+            return "CI_STMT_KIND_CONTINUE";
+        case CI_STMT_KIND_DO_WHILE:
+            return "CI_STMT_KIND_DO_WHILE";
+        case CI_STMT_KIND_FOR:
+            return "CI_STMT_KIND_FOR";
+        case CI_STMT_KIND_GOTO:
+            return "CI_STMT_KIND_GOTO";
+        case CI_STMT_KIND_IF:
+            return "CI_STMT_KIND_IF";
+        case CI_STMT_KIND_RETURN:
+            return "CI_STMT_KIND_RETURN";
+        case CI_STMT_KIND_SWITCH:
+            return "CI_STMT_KIND_SWITCH";
+        case CI_STMT_KIND_WHILE:
+            return "CI_STMT_KIND_WHILE";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIStmtDoWhile, const CIStmtDoWhile *self)
+{
+    String *res = format__String("CIStmtDoWhile{{ body =");
+
+    DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
+
+    {
+        String *s = format__String(", cond = {Sr} }",
+                                   to_string__Debug__CIExpr(self->cond));
+
+        APPEND_AND_FREE(res, s);
+    }
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CIStmtDoWhile, const CIStmtDoWhile *self)
+{
+    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, CIDeclFunctionItem);
+    FREE(Vec, self->body);
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIStmtFor, const CIStmtFor *self)
+{
+    String *res = format__String("CIStmtFor{ body =");
+
+    DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
+
+    push_str__String(res, ", init_clauses =");
+
+    if (self->init_clauses) {
+        DEBUG_VEC_STRING(self->init_clauses, res, CIDeclFunctionItem);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, ", exprs1 =");
+
+    if (self->exprs1) {
+        DEBUG_VEC_STRING(self->exprs1, res, CIExpr);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, ", exprs2 =");
+
+    if (self->exprs2) {
+        DEBUG_VEC_STRING(self->exprs2, res, CIExpr);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CIStmtFor, const CIStmtFor *self)
+{
+    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, CIDeclFunctionItem);
+    FREE(Vec, self->body);
+
+    if (self->init_clauses) {
+        FREE_BUFFER_ITEMS(self->init_clauses->buffer,
+                          self->init_clauses->len,
+                          CIDeclFunctionItem);
+        FREE(Vec, self->init_clauses);
+    }
+
+    if (self->exprs1) {
+        FREE_BUFFER_ITEMS(self->exprs1->buffer, self->exprs1->len, CIExpr);
+        FREE(Vec, self->exprs1);
+    }
+
+    if (self->exprs2) {
+        FREE_BUFFER_ITEMS(self->exprs2->buffer, self->exprs2->len, CIExpr);
+        FREE(Vec, self->exprs2);
+    }
+}
+
+CONSTRUCTOR(CIStmtIfBranch *, CIStmtIfBranch, CIExpr *cond, Vec *body)
+{
+    CIStmtIfBranch *self = lily_malloc(sizeof(CIStmtIfBranch));
+
+    self->cond = cond;
+    self->body = body;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIStmtIfBranch, const CIStmtIfBranch *self)
+{
+    String *res = format__String("CIStmtIfBranch{{ body =");
+
+    DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
+
+    {
+        String *s = format__String(", cond = {Sr} }",
+                                   to_string__Debug__CIExpr(self->cond));
+
+        APPEND_AND_FREE(res, s);
+    }
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CIStmtIfBranch, CIStmtIfBranch *self)
+{
+    FREE(CIExpr, self->cond);
+    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, CIDeclFunctionItem);
+    FREE(Vec, self->body);
+    lily_free(self);
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIStmtIf, const CIStmtIf *self)
+{
+    String *res = format__String("CIStmtIf{{ if = {Sr}",
+                                 to_string__Debug__CIStmtIfBranch(self->if_));
+
+    push_str__String(res, ", else_ifs =");
+
+    if (self->else_ifs) {
+        DEBUG_VEC_STRING(self->else_ifs, res, CIStmtIfBranch);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, ", else_ =");
+
+    if (self->else_) {
+        DEBUG_VEC_STRING(self->else_, res, CIDeclFunctionItem);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CIStmtIf, const CIStmtIf *self)
+{
+    FREE(CIStmtIfBranch, self->if_);
+
+    if (self->else_ifs) {
+        FREE_BUFFER_ITEMS(
+          self->else_ifs->buffer, self->else_ifs->len, CIStmtIfBranch);
+        FREE(Vec, self->else_ifs);
+    }
+
+    if (self->else_) {
+        FREE_BUFFER_ITEMS(
+          self->else_->buffer, self->else_->len, CIDeclFunctionItem);
+        FREE(Vec, self->else_);
+    }
+}
+
+CONSTRUCTOR(CIStmtSwitchCase *, CIStmtSwitchCase, CIExpr *value, Vec *body)
+{
+    CIStmtSwitchCase *self = lily_malloc(sizeof(CIStmtSwitchCase));
+
+    self->value = value;
+    self->body = body;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIStmtSwitchCase, const CIStmtSwitchCase *self)
+{
+    String *res = format__String("CIStmtSwitchCase{{ body =");
+
+    DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
+
+    {
+        String *s = format__String(", value = {Sr} }",
+                                   to_string__Debug__CIExpr(self->value));
+
+        APPEND_AND_FREE(res, s);
+    }
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CIStmtSwitchCase, CIStmtSwitchCase *self)
+{
+    FREE(CIExpr, self->value);
+    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, CIDeclFunctionItem);
+    FREE(Vec, self->body);
+    lily_free(self);
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIStmtSwitch, const CIStmtSwitch *self)
+{
+    String *res = format__String("CIStmtSwitch{{ cases =");
+
+    DEBUG_VEC_STRING(self->cases, res, CIStmtSwitchCase);
+
+    {
+        String *s = format__String(", expr = {Sr} }",
+                                   to_string__Debug__CIExpr(self->expr));
+
+        APPEND_AND_FREE(res, s);
+    }
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CIStmtSwitch, const CIStmtSwitch *self)
+{
+    FREE_BUFFER_ITEMS(self->cases->buffer, self->cases->len, CIStmtSwitchCase);
+    FREE(Vec, self->cases);
+    FREE(CIExpr, self->expr);
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIStmtWhile, const CIStmtWhile *self)
+{
+    String *res = format__String("CIStmtWhile{{ body =");
+
+    DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
+
+    {
+        String *s = format__String(", cond = {Sr} }",
+                                   to_string__Debug__CIExpr(self->cond));
+
+        APPEND_AND_FREE(res, s);
+    }
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CIStmtWhile, const CIStmtWhile *self)
+{
+    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, CIDeclFunctionItem);
+    FREE(Vec, self->body);
+    FREE(CIExpr, self->cond);
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIStmt, const CIStmt *self)
+{
+    switch (self->kind) {
+        case CI_STMT_KIND_BREAK:
+        case CI_STMT_KIND_CONTINUE:
+            return format__String("CIStmt{ kind = {s} }",
+                                  to_string__Debug__CIStmtKind(self->kind));
+        case CI_STMT_KIND_DO_WHILE:
+            return format__String(
+              "CIStmt{{ kind = {s}, do_while = {Sr} }",
+              to_string__Debug__CIStmtKind(self->kind),
+              to_string__Debug__CIStmtDoWhile(&self->do_while));
+        case CI_STMT_KIND_FOR:
+            return format__String("CIStmt{{ kind = {s}, for_ = {Sr} }",
+                                  to_string__Debug__CIStmtKind(self->kind),
+                                  to_string__Debug__CIStmtFor(&self->for_));
+        case CI_STMT_KIND_GOTO:
+            return format__String("CIStmt{{ kind = {s}, goto_ = {S} }",
+                                  to_string__Debug__CIStmtKind(self->kind),
+                                  self->goto_);
+        case CI_STMT_KIND_IF:
+            return format__String("CIStmt{{ kind = {s}, if_ = {Sr} }",
+                                  to_string__Debug__CIStmtKind(self->kind),
+                                  to_string__Debug__CIStmtIf(&self->if_));
+        case CI_STMT_KIND_RETURN:
+            return format__String("CIStmt{ kind = {s}, return_ = {Sr} }",
+                                  to_string__Debug__CIStmtKind(self->kind),
+                                  to_string__Debug__CIExpr(self->return_));
+        case CI_STMT_KIND_SWITCH:
+            return format__String(
+              "CIStmt{{ kind = {s}, switch_ = {Sr} }",
+              to_string__Debug__CIStmtKind(self->kind),
+              to_string__Debug__CIStmtSwitch(&self->switch_));
+        case CI_STMT_KIND_WHILE:
+            return format__String("CIStmt{{ kind = {s}, while_ = {Sr} }",
+                                  to_string__Debug__CIStmtKind(self->kind),
+                                  to_string__Debug__CIStmtWhile(&self->while_));
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+VARIANT_DESTRUCTOR(CIStmt, do_while, const CIStmt *self)
+{
+    FREE(CIStmtDoWhile, &self->do_while);
+}
+
+VARIANT_DESTRUCTOR(CIStmt, for, const CIStmt *self)
+{
+    FREE(CIStmtFor, &self->for_);
+}
+
+VARIANT_DESTRUCTOR(CIStmt, if, const CIStmt *self)
+{
+    FREE(CIStmtIf, &self->if_);
+}
+
+VARIANT_DESTRUCTOR(CIStmt, return, const CIStmt *self)
+{
+    FREE(CIExpr, self->return_);
+}
+
+VARIANT_DESTRUCTOR(CIStmt, switch, const CIStmt *self)
+{
+    FREE(CIStmtSwitch, &self->switch_);
+}
+
+VARIANT_DESTRUCTOR(CIStmt, while, const CIStmt *self)
+{
+    FREE(CIStmtWhile, &self->while_);
+}
+
+DESTRUCTOR(CIStmt, const CIStmt *self)
+{
+    switch (self->kind) {
+        case CI_STMT_KIND_BREAK:
+        case CI_STMT_KIND_CONTINUE:
+        case CI_STMT_KIND_GOTO:
+            break;
+        case CI_STMT_KIND_DO_WHILE:
+            FREE_VARIANT(CIStmt, do_while, self);
+            break;
+        case CI_STMT_KIND_FOR:
+            FREE_VARIANT(CIStmt, for, self);
+            break;
+        case CI_STMT_KIND_IF:
+            FREE_VARIANT(CIStmt, if, self);
+            break;
+        case CI_STMT_KIND_RETURN:
+            FREE_VARIANT(CIStmt, return, self);
+            break;
+        case CI_STMT_KIND_SWITCH:
+            FREE_VARIANT(CIStmt, switch, self);
+            break;
+        case CI_STMT_KIND_WHILE:
+            FREE_VARIANT(CIStmt, while, self);
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               CIDeclFunctionItemKind,
+               enum CIDeclFunctionItemKind self)
+{
+    switch (self) {
+        case CI_DECL_FUNCTION_ITEM_KIND_DECL:
+            return "CI_DECL_FUNCTION_ITEM_KIND_DECL";
+        case CI_DECL_FUNCTION_ITEM_KIND_EXPR:
+            return "CI_DECL_FUNCTION_ITEM_KIND_EXPR";
+        case CI_DECL_FUNCTION_ITEM_KIND_STMT:
+            return "CI_DECL_FUNCTION_ITEM_KIND_STMT";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+VARIANT_CONSTRUCTOR(CIDeclFunctionItem *,
+                    CIDeclFunctionItem,
+                    decl,
+                    CIDecl *decl)
+{
+    CIDeclFunctionItem *self = lily_malloc(sizeof(CIDeclFunctionItem));
+
+    self->kind = CI_DECL_FUNCTION_ITEM_KIND_DECL;
+    self->decl = decl;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIDeclFunctionItem *,
+                    CIDeclFunctionItem,
+                    expr,
+                    CIExpr *expr)
+{
+    CIDeclFunctionItem *self = lily_malloc(sizeof(CIDeclFunctionItem));
+
+    self->kind = CI_DECL_FUNCTION_ITEM_KIND_EXPR;
+    self->expr = expr;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIDeclFunctionItem *, CIDeclFunctionItem, stmt, CIStmt stmt)
+{
+    CIDeclFunctionItem *self = lily_malloc(sizeof(CIDeclFunctionItem));
+
+    self->kind = CI_DECL_FUNCTION_ITEM_KIND_STMT;
+    self->stmt = stmt;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclFunctionItem, const CIDeclFunctionItem *self)
+{
+    switch (self->kind) {
+        case CI_DECL_FUNCTION_ITEM_KIND_DECL:
+            return format__String(
+              "CIDeclFunctionItem{{ kind = {s}, decl = {Sr} }",
+              to_string__Debug__CIDeclFunctionItemKind(self->kind),
+              to_string__Debug__CIDecl(self->decl));
+        case CI_DECL_FUNCTION_ITEM_KIND_EXPR:
+            return format__String(
+              "CIDeclFunctionItem{{ kind = {s}, expr = {Sr} }",
+              to_string__Debug__CIDeclFunctionItemKind(self->kind),
+              to_string__Debug__CIExpr(self->expr));
+        case CI_DECL_FUNCTION_ITEM_KIND_STMT:
+            return format__String(
+              "CIDeclFunctionItem{{ kind = {s}, stmt = {Sr} }",
+              to_string__Debug__CIDeclFunctionItemKind(self->kind),
+              to_string__Debug__CIStmt(&self->stmt));
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+VARIANT_DESTRUCTOR(CIDeclFunctionItem, decl, CIDeclFunctionItem *self)
+{
+    FREE(CIDecl, self->decl);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIDeclFunctionItem, expr, CIDeclFunctionItem *self)
+{
+    FREE(CIExpr, self->expr);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIDeclFunctionItem, stmt, CIDeclFunctionItem *self)
+{
+    FREE(CIStmt, &self->stmt);
+    lily_free(self);
+}
+
+DESTRUCTOR(CIDeclFunctionItem, CIDeclFunctionItem *self)
+{
+    switch (self->kind) {
+        case CI_DECL_FUNCTION_ITEM_KIND_DECL:
+            FREE_VARIANT(CIDeclFunctionItem, decl, self);
+            break;
+        case CI_DECL_FUNCTION_ITEM_KIND_EXPR:
+            FREE_VARIANT(CIDeclFunctionItem, expr, self);
+            break;
+        case CI_DECL_FUNCTION_ITEM_KIND_STMT:
+            FREE_VARIANT(CIDeclFunctionItem, stmt, self);
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
