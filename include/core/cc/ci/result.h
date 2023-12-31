@@ -29,7 +29,11 @@
 #include <base/macros.h>
 
 #include <core/cc/ci/ast.h>
+#include <core/cc/ci/features.h>
+#include <core/cc/ci/parser.h>
+#include <core/cc/ci/scanner.h>
 #include <core/cc/ci/token.h>
+#include <core/shared/file.h>
 
 typedef struct CIResultFile CIResultFile;
 
@@ -103,17 +107,32 @@ inline DESTRUCTOR(CIResultInclude, CIResultInclude *self)
 // This structure represents the organization of an *.hci or *.ci file.
 typedef struct CIResultFile
 {
-    String *filename;
+    String *filename_result;
+    File file_input;
     HashMap *defines;  // HashMap<Vec<CIResultDefine*>*>*
     HashMap *includes; // HashMap<CIResultInclude*>*
     HashMap *decls;    // HashMap<CIDecl*>*
+    Usize count_error;
+    CIScanner scanner;
+    CIParser parser;
 } CIResultFile;
 
 /**
  *
  * @brief Construct CIResultFile type.
  */
-CONSTRUCTOR(CIResultFile *, CIResultFile, String *filename);
+CONSTRUCTOR(CIResultFile *,
+            CIResultFile,
+            enum CIStandard standard,
+            String *filename_result,
+            File file_input);
+
+/**
+ *
+ * @brief Run the scanner, parser and the C generator.
+ */
+void
+run__CIResultFile(CIResultFile *self);
 
 /**
  *
@@ -137,6 +156,46 @@ inline CONSTRUCTOR(CIResult, CIResult)
         .headers = NEW(HashMap),
         .sources = NEW(HashMap),
     };
+}
+
+/**
+ *
+ * @brief Add a header to headers HashMap.
+ */
+inline void
+add_header__CIResult(const CIResult *self, CIResultFile *header)
+{
+    insert__HashMap(self->headers, header->filename_result->buffer, header);
+}
+
+/**
+ *
+ * @brief Add a source to sources HashMap.
+ */
+inline void
+add_source__CIResult(const CIResult *self, CIResultFile *source)
+{
+    insert__HashMap(self->sources, source->filename_result->buffer, source);
+}
+
+/**
+ *
+ * @brief Check if the header is already in the headers HashMap.
+ */
+inline bool
+has_header__CIResult(const CIResult *self, const String *filename_result)
+{
+    return get__HashMap(self->headers, filename_result->buffer);
+}
+
+/**
+ *
+ * @brief Check if the source is already in the sources HashMap.
+ */
+inline bool
+has_source__CIResult(const CIResult *self, const String *filename_result)
+{
+    return get__HashMap(self->sources, filename_result->buffer);
 }
 
 /**

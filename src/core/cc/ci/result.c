@@ -63,27 +63,48 @@ CONSTRUCTOR(CIResultInclude *,
     return self;
 }
 
-CONSTRUCTOR(CIResultFile *, CIResultFile, String *filename)
+CONSTRUCTOR(CIResultFile *,
+            CIResultFile,
+            enum CIStandard standard,
+            String *filename_result,
+            File file_input)
 {
     CIResultFile *self = lily_malloc(sizeof(CIResultFile));
 
-    self->filename = filename;
+    self->filename_result = filename_result;
+    self->file_input = file_input;
     self->defines = NEW(HashMap);
     self->includes = NEW(HashMap);
     self->decls = NEW(HashMap);
+    self->count_error = 0;
+    self->scanner =
+      NEW(CIScanner,
+          NEW(Source, NEW(Cursor, self->file_input.content), &self->file_input),
+          &self->count_error,
+          standard);
+    self->parser = NEW(CIParser, self, &self->scanner);
 
     return self;
 }
 
+void
+run__CIResultFile(CIResultFile *self)
+{
+    run__CIScanner(&self->scanner, false);
+    run__CIParser(&self->parser);
+}
+
 DESTRUCTOR(CIResultFile, CIResultFile *self)
 {
-    FREE(String, self->filename);
+    FREE(String, self->filename_result);
+    lily_free(self->file_input.content);
     FREE_HASHMAP_VALUES(self->defines, CIResultDefineVec);
     FREE(HashMap, self->defines);
     FREE_HASHMAP_VALUES(self->includes, CIResultInclude);
     FREE(HashMap, self->includes);
     FREE_HASHMAP_VALUES(self->decls, CIDecl);
     FREE(HashMap, self->decls);
+    FREE(CIScanner, &self->scanner);
     lily_free(self);
 }
 
