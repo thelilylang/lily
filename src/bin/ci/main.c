@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+#include <core/cc/ci/parser.h>
+#include <core/cc/ci/result.h>
 #include <core/cc/ci/scanner.h>
 
 #include <stdio.h>
@@ -30,7 +32,7 @@ int
 main(int argc, char **argv)
 {
     // TODO: implement a real CLI, like in bin/lily/main.c, bin/lilyc/main.c
-    if (argc == 3) {
+    if (argc >= 3) {
         enum CIStandard standard;
 
         if (!strcmp(argv[1], "c89")) {
@@ -49,19 +51,58 @@ main(int argc, char **argv)
             UNREACHABLE("unknown standard");
         }
 
-        char *file_content = read_file__File(argv[2]);
-        Usize count_error = 0;
-        File file = NEW(File, argv[2], file_content);
-        CIScanner scanner = NEW(CIScanner,
-                                NEW(Source, NEW(Cursor, file_content), &file),
-                                &count_error,
-                                standard);
+        CIResult result = NEW(CIResult);
 
-        run__CIScanner(&scanner, true);
+        for (Usize i = 2; i < argc; ++i) {
+            char *extension = get_extension__File(argv[i]);
+            String *filename_result = get_filename__File(argv[i]);
+            bool is_header = false;
 
-        FREE(CIScanner, &scanner);
-        FREE(File, &file);
+            if (!strcmp(extension, ".ci")) {
+                push_str__String(filename_result, ".c");
+            } else if (!strcmp(extension, ".hci")) {
+                push_str__String(filename_result, ".h");
+                is_header = true;
+            } else {
+                lily_free(extension);
+                FREE(String, filename_result);
+                FREE(CIResult, &result);
+
+                FAILED("unknown extension, expected `.ci` or `.hci`");
+            }
+
+            const bool has_header =
+              is_header ? has_header__CIResult(&result, filename_result)
+                        : false;
+            const bool has_source =
+              !is_header ? has_source__CIResult(&result, filename_result)
+                         : false;
+
+            if (has_header || has_source) {
+                lily_free(extension);
+                FREE(String, filename_result);
+
+                continue;
+            }
+
+            char *file_content = read_file__File(argv[i]);
+            File file_input = NEW(File, argv[i], file_content);
+            CIResultFile *result_file =
+              NEW(CIResultFile, standard, filename_result, file_input);
+
+            run__CIResultFile(result_file);
+
+            if (is_header) {
+                add_header__CIResult(&result, result_file);
+            } else {
+                add_source__CIResult(&result, result_file);
+            }
+
+            lily_free(extension);
+        }
+
+        FREE(CIResult, &result);
     } else {
-        printf("ci [standard] [ci_file]\n");
+        printf("ci [standard] [ci_files...]\n");
     }
 }
