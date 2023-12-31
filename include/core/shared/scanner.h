@@ -73,6 +73,28 @@ previous_char__Scanner(Scanner *self)
 
 /**
  *
+ * @brief Check if the current is space (new line, tab, ...).
+ */
+inline bool
+is_space__Scanner(Scanner *self)
+{
+    return isspace(self->source.cursor.current);
+}
+
+/**
+ *
+ * @brief Check if the peeked character is space (new line, tab, ...).
+ * @param c const char*?
+ */
+inline bool
+is_space_with_peeked_char__Scanner([[maybe_unused]] const Scanner *,
+                                   const char *c)
+{
+    return c ? isspace(*c) : false;
+}
+
+/**
+ *
  * @brief Skip space (new line, tab, ...).
  */
 void

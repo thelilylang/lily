@@ -49,6 +49,17 @@ next_char__CIScanner(CIScanner *self);
 static inline void
 previous_char__CIScanner(CIScanner *self);
 
+/// @brief Check if the current is space (new line, tab, ...).
+/// @see `include/core/shared/scanner.h`
+static inline bool
+is_space__CIScanner(CIScanner *self);
+
+/// @brief Check if the peeked char is space (new line, tab, ...).
+/// @see `include/core/shared/scanner.h`
+static inline bool
+is_space_with_peeked_char__CIScanner([[maybe_unused]] const CIScanner *self,
+                                     const char *c);
+
 /// @brief Skip space (new line, tab, ...).
 /// @see `include/core/shared/scanner.h`
 static inline void
@@ -109,20 +120,22 @@ is_ident__CIScanner(const CIScanner *self);
 /// peek_char__CIScanner function).
 /// @param c char*?
 static inline bool
-is_digit_with_peeked_char__CIScanner(const CIScanner *self, const char *c);
+is_digit_with_peeked_char__CIScanner([[maybe_unused]] const CIScanner *,
+                                     const char *c);
 
 /// @brief Check if `c` can be a start identifier with peeked char (used
 /// with peek_char__CIScanner function).
 /// @param c char*?
 static inline bool
-is_start_ident_with_peeked_char__CIScanner(const CIScanner *self,
+is_start_ident_with_peeked_char__CIScanner([[maybe_unused]] const CIScanner *,
                                            const char *c);
 
 /// @brief Check if `c` can be an identifier with peeked char (used with
 /// peek_char__CIScanner function).
 /// @param c char*?
 static inline bool
-is_ident_with_peeked_char__CIScanner(const CIScanner *self, const char *c);
+is_ident_with_peeked_char__CIScanner([[maybe_unused]] const CIScanner *,
+                                     const char *c);
 
 /// @brief Check if current can be an hexadecimal.
 static inline bool
@@ -255,6 +268,10 @@ scan_octal_or_binary__CIScanner(CIScanner *self);
 /// @brief Scan number (decimal and float).
 static CIToken *
 scan_num__CIScanner(CIScanner *self);
+
+/// @brief Skip space and backslash
+static void
+skip_space_and_backslash__CIScanner(CIScanner *self);
 
 /// @brief Scan define preprocessor.
 static CIToken *
@@ -931,6 +948,19 @@ previous_char__CIScanner(CIScanner *self)
     return previous_char__Scanner(&self->base);
 }
 
+bool
+is_space__CIScanner(CIScanner *self)
+{
+    return is_space__Scanner(&self->base);
+}
+
+bool
+is_space_with_peeked_char__CIScanner([[maybe_unused]] const CIScanner *self,
+                                     const char *c)
+{
+    return is_space_with_peeked_char__Scanner(&self->base, c);
+}
+
 void
 skip_space__CIScanner(CIScanner *self)
 {
@@ -1013,13 +1043,15 @@ is_ident__CIScanner(const CIScanner *self)
 }
 
 bool
-is_digit_with_peeked_char__CIScanner(const CIScanner *self, const char *c)
+is_digit_with_peeked_char__CIScanner([[maybe_unused]] const CIScanner *,
+                                     const char *c)
 {
     return c >= (char *)'0' && c <= (char *)'9';
 }
 
 bool
-is_start_ident_with_peeked_char__CIScanner(const CIScanner *self, const char *c)
+is_start_ident_with_peeked_char__CIScanner([[maybe_unused]] const CIScanner *,
+                                           const char *c)
 {
     return (c >= (char *)'a' && c <= (char *)'z') ||
            (c >= (char *)'A' && c <= (char *)'Z') || c == (char *)'_' ||
@@ -1027,10 +1059,11 @@ is_start_ident_with_peeked_char__CIScanner(const CIScanner *self, const char *c)
 }
 
 bool
-is_ident_with_peeked_char__CIScanner(const CIScanner *self, const char *c)
+is_ident_with_peeked_char__CIScanner([[maybe_unused]] const CIScanner *,
+                                     const char *c)
 {
-    return is_digit_with_peeked_char__CIScanner(self, c) ||
-           is_start_ident_with_peeked_char__CIScanner(self, c);
+    return is_digit_with_peeked_char__CIScanner(NULL, c) ||
+           is_start_ident_with_peeked_char__CIScanner(NULL, c);
 }
 
 bool
@@ -2285,9 +2318,69 @@ scan_num__CIScanner(CIScanner *self)
                        res);
 }
 
+void
+skip_space_and_backslash__CIScanner(CIScanner *self)
+{
+    bool after_backslash = false;
+
+    while (
+      (is_space__CIScanner(self) || self->base.source.cursor.current == '\\') &&
+      self->base.source.cursor.position < self->base.source.file->len - 1) {
+        if (after_backslash && self->base.source.cursor.current == '\n') {
+            after_backslash = false;
+        } else if (self->base.source.cursor.current == '\\') {
+            after_backslash = true;
+        }
+
+        next_char__CIScanner(self);
+    }
+}
+
 CIToken *
 scan_define_preprocessor__CIScanner(CIScanner *self)
 {
+    Location define_location = clone__Location(&self->base.location);
+    Vec *params = NULL; // Vec<CIToken*>*?
+    String *name = NULL;
+
+    skip_space_and_backslash__CIScanner(self);
+
+    if (is_start_ident__CIScanner(self)) {
+        name = scan_identifier__CIScanner(self);
+        next_char__CIScanner(self);
+    } else {
+        FAILED("expected name");
+    }
+
+    skip_space_and_backslash__CIScanner(self);
+
+    Vec *tokens = NEW(Vec); // Vec<CIToken*>*
+
+    while (self->base.source.cursor.current != '\n') {
+        if (self->base.source.cursor.current == '\\') {
+            next_char__CIScanner(self);
+
+            if (self->base.source.cursor.current == '\n') {
+                next_char__CIScanner(self);
+                continue;
+            } else if (self->base.source.cursor.current == ' ') {
+                // TODO: skip blank space
+            } else {
+                // TODO: skip newline, (maybe spaces).
+            }
+        }
+
+        CIToken *token =
+          get_token__CIScanner(self, NEW(CIScannerContext, false, false));
+
+        if (token) {
+        }
+    }
+
+    return NEW_VARIANT(CIToken,
+                       preprocessor_define,
+                       define_location,
+                       NEW(CITokenPreprocessorDefine, name, params, tokens));
 }
 
 CIToken *
