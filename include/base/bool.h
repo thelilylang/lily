@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2022-2024 ArthurPV
+ * Copyright (c) 2022-2023 ArthurPV
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,37 +22,9 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_BASE_MEMORY_BLOCK_H
-#define LILY_BASE_MEMORY_BLOCK_H
+#ifndef LILY_BASE_BOOL_H
+#define LILY_BASE_BOOL_H
 
-#include <base/memory/api.h>
-#include <base/ptr_mut.h>
+#include <stdbool.h>
 
-typedef struct MemoryBlock MemoryBlock;
-
-/**
- *
- * @brief Impl PtrMut wrapper for MemoryBlock type.
- */
-DEF_PTR_MUT(MemoryBlock);
-
-struct MemoryBlock
-{
-    Usize size;
-    Usize align;
-    PtrMut(MemoryBlock) next; // MemoryBlock*?
-    PtrMut(MemoryBlock) prev; // MemoryBlock*?
-};
-
-/**
- *
- * @brief Construct MemoryBlock type.
- */
-CONSTRUCTOR(MemoryBlock *,
-            MemoryBlock,
-            Ref(MemoryApi) api,
-            Usize size,
-            Usize align,
-            PtrMut(MemoryBlock) prev);
-
-#endif // LILY_BASE_MEMORY_BLOCK_H
+#endif // LILY_BASE_BOOL_H

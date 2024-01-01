@@ -32,10 +32,10 @@
 
 CONSTRUCTOR(MemoryBlock *,
             MemoryBlock,
-            MemoryApi *api,
+            Ref(MemoryApi) api,
             Usize size,
             Usize align,
-            MemoryBlock *prev)
+            PtrMut(MemoryBlock) prev)
 {
     MemoryBlock *self =
       api->alloc(sizeof(MemoryBlock) + size, DEFAULT_ALIGNMENT);

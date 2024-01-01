@@ -28,7 +28,7 @@
 #include <stdlib.h>
 
 void
-destroy__Allocator(Allocator *self)
+destroy__Allocator(RefMut(Allocator) self)
 {
     switch (self->kind) {
         case ALLOCATOR_KIND_ARENA:
@@ -42,7 +42,7 @@ destroy__Allocator(Allocator *self)
 }
 
 void
-reset__Allocator(Allocator *self)
+reset__Allocator(RefMut(Allocator) self)
 {
     switch (self->kind) {
         case ALLOCATOR_KIND_ARENA:

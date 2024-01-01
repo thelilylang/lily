@@ -32,7 +32,7 @@
 #include <stdlib.h>
 
 void *
-alloc__MemoryPage(MemoryPage *self, Usize size, Usize align)
+alloc__MemoryPage(RefMut(MemoryPage) self, Usize size, Usize align)
 {
     void *mem = alloc__MemoryGlobal(size, align);
 
@@ -45,7 +45,7 @@ alloc__MemoryPage(MemoryPage *self, Usize size, Usize align)
 }
 
 void *
-resize__MemoryPage(MemoryPage *self, Usize new_size)
+resize__MemoryPage(RefMut(MemoryPage) self, Usize new_size)
 {
     ASSERT(!self->is_undef && self->mem);
 
@@ -55,7 +55,7 @@ resize__MemoryPage(MemoryPage *self, Usize new_size)
 }
 
 void
-free__MemoryPage(MemoryPage *self)
+free__MemoryPage(RefMut(MemoryPage) self)
 {
     ASSERT(!self->is_undef && self->mem);
 

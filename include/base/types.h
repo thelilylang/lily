@@ -25,6 +25,7 @@
 #ifndef LILY_BASE_TYPES_H
 #define LILY_BASE_TYPES_H
 
+#include <base/bool.h>
 #include <base/platform.h>
 
 #include <stdint.h>
@@ -73,5 +74,20 @@ typedef float Float32;
 typedef double Float64;
 
 typedef uintptr_t Uptr;
+
+typedef bool Bool;
+typedef char Char;
+typedef short Short;
+typedef int Int;
+typedef long Long;
+typedef long long Longlong;
+
+typedef unsigned char Uchar;
+typedef unsigned short Ushort;
+typedef unsigned int Uint;
+typedef unsigned long Ulong;
+typedef unsigned long long Ulonglong;
+
+typedef void *Anyptr;
 
 #endif // LILY_BASE_TYPES_H

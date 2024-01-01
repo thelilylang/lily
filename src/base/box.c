@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2022-2024 ArthurPV
+ * Copyright (c) 2022-2023 ArthurPV
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,37 +22,41 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_BASE_MEMORY_BLOCK_H
-#define LILY_BASE_MEMORY_BLOCK_H
+#include <base/assert.h>
+#include <base/box.h>
+#include <base/macros.h>
+#include <base/new.h>
 
-#include <base/memory/api.h>
-#include <base/ptr_mut.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-typedef struct MemoryBlock MemoryBlock;
+IMPL_BOX(Int8);
+IMPL_BOX(Int16);
+IMPL_BOX(Int32);
+IMPL_BOX(Int64);
 
-/**
- *
- * @brief Impl PtrMut wrapper for MemoryBlock type.
- */
-DEF_PTR_MUT(MemoryBlock);
+IMPL_BOX(Uint8);
+IMPL_BOX(Uint16);
+IMPL_BOX(Uint32);
+IMPL_BOX(Uint64);
 
-struct MemoryBlock
-{
-    Usize size;
-    Usize align;
-    PtrMut(MemoryBlock) next; // MemoryBlock*?
-    PtrMut(MemoryBlock) prev; // MemoryBlock*?
-};
+IMPL_BOX(Isize);
+IMPL_BOX(Usize);
 
-/**
- *
- * @brief Construct MemoryBlock type.
- */
-CONSTRUCTOR(MemoryBlock *,
-            MemoryBlock,
-            Ref(MemoryApi) api,
-            Usize size,
-            Usize align,
-            PtrMut(MemoryBlock) prev);
+IMPL_BOX(Float32);
+IMPL_BOX(Float64);
 
-#endif // LILY_BASE_MEMORY_BLOCK_H
+IMPL_BOX(Uptr);
+
+IMPL_BOX(Bool);
+IMPL_BOX(Char);
+IMPL_BOX(Short);
+IMPL_BOX(Int);
+IMPL_BOX(Long);
+IMPL_BOX(Longlong);
+
+IMPL_BOX(Uchar);
+IMPL_BOX(Ushort);
+IMPL_BOX(Uint);
+IMPL_BOX(Ulong);
+IMPL_BOX(Ulonglong);
