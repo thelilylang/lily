@@ -263,7 +263,7 @@ The class can take an inheritance and an other class can take this class in inhe
 I think it's important to implement that in record object, enum object or class, because it's an avandage to implement that in a programming language.
 
 ```lily
-#[Derive: Eq]
+@+Derive("Eq")
 object App class =
 end
 ```
@@ -1008,8 +1008,10 @@ end
 
 ## Lib
 
+You can create extern function.
+
 ```lily
-#[Link: "math"]
+@+Link("math")
 lib Math =
     val PI Float64;
 end
