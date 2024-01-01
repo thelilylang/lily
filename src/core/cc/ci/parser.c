@@ -22,8 +22,151 @@
  * SOFTWARE.
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include <core/cc/ci/parser.h>
 #include <core/cc/ci/result.h>
+
+/// @brief Advance to one token.
+static void
+next_token__CIParser(CIParser *self);
+
+/// @brief Advance to n token(s).
+static void
+jump__CIParser(CIParser *self, Usize n);
+
+/// @brief Parse enum declaration.
+static CIDecl *
+parse_enum__CIParser(CIParser *self);
+
+/// @brief Parse function declaration.
+static CIDecl *
+parse_function__CIParser(CIParser *self);
+
+/// @brief Parse struct declaration.
+static CIDecl *
+parse_struct__CIParser(CIParser *self);
+
+/// @brief Parse union declaration.
+static CIDecl *
+parse_union__CIParser(CIParser *self);
+
+/// @brief Parse variable declaration.
+static CIDecl *
+parse_variable__CIParser(CIParser *self);
+
+/// @brief Parse declaration.
+static CIDecl *
+parse_decl__CIParser(CIParser *self);
+
+/// @brief Parse storage class specifier.
+/// @return true if the token is a storage class specifier, false otherwise.
+static bool
+parse_storage_class_specifier__CIParser(CIParser *self,
+                                        int *storage_class_flag);
+
+/// @brief Parse many storage class specifiers.
+static void
+parse_storage_class_specifiers__CIParser(CIParser *self,
+                                         int *storage_class_flag);
+
+CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner)
+{
+    CIToken *current = get__Vec(scanner->tokens, 0);
+
+    return (CIParser){ .file = file,
+                       .scanner = scanner,
+                       .count_error = scanner->base.count_error,
+                       .position = 0,
+                       .current = current,
+                       .previous = current };
+}
+
+void
+next_token__CIParser(CIParser *self)
+{
+    if (self->position + 1 < self->scanner->tokens->len) {
+        self->previous = get__Vec(self->scanner->tokens, self->position++);
+        self->current = get__Vec(self->scanner->tokens, self->position);
+    } else {
+        self->previous = last__Vec(self->scanner->tokens);
+        self->current = self->previous;
+    }
+}
+
+void
+jump__CIParser(CIParser *self, Usize n)
+{
+    if (self->position + n < self->scanner->tokens->len) {
+        self->position += n;
+        self->current = get__Vec(self->scanner->tokens, self->position);
+
+        return;
+    }
+
+    UNREACHABLE("cannot jump outside of the length of tokens");
+}
+
+CIDecl *
+parse_decl__CIParser(CIParser *self)
+{
+    int storage_class_flag = 0;
+
+    parse_storage_class_specifiers__CIParser(self, &storage_class_flag);
+}
+
+bool
+parse_storage_class_specifier__CIParser(CIParser *self, int *storage_class_flag)
+{
+    switch (self->current->kind) {
+        case CI_TOKEN_KIND_KEYWORD_AUTO:
+            *storage_class_flag |= CI_STORAGE_CLASS_AUTO;
+            break;
+        case CI_TOKEN_KIND_KEYWORD_CONSTEXPR:
+            *storage_class_flag |= CI_STORAGE_CLASS_CONSTEXPR;
+            break;
+        case CI_TOKEN_KIND_KEYWORD_EXTERN:
+            *storage_class_flag |= CI_STORAGE_CLASS_EXTERN;
+            break;
+        case CI_TOKEN_KIND_KEYWORD_INLINE:
+            *storage_class_flag |= CI_STORAGE_CLASS_INLINE;
+            break;
+        case CI_TOKEN_KIND_KEYWORD_REGISTER:
+            *storage_class_flag |= CI_STORAGE_CLASS_REGISTER;
+            break;
+        case CI_TOKEN_KIND_KEYWORD_STATIC:
+            *storage_class_flag |= CI_STORAGE_CLASS_STATIC;
+            break;
+        case CI_TOKEN_KIND_KEYWORD_THREAD_LOCAL:
+            *storage_class_flag |= CI_STORAGE_CLASS_THREAD_LOCAL;
+            break;
+        case CI_TOKEN_KIND_KEYWORD_TYPEDEF:
+            *storage_class_flag |= CI_STORAGE_CLASS_TYPEDEF;
+            break;
+        default:
+            return false;
+    }
+
+    return true;
+}
+
+void
+parse_storage_class_specifiers__CIParser(CIParser *self,
+                                         int *storage_class_flag)
+{
+    int old_storage_class_flag = *storage_class_flag;
+
+    while (parse_storage_class_specifier__CIParser(self, storage_class_flag)) {
+        next_token__CIParser(self);
+
+        if (old_storage_class_flag == *storage_class_flag) {
+            FAILED("warning: duplicate storage class specifier");
+        }
+
+        old_storage_class_flag = *storage_class_flag;
+    }
+}
 
 void
 run__CIParser(CIParser *self)

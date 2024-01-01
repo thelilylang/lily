@@ -35,22 +35,15 @@ typedef struct CIParser
     const CIScanner *scanner; // CIScanner* (&)
     Usize *count_error;       // Usize* (&)
     Usize position;
+    CIToken *current;  // CIToken* (&)
+    CIToken *previous; // CIToken* (&)
 } CIParser;
 
 /**
  *
  * @brief Construct CIParser type.
  */
-inline CONSTRUCTOR(CIParser,
-                   CIParser,
-                   CIResultFile *file,
-                   const CIScanner *scanner)
-{
-    return (CIParser){ .file = file,
-                       .scanner = scanner,
-                       .count_error = scanner->base.count_error,
-                       .position = 0 };
-}
+CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner);
 
 /**
  *
