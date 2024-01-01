@@ -742,7 +742,7 @@ next_token__LilyParseBlock(LilyParseBlock *self)
         self->current = get__Vec(self->tokens, self->position);
     } else {
         self->previous = last__Vec(self->tokens);
-        self->current = last__Vec(self->tokens);
+        self->current = self->previous;
     }
 }
 
