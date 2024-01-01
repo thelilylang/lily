@@ -55,6 +55,8 @@ enum CIDataTypeKind
     CI_DATA_TYPE_KIND_LONG_DOUBLE__IMAGINARY,
     CI_DATA_TYPE_KIND_LONG_INT,
     CI_DATA_TYPE_KIND_LONG_LONG_INT,
+    CI_DATA_TYPE_KIND_PRE_CONST,
+    CI_DATA_TYPE_KIND_POST_CONST,
     CI_DATA_TYPE_KIND_PTR,
     CI_DATA_TYPE_KIND_SHORT_INT,
     CI_DATA_TYPE_KIND_SIGNED_CHAR,
@@ -260,6 +262,8 @@ typedef struct CIDataType
         CIDataTypeArray array;
         struct CIDataType *_atomic;
         CIDataTypeFunction function;
+        struct CIDataType *pre_const;
+        struct CIDataType *post_const;
         struct CIDataType *ptr;
         CIDataTypeStruct struct_;
         CIDataTypeUnion union_;
@@ -286,6 +290,21 @@ VARIANT_CONSTRUCTOR(CIDataType *,
                     CIDataType,
                     function,
                     CIDataTypeFunction function);
+
+/**
+ *
+ * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_PRE_CONST).
+ */
+VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, pre_const, CIDataType *pre_const);
+
+/**
+ *
+ * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_POST_CONST).
+ */
+VARIANT_CONSTRUCTOR(CIDataType *,
+                    CIDataType,
+                    post_const,
+                    CIDataType *post_const);
 
 /**
  *
@@ -330,14 +349,13 @@ DESTRUCTOR(CIDataType, CIDataType *self);
 enum CIStorageClass
 {
     CI_STORAGE_CLASS_AUTO = 1 << 0,
-    CI_STORAGE_CLASS_CONST = 1 << 1,
-    CI_STORAGE_CLASS_CONSTEXPR = 1 << 2,
-    CI_STORAGE_CLASS_EXTERN = 1 << 3,
-    CI_STORAGE_CLASS_INLINE = 1 << 4,
-    CI_STORAGE_CLASS_REGISTER = 1 << 5,
-    CI_STORAGE_CLASS_STATIC = 1 << 6,
-    CI_STORAGE_CLASS_THREAD_LOCAL = 1 << 7,
-    CI_STORAGE_CLASS_TYPEDEF = 1 << 8
+    CI_STORAGE_CLASS_CONSTEXPR = 1 << 1,
+    CI_STORAGE_CLASS_EXTERN = 1 << 2,
+    CI_STORAGE_CLASS_INLINE = 1 << 3,
+    CI_STORAGE_CLASS_REGISTER = 1 << 4,
+    CI_STORAGE_CLASS_STATIC = 1 << 5,
+    CI_STORAGE_CLASS_THREAD_LOCAL = 1 << 6,
+    CI_STORAGE_CLASS_TYPEDEF = 1 << 7
 };
 
 /**

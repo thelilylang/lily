@@ -38,6 +38,12 @@ static VARIANT_DESTRUCTOR(CIDataType, _atomic, CIDataType *self);
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_FUNCTION).
 static VARIANT_DESTRUCTOR(CIDataType, function, CIDataType *self);
 
+/// @brief Free CIDataType type (CI_DATA_TYPE_KIND_PRE_CONST).
+static VARIANT_DESTRUCTOR(CIDataType, pre_const, CIDataType *self);
+
+/// @brief Free CIDataType type (CI_DATA_TYPE_KIND_POST_CONST).
+static VARIANT_DESTRUCTOR(CIDataType, post_const, CIDataType *self);
+
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_PTR).
 static VARIANT_DESTRUCTOR(CIDataType, ptr, CIDataType *self);
 
@@ -156,6 +162,10 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeKind, enum CIDataTypeKind self)
             return "CI_DATA_TYPE_KIND_LONG_INT";
         case CI_DATA_TYPE_KIND_LONG_LONG_INT:
             return "CI_DATA_TYPE_KIND_LONG_LONG_INT";
+        case CI_DATA_TYPE_KIND_PRE_CONST:
+            return "CI_DATA_TYPE_KIND_PRE_CONST";
+        case CI_DATA_TYPE_KIND_POST_CONST:
+            return "CI_DATA_TYPE_KIND_POST_CONST";
         case CI_DATA_TYPE_KIND_PTR:
             return "CI_DATA_TYPE_KIND_PTR";
         case CI_DATA_TYPE_KIND_SHORT_INT:
@@ -330,6 +340,29 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     return self;
 }
 
+VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, pre_const, CIDataType *pre_const)
+{
+    CIDataType *self = lily_malloc(sizeof(CIDataType));
+
+    self->kind = CI_DATA_TYPE_KIND_PRE_CONST;
+    self->pre_const = pre_const;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIDataType *,
+                    CIDataType,
+                    post_const,
+                    CIDataType *post_const)
+{
+    CIDataType *self = lily_malloc(sizeof(CIDataType));
+
+    self->kind = CI_DATA_TYPE_KIND_POST_CONST;
+    self->post_const = post_const;
+
+    return self;
+}
+
 VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, ptr, CIDataType *ptr)
 {
     CIDataType *self = lily_malloc(sizeof(CIDataType));
@@ -388,6 +421,16 @@ IMPL_FOR_DEBUG(to_string, CIDataType, const CIDataType *self)
               "CIDataType{{ kind = {s}, function = {Sr} }",
               to_string__Debug__CIDataTypeKind(self->kind),
               to_string__Debug__CIDataTypeFunction(&self->function));
+        case CI_DATA_TYPE_KIND_PRE_CONST:
+            return format__String(
+              "CIDataType{{ kind = {s}, pre_const = {Sr} }",
+              to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataType(self->pre_const));
+        case CI_DATA_TYPE_KIND_POST_CONST:
+            return format__String(
+              "CIDataType{{ kind = {s}, post_const = {Sr} }",
+              to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataType(self->post_const));
         case CI_DATA_TYPE_KIND_PTR:
             return format__String("CIDataType{{ kind = {s}, ptr = {Sr} }",
                                   to_string__Debug__CIDataTypeKind(self->kind),
@@ -427,6 +470,18 @@ VARIANT_DESTRUCTOR(CIDataType, function, CIDataType *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(CIDataType, pre_const, CIDataType *self)
+{
+    FREE(CIDataType, self->pre_const);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIDataType, post_const, CIDataType *self)
+{
+    FREE(CIDataType, self->post_const);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(CIDataType, ptr, CIDataType *self)
 {
     FREE(CIDataType, self->ptr);
@@ -457,6 +512,12 @@ DESTRUCTOR(CIDataType, CIDataType *self)
         case CI_DATA_TYPE_KIND_FUNCTION:
             FREE_VARIANT(CIDataType, function, self);
             break;
+        case CI_DATA_TYPE_KIND_PRE_CONST:
+            FREE_VARIANT(CIDataType, pre_const, self);
+            break;
+        case CI_DATA_TYPE_KIND_POST_CONST:
+            FREE_VARIANT(CIDataType, post_const, self);
+            break;
         case CI_DATA_TYPE_KIND_PTR:
             FREE_VARIANT(CIDataType, ptr, self);
             break;
@@ -478,8 +539,6 @@ IMPL_FOR_DEBUG(to_string, CIStorageClass, int storage_class_flag)
     switch (storage_class_flag) {
         case CI_STORAGE_CLASS_AUTO:
             return "CI_STORAGE_CLASS_AUTO";
-        case CI_STORAGE_CLASS_CONST:
-            return "CI_STORAGE_CLASS_CONST";
         case CI_STORAGE_CLASS_CONSTEXPR:
             return "CI_STORAGE_CLASS_CONSTEXPR";
         case CI_STORAGE_CLASS_EXTERN:
@@ -512,8 +571,6 @@ IMPL_FOR_DEBUG(to_string, CIStorageClass, int storage_class_flag)
             return "CI_STORAGE_CLASS_STATIC";
         case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_AUTO:
             return "CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_AUTO";
-        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_CONST:
-            return "CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_CONST";
         case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_CONSTEXPR:
             return "CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_CONSTEXPR";
         case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_EXTERN:
@@ -546,8 +603,6 @@ to_string__CIStorageClass(int storage_class_flag)
     switch (storage_class_flag) {
         case CI_STORAGE_CLASS_AUTO:
             return "auto";
-        case CI_STORAGE_CLASS_CONST:
-            return "const";
         case CI_STORAGE_CLASS_CONSTEXPR:
             return "constexpr";
         case CI_STORAGE_CLASS_EXTERN:
@@ -576,8 +631,6 @@ to_string__CIStorageClass(int storage_class_flag)
             return "static";
         case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_AUTO:
             return "static auto";
-        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_CONST:
-            return "static const";
         case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_CONSTEXPR:
             return "static constexpr";
         case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_EXTERN:
