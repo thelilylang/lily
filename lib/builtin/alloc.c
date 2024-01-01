@@ -46,7 +46,7 @@
 #endif
 
 Usize
-__max_capacity__$Alloc()
+_max_capacity__$Alloc()
 {
 #if defined(LILY_LINUX_OS) || defined(LILY_APPLE_OS)
     return sysconf(_SC_PHYS_PAGES) * sysconf(_SC_PAGESIZE);
@@ -61,7 +61,7 @@ __max_capacity__$Alloc()
 }
 
 void *
-__align__$Alloc(void *mem, Usize align)
+_align__$Alloc(void *mem, Usize align)
 {
     ASSERT(align % ALIGNMENT_COEFF == 0);
 
@@ -69,10 +69,10 @@ __align__$Alloc(void *mem, Usize align)
 }
 
 void *
-__alloc__$Alloc(Usize size, Usize align)
+_alloc__$Alloc(Usize size, Usize align)
 {
 #ifdef ENV_SAFE
-    Usize max_capacity = __max_capacity__$Alloc();
+    Usize max_capacity = _max_capacity__$Alloc();
 
     if (size > max_capacity) {
         perror("Lily(Fail): too much memory allocation allocated");
@@ -101,19 +101,19 @@ __alloc__$Alloc(Usize size, Usize align)
 #endif
 
     if (align > 0) {
-        mem = __align__$Alloc(mem, align);
+        mem = _align__$Alloc(mem, align);
     }
 
     return mem;
 }
 
 void *
-__resize__$Alloc(void *old_mem, Usize old_size, Usize new_size, Usize align)
+_resize__$Alloc(void *old_mem, Usize old_size, Usize new_size, Usize align)
 {
     if (new_size == 0) {
         return old_mem;
     } else if (!old_mem) {
-        return __alloc__$Alloc(new_size, align);
+        return _alloc__$Alloc(new_size, align);
     } else if (new_size <= old_size) {
         return old_mem;
     }
@@ -122,11 +122,11 @@ __resize__$Alloc(void *old_mem, Usize old_size, Usize new_size, Usize align)
     void *new_mem = mremap(old_mem, old_size, new_size, MREMAP_MAYMOVE);
 
     if (new_mem == MAP_FAILED) {
-        new_mem = __alloc__$Alloc(new_size, align);
+        new_mem = _alloc__$Alloc(new_size, align);
 
         memcpy(new_mem, old_mem, old_size);
         // NOTE: We assume that the alignment does not change
-        __free__$Alloc(&old_mem, old_size, align);
+        _free__$Alloc(&old_mem, old_size, align);
     }
 #elif defined(LILY_APPLE_OS)
     void *new_mem = mmap(NULL,
@@ -143,7 +143,7 @@ __resize__$Alloc(void *old_mem, Usize old_size, Usize new_size, Usize align)
 
     memcpy(new_mem, old_mem, old_size);
     // NOTE: We assume that the alignment does not change
-    __free__$Alloc(&old_mem, old_size, align);
+    _free__$Alloc(&old_mem, old_size, align);
 #elif defined(LILY_WINDOWS_OS)
     LPVOID new_mem =
       VirtualAlloc(NULL, new_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
@@ -155,20 +155,20 @@ __resize__$Alloc(void *old_mem, Usize old_size, Usize new_size, Usize align)
 
     memcpy(new_mem, old_mem, old_size);
     // NOTE: We assume that the alignment does not change
-    __free__$Alloc(&old_mem, old_size, align);
+    _free__$Alloc(&old_mem, old_size, align);
 #else
 #error "This is not yet supported"
 #endif
 
     if (align > 0) {
-        new_mem = __align__$Alloc(new_mem, align);
+        new_mem = _align__$Alloc(new_mem, align);
     }
 
     return new_mem;
 }
 
 void
-__free__$Alloc(void **mem, Usize size, Usize align)
+_free__$Alloc(void **mem, Usize size, Usize align)
 {
     if (!(*mem) || !mem) {
         perror("Lily(Fail): fail to free a pointer, because the value is NULL");

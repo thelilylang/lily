@@ -6038,7 +6038,7 @@ check_call_expr__LilyAnalysis(LilyAnalysis *self,
                       NEW_VARIANT(LilyCheckedExprCall, str_len, len_expr));
                 case LILY_CHECKED_DATA_TYPE_KIND_CSTR: {
                     LilyBuiltinFun *len_cstr_fun =
-                      &self->root_package->builtins[builtin__len__$CStr];
+                      &self->root_package->builtins[_len__$CStr];
 
                     add_builtin_fun_to_builtin_usage__LilyPackage(self->package,
                                                                   len_cstr_fun);
