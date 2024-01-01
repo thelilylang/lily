@@ -27,9 +27,7 @@
 
 #include <base/macros.h>
 #include <base/string.h>
-#include <base/vec.h>
 
-#include <core/lily/analysis/checked/access.h>
 #include <core/lily/analysis/checked/scope.h>
 #include <core/lily/shared/visibility.h>
 
@@ -37,10 +35,8 @@ typedef struct LilyCheckedDeclModule
 {
     String *name; // String* (&)
     String *global_name;
-    Vec *decls; // Vec<LilyCheckedDecl*>*
-    LilyCheckedScope *scope;
+    Usize scope_id;
     enum LilyVisibility visibility;
-    bool is_checked;
 } LilyCheckedDeclModule;
 
 /**
@@ -51,33 +47,32 @@ inline CONSTRUCTOR(LilyCheckedDeclModule,
                    LilyCheckedDeclModule,
                    String *name,
                    String *global_name,
-                   Vec *decls,
-                   LilyCheckedScope *scope,
+                   Usize scope_id,
                    enum LilyVisibility visibility)
 {
     return (LilyCheckedDeclModule){ .name = name,
                                     .global_name = global_name,
-                                    .decls = decls,
-                                    .scope = scope,
+                                    .scope_id = scope_id,
                                     .visibility = visibility };
 }
 
 /**
  *
- * @brief Convert LilyCheckedDeclModule in String.
+ * @brief Convert LilyAstDeclModule in String.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string,
-               LilyCheckedDeclModule,
-               const LilyCheckedDeclModule *self);
+IMPL_FOR_DEBUG(to_string, LilyAstDeclModule, const LilyAstDeclModule *self);
 #endif
 
 /**
  *
  * @brief Free LilyCheckedDeclModule type.
  */
-DESTRUCTOR(LilyCheckedDeclModule, const LilyCheckedDeclModule *self);
+inline DESTRUCTOR(LilyCheckedDeclModule, const LilyCheckedDeclModule *self)
+{
+    FREE(String, self->global_name);
+}
 
 #endif // LILY_CORE_LILY_ANALYSIS_CHECKED_DECL_MODULE_H

@@ -437,6 +437,7 @@ set(LILY_CORE_LILY_ANALYSIS_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/stmt/variable.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/stmt/while.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/access.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/case_verification.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/captured_variable.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/compiler_generic.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/data_type.c
@@ -451,6 +452,7 @@ set(LILY_CORE_LILY_ANALYSIS_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/inherit_param.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/operator.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/operator_register.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/package.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/parent.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/pattern.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/safety_mode.c
@@ -461,6 +463,7 @@ set(LILY_CORE_LILY_ANALYSIS_SRC
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/scope_stmt.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/signature.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/stmt.c
+    ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/symbol.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/variant.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/virtual_scope.c
     ${CMAKE_SOURCE_DIR}/src/core/lily/analysis/checked/virtual_variable_manager.c

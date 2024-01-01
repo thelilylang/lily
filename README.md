@@ -27,8 +27,8 @@ Work in progress...
 
 - Scanner: 99% finished
 - Preparser: 97% finished
-- Precompiler: 80% finished
-- Parser: 90% finished
+- Precompiler: 95% finished
+- Parser: 95% finished
 - Analysis: 60% finished
 - MIR: 55% finished
 - Code generator (LLVM): 60% finished
@@ -54,7 +54,19 @@ Work in progress...
 | v0.9.0  | Implement C++ mode                         | 2025-09-21   |
 | v0.10.0 | ASM features                               | 2025-11-21   |
 | v0.11.0 | Thread + Future data type                  | 2026-01-21   |
-| v1.0.0  | Self host and add some other features      | ----------   |
+| v0.12.0 | Implement linker                           | 2026-05-21   |
+| v0.13.0 | Drop LLD use                               | 2026-09-21   |
+| v0.14.0 | Implement codegen                          | 2027-03-21   |
+| v0.15.0 | Drop LLVM                                  | 2027-05-21   |
+| v0.16.0 | Add WASM support                           | 2027-07-21   |
+| v0.17.0 | Implement LSP                              | 2027-09-21   |
+| v1.0.0  | Self host and add some other features      | 2028-07-21   |
+| v1.1.0  | Implement C compiler                       | 2028-12-21   |
+| v1.2.0  | Implement C++ compiler                     | 2029-06-21   |
+| v1.3.0  | Transpile to C                             | 2029-08-21   |
+| v1.4.0  | Transpile to C++                           | 2029-11-21   |
+
+NOTE: Release dates may be subject to change.
 
 ## Examples
 

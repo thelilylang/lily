@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2022-2024 ArthurPV
+ * Copyright (c) 2022-2023 ArthurPV
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,26 +22,31 @@
  * SOFTWARE.
  */
 
-#include <base/new.h>
+#ifndef LILY_CORE_LILY_ANALYSIS_CHECKED_CASE_VERIFICATION_H
+#define LILY_CORE_LILY_ANALYSIS_CHECKED_CASE_VERIFICATION_H
 
-#include <core/lily/analysis/checked/decl/module.h>
+/**
+ *
+ * @brief Valid if the string is formated in a snake case.
+ * @return Return true if the verification is valid, otherwise return false.
+ */
+bool
+valid_snake_case__LilyCheckedCaseVerification(char *s);
 
-#include <stdio.h>
-#include <stdlib.h>
+/**
+ *
+ * @brief Valid if the string is formated in a pascal case.
+ * @return Return true if the verification is valid, otherwise return false.
+ */
+bool
+valid_pascal_case__LilyCheckedCaseVerification(char *s);
 
-#ifdef ENV_DEBUG
-#include <base/format.h>
-#endif
+/**
+ *
+ * @brief Valid if the string is formated in a upper snake case.
+ * @return Return true if the verification is valid, otherwise return false.
+ */
+bool
+valid_upper_snake_case__LilyCheckedCaseVerification(char *s);
 
-#ifdef ENV_DEBUG
-String *
-IMPL_FOR_DEBUG(to_string, LilyAstDeclModule, const LilyAstDeclModule *self)
-{
-    return format__String("LilyAstDeclModule{{ name = {S}, global_name = {S}, "
-                          "scope_id = {zu}, visibility = {s} }",
-                          self->name,
-                          self->global_name,
-                          self->scope_id,
-                          to_string__Debug__LilyVisibility(self->visibility));
-}
-#endif
+#endif // LILY_CORE_LILY_ANALYSIS_CHECKED_CASE_VERIFICATION_H

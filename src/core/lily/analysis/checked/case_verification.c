@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2022-2024 ArthurPV
+ * Copyright (c) 2022-2023 ArthurPV
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,26 +22,45 @@
  * SOFTWARE.
  */
 
-#include <base/new.h>
+#include <core/lily/analysis/checked/case_verification.h>
 
-#include <core/lily/analysis/checked/decl/module.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-
-#ifdef ENV_DEBUG
-#include <base/format.h>
-#endif
-
-#ifdef ENV_DEBUG
-String *
-IMPL_FOR_DEBUG(to_string, LilyAstDeclModule, const LilyAstDeclModule *self)
+bool
+valid_snake_case__LilyCheckedCaseVerification(char *s)
 {
-    return format__String("LilyAstDeclModule{{ name = {S}, global_name = {S}, "
-                          "scope_id = {zu}, visibility = {s} }",
-                          self->name,
-                          self->global_name,
-                          self->scope_id,
-                          to_string__Debug__LilyVisibility(self->visibility));
+    for (char *current = s; *current; ++current) {
+        if (!((*current >= 'a' && *current <= 'z') || *current == '_')) {
+            return false;
+        }
+    }
+
+    return true;
 }
-#endif
+
+bool
+valid_pascal_case__LilyCheckedCaseVerification(char *s)
+{
+    if (!(*s >= 'A' && *s <= 'Z')) {
+        return false;
+    }
+
+    for (char *current = s + 1; *current; ++current) {
+        if (!((*current >= 'a' && *current <= 'z') ||
+              (*current >= 'A' && *current <= 'Z'))) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool
+valid_upper_snake_case__LilyCheckedCaseVerification(char *s)
+{
+    for (char *current = s; *current; ++current) {
+        if (!((*current >= 'A' && *current <= 'Z') || *current == '_')) {
+            return false;
+        }
+    }
+
+    return true;
+}
