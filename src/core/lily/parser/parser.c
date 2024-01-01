@@ -41,7 +41,7 @@ next_decl__LilyParser(LilyParser *self);
 static void
 next_token__LilyParseBlock(LilyParseBlock *self);
 
-// Advance to n token.
+// Advance to n token(s).
 static void
 jump__LilyParseBlock(LilyParseBlock *self, Usize n);
 
@@ -752,6 +752,8 @@ jump__LilyParseBlock(LilyParseBlock *self, Usize n)
     if (self->position + n < self->tokens->len) {
         self->position += n;
         self->current = get__Vec(self->tokens, self->position);
+
+        return;
     }
 
     UNREACHABLE("cannot jump outside of the length of tokens");
