@@ -1,0 +1,21 @@
+#ifndef __CI_STD__
+#define __CI_STD__
+
+#include "builtin/arch.cih"
+#include "builtin/os.cih"
+#include "array.cih"
+#include "builtin.cih"
+#include "fmt.cih"
+#include "hash.cih"
+#include "macros.cih"
+#include "mem.cih"
+#include "optional.cih"
+#include "process.cih"
+#include "result.cih"
+#include "string.cih"
+#include "sync.cih"
+#include "thread.cih"
+#include "types.cih"
+#include "unique.cih"
+
+#endif // __CI_STD__

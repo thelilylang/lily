@@ -1,0 +1,10 @@
+#ifndef CI_LIB_VEC_CIH
+#define CI_LIB_VEC_CIH
+
+typedef struct Vec<T> {
+	T *buffer;
+	size_t len;
+	size_t capacity;
+} Vec<T>;
+
+#endif // CI_LIB_VEC_CIH

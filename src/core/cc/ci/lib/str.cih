@@ -1,0 +1,8 @@
+#ifndef CI_LIB_STR_CIH
+#define CI_LIB_STR_CIH
+
+typedef char* Str;
+
+
+
+#endif // CI_LIB_STR_CIH
