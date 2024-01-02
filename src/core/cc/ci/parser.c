@@ -84,6 +84,15 @@ parse_storage_class_specifiers__CIParser(CIParser *self,
             action;                          \
     }
 
+CONSTRUCTOR(CIParserMacro *, CIParserMacro, Vec *params)
+{
+    CIParserMacro *self = lily_malloc(sizeof(CIParserMacro));
+
+    self->params = params;
+
+    return self;
+}
+
 CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner)
 {
     CITokensIters tokens_iters = NEW(CITokensIters);
@@ -94,7 +103,8 @@ CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner)
     return (CIParser){ .file = file,
                        .scanner = scanner,
                        .count_error = scanner->base.count_error,
-                       .tokens_iters = tokens_iters };
+                       .tokens_iters = tokens_iters,
+                       .macros = NEW(Stack, CI_PARSER_MACROS_MAX_SIZE) };
 }
 
 void
@@ -171,4 +181,11 @@ parse_storage_class_specifiers__CIParser(CIParser *self,
 void
 run__CIParser(CIParser *self)
 {
+}
+
+DESTRUCTOR(CIParser, const CIParser *self)
+{
+    FREE(CITokensIters, &self->tokens_iters);
+    FREE_STACK_ITEMS(self->macros, CIParserMacro);
+    FREE(Stack, self->macros);
 }

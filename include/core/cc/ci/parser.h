@@ -29,12 +29,35 @@
 
 typedef struct CIResultFile CIResultFile;
 
+typedef struct CIParserMacro
+{
+    Vec *params; // Vec<Vec<CIToken* (&)>*>* (&)
+} CIParserMacro;
+
+/**
+ *
+ * @brief Construct CIParserMacro type.
+ */
+CONSTRUCTOR(CIParserMacro *, CIParserMacro, Vec *params);
+
+/**
+ *
+ * @brief Free CIParserMacro type.
+ */
+inline DESTRUCTOR(CIParserMacro, CIParserMacro *self)
+{
+    lily_free(self);
+}
+
+#define CI_PARSER_MACROS_MAX_SIZE CI_TOKENS_ITERS_MAX_SIZE
+
 typedef struct CIParser
 {
     CIResultFile *file;       // CIResultFile* (&)
     const CIScanner *scanner; // CIScanner* (&)
     Usize *count_error;       // Usize* (&)
     CITokensIters tokens_iters;
+    Stack *macros; // Vec<CIParserMacro*>*
 } CIParser;
 
 /**
@@ -54,9 +77,6 @@ run__CIParser(CIParser *self);
  *
  * @brief Free CIParser type.
  */
-inline DESTRUCTOR(CIParser, const CIParser *self)
-{
-    FREE(CITokensIters, &self->tokens_iters);
-}
+DESTRUCTOR(CIParser, const CIParser *self);
 
 #endif // LILY_CORE_CC_CI_PARSER_H
