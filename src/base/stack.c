@@ -89,6 +89,16 @@ pop__Stack(Stack *self)
     return res;
 }
 
+void *
+safe_pop__Stack(Stack *self)
+{
+    if (self->len == 0) {
+        return NULL;
+    }
+
+    return pop__Stack(self);
+}
+
 DESTRUCTOR(Stack, Stack *self)
 {
     if (self->buffer) {

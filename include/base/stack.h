@@ -80,6 +80,14 @@ pop__Stack(Stack *self);
 
 /**
  *
+ * @brief Remove top element safely (without assertion failure).
+ * @return void*?
+ */
+void *
+safe_pop__Stack(Stack *self);
+
+/**
+ *
  * @brief Free Stack type.
  */
 DESTRUCTOR(Stack, Stack *self);
