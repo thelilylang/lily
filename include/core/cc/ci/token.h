@@ -630,7 +630,9 @@ typedef VecIter CITokensIter;
 
 typedef struct CITokensIters
 {
-    Stack *iters;               // Stack<CITokensIter*>*
+    Stack *iters; // Stack<CITokensIter*>*
+    // NOTE: The `current_iter` is supposed to be NULL at then end of the
+    // process (parsing).
     CITokensIter *current_iter; // CITokensIter*?
     CIToken *current_token;     // CIToken*? (&)
     CIToken *previous_token;    // CIToken*? (&)
@@ -654,5 +656,14 @@ inline CONSTRUCTOR(CITokensIters, CITokensIters)
  */
 void
 next_token__CITokensIters(CITokensIters *self);
+
+/**
+ *
+ * @brief Free CITokensIters type.
+ */
+inline DESTRUCTOR(CITokensIters, const CITokensIters *self)
+{
+    FREE(Stack, self->iters);
+}
 
 #endif // LILY_CORE_CC_CI_TOKEN_H
