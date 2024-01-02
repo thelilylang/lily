@@ -34,9 +34,7 @@ typedef struct CIParser
     CIResultFile *file;       // CIResultFile* (&)
     const CIScanner *scanner; // CIScanner* (&)
     Usize *count_error;       // Usize* (&)
-    Usize position;
-    CIToken *current;  // CIToken* (&)
-    CIToken *previous; // CIToken* (&)
+    CITokensIters tokens_iters;
 } CIParser;
 
 /**
@@ -51,5 +49,14 @@ CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner);
  */
 void
 run__CIParser(CIParser *self);
+
+/**
+ *
+ * @brief Free CIParser type.
+ */
+inline DESTRUCTOR(CIParser, const CIParser *self)
+{
+    FREE(CITokensIters, &self->tokens_iters);
+}
 
 #endif // LILY_CORE_CC_CI_PARSER_H

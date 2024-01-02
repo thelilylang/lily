@@ -33,8 +33,9 @@ static void
 next_token__CIParser(CIParser *self);
 
 /// @brief Advance to n token(s).
-static void
-jump__CIParser(CIParser *self, Usize n);
+// TODO: Perhaps implement it.
+// static void
+// jump__CIParser(CIParser *self, Usize n);
 
 /// @brief Parse enum declaration.
 static CIDecl *
@@ -60,6 +61,10 @@ parse_variable__CIParser(CIParser *self);
 static CIDecl *
 parse_decl__CIParser(CIParser *self);
 
+/// @brief Look for macro.
+static bool
+look_for_macro__CIParser(CIParser *self);
+
 /// @brief Parse storage class specifier.
 /// @return true if the token is a storage class specifier, false otherwise.
 static bool
@@ -71,41 +76,36 @@ static void
 parse_storage_class_specifiers__CIParser(CIParser *self,
                                          int *storage_class_flag);
 
+#define LOOK_FOR_MACRO_AND_DO_ACTION(action) \
+    switch (self->kind) {                    \
+        case CI_TOKEN_KIND_IDENTIFIER:       \
+            break;                           \
+        default:                             \
+            action;                          \
+    }
+
 CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner)
 {
-    CIToken *current = get__Vec(scanner->tokens, 0);
+    CITokensIters tokens_iters = NEW(CITokensIters);
+    CITokensIter *iter = NEW(CITokensIter, scanner->tokens);
+
+    add_iter__CITokensIters(&tokens_iters, iter);
 
     return (CIParser){ .file = file,
                        .scanner = scanner,
                        .count_error = scanner->base.count_error,
-                       .position = 0,
-                       .current = current,
-                       .previous = current };
+                       .tokens_iters = tokens_iters };
 }
 
 void
 next_token__CIParser(CIParser *self)
 {
-    if (self->position + 1 < self->scanner->tokens->len) {
-        self->previous = get__Vec(self->scanner->tokens, self->position++);
-        self->current = get__Vec(self->scanner->tokens, self->position);
-    } else {
-        self->previous = last__Vec(self->scanner->tokens);
-        self->current = self->previous;
-    }
+    next_token__CITokensIters(&self->tokens_iters);
 }
 
-void
-jump__CIParser(CIParser *self, Usize n)
+CIDecl *
+parse_enum__CIParser(CIParser *self)
 {
-    if (self->position + n < self->scanner->tokens->len) {
-        self->position += n;
-        self->current = get__Vec(self->scanner->tokens, self->position);
-
-        return;
-    }
-
-    UNREACHABLE("cannot jump outside of the length of tokens");
 }
 
 CIDecl *
@@ -119,7 +119,7 @@ parse_decl__CIParser(CIParser *self)
 bool
 parse_storage_class_specifier__CIParser(CIParser *self, int *storage_class_flag)
 {
-    switch (self->current->kind) {
+    switch (self->tokens_iters.current_token->kind) {
         case CI_TOKEN_KIND_KEYWORD_AUTO:
             *storage_class_flag |= CI_STORAGE_CLASS_AUTO;
             break;
