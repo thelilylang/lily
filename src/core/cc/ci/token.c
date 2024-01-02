@@ -23,6 +23,7 @@
  */
 
 #include <base/alloc.h>
+#include <base/assert.h>
 #include <base/macros.h>
 
 #ifdef ENV_DEBUG
@@ -1500,5 +1501,36 @@ DESTRUCTOR(CIToken, CIToken *self)
             break;
         default:
             lily_free(self);
+    }
+}
+
+void
+next_token__CITokensIters(CITokensIters *self)
+{
+    if (self->current_iter) {
+        if (self->current_iter->count == 0) {
+            self->current_token = next__VecIter(self->current_iter);
+
+            // If the `previous_token` is `NULL`, we assign the `current_token`
+            // to it. Otherwise, we assign nothing because that means we keep
+            // the last token of the previous iterator.
+            if (!self->previous_token) {
+                self->previous_token = self->current_token;
+            }
+        } else {
+            self->previous_token = self->current_token;
+            self->current_token = next__VecIter(self->current_iter);
+
+            // If the `current_token` is `NULL`, that means we have reached the
+            // end of the current iter. So we pop the current iter from the
+            // stack and call `next_token__CITokensIters` again.
+            if (!self->current_token) {
+                lily_free(self->current_iter);
+
+                self->current_iter = safe_pop__Stack(self->iters);
+
+                return next_token__CITokensIters(self);
+            }
+        }
     }
 }

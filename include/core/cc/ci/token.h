@@ -27,6 +27,7 @@
 
 #include <base/macros.h>
 #include <base/new.h>
+#include <base/stack.h>
 #include <base/string.h>
 #include <base/vec.h>
 
@@ -622,5 +623,36 @@ IMPL_FOR_DEBUG(debug, CIToken, const CIToken *self);
  * @brief Free CIToken type.
  */
 DESTRUCTOR(CIToken, CIToken *self);
+
+#define CI_TOKENS_ITERS_MAX_SIZE 512
+
+typedef VecIter CITokensIter;
+
+typedef struct CITokensIters
+{
+    Stack *iters;               // Stack<CITokensIter*>*
+    CITokensIter *current_iter; // CITokensIter*?
+    CIToken *current_token;     // CIToken*? (&)
+    CIToken *previous_token;    // CIToken*? (&)
+} CITokensIters;
+
+/**
+ *
+ * @brief Construct CITokensIters type.
+ */
+inline CONSTRUCTOR(CITokensIters, CITokensIters)
+{
+    return (CITokensIters){ .iters = NEW(Stack, CI_TOKENS_ITERS_MAX_SIZE),
+                            .current_iter = NULL,
+                            .current_token = NULL,
+                            .previous_token = NULL };
+}
+
+/**
+ *
+ * @brief Advance to one token on the current iterator.
+ */
+void
+next_token__CITokensIters(CITokensIters *self);
 
 #endif // LILY_CORE_CC_CI_TOKEN_H
