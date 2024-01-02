@@ -22,7 +22,6 @@
  * SOFTWARE.
  */
 
-#include <base/alloc.h>
 #include <base/assert.h>
 #include <base/macros.h>
 
@@ -1504,6 +1503,22 @@ DESTRUCTOR(CIToken, CIToken *self)
     }
 }
 
+CONSTRUCTOR(CITokensIter *, CITokensIter, const Vec *vec)
+{
+    CITokensIter *self = lily_malloc(sizeof(CITokensIter));
+
+    *self = NEW(VecIter, vec);
+
+    return self;
+}
+
+void
+add_iter__CITokensIters(CITokensIters *self, CITokensIter *iter)
+{
+    push__Stack(self->iters, self->current_iter);
+    self->current_iter = iter;
+}
+
 void
 next_token__CITokensIters(CITokensIters *self)
 {
@@ -1525,7 +1540,7 @@ next_token__CITokensIters(CITokensIters *self)
             // end of the current iter. So we pop the current iter from the
             // stack and call `next_token__CITokensIters` again.
             if (!self->current_token) {
-                lily_free(self->current_iter);
+                FREE(CITokensIter, self->current_iter);
 
                 self->current_iter = safe_pop__Stack(self->iters);
 

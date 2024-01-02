@@ -25,6 +25,7 @@
 #ifndef LILY_CORE_CC_CI_TOKEN_H
 #define LILY_CORE_CC_CI_TOKEN_H
 
+#include <base/alloc.h>
 #include <base/macros.h>
 #include <base/new.h>
 #include <base/stack.h>
@@ -628,6 +629,21 @@ DESTRUCTOR(CIToken, CIToken *self);
 
 typedef VecIter CITokensIter;
 
+/**
+ *
+ * @brief Construct CITokensIter type.
+ */
+CONSTRUCTOR(CITokensIter *, CITokensIter, const Vec *vec);
+
+/**
+ *
+ * @brief Free CITokensIter type.
+ */
+inline DESTRUCTOR(CITokensIter, CITokensIter *self)
+{
+    lily_free(self);
+}
+
 typedef struct CITokensIters
 {
     Stack *iters; // Stack<CITokensIter*>*
@@ -649,6 +665,13 @@ inline CONSTRUCTOR(CITokensIters, CITokensIters)
                             .current_token = NULL,
                             .previous_token = NULL };
 }
+
+/**
+ *
+ * @brief Add new iter as current.
+ */
+void
+add_iter__CITokensIters(CITokensIters *self, CITokensIter *iter);
 
 /**
  *
