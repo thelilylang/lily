@@ -99,6 +99,26 @@ safe_pop__Stack(Stack *self)
     return pop__Stack(self);
 }
 
+void *
+peek__Stack(const Stack *self)
+{
+    ASSERT(self->top);
+
+    return self->top;
+}
+
+void *
+visit__Stack(const Stack *self, Usize rsp)
+{
+    if (rsp == 0) {
+        return peek__Stack(self);
+    }
+
+    ASSERT(self->buffer[rsp - 1]);
+
+    return self->buffer[rsp - 1];
+}
+
 DESTRUCTOR(Stack, Stack *self)
 {
     if (self->buffer) {

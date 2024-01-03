@@ -88,6 +88,20 @@ safe_pop__Stack(Stack *self);
 
 /**
  *
+ * @brief Get the top element without removing it.
+ */
+void *
+peek__Stack(const Stack *self);
+
+/**
+ *
+ * @brief Visit the stack at n index.
+ */
+void *
+visit__Stack(const Stack *self, Usize rsp);
+
+/**
+ *
  * @brief Free Stack type.
  */
 DESTRUCTOR(Stack, Stack *self);
