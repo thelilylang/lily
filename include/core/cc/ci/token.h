@@ -35,6 +35,8 @@
 #include <core/cc/ci/features.h>
 #include <core/shared/location.h>
 
+typedef struct CIResultFile CIResultFile;
+
 // NOTE: Does not take multi-part keywords into account.
 // e.g. unsigned int, unsigned long long int, ...
 #define CI_N_SINGLE_KEYWORD 60
@@ -180,6 +182,7 @@ enum CITokenKind
     CI_TOKEN_KIND_LITERAL_CONSTANT_BIN,
     CI_TOKEN_KIND_LITERAL_CONSTANT_CHARACTER,
     CI_TOKEN_KIND_LITERAL_CONSTANT_STRING,
+    CI_TOKEN_KIND_MACRO_PARAM,
     CI_TOKEN_KIND_MINUS,
     CI_TOKEN_KIND_MINUS_EQ,
     CI_TOKEN_KIND_MINUS_MINUS,
@@ -420,6 +423,7 @@ typedef struct CIToken
         String *literal_constant_bin;
         char literal_constant_character;
         String *literal_constant_string;
+        Usize macro_param;
     };
 } CIToken;
 
@@ -543,6 +547,16 @@ VARIANT_CONSTRUCTOR(CIToken *,
 
 /**
  *
+ * @brief Construct CIToken type (CI_TOKEN_KIND_MACRO_PARAM).
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    macro_param,
+                    Location location,
+                    Usize macro_param);
+
+/**
+ *
  * @brief Construct CIToken type (CI_TOKEN_KIND_PREPROCESSOR_DEFINE).
  */
 VARIANT_CONSTRUCTOR(CIToken *,
@@ -627,7 +641,15 @@ DESTRUCTOR(CIToken, CIToken *self);
 
 #define CI_TOKENS_ITERS_MAX_SIZE 512
 
-typedef VecIter CITokensIter;
+typedef struct CITokensIter
+{
+    VecIter iter;
+    struct
+    {
+        Usize count;
+        bool in_use;
+    } peek;
+} CITokensIter;
 
 /**
  *
@@ -649,9 +671,8 @@ typedef struct CITokensIters
     Stack *iters; // Stack<CITokensIter*>*
     // NOTE: The `current_iter` is supposed to be NULL at then end of the
     // process (parsing).
-    CITokensIter *current_iter; // CITokensIter*?
-    CIToken *current_token;     // CIToken*? (&)
-    CIToken *previous_token;    // CIToken*? (&)
+    CIToken *current_token;  // CIToken*? (&)
+    CIToken *previous_token; // CIToken*? (&)
 } CITokensIters;
 
 /**
@@ -661,7 +682,6 @@ typedef struct CITokensIters
 inline CONSTRUCTOR(CITokensIters, CITokensIters)
 {
     return (CITokensIters){ .iters = NEW(Stack, CI_TOKENS_ITERS_MAX_SIZE),
-                            .current_iter = NULL,
                             .current_token = NULL,
                             .previous_token = NULL };
 }
@@ -670,8 +690,11 @@ inline CONSTRUCTOR(CITokensIters, CITokensIters)
  *
  * @brief Add new iter as current.
  */
-void
-add_iter__CITokensIters(CITokensIters *self, CITokensIter *iter);
+inline void
+add_iter__CITokensIters(CITokensIters *self, CITokensIter *iter)
+{
+    push__Stack(self->iters, iter);
+}
 
 /**
  *
@@ -679,6 +702,15 @@ add_iter__CITokensIters(CITokensIters *self, CITokensIter *iter);
  */
 void
 next_token__CITokensIters(CITokensIters *self);
+
+/**
+ *
+ * @brief Peek token at position + n.
+ */
+CIToken *
+peek_token__CITokensIters(const CITokensIters *self,
+                          const CIResultFile *file,
+                          Usize n);
 
 /**
  *

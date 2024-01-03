@@ -451,6 +451,21 @@ VARIANT_CONSTRUCTOR(CIToken *,
 
 VARIANT_CONSTRUCTOR(CIToken *,
                     CIToken,
+                    macro_param,
+                    Location location,
+                    Usize macro_param)
+{
+    CIToken *self = lily_malloc(sizeof(CIToken));
+
+    self->kind = CI_TOKEN_KIND_MACRO_PARAM;
+    self->location = location;
+    self->macro_param = macro_param;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
                     preprocessor_define,
                     Location location,
                     CITokenPreprocessorDefine preprocessor_define)
@@ -796,6 +811,8 @@ to_string__CIToken(CIToken *self)
         case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
             return format__String("LITERAL_CONSTANT(STRING({S}))",
                                   self->literal_constant_string);
+        case CI_TOKEN_KIND_MACRO_PARAM:
+            return format__String("MACRO_PARAM({zu})", self->macro_param);
         case CI_TOKEN_KIND_MINUS:
             return from__String("-");
         case CI_TOKEN_KIND_MINUS_EQ:
@@ -1147,6 +1164,8 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_LITERAL_CONSTANT_CHARACTER";
         case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
             return "CI_TOKEN_KIND_LITERAL_CONSTANT_STRING";
+        case CI_TOKEN_KIND_MACRO_PARAM:
+            return "CI_TOKEN_KIND_MACRO_PARAM";
         case CI_TOKEN_KIND_MINUS:
             return "CI_TOKEN_KIND_MINUS";
         case CI_TOKEN_KIND_MINUS_EQ:
@@ -1306,6 +1325,12 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_constant_character);
+        case CI_TOKEN_KIND_MACRO_PARAM:
+            return format(
+              "LilyToken{{ kind = {s}, location = {sa}, macro_param = {zu} }",
+              CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
+              CALL_DEBUG_IMPL(to_string, Location, &self->location),
+              self->macro_param);
         case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_include = {Sr} }",
@@ -1507,24 +1532,21 @@ CONSTRUCTOR(CITokensIter *, CITokensIter, const Vec *vec)
 {
     CITokensIter *self = lily_malloc(sizeof(CITokensIter));
 
-    *self = NEW(VecIter, vec);
+    self->iter = NEW(VecIter, vec);
+    self->peek.count = 0;
+    self->peek.in_use = false;
 
     return self;
 }
 
 void
-add_iter__CITokensIters(CITokensIters *self, CITokensIter *iter)
-{
-    push__Stack(self->iters, self->current_iter);
-    self->current_iter = iter;
-}
-
-void
 next_token__CITokensIters(CITokensIters *self)
 {
-    if (self->current_iter) {
-        if (self->current_iter->count == 0) {
-            self->current_token = next__VecIter(self->current_iter);
+    if (!empty__Stack(self->iters)) {
+        CITokensIter *top = peek__Stack(self->iters);
+
+        if (top->iter.count == 0) {
+            self->current_token = next__VecIter(&top->iter);
 
             // If the `previous_token` is `NULL`, we assign the `current_token`
             // to it. Otherwise, we assign nothing because that means we keep
@@ -1534,18 +1556,80 @@ next_token__CITokensIters(CITokensIters *self)
             }
         } else {
             self->previous_token = self->current_token;
-            self->current_token = next__VecIter(self->current_iter);
+            self->current_token = next__VecIter(&top->iter);
 
             // If the `current_token` is `NULL`, that means we have reached the
-            // end of the current iter. So we pop the current iter from the
-            // stack and call `next_token__CITokensIters` again.
+            // end of the current iter (top). So we pop the current iter from
+            // the stack and call `next_token__CITokensIters` again.
             if (!self->current_token) {
-                FREE(CITokensIter, self->current_iter);
-
-                self->current_iter = safe_pop__Stack(self->iters);
+                FREE(CITokensIter, pop__Stack(self->iters));
 
                 return next_token__CITokensIters(self);
             }
         }
     }
+}
+
+CIToken *
+peek_token__CITokensIters(const CITokensIters *self,
+                          const CIResultFile *file,
+                          Usize n)
+{
+    CIToken *current_token = self->current_token;
+    Vec *iters_vec = NEW(Vec); // Vec<CITokensIter*>*
+
+    for (Usize i = 0; i < self->iters->len; ++i) {
+        push__Vec(iters_vec, visit__Stack(self->iters, i));
+    }
+
+    CITokensIter *current_iter =
+      pop__Vec(iters_vec); // CITokensIter*? (&) | CITokensIter*?
+
+    current_iter->peek.count = current_iter->iter.count;
+    current_iter->peek.in_use = true;
+
+    for (Usize i = 0; i < n && current_iter && current_token;) {
+        current_token =
+          safe_get__Vec(current_iter->iter.vec, current_iter->peek.count);
+
+        if (current_token) {
+            ++i;
+            ++current_iter->peek.count;
+
+            switch (current_token->kind) {
+                case CI_TOKEN_KIND_MACRO_PARAM:
+                    push__Vec(iters_vec, current_iter);
+                    TODO("check macro variable");
+                    break;
+                default:
+                    break;
+            }
+        } else {
+            if (iters_vec->len > 0) {
+                // Check if check if the current iterator is in the stack.
+                if (iters_vec->len + 1 > self->iters->len) {
+                    FREE(CITokensIter, current_iter);
+                } else {
+                    current_iter->peek.in_use = false;
+                }
+
+                current_iter = pop__Vec(iters_vec);
+
+                if (!current_iter->peek.in_use) {
+                    current_iter->peek.count = current_iter->iter.count;
+                    current_iter->peek.in_use = true;
+                }
+            } else {
+                break;
+            }
+        }
+    }
+
+    if (current_iter) {
+        current_iter->peek.in_use = false;
+    }
+
+    FREE(Vec, iters_vec);
+
+    return current_token;
 }
