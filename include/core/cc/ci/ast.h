@@ -348,6 +348,7 @@ DESTRUCTOR(CIDataType, CIDataType *self);
 
 enum CIStorageClass
 {
+    CI_STORAGE_CLASS_NONE = 0,
     CI_STORAGE_CLASS_AUTO = 1 << 0,
     CI_STORAGE_CLASS_CONSTEXPR = 1 << 1,
     CI_STORAGE_CLASS_EXTERN = 1 << 2,
@@ -377,11 +378,11 @@ to_string__CIStorageClass(int storage_class_flag);
 
 enum CIDeclKind
 {
-    CI_DECL_KIND_ENUM,
-    CI_DECL_KIND_FUNCTION,
-    CI_DECL_KIND_STRUCT,
-    CI_DECL_KIND_UNION,
-    CI_DECL_KIND_VARIABLE,
+    CI_DECL_KIND_ENUM = 1 << 0,
+    CI_DECL_KIND_FUNCTION = 1 << 1,
+    CI_DECL_KIND_STRUCT = 1 << 2,
+    CI_DECL_KIND_UNION = 1 << 3,
+    CI_DECL_KIND_VARIABLE = 1 << 4,
 };
 
 /**

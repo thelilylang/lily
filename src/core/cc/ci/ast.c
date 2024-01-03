@@ -537,6 +537,8 @@ char *
 IMPL_FOR_DEBUG(to_string, CIStorageClass, int storage_class_flag)
 {
     switch (storage_class_flag) {
+        case CI_STORAGE_CLASS_NONE:
+            return "CI_STORAGE_CLASS_NONE";
         case CI_STORAGE_CLASS_AUTO:
             return "CI_STORAGE_CLASS_AUTO";
         case CI_STORAGE_CLASS_CONSTEXPR:
@@ -601,6 +603,8 @@ char *
 to_string__CIStorageClass(int storage_class_flag)
 {
     switch (storage_class_flag) {
+        case CI_STORAGE_CLASS_NONE:
+            return "";
         case CI_STORAGE_CLASS_AUTO:
             return "auto";
         case CI_STORAGE_CLASS_CONSTEXPR:
