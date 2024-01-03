@@ -1578,7 +1578,7 @@ peek_token__CITokensIters(const CITokensIters *self,
     CIToken *current_token = self->current_token;
     Vec *iters_vec = NEW(Vec); // Vec<CITokensIter*>*
 
-    for (Usize i = 0; i < self->iters->len; ++i) {
+    for (Usize i = self->iters->len; i--;) {
         push__Vec(iters_vec, visit__Stack(self->iters, i));
     }
 
