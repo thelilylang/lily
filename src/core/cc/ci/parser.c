@@ -128,7 +128,8 @@ next_token__CIParser(CIParser *self)
 CIToken *
 peek_token__CIParser(CIParser *self, Usize n)
 {
-    return peek_token__CITokensIters(&self->tokens_iters, self->file, n);
+    return peek_token__CITokensIters(
+      &self->tokens_iters, self->file, self->macros, n);
 }
 
 bool
