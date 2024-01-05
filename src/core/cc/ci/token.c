@@ -1573,10 +1573,12 @@ next_token__CITokensIters(CITokensIters *self)
 CIToken *
 peek_token__CITokensIters(const CITokensIters *self,
                           const CIResultFile *file,
+                          Stack *macros,
                           Usize n)
 {
     CIToken *current_token = self->current_token;
-    Vec *iters_vec = NEW(Vec); // Vec<CITokensIter*>*
+    Vec *iters_vec = NEW(Vec);  // Vec<CITokensIter*>*
+    Vec *macros_vec = NEW(Vec); // Vec<CIParserMacro*>*
 
     for (Usize i = self->iters->len; i--;) {
         push__Vec(iters_vec, visit__Stack(self->iters, i));
@@ -1593,16 +1595,19 @@ peek_token__CITokensIters(const CITokensIters *self,
           safe_get__Vec(current_iter->iter.vec, current_iter->peek.count);
 
         if (current_token) {
-            ++i;
-            ++current_iter->peek.count;
-
             switch (current_token->kind) {
                 case CI_TOKEN_KIND_MACRO_PARAM:
                     push__Vec(iters_vec, current_iter);
-                    TODO("check macro variable");
-                    break;
+                    current_iter = NEW(CITokensIter, peek__Stack(macros));
+
+                    continue;
+                case CI_TOKEN_KIND_IDENTIFIER:
+                    TODO("macro");
+                case CI_TOKEN_KIND_PAREN_CALL:
+                    TODO("paren call");
                 default:
-                    break;
+                    ++i;
+                    ++current_iter->peek.count;
             }
         } else {
             if (iters_vec->len > 0) {
@@ -1618,6 +1623,8 @@ peek_token__CITokensIters(const CITokensIters *self,
                 if (!current_iter->peek.in_use) {
                     current_iter->peek.count = current_iter->iter.count;
                     current_iter->peek.in_use = true;
+                } else {
+                    ++current_iter->peek.count;
                 }
             } else {
                 break;
@@ -1630,6 +1637,7 @@ peek_token__CITokensIters(const CITokensIters *self,
     }
 
     FREE(Vec, iters_vec);
+    FREE(Vec, macros_vec);
 
     return current_token;
 }

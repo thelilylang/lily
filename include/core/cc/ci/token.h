@@ -186,6 +186,7 @@ enum CITokenKind
     CI_TOKEN_KIND_MINUS,
     CI_TOKEN_KIND_MINUS_EQ,
     CI_TOKEN_KIND_MINUS_MINUS,
+    CI_TOKEN_KIND_PAREN_CALL, // <id>(...)
     CI_TOKEN_KIND_PERCENTAGE,
     CI_TOKEN_KIND_PERCENTAGE_EQ,
     CI_TOKEN_KIND_PLUS,
@@ -710,6 +711,7 @@ next_token__CITokensIters(CITokensIters *self);
 CIToken *
 peek_token__CITokensIters(const CITokensIters *self,
                           const CIResultFile *file,
+                          Stack *macros,
                           Usize n);
 
 /**
