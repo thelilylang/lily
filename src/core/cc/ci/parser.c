@@ -295,8 +295,8 @@ parse_data_type__CIParser(CIParser *self)
             res = NEW_VARIANT(CIDataType, ptr, res);
 
             break;
-		case CI_TOKEN_KIND_LPAREN:
-			TODO("function data type");
+        case CI_TOKEN_KIND_LPAREN:
+            TODO("function data type");
         default:
             return res;
     }
