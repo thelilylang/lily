@@ -38,6 +38,7 @@ enum CIDataTypeKind
 {
     CI_DATA_TYPE_KIND_ARRAY,
     CI_DATA_TYPE_KIND__ATOMIC,
+    CI_DATA_TYPE_KIND_BOOL,
     CI_DATA_TYPE_KIND_CHAR,
     CI_DATA_TYPE_KIND_DOUBLE,
     CI_DATA_TYPE_KIND_DOUBLE__COMPLEX,
@@ -61,6 +62,7 @@ enum CIDataTypeKind
     CI_DATA_TYPE_KIND_SHORT_INT,
     CI_DATA_TYPE_KIND_SIGNED_CHAR,
     CI_DATA_TYPE_KIND_STRUCT,
+    CI_DATA_TYPE_KIND_UNSIGNED_INT,
     CI_DATA_TYPE_KIND_UNSIGNED_CHAR,
     CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT,
     CI_DATA_TYPE_KIND_UNSIGNED_LONG_LONG_INT,
@@ -153,7 +155,8 @@ DESTRUCTOR(CIDataTypeArray, const CIDataTypeArray *self);
 
 typedef struct CIDataTypeFunction
 {
-    Vec *params; // Vec<CIDataType*>*
+    String *name; // String* (&)
+    Vec *params;  // Vec<CIDataType*>*
     struct CIDataType *return_data_type;
 } CIDataTypeFunction;
 
@@ -163,10 +166,12 @@ typedef struct CIDataTypeFunction
  */
 inline CONSTRUCTOR(CIDataTypeFunction,
                    CIDataTypeFunction,
+                   String *name,
                    Vec *params,
                    struct CIDataType *return_data_type)
 {
-    return (CIDataTypeFunction){ .params = params,
+    return (CIDataTypeFunction){ .name = name,
+                                 .params = params,
                                  .return_data_type = return_data_type };
 }
 

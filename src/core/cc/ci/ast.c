@@ -128,6 +128,8 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeKind, enum CIDataTypeKind self)
             return "CI_DATA_TYPE_KIND_ARRAY";
         case CI_DATA_TYPE_KIND__ATOMIC:
             return "CI_DATA_TYPE_KIND__ATOMIC";
+        case CI_DATA_TYPE_KIND_BOOL:
+            return "CI_DATA_TYPE_KIND_BOOL";
         case CI_DATA_TYPE_KIND_CHAR:
             return "CI_DATA_TYPE_KIND_CHAR";
         case CI_DATA_TYPE_KIND_DOUBLE:
@@ -174,6 +176,8 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeKind, enum CIDataTypeKind self)
             return "CI_DATA_TYPE_KIND_SIGNED_CHAR";
         case CI_DATA_TYPE_KIND_STRUCT:
             return "CI_DATA_TYPE_KIND_STRUCT";
+        case CI_DATA_TYPE_KIND_UNSIGNED_INT:
+            return "CI_DATA_TYPE_KIND_UNSIGNED_INT";
         case CI_DATA_TYPE_KIND_UNSIGNED_CHAR:
             return "CI_DATA_TYPE_KIND_UNSIGNED_CHAR";
         case CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT:
@@ -233,7 +237,8 @@ DESTRUCTOR(CIDataTypeArray, const CIDataTypeArray *self)
 String *
 IMPL_FOR_DEBUG(to_string, CIDataTypeFunction, const CIDataTypeFunction *self)
 {
-    String *res = from__String("CIDataTypeFunction{ params =");
+    String *res =
+      format__String("CIDataTypeFunction{{ name = {S}, params =", self->name);
 
     DEBUG_VEC_STRING(self->params, res, CIDataType);
 
