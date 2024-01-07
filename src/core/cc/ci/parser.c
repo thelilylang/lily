@@ -175,10 +175,168 @@ is_data_type__CIParser(CIParser *self)
 CIDataType *
 parse_data_type__CIParser(CIParser *self)
 {
+    CIDataType *res = NULL;
+
+    next_token__CIParser(self);
+
+    switch (self->tokens_iters.previous_token->kind) {
+        case CI_TOKEN_KIND_IDENTIFIER:
+            TODO("type");
+        case CI_TOKEN_KIND_KEYWORD_BOOL:
+        case CI_TOKEN_KIND_KEYWORD__BOOL:
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_BOOL);
+
+            break;
+        case CI_TOKEN_KIND_KEYWORD_CHAR:
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_CHAR);
+
+            break;
+        case CI_TOKEN_KIND_KEYWORD_CONST:
+            res = NEW_VARIANT(
+              CIDataType, pre_const, parse_data_type__CIParser(self));
+
+            break;
+        case CI_TOKEN_KIND_KEYWORD_DOUBLE:
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_DOUBLE);
+
+            break;
+        case CI_TOKEN_KIND_KEYWORD_DOUBLE__COMPLEX:
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_DOUBLE__COMPLEX);
+
+            break;
+        case CI_TOKEN_KIND_KEYWORD_DOUBLE__IMAGINARY:
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_DOUBLE__IMAGINARY);
+
+            break;
+        case CI_TOKEN_KIND_KEYWORD_ENUM:
+            TODO("enum");
+        case CI_TOKEN_KIND_KEYWORD_FLOAT:
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_FLOAT);
+
+            break;
+        case CI_TOKEN_KIND_KEYWORD_FLOAT__COMPLEX:
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_FLOAT__COMPLEX);
+
+            break;
+        case CI_TOKEN_KIND_KEYWORD_FLOAT__IMAGINARY:
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_FLOAT__IMAGINARY);
+
+            break;
+        case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE:
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_LONG_DOUBLE);
+
+            break;
+        case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__COMPLEX:
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_LONG_DOUBLE__COMPLEX);
+
+            break;
+        case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__IMAGINARY:
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_LONG_DOUBLE__IMAGINARY);
+
+            break;
+        case CI_TOKEN_KIND_KEYWORD_INT:
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
+
+            break;
+        case CI_TOKEN_KIND_KEYWORD_SHORT_INT:
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_SHORT_INT);
+
+            break;
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_CHAR:
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_SIGNED_CHAR);
+
+            break;
+        case CI_TOKEN_KIND_KEYWORD_STRUCT:
+            TODO("struct");
+        case CI_TOKEN_KIND_KEYWORD_UNION:
+            TODO("union");
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_CHAR:
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_CHAR);
+
+            break;
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_INT:
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_INT);
+
+            break;
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_INT:
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT);
+
+            break;
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT_INT:
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_SHORT_INT);
+
+            break;
+        case CI_TOKEN_KIND_KEYWORD_VOID:
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_VOID);
+
+            break;
+        case CI_TOKEN_KIND_KEYWORD_VOLATILE:
+            TODO("volatile");
+        case CI_TOKEN_KIND_KEYWORD__DECIMAL128:
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND__DECIMAL128);
+
+            break;
+        case CI_TOKEN_KIND_KEYWORD__DECIMAL32:
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND__DECIMAL32);
+
+            break;
+        case CI_TOKEN_KIND_KEYWORD__DECIMAL64:
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND__DECIMAL64);
+
+            break;
+        default:
+            FAILED("expected data type");
+    }
+
+    switch (self->tokens_iters.current_token->kind) {
+        case CI_TOKEN_KIND_STAR:
+            next_token__CIParser(self);
+
+            res = NEW_VARIANT(CIDataType, ptr, res);
+
+            break;
+		case CI_TOKEN_KIND_LPAREN:
+			TODO("function data type");
+        default:
+            return res;
+    }
+
+    switch (self->tokens_iters.current_token->kind) {
+        case CI_TOKEN_KIND_KEYWORD_CONST:
+            next_token__CIParser(self);
+
+            res = NEW_VARIANT(CIDataType, post_const, res);
+
+            break;
+        default:
+            return res;
+    }
+
+    return res;
 }
 
 CIDecl *
 parse_enum__CIParser(CIParser *self)
+{
+}
+
+CIDecl *
+parse_function__CIParser(CIParser *self)
+{
+}
+
+CIDecl *
+parse_struct__CIParser(CIParser *self)
+{
+}
+
+CIDecl *
+parse_union__CIParser(CIParser *self)
+{
+}
+
+CIDecl *
+parse_variable__CIParser(CIParser *self)
 {
 }
 
