@@ -22,11 +22,14 @@
  * SOFTWARE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <base/assert.h>
 
 #include <core/cc/ci/parser.h>
 #include <core/cc/ci/result.h>
+
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 /// @brief Advance to one token.
 static inline void
@@ -35,6 +38,16 @@ next_token__CIParser(CIParser *self);
 /// @brief Peek token at position + n.
 static inline CIToken *
 peek_token__CIParser(CIParser *self, Usize n);
+
+/// @brief Check if the current token has the same kind than passed in
+/// parameter.
+static bool
+expect__CIParser(CIParser *self, enum CITokenKind kind, bool emit_error);
+
+/// @brief Check if the current token has the same kind than an element in the
+/// list of kind.
+static void
+expect_with_list__CIParser(CIParser *self, Usize n, ...);
 
 /// @brief Advance to n token(s).
 // TODO: Perhaps implement it.
@@ -130,6 +143,41 @@ peek_token__CIParser(CIParser *self, Usize n)
 {
     return peek_token__CITokensIters(
       &self->tokens_iters, self->file, self->macros, n);
+}
+
+bool
+expect__CIParser(CIParser *self, enum CITokenKind kind, bool emit_error)
+{
+    if (self->tokens_iters.current_token->kind == kind) {
+        next_token__CIParser(self);
+
+        return true;
+    }
+
+    if (emit_error) {
+        FAILED("expected ...");
+    }
+
+    return false;
+}
+
+void
+expect_with_list__CIParser(CIParser *self, Usize n, ...)
+{
+    ASSERT(n > 0);
+
+    va_list vl;
+
+    va_start(vl);
+
+    while (n-- && !expect__CIParser(self, va_arg(vl, enum CITokenKind), false))
+        ;
+
+    va_end(vl);
+
+    if (n == 0) {
+        FAILED("expected ...");
+    }
 }
 
 bool
