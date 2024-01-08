@@ -31,6 +31,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static String *
+generate_name_error__CIParser();
+
 /// @brief Advance to one token.
 static inline void
 next_token__CIParser(CIParser *self);
@@ -63,19 +66,19 @@ static CIDataType *
 parse_data_type__CIParser(CIParser *self);
 
 /// @brief Parse enum declaration.
-static CIDecl *
-parse_enum__CIParser(CIParser *self);
+static CIDeclEnum
+parse_enum__CIParser(CIParser *self, String *name);
 
 /// @brief Parse function declaration.
 static CIDecl *
 parse_function__CIParser(CIParser *self);
 
 /// @brief Parse struct declaration.
-static CIDecl *
+static CIDeclStruct
 parse_struct__CIParser(CIParser *self);
 
 /// @brief Parse union declaration.
-static CIDecl *
+static CIDeclUnion
 parse_union__CIParser(CIParser *self);
 
 /// @brief Parse variable declaration.
@@ -109,6 +112,11 @@ parse_storage_class_specifiers__CIParser(CIParser *self,
             action;                                   \
     }
 
+// NOTE: If the program is multi-threaded, you'll need to adapt these variables
+// to multi-threading.
+static Vec *names_error = NULL; // Vec<String*>*
+static Usize name_error_count = 0;
+
 CONSTRUCTOR(CIParserMacro *, CIParserMacro, Vec *params)
 {
     CIParserMacro *self = lily_malloc(sizeof(CIParserMacro));
@@ -125,11 +133,27 @@ CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner)
 
     add_iter__CITokensIters(&tokens_iters, iter);
 
+    if (!names_error) {
+        names_error = NEW(Vec);
+    }
+
     return (CIParser){ .file = file,
                        .scanner = scanner,
                        .count_error = scanner->base.count_error,
                        .tokens_iters = tokens_iters,
                        .macros = NEW(Stack, CI_PARSER_MACROS_MAX_SIZE) };
+}
+
+String *
+generate_name_error__CIParser()
+{
+    ASSERT(names_error);
+
+    String *name_error = format__String("%__error__{zu}", name_error_count++);
+
+    push__Vec(names_error, name_error);
+
+    return name_error;
 }
 
 void
@@ -256,8 +280,43 @@ parse_data_type__CIParser(CIParser *self)
             res = NEW(CIDataType, CI_DATA_TYPE_KIND_DOUBLE__IMAGINARY);
 
             break;
-        case CI_TOKEN_KIND_KEYWORD_ENUM:
-            TODO("enum");
+        case CI_TOKEN_KIND_KEYWORD_ENUM: {
+            String *name = NULL; // String* (&)
+
+            // enum <name> ...;
+            // enum <name> { ... } ...;
+            if (expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, true)) {
+                name = self->tokens_iters.previous_token->identifier;
+            } else {
+                name = generate_name_error__CIParser();
+            }
+
+            res = NEW_VARIANT(CIDataType, enum, name);
+
+            switch (self->tokens_iters.current_token->kind) {
+                case CI_TOKEN_KIND_LBRACE: {
+                    next_token__CIParser(self);
+
+                    CIDecl *enum_decl =
+                      NEW_VARIANT(CIDecl,
+                                  enum,
+                                  CI_STORAGE_CLASS_NONE,
+                                  parse_enum__CIParser(self, name));
+
+                    if (add_decl__CIResultFile(self->file, enum_decl)) {
+                        FREE(CIDecl, enum_decl);
+
+                        FAILED("duplicate enum declaration");
+                    }
+
+                    break;
+                }
+                default:
+                    break;
+            }
+
+            break;
+        }
         case CI_TOKEN_KIND_KEYWORD_FLOAT:
             res = NEW(CIDataType, CI_DATA_TYPE_KIND_FLOAT);
 
@@ -363,29 +422,34 @@ parse_data_type__CIParser(CIParser *self)
     return res;
 }
 
-CIDecl *
-parse_enum__CIParser(CIParser *self)
+CIDeclEnum
+parse_enum__CIParser(CIParser *self, String *name)
 {
+    TODO("enum");
 }
 
 CIDecl *
 parse_function__CIParser(CIParser *self)
 {
+    TODO("function");
 }
 
-CIDecl *
+CIDeclStruct
 parse_struct__CIParser(CIParser *self)
 {
+    TODO("struct");
 }
 
-CIDecl *
+CIDeclUnion
 parse_union__CIParser(CIParser *self)
 {
+    TODO("union");
 }
 
 CIDecl *
 parse_variable__CIParser(CIParser *self)
 {
+    TODO("variable");
 }
 
 CIDecl *
@@ -393,9 +457,17 @@ parse_decl__CIParser(CIParser *self)
 {
     int storage_class_flag = CI_STORAGE_CLASS_NONE;
     enum CIDeclKind kind = 0;
-    CIDataType *data_type = NULL; // CIDataType*?
 
     parse_storage_class_specifiers__CIParser(self, &storage_class_flag);
+
+    // struct <name>;
+    // struct <name> { ... }
+    // enum <name>;
+    // enum <name> { ... }
+    // union <name>;
+    // union <name> { ... }
+
+    CIDataType *data_type = parse_data_type__CIParser(self);
 
     LOOK_FOR_MACRO_AND_DO_ACTION(
       switch (self->tokens_iters.current_token->kind) {
@@ -428,6 +500,8 @@ parse_decl__CIParser(CIParser *self)
     if (storage_class_flag & CI_STORAGE_CLASS_INLINE) {
         kind = CI_DECL_KIND_FUNCTION;
     }
+
+    expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
 }
 
 bool
@@ -492,6 +566,13 @@ run__CIParser(CIParser *self)
 
 DESTRUCTOR(CIParser, const CIParser *self)
 {
+    if (names_error) {
+        FREE_BUFFER_ITEMS(names_error->buffer, names_error->len, String);
+        FREE(Vec, names_error);
+
+        names_error = NULL;
+    }
+
     FREE(CITokensIters, &self->tokens_iters);
     FREE_STACK_ITEMS(self->macros, CIParserMacro);
     FREE(Stack, self->macros);
