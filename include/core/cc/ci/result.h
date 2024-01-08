@@ -27,6 +27,7 @@
 
 #include <base/hash_map.h>
 #include <base/macros.h>
+#include <base/ordered_hash_map.h>
 
 #include <core/cc/ci/ast.h>
 #include <core/cc/ci/features.h>
@@ -109,9 +110,9 @@ typedef struct CIResultFile
 {
     String *filename_result;
     File file_input;
-    HashMap *defines;  // HashMap<Vec<CIResultDefine*>*>*
-    HashMap *includes; // HashMap<CIResultInclude*>*
-    HashMap *decls;    // HashMap<CIDecl*>*
+    HashMap *defines;      // HashMap<Vec<CIResultDefine*>*>*
+    HashMap *includes;     // HashMap<CIResultInclude*>*
+    OrderedHashMap *decls; // HashMap<CIDecl*>*
     Usize count_error;
     CIScanner scanner;
     CIParser parser;
@@ -126,6 +127,17 @@ CONSTRUCTOR(CIResultFile *,
             enum CIStandard standard,
             String *filename_result,
             File file_input);
+
+/**
+ *
+ * @brief Add declaration to decls field.
+ */
+inline bool
+add_decl__CIResultFile(const CIResultFile *self, CIDecl *decl)
+{
+    return insert__OrderedHashMap(
+      self->decls, get_name__CIDecl(decl)->buffer, decl);
+}
 
 /**
  *

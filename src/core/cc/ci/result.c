@@ -75,7 +75,7 @@ CONSTRUCTOR(CIResultFile *,
     self->file_input = file_input;
     self->defines = NEW(HashMap);
     self->includes = NEW(HashMap);
-    self->decls = NEW(HashMap);
+    self->decls = NEW(OrderedHashMap);
     self->count_error = 0;
     self->scanner =
       NEW(CIScanner,
@@ -102,8 +102,8 @@ DESTRUCTOR(CIResultFile, CIResultFile *self)
     FREE(HashMap, self->defines);
     FREE_HASHMAP_VALUES(self->includes, CIResultInclude);
     FREE(HashMap, self->includes);
-    FREE_HASHMAP_VALUES(self->decls, CIDecl);
-    FREE(HashMap, self->decls);
+    FREE_ORD_HASHMAP_VALUES(self->decls, CIDecl);
+    FREE(OrderedHashMap, self->decls);
     FREE(CIScanner, &self->scanner);
     lily_free(self);
 }
