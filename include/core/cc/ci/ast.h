@@ -507,7 +507,7 @@ DESTRUCTOR(CIDeclEnum, const CIDeclEnum *self);
 
 typedef struct CIDeclFunctionParam
 {
-    String *name; // String* (&)
+    String *name; // String*? (&)
     CIDataType *data_type;
 } CIDeclFunctionParam;
 
@@ -539,8 +539,8 @@ DESTRUCTOR(CIDeclFunctionParam, CIDeclFunctionParam *self);
 typedef struct CIDeclFunction
 {
     String *name; // String* (&)
-    Vec *params;  // Vec<CIDeclFunctionParam*>*
-    Vec *body;    // Vec<CIDeclFunctionItem*>*
+    Vec *params;  // Vec<CIDeclFunctionParam*>*?
+    Vec *body;    // Vec<CIDeclFunctionItem*>*?
 } CIDeclFunction;
 
 /**
@@ -700,6 +700,7 @@ typedef struct CIDecl
 {
     enum CIDeclKind kind;
     int storage_class_flag;
+    bool is_prototype;
     union
     {
         CIDeclEnum enum_;
@@ -718,6 +719,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     enum,
                     int storage_class_flag,
+                    bool is_prototype,
                     CIDeclEnum enum_);
 
 /**
@@ -728,6 +730,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     function,
                     int storage_class_flag,
+                    bool is_prototype,
                     CIDeclFunction function);
 
 /**
@@ -738,6 +741,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     struct,
                     int storage_class_flag,
+                    bool is_prototype,
                     CIDeclStruct struct_);
 
 /**
@@ -748,6 +752,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     union,
                     int storage_class_flag,
+                    bool is_prototype,
                     CIDeclUnion union_);
 
 /**
@@ -758,6 +763,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     variable,
                     int storage_class_flag,
+                    bool is_prototype,
                     CIDeclVariable variable);
 
 /**

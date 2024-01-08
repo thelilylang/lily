@@ -816,9 +816,15 @@ CONSTRUCTOR(CIDeclFunctionParam *,
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclFunctionParam, const CIDeclFunctionParam *self)
 {
+    if (self->name) {
+        return format__String(
+          "CIDeclFunctionParam{{ name = {S}, data_type = {Sr} }",
+          self->name,
+          to_string__Debug__CIDataType(self->data_type));
+    }
+
     return format__String(
-      "CIDeclFunctionParam{{ name = {S}, data_type = {Sr} }",
-      self->name,
+      "CIDeclFunctionParam{{ name = NULL, data_type = {Sr} }",
       to_string__Debug__CIDataType(self->data_type));
 }
 #endif
@@ -835,10 +841,20 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunction, const CIDeclFunction *self)
 {
     String *res = format__String("CIDeclFunction{{ name = {S}, params =");
 
-    DEBUG_VEC_STRING(self->params, res, CIDeclFunctionParam);
+    if (self->params) {
+        DEBUG_VEC_STRING(self->params, res, CIDeclFunctionParam);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
     push_str__String(res, ", body =");
 
-    DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
+    if (self->body) {
+        DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
     push_str__String(res, " }");
 
     return res;
@@ -847,11 +863,17 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunction, const CIDeclFunction *self)
 
 DESTRUCTOR(CIDeclFunction, const CIDeclFunction *self)
 {
-    FREE_BUFFER_ITEMS(
-      self->params->buffer, self->params->len, CIDeclFunctionParam);
-    FREE(Vec, self->params);
-    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, CIDeclFunctionItem);
-    FREE(Vec, self->body);
+    if (self->params) {
+        FREE_BUFFER_ITEMS(
+          self->params->buffer, self->params->len, CIDeclFunctionParam);
+        FREE(Vec, self->params);
+    }
+
+    if (self->body) {
+        FREE_BUFFER_ITEMS(
+          self->body->buffer, self->body->len, CIDeclFunctionItem);
+        FREE(Vec, self->body);
+    }
 }
 
 CONSTRUCTOR(CIDeclStructField *,
@@ -951,12 +973,14 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     enum,
                     int storage_class_flag,
+                    bool is_prototype,
                     CIDeclEnum enum_)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
 
     self->kind = CI_DECL_KIND_ENUM;
     self->storage_class_flag = storage_class_flag;
+    self->is_prototype = is_prototype;
     self->enum_ = enum_;
 
     return self;
@@ -966,12 +990,14 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     function,
                     int storage_class_flag,
+                    bool is_prototype,
                     CIDeclFunction function)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
 
     self->kind = CI_DECL_KIND_FUNCTION;
     self->storage_class_flag = storage_class_flag;
+    self->is_prototype = is_prototype;
     self->function = function;
 
     return self;
@@ -981,12 +1007,14 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     struct,
                     int storage_class_flag,
+                    bool is_prototype,
                     CIDeclStruct struct_)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
 
     self->kind = CI_DECL_KIND_STRUCT;
     self->storage_class_flag = storage_class_flag;
+    self->is_prototype = is_prototype;
     self->struct_ = struct_;
 
     return self;
@@ -996,12 +1024,14 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     union,
                     int storage_class_flag,
+                    bool is_prototype,
                     CIDeclUnion union_)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
 
     self->kind = CI_DECL_KIND_UNION;
     self->storage_class_flag = storage_class_flag;
+    self->is_prototype = is_prototype;
     self->union_ = union_;
 
     return self;
@@ -1011,12 +1041,14 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     variable,
                     int storage_class_flag,
+                    bool is_prototype,
                     CIDeclVariable variable)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
 
     self->kind = CI_DECL_KIND_VARIABLE;
     self->storage_class_flag = storage_class_flag;
+    self->is_prototype = is_prototype;
     self->variable = variable;
 
     return self;
