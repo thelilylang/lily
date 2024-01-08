@@ -69,9 +69,19 @@ parse_data_type__CIParser(CIParser *self);
 static CIDeclEnum
 parse_enum__CIParser(CIParser *self, String *name);
 
+/// @brief Parse function params.
+/// @return Vec<CIDeclFunctionParam*>*?
+static Vec *
+parse_function_params__CIParser(CIParser *self);
+
+/// @brief Parse function body.
+/// @return Vec<CIDeclFunctionItem*>*
+static Vec *
+parse_function_body__CIParser(CIParser *self);
+
 /// @brief Parse function declaration.
 static CIDecl *
-parse_function__CIParser(CIParser *self);
+parse_function__CIParser(CIParser *self, int storage_class_flag, String *name);
 
 /// @brief Parse struct declaration.
 static CIDeclStruct
@@ -301,6 +311,7 @@ parse_data_type__CIParser(CIParser *self)
                       NEW_VARIANT(CIDecl,
                                   enum,
                                   CI_STORAGE_CLASS_NONE,
+                                  false,
                                   parse_enum__CIParser(self, name));
 
                     if (add_decl__CIResultFile(self->file, enum_decl)) {
@@ -428,10 +439,79 @@ parse_enum__CIParser(CIParser *self, String *name)
     TODO("enum");
 }
 
-CIDecl *
-parse_function__CIParser(CIParser *self)
+Vec *
+parse_function_params__CIParser(CIParser *self)
 {
-    TODO("function");
+    next_token__CIParser(self); // skip `(`
+
+    switch (self->tokens_iters.current_token->kind) {
+        case CI_TOKEN_KIND_RPAREN:
+            next_token__CIParser(self);
+
+            return NULL;
+        default:
+            break;
+    }
+
+    Vec *params = NEW(Vec); // Vec<CIDeclFunctionParam*>*
+
+    while (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RPAREN &&
+           self->tokens_iters.current_token->kind != CI_TOKEN_KIND_EOF) {
+        CIDataType *data_type = parse_data_type__CIParser(self);
+        String *name = NULL; // String*? (&)
+
+        // TODO: ... parameter
+        if (expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, false)) {
+            name = self->tokens_iters.previous_token->identifier;
+        }
+
+        push__Vec(params, NEW(CIDeclFunctionParam, name, data_type));
+
+        if (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RPAREN) {
+            expect__CIParser(self, CI_TOKEN_KIND_COMMA, true);
+        }
+    }
+
+    next_token__CIParser(self);
+
+    return params;
+}
+
+Vec *
+parse_function_body__CIParser(CIParser *self)
+{
+    TODO("parse function body");
+}
+
+CIDecl *
+parse_function__CIParser(CIParser *self, int storage_class_flag, String *name)
+{
+    Vec *params =
+      parse_function_params__CIParser(self); // Vec<CIDeclFunctionParam*>*?
+
+    switch (self->tokens_iters.current_token->kind) {
+        case CI_TOKEN_KIND_SEMICOLON:
+            next_token__CIParser(self);
+
+            return NEW_VARIANT(CIDecl,
+                               function,
+                               storage_class_flag,
+                               true,
+                               NEW(CIDeclFunction, name, params, NULL));
+        case CI_TOKEN_KIND_LBRACE:
+            next_token__CIParser(self);
+
+            return NEW_VARIANT(CIDecl,
+                               function,
+                               storage_class_flag,
+                               false,
+                               NEW(CIDeclFunction,
+                                   name,
+                                   params,
+                                   parse_function_body__CIParser(self)));
+        default:
+            FAILED("expected `;` or `{`");
+    }
 }
 
 CIDeclStruct
