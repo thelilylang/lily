@@ -46,6 +46,7 @@ enum CIDataTypeKind
     CI_DATA_TYPE_KIND__DECIMAL32,
     CI_DATA_TYPE_KIND__DECIMAL64,
     CI_DATA_TYPE_KIND__DECIMAL128,
+    CI_DATA_TYPE_KIND_ENUM,
     CI_DATA_TYPE_KIND_FLOAT,
     CI_DATA_TYPE_KIND_FLOAT__COMPLEX,
     CI_DATA_TYPE_KIND_FLOAT__IMAGINARY,
@@ -266,6 +267,7 @@ typedef struct CIDataType
     {
         CIDataTypeArray array;
         struct CIDataType *_atomic;
+        String *enum_; // String* (&)
         CIDataTypeFunction function;
         struct CIDataType *pre_const;
         struct CIDataType *post_const;
@@ -286,6 +288,12 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, array, CIDataTypeArray array);
  * @brief Construct CIDataType type (CI_DATA_TYPE_KIND__ATOMIC).
  */
 VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, _atomic, CIDataType *_atomic);
+
+/**
+ *
+ * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_ENUM).
+ */
+VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, enum, String *enum_);
 
 /**
  *
@@ -751,6 +759,13 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     variable,
                     int storage_class_flag,
                     CIDeclVariable variable);
+
+/**
+ *
+ * @brief Get name from declaration.
+ */
+String *
+get_name__CIDecl(const CIDecl *self);
 
 /**
  *

@@ -35,6 +35,9 @@ static VARIANT_DESTRUCTOR(CIDataType, array, CIDataType *self);
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND__ATOMIC).
 static VARIANT_DESTRUCTOR(CIDataType, _atomic, CIDataType *self);
 
+/// @brief Free CIDataType type (CI_DATA_TYPE_KIND_ENUM).
+static inline VARIANT_DESTRUCTOR(CIDataType, enum, CIDataType *self);
+
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_FUNCTION).
 static VARIANT_DESTRUCTOR(CIDataType, function, CIDataType *self);
 
@@ -144,6 +147,8 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeKind, enum CIDataTypeKind self)
             return "CI_DATA_TYPE_KIND__DECIMAL64";
         case CI_DATA_TYPE_KIND__DECIMAL128:
             return "CI_DATA_TYPE_KIND__DECIMAL128";
+        case CI_DATA_TYPE_KIND_ENUM:
+            return "CI_DATA_TYPE_KIND_ENUM";
         case CI_DATA_TYPE_KIND_FLOAT:
             return "CI_DATA_TYPE_KIND_FLOAT";
         case CI_DATA_TYPE_KIND_FLOAT__COMPLEX:
@@ -332,6 +337,16 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, _atomic, CIDataType *_atomic)
     return self;
 }
 
+VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, enum, String *enum_)
+{
+    CIDataType *self = lily_malloc(sizeof(CIDataType));
+
+    self->kind = CI_DATA_TYPE_KIND_ENUM;
+    self->enum_ = enum_;
+
+    return self;
+}
+
 VARIANT_CONSTRUCTOR(CIDataType *,
                     CIDataType,
                     function,
@@ -421,6 +436,10 @@ IMPL_FOR_DEBUG(to_string, CIDataType, const CIDataType *self)
             return format__String("CIDataType{{ kind = {s}, _atomic = {Sr} }",
                                   to_string__Debug__CIDataTypeKind(self->kind),
                                   to_string__Debug__CIDataType(self->_atomic));
+        case CI_DATA_TYPE_KIND_ENUM:
+            return format__String("CIDataType{{ kind = {s}, enum = {S} }",
+                                  to_string__Debug__CIDataTypeKind(self->kind),
+                                  self->enum_);
         case CI_DATA_TYPE_KIND_FUNCTION:
             return format__String(
               "CIDataType{{ kind = {s}, function = {Sr} }",
@@ -469,6 +488,11 @@ VARIANT_DESTRUCTOR(CIDataType, _atomic, CIDataType *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(CIDataType, enum, CIDataType *self)
+{
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(CIDataType, function, CIDataType *self)
 {
     FREE(CIDataTypeFunction, &self->function);
@@ -513,6 +537,9 @@ DESTRUCTOR(CIDataType, CIDataType *self)
             break;
         case CI_DATA_TYPE_KIND__ATOMIC:
             FREE_VARIANT(CIDataType, _atomic, self);
+            break;
+        case CI_DATA_TYPE_KIND_ENUM:
+            FREE_VARIANT(CIDataType, enum, self);
             break;
         case CI_DATA_TYPE_KIND_FUNCTION:
             FREE_VARIANT(CIDataType, function, self);
@@ -993,6 +1020,25 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->variable = variable;
 
     return self;
+}
+
+String *
+get_name__CIDecl(const CIDecl *self)
+{
+    switch (self->kind) {
+        case CI_DECL_KIND_ENUM:
+            return self->enum_.name;
+        case CI_DECL_KIND_FUNCTION:
+            return self->function.name;
+        case CI_DECL_KIND_STRUCT:
+            return self->struct_.name;
+        case CI_DECL_KIND_UNION:
+            return self->union_.name;
+        case CI_DECL_KIND_VARIABLE:
+            return self->variable.name;
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }
 
 #ifdef ENV_DEBUG
