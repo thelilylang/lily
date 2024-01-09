@@ -436,7 +436,42 @@ parse_data_type__CIParser(CIParser *self)
 CIDeclEnum
 parse_enum__CIParser(CIParser *self, String *name)
 {
-    TODO("enum");
+    next_token__CIParser(self); // skip `{`
+
+    Vec *variants = NEW(Vec); // Vec<CIDeclEnumVariant*>*
+
+    while (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RBRACE &&
+           self->tokens_iters.current_token->kind != CI_TOKEN_KIND_EOF) {
+        String *name = NULL; // String* (&)
+
+        if (expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, true)) {
+            name = self->tokens_iters.previous_token->identifier;
+        } else {
+            name = generate_name_error__CIParser();
+        }
+
+        switch (self->tokens_iters.current_token->kind) {
+            case CI_TOKEN_KIND_EQ:
+                next_token__CIParser(self);
+
+                TODO("parse expression");
+
+                break;
+            default:
+                push__Vec(variants,
+                          NEW_VARIANT(CIDeclEnumVariant, default, name));
+        }
+
+        if (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RBRACE) {
+            expect__CIParser(self, CI_TOKEN_KIND_COMMA, true);
+        }
+    }
+
+    if (variants->len == 0) {
+        FAILED("expected one or many variants");
+    }
+
+    return NEW(CIDeclEnum, name, variants);
 }
 
 Vec *
