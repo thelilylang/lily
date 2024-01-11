@@ -85,7 +85,7 @@ parse_function__CIParser(CIParser *self, int storage_class_flag, String *name);
 
 /// @brief Parse struct declaration.
 static CIDeclStruct
-parse_struct__CIParser(CIParser *self);
+parse_struct__CIParser(CIParser *self, String *name);
 
 /// @brief Parse union declaration.
 static CIDeclUnion
@@ -507,7 +507,11 @@ parse_function_params__CIParser(CIParser *self)
         }
     }
 
-    next_token__CIParser(self);
+    if (self->tokens_iters.current_token->kind == CI_TOKEN_KIND_EOF) {
+        FAILED("hit EOF");
+    } else {
+        next_token__CIParser(self); // skip `}`
+    }
 
     return params;
 }
@@ -550,9 +554,36 @@ parse_function__CIParser(CIParser *self, int storage_class_flag, String *name)
 }
 
 CIDeclStruct
-parse_struct__CIParser(CIParser *self)
+parse_struct__CIParser(CIParser *self, String *name)
 {
-    TODO("struct");
+    next_token__CIParser(self); // skip `{`
+
+    Vec *fields = NEW(Vec); // Vec<CIDeclStructField*>*
+
+    while (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RBRACE &&
+           self->tokens_iters.current_token->kind != CI_TOKEN_KIND_EOF) {
+        CIDataType *data_type = parse_data_type__CIParser(self);
+        String *name = NULL;
+
+        if (expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, true)) {
+            name = self->tokens_iters.previous_token->identifier;
+        } else {
+            name = generate_name_error__CIParser();
+        }
+
+        // TODO: parse bits set
+
+        push__Vec(fields, NEW(CIDeclStructField, name, data_type));
+        expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
+    }
+
+    if (self->tokens_iters.current_token->kind == CI_TOKEN_KIND_EOF) {
+        FAILED("hit EOF");
+    } else {
+        next_token__CIParser(self); // skip `}`
+    }
+
+    return NEW(CIDeclStruct, name, fields);
 }
 
 CIDeclUnion
