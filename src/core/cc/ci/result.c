@@ -87,6 +87,13 @@ CONSTRUCTOR(CIResultFile *,
     return self;
 }
 
+bool
+add_decl__CIResultFile(const CIResultFile *self, CIDecl *decl)
+{
+    return insert__OrderedHashMap(
+      self->decls, get_name__CIDecl(decl)->buffer, decl);
+}
+
 void
 run__CIResultFile(CIResultFile *self)
 {

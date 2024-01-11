@@ -132,12 +132,8 @@ CONSTRUCTOR(CIResultFile *,
  *
  * @brief Add declaration to decls field.
  */
-inline bool
-add_decl__CIResultFile(const CIResultFile *self, CIDecl *decl)
-{
-    return insert__OrderedHashMap(
-      self->decls, get_name__CIDecl(decl)->buffer, decl);
-}
+bool
+add_decl__CIResultFile(const CIResultFile *self, CIDecl *decl);
 
 /**
  *
