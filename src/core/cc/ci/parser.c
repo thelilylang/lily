@@ -66,8 +66,8 @@ static CIDataType *
 parse_data_type__CIParser(CIParser *self);
 
 /// @brief Parse enum declaration.
-static CIDeclEnum
-parse_enum__CIParser(CIParser *self, String *name);
+static CIDecl *
+parse_enum__CIParser(CIParser *self, int storage_class_flag, String *name);
 
 /// @brief Parse function params.
 /// @return Vec<CIDeclFunctionParam*>*?
@@ -81,7 +81,10 @@ parse_function_body__CIParser(CIParser *self);
 
 /// @brief Parse function declaration.
 static CIDecl *
-parse_function__CIParser(CIParser *self, int storage_class_flag, String *name);
+parse_function__CIParser(CIParser *self,
+                         int storage_class_flag,
+                         CIDataType *return_data_type,
+                         String *name);
 
 /// @brief Parse struct (union) fields.
 static Vec *
@@ -103,10 +106,6 @@ parse_variable__CIParser(CIParser *self);
 static CIDecl *
 parse_decl__CIParser(CIParser *self);
 
-/// @brief Look for macro.
-static bool
-look_for_macro__CIParser(CIParser *self);
-
 /// @brief Parse storage class specifier.
 /// @return true if the token is a storage class specifier, false otherwise.
 static bool
@@ -118,18 +117,12 @@ static void
 parse_storage_class_specifiers__CIParser(CIParser *self,
                                          int *storage_class_flag);
 
-#define LOOK_FOR_MACRO_AND_DO_ACTION(action)          \
-    switch (self->tokens_iters.current_token->kind) { \
-        case CI_TOKEN_KIND_IDENTIFIER:                \
-            look_for_macro__CIParser(self);           \
-        default:                                      \
-            action;                                   \
-    }
-
 // NOTE: If the program is multi-threaded, you'll need to adapt these variables
 // to multi-threading.
 static Vec *names_error = NULL; // Vec<String*>*
 static Usize name_error_count = 0;
+
+static int storage_class_flag = CI_STORAGE_CLASS_NONE;
 
 CONSTRUCTOR(CIParserMacro *, CIParserMacro, Vec *params)
 {
@@ -221,41 +214,40 @@ expect_with_list__CIParser(CIParser *self, Usize n, ...)
 bool
 is_data_type__CIParser(CIParser *self)
 {
-    LOOK_FOR_MACRO_AND_DO_ACTION(
-      switch (self->tokens_iters.current_token->kind) {
-          case CI_TOKEN_KIND_IDENTIFIER:
-          case CI_TOKEN_KIND_KEYWORD_BOOL:
-          case CI_TOKEN_KIND_KEYWORD_CHAR:
-          case CI_TOKEN_KIND_KEYWORD_CONST:
-          case CI_TOKEN_KIND_KEYWORD_DOUBLE:
-          case CI_TOKEN_KIND_KEYWORD_DOUBLE__COMPLEX:
-          case CI_TOKEN_KIND_KEYWORD_DOUBLE__IMAGINARY:
-          case CI_TOKEN_KIND_KEYWORD_ENUM:
-          case CI_TOKEN_KIND_KEYWORD_FLOAT:
-          case CI_TOKEN_KIND_KEYWORD_FLOAT__COMPLEX:
-          case CI_TOKEN_KIND_KEYWORD_FLOAT__IMAGINARY:
-          case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE:
-          case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__COMPLEX:
-          case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__IMAGINARY:
-          case CI_TOKEN_KIND_KEYWORD_INT:
-          case CI_TOKEN_KIND_KEYWORD_SHORT_INT:
-          case CI_TOKEN_KIND_KEYWORD_SIGNED_CHAR:
-          case CI_TOKEN_KIND_KEYWORD_STRUCT:
-          case CI_TOKEN_KIND_KEYWORD_UNION:
-          case CI_TOKEN_KIND_KEYWORD_UNSIGNED_CHAR:
-          case CI_TOKEN_KIND_KEYWORD_UNSIGNED_INT:
-          case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_INT:
-          case CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT_INT:
-          case CI_TOKEN_KIND_KEYWORD_VOID:
-          case CI_TOKEN_KIND_KEYWORD_VOLATILE:
-          case CI_TOKEN_KIND_KEYWORD__BOOL:
-          case CI_TOKEN_KIND_KEYWORD__DECIMAL128:
-          case CI_TOKEN_KIND_KEYWORD__DECIMAL32:
-          case CI_TOKEN_KIND_KEYWORD__DECIMAL64:
-              return true;
-          default:
-              return false;
-      });
+    switch (self->tokens_iters.current_token->kind) {
+        case CI_TOKEN_KIND_IDENTIFIER:
+        case CI_TOKEN_KIND_KEYWORD_BOOL:
+        case CI_TOKEN_KIND_KEYWORD_CHAR:
+        case CI_TOKEN_KIND_KEYWORD_CONST:
+        case CI_TOKEN_KIND_KEYWORD_DOUBLE:
+        case CI_TOKEN_KIND_KEYWORD_DOUBLE__COMPLEX:
+        case CI_TOKEN_KIND_KEYWORD_DOUBLE__IMAGINARY:
+        case CI_TOKEN_KIND_KEYWORD_ENUM:
+        case CI_TOKEN_KIND_KEYWORD_FLOAT:
+        case CI_TOKEN_KIND_KEYWORD_FLOAT__COMPLEX:
+        case CI_TOKEN_KIND_KEYWORD_FLOAT__IMAGINARY:
+        case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE:
+        case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__COMPLEX:
+        case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__IMAGINARY:
+        case CI_TOKEN_KIND_KEYWORD_INT:
+        case CI_TOKEN_KIND_KEYWORD_SHORT_INT:
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_CHAR:
+        case CI_TOKEN_KIND_KEYWORD_STRUCT:
+        case CI_TOKEN_KIND_KEYWORD_UNION:
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_CHAR:
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_INT:
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_INT:
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT_INT:
+        case CI_TOKEN_KIND_KEYWORD_VOID:
+        case CI_TOKEN_KIND_KEYWORD_VOLATILE:
+        case CI_TOKEN_KIND_KEYWORD__BOOL:
+        case CI_TOKEN_KIND_KEYWORD__DECIMAL128:
+        case CI_TOKEN_KIND_KEYWORD__DECIMAL32:
+        case CI_TOKEN_KIND_KEYWORD__DECIMAL64:
+            return true;
+        default:
+            return false;
+    }
 }
 
 CIDataType *
@@ -263,6 +255,9 @@ parse_data_type__CIParser(CIParser *self)
 {
     CIDataType *res = NULL;
 
+    storage_class_flag = CI_STORAGE_CLASS_NONE;
+
+    parse_storage_class_specifiers__CIParser(self, &storage_class_flag);
     next_token__CIParser(self);
 
     switch (self->tokens_iters.previous_token->kind) {
@@ -312,11 +307,7 @@ parse_data_type__CIParser(CIParser *self)
                     next_token__CIParser(self);
 
                     CIDecl *enum_decl =
-                      NEW_VARIANT(CIDecl,
-                                  enum,
-                                  CI_STORAGE_CLASS_NONE,
-                                  false,
-                                  parse_enum__CIParser(self, name));
+                      parse_enum__CIParser(self, storage_class_flag, name);
 
                     if (add_decl__CIResultFile(self->file, enum_decl)) {
                         FREE(CIDecl, enum_decl);
@@ -437,10 +428,23 @@ parse_data_type__CIParser(CIParser *self)
     return res;
 }
 
-CIDeclEnum
-parse_enum__CIParser(CIParser *self, String *name)
+CIDecl *
+parse_enum__CIParser(CIParser *self, int storage_class_flag, String *name)
 {
-    next_token__CIParser(self); // skip `{`
+    switch (self->tokens_iters.current_token->kind) {
+        case CI_TOKEN_KIND_SEMICOLON:
+            next_token__CIParser(self);
+
+            return NEW_VARIANT(CIDecl,
+                               enum,
+                               storage_class_flag,
+                               true,
+                               NEW(CIDeclEnum, name, NULL));
+        case CI_TOKEN_KIND_LBRACE:
+            next_token__CIParser(self); // skip `{`
+        default:
+            UNREACHABLE("expected `;` or `{`");
+    }
 
     Vec *variants = NEW(Vec); // Vec<CIDeclEnumVariant*>*
 
@@ -475,7 +479,8 @@ parse_enum__CIParser(CIParser *self, String *name)
         FAILED("expected one or many variants");
     }
 
-    return NEW(CIDeclEnum, name, variants);
+    return NEW_VARIANT(
+      CIDecl, enum, storage_class_flag, false, NEW(CIDeclEnum, name, variants));
 }
 
 Vec *
@@ -527,7 +532,10 @@ parse_function_body__CIParser(CIParser *self)
 }
 
 CIDecl *
-parse_function__CIParser(CIParser *self, int storage_class_flag, String *name)
+parse_function__CIParser(CIParser *self,
+                         int storage_class_flag,
+                         CIDataType *return_data_type,
+                         String *name)
 {
     Vec *params =
       parse_function_params__CIParser(self); // Vec<CIDeclFunctionParam*>*?
@@ -536,11 +544,12 @@ parse_function__CIParser(CIParser *self, int storage_class_flag, String *name)
         case CI_TOKEN_KIND_SEMICOLON:
             next_token__CIParser(self);
 
-            return NEW_VARIANT(CIDecl,
-                               function,
-                               storage_class_flag,
-                               true,
-                               NEW(CIDeclFunction, name, params, NULL));
+            return NEW_VARIANT(
+              CIDecl,
+              function,
+              storage_class_flag,
+              true,
+              NEW(CIDeclFunction, name, return_data_type, params, NULL));
         case CI_TOKEN_KIND_LBRACE:
             next_token__CIParser(self);
 
@@ -550,6 +559,7 @@ parse_function__CIParser(CIParser *self, int storage_class_flag, String *name)
                                false,
                                NEW(CIDeclFunction,
                                    name,
+                                   return_data_type,
                                    params,
                                    parse_function_body__CIParser(self)));
         default:
@@ -618,53 +628,35 @@ parse_variable__CIParser(CIParser *self)
 CIDecl *
 parse_decl__CIParser(CIParser *self)
 {
-    int storage_class_flag = CI_STORAGE_CLASS_NONE;
-    enum CIDeclKind kind = 0;
-
-    parse_storage_class_specifiers__CIParser(self, &storage_class_flag);
-
-    // struct <name>;
-    // struct <name> { ... }
-    // enum <name>;
-    // enum <name> { ... }
-    // union <name>;
-    // union <name> { ... }
-
     CIDataType *data_type = parse_data_type__CIParser(self);
 
-    LOOK_FOR_MACRO_AND_DO_ACTION(
-      switch (self->tokens_iters.current_token->kind) {
-          case CI_TOKEN_KIND_KEYWORD_STRUCT:
-              kind = CI_DECL_KIND_STRUCT | CI_DECL_KIND_FUNCTION |
-                     CI_DECL_KIND_VARIABLE;
-              break;
-          case CI_TOKEN_KIND_KEYWORD_ENUM:
-              kind = CI_DECL_KIND_ENUM | CI_DECL_KIND_FUNCTION |
-                     CI_DECL_KIND_VARIABLE;
-              break;
-          case CI_TOKEN_KIND_KEYWORD_UNION:
-              kind = CI_DECL_KIND_UNION | CI_DECL_KIND_FUNCTION |
-                     CI_DECL_KIND_VARIABLE;
-              break;
-          default:
-              if (is_data_type__CIParser(self)) {
-                  // The parser doesn't know whether it's a function or a
-                  // variable.
-                  kind = CI_DECL_KIND_FUNCTION | CI_DECL_KIND_VARIABLE;
+    switch (self->tokens_iters.current_token->kind) {
+        case CI_TOKEN_KIND_IDENTIFIER: {
+            String *name = self->tokens_iters.current_token->identifier;
 
-                  data_type = parse_data_type__CIParser(self);
+            next_token__CIParser(self);
 
-                  break;
-              }
+            switch (self->tokens_iters.current_token->kind) {
+                case CI_TOKEN_KIND_EQ:
+                    TODO("variable");
+                case CI_TOKEN_KIND_SEMICOLON:
+                    TODO("prototype");
+                case CI_TOKEN_KIND_LPAREN:
+                    return parse_function__CIParser(
+                      self, storage_class_flag, data_type, name);
+                default:
+                    FAILED("expected `=`, `;`, `(`");
+            }
 
-              FAILED("expected struct, enum, union, data type, or identifier");
-      });
+            break;
+        }
+        default:
+            expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
 
-    if (storage_class_flag & CI_STORAGE_CLASS_INLINE) {
-        kind = CI_DECL_KIND_FUNCTION;
+            FREE(CIDataType, data_type);
+
+            return NULL;
     }
-
-    expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
 }
 
 bool
@@ -706,25 +698,32 @@ void
 parse_storage_class_specifiers__CIParser(CIParser *self,
                                          int *storage_class_flag)
 {
-    LOOK_FOR_MACRO_AND_DO_ACTION({
-        int old_storage_class_flag = *storage_class_flag;
+    int old_storage_class_flag = *storage_class_flag;
 
-        while (
-          parse_storage_class_specifier__CIParser(self, storage_class_flag)) {
-            next_token__CIParser(self);
+    while (parse_storage_class_specifier__CIParser(self, storage_class_flag)) {
+        next_token__CIParser(self);
 
-            if (old_storage_class_flag == *storage_class_flag) {
-                FAILED("warning: duplicate storage class specifier");
-            }
-
-            old_storage_class_flag = *storage_class_flag;
+        if (old_storage_class_flag == *storage_class_flag) {
+            FAILED("warning: duplicate storage class specifier");
         }
-    });
+
+        old_storage_class_flag = *storage_class_flag;
+    }
 }
 
 void
 run__CIParser(CIParser *self)
 {
+    // Initialize the first token.
+    next_token__CIParser(self);
+
+    while (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_EOF) {
+        CIDecl *decl = parse_decl__CIParser(self);
+
+        if (decl) {
+            add_decl__CIResultFile(self->file, decl);
+        }
+    }
 }
 
 DESTRUCTOR(CIParser, const CIParser *self)
