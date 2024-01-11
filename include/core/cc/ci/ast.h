@@ -477,7 +477,7 @@ inline DESTRUCTOR(CIDeclEnumVariant, CIDeclEnumVariant *self)
 typedef struct CIDeclEnum
 {
     String *name;  // String* (&)
-    Vec *variants; // Vec<CIDeclEnumVariant*>*
+    Vec *variants; // Vec<CIDeclEnumVariant*>*?
 } CIDeclEnum;
 
 /**
@@ -539,8 +539,9 @@ DESTRUCTOR(CIDeclFunctionParam, CIDeclFunctionParam *self);
 typedef struct CIDeclFunction
 {
     String *name; // String* (&)
-    Vec *params;  // Vec<CIDeclFunctionParam*>*?
-    Vec *body;    // Vec<CIDeclFunctionItem*>*?
+    CIDataType *return_data_type;
+    Vec *params; // Vec<CIDeclFunctionParam*>*?
+    Vec *body;   // Vec<CIDeclFunctionItem*>*?
 } CIDeclFunction;
 
 /**
@@ -550,10 +551,14 @@ typedef struct CIDeclFunction
 inline CONSTRUCTOR(CIDeclFunction,
                    CIDeclFunction,
                    String *name,
+                   CIDataType *return_data_type,
                    Vec *params,
                    Vec *body)
 {
-    return (CIDeclFunction){ .name = name, .params = params, .body = body };
+    return (CIDeclFunction){ .name = name,
+                             .return_data_type = return_data_type,
+                             .params = params,
+                             .body = body };
 }
 
 /**
@@ -606,7 +611,7 @@ DESTRUCTOR(CIDeclStructField, CIDeclStructField *self);
 typedef struct CIDeclStruct
 {
     String *name; // String* (&)
-    Vec *fields;  // Vec<CIDeclStructField*>*
+    Vec *fields;  // Vec<CIDeclStructField*>*?
 } CIDeclStruct;
 
 /**
@@ -637,7 +642,7 @@ DESTRUCTOR(CIDeclStruct, const CIDeclStruct *self);
 typedef struct CIDeclUnion
 {
     String *name; // String* (&)
-    Vec *fields;  // Vec<CIDeclStructField*>*
+    Vec *fields;  // Vec<CIDeclStructField*>*?
 } CIDeclUnion;
 
 /**

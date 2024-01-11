@@ -785,8 +785,12 @@ IMPL_FOR_DEBUG(to_string, CIDeclEnum, const CIDeclEnum *self)
     String *res =
       format__String("CIDeclEnum{{ name = {S}, variants =", self->name);
 
-    DEBUG_VEC_STRING(self->variants, res, CIDeclEnumVariant);
-    push_str__String(res, " }");
+    if (self->variants) {
+        DEBUG_VEC_STRING(self->variants, res, CIDeclEnumVariant);
+        push_str__String(res, " }");
+    } else {
+        push_str__String(res, " NULL");
+    }
 
     return res;
 }
@@ -794,9 +798,11 @@ IMPL_FOR_DEBUG(to_string, CIDeclEnum, const CIDeclEnum *self)
 
 DESTRUCTOR(CIDeclEnum, const CIDeclEnum *self)
 {
-    FREE_BUFFER_ITEMS(
-      self->variants->buffer, self->variants->len, CIDeclEnumVariant);
-    FREE(Vec, self->variants);
+    if (self->variants) {
+        FREE_BUFFER_ITEMS(
+          self->variants->buffer, self->variants->len, CIDeclEnumVariant);
+        FREE(Vec, self->variants);
+    }
 }
 
 CONSTRUCTOR(CIDeclFunctionParam *,
@@ -839,7 +845,9 @@ DESTRUCTOR(CIDeclFunctionParam, CIDeclFunctionParam *self)
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclFunction, const CIDeclFunction *self)
 {
-    String *res = format__String("CIDeclFunction{{ name = {S}, params =");
+    String *res = format__String(
+      "CIDeclFunction{{ name = {S}, return_data_type = {Sr}, params =",
+      to_string__Debug__CIDataType(self->return_data_type));
 
     if (self->params) {
         DEBUG_VEC_STRING(self->params, res, CIDeclFunctionParam);
@@ -863,6 +871,8 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunction, const CIDeclFunction *self)
 
 DESTRUCTOR(CIDeclFunction, const CIDeclFunction *self)
 {
+    FREE(CIDataType, self->return_data_type);
+
     if (self->params) {
         FREE_BUFFER_ITEMS(
           self->params->buffer, self->params->len, CIDeclFunctionParam);
@@ -912,8 +922,12 @@ IMPL_FOR_DEBUG(to_string, CIDeclStruct, const CIDeclStruct *self)
     String *res =
       format__String("CIDeclStruct{{ name = {S}, fields =", self->name);
 
-    DEBUG_VEC_STRING(self->fields, res, CIDeclStructField);
-    push_str__String(res, " }");
+    if (self->fields) {
+        DEBUG_VEC_STRING(self->fields, res, CIDeclStructField);
+        push_str__String(res, " }");
+    } else {
+        push_str__String(res, " NULL");
+    }
 
     return res;
 }
@@ -921,9 +935,11 @@ IMPL_FOR_DEBUG(to_string, CIDeclStruct, const CIDeclStruct *self)
 
 DESTRUCTOR(CIDeclStruct, const CIDeclStruct *self)
 {
-    FREE_BUFFER_ITEMS(
-      self->fields->buffer, self->fields->len, CIDeclStructField);
-    FREE(Vec, self->fields);
+    if (self->fields) {
+        FREE_BUFFER_ITEMS(
+          self->fields->buffer, self->fields->len, CIDeclStructField);
+        FREE(Vec, self->fields);
+    }
 }
 
 #ifdef ENV_DEBUG
@@ -933,8 +949,12 @@ IMPL_FOR_DEBUG(to_string, CIDeclUnion, const CIDeclUnion *self)
     String *res =
       format__String("CIDeclUnion{{ name = {S}, fields =", self->name);
 
-    DEBUG_VEC_STRING(self->fields, res, CIDeclStructField);
-    push_str__String(res, " }");
+    if (self->fields) {
+        DEBUG_VEC_STRING(self->fields, res, CIDeclStructField);
+        push_str__String(res, " }");
+    } else {
+        push_str__String(res, " NULL");
+    }
 
     return res;
 }
@@ -942,9 +962,11 @@ IMPL_FOR_DEBUG(to_string, CIDeclUnion, const CIDeclUnion *self)
 
 DESTRUCTOR(CIDeclUnion, const CIDeclUnion *self)
 {
-    FREE_BUFFER_ITEMS(
-      self->fields->buffer, self->fields->len, CIDeclStructField);
-    FREE(Vec, self->fields);
+    if (self->fields) {
+        FREE_BUFFER_ITEMS(
+          self->fields->buffer, self->fields->len, CIDeclStructField);
+        FREE(Vec, self->fields);
+    }
 }
 
 #ifdef ENV_DEBUG
