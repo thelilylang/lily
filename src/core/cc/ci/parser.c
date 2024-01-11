@@ -83,13 +83,17 @@ parse_function_body__CIParser(CIParser *self);
 static CIDecl *
 parse_function__CIParser(CIParser *self, int storage_class_flag, String *name);
 
+/// @brief Parse struct (union) fields.
+static Vec *
+parse_struct_fields__CIParser(CIParser *self);
+
 /// @brief Parse struct declaration.
 static CIDeclStruct
 parse_struct__CIParser(CIParser *self, String *name);
 
 /// @brief Parse union declaration.
 static CIDeclUnion
-parse_union__CIParser(CIParser *self);
+parse_union__CIParser(CIParser *self, String *name);
 
 /// @brief Parse variable declaration.
 static CIDecl *
@@ -553,8 +557,8 @@ parse_function__CIParser(CIParser *self, int storage_class_flag, String *name)
     }
 }
 
-CIDeclStruct
-parse_struct__CIParser(CIParser *self, String *name)
+Vec *
+parse_struct_fields__CIParser(CIParser *self)
 {
     next_token__CIParser(self); // skip `{`
 
@@ -583,13 +587,26 @@ parse_struct__CIParser(CIParser *self, String *name)
         next_token__CIParser(self); // skip `}`
     }
 
+    return fields;
+}
+
+CIDeclStruct
+parse_struct__CIParser(CIParser *self, String *name)
+{
+
+    Vec *fields =
+      parse_struct_fields__CIParser(self); // Vec<CIDeclStructField*>*
+
     return NEW(CIDeclStruct, name, fields);
 }
 
 CIDeclUnion
-parse_union__CIParser(CIParser *self)
+parse_union__CIParser(CIParser *self, String *name)
 {
-    TODO("union");
+    Vec *fields =
+      parse_struct_fields__CIParser(self); // Vec<CIDeclStructField*>*
+
+    return NEW(CIDeclUnion, name, fields);
 }
 
 CIDecl *
