@@ -1825,7 +1825,7 @@ skip_comment_block__CIScanner(CIScanner *self)
     // Check if the comment block is closed. While the current character is not
     // a `*` and the next character is not a `/`, we continue to scan the
     // comment block.
-    while (self->base.source.cursor.current != '*' &&
+    while (self->base.source.cursor.current != '*' ||
            peek_char__CIScanner(self, 1) != (char *)'/') {
         // Check if the comment block is not closed.
         if (self->base.source.cursor.position >=
@@ -1869,8 +1869,8 @@ scan_comment_doc__CIScanner(CIScanner *self)
     // Check if the comment block is closed. While the current character is not
     // a `*`,the next character one is not a `*` and the next second is not a
     // `/`, we continue to scan the comment block.
-    while (self->base.source.cursor.current != '*' &&
-           peek_char__CIScanner(self, 1) != (char *)'*' &&
+    while (self->base.source.cursor.current != '*' ||
+           peek_char__CIScanner(self, 1) != (char *)'*' ||
            peek_char__CIScanner(self, 2) != (char *)'/') {
         // Check if the comment block is not closed.
         if (self->base.source.cursor.position >=
