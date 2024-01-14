@@ -1457,7 +1457,7 @@ IMPL_FOR_DEBUG(to_string, CIExprKind, enum CIExprKind self)
 }
 #endif
 
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, alignof, CIDataType *alignof_)
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, alignof, CIExpr *alignof_)
 {
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
@@ -1545,7 +1545,7 @@ IMPL_FOR_DEBUG(to_string, CIExpr, const CIExpr *self)
         case CI_EXPR_KIND_ALIGNOF:
             return format__String("CIExpr{{ kind = {s}, alignof_ = {Sr} }",
                                   to_string__Debug__CIExprKind(self->kind),
-                                  to_string__Debug__CIDataType(self->alignof_));
+                                  to_string__Debug__CIExpr(self->alignof_));
         case CI_EXPR_KIND_BINARY:
             return format__String(
               "CIExpr{{ kind = {s}, binary = {Sr} }",
@@ -1586,7 +1586,7 @@ IMPL_FOR_DEBUG(to_string, CIExpr, const CIExpr *self)
 
 VARIANT_DESTRUCTOR(CIExpr, alignof, CIExpr *self)
 {
-    FREE(CIDataType, self->alignof_);
+    FREE(CIExpr, self->alignof_);
     lily_free(self);
 }
 

@@ -112,7 +112,7 @@ typedef struct CIResultFile
     File file_input;
     HashMap *defines;      // HashMap<Vec<CIResultDefine*>*>*
     HashMap *includes;     // HashMap<CIResultInclude*>*
-    OrderedHashMap *decls; // HashMap<CIDecl*>*
+    OrderedHashMap *decls; // OrderedHashMap<CIDecl*>*
     Usize count_error;
     CIScanner scanner;
     CIParser parser;
@@ -134,6 +134,20 @@ CONSTRUCTOR(CIResultFile *,
  */
 bool
 add_decl__CIResultFile(const CIResultFile *self, CIDecl *decl);
+
+/**
+ *
+ * @brief Search typedef declaration in decls map.
+ */
+CIDecl *
+search_typedef__CIResultFile(const CIResultFile *self, const String *name);
+
+/**
+ *
+ * @brief Search data type declaration in decls map.
+ */
+CIDecl *
+search_data_type__CIResultFile(const CIResultFile *self, const String *name);
 
 /**
  *

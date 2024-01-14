@@ -94,6 +94,37 @@ add_decl__CIResultFile(const CIResultFile *self, CIDecl *decl)
       self->decls, get_name__CIDecl(decl)->buffer, decl);
 }
 
+CIDecl *
+search_typedef__CIResultFile(const CIResultFile *self, const String *name)
+{
+    CIDecl *res = get__OrderedHashMap(self->decls, name->buffer);
+
+    if (res && res->storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
+        return res;
+    }
+
+    return NULL;
+}
+
+CIDecl *
+search_data_type__CIResultFile(const CIResultFile *self, const String *name)
+{
+    CIDecl *res = get__OrderedHashMap(self->decls, name->buffer);
+
+    if (res) {
+        switch (res->kind) {
+            case CI_DECL_KIND_ENUM:
+            case CI_DECL_KIND_STRUCT:
+            case CI_DECL_KIND_UNION:
+                return res;
+            default:
+                return NULL;
+        }
+    }
+
+    return NULL;
+}
+
 void
 run__CIResultFile(CIResultFile *self)
 {

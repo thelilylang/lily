@@ -1135,7 +1135,7 @@ struct CIExpr
     enum CIExprKind kind;
     union
     {
-        CIDataType *alignof_;
+        CIExpr *alignof_;
         CIExprBinary binary;
         CIExprCast cast;
         CIDataType *data_type;
@@ -1150,7 +1150,7 @@ struct CIExpr
  *
  * @brief Construct CIExpr type (CI_EXPR_KIND_ALIGNOF).
  */
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, alignof, CIDataType *alignof_);
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, alignof, CIExpr *alignof_);
 
 /**
  *
