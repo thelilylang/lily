@@ -2386,51 +2386,61 @@ scan_define_preprocessor__CIScanner(CIScanner *self)
 CIToken *
 scan_embed_preprocessor__CIScanner(CIScanner *self)
 {
+    TODO("scan #embed");
 }
 
 CIToken *
 scan_error_preprocessor__CIScanner(CIScanner *self)
 {
+    TODO("scan #error");
 }
 
 CIToken *
 scan_if_preprocessor__CIScanner(CIScanner *self)
 {
+    TODO("scan #if");
 }
 
 CIToken *
 scan_ifdef_preprocessor__CIScanner(CIScanner *self)
 {
+    TODO("scan #ifdef");
 }
 
 CIToken *
 scan_ifndef_preprocessor__CIScanner(CIScanner *self)
 {
+    TODO("scan #ifndef");
 }
 
 CIToken *
 scan_include_preprocessor__CIScanner(CIScanner *self)
 {
+    TODO("scan #include");
 }
 
 CIToken *
 scan_line_preprocessor__CIScanner(CIScanner *self)
 {
+    TODO("scan #line");
 }
 
 CIToken *
 scan_pragma_preprocessor__CIScanner(CIScanner *self)
 {
+    TODO("scan #pragma");
 }
 
 CIToken *
 scan_undef_preprocessor__CIScanner(CIScanner *self)
 {
+    TODO("scan #undef");
 }
 
 CIToken *
 scan_warning_preprocessor__CIScanner(CIScanner *self)
 {
+    TODO("scan #warning");
 }
 
 CIToken *
