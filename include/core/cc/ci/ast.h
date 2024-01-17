@@ -1114,6 +1114,7 @@ enum CIExprKind
     CI_EXPR_KIND_BINARY,
     CI_EXPR_KIND_CAST,
     CI_EXPR_KIND_DATA_TYPE,
+    CI_EXPR_KIND_IDENTIFIER,
     CI_EXPR_KIND_LITERAL,
     CI_EXPR_KIND_SIZEOF,
     CI_EXPR_KIND_TERNARY,
@@ -1139,6 +1140,7 @@ struct CIExpr
         CIExprBinary binary;
         CIExprCast cast;
         CIDataType *data_type;
+        String *identifier; // String* (&)
         CIExprLiteral literal;
         CIExpr *sizeof_;
         CIExprTernary ternary;
@@ -1169,6 +1171,12 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, cast, CIExprCast cast);
  * @brief Construct CIExpr type (CI_EXPR_KIND_DATA_TYPE).
  */
 VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, data_type, CIDataType *data_type);
+
+/**
+ *
+ * @brief Construct CIExpr type (CI_EXPR_KIND_IDENTIFIER).
+ */
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, identifier, String *identifier);
 
 /**
  *

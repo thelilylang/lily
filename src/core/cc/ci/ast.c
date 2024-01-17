@@ -83,6 +83,9 @@ static VARIANT_DESTRUCTOR(CIExpr, cast, CIExpr *self);
 /// @brief Free CIExpr type (CI_EXPR_KIND_DATA_TYPE).
 static VARIANT_DESTRUCTOR(CIExpr, data_type, CIExpr *self);
 
+/// @brief Free CIExpr type (CI_EXPR_KIND_IDENTIFIER).
+static inline VARIANT_DESTRUCTOR(CIExpr, identifier, CIExpr *self);
+
 /// @brief Free CIExpr type (CI_EXPR_KIND_LITERAL).
 static inline VARIANT_DESTRUCTOR(CIExpr, literal, CIExpr *self);
 
@@ -1443,6 +1446,8 @@ IMPL_FOR_DEBUG(to_string, CIExprKind, enum CIExprKind self)
             return "CI_EXPR_KIND_CAST";
         case CI_EXPR_KIND_DATA_TYPE:
             return "CI_EXPR_KIND_DATA_TYPE";
+        case CI_EXPR_KIND_IDENTIFIER:
+            return "CI_EXPR_KIND_IDENTIFIER";
         case CI_EXPR_KIND_LITERAL:
             return "CI_EXPR_KIND_LITERAL";
         case CI_EXPR_KIND_SIZEOF:
@@ -1493,6 +1498,16 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, data_type, CIDataType *data_type)
 
     self->kind = CI_EXPR_KIND_DATA_TYPE;
     self->data_type = data_type;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, identifier, String *identifier)
+{
+    CIExpr *self = lily_malloc(sizeof(CIExpr));
+
+    self->kind = CI_EXPR_KIND_IDENTIFIER;
+    self->identifier = identifier;
 
     return self;
 }
@@ -1560,6 +1575,10 @@ IMPL_FOR_DEBUG(to_string, CIExpr, const CIExpr *self)
               "CIExpr{{ kind = {s}, data_type = {Sr} }",
               to_string__Debug__CIExprKind(self->kind),
               to_string__Debug__CIDataType(self->data_type));
+        case CI_EXPR_KIND_IDENTIFIER:
+            return format__String("CIExpr{{ kind = {s}, identifier = {S} }",
+                                  to_string__Debug__CIExprKind(self->kind),
+                                  self->identifier);
         case CI_EXPR_KIND_LITERAL:
             return format__String(
               "CIExpr{{ kind = {s}, literal = {Sr} }",
@@ -1608,6 +1627,11 @@ VARIANT_DESTRUCTOR(CIExpr, data_type, CIExpr *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(CIExpr, identifier, CIExpr *self)
+{
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(CIExpr, literal, CIExpr *self)
 {
     lily_free(self);
@@ -1645,6 +1669,9 @@ DESTRUCTOR(CIExpr, CIExpr *self)
             break;
         case CI_EXPR_KIND_DATA_TYPE:
             FREE_VARIANT(CIExpr, data_type, self);
+            break;
+        case CI_EXPR_KIND_IDENTIFIER:
+            FREE_VARIANT(CIExpr, identifier, self);
             break;
         case CI_EXPR_KIND_LITERAL:
             FREE_VARIANT(CIExpr, literal, self);
