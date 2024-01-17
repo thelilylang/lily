@@ -90,10 +90,7 @@ is_none__Optional(const Optional *self)
  *
  * @brief Free Optional type.
  */
-inline DESTRUCTOR(Optional, Optional *self)
-{
-    lily_free(self);
-}
+DESTRUCTOR(Optional, Optional *self);
 
 #define SOME(x) NEW_VARIANT(Optional, some, x)
 #define NONE NEW_VARIANT(Optional, none)

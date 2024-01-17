@@ -51,3 +51,8 @@ get__Optional(const Optional *self)
 
     return self->some;
 }
+
+DESTRUCTOR(Optional, Optional *self)
+{
+    lily_free(self);
+}
