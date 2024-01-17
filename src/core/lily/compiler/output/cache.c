@@ -31,21 +31,21 @@ create_cache__LilyCompilerOutputCache()
 {
     if (!exists__Dir(DIR_CACHE_NAME)) {
         create__Dir(DIR_CACHE_NAME,
-                    DIR_MODE_RWXU + DIR_MODE_RWXG + DIR_MODE_RWXO);
+                    DIR_MODE_RWXU | DIR_MODE_RWXG | DIR_MODE_RWXO);
     }
 
     if (!exists__Dir(DIR_CACHE_BIN)) {
         create__Dir(DIR_CACHE_BIN,
-                    DIR_MODE_RWXU + DIR_MODE_RWXG + DIR_MODE_RWXO);
+                    DIR_MODE_RWXU | DIR_MODE_RWXG | DIR_MODE_RWXO);
     }
 
     if (!exists__Dir(DIR_CACHE_LIB)) {
         create__Dir(DIR_CACHE_LIB,
-                    DIR_MODE_RWXU + DIR_MODE_RWXG + DIR_MODE_RWXO);
+                    DIR_MODE_RWXU | DIR_MODE_RWXG | DIR_MODE_RWXO);
     }
 
     if (!exists__Dir(DIR_CACHE_OBJ)) {
         create__Dir(DIR_CACHE_OBJ,
-                    DIR_MODE_RWXU + DIR_MODE_RWXG + DIR_MODE_RWXO);
+                    DIR_MODE_RWXU | DIR_MODE_RWXG | DIR_MODE_RWXO);
     }
 }
