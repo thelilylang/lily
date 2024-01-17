@@ -23,6 +23,7 @@
  */
 
 #include <base/assert.h>
+#include <base/atoi.h>
 
 #include <core/cc/ci/parser.h>
 #include <core/cc/ci/result.h>
@@ -74,10 +75,29 @@ parse_enum__CIParser(CIParser *self, int storage_class_flag, String *name);
 static Vec *
 parse_function_params__CIParser(CIParser *self);
 
+/// @brief Parse generic params.
+/// @return Vec<CIDataType*>*
+static Vec *
+parse_generic_params__CIParser(CIParser *self);
+
+/// @brief Parser function call.
+static CIExpr *
+parse_function_call__CIParser(CIParser *self, String *identifier);
+
+/// @brief Parse literal expression.
+/// @brief @return CIExpr*?
+static CIExpr *
+parse_literal_expr__CIParser(CIParser *self);
+
 /// @brief Parse expression.
 /// @return CIExpr*?
 static CIExpr *
 parse_expr__CIParser(CIParser *self);
+
+/// @brief Parse statement.
+/// @return CIDeclFunctionItem*?
+static CIDeclFunctionItem *
+parse_stmt__CIParser(CIParser *self);
 
 /// @brief Parse function body.
 /// @return Vec<CIDeclFunctionItem*>*
@@ -532,6 +552,150 @@ parse_function_params__CIParser(CIParser *self)
     return params;
 }
 
+Vec *
+parse_generic_params__CIParser(CIParser *self)
+{
+    next_token__CIParser(self); // skip `<`
+
+    Vec *generic_params = NEW(Vec); // Vec<CIDataType*>*
+
+    while (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RSHIFT &&
+           self->tokens_iters.current_token->kind != CI_TOKEN_KIND_EOF) {
+        CIDataType *data_type = parse_data_type__CIParser(self);
+
+        if (data_type) {
+            push__Vec(generic_params, data_type);
+        }
+
+        if (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RSHIFT) {
+            expect__CIParser(self, CI_TOKEN_KIND_COMMA, true);
+        }
+    }
+
+    if (generic_params->len == 0) {
+        FAILED("expected at least one generic param");
+    }
+
+    switch (self->tokens_iters.current_token->kind) {
+        case CI_TOKEN_KIND_RSHIFT:
+            next_token__CIParser(self);
+
+            break;
+        case CI_TOKEN_KIND_EOF:
+            FAILED("unexpected EOF");
+        default:
+            UNREACHABLE("expected `>` or `EOF`");
+    }
+
+    return generic_params;
+}
+
+CIExpr *
+parse_function_call__CIParser(CIParser *self, String *identifier)
+{
+    next_token__CIParser(self); // skip `(`
+
+    while (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RPAREN &&
+           self->tokens_iters.current_token->kind != CI_TOKEN_KIND_EOF) {
+    }
+
+    switch (self->tokens_iters.current_token->kind) {
+        case CI_TOKEN_KIND_RPAREN:
+            next_token__CIParser(self);
+
+            break;
+        case CI_TOKEN_KIND_EOF:
+            FAILED("unexpected EOF");
+        default:
+            UNREACHABLE("expected `)` or `EOF`");
+    }
+
+    TODO("parse function call");
+}
+
+CIExpr *
+parse_literal_expr__CIParser(CIParser *self)
+{
+    switch (self->tokens_iters.previous_token->kind) {
+        case CI_TOKEN_KIND_KEYWORD_TRUE:
+            return NEW_VARIANT(
+              CIExpr, literal, NEW_VARIANT(CIExprLiteral, bool, true));
+        case CI_TOKEN_KIND_KEYWORD_FALSE:
+            return NEW_VARIANT(
+              CIExpr, literal, NEW_VARIANT(CIExprLiteral, bool, false));
+        case CI_TOKEN_KIND_LITERAL_CONSTANT_INT:
+        case CI_TOKEN_KIND_LITERAL_CONSTANT_OCTAL:
+        case CI_TOKEN_KIND_LITERAL_CONSTANT_HEX:
+        case CI_TOKEN_KIND_LITERAL_CONSTANT_BIN: {
+            String *int_s = NULL;
+            int base = 10;
+
+            switch (self->tokens_iters.previous_token->kind) {
+                case CI_TOKEN_KIND_LITERAL_CONSTANT_INT:
+                    int_s =
+                      self->tokens_iters.previous_token->literal_constant_int;
+
+                    break;
+                case CI_TOKEN_KIND_LITERAL_CONSTANT_OCTAL:
+                    int_s =
+                      self->tokens_iters.previous_token->literal_constant_octal;
+                    base = 8;
+
+                    break;
+                case CI_TOKEN_KIND_LITERAL_CONSTANT_HEX:
+                    int_s =
+                      self->tokens_iters.previous_token->literal_constant_hex;
+                    base = 16;
+
+                    break;
+                case CI_TOKEN_KIND_LITERAL_CONSTANT_BIN:
+                    int_s =
+                      self->tokens_iters.previous_token->literal_constant_bin;
+                    base = 2;
+
+                    break;
+                default:
+                    UNREACHABLE("this kind of integer is not expected");
+            }
+
+            Optional *res_op = atoi_safe__Isize(int_s->buffer, base);
+
+            if (is_none__Optional(res_op)) {
+                FREE(Optional, res_op);
+
+                FAILED("bad integer");
+            }
+
+            Isize res = (Isize)(Uptr)get__Optional(res_op);
+
+            FREE(Optional, res_op);
+
+            return NEW_VARIANT(
+              CIExpr, literal, NEW_VARIANT(CIExprLiteral, signed_int, res));
+        }
+        case CI_TOKEN_KIND_LITERAL_CONSTANT_FLOAT:
+            TODO("parse literal constant float");
+        case CI_TOKEN_KIND_LITERAL_CONSTANT_CHARACTER:
+            return NEW_VARIANT(
+              CIExpr,
+              literal,
+              NEW_VARIANT(
+                CIExprLiteral,
+                char,
+                self->tokens_iters.previous_token->literal_constant_character));
+        case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
+            return NEW_VARIANT(
+              CIExpr,
+              literal,
+              NEW_VARIANT(
+                CIExprLiteral,
+                string,
+                self->tokens_iters.previous_token->literal_constant_string));
+        default:
+            UNREACHABLE("unexpected token");
+    }
+}
+
 CIExpr *
 parse_expr__CIParser(CIParser *self)
 {
@@ -560,24 +724,32 @@ parse_expr__CIParser(CIParser *self)
 
             return NULL;
         }
-        case CI_TOKEN_KIND_IDENTIFIER:
+        case CI_TOKEN_KIND_IDENTIFIER: {
+            String *identifier = self->tokens_iters.previous_token->identifier;
+            Vec *generic_params = NULL; // Vec<CIDataType*>*?
+
             switch (self->tokens_iters.current_token->kind) {
                 case CI_TOKEN_KIND_LSHIFT:
-                    TODO("parse generic");
+                    generic_params = parse_generic_params__CIParser(self);
+
+                    break;
                 default:
                     break;
             }
 
             switch (self->tokens_iters.current_token->kind) {
                 case CI_TOKEN_KIND_LPAREN:
-                    TODO("parse function call");
+                    return parse_function_call__CIParser(self, identifier);
                 case CI_TOKEN_KIND_LBRACE:
                     TODO("parse struct call");
                 case CI_TOKEN_KIND_LHOOK:
                     TODO("parse indexed array");
                 default:
-                    TODO("parse variable, constant");
+                    return NEW_VARIANT(CIExpr, identifier, identifier);
             }
+        }
+        case CI_TOKEN_KIND_KEYWORD_TRUE:
+        case CI_TOKEN_KIND_KEYWORD_FALSE:
         case CI_TOKEN_KIND_LITERAL_CONSTANT_INT:
         case CI_TOKEN_KIND_LITERAL_CONSTANT_FLOAT:
         case CI_TOKEN_KIND_LITERAL_CONSTANT_OCTAL:
@@ -585,10 +757,47 @@ parse_expr__CIParser(CIParser *self)
         case CI_TOKEN_KIND_LITERAL_CONSTANT_BIN:
         case CI_TOKEN_KIND_LITERAL_CONSTANT_CHARACTER:
         case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
-            TODO("parse literal");
+            return parse_literal_expr__CIParser(self);
         default:
             FAILED("unexpected token");
     }
+}
+
+CIDeclFunctionItem *
+parse_stmt__CIParser(CIParser *self)
+{
+    next_token__CIParser(self);
+
+    switch (self->tokens_iters.previous_token->kind) {
+        case CI_TOKEN_KIND_KEYWORD_DO:
+            TODO("do statement");
+        case CI_TOKEN_KIND_KEYWORD_FOR:
+            TODO("for statement");
+        case CI_TOKEN_KIND_KEYWORD_GOTO:
+            TODO("goto statement");
+        case CI_TOKEN_KIND_KEYWORD_IF:
+            TODO("if statement");
+        case CI_TOKEN_KIND_KEYWORD_RETURN: {
+            CIExpr *expr = parse_expr__CIParser(self);
+
+            if (expr) {
+                expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
+
+                return NEW_VARIANT(
+                  CIDeclFunctionItem, stmt, NEW_VARIANT(CIStmt, return, expr));
+            }
+
+            FAILED("expected expression");
+        }
+        case CI_TOKEN_KIND_KEYWORD_SWITCH:
+            TODO("switch statement");
+        case CI_TOKEN_KIND_KEYWORD_WHILE:
+            TODO("while statement");
+        default:
+            UNREACHABLE("not expected token");
+    }
+
+    TODO("parse statement");
 }
 
 Vec *
@@ -608,8 +817,15 @@ parse_function_body__CIParser(CIParser *self)
             case CI_TOKEN_KIND_KEYWORD_IF:
             case CI_TOKEN_KIND_KEYWORD_RETURN:
             case CI_TOKEN_KIND_KEYWORD_SWITCH:
-            case CI_TOKEN_KIND_KEYWORD_WHILE:
-                TODO("parse statement");
+            case CI_TOKEN_KIND_KEYWORD_WHILE: {
+                CIDeclFunctionItem *stmt_item = parse_stmt__CIParser(self);
+
+                if (stmt_item) {
+                    push__Vec(body, stmt_item);
+                }
+
+                break;
+            }
             default: {
                 CIExpr *expr = parse_expr__CIParser(self);
 
@@ -620,6 +836,8 @@ parse_function_body__CIParser(CIParser *self)
             }
         }
     }
+
+    expect__CIParser(self, CI_TOKEN_KIND_RBRACE, true);
 
     return body;
 }
@@ -817,6 +1035,10 @@ run__CIParser(CIParser *self)
             add_decl__CIResultFile(self->file, decl);
         }
     }
+
+#ifdef ENV_DEBUG
+    // TODO: Print debug
+#endif
 }
 
 DESTRUCTOR(CIParser, const CIParser *self)
