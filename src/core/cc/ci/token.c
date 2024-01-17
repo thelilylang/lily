@@ -1641,3 +1641,9 @@ peek_token__CITokensIters(const CITokensIters *self,
 
     return current_token;
 }
+
+DESTRUCTOR(CITokensIters, const CITokensIters *self)
+{
+    FREE_STACK_ITEMS(self->iters, CITokensIter);
+    FREE(Stack, self->iters);
+}

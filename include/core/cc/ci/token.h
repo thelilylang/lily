@@ -718,9 +718,6 @@ peek_token__CITokensIters(const CITokensIters *self,
  *
  * @brief Free CITokensIters type.
  */
-inline DESTRUCTOR(CITokensIters, const CITokensIters *self)
-{
-    FREE(Stack, self->iters);
-}
+DESTRUCTOR(CITokensIters, const CITokensIters *self);
 
 #endif // LILY_CORE_CC_CI_TOKEN_H
