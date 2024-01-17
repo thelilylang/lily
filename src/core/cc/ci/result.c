@@ -143,6 +143,7 @@ DESTRUCTOR(CIResultFile, CIResultFile *self)
     FREE_ORD_HASHMAP_VALUES(self->decls, CIDecl);
     FREE(OrderedHashMap, self->decls);
     FREE(CIScanner, &self->scanner);
+    FREE(CIParser, &self->parser);
     lily_free(self);
 }
 
