@@ -56,6 +56,13 @@ create__Dir(const char *path, [[maybe_unused]] enum DirMode mode);
 
 /**
  *
+ * @brief Create directories (recursive) according the mode.
+ */
+void
+create_recursive_dir__Dir(const char *path, [[maybe_unused]] enum DirMode mode);
+
+/**
+ *
  * @brief Remove directory.
  */
 void

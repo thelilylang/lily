@@ -24,11 +24,14 @@
 
 #include <base/assert.h>
 #include <base/dir.h>
-#include <base/platform.h>
+#include <base/dir_separator.h>
+#include <base/new.h>
+#include <base/string.h>
 #include <base/sys.h>
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef LILY_WINDOWS_OS
 #include <direct.h>
@@ -47,6 +50,36 @@ create__Dir(const char *path, [[maybe_unused]] enum DirMode mode)
 #else
     ASSERT(!mkdir(path, mode));
 #endif
+}
+
+void
+create_recursive_dir__Dir(const char *path, [[maybe_unused]] enum DirMode mode)
+{
+    char *current = (char *)path;
+    char *dir_separator = strchr(path, DIR_SEPARATOR);
+    String *dir = NEW(String);
+
+    while (*current) {
+        // Get one directory
+        if (dir_separator) {
+            while (current != dir_separator) {
+                push__String(dir, *(current++));
+            }
+        } else {
+            while (*current) {
+                push__String(dir, *(current++));
+            }
+        }
+
+        if (!exists__Dir(dir->buffer)) {
+            create__Dir(dir->buffer, mode);
+        }
+
+        push__String(dir, DIR_SEPARATOR);
+        dir_separator = strchr(++current, DIR_SEPARATOR);
+    }
+
+    FREE(String, dir);
 }
 
 void
