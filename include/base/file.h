@@ -39,10 +39,30 @@ get_extension__File(const char *path);
 
 /**
  *
- * @brief Get filename of the path.
+ * @brief Get filename (without extension) of the path.
+ * @return String*?
+ * @example a/b/c/file.txt => file
  */
 String *
 get_filename__File(const char *path);
+
+/**
+ *
+ * @brief Get filename of the path.
+ * @return String*?
+ * @example a/b/c/file.txt => file.txt
+ */
+String *
+get_filename_with_extension__File(const char *path);
+
+/**
+ *
+ * @brief Get directory (e.g. a/b, a, ...) of the path.
+ * @return String*?
+ * @example a/b/c/file.txt => a/b/c
+ */
+String *
+get_dir__File(const char *path);
 
 /**
  *

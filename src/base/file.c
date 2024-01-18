@@ -25,10 +25,10 @@
 #include <base/alloc.h>
 #include <base/assert.h>
 #include <base/dir.h>
+#include <base/dir_separator.h>
 #include <base/file.h>
 #include <base/macros.h>
 #include <base/new.h>
-#include <base/platform.h>
 #include <base/sys.h>
 #include <base/types.h>
 
@@ -43,6 +43,7 @@
 char *
 get_extension__File(const char *path)
 {
+    // TODO: Probably refactor this function
     bool extension_started = false;
     Usize size = 1;
     char *extension = lily_malloc(1);
@@ -69,23 +70,61 @@ String *
 get_filename__File(const char *path)
 {
     // Extract the filename
-#ifdef LILY_WINDOWS_OS
-    const char *filename_with_ext = strrchr(path, '\\');
-#else
-    const char *filename_with_ext = strrchr(path, '/');
-#endif
+    const char *path_filename = strrchr(path, DIR_SEPARATOR);
 
-    if (filename_with_ext) {
-        ++filename_with_ext;
+    if (path_filename) {
+        ++path_filename;
+    } else {
+        return NULL;
     }
 
     String *filename = NEW(String);
 
-    while (*filename_with_ext != '.') {
-        push__String(filename, *(filename_with_ext++));
+    while (*path_filename != '.') {
+        push__String(filename, *(path_filename++));
     }
 
     return filename;
+}
+
+String *
+get_filename_with_extension__File(const char *path)
+{
+    // Extract the filename
+    const char *path_filename = strrchr(path, DIR_SEPARATOR);
+
+    if (path_filename) {
+        ++path_filename;
+    } else {
+        return NULL;
+    }
+
+    String *filename = NEW(String);
+
+    while (*path_filename) {
+        push__String(filename, *(path_filename++));
+    }
+
+    return filename;
+}
+
+String *
+get_dir__File(const char *path)
+{
+    // Extract the directory (path)
+    const char *path_dir = strrchr(path, DIR_SEPARATOR);
+
+    if (!path_dir) {
+        return NULL;
+    }
+
+    String *dir = NEW(String);
+
+    for (char *current = (char *)path; current != path_dir; ++current) {
+        push__String(dir, *current);
+    }
+
+    return dir;
 }
 
 Usize
