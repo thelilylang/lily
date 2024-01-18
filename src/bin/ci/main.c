@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <core/cc/ci/generator.h>
 #include <core/cc/ci/parser.h>
 #include <core/cc/ci/result.h>
 #include <core/cc/ci/scanner.h>
@@ -100,6 +101,8 @@ main(int argc, char **argv)
 
             lily_free(extension);
         }
+
+        run__CIGenerator(&result);
 
         FREE(CIResult, &result);
     } else {
