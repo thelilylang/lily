@@ -76,7 +76,10 @@ create_recursive_dir__Dir(const char *path, [[maybe_unused]] enum DirMode mode)
         }
 
         push__String(dir, DIR_SEPARATOR);
-        dir_separator = strchr(++current, DIR_SEPARATOR);
+
+        if (*current) {
+            dir_separator = strchr(++current, DIR_SEPARATOR);
+        }
     }
 
     FREE(String, dir);
