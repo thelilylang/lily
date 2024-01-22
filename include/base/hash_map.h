@@ -169,12 +169,7 @@ hash__HashMap(HashMap *self, char *key)
 #elif defined(HASH_JENKINS)
     return hash_jenkins(key);
 #elif defined(HASH_SIP)
-#ifdef PLATFORM_64
-    return hash_sip(
-      key, strlen(key), 0x0123456789abcdefULL, 0xfedcba9876543210ULL);
-#else
-    return hash_sip(key, strlen(key), 0x01234567, 0x89abcdef);
-#endif
+    return hash_sip(key, strlen(key), SIP_K0, SIP_K1);
 #else
 #error "cannot generate an hash"
 #endif

@@ -27,6 +27,14 @@
 
 #include <base/types.h>
 
+#ifdef PLATFORM_64
+#define SIP_K0 0x0123456789abcdefULL
+#define SIP_K1 0xfedcba9876543210ULL
+#else
+#define SIP_K0 0x01234567
+#define SIP_K1 0x89abcdef
+#endif
+
 /**
  *
  * @brief Generate an hash with Sip algorithm.
