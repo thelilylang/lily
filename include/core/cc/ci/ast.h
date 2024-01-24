@@ -34,6 +34,108 @@ typedef struct CIExpr CIExpr;
 typedef struct CIDataType CIDataType;
 typedef struct CIDeclFunctionItem CIDeclFunctionItem;
 
+typedef struct CIFileID
+{
+    Usize id;
+} CIFileID;
+
+/**
+ *
+ * @brief Construct CIFileID type.
+ */
+inline CONSTRUCTOR(CIFileID, CIFileID, Usize id)
+{
+    return (CIFileID){ .id = id };
+}
+
+typedef struct CIEnumID
+{
+    CIFileID file_id;
+    Usize id;
+} CIEnumID;
+
+/**
+ *
+ * @brief Construct CIEnumID type.
+ */
+CONSTRUCTOR(CIEnumID *, CIEnumID, CIFileID file_id, Usize id);
+
+/**
+ *
+ * @brief Free CIEnumID type.
+ */
+inline DESTRUCTOR(CIEnumID, CIEnumID *self)
+{
+    lily_free(self);
+}
+
+typedef struct CIFunctionID
+{
+    CIFileID file_id;
+    Usize id;
+} CIFunctionID;
+
+/**
+ *
+ * @brief Construct CIFunctionID type.
+ */
+CONSTRUCTOR(CIFunctionID *, CIFunctionID, CIFileID file_id, Usize id);
+
+/**
+ *
+ * @brief Free CIFunctionID type.
+ */
+inline DESTRUCTOR(CIFunctionID, CIFunctionID *self)
+{
+    lily_free(self);
+}
+
+typedef struct CIStructID
+{
+    CIFileID file_id;
+    Usize id;
+} CIStructID;
+
+/**
+ *
+ * @brief Construct CIStructID type.
+ */
+CONSTRUCTOR(CIStructID *, CIStructID, CIFileID file_id, Usize id);
+
+/**
+ *
+ * @brief Free CIStructID type.
+ */
+inline DESTRUCTOR(CIStructID, CIStructID *self)
+{
+    lily_free(self);
+}
+
+typedef struct CIUnionID
+{
+    CIFileID file_id;
+    Usize id;
+} CIUnionID;
+
+/**
+ *
+ * @brief Construct CIUnionID type.
+ */
+CONSTRUCTOR(CIUnionID *, CIUnionID, CIFileID file_id, Usize id);
+
+/**
+ *
+ * @brief Free CIUnionID type.
+ */
+inline DESTRUCTOR(CIUnionID, CIUnionID *self)
+{
+    lily_free(self);
+}
+
+typedef struct CIScope
+{
+} CIScope;
+
 enum CIDataTypeKind
 {
     CI_DATA_TYPE_KIND_ARRAY,
@@ -102,6 +204,7 @@ typedef struct CIDataTypeArray
 {
     enum CIDataTypeArrayKind kind;
     struct CIDataType *data_type;
+    String *name; // String*? (&)
     union
     {
         Usize size;
@@ -116,10 +219,12 @@ inline VARIANT_CONSTRUCTOR(CIDataTypeArray,
                            CIDataTypeArray,
                            sized,
                            struct CIDataType *data_type,
+                           String *name,
                            Usize size)
 {
     return (CIDataTypeArray){ .kind = CI_DATA_TYPE_ARRAY_KIND_SIZED,
                               .data_type = data_type,
+                              .name = name,
                               .size = size };
 }
 
@@ -130,11 +235,13 @@ inline VARIANT_CONSTRUCTOR(CIDataTypeArray,
 inline VARIANT_CONSTRUCTOR(CIDataTypeArray,
                            CIDataTypeArray,
                            none,
-                           struct CIDataType *data_type)
+                           struct CIDataType *data_type,
+                           String *name)
 {
     return (CIDataTypeArray){
         .kind = CI_DATA_TYPE_ARRAY_KIND_NONE,
         .data_type = data_type,
+        .name = name,
     };
 }
 
@@ -706,6 +813,7 @@ typedef struct CIDecl
     enum CIDeclKind kind;
     int storage_class_flag;
     bool is_prototype;
+    String *typedef_name; // String*? (&)
     union
     {
         CIDeclEnum enum_;
@@ -725,6 +833,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     enum,
                     int storage_class_flag,
                     bool is_prototype,
+                    String *typedef_name,
                     CIDeclEnum enum_);
 
 /**
@@ -747,6 +856,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     struct,
                     int storage_class_flag,
                     bool is_prototype,
+                    String *typedef_name,
                     CIDeclStruct struct_);
 
 /**
@@ -758,6 +868,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     union,
                     int storage_class_flag,
                     bool is_prototype,
+                    String *typedef_name,
                     CIDeclUnion union_);
 
 /**
@@ -773,7 +884,19 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 
 /**
  *
+ * @brief Get typedef name from declaration.
+ * @return String*? (&)
+ */
+inline String *
+get_typedef_name__CIDecl(const CIDecl *self)
+{
+    return self->typedef_name;
+}
+
+/**
+ *
  * @brief Get name from declaration.
+ * @return String* (&)
  */
 String *
 get_name__CIDecl(const CIDecl *self);
@@ -1274,10 +1397,10 @@ DESTRUCTOR(CIStmtDoWhile, const CIStmtDoWhile *self);
 
 typedef struct CIStmtFor
 {
-    Vec *body;         // Vec<CIDeclFunctionItem*>*
-    Vec *init_clauses; // Vec<CIDeclFunctionItem*>*?
-    Vec *exprs1;       // Vec<CIExpr*>*?
-    Vec *exprs2;       // Vec<CIExpr*>*?
+    Vec *body;                       // Vec<CIDeclFunctionItem*>*
+    CIDeclFunctionItem *init_clause; // CIDeclFunctionItem*?
+    CIExpr *expr1;                   // CIExpr*?
+    Vec *exprs2;                     // Vec<CIExpr*>*?
 } CIStmtFor;
 
 /**
@@ -1287,13 +1410,13 @@ typedef struct CIStmtFor
 inline CONSTRUCTOR(CIStmtFor,
                    CIStmtFor,
                    Vec *body,
-                   Vec *init_clauses,
-                   Vec *exprs1,
+                   CIDeclFunctionItem *init_clause,
+                   CIExpr *expr1,
                    Vec *exprs2)
 {
     return (CIStmtFor){ .body = body,
-                        .init_clauses = init_clauses,
-                        .exprs1 = exprs1,
+                        .init_clause = init_clause,
+                        .expr1 = expr1,
                         .exprs2 = exprs2 };
 }
 
@@ -1408,16 +1531,23 @@ DESTRUCTOR(CIStmtSwitchCase, CIStmtSwitchCase *self);
 typedef struct CIStmtSwitch
 {
     CIExpr *expr;
-    Vec *cases; // Vec<CIStmtSwitchCase*>*
+    Vec *cases;        // Vec<CIStmtSwitchCase*>*
+    Vec *default_case; // Vec<CIDeclFunctionItem*>*?
 } CIStmtSwitch;
 
 /**
  *
  * @brief Construct CIStmtSwitch type.
  */
-inline CONSTRUCTOR(CIStmtSwitch, CIStmtSwitch, CIExpr *expr, Vec *cases)
+inline CONSTRUCTOR(CIStmtSwitch,
+                   CIStmtSwitch,
+                   CIExpr *expr,
+                   Vec *cases,
+                   Vec *default_case)
 {
-    return (CIStmtSwitch){ .expr = expr, .cases = cases };
+    return (CIStmtSwitch){ .expr = expr,
+                           .cases = cases,
+                           .default_case = default_case };
 }
 
 /**

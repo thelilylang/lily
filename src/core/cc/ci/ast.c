@@ -125,6 +125,46 @@ static VARIANT_DESTRUCTOR(CIDeclFunctionItem, expr, CIDeclFunctionItem *self);
 /// @brief Free CIDeclFunctionItem type (CI_DECL_FUNCTION_ITEM_KIND_STMT).
 static VARIANT_DESTRUCTOR(CIDeclFunctionItem, stmt, CIDeclFunctionItem *self);
 
+CONSTRUCTOR(CIEnumID *, CIEnumID, CIFileID file_id, Usize id)
+{
+    CIEnumID *self = lily_malloc(sizeof(CIEnumID));
+
+    self->file_id = file_id;
+    self->id = id;
+
+    return self;
+}
+
+CONSTRUCTOR(CIStructID *, CIStructID, CIFileID file_id, Usize id)
+{
+    CIStructID *self = lily_malloc(sizeof(CIStructID));
+
+    self->file_id = file_id;
+    self->id = id;
+
+    return self;
+}
+
+CONSTRUCTOR(CIFunctionID *, CIFunctionID, CIFileID file_id, Usize id)
+{
+    CIFunctionID *self = lily_malloc(sizeof(CIFunctionID));
+
+    self->file_id = file_id;
+    self->id = id;
+
+    return self;
+}
+
+CONSTRUCTOR(CIUnionID *, CIUnionID, CIFileID file_id, Usize id)
+{
+    CIUnionID *self = lily_malloc(sizeof(CIUnionID));
+
+    self->file_id = file_id;
+    self->id = id;
+
+    return self;
+}
+
 #ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string, CIDataTypeKind, enum CIDataTypeKind self)
@@ -224,15 +264,18 @@ String *
 IMPL_FOR_DEBUG(to_string, CIDataTypeArray, const CIDataTypeArray *self)
 {
     return self->kind == CI_DATA_TYPE_ARRAY_KIND_SIZED
-             ? format__String("CIDataTypeArray{{ kind = {s}, data_type = {Sr}, "
-                              "size = {zu} }",
-                              to_string__Debug__CIDataTypeArrayKind(self->kind),
-                              to_string__Debug__CIDataType(self->data_type),
-                              self->size)
-             : format__String(
-                 "CIDataTypeArray{{ kind = {s}, data_type = {Sr} }",
+             ? format__String(
+                 "CIDataTypeArray{{ kind = {s}, data_type = {Sr}, name = {s}, "
+                 "size = {zu} }",
                  to_string__Debug__CIDataTypeArrayKind(self->kind),
-                 to_string__Debug__CIDataType(self->data_type));
+                 to_string__Debug__CIDataType(self->data_type),
+                 self->name ? self->name->buffer : "NULL",
+                 self->size)
+             : format__String(
+                 "CIDataTypeArray{{ kind = {s}, data_type = {Sr}, name = {s} }",
+                 to_string__Debug__CIDataTypeArrayKind(self->kind),
+                 to_string__Debug__CIDataType(self->data_type),
+                 self->name ? self->name->buffer : "NULL");
 }
 #endif
 
@@ -999,6 +1042,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     enum,
                     int storage_class_flag,
                     bool is_prototype,
+                    String *typedef_name,
                     CIDeclEnum enum_)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
@@ -1006,6 +1050,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->kind = CI_DECL_KIND_ENUM;
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = is_prototype;
+    self->typedef_name = typedef_name;
     self->enum_ = enum_;
 
     return self;
@@ -1023,6 +1068,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->kind = CI_DECL_KIND_FUNCTION;
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = is_prototype;
+    self->typedef_name = NULL;
     self->function = function;
 
     return self;
@@ -1033,6 +1079,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     struct,
                     int storage_class_flag,
                     bool is_prototype,
+                    String *typedef_name,
                     CIDeclStruct struct_)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
@@ -1040,6 +1087,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->kind = CI_DECL_KIND_STRUCT;
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = is_prototype;
+    self->typedef_name = typedef_name;
     self->struct_ = struct_;
 
     return self;
@@ -1050,6 +1098,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     union,
                     int storage_class_flag,
                     bool is_prototype,
+                    String *typedef_name,
                     CIDeclUnion union_)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
@@ -1057,6 +1106,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->kind = CI_DECL_KIND_UNION;
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = is_prototype;
+    self->typedef_name = typedef_name;
     self->union_ = union_;
 
     return self;
@@ -1074,6 +1124,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->kind = CI_DECL_KIND_VARIABLE;
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = is_prototype;
+    self->typedef_name = NULL;
     self->variable = variable;
 
     return self;
@@ -1105,37 +1156,50 @@ IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)
     switch (self->kind) {
         case CI_DECL_KIND_ENUM:
             return format__String(
-              "CIDecl{{ kind = {s}, storage_class_flag = {s}, enum_ = {Sr} }",
+              "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
+              "{b}, typedef_name = {s}, enum_ = {Sr} }",
               to_string__Debug__CIDeclKind(self->kind),
               to_string__Debug__CIStorageClass(self->storage_class_flag),
+              self->is_prototype,
+              self->typedef_name ? self->typedef_name->buffer : "NULL",
               to_string__Debug__CIDeclEnum(&self->enum_));
         case CI_DECL_KIND_FUNCTION:
             return format__String(
-              "CIDecl{{ kind = {s}, storage_class_flag = {s}, function = {Sr} "
+              "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
+              "{b}, typedef_name = NULL, function = {Sr} "
               "}",
               to_string__Debug__CIDeclKind(self->kind),
               to_string__Debug__CIStorageClass(self->storage_class_flag),
+              self->is_prototype,
               to_string__Debug__CIDeclFunction(&self->function));
         case CI_DECL_KIND_STRUCT:
             return format__String(
-              "CIDecl{{ kind = {s}, storage_class_flag = {s}, struct_ = {Sr} "
+              "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
+              "{b}, typedef_name = {s}, struct_ = {Sr} "
               "}",
               to_string__Debug__CIDeclKind(self->kind),
               to_string__Debug__CIStorageClass(self->storage_class_flag),
+              self->is_prototype,
+              self->typedef_name ? self->typedef_name->buffer : "NULL",
               to_string__Debug__CIDeclStruct(&self->struct_));
         case CI_DECL_KIND_VARIABLE:
             return format__String(
-              "CIDecl{{ kind = {s}, storage_class_flag = {s}, variable = {Sr} "
+              "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
+              "{b}, typedef_name = NULL, variable = {Sr} "
               "}",
               to_string__Debug__CIDeclKind(self->kind),
               to_string__Debug__CIStorageClass(self->storage_class_flag),
+              self->is_prototype,
               to_string__Debug__CIDeclVariable(&self->variable));
         case CI_DECL_KIND_UNION:
             return format__String(
-              "CIDecl{{ kind = {s}, storage_class_flag = {s}, union_ = {Sr} "
+              "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
+              "{b}, typedef_name = {s}, union_ = {Sr} "
               "}",
               to_string__Debug__CIDeclKind(self->kind),
               to_string__Debug__CIStorageClass(self->storage_class_flag),
+              self->is_prototype,
+              self->typedef_name ? self->typedef_name->buffer : "NULL",
               to_string__Debug__CIDeclUnion(&self->union_));
         default:
             UNREACHABLE("unknown variant");
@@ -1752,20 +1816,23 @@ IMPL_FOR_DEBUG(to_string, CIStmtFor, const CIStmtFor *self)
 
     DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
 
-    push_str__String(res, ", init_clauses =");
+    if (self->init_clause) {
+        String *s = format__String(
+          ", init_clause = {Sr}",
+          to_string__Debug__CIDeclFunctionItem(self->init_clause));
 
-    if (self->init_clauses) {
-        DEBUG_VEC_STRING(self->init_clauses, res, CIDeclFunctionItem);
+        APPEND_AND_FREE(res, s);
     } else {
-        push_str__String(res, " NULL");
+        push_str__String(res, ", init_clause = NULL");
     }
 
-    push_str__String(res, ", exprs1 =");
+    if (self->expr1) {
+        String *s = format__String(", expr1 = {Sr}",
+                                   to_string__Debug__CIExpr(self->expr1));
 
-    if (self->exprs1) {
-        DEBUG_VEC_STRING(self->exprs1, res, CIExpr);
+        APPEND_AND_FREE(res, s);
     } else {
-        push_str__String(res, " NULL");
+        push_str__String(res, ", expr1 = NULL");
     }
 
     push_str__String(res, ", exprs2 =");
@@ -1787,16 +1854,12 @@ DESTRUCTOR(CIStmtFor, const CIStmtFor *self)
     FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, CIDeclFunctionItem);
     FREE(Vec, self->body);
 
-    if (self->init_clauses) {
-        FREE_BUFFER_ITEMS(self->init_clauses->buffer,
-                          self->init_clauses->len,
-                          CIDeclFunctionItem);
-        FREE(Vec, self->init_clauses);
+    if (self->init_clause) {
+        FREE(CIDeclFunctionItem, self->init_clause);
     }
 
-    if (self->exprs1) {
-        FREE_BUFFER_ITEMS(self->exprs1->buffer, self->exprs1->len, CIExpr);
-        FREE(Vec, self->exprs1);
+    if (self->expr1) {
+        FREE(CIExpr, self->expr1);
     }
 
     if (self->exprs2) {
@@ -1946,9 +2009,16 @@ IMPL_FOR_DEBUG(to_string, CIStmtSwitch, const CIStmtSwitch *self)
 
 DESTRUCTOR(CIStmtSwitch, const CIStmtSwitch *self)
 {
+    FREE(CIExpr, self->expr);
     FREE_BUFFER_ITEMS(self->cases->buffer, self->cases->len, CIStmtSwitchCase);
     FREE(Vec, self->cases);
-    FREE(CIExpr, self->expr);
+
+    if (self->default_case) {
+        FREE_BUFFER_ITEMS(self->default_case->buffer,
+                          self->default_case->len,
+                          CIDeclFunctionItem);
+        FREE(Vec, self->default_case);
+    }
 }
 
 #ifdef ENV_DEBUG
