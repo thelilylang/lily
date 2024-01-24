@@ -460,20 +460,40 @@ parse_enum__CIParser(CIParser *self, int storage_class_flag, String *name)
 {
     switch (self->tokens_iters.current_token->kind) {
         case CI_TOKEN_KIND_SEMICOLON:
-            next_token__CIParser(self);
+            if (storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
+                FAILED("expected identifier");
+            }
 
             return NEW_VARIANT(CIDecl,
                                enum,
                                storage_class_flag,
                                true,
+                               NULL,
                                NEW(CIDeclEnum, name, NULL));
+        case CI_TOKEN_KIND_IDENTIFIER: {
+            String *typedef_name = self->tokens_iters.current_token->identifier;
+
+            if (storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
+                next_token__CIParser(self);
+            } else {
+                FAILED("expected `;`");
+            }
+
+            return NEW_VARIANT(CIDecl,
+                               enum,
+                               storage_class_flag,
+                               true,
+                               typedef_name,
+                               NEW(CIDeclEnum, name, NULL));
+        }
         case CI_TOKEN_KIND_LBRACE:
             next_token__CIParser(self); // skip `{`
         default:
-            UNREACHABLE("expected `;` or `{`");
+            UNREACHABLE("expected `;`, `{` or identifier");
     }
 
     Vec *variants = NEW(Vec); // Vec<CIDeclEnumVariant*>*
+    String *typedef_name = NULL;
 
     while (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RBRACE &&
            self->tokens_iters.current_token->kind != CI_TOKEN_KIND_EOF) {
@@ -502,12 +522,33 @@ parse_enum__CIParser(CIParser *self, int storage_class_flag, String *name)
         }
     }
 
+    expect__CIParser(self, CI_TOKEN_KIND_RBRACE, true);
+
     if (variants->len == 0) {
         FAILED("expected one or many variants");
     }
 
-    return NEW_VARIANT(
-      CIDecl, enum, storage_class_flag, false, NEW(CIDeclEnum, name, variants));
+    switch (self->tokens_iters.current_token->kind) {
+        case CI_TOKEN_KIND_IDENTIFIER:
+            typedef_name = self->tokens_iters.current_token->identifier;
+
+            if (storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
+                next_token__CIParser(self);
+            } else {
+                FAILED("expected `;`");
+            }
+
+            break;
+        default:
+            break;
+    }
+
+    return NEW_VARIANT(CIDecl,
+                       enum,
+                       storage_class_flag,
+                       false,
+                       typedef_name,
+                       NEW(CIDeclEnum, name, variants));
 }
 
 Vec *
