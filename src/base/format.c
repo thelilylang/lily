@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 
 #define PUSH_STR(s)                                              \
     {                                                            \
@@ -65,39 +66,71 @@
     lily_free(zu_s);
 #endif
 
+#ifdef PLATFORM_64
+#define PUSH_ZI(d, base)               \
+    char *zi_s = itoa__Int64(d, base); \
+    PUSH_STR(zi_s);                    \
+    lily_free(zi_s);
+#else
+#define PUSH_ZI(d, base)               \
+    char *zi_s = itoa__Int32(d, base); \
+    PUSH_STR(zi_s);                    \
+    lily_free(zi_s);
+#endif
+
 char *
 format(const char *fmt, ...)
 {
+#define PEEK(n)              \
+    if (i + n < len) {       \
+        peeked = fmt[i + n]; \
+    } else {                 \
+        peeked = '\0';       \
+    }
+
     va_list vl;
+    char peeked = '\0';
     char *res = lily_malloc(1);
     Usize buffer_size = 0;
     Usize len = strlen(fmt);
 
     res[0] = '\0';
     va_start(vl, fmt);
+
     for (Usize i = 0; i < len;) {
         switch (fmt[i]) {
             case '{':
-                switch (fmt[i + 1]) {
+                PEEK(1);
+
+                switch (peeked) {
                     case 's': {
                         char *s = va_arg(vl, char *);
 
                         PUSH_STR(s);
+                        PEEK(2);
 
-                        if (fmt[i + 2] == 'a') {
-                            lily_free(s);
-                            i += 3;
-                        } else
-                            i += 2;
+                        switch (peeked) {
+                            case 'a':
+                                lily_free(s);
+                                i += 3;
+
+                                break;
+                            default:
+                                i += 2;
+                        }
 
                         break;
                     }
                     case 'd': {
                         int d = va_arg(vl, int);
 
-                        switch (fmt[i + 2]) {
+                        PEEK(2);
+
+                        switch (peeked) {
                             case ':':
-                                switch (fmt[i + 3]) {
+                                PEEK(3);
+
+                                switch (peeked) {
                                     case 'b': {
                                         PUSH_INT(d, 2);
 
@@ -130,11 +163,12 @@ format(const char *fmt, ...)
                         break;
                     }
                     case 'f':
+                        PEEK(2);
+
                         // TODO: use ftoa function instead sprintf
-                        switch (fmt[i + 2]) {
+                        switch (peeked) {
                             case '.':
                                 TODO("add more precision option");
-                                break;
                             case '3': {
                                 TODO("add support for {f32}");
                             }
@@ -154,6 +188,7 @@ format(const char *fmt, ...)
                                 break;
                             }
                         }
+
                         break;
                     case 'c': {
                         char c = va_arg(vl, int);
@@ -194,13 +229,17 @@ format(const char *fmt, ...)
                         break;
                     }
                     case 'p':
-                        break;
+                        TODO("{p}");
                     case 'u': {
                         int d = va_arg(vl, unsigned int);
 
-                        switch (fmt[i + 2]) {
+                        PEEK(2);
+
+                        switch (peeked) {
                             case ':':
-                                switch (fmt[i + 3]) {
+                                PEEK(3);
+
+                                switch (peeked) {
                                     case 'b': {
                                         PUSH_INT(d, 2);
 
@@ -250,14 +289,93 @@ format(const char *fmt, ...)
                         break;
                     }
                     case 'z': {
-                        if (fmt[i + 2] == 'u') {
-                            size_t zu = va_arg(vl, size_t);
+                        PEEK(2);
 
-                            PUSH_ZU(zu, 10);
+                        switch (peeked) {
+                            case 'u': {
+                                size_t zu = va_arg(vl, size_t);
 
-                            i += 3;
-                        } else {
-                            FAILED("expected {zu}");
+                                PEEK(3);
+
+                                switch (peeked) {
+                                    case ':':
+                                        PEEK(4);
+
+                                        switch (peeked) {
+                                            case 'b': {
+                                                PUSH_ZU(zu, 2);
+
+                                                break;
+                                            }
+                                            case 'o': {
+                                                PUSH_ZU(zu, 8);
+
+                                                break;
+                                            }
+                                            case 'x': {
+                                                PUSH_ZU(zu, 16);
+
+                                                break;
+                                            }
+                                            default:
+                                                FAILED("unknown specifier");
+                                        }
+
+                                        i += 5;
+
+                                        break;
+                                    default: {
+                                        PUSH_ZU(zu, 10);
+
+                                        i += 3;
+                                    }
+                                }
+
+                                break;
+                            }
+                            case 'i': {
+                                ssize_t zi = va_arg(vl, ssize_t);
+
+                                PEEK(3);
+
+                                switch (peeked) {
+                                    case ':':
+                                        PEEK(4);
+
+                                        switch (peeked) {
+                                            case 'b': {
+                                                PUSH_ZI(zi, 2);
+
+                                                break;
+                                            }
+                                            case 'o': {
+                                                PUSH_ZI(zi, 8);
+
+                                                break;
+                                            }
+                                            case 'x': {
+                                                PUSH_ZI(zi, 16);
+
+                                                break;
+                                            }
+                                            default:
+                                                FAILED("unknown specifier");
+                                        }
+
+                                        i += 5;
+
+                                        break;
+                                    default: {
+                                        PUSH_ZI(zi, 10);
+
+                                        i += 3;
+                                    }
+                                }
+
+                                break;
+                            }
+                            default:
+                                FAILED("expected {zu} or {zi}");
                         }
 
                         break;

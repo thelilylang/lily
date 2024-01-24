@@ -30,24 +30,31 @@
  * @brief Format string.
  *
  * List of format specifiers:
- * - {s}: String
+ * - {s}: String (char*)
  * - {sa}: String allocated (free after use)
- * - {d:b}: Integer (binary)
- * - {d:o}: Integer (octal)
- * - {d:x}: Integer (hex)
- * - {d}: Integer
- * - {f}: Float
+ * - {d:b}: Integer, Int32 (binary)
+ * - {d:o}: Integer, Int32 (octal)
+ * - {d:x}: Integer, Int32 (hex)
+ * - {d}: Integer, Int32
+ * - {f}: Double, Float64
+ * - {f.n}: Double, Float64
  * - {c}: Char
  * - {b}: Boolean
  * - {p}: Pointer
- * - {u}: Unsigned
- * - {u:b}: Unsigned (binary)
- * - {u:o}: Unsigned (octal)
- * - {u:x}: Unsigned (hex)
- * - {u}: Unsigned
+ * - {u:b}: Unsigned, Uint32 (binary)
+ * - {u:o}: Unsigned, Uint32 (octal)
+ * - {u:x}: Unsigned, Uint32 (hex)
+ * - {u}: Unsigned, Uint32
  * - {S}: Dynamic String (base/string.h)
  * - {Sr}: Raw dynamic string (free it after use) (base/string.h)
- * - {zu} size_t
+ * - {zi:b} ssize_t, Isize (binary)
+ * - {zi:o} ssize_t, Isize (octal)
+ * - {zi:x} ssize_t, Isize (hex)
+ * - {zi} ssize_t, Isize
+ * - {zu:b} size_t, Usize (binary)
+ * - {zu:o} size_t, Usize (octal)
+ * - {zu:x} size_t, Usize (hex)
+ * - {zu} size_t, Usize
  */
 char *
 format(const char *fmt, ...);
