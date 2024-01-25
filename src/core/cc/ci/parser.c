@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+// TODO: add a typecheck.
+
 #include <base/assert.h>
 #include <base/atoi.h>
 
@@ -301,7 +303,11 @@ parse_data_type__CIParser(CIParser *self)
 
     switch (self->tokens_iters.previous_token->kind) {
         case CI_TOKEN_KIND_IDENTIFIER:
-            TODO("type");
+            res = NEW_VARIANT(CIDataType,
+                              typedef,
+                              self->tokens_iters.previous_token->identifier);
+
+            break;
         case CI_TOKEN_KIND_KEYWORD_BOOL:
         case CI_TOKEN_KIND_KEYWORD__BOOL:
             res = NEW(CIDataType, CI_DATA_TYPE_KIND_BOOL);
@@ -428,18 +434,24 @@ parse_data_type__CIParser(CIParser *self)
 
             switch (previous_token_kind) {
                 case CI_TOKEN_KIND_KEYWORD_STRUCT:
-                    return NEW_VARIANT(
-                      CIDataType,
-                      struct,
-                      NEW(CIDataTypeStruct, name, generic_params));
+                    res =
+                      NEW_VARIANT(CIDataType,
+                                  struct,
+                                  NEW(CIDataTypeStruct, name, generic_params));
+
+                    break;
                 case CI_TOKEN_KIND_KEYWORD_UNION:
-                    return NEW_VARIANT(
-                      CIDataType,
-                      union,
-                      NEW(CIDataTypeUnion, name, generic_params));
+                    res =
+                      NEW_VARIANT(CIDataType,
+                                  union,
+                                  NEW(CIDataTypeUnion, name, generic_params));
+
+                    break;
                 default:
                     UNREACHABLE("unknown variant");
             }
+
+            break;
         }
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_CHAR:
             res = NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_CHAR);

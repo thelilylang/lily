@@ -165,6 +165,7 @@ enum CIDataTypeKind
     CI_DATA_TYPE_KIND_SHORT_INT,
     CI_DATA_TYPE_KIND_SIGNED_CHAR,
     CI_DATA_TYPE_KIND_STRUCT,
+    CI_DATA_TYPE_KIND_TYPEDEF,
     CI_DATA_TYPE_KIND_UNSIGNED_INT,
     CI_DATA_TYPE_KIND_UNSIGNED_CHAR,
     CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT,
@@ -380,6 +381,7 @@ typedef struct CIDataType
         struct CIDataType *post_const;
         struct CIDataType *ptr;
         CIDataTypeStruct struct_;
+        String *typedef_; // String* (&)
         CIDataTypeUnion union_;
     };
 } CIDataType;
@@ -437,6 +439,12 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, ptr, CIDataType *ptr);
  * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_STRUCT).
  */
 VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, struct, CIDataTypeStruct struct_);
+
+/**
+ *
+ * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_TYPEDEF).
+ */
+VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, typedef, String *typedef_);
 
 /**
  *

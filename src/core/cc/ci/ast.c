@@ -53,6 +53,9 @@ static VARIANT_DESTRUCTOR(CIDataType, ptr, CIDataType *self);
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_STRUCT).
 static VARIANT_DESTRUCTOR(CIDataType, struct, CIDataType *self);
 
+/// @brief Free CIDataType type (CI_DATA_TYPE_KIND_TYPEDEF).
+static inline VARIANT_DESTRUCTOR(CIDataType, typedef, CIDataType *self);
+
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_UNION).
 static VARIANT_DESTRUCTOR(CIDataType, union, CIDataType *self);
 
@@ -224,6 +227,8 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeKind, enum CIDataTypeKind self)
             return "CI_DATA_TYPE_KIND_SIGNED_CHAR";
         case CI_DATA_TYPE_KIND_STRUCT:
             return "CI_DATA_TYPE_KIND_STRUCT";
+        case CI_DATA_TYPE_KIND_TYPEDEF:
+            return "CI_DATA_TYPE_KIND_TYPEDEF";
         case CI_DATA_TYPE_KIND_UNSIGNED_INT:
             return "CI_DATA_TYPE_KIND_UNSIGNED_INT";
         case CI_DATA_TYPE_KIND_UNSIGNED_CHAR:
@@ -449,6 +454,16 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, struct, CIDataTypeStruct struct_)
     return self;
 }
 
+VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, typedef, String *typedef_)
+{
+    CIDataType *self = lily_malloc(sizeof(CIDataType));
+
+    self->kind = CI_DATA_TYPE_KIND_TYPEDEF;
+    self->typedef_ = typedef_;
+
+    return self;
+}
+
 VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, union, CIDataTypeUnion union_)
 {
     CIDataType *self = lily_malloc(sizeof(CIDataType));
@@ -510,6 +525,10 @@ IMPL_FOR_DEBUG(to_string, CIDataType, const CIDataType *self)
               "CIDataType{{ kind = {s}, struct_ = {Sr} }",
               to_string__Debug__CIDataTypeKind(self->kind),
               to_string__Debug__CIDataTypeStruct(&self->struct_));
+        case CI_DATA_TYPE_KIND_TYPEDEF:
+            return format__String("CIDataType{{ kind = {s}, typedef_ = {S} }",
+                                  to_string__Debug__CIDataTypeKind(self->kind),
+                                  self->typedef_);
         case CI_DATA_TYPE_KIND_UNION:
             return format__String(
               "CIDataType{{ kind = {s}, union_ = {Sr} }",
@@ -569,6 +588,11 @@ VARIANT_DESTRUCTOR(CIDataType, struct, CIDataType *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(CIDataType, typedef, CIDataType *self)
+{
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(CIDataType, union, CIDataType *self)
 {
     FREE(CIDataTypeUnion, &self->union_);
@@ -601,6 +625,9 @@ DESTRUCTOR(CIDataType, CIDataType *self)
             break;
         case CI_DATA_TYPE_KIND_STRUCT:
             FREE_VARIANT(CIDataType, struct, self);
+            break;
+        case CI_DATA_TYPE_KIND_TYPEDEF:
+            FREE_VARIANT(CIDataType, typedef, self);
             break;
         case CI_DATA_TYPE_KIND_UNION:
             FREE_VARIANT(CIDataType, union, self);
