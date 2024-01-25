@@ -1,4 +1,5 @@
 #include "allocator.c"
+#include "atof.c"
 #include "atoi.c"
 #include "buffer.c"
 #include "format.c"
@@ -34,6 +35,7 @@ main()
               CALL_CASE(atoi_check_uint64_overflow),
               CALL_CASE(atoi),
               CALL_CASE(atoi_safe));
+    ADD_SUITE(2, atof, CALL_CASE(atof__Float32), CALL_CASE(atof__Float64));
     ADD_SUITE(1, buffer, CALL_CASE(buffer_push));
     ADD_SUITE(8,
               format,
