@@ -25,6 +25,7 @@
 // TODO: add a typecheck.
 
 #include <base/assert.h>
+#include <base/atof.h>
 #include <base/atoi.h>
 
 #include <core/cc/ci/parser.h>
@@ -778,7 +779,15 @@ parse_literal_expr__CIParser(CIParser *self)
               CIExpr, literal, NEW_VARIANT(CIExprLiteral, signed_int, res));
         }
         case CI_TOKEN_KIND_LITERAL_CONSTANT_FLOAT:
-            TODO("parse literal constant float");
+            // TODO: Check if the float is overflow/underflow.
+            // Update `base/atof.h` header.
+            return NEW_VARIANT(
+              CIExpr,
+              literal,
+              NEW_VARIANT(CIExprLiteral,
+                          float,
+                          atof__Float64(self->tokens_iters.previous_token
+                                          ->literal_constant_float->buffer)));
         case CI_TOKEN_KIND_LITERAL_CONSTANT_CHARACTER:
             return NEW_VARIANT(
               CIExpr,
