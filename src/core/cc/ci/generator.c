@@ -194,6 +194,10 @@ void
 generate_storage_class__CIGenerator(const int *storage_class_flag)
 {
     write_str__CIGenerator(to_string__CIStorageClass(*storage_class_flag));
+
+    if (*storage_class_flag != CI_STORAGE_CLASS_NONE) {
+        write_str__CIGenerator(" ");
+    }
 }
 
 static void
@@ -997,18 +1001,17 @@ generate_function_body_item__CIGenerator(const CIDeclFunctionItem *item)
             break;
         case CI_DECL_FUNCTION_ITEM_KIND_EXPR:
             generate_function_expr__CIGenerator(item->expr);
-            write_str__CIGenerator(";");
+            write_str__CIGenerator(";\n");
 
             break;
         case CI_DECL_FUNCTION_ITEM_KIND_STMT:
             generate_function_stmt__CIGenerator(&item->stmt);
+            write_str__CIGenerator("\n");
 
             break;
         default:
             UNREACHABLE("unknown variant");
     }
-
-    write_str__CIGenerator("\n");
 }
 
 void
@@ -1023,7 +1026,7 @@ generate_function_body__CIGenerator(const Vec *body)
     }
 
     dec_tab_count__CIGenerator();
-    write_str__CIGenerator("}");
+    write_str__CIGenerator("}\n");
 }
 
 void
@@ -1077,7 +1080,7 @@ generate_variable_decl__CIGenerator(const CIDeclVariable *variable)
         generate_function_expr__CIGenerator(variable->expr);
     }
 
-    write_str__CIGenerator(";");
+    write_str__CIGenerator(";\n\n");
 }
 
 void
