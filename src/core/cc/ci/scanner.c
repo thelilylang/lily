@@ -2992,6 +2992,17 @@ get_token__CIScanner(CIScanner *self, const CIScannerContext ctx)
                        CI_TOKEN_KIND_SEMICOLON,
                        clone__Location(&self->base.location));
 
+        case '*':
+            if (c1 == (char *)'=') {
+                return NEW(CIToken,
+                           CI_TOKEN_KIND_STAR_EQ,
+                           clone__Location(&self->base.location));
+            }
+
+            return NEW(CIToken,
+                       CI_TOKEN_KIND_STAR,
+                       clone__Location(&self->base.location));
+
         case IS_ZERO:
             if (c1 == (char *)'x' || c1 == (char *)'0' || c1 == (char *)'.' ||
                 !(c1 >= (char *)'0' && c1 <= (char *)'9')) {
