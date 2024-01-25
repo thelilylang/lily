@@ -1020,18 +1020,24 @@ String *
 IMPL_FOR_DEBUG(to_string, CIDeclVariable, const CIDeclVariable *self)
 {
     if (self->expr) {
-        return format__String("CIDeclVariable{{ name = {S}, expr = {Sr} }",
-                              self->name,
-                              to_string__Debug__CIExpr(self->expr));
+        return format__String(
+          "CIDeclVariable{{ data_type = {Sr}, name = {S}, expr = {Sr} }",
+          to_string__Debug__CIDataType(self->data_type),
+          self->name,
+          to_string__Debug__CIExpr(self->expr));
     }
 
-    return format__String("CIDeclVariable{{ name = {S}, expr = NULL }",
-                          self->name);
+    return format__String(
+      "CIDeclVariable{{ data_type = {Sr}, name = {S}, expr = NULL }",
+      to_string__Debug__CIDataType(self->data_type),
+      self->name);
 }
 #endif
 
 DESTRUCTOR(CIDeclVariable, const CIDeclVariable *self)
 {
+    FREE(CIDataType, self->data_type);
+
     if (self->expr) {
         FREE(CIExpr, self->expr);
     }

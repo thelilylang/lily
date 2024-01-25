@@ -779,6 +779,7 @@ DESTRUCTOR(CIDeclUnion, const CIDeclUnion *self);
 
 typedef struct CIDeclVariable
 {
+    CIDataType *data_type;
     String *name; // String* (&)
     CIExpr *expr; // CIExpr*?
 } CIDeclVariable;
@@ -787,9 +788,14 @@ typedef struct CIDeclVariable
  *
  * @brief Construct CIDeclVariable type.
  */
-inline CONSTRUCTOR(CIDeclVariable, CIDeclVariable, String *name, CIExpr *expr)
+inline CONSTRUCTOR(CIDeclVariable,
+                   CIDeclVariable,
+                   CIDataType *data_type,
+                   String *name,
+                   CIExpr *expr)
 {
-    return (CIDeclVariable){ .name = name, .expr = expr };
+    return (
+      CIDeclVariable){ .data_type = data_type, .name = name, .expr = expr };
 }
 
 /**
