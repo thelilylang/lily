@@ -120,6 +120,12 @@ static void
 generate_function_decl__CIGenerator(const CIDeclFunction *function);
 
 static void
+generate_struct_field__CIGenerator(const CIDeclStructField *field);
+
+static void
+generate_struct_fields__CIGenerator(const Vec *fields);
+
+static void
 generate_struct_decl__CIGenerator(const CIDeclStruct *struct_);
 
 static void
@@ -498,9 +504,7 @@ void
 generate_enum_decl__CIGenerator(const CIDeclEnum *enum_)
 {
     write_String__CIGenerator(format__String("enum {S} {{\n", enum_->name));
-
     generate_enum_variants__CIGenerator(enum_->variants);
-
     write_str__CIGenerator("}");
 }
 
@@ -1032,9 +1036,26 @@ generate_function_decl__CIGenerator(const CIDeclFunction *function)
 }
 
 void
+generate_struct_field__CIGenerator(const CIDeclStructField *field)
+{
+	generate_data_type__CIGenerator(field->data_type);
+	write_String__CIGenerator(format__String(" {S};\n", field->name));
+}
+
+void
+generate_struct_fields__CIGenerator(const Vec *fields)
+{
+	for (Usize i = 0; i < fields->len; ++i) {
+		generate_struct_field__CIGenerator(get__Vec(fields, i));
+	}
+}
+
+void
 generate_struct_decl__CIGenerator(const CIDeclStruct *struct_)
 {
-    TODO("struct");
+	write_String__CIGenerator(format__String("struct {S} {{\n"));
+	generate_struct_fields__CIGenerator(struct_->fields);
+    write_str__CIGenerator("}");
 }
 
 void
