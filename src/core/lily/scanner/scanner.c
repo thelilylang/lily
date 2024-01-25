@@ -743,6 +743,7 @@ static const enum LilyTokenKind lily_at_keyword_ids[LILY_N_AT_KEYWORD] = {
                    c3 == (char *)'2') {                                        \
             /*                                                                 \
             TODO: Check if the float is overflow/underflow.                    \
+            Update `base/atof.h` header.                                       \
             */                                                                 \
             token_res = NEW_VARIANT(LilyToken,                                 \
                                     literal_suffix_float32,                    \
@@ -752,6 +753,7 @@ static const enum LilyTokenKind lily_at_keyword_ids[LILY_N_AT_KEYWORD] = {
                    c3 == (char *)'4') {                                        \
             /*                                                                 \
             TODO: Check if the float is overflow/underflow.                    \
+            Update `base/atof.h` header.                                       \
             */                                                                 \
             token_res = NEW_VARIANT(LilyToken,                                 \
                                     literal_suffix_float64,                    \
