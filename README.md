@@ -43,7 +43,7 @@ Work in progress...
 | Version | Content                                    | Release date |
 |---------|--------------------------------------------|--------------|
 | v0.0.0  | First release.                             | 2023-09-21   |
-| v0.1.0  | Add some basic features                    | 2024-01-21   |
+| v0.1.0  | Add some basic features                    | 2024-02-21   |
 | v0.2.0  | Implement OOP                              | 2024-03-21   |
 | v0.3.0  | Begin to write Std library + Core library  | 2024-05-21   |
 | v0.4.0  | Implement @std.C.*                         | 2024-08-21   |
