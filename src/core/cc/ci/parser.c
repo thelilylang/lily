@@ -125,7 +125,11 @@ parse_union__CIParser(CIParser *self, String *name);
 
 /// @brief Parse variable declaration.
 static CIDecl *
-parse_variable__CIParser(CIParser *self);
+parse_variable__CIParser(CIParser *self,
+                         int storage_class_flag,
+                         CIDataType *data_type,
+                         String *name,
+                         bool is_prototype);
 
 /// @brief Parse declaration.
 static CIDecl *
@@ -293,9 +297,6 @@ parse_data_type__CIParser(CIParser *self)
 {
     CIDataType *res = NULL;
 
-    storage_class_flag = CI_STORAGE_CLASS_NONE;
-
-    parse_storage_class_specifiers__CIParser(self, &storage_class_flag);
     next_token__CIParser(self);
 
     switch (self->tokens_iters.previous_token->kind) {
@@ -999,14 +1000,46 @@ parse_union__CIParser(CIParser *self, String *name)
 }
 
 CIDecl *
-parse_variable__CIParser(CIParser *self)
+parse_variable__CIParser(CIParser *self,
+                         int storage_class_flag,
+                         CIDataType *data_type,
+                         String *name,
+                         bool is_prototype)
 {
-    TODO("variable");
+    next_token__CIParser(self); // skip `=` or `;`
+
+    if (is_prototype) {
+        return NEW_VARIANT(CIDecl,
+                           variable,
+                           storage_class_flag,
+                           true,
+                           NEW(CIDeclVariable, data_type, name, NULL));
+    }
+
+    CIExpr *expr = parse_expr__CIParser(self);
+
+    switch (self->tokens_iters.current_token->kind) {
+        case CI_TOKEN_KIND_SEMICOLON:
+            next_token__CIParser(self);
+            break;
+        default:
+            FAILED("expected `;`");
+    }
+
+    return NEW_VARIANT(CIDecl,
+                       variable,
+                       storage_class_flag,
+                       true,
+                       NEW(CIDeclVariable, data_type, name, expr));
 }
 
 CIDecl *
 parse_decl__CIParser(CIParser *self, bool in_function_body)
 {
+    storage_class_flag = CI_STORAGE_CLASS_NONE;
+
+    parse_storage_class_specifiers__CIParser(self, &storage_class_flag);
+
     CIDataType *data_type = parse_data_type__CIParser(self);
 
     switch (self->tokens_iters.current_token->kind) {
@@ -1017,9 +1050,11 @@ parse_decl__CIParser(CIParser *self, bool in_function_body)
 
             switch (self->tokens_iters.current_token->kind) {
                 case CI_TOKEN_KIND_EQ:
-                    TODO("variable");
+                    return parse_variable__CIParser(
+                      self, storage_class_flag, data_type, name, false);
                 case CI_TOKEN_KIND_SEMICOLON:
-                    TODO("prototype");
+                    return parse_variable__CIParser(
+                      self, storage_class_flag, data_type, name, true);
                 case CI_TOKEN_KIND_LPAREN:
                     return parse_function__CIParser(
                       self, storage_class_flag, data_type, name);
