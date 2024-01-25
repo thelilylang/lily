@@ -2696,6 +2696,8 @@ parse_list_expr__LilyParseBlock(LilyParseBlock *self)
             return VARIANT_LITERAL(name, cstr, cstr_copy);                    \
         }                                                                     \
         case LILY_TOKEN_KIND_LITERAL_FLOAT:                                   \
+            /* TODO: Check if the float is overflow/underflow.                \
+            Update `base/atof.h` header. */                                   \
             return VARIANT_LITERAL(                                           \
               name,                                                           \
               float64,                                                        \
