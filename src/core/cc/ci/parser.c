@@ -129,7 +129,7 @@ parse_variable__CIParser(CIParser *self);
 
 /// @brief Parse declaration.
 static CIDecl *
-parse_decl__CIParser(CIParser *self);
+parse_decl__CIParser(CIParser *self, bool in_function_body);
 
 /// @brief Parse storage class specifier.
 /// @return true if the token is a storage class specifier, false otherwise.
@@ -144,8 +144,19 @@ parse_storage_class_specifiers__CIParser(CIParser *self,
 
 // NOTE: If the program is multi-threaded, you'll need to adapt these variables
 // to multi-threading.
+// If a name (of a variable, a function, etc.) is expected by the compiler, but
+// is not here, it will generate a name and therefore increment the
+// `name_error_count` and store all `name_error` in the `names_error` vector, as
+// declaration strucutures (CIDeclVariable, CIDeclFunction, ...), are not
+// supposed to own the name (in other words not to be able to free it).
 static Vec *names_error = NULL; // Vec<String*>*
 static Usize name_error_count = 0;
+// The `data_type_as_expression` variable is used to keep the `DataType`
+// pointer, when in `parse_decl__CIParser`, when `in_function_body` is true is
+// that the following (current) token is not a `=`, `;` or `(`. Then, in the
+// `parse_expr__CIParser` function, if `data_type_as_expression` is not NULL,
+// the data type is returned as an expression.
+static CIDataType *data_type_as_expression = NULL;
 
 static int storage_class_flag = CI_STORAGE_CLASS_NONE;
 
@@ -740,8 +751,12 @@ parse_literal_expr__CIParser(CIParser *self)
 CIExpr *
 parse_expr__CIParser(CIParser *self)
 {
-    if (is_data_type__CIParser(self)) {
-        return NEW_VARIANT(CIExpr, data_type, parse_data_type__CIParser(self));
+    if (data_type_as_expression) {
+        CIDataType *data_type = data_type_as_expression;
+
+        data_type_as_expression = NULL;
+
+        return NEW_VARIANT(CIExpr, data_type, data_type);
     }
 
     next_token__CIParser(self);
@@ -868,6 +883,18 @@ parse_function_body__CIParser(CIParser *self)
                 break;
             }
             default: {
+                if (is_data_type__CIParser(self)) {
+                    CIDecl *decl = parse_decl__CIParser(self, true);
+
+                    if (decl) {
+                        push__Vec(body,
+                                  NEW_VARIANT(CIDeclFunctionItem, decl, decl));
+                        continue;
+                    } else if (!data_type_as_expression) {
+                        continue;
+                    }
+                }
+
                 CIExpr *expr = parse_expr__CIParser(self);
 
                 if (expr) {
@@ -978,7 +1005,7 @@ parse_variable__CIParser(CIParser *self)
 }
 
 CIDecl *
-parse_decl__CIParser(CIParser *self)
+parse_decl__CIParser(CIParser *self, bool in_function_body)
 {
     CIDataType *data_type = parse_data_type__CIParser(self);
 
@@ -997,7 +1024,13 @@ parse_decl__CIParser(CIParser *self)
                     return parse_function__CIParser(
                       self, storage_class_flag, data_type, name);
                 default:
-                    FAILED("expected `=`, `;`, `(`");
+                    if (!in_function_body) {
+                        FAILED("expected `=`, `;`, `(`");
+                    }
+
+                    data_type_as_expression = data_type;
+
+                    return NULL;
             }
 
             break;
@@ -1070,7 +1103,7 @@ run__CIParser(CIParser *self)
     next_token__CIParser(self);
 
     while (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_EOF) {
-        CIDecl *decl = parse_decl__CIParser(self);
+        CIDecl *decl = parse_decl__CIParser(self, false);
 
         if (decl) {
             add_decl__CIResultFile(self->file, decl);
