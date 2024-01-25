@@ -399,9 +399,48 @@ parse_data_type__CIParser(CIParser *self)
 
             break;
         case CI_TOKEN_KIND_KEYWORD_STRUCT:
-            TODO("struct");
-        case CI_TOKEN_KIND_KEYWORD_UNION:
-            TODO("union");
+        case CI_TOKEN_KIND_KEYWORD_UNION: {
+            enum CITokenKind previous_token_kind =
+              self->tokens_iters.previous_token->kind;
+            String *name = NULL;
+            Vec *generic_params = NULL;
+
+            switch (self->tokens_iters.current_token->kind) {
+                case CI_TOKEN_KIND_IDENTIFIER:
+                    name = self->tokens_iters.current_token->identifier;
+                    next_token__CIParser(self);
+
+                    break;
+                default:
+                    name = generate_name_error__CIParser();
+
+                    FAILED("expected identifier");
+            }
+
+            switch (self->tokens_iters.current_token->kind) {
+                case CI_TOKEN_KIND_LSHIFT:
+                    generic_params = parse_generic_params__CIParser(self);
+
+                    break;
+                default:
+                    break;
+            }
+
+            switch (previous_token_kind) {
+                case CI_TOKEN_KIND_KEYWORD_STRUCT:
+                    return NEW_VARIANT(
+                      CIDataType,
+                      struct,
+                      NEW(CIDataTypeStruct, name, generic_params));
+                case CI_TOKEN_KIND_KEYWORD_UNION:
+                    return NEW_VARIANT(
+                      CIDataType,
+                      union,
+                      NEW(CIDataTypeUnion, name, generic_params));
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+        }
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_CHAR:
             res = NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_CHAR);
 
