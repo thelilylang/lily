@@ -1038,30 +1038,32 @@ generate_function_decl__CIGenerator(const CIDeclFunction *function)
 void
 generate_struct_field__CIGenerator(const CIDeclStructField *field)
 {
-	generate_data_type__CIGenerator(field->data_type);
-	write_String__CIGenerator(format__String(" {S};\n", field->name));
+    generate_data_type__CIGenerator(field->data_type);
+    write_String__CIGenerator(format__String(" {S};\n", field->name));
 }
 
 void
 generate_struct_fields__CIGenerator(const Vec *fields)
 {
-	for (Usize i = 0; i < fields->len; ++i) {
-		generate_struct_field__CIGenerator(get__Vec(fields, i));
-	}
+    for (Usize i = 0; i < fields->len; ++i) {
+        generate_struct_field__CIGenerator(get__Vec(fields, i));
+    }
 }
 
 void
 generate_struct_decl__CIGenerator(const CIDeclStruct *struct_)
 {
-	write_String__CIGenerator(format__String("struct {S} {{\n"));
-	generate_struct_fields__CIGenerator(struct_->fields);
+    write_String__CIGenerator(format__String("struct {S} {{\n"));
+    generate_struct_fields__CIGenerator(struct_->fields);
     write_str__CIGenerator("}");
 }
 
 void
 generate_union_decl__CIGenerator(const CIDeclUnion *union_)
 {
-    TODO("union");
+    write_String__CIGenerator(format__String("union {S} {{\n"));
+    generate_struct_fields__CIGenerator(union_->fields);
+    write_str__CIGenerator("}");
 }
 
 void
