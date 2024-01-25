@@ -26,6 +26,8 @@
 
 #include <stdbool.h>
 
+// TODO: Update atof header.
+
 #define __atof__(type, s)                                \
     type res = 0;                                        \
     type power;                                          \
