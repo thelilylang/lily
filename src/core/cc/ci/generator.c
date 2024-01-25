@@ -751,7 +751,6 @@ generate_function_literal_expr__CIGenerator(const CIExprLiteral *literal)
 
             break;
         case CI_EXPR_LITERAL_KIND_FLOAT:
-            // TODO: Replace by {F}
             write_String__CIGenerator(format__String("{f}", literal->float_));
 
             break;
