@@ -1418,10 +1418,13 @@ get_keyword_part2__CIScanner(CIScanner *self, struct CITokenKindWithID *part1)
                             break;
                         case CI_TOKEN_KIND_KEYWORD_SHORT:
                             merged_kind = CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT;
+                            break;
                         case CI_TOKEN_KIND_KEYWORD_INT:
                             merged_kind = CI_TOKEN_KIND_KEYWORD_UNSIGNED_INT;
+                            break;
                         case CI_TOKEN_KIND_KEYWORD_LONG:
                             merged_kind = CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG;
+                            break;
                         default:
                             FAILED("error, expected char, short, int or long "
                                    "after unsigned");
