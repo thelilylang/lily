@@ -1069,7 +1069,15 @@ generate_union_decl__CIGenerator(const CIDeclUnion *union_)
 void
 generate_variable_decl__CIGenerator(const CIDeclVariable *variable)
 {
-    TODO("variable");
+    generate_data_type__CIGenerator(variable->data_type);
+    write_String__CIGenerator(format__String(" {S}", variable->name));
+
+    if (variable->expr) {
+        write_str__CIGenerator(" = ");
+        generate_function_expr__CIGenerator(variable->expr);
+    }
+
+    write_str__CIGenerator(";");
 }
 
 void
