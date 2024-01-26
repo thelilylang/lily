@@ -485,6 +485,105 @@ CONSTRUCTOR(CIDataType *, CIDataType, enum CIDataTypeKind kind)
     return self;
 }
 
+CIDataType *
+clone__CIDataType(const CIDataType *self)
+{
+    switch (self->kind) {
+        case CI_DATA_TYPE_KIND_ARRAY:
+            switch (self->array.kind) {
+                case CI_DATA_TYPE_ARRAY_KIND_NONE:
+                    return NEW_VARIANT(
+                      CIDataType,
+                      array,
+                      NEW_VARIANT(CIDataTypeArray,
+                                  none,
+                                  clone__CIDataType(self->array.data_type),
+                                  self->array.name));
+                case CI_DATA_TYPE_ARRAY_KIND_SIZED:
+                    return NEW_VARIANT(
+                      CIDataType,
+                      array,
+                      NEW_VARIANT(CIDataTypeArray,
+                                  sized,
+                                  clone__CIDataType(self->array.data_type),
+                                  self->array.name,
+                                  self->array.size));
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+        case CI_DATA_TYPE_KIND__ATOMIC:
+            return NEW_VARIANT(
+              CIDataType, _atomic, clone__CIDataType(self->_atomic));
+        case CI_DATA_TYPE_KIND_ENUM:
+            return NEW_VARIANT(CIDataType, enum, self->enum_);
+        case CI_DATA_TYPE_KIND_FUNCTION: {
+            Vec *params = NEW(Vec); // Vec<CIDataType*>*
+
+            for (Usize i = 0; i < self->function.params->len; ++i) {
+                push__Vec(
+                  params,
+                  clone__CIDataType(get__Vec(self->function.params, i)));
+            }
+
+            return NEW_VARIANT(
+              CIDataType,
+              function,
+              NEW(CIDataTypeFunction,
+                  self->function.name,
+                  params,
+                  clone__CIDataType(self->function.return_data_type)));
+        }
+        case CI_DATA_TYPE_KIND_PRE_CONST:
+            return NEW_VARIANT(
+              CIDataType, pre_const, clone__CIDataType(self->pre_const));
+        case CI_DATA_TYPE_KIND_POST_CONST:
+            return NEW_VARIANT(
+              CIDataType, pre_const, clone__CIDataType(self->post_const));
+        case CI_DATA_TYPE_KIND_PTR:
+            return NEW_VARIANT(CIDataType, ptr, clone__CIDataType(self->ptr));
+        case CI_DATA_TYPE_KIND_STRUCT: {
+            Vec *generic_params = NULL; // Vec<CIDataType*>*?
+
+            if (self->struct_.generic_params) {
+                generic_params = NEW(Vec);
+
+                for (Usize i = 0; i < self->struct_.generic_params->len; ++i) {
+                    push__Vec(generic_params,
+                              clone__CIDataType(
+                                get__Vec(self->struct_.generic_params, i)));
+                }
+            }
+
+            return NEW_VARIANT(
+              CIDataType,
+              struct,
+              NEW(CIDataTypeStruct, self->struct_.name, generic_params));
+        }
+        case CI_DATA_TYPE_KIND_TYPEDEF:
+            return NEW_VARIANT(CIDataType, typedef, self->typedef_);
+        case CI_DATA_TYPE_KIND_UNION: {
+            Vec *generic_params = NULL; // Vec<CIDataType*>*?
+
+            if (self->union_.generic_params) {
+                generic_params = NEW(Vec);
+
+                for (Usize i = 0; i < self->union_.generic_params->len; ++i) {
+                    push__Vec(generic_params,
+                              clone__CIDataType(
+                                get__Vec(self->union_.generic_params, i)));
+                }
+            }
+
+            return NEW_VARIANT(
+              CIDataType,
+              union,
+              NEW(CIDataTypeUnion, self->union_.name, generic_params));
+        }
+        default:
+            return NEW(CIDataType, self->kind);
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIDataType, const CIDataType *self)

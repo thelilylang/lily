@@ -460,6 +460,13 @@ CONSTRUCTOR(CIDataType *, CIDataType, enum CIDataTypeKind kind);
 
 /**
  *
+ * @brief Clone a CIDataType type.
+ */
+CIDataType *
+clone__CIDataType(const CIDataType *self);
+
+/**
+ *
  * @brief Convert CIDataType in String.
  * @note This function is only used to debug.
  */
