@@ -2990,11 +2990,33 @@ get_token__CIScanner(CIScanner *self, const CIScannerContext ctx)
                        CI_TOKEN_KIND_LSHIFT,
                        clone__Location(&self->base.location));
 
+        // >=, >>=, >>, >
+        case '>':
+            if (c1 == (char *)'=') {
+                return NEW(CIToken,
+                           CI_TOKEN_KIND_RSHIFT_EQ,
+                           clone__Location(&self->base.location));
+            } else if (c1 == (char *)'>' && c2 == (char *)'=') {
+                return NEW(CIToken,
+                           CI_TOKEN_KIND_RSHIFT_RSHIFT_EQ,
+                           clone__Location(&self->base.location));
+            } else if (c1 == (char *)'>') {
+                return NEW(CIToken,
+                           CI_TOKEN_KIND_RSHIFT_RSHIFT,
+                           clone__Location(&self->base.location));
+            }
+
+            return NEW(CIToken,
+                       CI_TOKEN_KIND_RSHIFT,
+                       clone__Location(&self->base.location));
+
+        // ;
         case ';':
             return NEW(CIToken,
                        CI_TOKEN_KIND_SEMICOLON,
                        clone__Location(&self->base.location));
 
+        // *=, *
         case '*':
             if (c1 == (char *)'=') {
                 return NEW(CIToken,
@@ -3057,7 +3079,7 @@ get_token__CIScanner(CIScanner *self, const CIScannerContext ctx)
             return NULL;
         }
         default:
-            TODO("error!!");
+            FAILED("unexpected token");
     }
 
     return NULL;
