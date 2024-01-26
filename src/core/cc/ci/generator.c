@@ -438,6 +438,10 @@ generate_data_type__CIGenerator(const CIDataType *data_type)
             }
 
             break;
+        case CI_DATA_TYPE_KIND_TYPEDEF:
+            write_str__CIGenerator(data_type->typedef_->buffer);
+
+            break;
         case CI_DATA_TYPE_KIND_UNSIGNED_INT:
             write_str__CIGenerator("unsigned int");
 
@@ -483,11 +487,12 @@ generate_enum_variant__CIGenerator(const CIDeclEnumVariant *enum_variant)
     switch (enum_variant->kind) {
         case CI_DECL_ENUM_VARIANT_KIND_CUSTOM:
             write_String__CIGenerator(format__String(
-              "{S} = {zi}", enum_variant->name, enum_variant->value));
+              "{S} = {zi},\n", enum_variant->name, enum_variant->value));
 
             break;
         case CI_DECL_ENUM_VARIANT_KIND_DEFAULT:
             write_str__CIGenerator(enum_variant->name->buffer);
+            write_str__CIGenerator(",\n");
 
             break;
         default:
@@ -498,10 +503,14 @@ generate_enum_variant__CIGenerator(const CIDeclEnumVariant *enum_variant)
 void
 generate_enum_variants__CIGenerator(const Vec *enum_variants)
 {
+    inc_tab_count__CIGenerator();
+
     for (Usize i = 0; i < enum_variants->len; ++i) {
+        write_tab__CIGenerator();
         generate_enum_variant__CIGenerator(get__Vec(enum_variants, i));
-        write_str__CIGenerator(",\n");
     }
+
+    dec_tab_count__CIGenerator();
 }
 
 void
@@ -1048,9 +1057,14 @@ generate_struct_field__CIGenerator(const CIDeclStructField *field)
 void
 generate_struct_fields__CIGenerator(const Vec *fields)
 {
+    inc_tab_count__CIGenerator();
+
     for (Usize i = 0; i < fields->len; ++i) {
+        write_tab__CIGenerator();
         generate_struct_field__CIGenerator(get__Vec(fields, i));
     }
+
+    dec_tab_count__CIGenerator();
 }
 
 void
@@ -1086,36 +1100,38 @@ generate_variable_decl__CIGenerator(const CIDeclVariable *variable)
 void
 generate_decl__CIGenerator(const CIDecl *decl)
 {
-    generate_storage_class__CIGenerator(&decl->storage_class_flag);
+    if (!has_generic__CIDecl(decl)) {
+        generate_storage_class__CIGenerator(&decl->storage_class_flag);
 
-    switch (decl->kind) {
-        case CI_DECL_KIND_ENUM:
-            generate_enum_decl__CIGenerator(&decl->enum_);
+        switch (decl->kind) {
+            case CI_DECL_KIND_ENUM:
+                generate_enum_decl__CIGenerator(&decl->enum_);
 
-            break;
-        case CI_DECL_KIND_FUNCTION:
-            return generate_function_decl__CIGenerator(&decl->function);
-        case CI_DECL_KIND_STRUCT:
-            generate_struct_decl__CIGenerator(&decl->struct_);
+                break;
+            case CI_DECL_KIND_FUNCTION:
+                return generate_function_decl__CIGenerator(&decl->function);
+            case CI_DECL_KIND_STRUCT:
+                generate_struct_decl__CIGenerator(&decl->struct_);
 
-            break;
-        case CI_DECL_KIND_UNION:
-            generate_union_decl__CIGenerator(&decl->union_);
+                break;
+            case CI_DECL_KIND_UNION:
+                generate_union_decl__CIGenerator(&decl->union_);
 
-            break;
-        case CI_DECL_KIND_VARIABLE:
-            return generate_variable_decl__CIGenerator(&decl->variable);
-        default:
-            UNREACHABLE("unknown variant");
-    }
+                break;
+            case CI_DECL_KIND_VARIABLE:
+                return generate_variable_decl__CIGenerator(&decl->variable);
+            default:
+                UNREACHABLE("unknown variant");
+        }
 
-    if (decl->storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
-        ASSERT(decl->typedef_name);
+        if (decl->storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
+            ASSERT(decl->typedef_name);
 
-        write_String__CIGenerator(
-          format__String("{S};\n\n", get_typedef_name__CIDecl(decl)));
-    } else {
-        write_str__CIGenerator(";\n\n");
+            write_String__CIGenerator(
+              format__String("{S};\n\n", get_typedef_name__CIDecl(decl)));
+        } else {
+            write_str__CIGenerator(";\n\n");
+        }
     }
 }
 
