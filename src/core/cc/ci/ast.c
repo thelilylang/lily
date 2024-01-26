@@ -337,9 +337,11 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeStruct, const CIDataTypeStruct *self)
 
 DESTRUCTOR(CIDataTypeStruct, const CIDataTypeStruct *self)
 {
-    FREE_BUFFER_ITEMS(
-      self->generic_params->buffer, self->generic_params->len, CIDataType);
-    FREE(Vec, self->generic_params);
+    if (self->generic_params) {
+        FREE_BUFFER_ITEMS(
+          self->generic_params->buffer, self->generic_params->len, CIDataType);
+        FREE(Vec, self->generic_params);
+    }
 }
 
 #ifdef ENV_DEBUG
@@ -1008,6 +1010,12 @@ IMPL_FOR_DEBUG(to_string, CIDeclStruct, const CIDeclStruct *self)
 
 DESTRUCTOR(CIDeclStruct, const CIDeclStruct *self)
 {
+    if (self->generic_params) {
+        FREE_BUFFER_ITEMS(
+          self->generic_params->buffer, self->generic_params->len, CIDataType);
+        FREE(Vec, self->generic_params);
+    }
+
     if (self->fields) {
         FREE_BUFFER_ITEMS(
           self->fields->buffer, self->fields->len, CIDeclStructField);
@@ -1020,14 +1028,23 @@ String *
 IMPL_FOR_DEBUG(to_string, CIDeclUnion, const CIDeclUnion *self)
 {
     String *res =
-      format__String("CIDeclUnion{{ name = {S}, fields =", self->name);
+      format__String("CIDeclUnion{{ name = {S}, generic_params =", self->name);
 
-    if (self->fields) {
-        DEBUG_VEC_STRING(self->fields, res, CIDeclStructField);
-        push_str__String(res, " }");
+    if (self->generic_params) {
+        DEBUG_VEC_STRING(self->generic_params, res, CIDataType);
     } else {
         push_str__String(res, " NULL");
     }
+
+    push_str__String(res, ", fields =");
+
+    if (self->fields) {
+        DEBUG_VEC_STRING(self->fields, res, CIDeclStructField);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, " }");
 
     return res;
 }

@@ -725,17 +725,24 @@ DESTRUCTOR(CIDeclStructField, CIDeclStructField *self);
 
 typedef struct CIDeclStruct
 {
-    String *name; // String* (&)
-    Vec *fields;  // Vec<CIDeclStructField*>*?
+    String *name;        // String* (&)
+    Vec *generic_params; // Vec<CIDataType*>*?
+    Vec *fields;         // Vec<CIDeclStructField*>*?
 } CIDeclStruct;
 
 /**
  *
  * @brief Construct CIDeclStruct type.
  */
-inline CONSTRUCTOR(CIDeclStruct, CIDeclStruct, String *name, Vec *fields)
+inline CONSTRUCTOR(CIDeclStruct,
+                   CIDeclStruct,
+                   String *name,
+                   Vec *generic_params,
+                   Vec *fields)
 {
-    return (CIDeclStruct){ .name = name, .fields = fields };
+    return (CIDeclStruct){ .name = name,
+                           .generic_params = generic_params,
+                           .fields = fields };
 }
 
 /**
