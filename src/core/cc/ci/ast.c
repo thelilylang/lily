@@ -1298,6 +1298,22 @@ get_name__CIDecl(const CIDecl *self)
     }
 }
 
+bool
+has_generic__CIDecl(const CIDecl *self)
+{
+    switch (self->kind) {
+        case CI_DECL_KIND_ENUM:
+        case CI_DECL_KIND_FUNCTION:
+        case CI_DECL_KIND_UNION:
+        case CI_DECL_KIND_VARIABLE:
+            return false;
+        case CI_DECL_KIND_STRUCT:
+            return self->struct_.generic_params;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)

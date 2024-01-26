@@ -931,6 +931,13 @@ get_name__CIDecl(const CIDecl *self);
 
 /**
  *
+ * @brief Check if the declaration has generic (e.g. generic_params)
+ */
+bool
+has_generic__CIDecl(const CIDecl *self);
+
+/**
+ *
  * @brief Convert CIDecl in String.
  * @note This function is only used to debug.
  */
