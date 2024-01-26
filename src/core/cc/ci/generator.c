@@ -1056,7 +1056,7 @@ generate_struct_fields__CIGenerator(const Vec *fields)
 void
 generate_struct_decl__CIGenerator(const CIDeclStruct *struct_)
 {
-    write_String__CIGenerator(format__String("struct {S} {{\n"));
+    write_String__CIGenerator(format__String("struct {S} {{\n", struct_->name));
     generate_struct_fields__CIGenerator(struct_->fields);
     write_str__CIGenerator("}");
 }
@@ -1064,7 +1064,7 @@ generate_struct_decl__CIGenerator(const CIDeclStruct *struct_)
 void
 generate_union_decl__CIGenerator(const CIDeclUnion *union_)
 {
-    write_String__CIGenerator(format__String("union {S} {{\n"));
+    write_String__CIGenerator(format__String("union {S} {{\n", union_->name));
     generate_struct_fields__CIGenerator(union_->fields);
     write_str__CIGenerator("}");
 }
