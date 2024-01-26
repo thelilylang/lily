@@ -417,8 +417,9 @@ parse_data_type__CIParser(CIParser *self)
         case CI_TOKEN_KIND_KEYWORD_UNION: {
             enum CITokenKind previous_token_kind =
               self->tokens_iters.previous_token->kind;
-            String *name = NULL;        // String* (&)
-            Vec *generic_params = NULL; // Vec<CIDataType*>*?
+            String *name = NULL;               // String* (&)
+            Vec *generic_params = NULL;        // Vec<CIDataType*>*?
+            Vec *generic_params_cloned = NULL; // Vec<CIDataType*>*?
 
             // struct <name><generic_params, ...> ...;
             // struct <name><generic_params, ...> { ... } ...;
@@ -431,6 +432,13 @@ parse_data_type__CIParser(CIParser *self)
             switch (self->tokens_iters.current_token->kind) {
                 case CI_TOKEN_KIND_LSHIFT:
                     generic_params = parse_generic_params__CIParser(self);
+                    generic_params_cloned = NEW(Vec);
+
+                    for (Usize i = 0; i < generic_params->len; ++i) {
+                        push__Vec(
+                          generic_params_cloned,
+                          clone__CIDataType(get__Vec(generic_params, i)));
+                    }
 
                     break;
                 default:
@@ -439,15 +447,17 @@ parse_data_type__CIParser(CIParser *self)
 
             switch (previous_token_kind) {
                 case CI_TOKEN_KIND_KEYWORD_STRUCT:
-                    // FIXME: assign generic params
                     res = NEW_VARIANT(
-                      CIDataType, struct, NEW(CIDataTypeStruct, name, NULL));
+                      CIDataType,
+                      struct,
+                      NEW(CIDataTypeStruct, name, generic_params_cloned));
 
                     break;
                 case CI_TOKEN_KIND_KEYWORD_UNION:
-                    // FIXME: assign generic params
                     res = NEW_VARIANT(
-                      CIDataType, union, NEW(CIDataTypeUnion, name, NULL));
+                      CIDataType,
+                      union,
+                      NEW(CIDataTypeUnion, name, generic_params_cloned));
 
                     break;
                 default:
