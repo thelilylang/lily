@@ -69,6 +69,11 @@ is_data_type__CIParser(CIParser *self);
 static CIDataType *
 parse_data_type__CIParser(CIParser *self);
 
+/// @brief Parse enum variants.
+/// @return Vec<CIDeclEnumVariant*>*
+static Vec *
+parse_enum_variants__CIParser(CIParser *self);
+
 /// @brief Parse enum declaration.
 static CIDecl *
 parse_enum__CIParser(CIParser *self, int storage_class_flag, String *name);
@@ -119,8 +124,11 @@ static Vec *
 parse_struct_fields__CIParser(CIParser *self);
 
 /// @brief Parse struct declaration.
-static CIDeclStruct
-parse_struct__CIParser(CIParser *self, String *name);
+static CIDecl *
+parse_struct__CIParser(CIParser *self,
+                       int storage_class_flag,
+                       String *name,
+                       Vec *generic_params);
 
 /// @brief Parse union declaration.
 static CIDeclUnion
@@ -349,9 +357,9 @@ parse_data_type__CIParser(CIParser *self)
             res = NEW_VARIANT(CIDataType, enum, name);
 
             switch (self->tokens_iters.current_token->kind) {
-                case CI_TOKEN_KIND_LBRACE: {
-                    next_token__CIParser(self);
-
+                case CI_TOKEN_KIND_IDENTIFIER:
+                case CI_TOKEN_KIND_LBRACE:
+                case CI_TOKEN_KIND_SEMICOLON: {
                     CIDecl *enum_decl =
                       parse_enum__CIParser(self, storage_class_flag, name);
 
@@ -409,19 +417,15 @@ parse_data_type__CIParser(CIParser *self)
         case CI_TOKEN_KIND_KEYWORD_UNION: {
             enum CITokenKind previous_token_kind =
               self->tokens_iters.previous_token->kind;
-            String *name = NULL;
-            Vec *generic_params = NULL;
+            String *name = NULL;        // String* (&)
+            Vec *generic_params = NULL; // Vec<CIDataType*>*?
 
-            switch (self->tokens_iters.current_token->kind) {
-                case CI_TOKEN_KIND_IDENTIFIER:
-                    name = self->tokens_iters.current_token->identifier;
-                    next_token__CIParser(self);
-
-                    break;
-                default:
-                    name = generate_name_error__CIParser();
-
-                    FAILED("expected identifier");
+            // struct <name><generic_params, ...> ...;
+            // struct <name><generic_params, ...> { ... } ...;
+            if (expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, true)) {
+                name = self->tokens_iters.previous_token->identifier;
+            } else {
+                name = generate_name_error__CIParser();
             }
 
             switch (self->tokens_iters.current_token->kind) {
@@ -435,21 +439,36 @@ parse_data_type__CIParser(CIParser *self)
 
             switch (previous_token_kind) {
                 case CI_TOKEN_KIND_KEYWORD_STRUCT:
-                    res =
-                      NEW_VARIANT(CIDataType,
-                                  struct,
-                                  NEW(CIDataTypeStruct, name, generic_params));
+                    // FIXME: assign generic params
+                    res = NEW_VARIANT(
+                      CIDataType, struct, NEW(CIDataTypeStruct, name, NULL));
 
                     break;
                 case CI_TOKEN_KIND_KEYWORD_UNION:
-                    res =
-                      NEW_VARIANT(CIDataType,
-                                  union,
-                                  NEW(CIDataTypeUnion, name, generic_params));
+                    // FIXME: assign generic params
+                    res = NEW_VARIANT(
+                      CIDataType, union, NEW(CIDataTypeUnion, name, NULL));
 
                     break;
                 default:
                     UNREACHABLE("unknown variant");
+            }
+
+            switch (self->tokens_iters.current_token->kind) {
+                case CI_TOKEN_KIND_IDENTIFIER:
+                case CI_TOKEN_KIND_LBRACE:
+                case CI_TOKEN_KIND_SEMICOLON: {
+                    CIDecl *struct_decl = parse_struct__CIParser(
+                      self, storage_class_flag, name, generic_params);
+
+                    if (add_decl__CIResultFile(self->file, struct_decl)) {
+                        FREE(CIDecl, struct_decl);
+                    }
+
+                    break;
+                }
+                default:
+                    break;
             }
 
             break;
@@ -519,45 +538,10 @@ parse_data_type__CIParser(CIParser *self)
     return res;
 }
 
-CIDecl *
-parse_enum__CIParser(CIParser *self, int storage_class_flag, String *name)
+Vec *
+parse_enum_variants__CIParser(CIParser *self)
 {
-    switch (self->tokens_iters.current_token->kind) {
-        case CI_TOKEN_KIND_SEMICOLON:
-            if (storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
-                FAILED("expected identifier");
-            }
-
-            return NEW_VARIANT(CIDecl,
-                               enum,
-                               storage_class_flag,
-                               true,
-                               NULL,
-                               NEW(CIDeclEnum, name, NULL));
-        case CI_TOKEN_KIND_IDENTIFIER: {
-            String *typedef_name = self->tokens_iters.current_token->identifier;
-
-            if (storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
-                next_token__CIParser(self);
-            } else {
-                FAILED("expected `;`");
-            }
-
-            return NEW_VARIANT(CIDecl,
-                               enum,
-                               storage_class_flag,
-                               true,
-                               typedef_name,
-                               NEW(CIDeclEnum, name, NULL));
-        }
-        case CI_TOKEN_KIND_LBRACE:
-            next_token__CIParser(self); // skip `{`
-        default:
-            UNREACHABLE("expected `;`, `{` or identifier");
-    }
-
     Vec *variants = NEW(Vec); // Vec<CIDeclEnumVariant*>*
-    String *typedef_name = NULL;
 
     while (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RBRACE &&
            self->tokens_iters.current_token->kind != CI_TOKEN_KIND_EOF) {
@@ -592,12 +576,60 @@ parse_enum__CIParser(CIParser *self, int storage_class_flag, String *name)
         FAILED("expected one or many variants");
     }
 
+    return variants;
+}
+
+CIDecl *
+parse_enum__CIParser(CIParser *self, int storage_class_flag, String *name)
+{
+    next_token__CIParser(self); // skip `{` or `;`
+
+    switch (self->tokens_iters.previous_token->kind) {
+        case CI_TOKEN_KIND_SEMICOLON:
+            if (storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
+                FAILED("expected identifier");
+            }
+
+            return NEW_VARIANT(CIDecl,
+                               enum,
+                               storage_class_flag,
+                               true,
+                               NULL,
+                               NEW(CIDeclEnum, name, NULL));
+        case CI_TOKEN_KIND_IDENTIFIER: {
+            String *typedef_name =
+              self->tokens_iters.previous_token->identifier;
+
+            if (storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
+                expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
+            } else {
+                FAILED("expected `;`, identifier is not expected");
+            }
+
+            return NEW_VARIANT(CIDecl,
+                               enum,
+                               storage_class_flag,
+                               true,
+                               typedef_name,
+                               NEW(CIDeclEnum, name, NULL));
+        }
+        case CI_TOKEN_KIND_LBRACE:
+            break;
+        default:
+            UNREACHABLE("expected `;`, `{` or identifier");
+    }
+
+    Vec *variants =
+      parse_enum_variants__CIParser(self); // Vec<CIDeclEnumVariant*>*
+    String *typedef_name = NULL;           // String*? (&)
+
     switch (self->tokens_iters.current_token->kind) {
         case CI_TOKEN_KIND_IDENTIFIER:
             typedef_name = self->tokens_iters.current_token->identifier;
 
             if (storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
                 next_token__CIParser(self);
+                expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
             } else {
                 FAILED("expected `;`");
             }
@@ -1010,8 +1042,6 @@ parse_function__CIParser(CIParser *self,
 Vec *
 parse_struct_fields__CIParser(CIParser *self)
 {
-    next_token__CIParser(self); // skip `{`
-
     Vec *fields = NEW(Vec); // Vec<CIDeclStructField*>*
 
     while (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RBRACE &&
@@ -1031,23 +1061,80 @@ parse_struct_fields__CIParser(CIParser *self)
         expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
     }
 
-    if (self->tokens_iters.current_token->kind == CI_TOKEN_KIND_EOF) {
-        FAILED("hit EOF");
-    } else {
-        next_token__CIParser(self); // skip `}`
-    }
+    expect__CIParser(self, CI_TOKEN_KIND_RBRACE, true);
 
     return fields;
 }
 
-CIDeclStruct
-parse_struct__CIParser(CIParser *self, String *name)
+CIDecl *
+parse_struct__CIParser(CIParser *self,
+                       int storage_class_flag,
+                       String *name,
+                       Vec *generic_params)
 {
+    next_token__CIParser(self); // skip `{` or `;`
+
+    switch (self->tokens_iters.previous_token->kind) {
+        case CI_TOKEN_KIND_SEMICOLON:
+            if (storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
+                FAILED("expected identfiier");
+            }
+
+            return NEW_VARIANT(CIDecl,
+                               struct,
+                               storage_class_flag,
+                               true,
+                               NULL,
+                               NEW(CIDeclStruct, name, generic_params, NULL));
+        case CI_TOKEN_KIND_IDENTIFIER: {
+            String *typedef_name =
+              self->tokens_iters.previous_token->identifier;
+
+            if (storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
+                expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
+            } else {
+                FAILED("expected `;`, identifier is not expected");
+            }
+
+            return NEW_VARIANT(CIDecl,
+                               struct,
+                               storage_class_flag,
+                               true,
+                               typedef_name,
+                               NEW(CIDeclStruct, name, generic_params, NULL));
+        }
+        case CI_TOKEN_KIND_LBRACE:
+            break;
+        default:
+            UNREACHABLE("expected `;`, `{` or identifier");
+    }
 
     Vec *fields =
       parse_struct_fields__CIParser(self); // Vec<CIDeclStructField*>*
+    String *typedef_name = NULL;           // String*? (&)
 
-    return NEW(CIDeclStruct, name, fields);
+    switch (self->tokens_iters.current_token->kind) {
+        case CI_TOKEN_KIND_IDENTIFIER:
+            typedef_name = self->tokens_iters.current_token->identifier;
+
+            if (storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
+                next_token__CIParser(self);
+                expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
+            } else {
+                FAILED("expected `;`");
+            }
+
+            break;
+        default:
+            break;
+    }
+
+    return NEW_VARIANT(CIDecl,
+                       struct,
+                       storage_class_flag,
+                       false,
+                       typedef_name,
+                       NEW(CIDeclStruct, name, generic_params, fields));
 }
 
 CIDeclUnion
