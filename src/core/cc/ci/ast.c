@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+#include <base/format.h>
+#include <base/hash/sip.h>
 #include <base/new.h>
 
 #include <core/cc/ci/ast.h>
@@ -581,6 +583,108 @@ clone__CIDataType(const CIDataType *self)
         }
         default:
             return NEW(CIDataType, self->kind);
+    }
+}
+
+void
+serialize_vec__CIDataType(const Vec *data_types, String *buffer)
+{
+    for (Usize i = 0; i < data_types->len; ++i) {
+        serialize__CIDataType(get__Vec(data_types, i), buffer);
+    }
+}
+
+void
+serialize__CIDataType(const CIDataType *self, String *buffer)
+{
+#define SERIALIZE_NAME(name, name_len) hash_sip(name, name_len, SIP_K0, SIP_K1)
+
+#define SERIALIZE_TYPE_WITH_GENERIC_PARAMS(ty)                           \
+    {                                                                    \
+        char *s =                                                        \
+          format("{zu}", SERIALIZE_NAME(ty.name->buffer, ty.name->len)); \
+        PUSH_STR_AND_FREE(buffer, s);                                    \
+                                                                         \
+        if (ty.generic_params) {                                         \
+            serialize_vec__CIDataType(ty.generic_params, buffer);        \
+        }                                                                \
+    }
+
+#define SERIALIZE_FMT_PUSH_TO_BUFFER(fmt, ...) \
+    {                                          \
+        char *s = format(fmt, __VA_ARGS__);    \
+        PUSH_STR_AND_FREE(buffer, s);          \
+    }
+
+    SERIALIZE_FMT_PUSH_TO_BUFFER("{d}", self->kind);
+
+    switch (self->kind) {
+        case CI_DATA_TYPE_KIND_ARRAY:
+            serialize__CIDataType(self->array.data_type, buffer);
+
+            break;
+        case CI_DATA_TYPE_KIND__ATOMIC:
+            serialize__CIDataType(self->_atomic, buffer);
+
+            break;
+        case CI_DATA_TYPE_KIND_ENUM:
+            SERIALIZE_FMT_PUSH_TO_BUFFER(
+              "{zu}", SERIALIZE_NAME(self->enum_->buffer, self->enum_->len));
+
+            break;
+        case CI_DATA_TYPE_KIND_FUNCTION:
+            serialize__CIDataType(self->function.return_data_type, buffer);
+            serialize_vec__CIDataType(self->function.params, buffer);
+
+            break;
+        case CI_DATA_TYPE_KIND_PRE_CONST:
+            serialize__CIDataType(self->pre_const, buffer);
+
+            break;
+        case CI_DATA_TYPE_KIND_POST_CONST:
+            serialize__CIDataType(self->post_const, buffer);
+
+            break;
+        case CI_DATA_TYPE_KIND_PTR:
+            serialize__CIDataType(self->ptr, buffer);
+
+            break;
+        case CI_DATA_TYPE_KIND_STRUCT:
+            SERIALIZE_TYPE_WITH_GENERIC_PARAMS(self->struct_);
+
+            break;
+        case CI_DATA_TYPE_KIND_UNION:
+            SERIALIZE_TYPE_WITH_GENERIC_PARAMS(self->union_);
+
+            break;
+        case CI_DATA_TYPE_KIND_BOOL:
+        case CI_DATA_TYPE_KIND_CHAR:
+        case CI_DATA_TYPE_KIND_DOUBLE:
+        case CI_DATA_TYPE_KIND_DOUBLE__COMPLEX:
+        case CI_DATA_TYPE_KIND_DOUBLE__IMAGINARY:
+        case CI_DATA_TYPE_KIND__DECIMAL32:
+        case CI_DATA_TYPE_KIND__DECIMAL64:
+        case CI_DATA_TYPE_KIND__DECIMAL128:
+        case CI_DATA_TYPE_KIND_FLOAT:
+        case CI_DATA_TYPE_KIND_FLOAT__COMPLEX:
+        case CI_DATA_TYPE_KIND_FLOAT__IMAGINARY:
+        case CI_DATA_TYPE_KIND_INT:
+        case CI_DATA_TYPE_KIND_LONG_DOUBLE:
+        case CI_DATA_TYPE_KIND_LONG_DOUBLE__COMPLEX:
+        case CI_DATA_TYPE_KIND_LONG_DOUBLE__IMAGINARY:
+        case CI_DATA_TYPE_KIND_LONG_INT:
+        case CI_DATA_TYPE_KIND_LONG_LONG_INT:
+        case CI_DATA_TYPE_KIND_SHORT_INT:
+        case CI_DATA_TYPE_KIND_SIGNED_CHAR:
+        case CI_DATA_TYPE_KIND_UNSIGNED_INT:
+        case CI_DATA_TYPE_KIND_UNSIGNED_CHAR:
+        case CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT:
+        case CI_DATA_TYPE_KIND_UNSIGNED_LONG_LONG_INT:
+        case CI_DATA_TYPE_KIND_UNSIGNED_SHORT_INT:
+        case CI_DATA_TYPE_KIND_VOID:
+            break;
+        default:
+            UNREACHABLE("unknown variant");
     }
 }
 

@@ -467,6 +467,22 @@ clone__CIDataType(const CIDataType *self);
 
 /**
  *
+ * @brief Serialize CIDataType.
+ * @param self const CIDataType* (&)
+ */
+void
+serialize__CIDataType(const CIDataType *self, String *buffer);
+
+/**
+ *
+ * @brief Serialize Vec<CIDataType*>*.
+ * @param data_types const Vec<CIDataType*>* (&)
+ */
+void
+serialize_vec__CIDataType(const Vec *data_types, String *buffer);
+
+/**
+ *
  * @brief Convert CIDataType in String.
  * @note This function is only used to debug.
  */

@@ -53,16 +53,6 @@ static void
 generate_storage_class__CIGenerator(const int *storage_class_flag);
 
 static void
-serialize_data_type__CIGenerator(const CIDataType *data_type);
-
-static inline void
-serialize_generic_param__CIGenerator(const CIDataType *data_type);
-
-/// @params generic_params const Vec<CIDataType*>* (&)
-static void
-serialize_generic_params__CIGenerator(const Vec *generic_params);
-
-static void
 generate_data_type__CIGenerator(const CIDataType *data_type);
 
 static void
@@ -197,103 +187,6 @@ generate_storage_class__CIGenerator(const int *storage_class_flag)
 
     if (*storage_class_flag != CI_STORAGE_CLASS_NONE) {
         write_str__CIGenerator(" ");
-    }
-}
-
-static void
-serialize_data_type__CIGenerator(const CIDataType *data_type)
-{
-#define SERIALIZE_NAME(name, name_len) hash_sip(name, name_len, SIP_K0, SIP_K1)
-
-#define SERIALIZE_TYPE_WITH_GENERIC_PARAMS(ty)                                \
-    write_String__CIGenerator(                                                \
-      format__String("{zu}", SERIALIZE_NAME(ty.name->buffer, ty.name->len))); \
-                                                                              \
-    if (ty.generic_params) {                                                  \
-        serialize_generic_params__CIGenerator(ty.generic_params);             \
-    }
-
-    write_String__CIGenerator(format__String("{d}", data_type->kind));
-
-    switch (data_type->kind) {
-        case CI_DATA_TYPE_KIND_ARRAY:
-            serialize_data_type__CIGenerator(data_type->array.data_type);
-
-            break;
-        case CI_DATA_TYPE_KIND__ATOMIC:
-            serialize_data_type__CIGenerator(data_type->_atomic);
-
-            break;
-        case CI_DATA_TYPE_KIND_ENUM:
-            write_String__CIGenerator(format__String(
-              "{zu}",
-              SERIALIZE_NAME(data_type->enum_->buffer, data_type->enum_->len)));
-
-            break;
-        case CI_DATA_TYPE_KIND_FUNCTION:
-            TODO("function");
-        case CI_DATA_TYPE_KIND_PRE_CONST:
-            serialize_data_type__CIGenerator(data_type->pre_const);
-
-            break;
-        case CI_DATA_TYPE_KIND_POST_CONST:
-            serialize_data_type__CIGenerator(data_type->post_const);
-
-            break;
-        case CI_DATA_TYPE_KIND_PTR:
-            serialize_data_type__CIGenerator(data_type->ptr);
-
-            break;
-        case CI_DATA_TYPE_KIND_STRUCT:
-            SERIALIZE_TYPE_WITH_GENERIC_PARAMS(data_type->struct_);
-
-            break;
-        case CI_DATA_TYPE_KIND_UNION:
-            SERIALIZE_TYPE_WITH_GENERIC_PARAMS(data_type->union_);
-
-            break;
-        case CI_DATA_TYPE_KIND_BOOL:
-        case CI_DATA_TYPE_KIND_CHAR:
-        case CI_DATA_TYPE_KIND_DOUBLE:
-        case CI_DATA_TYPE_KIND_DOUBLE__COMPLEX:
-        case CI_DATA_TYPE_KIND_DOUBLE__IMAGINARY:
-        case CI_DATA_TYPE_KIND__DECIMAL32:
-        case CI_DATA_TYPE_KIND__DECIMAL64:
-        case CI_DATA_TYPE_KIND__DECIMAL128:
-        case CI_DATA_TYPE_KIND_FLOAT:
-        case CI_DATA_TYPE_KIND_FLOAT__COMPLEX:
-        case CI_DATA_TYPE_KIND_FLOAT__IMAGINARY:
-        case CI_DATA_TYPE_KIND_INT:
-        case CI_DATA_TYPE_KIND_LONG_DOUBLE:
-        case CI_DATA_TYPE_KIND_LONG_DOUBLE__COMPLEX:
-        case CI_DATA_TYPE_KIND_LONG_DOUBLE__IMAGINARY:
-        case CI_DATA_TYPE_KIND_LONG_INT:
-        case CI_DATA_TYPE_KIND_LONG_LONG_INT:
-        case CI_DATA_TYPE_KIND_SHORT_INT:
-        case CI_DATA_TYPE_KIND_SIGNED_CHAR:
-        case CI_DATA_TYPE_KIND_UNSIGNED_INT:
-        case CI_DATA_TYPE_KIND_UNSIGNED_CHAR:
-        case CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT:
-        case CI_DATA_TYPE_KIND_UNSIGNED_LONG_LONG_INT:
-        case CI_DATA_TYPE_KIND_UNSIGNED_SHORT_INT:
-        case CI_DATA_TYPE_KIND_VOID:
-            break;
-        default:
-            UNREACHABLE("unknown variant");
-    }
-}
-
-static inline void
-serialize_generic_param__CIGenerator(const CIDataType *data_type)
-{
-    return serialize_data_type__CIGenerator(data_type);
-}
-
-static void
-serialize_generic_params__CIGenerator(const Vec *generic_params)
-{
-    for (Usize i = 0; i < generic_params->len; ++i) {
-        serialize_generic_param__CIGenerator(get__Vec(generic_params, i));
     }
 }
 
@@ -433,8 +326,11 @@ generate_data_type__CIGenerator(const CIDataType *data_type)
               format__String("struct {S}__", data_type->struct_.name));
 
             if (data_type->struct_.generic_params) {
-                serialize_generic_params__CIGenerator(
-                  data_type->struct_.generic_params);
+                String *serialize_buffer = NEW(String);
+
+                serialize_vec__CIDataType(data_type->struct_.generic_params,
+                                          serialize_buffer);
+                write_String__CIGenerator(serialize_buffer);
             }
 
             break;
@@ -467,8 +363,11 @@ generate_data_type__CIGenerator(const CIDataType *data_type)
               format__String("union {S}__", data_type->union_.name));
 
             if (data_type->union_.generic_params) {
-                serialize_generic_params__CIGenerator(
-                  data_type->union_.generic_params);
+                String *serialize_buffer = NEW(String);
+
+                serialize_vec__CIDataType(data_type->union_.generic_params,
+                                          serialize_buffer);
+                write_String__CIGenerator(serialize_buffer);
             }
 
             break;
