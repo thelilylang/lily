@@ -130,6 +130,15 @@ static VARIANT_DESTRUCTOR(CIDeclFunctionItem, expr, CIDeclFunctionItem *self);
 /// @brief Free CIDeclFunctionItem type (CI_DECL_FUNCTION_ITEM_KIND_STMT).
 static VARIANT_DESTRUCTOR(CIDeclFunctionItem, stmt, CIDeclFunctionItem *self);
 
+CONSTRUCTOR(CIScopeID *, CIScopeID, Usize id)
+{
+    CIScopeID *self = lily_malloc(sizeof(CIScopeID));
+
+    self->id = id;
+
+    return self;
+}
+
 CONSTRUCTOR(CIEnumID *, CIEnumID, CIFileID file_id, Usize id)
 {
     CIEnumID *self = lily_malloc(sizeof(CIEnumID));
@@ -168,6 +177,55 @@ CONSTRUCTOR(CIUnionID *, CIUnionID, CIFileID file_id, Usize id)
     self->id = id;
 
     return self;
+}
+
+CONSTRUCTOR(CIVariableID *, CIVariableID, CIFileID file_id, Usize id)
+{
+    CIVariableID *self = lily_malloc(sizeof(CIVariableID));
+
+    self->file_id = file_id;
+    self->id = id;
+
+    return self;
+}
+
+CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, bool is_block)
+{
+    CIScope *self = lily_malloc(sizeof(CIScope));
+
+    self->parent = parent;
+    self->is_block = is_block;
+    self->enums = NEW(HashMap);
+    self->functions = NEW(HashMap);
+    self->structs = NEW(HashMap);
+    self->unions = NEW(HashMap);
+    self->variables = NEW(HashMap);
+
+    return self;
+}
+
+DESTRUCTOR(CIScope, CIScope *self)
+{
+    if (self->parent) {
+        FREE(CIScopeID, self->parent);
+    }
+
+    FREE_HASHMAP_VALUES(self->enums, CIEnumID);
+    FREE(HashMap, self->enums);
+
+    FREE_HASHMAP_VALUES(self->functions, CIFunctionID);
+    FREE(HashMap, self->functions);
+
+    FREE_HASHMAP_VALUES(self->structs, CIStructID);
+    FREE(HashMap, self->structs);
+
+    FREE_HASHMAP_VALUES(self->unions, CIUnionID);
+    FREE(HashMap, self->unions);
+
+    FREE_HASHMAP_VALUES(self->variables, CIVariableID);
+    FREE(HashMap, self->variables);
+
+    lily_free(self);
 }
 
 #ifdef ENV_DEBUG

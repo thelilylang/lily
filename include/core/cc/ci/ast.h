@@ -26,6 +26,7 @@
 #define LILY_CORE_CC_CI_AST_H
 
 #include <base/alloc.h>
+#include <base/hash_map.h>
 #include <base/string.h>
 #include <base/types.h>
 #include <base/vec.h>
@@ -33,6 +34,26 @@
 typedef struct CIExpr CIExpr;
 typedef struct CIDataType CIDataType;
 typedef struct CIDeclFunctionItem CIDeclFunctionItem;
+
+typedef struct CIScopeID
+{
+    Usize id;
+} CIScopeID;
+
+/**
+ *
+ * @brief Construct CIScopeID type.
+ */
+CONSTRUCTOR(CIScopeID *, CIScopeID, Usize id);
+
+/**
+ *
+ * @brief Free CIScopeID type.
+ */
+inline DESTRUCTOR(CIScopeID, CIScopeID *self)
+{
+    lily_free(self);
+}
 
 typedef struct CIFileID
 {
@@ -132,9 +153,49 @@ inline DESTRUCTOR(CIUnionID, CIUnionID *self)
     lily_free(self);
 }
 
+typedef struct CIVariableID
+{
+    CIFileID file_id;
+    Usize id;
+} CIVariableID;
+
+/**
+ *
+ * @brief Construct CIVariableID type.
+ */
+CONSTRUCTOR(CIVariableID *, CIVariableID, CIFileID file_id, Usize id);
+
+/**
+ *
+ * @brief Free CIVariableID type.
+ */
+inline DESTRUCTOR(CIVariableID, CIVariableID *self)
+{
+    lily_free(self);
+}
+
 typedef struct CIScope
 {
+    CIScopeID *parent; // CIScopeID*?
+    bool is_block;
+    HashMap *enums;     // HashMap<CIEnumID*>*
+    HashMap *functions; // HashMap<CIFunctionID*>*
+    HashMap *structs;   // HashMap<CIStructID*>*
+    HashMap *unions;    // HashMap<CIUnionID*>*
+    HashMap *variables; // HashMap<CIVariableID*>*
 } CIScope;
+
+/**
+ *
+ * @brief Construct CIScope type.
+ */
+CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, bool is_block);
+
+/**
+ *
+ * @brief Free CIScope type.
+ */
+DESTRUCTOR(CIScope, CIScope *self);
 
 enum CIDataTypeKind
 {
