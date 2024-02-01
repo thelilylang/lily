@@ -110,9 +110,13 @@ typedef struct CIResultFile
 {
     String *filename_result;
     File file_input;
-    HashMap *defines;      // HashMap<Vec<CIResultDefine*>*>*
-    HashMap *includes;     // HashMap<CIResultInclude*>*
-    OrderedHashMap *decls; // OrderedHashMap<CIDecl*>*
+    HashMap *defines;          // HashMap<Vec<CIResultDefine*>*>*
+    HashMap *includes;         // HashMap<CIResultInclude*>*
+    OrderedHashMap *enums;     // OrderedHashMap<CIDecl*>*
+    OrderedHashMap *functions; // OrderedHashMap<CIDecl*>*
+    OrderedHashMap *structs;   // OrderedHashMap<CIDecl*>*
+    OrderedHashMap *unions;    // OrderedHashMap<CIDecl*>*
+    OrderedHashMap *variables; // OrderedHashMap<CIDecl*>*
     Usize count_error;
     CIScanner scanner;
     CIParser parser;
@@ -130,10 +134,103 @@ CONSTRUCTOR(CIResultFile *,
 
 /**
  *
- * @brief Add declaration to decls field.
+ * @brief Add enum declaration to enums field. If the enum name is already
+ * defined, the declaration pointer is returned, otherwise NULL is returned.
  */
-bool
-add_decl__CIResultFile(const CIResultFile *self, CIDecl *decl);
+const CIDecl *
+add_enum__CIResultFile(const CIResultFile *self, CIDecl *enum_);
+
+/**
+ *
+ * @brief Add function declaration to functions field. If the function name is
+ * already defined, the declaration pointer is returned, otherwise NULL is
+ * returned.
+ */
+const CIDecl *
+add_function__CIResultFile(const CIResultFile *self, CIDecl *function);
+
+/**
+ *
+ * @brief Add struct declaration to structs field. If the struct name is already
+ * defined, the declaration pointer is returned, otherwise NULL is returned.
+ */
+const CIDecl *
+add_struct__CIResultFile(const CIResultFile *self, CIDecl *struct_);
+
+/**
+ *
+ * @brief Add union declaration to unions field. If the union name is already
+ * defined, the declaration pointer is returned, otherwise NULL is returned.
+ */
+const CIDecl *
+add_union__CIResultFile(const CIResultFile *self, CIDecl *union_);
+
+/**
+ *
+ * @brief Add variable declaration to variables field. If the variable name is
+ * already defined, the declaration pointer is returned, otherwise NULL is
+ * returned.
+ */
+const CIDecl *
+add_variable__CIResultFile(const CIResultFile *self, CIDecl *variable);
+
+/**
+ *
+ * @brief Search enum declaration in enums map.
+ */
+CIDecl *
+search_enum__CIResultFile(const CIResultFile *self, const String *name);
+
+/**
+ *
+ * @brief Search function declaration in functions map.
+ */
+CIDecl *
+search_function__CIResultFile(const CIResultFile *self, const String *name);
+
+/**
+ *
+ * @brief Search struct declaration in structs map.
+ */
+CIDecl *
+search_struct__CIResultFile(const CIResultFile *self, const String *name);
+
+/**
+ *
+ * @brief Search union declaration in unions map.
+ */
+CIDecl *
+search_union__CIResultFile(const CIResultFile *self, const String *name);
+
+/**
+ *
+ * @brief Search variable declaration in variables map.
+ */
+CIDecl *
+search_variable__CIResultFile(const CIResultFile *self, const String *name);
+
+/**
+ *
+ * @brief Search typedef enum declaration in enums map.
+ */
+CIDecl *
+search_typedef_enum__CIResultFile(const CIResultFile *self, const String *name);
+
+/**
+ *
+ * @brief Search typedef struct declaration in structs map.
+ */
+CIDecl *
+search_typedef_struct__CIResultFile(const CIResultFile *self,
+                                    const String *name);
+
+/**
+ *
+ * @brief Search typedef union declaration in unions map.
+ */
+CIDecl *
+search_typedef_union__CIResultFile(const CIResultFile *self,
+                                   const String *name);
 
 /**
  *
