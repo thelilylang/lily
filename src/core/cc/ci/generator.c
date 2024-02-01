@@ -961,9 +961,7 @@ generate_function_body__CIGenerator(const Vec *body)
 void
 generate_function_decl__CIGenerator(const CIDeclFunction *function)
 {
-    generate_data_type__CIGenerator(function->return_data_type);
-    write_String__CIGenerator(format__String(" {S}", function->name));
-    generate_function_params__CIGenerator(function->params);
+    generate_function_prototype__CIGenerator(function);
     generate_function_body__CIGenerator(function->body);
 }
 
