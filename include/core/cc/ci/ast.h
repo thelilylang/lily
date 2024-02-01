@@ -847,17 +847,24 @@ DESTRUCTOR(CIDeclStruct, const CIDeclStruct *self);
 
 typedef struct CIDeclUnion
 {
-    String *name; // String* (&)
-    Vec *fields;  // Vec<CIDeclStructField*>*?
+    String *name;        // String* (&)
+    Vec *generic_params; // Vec<CIDataType*>*?
+    Vec *fields;         // Vec<CIDeclStructField*>*?
 } CIDeclUnion;
 
 /**
  *
  * @brief Construct CIDeclUnion type.
  */
-inline CONSTRUCTOR(CIDeclUnion, CIDeclUnion, String *name, Vec *fields)
+inline CONSTRUCTOR(CIDeclUnion,
+                   CIDeclUnion,
+                   String *name,
+                   Vec *generic_params,
+                   Vec *fields)
 {
-    return (CIDeclUnion){ .name = name, .fields = fields };
+    return (CIDeclUnion){ .name = name,
+                          .generic_params = generic_params,
+                          .fields = fields };
 }
 
 /**

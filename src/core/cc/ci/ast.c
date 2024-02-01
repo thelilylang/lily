@@ -1313,6 +1313,12 @@ IMPL_FOR_DEBUG(to_string, CIDeclUnion, const CIDeclUnion *self)
 
 DESTRUCTOR(CIDeclUnion, const CIDeclUnion *self)
 {
+    if (self->generic_params) {
+        FREE_BUFFER_ITEMS(
+          self->generic_params->buffer, self->generic_params->len, CIDataType);
+        FREE(Vec, self->generic_params);
+    }
+
     if (self->fields) {
         FREE_BUFFER_ITEMS(
           self->fields->buffer, self->fields->len, CIDeclStructField);
