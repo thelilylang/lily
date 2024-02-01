@@ -132,7 +132,7 @@ parse_struct__CIParser(CIParser *self,
 
 /// @brief Parse union declaration.
 static CIDeclUnion
-parse_union__CIParser(CIParser *self, String *name);
+parse_union__CIParser(CIParser *self, String *name, Vec *generic_params);
 
 /// @brief Parse variable declaration.
 static CIDecl *
@@ -466,8 +466,14 @@ parse_data_type__CIParser(CIParser *self)
 
             switch (self->tokens_iters.current_token->kind) {
                 case CI_TOKEN_KIND_IDENTIFIER:
+                    if (storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
+                        goto parse_struct;
+                    }
+
+                    break;
                 case CI_TOKEN_KIND_LBRACE:
                 case CI_TOKEN_KIND_SEMICOLON: {
+                parse_struct : {
                     CIDecl *struct_decl = parse_struct__CIParser(
                       self, storage_class_flag, name, generic_params);
 
@@ -478,6 +484,7 @@ parse_data_type__CIParser(CIParser *self)
                     }
 
                     break;
+                }
                 }
                 default:
                     break;
@@ -876,6 +883,9 @@ parse_expr__CIParser(CIParser *self)
 
             return NULL;
         }
+        case CI_TOKEN_KIND_LPAREN: {
+            TODO("(");
+        }
         case CI_TOKEN_KIND_KEYWORD_SIZEOF: {
             CIExpr *sizeof_expr = parse_expr__CIParser(self);
 
@@ -1150,12 +1160,12 @@ parse_struct__CIParser(CIParser *self,
 }
 
 CIDeclUnion
-parse_union__CIParser(CIParser *self, String *name)
+parse_union__CIParser(CIParser *self, String *name, Vec *generic_params)
 {
     Vec *fields =
       parse_struct_fields__CIParser(self); // Vec<CIDeclStructField*>*
 
-    return NEW(CIDeclUnion, name, fields);
+    return NEW(CIDeclUnion, name, fields, generic_params);
 }
 
 CIDecl *
@@ -1204,11 +1214,26 @@ parse_decl__CIParser(CIParser *self, bool in_function_body)
     switch (self->tokens_iters.current_token->kind) {
         case CI_TOKEN_KIND_IDENTIFIER: {
             String *name = self->tokens_iters.current_token->identifier;
+            Vec *generic_params = NULL;
 
             next_token__CIParser(self);
 
             switch (self->tokens_iters.current_token->kind) {
+                case CI_TOKEN_KIND_LSHIFT:
+                    generic_params = parse_generic_params__CIParser(self);
+
+                    break;
+                default:
+                    break;
+            }
+
+            switch (self->tokens_iters.current_token->kind) {
                 case CI_TOKEN_KIND_EQ:
+                    if (generic_params) {
+                        FAILED("no generic params are expected in variable "
+                               "declaration");
+                    }
+
                     return parse_variable__CIParser(
                       self, storage_class_flag, data_type, name, false);
                 case CI_TOKEN_KIND_SEMICOLON:
