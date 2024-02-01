@@ -35,6 +35,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+struct CIParserContext
+{
+    const CIDecl *current_decl; // CIDecl*? (&)
+    const CIExpr *current_expr; // CIExpr*? (&)
+    const CIStmt *current_stmt; // CIStmt*? (&)
+};
+
+static inline CONSTRUCTOR(struct CIParserContext, CIParserContext);
+
+static void
+check__CIParserContext(const struct CIParserContext *self);
+
 static String *
 generate_name_error__CIParser();
 
@@ -175,6 +187,34 @@ static CIDataType *data_type_as_expression = NULL;
 
 static int storage_class_flag = CI_STORAGE_CLASS_NONE;
 
+static struct CIParserContext ctx;
+
+CONSTRUCTOR(struct CIParserContext, CIParserContext)
+{
+    return (struct CIParserContext){ .current_decl = NULL,
+                                     .current_expr = NULL,
+                                     .current_stmt = NULL };
+}
+
+void
+check__CIParserContext(const struct CIParserContext *self)
+{
+    ASSERT(self->current_decl);
+
+    if (self->current_stmt && self->current_expr) {
+        TODO("check stmt and expr");
+    } else if (self->current_expr) {
+        CIDataType *expected_data_type = get_expected_data_type__CIDecl(
+          self->current_decl); // CIDataType*? (&)
+
+        if (expected_data_type) {
+            TODO("get data type from expression");
+        }
+
+        TODO("check expr");
+    }
+}
+
 CONSTRUCTOR(CIParserMacro *, CIParserMacro, Vec *params)
 {
     CIParserMacro *self = lily_malloc(sizeof(CIParserMacro));
@@ -194,6 +234,8 @@ CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner)
     if (!names_error) {
         names_error = NEW(Vec);
     }
+
+    ctx = NEW(CIParserContext);
 
     return (CIParser){ .file = file,
                        .scanner = scanner,
@@ -884,8 +926,31 @@ parse_expr__CIParser(CIParser *self)
             return NULL;
         }
         case CI_TOKEN_KIND_LPAREN: {
-            TODO("(");
+            if (is_data_type__CIParser(self)) {
+                CIDataType *data_type = parse_data_type__CIParser(self);
+
+                expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
+
+                CIExpr *expr = parse_expr__CIParser(self);
+
+                if (!data_type || !expr) {
+                    if (data_type) {
+                        FREE(CIDataType, data_type);
+                    } else if (expr) {
+                        FREE(CIExpr, expr);
+                    }
+
+                    return NULL;
+                }
+
+                return NEW_VARIANT(
+                  CIExpr, cast, NEW(CIExprCast, data_type, expr));
+            }
+
+            TODO("parse grouping expression");
         }
+        case CI_TOKEN_KIND_LBRACE:
+            TODO("parse struct call");
         case CI_TOKEN_KIND_KEYWORD_SIZEOF: {
             CIExpr *sizeof_expr = parse_expr__CIParser(self);
 
