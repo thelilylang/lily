@@ -127,6 +127,27 @@ generate_variable_decl__CIGenerator(const CIDeclVariable *variable);
 static void
 generate_decl__CIGenerator(const CIDecl *decl);
 
+static void
+generate_decls__CIGenerator(const CIResultFile *file_result);
+
+static void
+generate_enum_prototype__CIGenerator(const CIDeclEnum *enum_);
+
+static void
+generate_struct_prototype__CIGenerator(const CIDeclStruct *struct_);
+
+static void
+generate_union_prototype__CIGenerator(const CIDeclUnion *union_);
+
+static void
+generate_function_prototype__CIGenerator(const CIDeclFunction *function);
+
+static void
+generate_decl_prototype__CIGenerator(const CIDecl *decl);
+
+static void
+generate_decls_prototype__CIGenerator(const CIResultFile *file_result);
+
 // NOTE: If the program is multi-threaded, you'll need to adapt these variables
 // to multi-threading.
 static String *current_result_content = NULL;
@@ -1035,6 +1056,110 @@ generate_decl__CIGenerator(const CIDecl *decl)
 }
 
 void
+generate_decls__CIGenerator(const CIResultFile *file_result)
+{
+#define DECL_MAPS_LEN 5
+    OrderedHashMap *decl_maps[DECL_MAPS_LEN] = { file_result->enums,
+                                                 file_result->structs,
+                                                 file_result->unions,
+                                                 file_result->variables,
+                                                 file_result->functions };
+
+    for (Usize i = 0; i < DECL_MAPS_LEN; ++i) {
+        OrderedHashMapIter iter_decls = NEW(OrderedHashMapIter, decl_maps[i]);
+        CIDecl *decl = NULL;
+
+        while ((decl = next__OrderedHashMapIter(&iter_decls))) {
+            generate_decl__CIGenerator(decl);
+        }
+    }
+}
+
+void
+generate_enum_prototype__CIGenerator(const CIDeclEnum *enum_)
+{
+    write_String__CIGenerator(format__String("enum {S}", enum_->name));
+}
+
+void
+generate_struct_prototype__CIGenerator(const CIDeclStruct *struct_)
+{
+    write_String__CIGenerator(format__String("struct {S}", struct_->name));
+}
+
+void
+generate_union_prototype__CIGenerator(const CIDeclUnion *union_)
+{
+    write_String__CIGenerator(format__String("union {S}", union_->name));
+}
+
+void
+generate_function_prototype__CIGenerator(const CIDeclFunction *function)
+{
+    generate_data_type__CIGenerator(function->return_data_type);
+    write_String__CIGenerator(format__String(" {S}", function->name));
+    generate_function_params__CIGenerator(function->params);
+}
+
+void
+generate_decl_prototype__CIGenerator(const CIDecl *decl)
+{
+    if (decl->storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
+        write_str__CIGenerator("typedef ");
+    }
+
+    switch (decl->kind) {
+        case CI_DECL_KIND_ENUM:
+            generate_enum_prototype__CIGenerator(&decl->enum_);
+
+            break;
+        case CI_DECL_KIND_STRUCT:
+            generate_struct_prototype__CIGenerator(&decl->struct_);
+
+            break;
+        case CI_DECL_KIND_UNION:
+            generate_union_prototype__CIGenerator(&decl->union_);
+
+            break;
+        case CI_DECL_KIND_FUNCTION:
+            generate_function_prototype__CIGenerator(&decl->function);
+
+            break;
+        default:
+            UNREACHABLE("this situation is impossible");
+    }
+
+    if (decl->storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
+        write_String__CIGenerator(format__String(" {S}", decl->typedef_name));
+    }
+
+    write_str__CIGenerator(";\n");
+}
+
+void
+generate_decls_prototype__CIGenerator(const CIResultFile *file_result)
+{
+#define DECL_PROTOTYPE_MAPS_LEN 4
+    OrderedHashMap *decl_maps[DECL_PROTOTYPE_MAPS_LEN] = {
+        file_result->enums,
+        file_result->structs,
+        file_result->unions,
+        file_result->functions
+    };
+
+    for (Usize i = 0; i < DECL_PROTOTYPE_MAPS_LEN; ++i) {
+        OrderedHashMapIter iter_decls = NEW(OrderedHashMapIter, decl_maps[i]);
+        CIDecl *decl = NULL;
+
+        while ((decl = next__OrderedHashMapIter(&iter_decls))) {
+            generate_decl_prototype__CIGenerator(decl);
+        }
+    }
+
+    write_str__CIGenerator("\n");
+}
+
+void
 run_file__CIGenerator(const CIResultFile *file_result)
 {
     current_result_content = NEW(String);
@@ -1044,13 +1169,9 @@ run_file__CIGenerator(const CIResultFile *file_result)
       "{s}/{Sr}", output_dir, get_dir__File(file_result->file_input.name));
     String *path_result =
       format__String("{S}/{S}", dir_result, file_result->filename_result);
-    OrderedHashMapIter iter_decls = NEW(OrderedHashMapIter, file_result->decls);
-    CIDecl *decl = NULL;
 
-    while ((decl = next__OrderedHashMapIter(&iter_decls))) {
-        generate_decl__CIGenerator(decl);
-    }
-
+    generate_decls_prototype__CIGenerator(file_result);
+    generate_decls__CIGenerator(file_result);
     create_recursive_dir__Dir(dir_result->buffer,
                               DIR_MODE_RWXU | DIR_MODE_RWXG | DIR_MODE_RWXO);
     write_file__File(path_result->buffer, current_result_content->buffer);
