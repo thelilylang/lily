@@ -645,14 +645,6 @@ clone__CIDataType(const CIDataType *self)
 }
 
 void
-serialize_vec__CIDataType(const Vec *data_types, String *buffer)
-{
-    for (Usize i = 0; i < data_types->len; ++i) {
-        serialize__CIDataType(get__Vec(data_types, i), buffer);
-    }
-}
-
-void
 serialize__CIDataType(const CIDataType *self, String *buffer)
 {
 #define SERIALIZE_NAME(name, name_len) hash_sip(name, name_len, SIP_K0, SIP_K1)
@@ -741,6 +733,86 @@ serialize__CIDataType(const CIDataType *self, String *buffer)
         case CI_DATA_TYPE_KIND_UNSIGNED_SHORT_INT:
         case CI_DATA_TYPE_KIND_VOID:
             break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+void
+serialize_vec__CIDataType(const Vec *data_types, String *buffer)
+{
+    for (Usize i = 0; i < data_types->len; ++i) {
+        serialize__CIDataType(get__Vec(data_types, i), buffer);
+    }
+}
+
+bool
+eq__CIDataType(const CIDataType *self, const CIDataType *other)
+{
+    if (self->kind != other->kind) {
+        return false;
+    }
+
+    switch (self->kind) {
+        case CI_DATA_TYPE_KIND_ARRAY:
+            if (self->array.kind != other->array.kind ||
+                !eq__CIDataType(self->array.data_type,
+                                other->array.data_type)) {
+                return false;
+            }
+
+            switch (self->array.kind) {
+                case CI_DATA_TYPE_ARRAY_KIND_SIZED:
+                    return self->array.size == other->array.size;
+                case CI_DATA_TYPE_ARRAY_KIND_NONE:
+                    return false;
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+        case CI_DATA_TYPE_KIND__ATOMIC:
+            return eq__CIDataType(self->_atomic, other->_atomic);
+        case CI_DATA_TYPE_KIND_ENUM:
+            return !strcmp(self->enum_->buffer, other->enum_->buffer);
+        case CI_DATA_TYPE_KIND_FUNCTION:
+            TODO("eq__CIDataType: function data_type");
+        case CI_DATA_TYPE_KIND_PRE_CONST:
+            return eq__CIDataType(self->pre_const, other->pre_const);
+        case CI_DATA_TYPE_KIND_POST_CONST:
+            return eq__CIDataType(self->post_const, other->post_const);
+        case CI_DATA_TYPE_KIND_PTR:
+            return eq__CIDataType(self->ptr, other->ptr);
+        case CI_DATA_TYPE_KIND_STRUCT:
+            TODO("eq__CIDataType: struct data type");
+        case CI_DATA_TYPE_KIND_TYPEDEF:
+            return !strcmp(self->typedef_->buffer, other->typedef_->buffer);
+        case CI_DATA_TYPE_KIND_UNION:
+            TODO("eq__CIDataType: union data type");
+        case CI_DATA_TYPE_KIND_BOOL:
+        case CI_DATA_TYPE_KIND_CHAR:
+        case CI_DATA_TYPE_KIND_DOUBLE:
+        case CI_DATA_TYPE_KIND_DOUBLE__COMPLEX:
+        case CI_DATA_TYPE_KIND_DOUBLE__IMAGINARY:
+        case CI_DATA_TYPE_KIND__DECIMAL32:
+        case CI_DATA_TYPE_KIND__DECIMAL64:
+        case CI_DATA_TYPE_KIND__DECIMAL128:
+        case CI_DATA_TYPE_KIND_FLOAT:
+        case CI_DATA_TYPE_KIND_FLOAT__COMPLEX:
+        case CI_DATA_TYPE_KIND_FLOAT__IMAGINARY:
+        case CI_DATA_TYPE_KIND_INT:
+        case CI_DATA_TYPE_KIND_LONG_DOUBLE:
+        case CI_DATA_TYPE_KIND_LONG_DOUBLE__COMPLEX:
+        case CI_DATA_TYPE_KIND_LONG_DOUBLE__IMAGINARY:
+        case CI_DATA_TYPE_KIND_LONG_INT:
+        case CI_DATA_TYPE_KIND_LONG_LONG_INT:
+        case CI_DATA_TYPE_KIND_SHORT_INT:
+        case CI_DATA_TYPE_KIND_SIGNED_CHAR:
+        case CI_DATA_TYPE_KIND_UNSIGNED_INT:
+        case CI_DATA_TYPE_KIND_UNSIGNED_CHAR:
+        case CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT:
+        case CI_DATA_TYPE_KIND_UNSIGNED_LONG_LONG_INT:
+        case CI_DATA_TYPE_KIND_UNSIGNED_SHORT_INT:
+        case CI_DATA_TYPE_KIND_VOID:
+            return true;
         default:
             UNREACHABLE("unknown variant");
     }
@@ -1477,6 +1549,25 @@ has_generic__CIDecl(const CIDecl *self)
             return false;
         case CI_DECL_KIND_STRUCT:
             return self->struct_.generic_params;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+CIDataType *
+get_expected_data_type__CIDecl(const CIDecl *self)
+{
+    switch (self->kind) {
+        case CI_DECL_KIND_ENUM:
+            TODO("add a data type for type of variant (int, short int, ...) "
+                 "(all integers data type)");
+        case CI_DECL_KIND_FUNCTION:
+            return self->function.return_data_type;
+        case CI_DECL_KIND_STRUCT:
+        case CI_DECL_KIND_UNION:
+            return NULL;
+        case CI_DECL_KIND_VARIABLE:
+            return self->variable.data_type;
         default:
             UNREACHABLE("unknown variant");
     }

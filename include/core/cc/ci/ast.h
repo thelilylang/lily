@@ -544,6 +544,13 @@ serialize_vec__CIDataType(const Vec *data_types, String *buffer);
 
 /**
  *
+ * @brief Check if the both data types are equal.
+ */
+bool
+eq__CIDataType(const CIDataType *self, const CIDataType *other);
+
+/**
+ *
  * @brief Convert CIDataType in String.
  * @note This function is only used to debug.
  */
@@ -1019,6 +1026,14 @@ get_name__CIDecl(const CIDecl *self);
  */
 bool
 has_generic__CIDecl(const CIDecl *self);
+
+/**
+ *
+ * @brief Get expected data type from declaration.
+ * @return CIDataType*? (&)
+ */
+CIDataType *
+get_expected_data_type__CIDecl(const CIDecl *self);
 
 /**
  *
