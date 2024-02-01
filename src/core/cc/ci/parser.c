@@ -363,7 +363,7 @@ parse_data_type__CIParser(CIParser *self)
                     CIDecl *enum_decl =
                       parse_enum__CIParser(self, storage_class_flag, name);
 
-                    if (add_decl__CIResultFile(self->file, enum_decl)) {
+                    if (add_enum__CIResultFile(self->file, enum_decl)) {
                         FREE(CIDecl, enum_decl);
 
                         FAILED("duplicate enum declaration");
@@ -471,8 +471,10 @@ parse_data_type__CIParser(CIParser *self)
                     CIDecl *struct_decl = parse_struct__CIParser(
                       self, storage_class_flag, name, generic_params);
 
-                    if (add_decl__CIResultFile(self->file, struct_decl)) {
+                    if (add_struct__CIResultFile(self->file, struct_decl)) {
                         FREE(CIDecl, struct_decl);
+
+                        FAILED("struct name is already defined");
                     }
 
                     break;
@@ -1298,7 +1300,24 @@ run__CIParser(CIParser *self)
         CIDecl *decl = parse_decl__CIParser(self, false);
 
         if (decl) {
-            add_decl__CIResultFile(self->file, decl);
+            switch (decl->kind) {
+                case CI_DECL_KIND_FUNCTION:
+                    if (add_function__CIResultFile(self->file, decl)) {
+                        FREE(CIDecl, decl);
+                        FAILED("function name is already defined");
+                    }
+
+                    break;
+                case CI_DECL_KIND_VARIABLE:
+                    if (add_variable__CIResultFile(self->file, decl)) {
+                        FREE(CIDecl, decl);
+                        FAILED("variable name is already defined");
+                    }
+
+                    break;
+                default:
+                    UNREACHABLE("this situation is impossible");
+            }
         }
     }
 
