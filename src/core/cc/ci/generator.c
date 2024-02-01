@@ -1102,36 +1102,39 @@ generate_function_prototype__CIGenerator(const CIDeclFunction *function)
 void
 generate_decl_prototype__CIGenerator(const CIDecl *decl)
 {
-    if (decl->storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
-        write_str__CIGenerator("typedef ");
+    if (has_generic__CIDecl(decl)) {
+        if (decl->storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
+            write_str__CIGenerator("typedef ");
+        }
+
+        switch (decl->kind) {
+            case CI_DECL_KIND_ENUM:
+                generate_enum_prototype__CIGenerator(&decl->enum_);
+
+                break;
+            case CI_DECL_KIND_STRUCT:
+                generate_struct_prototype__CIGenerator(&decl->struct_);
+
+                break;
+            case CI_DECL_KIND_UNION:
+                generate_union_prototype__CIGenerator(&decl->union_);
+
+                break;
+            case CI_DECL_KIND_FUNCTION:
+                generate_function_prototype__CIGenerator(&decl->function);
+
+                break;
+            default:
+                UNREACHABLE("this situation is impossible");
+        }
+
+        if (decl->storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
+            write_String__CIGenerator(
+              format__String(" {S}", decl->typedef_name));
+        }
+
+        write_str__CIGenerator(";\n");
     }
-
-    switch (decl->kind) {
-        case CI_DECL_KIND_ENUM:
-            generate_enum_prototype__CIGenerator(&decl->enum_);
-
-            break;
-        case CI_DECL_KIND_STRUCT:
-            generate_struct_prototype__CIGenerator(&decl->struct_);
-
-            break;
-        case CI_DECL_KIND_UNION:
-            generate_union_prototype__CIGenerator(&decl->union_);
-
-            break;
-        case CI_DECL_KIND_FUNCTION:
-            generate_function_prototype__CIGenerator(&decl->function);
-
-            break;
-        default:
-            UNREACHABLE("this situation is impossible");
-    }
-
-    if (decl->storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
-        write_String__CIGenerator(format__String(" {S}", decl->typedef_name));
-    }
-
-    write_str__CIGenerator(";\n");
 }
 
 void
