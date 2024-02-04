@@ -818,6 +818,46 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
     }
 }
 
+bool
+is_integer__CIDataType(const CIDataType *self)
+{
+    switch (self->kind) {
+        case CI_DATA_TYPE_KIND_BOOL:
+        case CI_DATA_TYPE_KIND_CHAR:
+        case CI_DATA_TYPE_KIND_INT:
+        case CI_DATA_TYPE_KIND_LONG_INT:
+        case CI_DATA_TYPE_KIND_LONG_LONG_INT:
+        case CI_DATA_TYPE_KIND_SHORT_INT:
+        case CI_DATA_TYPE_KIND_SIGNED_CHAR:
+        case CI_DATA_TYPE_KIND_UNSIGNED_INT:
+        case CI_DATA_TYPE_KIND_UNSIGNED_CHAR:
+        case CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT:
+        case CI_DATA_TYPE_KIND_UNSIGNED_LONG_LONG_INT:
+        case CI_DATA_TYPE_KIND_UNSIGNED_SHORT_INT:
+            return true;
+        default:
+            return false;
+    }
+}
+
+CIDataType *
+get_ptr__CIDataType(const CIDataType *self)
+{
+    switch (self->kind) {
+        case CI_DATA_TYPE_KIND_PTR:
+            switch (self->ptr->kind) {
+                case CI_DATA_TYPE_KIND_POST_CONST:
+                    return self->ptr->post_const;
+                default:
+                    return self->ptr;
+            }
+        case CI_DATA_TYPE_KIND_PRE_CONST:
+            return get_ptr__CIDataType(self->pre_const);
+        default:
+            return NULL;
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIDataType, const CIDataType *self)
@@ -2038,6 +2078,161 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, unary, CIExprUnary unary)
     self->unary = unary;
 
     return self;
+}
+
+CIDataType *
+get_data_type__CIExpr(const CIExpr *self)
+{
+    switch (self->kind) {
+        case CI_EXPR_KIND_ALIGNOF:
+            TODO("alignof: implement size_t");
+        case CI_EXPR_KIND_BINARY:
+            switch (self->binary.kind) {
+                case CI_EXPR_BINARY_KIND_ASSIGN:
+                case CI_EXPR_BINARY_KIND_ASSIGN_ADD:
+                case CI_EXPR_BINARY_KIND_ASSIGN_SUB:
+                case CI_EXPR_BINARY_KIND_ASSIGN_MUL:
+                case CI_EXPR_BINARY_KIND_ASSIGN_DIV:
+                case CI_EXPR_BINARY_KIND_ASSIGN_MOD:
+                case CI_EXPR_BINARY_KIND_ASSIGN_BIT_AND:
+                case CI_EXPR_BINARY_KIND_ASSIGN_BIT_OR:
+                case CI_EXPR_BINARY_KIND_ASSIGN_XOR:
+                case CI_EXPR_BINARY_KIND_ASSIGN_BIT_LSHIFT:
+                case CI_EXPR_BINARY_KIND_ASSIGN_BIT_RSHIFT:
+                case CI_EXPR_BINARY_KIND_ADD:
+                case CI_EXPR_BINARY_KIND_SUB:
+                case CI_EXPR_BINARY_KIND_MUL:
+                case CI_EXPR_BINARY_KIND_DIV:
+                case CI_EXPR_BINARY_KIND_MOD:
+                case CI_EXPR_BINARY_KIND_BIT_AND:
+                case CI_EXPR_BINARY_KIND_BIT_OR:
+                case CI_EXPR_BINARY_KIND_BIT_XOR:
+                case CI_EXPR_BINARY_KIND_BIT_LSHIFT:
+                case CI_EXPR_BINARY_KIND_BIT_RSHIFT: {
+                    CIDataType *left_data_type =
+                      get_data_type__CIExpr(self->binary.left);
+                    CIDataType *right_data_type =
+                      get_data_type__CIExpr(self->binary.right);
+
+                    if (!eq__CIDataType(left_data_type, right_data_type)) {
+                        FREE(CIDataType, left_data_type);
+                        FREE(CIDataType, right_data_type);
+
+                        return NULL;
+                    }
+
+                    FREE(CIDataType, right_data_type);
+
+                    return left_data_type;
+                }
+                case CI_EXPR_BINARY_KIND_AND:
+                case CI_EXPR_BINARY_KIND_OR:
+                case CI_EXPR_BINARY_KIND_EQ:
+                case CI_EXPR_BINARY_KIND_NE:
+                case CI_EXPR_BINARY_KIND_LESS:
+                case CI_EXPR_BINARY_KIND_GREATER:
+                case CI_EXPR_BINARY_KIND_LESS_EQ:
+                case CI_EXPR_BINARY_KIND_GREATER_EQ: {
+                    // TODO: Check the left and right expr's data type
+                    return NEW(CIDataType, CI_DATA_TYPE_KIND_BOOL);
+                }
+                case CI_EXPR_BINARY_KIND_DOT:
+                case CI_EXPR_BINARY_KIND_ARROW:
+                    TODO("get data type of right expression of . and ->");
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+        case CI_EXPR_KIND_CAST:
+            return clone__CIDataType(self->cast.data_type);
+        case CI_EXPR_KIND_IDENTIFIER:
+            TODO("search identifier");
+        case CI_EXPR_KIND_LITERAL:
+            switch (self->literal.kind) {
+                case CI_EXPR_LITERAL_KIND_BOOL:
+                    return NEW(CIDataType, CI_DATA_TYPE_KIND_BOOL);
+                case CI_EXPR_LITERAL_KIND_CHAR:
+                    return NEW(CIDataType, CI_DATA_TYPE_KIND_CHAR);
+                case CI_EXPR_LITERAL_KIND_FLOAT:
+                    return NEW(CIDataType, CI_DATA_TYPE_KIND_DOUBLE);
+                case CI_EXPR_LITERAL_KIND_SIGNED_INT:
+                    return NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
+                case CI_EXPR_LITERAL_KIND_STRING:
+                    return NEW_VARIANT(
+                      CIDataType, ptr, NEW(CIDataType, CI_DATA_TYPE_KIND_CHAR));
+                case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:
+                    return NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_INT);
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+        case CI_EXPR_KIND_SIZEOF:
+            TODO("sizeof: implement size_t");
+        case CI_EXPR_KIND_TERNARY: {
+            CIDataType *if_ = get_data_type__CIExpr(self->ternary.if_);
+            CIDataType *else_ = get_data_type__CIExpr(self->ternary.else_);
+
+            if (!eq__CIDataType(if_, else_)) {
+                FREE(CIDataType, if_);
+                FREE(CIDataType, else_);
+
+                return NULL;
+            }
+
+            FREE(CIDataType, else_);
+
+            return if_;
+        }
+        case CI_EXPR_KIND_UNARY:
+            switch (self->unary.kind) {
+                case CI_EXPR_UNARY_KIND_PRE_INCREMENT:
+                case CI_EXPR_UNARY_KIND_PRE_DECREMENT:
+                case CI_EXPR_UNARY_KIND_POST_INCREMENT:
+                case CI_EXPR_UNARY_KIND_POST_DECREMENT:
+                case CI_EXPR_UNARY_KIND_POSITIVE:
+                case CI_EXPR_UNARY_KIND_NEGATIVE:
+                case CI_EXPR_UNARY_KIND_BIT_NOT:
+                case CI_EXPR_UNARY_KIND_NOT: {
+                    CIDataType *right = get_data_type__CIExpr(self->unary.expr);
+
+                    if (right) {
+                        if (is_integer__CIDataType(right)) {
+                            return right;
+                        }
+
+                        FREE(CIDataType, right);
+                    }
+
+                    return NULL;
+                }
+                case CI_EXPR_UNARY_KIND_DEREFERENCE: {
+                    CIDataType *right = get_data_type__CIExpr(self->unary.expr);
+
+                    if (right) {
+                        return get_ptr__CIDataType(right);
+                    }
+
+                    return NULL;
+                }
+                case CI_EXPR_UNARY_KIND_REF: {
+                    CIDataType *right = get_data_type__CIExpr(self->unary.expr);
+
+                    if (right) {
+                        switch (right->kind) {
+                            case CI_DATA_TYPE_KIND_PRE_CONST:
+                                return NEW_VARIANT(
+                                  CIDataType,
+                                  pre_const,
+                                  NEW_VARIANT(CIDataType, ptr, right));
+                            default:
+                                return NEW_VARIANT(CIDataType, ptr, right);
+                        }
+                    }
+
+                    return NULL;
+                }
+            }
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }
 
 #ifdef ENV_DEBUG

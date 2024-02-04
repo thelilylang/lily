@@ -551,6 +551,20 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other);
 
 /**
  *
+ * @brief Check if the data type is an integer (signed or unsigned).
+ */
+bool
+is_integer__CIDataType(const CIDataType *self);
+
+/**
+ *
+ * @brief Get pointer data type.
+ */
+CIDataType *
+get_ptr__CIDataType(const CIDataType *self);
+
+/**
+ *
  * @brief Convert CIDataType in String.
  * @note This function is only used to debug.
  */
@@ -1458,6 +1472,16 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, ternary, CIExprTernary ternary);
  * @brief Construct CIExpr type (CI_EXPR_KIND_UNARY).
  */
 VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, unary, CIExprUnary unary);
+
+/**
+ *
+ * @brief Get data type from expression.
+ * @note If it is not possible to determine the type of the expression, the
+ * function returns NULL.
+ * @return CIDataType*?
+ */
+CIDataType *
+get_data_type__CIExpr(const CIExpr *self);
 
 /**
  *
