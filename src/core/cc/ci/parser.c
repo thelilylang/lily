@@ -44,9 +44,6 @@ struct CIParserContext
 
 static inline CONSTRUCTOR(struct CIParserContext, CIParserContext);
 
-static void
-check__CIParserContext(const struct CIParserContext *self);
-
 static String *
 generate_name_error__CIParser();
 
@@ -113,6 +110,12 @@ parse_literal_expr__CIParser(CIParser *self);
 /// @return CIExpr*?
 static CIExpr *
 parse_expr__CIParser(CIParser *self);
+
+static CIDeclFunctionItem *
+parse_do_while_stmt__CIParser(CIParser *self);
+
+static CIDeclFunctionItem *
+parse_for_stmt__CIParser(CIParser *self);
 
 /// @brief Parse statement.
 /// @return CIDeclFunctionItem*?
@@ -194,25 +197,6 @@ CONSTRUCTOR(struct CIParserContext, CIParserContext)
     return (struct CIParserContext){ .current_decl = NULL,
                                      .current_expr = NULL,
                                      .current_stmt = NULL };
-}
-
-void
-check__CIParserContext(const struct CIParserContext *self)
-{
-    ASSERT(self->current_decl);
-
-    if (self->current_stmt && self->current_expr) {
-        TODO("check stmt and expr");
-    } else if (self->current_expr) {
-        CIDataType *expected_data_type = get_expected_data_type__CIDecl(
-          self->current_decl); // CIDataType*? (&)
-
-        if (expected_data_type) {
-            TODO("get data type from expression");
-        }
-
-        TODO("check expr");
-    }
 }
 
 CONSTRUCTOR(CIParserMacro *, CIParserMacro, Vec *params)
@@ -1000,17 +984,116 @@ parse_expr__CIParser(CIParser *self)
 }
 
 CIDeclFunctionItem *
+parse_do_while_stmt__CIParser(CIParser *self)
+{
+    expect__CIParser(self, CI_TOKEN_KIND_LBRACE, true);
+
+    Vec *body = parse_function_body__CIParser(self);
+
+    expect__CIParser(self, CI_TOKEN_KIND_KEYWORD_WHILE, true);
+
+    CIExpr *cond = parse_expr__CIParser(self);
+
+    if (!cond) {
+        return NULL;
+    }
+
+    expect_with_list__CIParser(
+      self, 2, CI_TOKEN_KIND_RPAREN, CI_TOKEN_KIND_SEMICOLON);
+
+    return NEW_VARIANT(
+      CIDeclFunctionItem,
+      stmt,
+      NEW_VARIANT(CIStmt, do_while, NEW(CIStmtDoWhile, body, cond)));
+}
+
+CIDeclFunctionItem *
+parse_for_stmt__CIParser(CIParser *self)
+{
+    CIDeclFunctionItem *init_clause = NULL;
+    CIExpr *expr1 = NULL;
+    Vec *exprs2 = NULL;
+
+    expect__CIParser(self, CI_TOKEN_KIND_LPAREN, true);
+
+    switch (self->tokens_iters.current_token->kind) {
+        case CI_TOKEN_KIND_SEMICOLON:
+            next_token__CIParser(self);
+            break;
+        default: {
+            CIDecl *decl = parse_decl__CIParser(self, true); // => variable
+
+            if (!decl) {
+                FAILED("expected variable declaration");
+            }
+
+            init_clause = NEW_VARIANT(CIDeclFunctionItem, decl, decl);
+
+            break;
+        }
+    }
+
+    switch (self->tokens_iters.current_token->kind) {
+        case CI_TOKEN_KIND_SEMICOLON:
+            next_token__CIParser(self);
+            break;
+        default:
+            expr1 = parse_expr__CIParser(self);
+
+            if (!expr1) {
+                FAILED("expected condition in for loop");
+            }
+    }
+
+    switch (self->tokens_iters.current_token->kind) {
+        case CI_TOKEN_KIND_RPAREN:
+            next_token__CIParser(self);
+            break;
+        default:
+            exprs2 = NEW(Vec);
+
+            do {
+                CIExpr *expr = parse_expr__CIParser(self);
+
+                if (expr) {
+                    push__Vec(exprs2, expr);
+                }
+
+                if (self->tokens_iters.current_token->kind !=
+                    CI_TOKEN_KIND_RPAREN) {
+                    expect__CIParser(self, CI_TOKEN_KIND_COMMA, true);
+                }
+            } while (self->tokens_iters.current_token->kind !=
+                     CI_TOKEN_KIND_RPAREN);
+    }
+
+    return NEW_VARIANT(CIDeclFunctionItem, stmt, NEW_VARIANT(CIStmt, for, NEW(CIStmtFor, NULL, init_clause, expr1, exprs2)));
+}
+
+CIDeclFunctionItem *
 parse_stmt__CIParser(CIParser *self)
 {
     next_token__CIParser(self);
 
     switch (self->tokens_iters.previous_token->kind) {
         case CI_TOKEN_KIND_KEYWORD_DO:
-            TODO("do statement");
+            return parse_do_while_stmt__CIParser(self);
         case CI_TOKEN_KIND_KEYWORD_FOR:
-            TODO("for statement");
-        case CI_TOKEN_KIND_KEYWORD_GOTO:
-            TODO("goto statement");
+            return parse_for_stmt__CIParser(self);
+        case CI_TOKEN_KIND_KEYWORD_GOTO: {
+            String *label_identifier = NULL;
+
+            if (expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, true)) {
+                label_identifier =
+                  self->tokens_iters.previous_token->identifier;
+            } else {
+                label_identifier = generate_name_error__CIParser();
+            }
+
+            return NEW_VARIANT(CIDeclFunctionItem,
+                               stmt,
+                               NEW_VARIANT(CIStmt, goto, label_identifier));
+        }
         case CI_TOKEN_KIND_KEYWORD_IF:
             TODO("if statement");
         case CI_TOKEN_KIND_KEYWORD_RETURN: {
