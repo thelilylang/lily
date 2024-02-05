@@ -1105,7 +1105,7 @@ generate_function_prototype__CIGenerator(const CIDeclFunction *function)
 void
 generate_decl_prototype__CIGenerator(const CIDecl *decl)
 {
-    if (has_generic__CIDecl(decl)) {
+    if (!has_generic__CIDecl(decl)) {
         if (decl->storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
             write_str__CIGenerator("typedef ");
         }
