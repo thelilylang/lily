@@ -780,7 +780,7 @@ generate_function_do_while_stmt__CIGenerator(const CIStmtDoWhile *do_while)
 void
 generate_function_if_stmt_branch__CIGenerator(const CIStmtIfBranch *if_branch)
 {
-    write_str__CIGenerator("(");
+    write_str__CIGenerator(" (");
     generate_function_expr__CIGenerator(if_branch->cond);
     write_str__CIGenerator(")");
     generate_function_body__CIGenerator(if_branch->body);
@@ -794,6 +794,7 @@ generate_function_if_stmt__CIGenerator(const CIStmtIf *if_)
 
     if (if_->else_ifs) {
         for (Usize i = 0; i < if_->else_ifs->len; ++i) {
+            write_tab__CIGenerator();
             write_str__CIGenerator("else if");
             generate_function_if_stmt_branch__CIGenerator(
               get__Vec(if_->else_ifs, i));
@@ -801,6 +802,7 @@ generate_function_if_stmt__CIGenerator(const CIStmtIf *if_)
     }
 
     if (if_->else_) {
+        write_tab__CIGenerator();
         write_str__CIGenerator("else");
         generate_function_body__CIGenerator(if_->else_);
     }
@@ -955,6 +957,7 @@ generate_function_body__CIGenerator(const Vec *body)
     }
 
     dec_tab_count__CIGenerator();
+    write_tab__CIGenerator();
     write_str__CIGenerator("}\n");
 }
 
@@ -1012,7 +1015,7 @@ generate_variable_decl__CIGenerator(const CIDeclVariable *variable)
         generate_function_expr__CIGenerator(variable->expr);
     }
 
-    write_str__CIGenerator(";\n\n");
+    write_str__CIGenerator(";\n");
 }
 
 void
@@ -1046,9 +1049,9 @@ generate_decl__CIGenerator(const CIDecl *decl)
             ASSERT(decl->typedef_name);
 
             write_String__CIGenerator(
-              format__String("{S};\n\n", get_typedef_name__CIDecl(decl)));
+              format__String("{S};\n", get_typedef_name__CIDecl(decl)));
         } else {
-            write_str__CIGenerator(";\n\n");
+            write_str__CIGenerator(";\n");
         }
     }
 }
