@@ -1293,6 +1293,7 @@ parse_if_branch__CIParser(CIParser *self)
 
     switch (self->tokens_iters.current_token->kind) {
         case CI_TOKEN_KIND_LBRACE:
+            next_token__CIParser(self);
             body = parse_function_body__CIParser(self);
 
             break;
@@ -1321,23 +1322,19 @@ parse_if_stmt__CIParser(CIParser *self)
         return NULL;
     }
 
-    for (;;) {
-        CIToken *peeked = peek_token__CIParser(self, 1);
+    if (self->tokens_iters.current_token->kind ==
+        CI_TOKEN_KIND_KEYWORD_ELSE_IF) {
+        else_ifs = NEW(Vec);
+    }
 
-        if (self->tokens_iters.current_token->kind ==
-              CI_TOKEN_KIND_KEYWORD_ELSE &&
-            peeked && peeked->kind == CI_TOKEN_KIND_KEYWORD_IF) {
-            if (!else_ifs) {
-                else_ifs = NEW(Vec);
-            }
+    for (; self->tokens_iters.current_token->kind ==
+           CI_TOKEN_KIND_KEYWORD_ELSE_IF;) {
+        next_token__CIParser(self);
 
-            CIStmtIfBranch *else_if = parse_if_branch__CIParser(self);
+        CIStmtIfBranch *else_if = parse_if_branch__CIParser(self);
 
-            if (else_if) {
-                push__Vec(else_ifs, else_if);
-            }
-        } else {
-            break;
+        if (else_if) {
+            push__Vec(else_ifs, else_if);
         }
     }
 
