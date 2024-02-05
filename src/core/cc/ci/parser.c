@@ -106,6 +106,14 @@ parse_function_call__CIParser(CIParser *self, String *identifier);
 static CIExpr *
 parse_literal_expr__CIParser(CIParser *self);
 
+/// @brief Parse primary expression.
+/// @return CIExpr*?
+static CIExpr *
+parse_primary_expr__CIParser(CIParser *self);
+
+static CIExpr *
+parse_binary_expr__CIParser(CIParser *self, CIExpr *expr);
+
 /// @brief Parse expression.
 /// @return CIExpr*?
 static CIExpr *
@@ -896,7 +904,7 @@ parse_literal_expr__CIParser(CIParser *self)
 }
 
 CIExpr *
-parse_expr__CIParser(CIParser *self)
+parse_primary_expr__CIParser(CIParser *self)
 {
     if (data_type_as_expression) {
         CIDataType *data_type = data_type_as_expression;
@@ -989,6 +997,160 @@ parse_expr__CIParser(CIParser *self)
             return parse_literal_expr__CIParser(self);
         default:
             FAILED("unexpected token");
+    }
+}
+
+CIExpr *
+parse_binary_expr__CIParser(CIParser *self, CIExpr *expr)
+{
+    Vec *stack = NEW(Vec); // Vec<CIExpr* | enum CIExprBinaryKind*>*
+    Usize last_precedence = to_precedence__CIExpr(expr);
+
+    push__Vec(stack, expr);
+
+    while (
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_EQ_EQ ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_PLUS_EQ ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_MINUS_EQ ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_STAR_EQ ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_SLASH_EQ ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_PERCENTAGE_EQ ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_AMPERSAND_EQ ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_BAR_EQ ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_BAR_EQ ||
+      self->tokens_iters.current_token->kind ==
+        CI_TOKEN_KIND_LSHIFT_LSHIFT_EQ ||
+      self->tokens_iters.current_token->kind ==
+        CI_TOKEN_KIND_RSHIFT_RSHIFT_EQ ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_PLUS ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_MINUS ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_STAR ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_SLASH ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_PERCENTAGE ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_AMPERSAND ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_BAR ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_HAT ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_LSHIFT_LSHIFT ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_RSHIFT_RSHIFT ||
+      self->tokens_iters.current_token->kind ==
+        CI_TOKEN_KIND_AMPERSAND_AMPERSAND ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_BAR_BAR ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_EQ_EQ ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_BANG_EQ ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_LSHIFT ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_RSHIFT ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_LSHIFT_EQ ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_RSHIFT_EQ ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_DOT ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_ARROW) {
+        enum CIExprBinaryKind op =
+          from_token__CIExprBinaryKind(self->tokens_iters.current_token);
+        Usize precedence = to_precedence__CIExprBinaryKind(op);
+
+        next_token__CIParser(self);
+
+        CIExpr *right = parse_primary_expr__CIParser(self);
+
+        if (!right) {
+            for (Usize i = 0; i < stack->len; i += 2) {
+                FREE(CIExpr, get__Vec(stack, i));
+            }
+
+            FREE(Vec, stack);
+
+            return NULL;
+        }
+
+        while (precedence <= last_precedence && stack->len > 1) {
+            CIExpr *top_right = pop__Vec(stack);
+            enum CIExprBinaryKind top_op =
+              (enum CIExprBinaryKind)(Uptr)pop__Vec(stack);
+
+            last_precedence = to_precedence__CIExprBinaryKind(top_op);
+
+            if (last_precedence < precedence) {
+                push__Vec(stack, (int *)top_op);
+                push__Vec(stack, top_right);
+
+                break;
+            }
+
+            CIExpr *top_left = pop__Vec(stack);
+
+            push__Vec(
+              stack,
+              NEW_VARIANT(CIExpr,
+                          binary,
+                          NEW(CIExprBinary, top_op, top_left, top_right)));
+        }
+
+        push__Vec(stack, (int *)op);
+        push__Vec(stack, right);
+
+        last_precedence = precedence;
+    }
+
+    while (stack->len > 1) {
+        CIExpr *rhs = pop__Vec(stack);
+        enum CIExprBinaryKind op = (enum CIExprBinaryKind)(Uptr)pop__Vec(stack);
+        CIExpr *lhs = pop__Vec(stack);
+
+        push__Vec(stack,
+                  NEW_VARIANT(CIExpr, binary, NEW(CIExprBinary, op, lhs, rhs)));
+    }
+
+    CIExpr *res = pop__Vec(stack);
+
+    FREE(Vec, stack);
+
+    return res;
+}
+
+CIExpr *
+parse_expr__CIParser(CIParser *self)
+{
+    CIExpr *expr = parse_primary_expr__CIParser(self);
+
+    if (!expr) {
+        return NULL;
+    }
+
+    // Parse binary expression
+    switch (self->tokens_iters.current_token->kind) {
+        case CI_TOKEN_KIND_EQ:
+        case CI_TOKEN_KIND_PLUS_EQ:
+        case CI_TOKEN_KIND_MINUS_EQ:
+        case CI_TOKEN_KIND_STAR_EQ:
+        case CI_TOKEN_KIND_SLASH_EQ:
+        case CI_TOKEN_KIND_PERCENTAGE_EQ:
+        case CI_TOKEN_KIND_AMPERSAND_EQ:
+        case CI_TOKEN_KIND_BAR_EQ:
+        case CI_TOKEN_KIND_HAT_EQ:
+        case CI_TOKEN_KIND_LSHIFT_LSHIFT_EQ:
+        case CI_TOKEN_KIND_RSHIFT_RSHIFT_EQ:
+        case CI_TOKEN_KIND_PLUS:
+        case CI_TOKEN_KIND_MINUS:
+        case CI_TOKEN_KIND_STAR:
+        case CI_TOKEN_KIND_SLASH:
+        case CI_TOKEN_KIND_PERCENTAGE:
+        case CI_TOKEN_KIND_AMPERSAND:
+        case CI_TOKEN_KIND_BAR:
+        case CI_TOKEN_KIND_HAT:
+        case CI_TOKEN_KIND_LSHIFT_LSHIFT:
+        case CI_TOKEN_KIND_RSHIFT_RSHIFT:
+        case CI_TOKEN_KIND_AMPERSAND_AMPERSAND:
+        case CI_TOKEN_KIND_BAR_BAR:
+        case CI_TOKEN_KIND_EQ_EQ:
+        case CI_TOKEN_KIND_BANG_EQ:
+        case CI_TOKEN_KIND_LSHIFT:
+        case CI_TOKEN_KIND_RSHIFT:
+        case CI_TOKEN_KIND_LSHIFT_EQ:
+        case CI_TOKEN_KIND_RSHIFT_EQ:
+        case CI_TOKEN_KIND_DOT:
+        case CI_TOKEN_KIND_ARROW:
+            return parse_binary_expr__CIParser(self, expr);
+        default:
+            return expr;
     }
 }
 
