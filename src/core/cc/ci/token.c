@@ -636,6 +636,8 @@ to_string__CIToken(CIToken *self)
             return from__String("double _Imaginary");
         case CI_TOKEN_KIND_KEYWORD_ELSE:
             return from__String("else");
+        case CI_TOKEN_KIND_KEYWORD_ELSE_IF:
+            return from__String("else if");
         case CI_TOKEN_KIND_KEYWORD_ENUM:
             return from__String("enum");
         case CI_TOKEN_KIND_KEYWORD_EXTERN:
@@ -996,6 +998,8 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_KEYWORD_DOUBLE__IMAGINARY";
         case CI_TOKEN_KIND_KEYWORD_ELSE:
             return "CI_TOKEN_KIND_KEYWORD_ELSE";
+        case CI_TOKEN_KIND_KEYWORD_ELSE_IF:
+            return "CI_TOKEN_KIND_KEYWORD_ELSE_IF";
         case CI_TOKEN_KIND_KEYWORD_ENUM:
             return "CI_TOKEN_KIND_KEYWORD_ENUM";
         case CI_TOKEN_KIND_KEYWORD_EXTERN:
