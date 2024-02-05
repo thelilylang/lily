@@ -446,6 +446,8 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                                   .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_ELSE] = { .since = CI_STANDARD_NONE,
                                      .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD_ELSE_IF] = { .since = CI_STANDARD_NONE,
+                                        .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_ENUM] = { .since = CI_STANDARD_NONE,
                                      .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_EXTERN] = { .since = CI_STANDARD_NONE,
@@ -1224,6 +1226,7 @@ can_run_keyword_part2__CIScanner(enum CITokenKind part1)
 {
     switch (part1) {
         case CI_TOKEN_KIND_KEYWORD_DOUBLE:
+        case CI_TOKEN_KIND_KEYWORD_ELSE:
         case CI_TOKEN_KIND_KEYWORD_FLOAT:
         case CI_TOKEN_KIND_KEYWORD_SIGNED:
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED:
@@ -1357,6 +1360,22 @@ get_keyword_part2__CIScanner(CIScanner *self, struct CITokenKindWithID *part1)
                         default:
                             FAILED("error, expected _Complex or _Imaginary "
                                    "after double");
+                    }
+
+                    break;
+                case CI_TOKEN_KIND_KEYWORD_ELSE:
+                    switch (unmerged_kind) {
+                        case CI_TOKEN_KIND_KEYWORD_IF:
+                            merged_kind = CI_TOKEN_KIND_KEYWORD_ELSE_IF;
+                            break;
+                        default:
+                            return (struct CITokenKindWithID){
+                                .kind = unmerged_kind,
+                                .is_merged = false,
+                                .location =
+                                  clone__Location(&self->base.location),
+                                .id = id
+                            };
                     }
 
                     break;
