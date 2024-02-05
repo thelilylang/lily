@@ -31,6 +31,9 @@
 #include <base/types.h>
 #include <base/vec.h>
 
+#define MAX_CI_EXPR_PRECEDENCE 100
+
+typedef struct CIToken CIToken;
 typedef struct CIExpr CIExpr;
 typedef struct CIDataType CIDataType;
 typedef struct CIDeclFunctionItem CIDeclFunctionItem;
@@ -1110,6 +1113,20 @@ char *
 IMPL_FOR_DEBUG(to_string, CIExprBinaryKind, enum CIExprBinaryKind self);
 #endif
 
+/**
+ *
+ * @brief Get precedence from binary.
+ */
+Uint8
+to_precedence__CIExprBinaryKind(enum CIExprBinaryKind kind);
+
+/**
+ *
+ * @brief Convert token to binary.
+ */
+enum CIExprBinaryKind
+from_token__CIExprBinaryKind(const CIToken *token);
+
 typedef struct CIExprBinary
 {
     enum CIExprBinaryKind kind;
@@ -1277,6 +1294,13 @@ enum CIExprUnaryKind
 char *
 IMPL_FOR_DEBUG(to_string, CIExprUnaryKind, enum CIExprUnaryKind self);
 #endif
+
+/**
+ *
+ * @brief Get precedence from unary.
+ */
+Uint8
+to_precedence__CIExprUnaryKind(enum CIExprUnaryKind kind);
 
 typedef struct CIExprUnary
 {
@@ -1482,6 +1506,13 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, unary, CIExprUnary unary);
  */
 CIDataType *
 get_data_type__CIExpr(const CIExpr *self);
+
+/**
+ *
+ * @brief Get precedence from expression.
+ */
+Uint8
+to_precedence__CIExpr(const CIExpr *self);
 
 /**
  *

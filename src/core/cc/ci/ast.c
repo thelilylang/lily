@@ -27,9 +27,25 @@
 #include <base/new.h>
 
 #include <core/cc/ci/ast.h>
+#include <core/cc/ci/token.h>
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#define EXPR_PRECEDENCE_LEVEL_1 MAX_CI_EXPR_PRECEDENCE
+#define EXPR_PRECEDENCE_LEVEL_2 95
+#define EXPR_PRECEDENCE_LEVEL_3 90
+#define EXPR_PRECEDENCE_LEVEL_4 85
+#define EXPR_PRECEDENCE_LEVEL_5 80
+#define EXPR_PRECEDENCE_LEVEL_6 75
+#define EXPR_PRECEDENCE_LEVEL_7 70
+#define EXPR_PRECEDENCE_LEVEL_8 65
+#define EXPR_PRECEDENCE_LEVEL_9 60
+#define EXPR_PRECEDENCE_LEVEL_10 55
+#define EXPR_PRECEDENCE_LEVEL_11 50
+#define EXPR_PRECEDENCE_LEVEL_12 45
+#define EXPR_PRECEDENCE_LEVEL_13 40
+#define EXPR_PRECEDENCE_LEVEL_14 35
 
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_ARRAY).
 static VARIANT_DESTRUCTOR(CIDataType, array, CIDataType *self);
@@ -1797,6 +1813,117 @@ IMPL_FOR_DEBUG(to_string, CIExprBinaryKind, enum CIExprBinaryKind self)
 }
 #endif
 
+Uint8
+to_precedence__CIExprBinaryKind(enum CIExprBinaryKind kind)
+{
+    switch (kind) {
+        case CI_EXPR_BINARY_KIND_DOT:
+        case CI_EXPR_BINARY_KIND_ARROW:
+            return 100;
+        case CI_EXPR_BINARY_KIND_MUL:
+        case CI_EXPR_BINARY_KIND_DIV:
+        case CI_EXPR_BINARY_KIND_MOD:
+            return 90;
+        case CI_EXPR_BINARY_KIND_ADD:
+        case CI_EXPR_BINARY_KIND_SUB:
+            return 85;
+        case CI_EXPR_BINARY_KIND_BIT_LSHIFT:
+        case CI_EXPR_BINARY_KIND_BIT_RSHIFT:
+            return 80;
+        case CI_EXPR_BINARY_KIND_LESS:
+        case CI_EXPR_BINARY_KIND_LESS_EQ:
+        case CI_EXPR_BINARY_KIND_GREATER:
+        case CI_EXPR_BINARY_KIND_GREATER_EQ:
+            return 75;
+        case CI_EXPR_BINARY_KIND_EQ:
+        case CI_EXPR_BINARY_KIND_NE:
+            return 70;
+        case CI_EXPR_BINARY_KIND_BIT_AND:
+            return 65;
+        case CI_EXPR_BINARY_KIND_BIT_XOR:
+            return 60;
+        case CI_EXPR_BINARY_KIND_BIT_OR:
+            return 55;
+        case CI_EXPR_BINARY_KIND_AND:
+            return 50;
+        case CI_EXPR_BINARY_KIND_OR:
+            return 45;
+        default:
+            return 40;
+    }
+}
+
+enum CIExprBinaryKind
+from_token__CIExprBinaryKind(const CIToken *token)
+{
+    switch (token->kind) {
+        case CI_TOKEN_KIND_EQ:
+            return CI_EXPR_BINARY_KIND_ASSIGN;
+        case CI_TOKEN_KIND_PLUS_EQ:
+            return CI_EXPR_BINARY_KIND_ASSIGN_ADD;
+        case CI_TOKEN_KIND_MINUS_EQ:
+            return CI_EXPR_BINARY_KIND_ASSIGN_SUB;
+        case CI_TOKEN_KIND_STAR_EQ:
+            return CI_EXPR_BINARY_KIND_ASSIGN_MUL;
+        case CI_TOKEN_KIND_SLASH_EQ:
+            return CI_EXPR_BINARY_KIND_ASSIGN_DIV;
+        case CI_TOKEN_KIND_PERCENTAGE_EQ:
+            return CI_EXPR_BINARY_KIND_ASSIGN_MOD;
+        case CI_TOKEN_KIND_AMPERSAND_EQ:
+            return CI_EXPR_BINARY_KIND_ASSIGN_BIT_AND;
+        case CI_TOKEN_KIND_BAR_EQ:
+            return CI_EXPR_BINARY_KIND_ASSIGN_BIT_OR;
+        case CI_TOKEN_KIND_HAT_EQ:
+            return CI_EXPR_BINARY_KIND_ASSIGN_XOR;
+        case CI_TOKEN_KIND_LSHIFT_LSHIFT_EQ:
+            return CI_EXPR_BINARY_KIND_ASSIGN_BIT_LSHIFT;
+        case CI_TOKEN_KIND_RSHIFT_RSHIFT_EQ:
+            return CI_EXPR_BINARY_KIND_ASSIGN_BIT_RSHIFT;
+        case CI_TOKEN_KIND_PLUS:
+            return CI_EXPR_BINARY_KIND_ADD;
+        case CI_TOKEN_KIND_MINUS:
+            return CI_EXPR_BINARY_KIND_SUB;
+        case CI_TOKEN_KIND_STAR:
+            return CI_EXPR_BINARY_KIND_MUL;
+        case CI_TOKEN_KIND_SLASH:
+            return CI_EXPR_BINARY_KIND_DIV;
+        case CI_TOKEN_KIND_PERCENTAGE:
+            return CI_EXPR_BINARY_KIND_MOD;
+        case CI_TOKEN_KIND_AMPERSAND:
+            return CI_EXPR_BINARY_KIND_BIT_AND;
+        case CI_TOKEN_KIND_BAR:
+            return CI_EXPR_BINARY_KIND_BIT_OR;
+        case CI_TOKEN_KIND_HAT:
+            return CI_EXPR_BINARY_KIND_BIT_XOR;
+        case CI_TOKEN_KIND_LSHIFT_LSHIFT:
+            return CI_EXPR_BINARY_KIND_BIT_LSHIFT;
+        case CI_TOKEN_KIND_RSHIFT_RSHIFT:
+            return CI_EXPR_BINARY_KIND_BIT_RSHIFT;
+        case CI_TOKEN_KIND_AMPERSAND_AMPERSAND:
+            return CI_EXPR_BINARY_KIND_AND;
+        case CI_TOKEN_KIND_BAR_BAR:
+            return CI_EXPR_BINARY_KIND_OR;
+        case CI_TOKEN_KIND_EQ_EQ:
+            return CI_EXPR_BINARY_KIND_EQ;
+        case CI_TOKEN_KIND_BANG_EQ:
+            return CI_EXPR_BINARY_KIND_NE;
+        case CI_TOKEN_KIND_LSHIFT:
+            return CI_EXPR_BINARY_KIND_LESS;
+        case CI_TOKEN_KIND_RSHIFT:
+            return CI_EXPR_BINARY_KIND_GREATER;
+        case CI_TOKEN_KIND_LSHIFT_EQ:
+            return CI_EXPR_BINARY_KIND_LESS_EQ;
+        case CI_TOKEN_KIND_RSHIFT_EQ:
+            return CI_EXPR_BINARY_KIND_GREATER_EQ;
+        case CI_TOKEN_KIND_DOT:
+            return CI_EXPR_BINARY_KIND_DOT;
+        case CI_TOKEN_KIND_ARROW:
+            return CI_EXPR_BINARY_KIND_ARROW;
+        default:
+            UNREACHABLE("impossible to convert this token in CIExprBinaryKind");
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIExprBinary, const CIExprBinary *self)
@@ -1910,6 +2037,20 @@ IMPL_FOR_DEBUG(to_string, CIExprUnaryKind, enum CIExprUnaryKind self)
     }
 }
 #endif
+
+Uint8
+to_precedence__CIExprUnaryKind(enum CIExprUnaryKind kind)
+{
+    switch (kind) {
+        case CI_EXPR_UNARY_KIND_POST_INCREMENT:
+        case CI_EXPR_UNARY_KIND_POST_DECREMENT:
+        case CI_EXPR_UNARY_KIND_PRE_INCREMENT:
+        case CI_EXPR_UNARY_KIND_PRE_DECREMENT:
+            return EXPR_PRECEDENCE_LEVEL_1;
+        default:
+            return EXPR_PRECEDENCE_LEVEL_2;
+    }
+}
 
 #ifdef ENV_DEBUG
 String *
@@ -2285,6 +2426,25 @@ IMPL_FOR_DEBUG(to_string, CIExpr, const CIExpr *self)
     }
 }
 #endif
+
+Uint8
+to_precedence__CIExpr(const CIExpr *self)
+{
+    switch (self->kind) {
+        case CI_EXPR_KIND_BINARY:
+            return to_precedence__CIExprBinaryKind(self->binary.kind);
+        case CI_EXPR_KIND_UNARY:
+            return to_precedence__CIExprUnaryKind(self->unary.kind);
+        case CI_EXPR_KIND_CAST:
+        case CI_EXPR_KIND_SIZEOF:
+        case CI_EXPR_KIND_ALIGNOF:
+            return EXPR_PRECEDENCE_LEVEL_2;
+        case CI_EXPR_KIND_TERNARY:
+            return EXPR_PRECEDENCE_LEVEL_13;
+        default:
+            return MAX_CI_EXPR_PRECEDENCE + 1;
+    }
+}
 
 VARIANT_DESTRUCTOR(CIExpr, alignof, CIExpr *self)
 {
