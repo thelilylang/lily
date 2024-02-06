@@ -1532,6 +1532,7 @@ DESTRUCTOR(CIExpr, CIExpr *self);
 
 enum CIStmtKind
 {
+    CI_STMT_KIND_BLOCK,
     CI_STMT_KIND_BREAK,
     CI_STMT_KIND_CONTINUE,
     CI_STMT_KIND_DO_WHILE,
@@ -1552,6 +1553,36 @@ enum CIStmtKind
 char *
 IMPL_FOR_DEBUG(to_string, CIStmtKind, enum CIStmtKind self);
 #endif
+
+typedef struct CIStmtBlock
+{
+    Vec *body; // Vec<CIDeclFunctionItem*>*
+} CIStmtBlock;
+
+/**
+ *
+ * @brief Construct CIStmtBlock type.
+ */
+inline CONSTRUCTOR(CIStmtBlock, CIStmtBlock, Vec *body)
+{
+    return (CIStmtBlock){ .body = body };
+}
+
+/**
+ *
+ * @brief Convert CIStmtBlock in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIStmtBlock, const CIStmtBlock *self);
+#endif
+
+/**
+ *
+ * @brief Free CIStmtBlock type.
+ */
+DESTRUCTOR(CIStmtBlock, const CIStmtBlock *self);
 
 typedef struct CIStmtDoWhile
 {
@@ -1791,6 +1822,7 @@ typedef struct CIStmt
     enum CIStmtKind kind;
     union
     {
+        CIStmtBlock block;
         CIStmtDoWhile do_while;
         CIStmtFor for_;
         String *goto_; // String* (&)
@@ -1800,6 +1832,15 @@ typedef struct CIStmt
         CIStmtWhile while_;
     };
 } CIStmt;
+
+/**
+ *
+ * @brief Construct CIStmt type (CI_STMT_KIND_BLOCK).
+ */
+inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, block, CIStmtBlock block)
+{
+    return (CIStmt){ .kind = CI_STMT_KIND_BLOCK, .block = block };
+}
 
 /**
  *

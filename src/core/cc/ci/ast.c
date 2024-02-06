@@ -119,6 +119,9 @@ static VARIANT_DESTRUCTOR(CIExpr, ternary, CIExpr *self);
 /// @brief Free CIExpr type (CI_EXPR_KIND_UNARY).
 static VARIANT_DESTRUCTOR(CIExpr, unary, CIExpr *self);
 
+/// @brief Free CIStmt type (CI_STMT_KIND_BLOCK).
+static inline VARIANT_DESTRUCTOR(CIStmt, block, const CIStmt *self);
+
 /// @brief Free CIStmt type (CI_STMT_KIND_DO_WHILE).
 static inline VARIANT_DESTRUCTOR(CIStmt, do_while, const CIStmt *self);
 
@@ -2538,6 +2541,8 @@ char *
 IMPL_FOR_DEBUG(to_string, CIStmtKind, enum CIStmtKind self)
 {
     switch (self) {
+        case CI_STMT_KIND_BLOCK:
+            return "CI_STMT_KIND_BLOCK";
         case CI_STMT_KIND_BREAK:
             return "CI_STMT_KIND_BREAK";
         case CI_STMT_KIND_CONTINUE:
@@ -2561,6 +2566,25 @@ IMPL_FOR_DEBUG(to_string, CIStmtKind, enum CIStmtKind self)
     }
 }
 #endif
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIStmtBlock, const CIStmtBlock *self)
+{
+    String *res = format__String("CIStmtBlock{{ body =");
+
+    DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CIStmtBlock, const CIStmtBlock *self)
+{
+    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, CIDeclFunctionItem);
+    FREE(Vec, self->body);
+}
 
 #ifdef ENV_DEBUG
 String *
@@ -2831,6 +2855,10 @@ String *
 IMPL_FOR_DEBUG(to_string, CIStmt, const CIStmt *self)
 {
     switch (self->kind) {
+        case CI_STMT_KIND_BLOCK:
+            return format__String("CIStmt{{ kind = {s}, block = {Sr} }",
+                                  to_string__Debug__CIStmtKind(self->kind),
+                                  to_string__Debug__CIStmtBlock(&self->block));
         case CI_STMT_KIND_BREAK:
         case CI_STMT_KIND_CONTINUE:
             return format__String("CIStmt{ kind = {s} }",
@@ -2871,6 +2899,11 @@ IMPL_FOR_DEBUG(to_string, CIStmt, const CIStmt *self)
 }
 #endif
 
+VARIANT_DESTRUCTOR(CIStmt, block, const CIStmt *self)
+{
+    FREE(CIStmtBlock, &self->block);
+}
+
 VARIANT_DESTRUCTOR(CIStmt, do_while, const CIStmt *self)
 {
     FREE(CIStmtDoWhile, &self->do_while);
@@ -2904,6 +2937,9 @@ VARIANT_DESTRUCTOR(CIStmt, while, const CIStmt *self)
 DESTRUCTOR(CIStmt, const CIStmt *self)
 {
     switch (self->kind) {
+        case CI_STMT_KIND_BLOCK:
+            FREE_VARIANT(CIStmt, block, self);
+            break;
         case CI_STMT_KIND_BREAK:
         case CI_STMT_KIND_CONTINUE:
         case CI_STMT_KIND_GOTO:
