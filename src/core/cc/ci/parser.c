@@ -134,6 +134,9 @@ parse_if_stmt__CIParser(CIParser *self);
 static CIDeclFunctionItem *
 parse_while_stmt__CIParser(CIParser *self);
 
+static CIDeclFunctionItem *
+parse_block_stmt__CIParser(CIParser *self);
+
 /// @brief Parse statement.
 /// @return CIDeclFunctionItem*?
 static CIDeclFunctionItem *
@@ -1401,6 +1404,16 @@ parse_while_stmt__CIParser(CIParser *self)
 }
 
 CIDeclFunctionItem *
+parse_block_stmt__CIParser(CIParser *self)
+{
+    Vec *body = parse_function_body__CIParser(self);
+
+    return NEW_VARIANT(CIDeclFunctionItem,
+                       stmt,
+                       NEW_VARIANT(CIStmt, block, NEW(CIStmtBlock, body)));
+}
+
+CIDeclFunctionItem *
 parse_stmt__CIParser(CIParser *self)
 {
     next_token__CIParser(self);
@@ -1442,6 +1455,8 @@ parse_stmt__CIParser(CIParser *self)
             TODO("switch statement");
         case CI_TOKEN_KIND_KEYWORD_WHILE:
             return parse_while_stmt__CIParser(self);
+        case CI_TOKEN_KIND_LBRACE:
+            return parse_block_stmt__CIParser(self);
         default:
             UNREACHABLE("not expected token");
     }
@@ -1461,6 +1476,7 @@ parse_function_body_item__CIParser(CIParser *self)
         case CI_TOKEN_KIND_KEYWORD_RETURN:
         case CI_TOKEN_KIND_KEYWORD_SWITCH:
         case CI_TOKEN_KIND_KEYWORD_WHILE:
+        case CI_TOKEN_KIND_LBRACE:
             return parse_stmt__CIParser(self);
         case CI_TOKEN_KIND_SEMICOLON:
             return NULL;
