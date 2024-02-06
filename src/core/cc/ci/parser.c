@@ -131,6 +131,9 @@ parse_if_branch__CIParser(CIParser *self);
 static CIDeclFunctionItem *
 parse_if_stmt__CIParser(CIParser *self);
 
+static CIDeclFunctionItem *
+parse_while_stmt__CIParser(CIParser *self);
+
 /// @brief Parse statement.
 /// @return CIDeclFunctionItem*?
 static CIDeclFunctionItem *
@@ -1365,6 +1368,39 @@ parse_if_stmt__CIParser(CIParser *self)
 }
 
 CIDeclFunctionItem *
+parse_while_stmt__CIParser(CIParser *self)
+{
+    expect__CIParser(self, CI_TOKEN_KIND_LPAREN, true);
+
+    CIExpr *cond = parse_expr__CIParser(self);
+    Vec *body = NULL;
+
+    if (!cond) {
+        return NULL;
+    }
+
+    expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
+
+    switch (self->tokens_iters.current_token->kind) {
+        case CI_TOKEN_KIND_LBRACE:
+            next_token__CIParser(self);
+            body = parse_function_body__CIParser(self);
+
+            break;
+        case CI_TOKEN_KIND_SEMICOLON:
+            next_token__CIParser(self);
+            break;
+        default:
+            FAILED("expected `{` or `;`");
+    }
+
+    return NEW_VARIANT(
+      CIDeclFunctionItem,
+      stmt,
+      NEW_VARIANT(CIStmt, while, NEW(CIStmtWhile, cond, body)));
+}
+
+CIDeclFunctionItem *
 parse_stmt__CIParser(CIParser *self)
 {
     next_token__CIParser(self);
@@ -1405,7 +1441,7 @@ parse_stmt__CIParser(CIParser *self)
         case CI_TOKEN_KIND_KEYWORD_SWITCH:
             TODO("switch statement");
         case CI_TOKEN_KIND_KEYWORD_WHILE:
-            TODO("while statement");
+            return parse_while_stmt__CIParser(self);
         default:
             UNREACHABLE("not expected token");
     }
