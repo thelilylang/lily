@@ -79,6 +79,9 @@ generate_function_literal_expr__CIGenerator(const CIExprLiteral *literal);
 static void
 generate_function_expr__CIGenerator(const CIExpr *expr);
 
+static inline void
+generate_function_block_stmt__CIGenerator(const CIStmtBlock *self);
+
 static void
 generate_function_do_while_stmt__CIGenerator(const CIStmtDoWhile *do_while);
 
@@ -768,6 +771,13 @@ generate_function_expr__CIGenerator(const CIExpr *expr)
 }
 
 void
+generate_function_block_stmt__CIGenerator(const CIStmtBlock *self)
+{
+    write_str__CIGenerator("\b");
+    generate_function_body__CIGenerator(self->body);
+}
+
+void
 generate_function_do_while_stmt__CIGenerator(const CIStmtDoWhile *do_while)
 {
     write_str__CIGenerator("do");
@@ -879,6 +889,10 @@ void
 generate_function_stmt__CIGenerator(const CIStmt *stmt)
 {
     switch (stmt->kind) {
+        case CI_STMT_KIND_BLOCK:
+            generate_function_block_stmt__CIGenerator(&stmt->block);
+
+            break;
         case CI_STMT_KIND_BREAK:
             write_str__CIGenerator("break;");
 
