@@ -1534,7 +1534,9 @@ enum CIStmtKind
 {
     CI_STMT_KIND_BLOCK,
     CI_STMT_KIND_BREAK,
+    CI_STMT_KIND_CASE,
     CI_STMT_KIND_CONTINUE,
+    CI_STMT_KIND_DEFAULT,
     CI_STMT_KIND_DO_WHILE,
     CI_STMT_KIND_FOR,
     CI_STMT_KIND_GOTO,
@@ -1730,7 +1732,10 @@ typedef struct CIStmtSwitchCase
  *
  * @brief Construct CIStmtSwitchCase type.
  */
-CONSTRUCTOR(CIStmtSwitchCase *, CIStmtSwitchCase, CIExpr *value, Vec *body);
+inline CONSTRUCTOR(CIStmtSwitchCase, CIStmtSwitchCase, CIExpr *value, Vec *body)
+{
+    return (CIStmtSwitchCase){ .value = value, .body = body };
+}
 
 /**
  *
@@ -1746,28 +1751,51 @@ IMPL_FOR_DEBUG(to_string, CIStmtSwitchCase, const CIStmtSwitchCase *self);
  *
  * @brief Free CIStmtSwitchCase type.
  */
-DESTRUCTOR(CIStmtSwitchCase, CIStmtSwitchCase *self);
+DESTRUCTOR(CIStmtSwitchCase, const CIStmtSwitchCase *self);
+
+typedef struct CIStmtSwitchDefault
+{
+    Vec *body; // Vec<CIDeclFunctionItem*>*
+} CIStmtSwitchDefault;
+
+/**
+ *
+ * @brief Construct CIStmtSwitchDefault type.
+ */
+inline CONSTRUCTOR(CIStmtSwitchDefault, CIStmtSwitchDefault, Vec *body)
+{
+    return (CIStmtSwitchDefault){ .body = body };
+}
+
+/**
+ *
+ * @brief Convert CIStmtSwitchDefault in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIStmtSwitchDefault, const CIStmtSwitchDefault *self);
+#endif
+
+/**
+ *
+ * @brief Free CIStmtSwitchDefault type.
+ */
+DESTRUCTOR(CIStmtSwitchDefault, const CIStmtSwitchDefault *self);
 
 typedef struct CIStmtSwitch
 {
     CIExpr *expr;
-    Vec *cases;        // Vec<CIStmtSwitchCase*>*
-    Vec *default_case; // Vec<CIDeclFunctionItem*>*?
+    Vec *body; // Vec<CIDeclFunctionItem*>*
 } CIStmtSwitch;
 
 /**
  *
  * @brief Construct CIStmtSwitch type.
  */
-inline CONSTRUCTOR(CIStmtSwitch,
-                   CIStmtSwitch,
-                   CIExpr *expr,
-                   Vec *cases,
-                   Vec *default_case)
+inline CONSTRUCTOR(CIStmtSwitch, CIStmtSwitch, CIExpr *expr, Vec *body)
 {
-    return (CIStmtSwitch){ .expr = expr,
-                           .cases = cases,
-                           .default_case = default_case };
+    return (CIStmtSwitch){ .expr = expr, .body = body };
 }
 
 /**
@@ -1823,6 +1851,8 @@ typedef struct CIStmt
     union
     {
         CIStmtBlock block;
+        CIStmtSwitchCase case_;
+        CIStmtSwitchDefault default_;
         CIStmtDoWhile do_while;
         CIStmtFor for_;
         String *goto_; // String* (&)
@@ -1849,6 +1879,27 @@ inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, block, CIStmtBlock block)
 inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, break)
 {
     return (CIStmt){ .kind = CI_STMT_KIND_BREAK };
+}
+
+/**
+ *
+ * @brief Construct CIStmt type (CI_STMT_KIND_CASE).
+ */
+inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, case, CIStmtSwitchCase case_)
+{
+    return (CIStmt){ .kind = CI_STMT_KIND_CASE, .case_ = case_ };
+}
+
+/**
+ *
+ * @brief Construct CIStmt type (CI_STMT_KIND_DEFAULT).
+ */
+inline VARIANT_CONSTRUCTOR(CIStmt,
+                           CIStmt,
+                           default,
+                           CIStmtSwitchDefault default_)
+{
+    return (CIStmt){ .kind = CI_STMT_KIND_DEFAULT, .default_ = default_ };
 }
 
 /**
