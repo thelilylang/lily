@@ -864,25 +864,7 @@ generate_function_switch_stmt__CIGenerator(const CIStmtSwitch *switch_)
     write_str__CIGenerator("switch (");
     generate_function_expr__CIGenerator(switch_->expr);
     write_str__CIGenerator(")");
-    write_str__CIGenerator("{\n");
-    inc_tab_count__CIGenerator();
-
-    for (Usize i = 0; i < switch_->cases->len; ++i) {
-        const CIStmtSwitchCase *case_ = get__Vec(switch_->cases, i);
-
-        write_tab__CIGenerator();
-        write_str__CIGenerator("case ");
-        generate_function_expr__CIGenerator(case_->value);
-        write_str__CIGenerator(":\n");
-        generate_function_body__CIGenerator(case_->body);
-    }
-
-    write_tab__CIGenerator();
-    write_str__CIGenerator("default:\n");
-    generate_function_body__CIGenerator(switch_->default_case);
-
-    dec_tab_count__CIGenerator();
-    write_str__CIGenerator("}");
+    generate_function_body__CIGenerator(switch_->body);
 }
 
 void
