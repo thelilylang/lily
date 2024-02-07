@@ -126,10 +126,10 @@ static CIDeclFunctionItem *
 parse_for_stmt__CIParser(CIParser *self);
 
 static CIStmtIfBranch *
-parse_if_branch__CIParser(CIParser *self);
+parse_if_branch__CIParser(CIParser *self, bool in_loop);
 
 static CIDeclFunctionItem *
-parse_if_stmt__CIParser(CIParser *self);
+parse_if_stmt__CIParser(CIParser *self, bool in_loop);
 
 static CIDeclFunctionItem *
 parse_while_stmt__CIParser(CIParser *self);
@@ -140,15 +140,15 @@ parse_block_stmt__CIParser(CIParser *self);
 /// @brief Parse statement.
 /// @return CIDeclFunctionItem*?
 static CIDeclFunctionItem *
-parse_stmt__CIParser(CIParser *self);
+parse_stmt__CIParser(CIParser *self, bool in_loop);
 
 /// @brief Parse function body.
 /// @return Vec<CIDeclFunctionItem*>*
 static Vec *
-parse_function_body__CIParser(CIParser *self);
+parse_function_body__CIParser(CIParser *self, bool in_loop);
 
 static CIDeclFunctionItem *
-parse_function_body_item__CIParser(CIParser *self);
+parse_function_body_item__CIParser(CIParser *self, bool in_loop);
 
 /// @brief Parse function declaration.
 static CIDecl *
@@ -1168,11 +1168,12 @@ parse_do_while_stmt__CIParser(CIParser *self)
     switch (self->tokens_iters.current_token->kind) {
         case CI_TOKEN_KIND_LBRACE:
             next_token__CIParser(self);
-            body = parse_function_body__CIParser(self);
+            body = parse_function_body__CIParser(self, true);
 
             break;
         default: {
-            CIDeclFunctionItem *item = parse_function_body_item__CIParser(self);
+            CIDeclFunctionItem *item =
+              parse_function_body_item__CIParser(self, true);
 
             if (item) {
                 body = init__Vec(1, item);
@@ -1266,11 +1267,12 @@ parse_for_stmt__CIParser(CIParser *self)
     switch (self->tokens_iters.current_token->kind) {
         case CI_TOKEN_KIND_LBRACE:
             next_token__CIParser(self);
-            body = parse_function_body__CIParser(self);
+            body = parse_function_body__CIParser(self, true);
 
             break;
         default: {
-            CIDeclFunctionItem *item = parse_function_body_item__CIParser(self);
+            CIDeclFunctionItem *item =
+              parse_function_body_item__CIParser(self, true);
 
             if (item) {
                 body = init__Vec(1, item);
@@ -1284,7 +1286,7 @@ parse_for_stmt__CIParser(CIParser *self)
 }
 
 CIStmtIfBranch *
-parse_if_branch__CIParser(CIParser *self)
+parse_if_branch__CIParser(CIParser *self, bool in_loop)
 {
     expect__CIParser(self, CI_TOKEN_KIND_LPAREN, true);
 
@@ -1300,11 +1302,12 @@ parse_if_branch__CIParser(CIParser *self)
     switch (self->tokens_iters.current_token->kind) {
         case CI_TOKEN_KIND_LBRACE:
             next_token__CIParser(self);
-            body = parse_function_body__CIParser(self);
+            body = parse_function_body__CIParser(self, in_loop);
 
             break;
         default: {
-            CIDeclFunctionItem *item = parse_function_body_item__CIParser(self);
+            CIDeclFunctionItem *item =
+              parse_function_body_item__CIParser(self, in_loop);
 
             if (item) {
                 body = init__Vec(1, item);
@@ -1318,9 +1321,9 @@ parse_if_branch__CIParser(CIParser *self)
 }
 
 CIDeclFunctionItem *
-parse_if_stmt__CIParser(CIParser *self)
+parse_if_stmt__CIParser(CIParser *self, bool in_loop)
 {
-    CIStmtIfBranch *if_ = parse_if_branch__CIParser(self);
+    CIStmtIfBranch *if_ = parse_if_branch__CIParser(self, in_loop);
     Vec *else_ifs = NULL;
     Vec *else_ = NULL;
 
@@ -1337,7 +1340,7 @@ parse_if_stmt__CIParser(CIParser *self)
            CI_TOKEN_KIND_KEYWORD_ELSE_IF;) {
         next_token__CIParser(self);
 
-        CIStmtIfBranch *else_if = parse_if_branch__CIParser(self);
+        CIStmtIfBranch *else_if = parse_if_branch__CIParser(self, in_loop);
 
         if (else_if) {
             push__Vec(else_ifs, else_if);
@@ -1347,10 +1350,10 @@ parse_if_stmt__CIParser(CIParser *self)
     switch (self->tokens_iters.current_token->kind) {
         case CI_TOKEN_KIND_KEYWORD_ELSE:
             if (expect__CIParser(self, CI_TOKEN_KIND_LBRACE, false)) {
-                else_ = parse_function_body__CIParser(self);
+                else_ = parse_function_body__CIParser(self, in_loop);
             } else {
                 CIDeclFunctionItem *item =
-                  parse_function_body_item__CIParser(self);
+                  parse_function_body_item__CIParser(self, in_loop);
 
                 if (item) {
                     else_ = init__Vec(1, item);
@@ -1387,7 +1390,7 @@ parse_while_stmt__CIParser(CIParser *self)
     switch (self->tokens_iters.current_token->kind) {
         case CI_TOKEN_KIND_LBRACE:
             next_token__CIParser(self);
-            body = parse_function_body__CIParser(self);
+            body = parse_function_body__CIParser(self, true);
 
             break;
         case CI_TOKEN_KIND_SEMICOLON:
@@ -1406,7 +1409,7 @@ parse_while_stmt__CIParser(CIParser *self)
 CIDeclFunctionItem *
 parse_block_stmt__CIParser(CIParser *self)
 {
-    Vec *body = parse_function_body__CIParser(self);
+    Vec *body = parse_function_body__CIParser(self, false);
 
     return NEW_VARIANT(CIDeclFunctionItem,
                        stmt,
@@ -1414,11 +1417,29 @@ parse_block_stmt__CIParser(CIParser *self)
 }
 
 CIDeclFunctionItem *
-parse_stmt__CIParser(CIParser *self)
+parse_stmt__CIParser(CIParser *self, bool in_loop)
 {
     next_token__CIParser(self);
 
     switch (self->tokens_iters.previous_token->kind) {
+        case CI_TOKEN_KIND_KEYWORD_BREAK:
+            expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
+
+            if (in_loop) {
+                return NEW_VARIANT(
+                  CIDeclFunctionItem, stmt, NEW_VARIANT(CIStmt, break));
+            } else {
+                FAILED("break is not expected outside of a loop");
+            }
+        case CI_TOKEN_KIND_KEYWORD_CONTINUE:
+            expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
+
+            if (in_loop) {
+                return NEW_VARIANT(
+                  CIDeclFunctionItem, stmt, NEW_VARIANT(CIStmt, continue));
+            } else {
+                FAILED("continue is not expected outside of a loop");
+            }
         case CI_TOKEN_KIND_KEYWORD_DO:
             return parse_do_while_stmt__CIParser(self);
         case CI_TOKEN_KIND_KEYWORD_FOR:
@@ -1438,7 +1459,7 @@ parse_stmt__CIParser(CIParser *self)
                                NEW_VARIANT(CIStmt, goto, label_identifier));
         }
         case CI_TOKEN_KIND_KEYWORD_IF:
-            return parse_if_stmt__CIParser(self);
+            return parse_if_stmt__CIParser(self, in_loop);
         case CI_TOKEN_KIND_KEYWORD_RETURN: {
             CIExpr *expr = parse_expr__CIParser(self);
 
@@ -1463,12 +1484,11 @@ parse_stmt__CIParser(CIParser *self)
 }
 
 CIDeclFunctionItem *
-parse_function_body_item__CIParser(CIParser *self)
+parse_function_body_item__CIParser(CIParser *self, bool in_loop)
 {
     switch (self->tokens_iters.current_token->kind) {
         case CI_TOKEN_KIND_KEYWORD_BREAK:
         case CI_TOKEN_KIND_KEYWORD_CONTINUE:
-            FAILED("break or continue are not expected outside of a loop");
         case CI_TOKEN_KIND_KEYWORD_DO:
         case CI_TOKEN_KIND_KEYWORD_FOR:
         case CI_TOKEN_KIND_KEYWORD_GOTO:
@@ -1477,7 +1497,7 @@ parse_function_body_item__CIParser(CIParser *self)
         case CI_TOKEN_KIND_KEYWORD_SWITCH:
         case CI_TOKEN_KIND_KEYWORD_WHILE:
         case CI_TOKEN_KIND_LBRACE:
-            return parse_stmt__CIParser(self);
+            return parse_stmt__CIParser(self, in_loop);
         case CI_TOKEN_KIND_SEMICOLON:
             return NULL;
         default: {
@@ -1498,13 +1518,14 @@ parse_function_body_item__CIParser(CIParser *self)
 }
 
 Vec *
-parse_function_body__CIParser(CIParser *self)
+parse_function_body__CIParser(CIParser *self, bool in_loop)
 {
     Vec *body = NEW(Vec); // Vec<CIDelcFunctionItem*>*
 
     while (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RBRACE &&
            self->tokens_iters.current_token->kind != CI_TOKEN_KIND_EOF) {
-        CIDeclFunctionItem *item = parse_function_body_item__CIParser(self);
+        CIDeclFunctionItem *item =
+          parse_function_body_item__CIParser(self, in_loop);
 
         if (item) {
             push__Vec(body, item);
@@ -1546,7 +1567,7 @@ parse_function__CIParser(CIParser *self,
                                    name,
                                    return_data_type,
                                    params,
-                                   parse_function_body__CIParser(self)));
+                                   parse_function_body__CIParser(self, false)));
         default:
             FAILED("expected `;` or `{`");
     }
