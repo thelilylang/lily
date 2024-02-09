@@ -120,6 +120,9 @@ static CIExpr *
 parse_expr__CIParser(CIParser *self);
 
 static CIDeclFunctionItem *
+parse_case__CIParser(CIParser *self);
+
+static CIDeclFunctionItem *
 parse_do_while_stmt__CIParser(CIParser *self, bool in_switch);
 
 static CIDeclFunctionItem *
@@ -219,6 +222,17 @@ static CIDataType *data_type_as_expression = NULL;
 static int storage_class_flag = CI_STORAGE_CLASS_NONE;
 
 static struct CIParserContext ctx;
+
+// The `in_label` variable checks whether you're in a label and emits an error
+// if there's a variable declaration in a label (also in case and default
+// statetement).
+static bool in_label = false;
+
+#define ENABLE_IN_LABEL() in_label = true;
+#define DISABLE_IN_LABEL() \
+    if (in_label) {        \
+        in_label = false;  \
+    }
 
 CONSTRUCTOR(struct CIParserContext, CIParserContext)
 {
@@ -1206,6 +1220,24 @@ parse_do_while_stmt__CIParser(CIParser *self, bool in_switch)
 }
 
 CIDeclFunctionItem *
+parse_case__CIParser(CIParser *self)
+{
+    CIExpr *expr = parse_expr__CIParser(self);
+
+    if (!expr) {
+        return NULL;
+    }
+
+    expect__CIParser(self, CI_TOKEN_KIND_COLON, true);
+
+    ENABLE_IN_LABEL();
+
+    return NEW_VARIANT(CIDeclFunctionItem,
+                       stmt,
+                       NEW_VARIANT(CIStmt, case, NEW(CIStmtSwitchCase, expr)));
+}
+
+CIDeclFunctionItem *
 parse_for_stmt__CIParser(CIParser *self, bool in_switch)
 {
     CIDeclFunctionItem *init_clause = NULL;
@@ -1454,6 +1486,8 @@ parse_block_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
 CIDeclFunctionItem *
 parse_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
 {
+    DISABLE_IN_LABEL();
+
     next_token__CIParser(self);
 
     switch (self->tokens_iters.previous_token->kind) {
@@ -1468,7 +1502,7 @@ parse_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
             }
         case CI_TOKEN_KIND_KEYWORD_CASE:
             if (in_switch) {
-                TODO("parse case statement");
+                return parse_case__CIParser(self);
             } else {
                 FAILED("case is not expected outside of a switch");
             }
@@ -1482,8 +1516,13 @@ parse_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
                 FAILED("continue is not expected outside of a loop");
             }
         case CI_TOKEN_KIND_KEYWORD_DEFAULT:
+            expect__CIParser(self, CI_TOKEN_KIND_COLON, true);
+
+            ENABLE_IN_LABEL();
+
             if (in_switch) {
-                TODO("parse default statement");
+                return NEW_VARIANT(
+                  CIDeclFunctionItem, stmt, NEW_VARIANT(CIStmt, default));
             } else {
                 FAILED("default is not expected outside of a switch");
             }
@@ -1579,7 +1618,11 @@ parse_function_body__CIParser(CIParser *self, bool in_loop, bool in_switch)
         if (item) {
             push__Vec(body, item);
         }
+
+        DISABLE_IN_LABEL();
     }
+
+    DISABLE_IN_LABEL();
 
     expect__CIParser(self, CI_TOKEN_KIND_RBRACE, true);
 
@@ -1755,6 +1798,10 @@ parse_variable__CIParser(CIParser *self,
             break;
         default:
             FAILED("expected `;`");
+    }
+
+    if (in_label) {
+        FAILED("Don't accept variable declaration in label");
     }
 
     return NEW_VARIANT(CIDecl,
