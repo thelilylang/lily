@@ -125,9 +125,6 @@ static inline VARIANT_DESTRUCTOR(CIStmt, block, const CIStmt *self);
 /// @brief Free CIStmt type (CI_STMT_KIND_CASE).
 static inline VARIANT_DESTRUCTOR(CIStmt, case, const CIStmt *self);
 
-/// @brief Free CIStmt type (CI_STMT_KIND_DEFAULT).
-static inline VARIANT_DESTRUCTOR(CIStmt, default, const CIStmt *self);
-
 /// @brief Free CIStmt type (CI_STMT_KIND_DO_WHILE).
 static inline VARIANT_DESTRUCTOR(CIStmt, do_while, const CIStmt *self);
 
@@ -2768,45 +2765,14 @@ DESTRUCTOR(CIStmtIf, const CIStmtIf *self)
 String *
 IMPL_FOR_DEBUG(to_string, CIStmtSwitchCase, const CIStmtSwitchCase *self)
 {
-    String *res = format__String("CIStmtSwitchCase{{ body =");
-
-    DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
-
-    {
-        String *s = format__String(", value = {Sr} }",
-                                   to_string__Debug__CIExpr(self->value));
-
-        APPEND_AND_FREE(res, s);
-    }
-
-    return res;
+    return format__String("CIStmtSwitchCase{{ value = {Sr} }",
+                          to_string__Debug__CIExpr(self->value));
 }
 #endif
 
 DESTRUCTOR(CIStmtSwitchCase, const CIStmtSwitchCase *self)
 {
     FREE(CIExpr, self->value);
-    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, CIDeclFunctionItem);
-    FREE(Vec, self->body);
-}
-
-#ifdef ENV_DEBUG
-String *
-IMPL_FOR_DEBUG(to_string, CIStmtSwitchDefault, const CIStmtSwitchDefault *self)
-{
-    String *res = format__String("CIStmtSwitchCase{{ body =");
-
-    DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
-    push_str__String(res, " }");
-
-    return res;
-}
-#endif
-
-DESTRUCTOR(CIStmtSwitchDefault, const CIStmtSwitchDefault *self)
-{
-    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, CIDeclFunctionItem);
-    FREE(Vec, self->body);
 }
 
 #ifdef ENV_DEBUG
@@ -2866,6 +2832,7 @@ IMPL_FOR_DEBUG(to_string, CIStmt, const CIStmt *self)
                                   to_string__Debug__CIStmtBlock(&self->block));
         case CI_STMT_KIND_BREAK:
         case CI_STMT_KIND_CONTINUE:
+        case CI_STMT_KIND_DEFAULT:
             return format__String("CIStmt{ kind = {s} }",
                                   to_string__Debug__CIStmtKind(self->kind));
         case CI_STMT_KIND_CASE:
@@ -2873,11 +2840,6 @@ IMPL_FOR_DEBUG(to_string, CIStmt, const CIStmt *self)
               "CIStmt{{ kind = {s}, case_ = {Sr} }",
               to_string__Debug__CIStmtKind(self->kind),
               to_string__Debug__CIStmtSwitchCase(&self->case_));
-        case CI_STMT_KIND_DEFAULT:
-            return format__String(
-              "CIStmt{{ kind = {s}, default_ = {Sr} }",
-              to_string__Debug__CIStmtKind(self->kind),
-              to_string__Debug__CIStmtSwitchDefault(&self->default_));
         case CI_STMT_KIND_DO_WHILE:
             return format__String(
               "CIStmt{{ kind = {s}, do_while = {Sr} }",
@@ -2924,11 +2886,6 @@ VARIANT_DESTRUCTOR(CIStmt, case, const CIStmt *self)
     FREE(CIStmtSwitchCase, &self->case_);
 }
 
-VARIANT_DESTRUCTOR(CIStmt, default, const CIStmt *self)
-{
-    FREE(CIStmtSwitchDefault, &self->default_);
-}
-
 VARIANT_DESTRUCTOR(CIStmt, do_while, const CIStmt *self)
 {
     FREE(CIStmtDoWhile, &self->do_while);
@@ -2971,9 +2928,6 @@ DESTRUCTOR(CIStmt, const CIStmt *self)
             break;
         case CI_STMT_KIND_CASE:
             FREE_VARIANT(CIStmt, case, self);
-            break;
-        case CI_STMT_KIND_DEFAULT:
-            FREE_VARIANT(CIStmt, default, self);
             break;
         case CI_STMT_KIND_DO_WHILE:
             FREE_VARIANT(CIStmt, do_while, self);

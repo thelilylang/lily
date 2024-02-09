@@ -1725,16 +1725,15 @@ DESTRUCTOR(CIStmtIf, const CIStmtIf *self);
 typedef struct CIStmtSwitchCase
 {
     CIExpr *value;
-    Vec *body; // Vec<CIDeclFunctionItem*>*
 } CIStmtSwitchCase;
 
 /**
  *
  * @brief Construct CIStmtSwitchCase type.
  */
-inline CONSTRUCTOR(CIStmtSwitchCase, CIStmtSwitchCase, CIExpr *value, Vec *body)
+inline CONSTRUCTOR(CIStmtSwitchCase, CIStmtSwitchCase, CIExpr *value)
 {
-    return (CIStmtSwitchCase){ .value = value, .body = body };
+    return (CIStmtSwitchCase){ .value = value };
 }
 
 /**
@@ -1752,36 +1751,6 @@ IMPL_FOR_DEBUG(to_string, CIStmtSwitchCase, const CIStmtSwitchCase *self);
  * @brief Free CIStmtSwitchCase type.
  */
 DESTRUCTOR(CIStmtSwitchCase, const CIStmtSwitchCase *self);
-
-typedef struct CIStmtSwitchDefault
-{
-    Vec *body; // Vec<CIDeclFunctionItem*>*
-} CIStmtSwitchDefault;
-
-/**
- *
- * @brief Construct CIStmtSwitchDefault type.
- */
-inline CONSTRUCTOR(CIStmtSwitchDefault, CIStmtSwitchDefault, Vec *body)
-{
-    return (CIStmtSwitchDefault){ .body = body };
-}
-
-/**
- *
- * @brief Convert CIStmtSwitchDefault in String.
- * @note This function is only used to debug.
- */
-#ifdef ENV_DEBUG
-String *
-IMPL_FOR_DEBUG(to_string, CIStmtSwitchDefault, const CIStmtSwitchDefault *self);
-#endif
-
-/**
- *
- * @brief Free CIStmtSwitchDefault type.
- */
-DESTRUCTOR(CIStmtSwitchDefault, const CIStmtSwitchDefault *self);
 
 typedef struct CIStmtSwitch
 {
@@ -1852,7 +1821,6 @@ typedef struct CIStmt
     {
         CIStmtBlock block;
         CIStmtSwitchCase case_;
-        CIStmtSwitchDefault default_;
         CIStmtDoWhile do_while;
         CIStmtFor for_;
         String *goto_; // String* (&)
@@ -1894,12 +1862,9 @@ inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, case, CIStmtSwitchCase case_)
  *
  * @brief Construct CIStmt type (CI_STMT_KIND_DEFAULT).
  */
-inline VARIANT_CONSTRUCTOR(CIStmt,
-                           CIStmt,
-                           default,
-                           CIStmtSwitchDefault default_)
+inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, default)
 {
-    return (CIStmt){ .kind = CI_STMT_KIND_DEFAULT, .default_ = default_ };
+    return (CIStmt){ .kind = CI_STMT_KIND_DEFAULT };
 }
 
 /**
