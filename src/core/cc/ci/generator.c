@@ -80,7 +80,10 @@ static void
 generate_function_expr__CIGenerator(const CIExpr *expr);
 
 static inline void
-generate_function_block_stmt__CIGenerator(const CIStmtBlock *self);
+generate_function_block_stmt__CIGenerator(const CIStmtBlock *block);
+
+static void
+generate_case_stmt__CIGenerator(const CIStmtSwitchCase *case_);
 
 static void
 generate_function_do_while_stmt__CIGenerator(const CIStmtDoWhile *do_while);
@@ -771,9 +774,17 @@ generate_function_expr__CIGenerator(const CIExpr *expr)
 }
 
 void
-generate_function_block_stmt__CIGenerator(const CIStmtBlock *self)
+generate_function_block_stmt__CIGenerator(const CIStmtBlock *block)
 {
-    generate_function_body__CIGenerator(self->body);
+    generate_function_body__CIGenerator(block->body);
+}
+
+void
+generate_case_stmt__CIGenerator(const CIStmtSwitchCase *case_)
+{
+    write_str__CIGenerator("case ");
+    generate_function_expr__CIGenerator(case_->value);
+    write_str__CIGenerator(":");
 }
 
 void
@@ -878,8 +889,16 @@ generate_function_stmt__CIGenerator(const CIStmt *stmt)
             write_str__CIGenerator("break;");
 
             break;
+        case CI_STMT_KIND_CASE:
+            generate_case_stmt__CIGenerator(&stmt->case_);
+
+            break;
         case CI_STMT_KIND_CONTINUE:
             write_str__CIGenerator("continue;");
+
+            break;
+        case CI_STMT_KIND_DEFAULT:
+            write_str__CIGenerator("default:");
 
             break;
         case CI_STMT_KIND_DO_WHILE:
@@ -896,6 +915,10 @@ generate_function_stmt__CIGenerator(const CIStmt *stmt)
             break;
         case CI_STMT_KIND_IF:
             generate_function_if_stmt__CIGenerator(&stmt->if_);
+
+            break;
+        case CI_STMT_KIND_LABEL:
+            write_String__CIGenerator(format__String("{S}:", stmt->label));
 
             break;
         case CI_STMT_KIND_RETURN:
