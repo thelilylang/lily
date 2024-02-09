@@ -99,7 +99,9 @@ parse_generic_params__CIParser(CIParser *self);
 
 /// @brief Parser function call.
 static CIExpr *
-parse_function_call__CIParser(CIParser *self, String *identifier);
+parse_function_call__CIParser(CIParser *self,
+                              String *identifier,
+                              Vec *generic_params);
 
 /// @brief Parse literal expression.
 /// @brief @return CIExpr*?
@@ -815,7 +817,9 @@ parse_generic_params__CIParser(CIParser *self)
 }
 
 CIExpr *
-parse_function_call__CIParser(CIParser *self, String *identifier)
+parse_function_call__CIParser(CIParser *self,
+                              String *identifier,
+                              Vec *generic_params)
 {
     next_token__CIParser(self); // skip `(`
 
@@ -1006,7 +1010,8 @@ parse_primary_expr__CIParser(CIParser *self)
 
             switch (self->tokens_iters.current_token->kind) {
                 case CI_TOKEN_KIND_LPAREN:
-                    return parse_function_call__CIParser(self, identifier);
+                    return parse_function_call__CIParser(
+                      self, identifier, generic_params);
                 case CI_TOKEN_KIND_LBRACE:
                     TODO("parse struct call");
                 case CI_TOKEN_KIND_LHOOK:
