@@ -1544,6 +1544,14 @@ parse_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
                                stmt,
                                NEW_VARIANT(CIStmt, goto, label_identifier));
         }
+        case CI_TOKEN_KIND_IDENTIFIER: {
+            String *identifier = self->tokens_iters.previous_token->identifier;
+
+            ASSERT(expect__CIParser(self, CI_TOKEN_KIND_COLON, false));
+
+            return NEW_VARIANT(
+              CIDeclFunctionItem, stmt, NEW_VARIANT(CIStmt, label, identifier));
+        }
         case CI_TOKEN_KIND_KEYWORD_IF:
             return parse_if_stmt__CIParser(self, in_loop, in_switch);
         case CI_TOKEN_KIND_KEYWORD_RETURN: {
@@ -1573,6 +1581,15 @@ CIDeclFunctionItem *
 parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
 {
     switch (self->tokens_iters.current_token->kind) {
+        case CI_TOKEN_KIND_IDENTIFIER: {
+            CIToken *peeked = peek_token__CIParser(self, 1);
+
+            if (peeked && peeked->kind == CI_TOKEN_KIND_COLON) {
+                goto parse_stmt;
+            }
+
+            goto default_case;
+        }
         case CI_TOKEN_KIND_KEYWORD_BREAK:
         case CI_TOKEN_KIND_KEYWORD_CASE:
         case CI_TOKEN_KIND_KEYWORD_CONTINUE:
@@ -1585,10 +1602,13 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
         case CI_TOKEN_KIND_KEYWORD_SWITCH:
         case CI_TOKEN_KIND_KEYWORD_WHILE:
         case CI_TOKEN_KIND_LBRACE:
+        parse_stmt : {
             return parse_stmt__CIParser(self, in_loop, in_switch);
+        }
         case CI_TOKEN_KIND_SEMICOLON:
             return NULL;
-        default: {
+        default:
+        default_case : {
             if (is_data_type__CIParser(self)) {
                 CIDecl *decl = parse_decl__CIParser(self, true);
 
