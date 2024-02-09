@@ -773,14 +773,13 @@ generate_function_expr__CIGenerator(const CIExpr *expr)
 void
 generate_function_block_stmt__CIGenerator(const CIStmtBlock *self)
 {
-    write_str__CIGenerator("\b");
     generate_function_body__CIGenerator(self->body);
 }
 
 void
 generate_function_do_while_stmt__CIGenerator(const CIStmtDoWhile *do_while)
 {
-    write_str__CIGenerator("do");
+    write_str__CIGenerator("do ");
     generate_function_body__CIGenerator(do_while->body);
     write_str__CIGenerator("while (");
     generate_function_expr__CIGenerator(do_while->cond);
@@ -792,7 +791,7 @@ generate_function_if_stmt_branch__CIGenerator(const CIStmtIfBranch *if_branch)
 {
     write_str__CIGenerator(" (");
     generate_function_expr__CIGenerator(if_branch->cond);
-    write_str__CIGenerator(")");
+    write_str__CIGenerator(") ");
     generate_function_body__CIGenerator(if_branch->body);
 }
 
@@ -813,7 +812,7 @@ generate_function_if_stmt__CIGenerator(const CIStmtIf *if_)
 
     if (if_->else_) {
         write_tab__CIGenerator();
-        write_str__CIGenerator("else");
+        write_str__CIGenerator("else ");
         generate_function_body__CIGenerator(if_->else_);
     }
 }
@@ -845,7 +844,7 @@ generate_function_for_stmt__CIGenerator(const CIStmtFor *for_)
         }
     }
 
-    write_str__CIGenerator(")");
+    write_str__CIGenerator(") ");
     generate_function_body__CIGenerator(for_->body);
 }
 
@@ -854,7 +853,7 @@ generate_function_while_stmt__CIGenerator(const CIStmtWhile *while_)
 {
     write_str__CIGenerator("while (");
     generate_function_expr__CIGenerator(while_->cond);
-    write_str__CIGenerator(")");
+    write_str__CIGenerator(") ");
     generate_function_body__CIGenerator(while_->body);
 }
 
@@ -863,7 +862,7 @@ generate_function_switch_stmt__CIGenerator(const CIStmtSwitch *switch_)
 {
     write_str__CIGenerator("switch (");
     generate_function_expr__CIGenerator(switch_->expr);
-    write_str__CIGenerator(")");
+    write_str__CIGenerator(") ");
     generate_function_body__CIGenerator(switch_->body);
 }
 
@@ -944,7 +943,7 @@ generate_function_body_item__CIGenerator(const CIDeclFunctionItem *item)
 void
 generate_function_body__CIGenerator(const Vec *body)
 {
-    write_str__CIGenerator(" {\n");
+    write_str__CIGenerator("{\n");
     inc_tab_count__CIGenerator();
 
     for (Usize i = 0; i < body->len; ++i) {
@@ -961,6 +960,7 @@ void
 generate_function_decl__CIGenerator(const CIDeclFunction *function)
 {
     generate_function_prototype__CIGenerator(function);
+    write_str__CIGenerator(" ");
     generate_function_body__CIGenerator(function->body);
 }
 
