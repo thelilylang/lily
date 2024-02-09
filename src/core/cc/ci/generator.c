@@ -74,6 +74,10 @@ static void
 generate_function_unary_expr__CIGenerator(const CIExprUnary *unary);
 
 static void
+generate_function_call_expr__CIGenerator(
+  const CIExprFunctionCall *function_call);
+
+static void
 generate_function_literal_expr__CIGenerator(const CIExprLiteral *literal);
 
 static void
@@ -718,6 +722,24 @@ generate_function_literal_expr__CIGenerator(const CIExprLiteral *literal)
 }
 
 void
+generate_function_call_expr__CIGenerator(
+  const CIExprFunctionCall *function_call)
+{
+    write_String__CIGenerator(
+      format__String("{S}(", function_call->identifier));
+
+    for (Usize i = 0; i < function_call->params->len; ++i) {
+        generate_function_expr__CIGenerator(get__Vec(function_call->params, i));
+
+        if (i + 1 != function_call->params->len) {
+            write_str__CIGenerator(", ");
+        }
+    }
+
+    write_str__CIGenerator(")");
+}
+
+void
 generate_function_expr__CIGenerator(const CIExpr *expr)
 {
     switch (expr->kind) {
@@ -740,6 +762,10 @@ generate_function_expr__CIGenerator(const CIExpr *expr)
             break;
         case CI_EXPR_KIND_DATA_TYPE:
             generate_data_type__CIGenerator(expr->data_type);
+
+            break;
+        case CI_EXPR_KIND_FUNCTION_CALL:
+            generate_function_call_expr__CIGenerator(&expr->function_call);
 
             break;
         case CI_EXPR_KIND_IDENTIFIER:
