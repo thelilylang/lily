@@ -1461,7 +1461,10 @@ parse_switch_stmt__CIParser(CIParser *self, bool in_loop)
 
     switch (self->tokens_iters.current_token->kind) {
         case CI_TOKEN_KIND_LBRACE:
+            next_token__CIParser(self);
+
             body = parse_function_body__CIParser(self, false, true);
+
             break;
         default:
             FAILED("expected `{`");
@@ -1486,8 +1489,6 @@ parse_block_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
 CIDeclFunctionItem *
 parse_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
 {
-    DISABLE_IN_LABEL();
-
     next_token__CIParser(self);
 
     switch (self->tokens_iters.previous_token->kind) {
@@ -1603,6 +1604,8 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
         case CI_TOKEN_KIND_KEYWORD_WHILE:
         case CI_TOKEN_KIND_LBRACE:
         parse_stmt : {
+            DISABLE_IN_LABEL();
+
             return parse_stmt__CIParser(self, in_loop, in_switch);
         }
         case CI_TOKEN_KIND_SEMICOLON:
@@ -1612,12 +1615,16 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
             if (is_data_type__CIParser(self)) {
                 CIDecl *decl = parse_decl__CIParser(self, true);
 
+                DISABLE_IN_LABEL();
+
                 if (decl) {
                     return NEW_VARIANT(CIDeclFunctionItem, decl, decl);
                 } else if (!data_type_as_expression) {
                     return NULL;
                 }
             }
+
+            DISABLE_IN_LABEL();
 
             return NEW_VARIANT(
               CIDeclFunctionItem, expr, parse_expr__CIParser(self));
@@ -1638,8 +1645,6 @@ parse_function_body__CIParser(CIParser *self, bool in_loop, bool in_switch)
         if (item) {
             push__Vec(body, item);
         }
-
-        DISABLE_IN_LABEL();
     }
 
     DISABLE_IN_LABEL();
@@ -1800,6 +1805,10 @@ parse_variable__CIParser(CIParser *self,
                          String *name,
                          bool is_prototype)
 {
+    if (in_label) {
+        FAILED("Don't accept variable declaration in label");
+    }
+
     next_token__CIParser(self); // skip `=` or `;`
 
     if (is_prototype) {
@@ -1818,10 +1827,6 @@ parse_variable__CIParser(CIParser *self,
             break;
         default:
             FAILED("expected `;`");
-    }
-
-    if (in_label) {
-        FAILED("Don't accept variable declaration in label");
     }
 
     return NEW_VARIANT(CIDecl,
