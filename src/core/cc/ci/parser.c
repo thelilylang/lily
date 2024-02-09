@@ -819,22 +819,27 @@ parse_function_call__CIParser(CIParser *self, String *identifier)
 {
     next_token__CIParser(self); // skip `(`
 
+    Vec *params = NEW(Vec); // Vec<CIExpr*>*
+
     while (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RPAREN &&
            self->tokens_iters.current_token->kind != CI_TOKEN_KIND_EOF) {
+        CIExpr *param = parse_expr__CIParser(self);
+
+        if (param) {
+            push__Vec(params, param);
+        }
+
+        if (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RPAREN) {
+            expect__CIParser(self, CI_TOKEN_KIND_COMMA, true);
+        }
     }
 
-    switch (self->tokens_iters.current_token->kind) {
-        case CI_TOKEN_KIND_RPAREN:
-            next_token__CIParser(self);
+    expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
 
-            break;
-        case CI_TOKEN_KIND_EOF:
-            FAILED("unexpected EOF");
-        default:
-            UNREACHABLE("expected `)` or `EOF`");
-    }
+    // TODO: manage generic function
 
-    TODO("parse function call");
+    return NEW_VARIANT(
+      CIExpr, function_call, NEW(CIExprFunctionCall, identifier, params));
 }
 
 CIExpr *
