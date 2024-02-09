@@ -104,6 +104,9 @@ static VARIANT_DESTRUCTOR(CIExpr, cast, CIExpr *self);
 /// @brief Free CIExpr type (CI_EXPR_KIND_DATA_TYPE).
 static VARIANT_DESTRUCTOR(CIExpr, data_type, CIExpr *self);
 
+/// @brief Free CIExpr type (CI_EXPR_KIND_FUNCTION_CALL).
+static VARIANT_DESTRUCTOR(CIExpr, function_call, CIExpr *self);
+
 /// @brief Free CIExpr type (CI_EXPR_KIND_IDENTIFIER).
 static inline VARIANT_DESTRUCTOR(CIExpr, identifier, CIExpr *self);
 
@@ -2109,6 +2112,26 @@ DESTRUCTOR(CIExprCast, const CIExprCast *self)
 }
 
 #ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIExprFunctionCall, const CIExprFunctionCall *self)
+{
+    String *res =
+      format__String("CIExprFunctionCall {{ identifier = {S}, params =");
+
+    DEBUG_VEC_STRING(self->params, res, CIExpr);
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CIExprFunctionCall, const CIExprFunctionCall *self)
+{
+    FREE_BUFFER_ITEMS(self->params->buffer, self->params->len, CIExpr);
+    FREE(Vec, self->params);
+}
+
+#ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string, CIExprKind, enum CIExprKind self)
 {
@@ -2121,6 +2144,8 @@ IMPL_FOR_DEBUG(to_string, CIExprKind, enum CIExprKind self)
             return "CI_EXPR_KIND_CAST";
         case CI_EXPR_KIND_DATA_TYPE:
             return "CI_EXPR_KIND_DATA_TYPE";
+        case CI_EXPR_KIND_FUNCTION_CALL:
+            return "CI_EXPR_KIND_FUNCTION_CALL";
         case CI_EXPR_KIND_IDENTIFIER:
             return "CI_EXPR_KIND_IDENTIFIER";
         case CI_EXPR_KIND_LITERAL:
@@ -2173,6 +2198,19 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, data_type, CIDataType *data_type)
 
     self->kind = CI_EXPR_KIND_DATA_TYPE;
     self->data_type = data_type;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    function_call,
+                    CIExprFunctionCall function_call)
+{
+    CIExpr *self = lily_malloc(sizeof(CIExpr));
+
+    self->kind = CI_EXPR_KIND_FUNCTION_CALL;
+    self->function_call = function_call;
 
     return self;
 }
@@ -2291,6 +2329,8 @@ get_data_type__CIExpr(const CIExpr *self)
             }
         case CI_EXPR_KIND_CAST:
             return clone__CIDataType(self->cast.data_type);
+        case CI_EXPR_KIND_FUNCTION_CALL:
+            TODO("get data from function");
         case CI_EXPR_KIND_IDENTIFIER:
             TODO("search identifier");
         case CI_EXPR_KIND_LITERAL:
@@ -2405,6 +2445,11 @@ IMPL_FOR_DEBUG(to_string, CIExpr, const CIExpr *self)
               "CIExpr{{ kind = {s}, data_type = {Sr} }",
               to_string__Debug__CIExprKind(self->kind),
               to_string__Debug__CIDataType(self->data_type));
+        case CI_EXPR_KIND_FUNCTION_CALL:
+            return format__String(
+              "CIExpr{{ kind = {s}, function_call = {Sr} }",
+              to_string__Debug__CIExprKind(self->kind),
+              to_string__Debug__CIExprFunctionCall(&self->function_call));
         case CI_EXPR_KIND_IDENTIFIER:
             return format__String("CIExpr{{ kind = {s}, identifier = {S} }",
                                   to_string__Debug__CIExprKind(self->kind),
@@ -2445,6 +2490,8 @@ to_precedence__CIExpr(const CIExpr *self)
         case CI_EXPR_KIND_SIZEOF:
         case CI_EXPR_KIND_ALIGNOF:
             return EXPR_PRECEDENCE_LEVEL_2;
+        case CI_EXPR_KIND_FUNCTION_CALL:
+            return EXPR_PRECEDENCE_LEVEL_1;
         case CI_EXPR_KIND_TERNARY:
             return EXPR_PRECEDENCE_LEVEL_13;
         default:
@@ -2473,6 +2520,12 @@ VARIANT_DESTRUCTOR(CIExpr, cast, CIExpr *self)
 VARIANT_DESTRUCTOR(CIExpr, data_type, CIExpr *self)
 {
     FREE(CIDataType, self->data_type);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIExpr, function_call, CIExpr *self)
+{
+    FREE(CIExprFunctionCall, &self->function_call);
     lily_free(self);
 }
 
@@ -2518,6 +2571,9 @@ DESTRUCTOR(CIExpr, CIExpr *self)
             break;
         case CI_EXPR_KIND_DATA_TYPE:
             FREE_VARIANT(CIExpr, data_type, self);
+            break;
+        case CI_EXPR_KIND_FUNCTION_CALL:
+            FREE_VARIANT(CIExpr, function_call, self);
             break;
         case CI_EXPR_KIND_IDENTIFIER:
             FREE_VARIANT(CIExpr, identifier, self);

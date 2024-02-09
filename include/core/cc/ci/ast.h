@@ -1403,12 +1403,47 @@ IMPL_FOR_DEBUG(to_string, CIExprCast, const CIExprCast *self);
  */
 DESTRUCTOR(CIExprCast, const CIExprCast *self);
 
+typedef struct CIExprFunctionCall
+{
+    String *identifier; // String* (&)
+    Vec *params;        // Vec<CIExpr*>*
+} CIExprFunctionCall;
+
+/**
+ *
+ * @brief Construct CIExprFunctionCall type.
+ */
+inline CONSTRUCTOR(CIExprFunctionCall,
+                   CIExprFunctionCall,
+                   String *identifier,
+                   Vec *params)
+{
+    return (CIExprFunctionCall){ .identifier = identifier, .params = params };
+}
+
+/**
+ *
+ * @brief Convert CIExprFunctionCall in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIExprFunctionCall, const CIExprFunctionCall *self);
+#endif
+
+/**
+ *
+ * @brief Free CIExprFunctionCall type.
+ */
+DESTRUCTOR(CIExprFunctionCall, const CIExprFunctionCall *self);
+
 enum CIExprKind
 {
     CI_EXPR_KIND_ALIGNOF,
     CI_EXPR_KIND_BINARY,
     CI_EXPR_KIND_CAST,
     CI_EXPR_KIND_DATA_TYPE,
+    CI_EXPR_KIND_FUNCTION_CALL,
     CI_EXPR_KIND_IDENTIFIER,
     CI_EXPR_KIND_LITERAL,
     CI_EXPR_KIND_SIZEOF,
@@ -1435,6 +1470,7 @@ struct CIExpr
         CIExprBinary binary;
         CIExprCast cast;
         CIDataType *data_type;
+        CIExprFunctionCall function_call;
         String *identifier; // String* (&)
         CIExprLiteral literal;
         CIExpr *sizeof_;
@@ -1466,6 +1502,15 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, cast, CIExprCast cast);
  * @brief Construct CIExpr type (CI_EXPR_KIND_DATA_TYPE).
  */
 VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, data_type, CIDataType *data_type);
+
+/**
+ *
+ * @brief Construct CIExpr type (CI_EXPR_KIND_FUNCTION_CALL).
+ */
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    function_call,
+                    CIExprFunctionCall function_call);
 
 /**
  *
