@@ -1541,6 +1541,7 @@ enum CIStmtKind
     CI_STMT_KIND_FOR,
     CI_STMT_KIND_GOTO,
     CI_STMT_KIND_IF,
+    CI_STMT_KIND_LABEL,
     CI_STMT_KIND_RETURN,
     CI_STMT_KIND_SWITCH,
     CI_STMT_KIND_WHILE,
@@ -1825,6 +1826,7 @@ typedef struct CIStmt
         CIStmtFor for_;
         String *goto_; // String* (&)
         CIStmtIf if_;
+        String *label; // String* (&)
         CIExpr *return_;
         CIStmtSwitch switch_;
         CIStmtWhile while_;
@@ -1910,6 +1912,15 @@ inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, goto, String *goto_)
 inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, if, CIStmtIf if_)
 {
     return (CIStmt){ .kind = CI_STMT_KIND_IF, .if_ = if_ };
+}
+
+/**
+ *
+ * @brief Construct CIStmt type (CI_STMT_KIND_LABEL).
+ */
+inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, label, String *label)
+{
+    return (CIStmt){ .kind = CI_STMT_KIND_LABEL, .label = label };
 }
 
 /**

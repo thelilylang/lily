@@ -2562,6 +2562,8 @@ IMPL_FOR_DEBUG(to_string, CIStmtKind, enum CIStmtKind self)
             return "CI_STMT_KIND_GOTO";
         case CI_STMT_KIND_IF:
             return "CI_STMT_KIND_IF";
+        case CI_STMT_KIND_LABEL:
+            return "CI_STMT_KIND_LABEL";
         case CI_STMT_KIND_RETURN:
             return "CI_STMT_KIND_RETURN";
         case CI_STMT_KIND_SWITCH:
@@ -2857,8 +2859,12 @@ IMPL_FOR_DEBUG(to_string, CIStmt, const CIStmt *self)
             return format__String("CIStmt{{ kind = {s}, if_ = {Sr} }",
                                   to_string__Debug__CIStmtKind(self->kind),
                                   to_string__Debug__CIStmtIf(&self->if_));
+        case CI_STMT_KIND_LABEL:
+            return format__String("CIStmt{{ kind = {s}, label = {S} }",
+                                  to_string__Debug__CIStmtKind(self->kind),
+                                  self->label);
         case CI_STMT_KIND_RETURN:
-            return format__String("CIStmt{ kind = {s}, return_ = {Sr} }",
+            return format__String("CIStmt{{ kind = {s}, return_ = {Sr} }",
                                   to_string__Debug__CIStmtKind(self->kind),
                                   to_string__Debug__CIExpr(self->return_));
         case CI_STMT_KIND_SWITCH:
@@ -2924,7 +2930,9 @@ DESTRUCTOR(CIStmt, const CIStmt *self)
             break;
         case CI_STMT_KIND_BREAK:
         case CI_STMT_KIND_CONTINUE:
+        case CI_STMT_KIND_DEFAULT:
         case CI_STMT_KIND_GOTO:
+        case CI_STMT_KIND_LABEL:
             break;
         case CI_STMT_KIND_CASE:
             FREE_VARIANT(CIStmt, case, self);
