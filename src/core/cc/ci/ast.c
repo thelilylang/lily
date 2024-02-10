@@ -107,6 +107,9 @@ static VARIANT_DESTRUCTOR(CIExpr, data_type, CIExpr *self);
 /// @brief Free CIExpr type (CI_EXPR_KIND_FUNCTION_CALL).
 static VARIANT_DESTRUCTOR(CIExpr, function_call, CIExpr *self);
 
+/// @brief Free CIExpr type (CI_EXPR_KIND_GROUPING).
+static VARIANT_DESTRUCTOR(CIExpr, grouping, CIExpr *self);
+
 /// @brief Free CIExpr type (CI_EXPR_KIND_IDENTIFIER).
 static inline VARIANT_DESTRUCTOR(CIExpr, identifier, CIExpr *self);
 
@@ -2146,6 +2149,8 @@ IMPL_FOR_DEBUG(to_string, CIExprKind, enum CIExprKind self)
             return "CI_EXPR_KIND_DATA_TYPE";
         case CI_EXPR_KIND_FUNCTION_CALL:
             return "CI_EXPR_KIND_FUNCTION_CALL";
+        case CI_EXPR_KIND_GROUPING:
+            return "CI_EXPR_KIND_GROUPING";
         case CI_EXPR_KIND_IDENTIFIER:
             return "CI_EXPR_KIND_IDENTIFIER";
         case CI_EXPR_KIND_LITERAL:
@@ -2211,6 +2216,16 @@ VARIANT_CONSTRUCTOR(CIExpr *,
 
     self->kind = CI_EXPR_KIND_FUNCTION_CALL;
     self->function_call = function_call;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, grouping, CIExpr *grouping)
+{
+    CIExpr *self = lily_malloc(sizeof(CIExpr));
+
+    self->kind = CI_EXPR_KIND_GROUPING;
+    self->grouping = grouping;
 
     return self;
 }
@@ -2331,6 +2346,8 @@ get_data_type__CIExpr(const CIExpr *self)
             return clone__CIDataType(self->cast.data_type);
         case CI_EXPR_KIND_FUNCTION_CALL:
             TODO("get data from function");
+        case CI_EXPR_KIND_GROUPING:
+            return get_data_type__CIExpr(self->grouping);
         case CI_EXPR_KIND_IDENTIFIER:
             TODO("search identifier");
         case CI_EXPR_KIND_LITERAL:
@@ -2450,6 +2467,10 @@ IMPL_FOR_DEBUG(to_string, CIExpr, const CIExpr *self)
               "CIExpr{{ kind = {s}, function_call = {Sr} }",
               to_string__Debug__CIExprKind(self->kind),
               to_string__Debug__CIExprFunctionCall(&self->function_call));
+        case CI_EXPR_KIND_GROUPING:
+            return format__String("CIExpr{{ kind = {s}, grouping = {Sr} }",
+                                  to_string__Debug__CIExprKind(self->kind),
+                                  to_string__Debug__CIExpr(self->grouping));
         case CI_EXPR_KIND_IDENTIFIER:
             return format__String("CIExpr{{ kind = {s}, identifier = {S} }",
                                   to_string__Debug__CIExprKind(self->kind),
@@ -2529,6 +2550,12 @@ VARIANT_DESTRUCTOR(CIExpr, function_call, CIExpr *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(CIExpr, grouping, CIExpr *self)
+{
+    FREE(CIExpr, self->grouping);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(CIExpr, identifier, CIExpr *self)
 {
     lily_free(self);
@@ -2574,6 +2601,9 @@ DESTRUCTOR(CIExpr, CIExpr *self)
             break;
         case CI_EXPR_KIND_FUNCTION_CALL:
             FREE_VARIANT(CIExpr, function_call, self);
+            break;
+        case CI_EXPR_KIND_GROUPING:
+            FREE_VARIANT(CIExpr, grouping, self);
             break;
         case CI_EXPR_KIND_IDENTIFIER:
             FREE_VARIANT(CIExpr, identifier, self);

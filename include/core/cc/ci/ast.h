@@ -1444,6 +1444,7 @@ enum CIExprKind
     CI_EXPR_KIND_CAST,
     CI_EXPR_KIND_DATA_TYPE,
     CI_EXPR_KIND_FUNCTION_CALL,
+    CI_EXPR_KIND_GROUPING,
     CI_EXPR_KIND_IDENTIFIER,
     CI_EXPR_KIND_LITERAL,
     CI_EXPR_KIND_SIZEOF,
@@ -1471,6 +1472,7 @@ struct CIExpr
         CIExprCast cast;
         CIDataType *data_type;
         CIExprFunctionCall function_call;
+        CIExpr *grouping;
         String *identifier; // String* (&)
         CIExprLiteral literal;
         CIExpr *sizeof_;
@@ -1511,6 +1513,12 @@ VARIANT_CONSTRUCTOR(CIExpr *,
                     CIExpr,
                     function_call,
                     CIExprFunctionCall function_call);
+
+/**
+ *
+ * @brief Construct CIExpr type (CI_EXPR_KIND_GROUPING).
+ */
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, grouping, CIExpr *grouping);
 
 /**
  *
