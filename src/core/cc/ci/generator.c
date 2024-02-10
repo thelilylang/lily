@@ -768,6 +768,12 @@ generate_function_expr__CIGenerator(const CIExpr *expr)
             generate_function_call_expr__CIGenerator(&expr->function_call);
 
             break;
+        case CI_EXPR_KIND_GROUPING:
+            write_str__CIGenerator("(");
+            generate_function_expr__CIGenerator(expr->grouping);
+            write_str__CIGenerator(")");
+
+            break;
         case CI_EXPR_KIND_IDENTIFIER:
             write_str__CIGenerator(expr->identifier->buffer);
 
