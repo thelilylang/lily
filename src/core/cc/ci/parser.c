@@ -982,7 +982,11 @@ parse_primary_expr__CIParser(CIParser *self)
                   CIExpr, cast, NEW(CIExprCast, data_type, expr));
             }
 
-            TODO("parse grouping expression");
+            CIExpr *expr = parse_expr__CIParser(self);
+
+            expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
+
+            return NEW_VARIANT(CIExpr, grouping, expr);
         }
         case CI_TOKEN_KIND_LBRACE:
             TODO("parse struct call");
