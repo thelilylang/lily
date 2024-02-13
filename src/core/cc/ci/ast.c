@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/assert.h>
 #include <base/format.h>
 #include <base/hash/sip.h>
 #include <base/new.h>
@@ -86,11 +87,20 @@ static VARIANT_DESTRUCTOR(CIDecl, enum, CIDecl *self);
 /// @brief Free CIDecl type (CI_DECL_KIND_FUNCTION).
 static VARIANT_DESTRUCTOR(CIDecl, function, CIDecl *self);
 
+/// @brief Free CIDecl type (CI_DECL_KIND_FUNCTION_GEN).
+static VARIANT_DESTRUCTOR(CIDecl, function_gen, CIDecl *self);
+
 /// @brief Free CIDecl type (CI_DECL_KIND_STRUCT).
 static VARIANT_DESTRUCTOR(CIDecl, struct, CIDecl *self);
 
+/// @brief Free CIDecl type (CI_DECL_KIND_STRUCT_GEN).
+static VARIANT_DESTRUCTOR(CIDecl, struct_gen, CIDecl *self);
+
 /// @brief Free CIDecl type (CI_DECL_KIND_UNION).
 static VARIANT_DESTRUCTOR(CIDecl, union, CIDecl *self);
+
+/// @brief Free CIDecl type (CI_DECL_KIND_UNION_GEN).
+static VARIANT_DESTRUCTOR(CIDecl, union_gen, CIDecl *self);
 
 /// @brief Free CIDecl type (CI_DECL_KIND_VARIABLE).
 static VARIANT_DESTRUCTOR(CIDecl, variable, CIDecl *self);
@@ -1226,6 +1236,14 @@ IMPL_FOR_DEBUG(to_string, CIDeclKind, enum CIDeclKind self)
             return "CI_DECL_KIND_UNION";
         case CI_DECL_KIND_VARIABLE:
             return "CI_DECL_KIND_VARIABLE";
+        case CI_DECL_KIND_FUNCTION_GEN:
+            return "CI_DECL_KIND_FUNCTION_GEN";
+        case CI_DECL_KIND_STRUCT_GEN:
+            return "CI_DECL_KIND_STRUCT_GEN";
+        case CI_DECL_KIND_UNION_GEN:
+            return "CI_DECL_KIND_UNION_GEN";
+        default:
+            UNREACHABLE("unknown variant");
     }
 }
 #endif
@@ -1361,6 +1379,19 @@ DESTRUCTOR(CIDeclFunctionParam, CIDeclFunctionParam *self)
     lily_free(self);
 }
 
+String *
+serialize_name__CIDeclFunction(const CIDeclFunction *self,
+                               const Vec *called_generic_params)
+{
+    ASSERT(called_generic_params);
+
+    String *res = format__String("{S}__", self->name);
+
+    serialize_vec__CIDataType(called_generic_params, res);
+
+    return res;
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclFunction, const CIDeclFunction *self)
@@ -1420,6 +1451,23 @@ DESTRUCTOR(CIDeclFunction, const CIDeclFunction *self)
     }
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclFunctionGen, const CIDeclFunctionGen *self)
+{
+    String *res =
+      format__String("CIDeclFunctionGen{{ function = {Sr}, name = {S}, "
+                     "called_generic_params =",
+                     to_string__Debug__CIDeclFunction(self->function),
+                     self->name);
+
+    DEBUG_VEC_STRING(self->called_generic_params, res, CIDataType);
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
 CONSTRUCTOR(CIDeclStructField *,
             CIDeclStructField,
             String *name,
@@ -1447,6 +1495,19 @@ DESTRUCTOR(CIDeclStructField, CIDeclStructField *self)
 {
     FREE(CIDataType, self->data_type);
     lily_free(self);
+}
+
+String *
+serialize_name__CIDeclStruct(const CIDeclStruct *self,
+                             const Vec *called_generic_params)
+{
+    ASSERT(called_generic_params);
+
+    String *res = format__String("{S}__", self->name);
+
+    serialize_vec__CIDataType(called_generic_params, res);
+
+    return res;
 }
 
 #ifdef ENV_DEBUG
@@ -1480,6 +1541,35 @@ DESTRUCTOR(CIDeclStruct, const CIDeclStruct *self)
           self->fields->buffer, self->fields->len, CIDeclStructField);
         FREE(Vec, self->fields);
     }
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclStructGen, const CIDeclStructGen *self)
+{
+    String *res = format__String(
+      "CIDeclStructGen{{ struct_ = {Sr}, name = {S}, called_generic_params =",
+      to_string__Debug__CIDeclStruct(self->struct_),
+      self->name);
+
+    DEBUG_VEC_STRING(self->called_generic_params, res, CIDataType);
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+String *
+serialize_name__CIDeclUnion(const CIDeclUnion *self,
+                            const Vec *called_generic_params)
+{
+    ASSERT(called_generic_params);
+
+    String *res = format__String("{S}__", self->name);
+
+    serialize_vec__CIDataType(called_generic_params, res);
+
+    return res;
 }
 
 #ifdef ENV_DEBUG
@@ -1523,6 +1613,21 @@ DESTRUCTOR(CIDeclUnion, const CIDeclUnion *self)
         FREE(Vec, self->fields);
     }
 }
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclUnionGen, const CIDeclUnionGen *self)
+{
+    String *res =
+      format__String("CIDeclUnionGen{{ union_ = {Sr}, called_generic_params =",
+                     to_string__Debug__CIDeclUnion(self->union_));
+
+    DEBUG_VEC_STRING(self->called_generic_params, res, CIDataType);
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
 
 #ifdef ENV_DEBUG
 String *
@@ -1591,6 +1696,28 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
+                    function_gen,
+                    CIDecl *function,
+                    Vec *called_generic_params)
+{
+    CIDecl *self = lily_malloc(sizeof(CIDecl));
+    const CIDeclFunction *f = &function->function;
+
+    self->kind = CI_DECL_KIND_FUNCTION_GEN;
+    self->storage_class_flag = function->storage_class_flag;
+    self->is_prototype = false;
+    self->typedef_name = NULL;
+    self->function_gen =
+      NEW(CIDeclFunctionGen,
+          f,
+          serialize_name__CIDeclFunction(f, called_generic_params),
+          called_generic_params);
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIDecl *,
+                    CIDecl,
                     struct,
                     int storage_class_flag,
                     bool is_prototype,
@@ -1604,6 +1731,29 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->is_prototype = is_prototype;
     self->typedef_name = typedef_name;
     self->struct_ = struct_;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIDecl *,
+                    CIDecl,
+                    struct_gen,
+                    CIDecl *struct_,
+                    Vec *called_generic_params)
+{
+    CIDecl *self = lily_malloc(sizeof(CIDecl));
+    const CIDeclStruct *s = &struct_->struct_;
+
+    self->kind = CI_DECL_KIND_STRUCT_GEN;
+    self->storage_class_flag = struct_->storage_class_flag;
+    self->is_prototype = false;
+    self->typedef_name =
+      serialize_typedef_name__CIDecl(struct_, called_generic_params);
+    self->struct_gen =
+      NEW(CIDeclStructGen,
+          s,
+          serialize_name__CIDeclStruct(s, called_generic_params),
+          called_generic_params);
 
     return self;
 }
@@ -1629,6 +1779,28 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
+                    union_gen,
+                    CIDecl *union_,
+                    Vec *called_generic_params)
+{
+    CIDecl *self = lily_malloc(sizeof(CIDecl));
+    const CIDeclUnion *u = &union_->union_;
+
+    self->kind = CI_DECL_KIND_UNION_GEN;
+    self->storage_class_flag = union_->storage_class_flag;
+    self->is_prototype = false;
+    self->typedef_name =
+      serialize_typedef_name__CIDecl(union_, called_generic_params);
+    self->union_gen = NEW(CIDeclUnionGen,
+                          u,
+                          serialize_name__CIDeclUnion(u, called_generic_params),
+                          called_generic_params);
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIDecl *,
+                    CIDecl,
                     variable,
                     int storage_class_flag,
                     bool is_prototype,
@@ -1646,6 +1818,19 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 }
 
 String *
+serialize_typedef_name__CIDecl(const CIDecl *self,
+                               const Vec *called_generic_params)
+{
+    ASSERT(called_generic_params);
+
+    String *res = format__String("{S}__", self->typedef_name);
+
+    serialize_vec__CIDataType(called_generic_params, res);
+
+    return res;
+}
+
+String *
 get_name__CIDecl(const CIDecl *self)
 {
     switch (self->kind) {
@@ -1653,10 +1838,16 @@ get_name__CIDecl(const CIDecl *self)
             return self->enum_.name;
         case CI_DECL_KIND_FUNCTION:
             return self->function.name;
+        case CI_DECL_KIND_FUNCTION_GEN:
+            return self->function_gen.name;
         case CI_DECL_KIND_STRUCT:
             return self->struct_.name;
+        case CI_DECL_KIND_STRUCT_GEN:
+            return self->struct_gen.name;
         case CI_DECL_KIND_UNION:
             return self->union_.name;
+        case CI_DECL_KIND_UNION_GEN:
+            return self->union_gen.name;
         case CI_DECL_KIND_VARIABLE:
             return self->variable.name;
         default:
@@ -1670,12 +1861,19 @@ has_generic__CIDecl(const CIDecl *self)
     switch (self->kind) {
         case CI_DECL_KIND_FUNCTION:
             return self->function.generic_params;
+        case CI_DECL_KIND_FUNCTION_GEN:
+            TODO("function gen: has generic");
         case CI_DECL_KIND_ENUM:
-        case CI_DECL_KIND_UNION:
         case CI_DECL_KIND_VARIABLE:
             return false;
         case CI_DECL_KIND_STRUCT:
             return self->struct_.generic_params;
+        case CI_DECL_KIND_STRUCT_GEN:
+            TODO("struct gen: has generic");
+        case CI_DECL_KIND_UNION:
+            return self->union_.generic_params;
+        case CI_DECL_KIND_UNION_GEN:
+            TODO("union gen: has generic");
         default:
             UNREACHABLE("unknown variant");
     }
@@ -1690,8 +1888,12 @@ get_expected_data_type__CIDecl(const CIDecl *self)
                  "(all integers data type)");
         case CI_DECL_KIND_FUNCTION:
             return self->function.return_data_type;
+        case CI_DECL_KIND_FUNCTION_GEN:
+            TODO("get data type from function gen");
         case CI_DECL_KIND_STRUCT:
+        case CI_DECL_KIND_STRUCT_GEN:
         case CI_DECL_KIND_UNION:
+        case CI_DECL_KIND_UNION_GEN:
             return NULL;
         case CI_DECL_KIND_VARIABLE:
             return self->variable.data_type;
@@ -1723,6 +1925,15 @@ IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)
               to_string__Debug__CIStorageClass(self->storage_class_flag),
               self->is_prototype,
               to_string__Debug__CIDeclFunction(&self->function));
+        case CI_DECL_KIND_FUNCTION_GEN:
+            return format__String(
+              "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
+              "{b}, typedef_name = NULL, function_gen = {Sr} "
+              "}",
+              to_string__Debug__CIDeclKind(self->kind),
+              to_string__Debug__CIStorageClass(self->storage_class_flag),
+              self->is_prototype,
+              to_string__Debug__CIDeclFunctionGen(&self->function_gen));
         case CI_DECL_KIND_STRUCT:
             return format__String(
               "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
@@ -1733,6 +1944,16 @@ IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)
               self->is_prototype,
               self->typedef_name ? self->typedef_name->buffer : "NULL",
               to_string__Debug__CIDeclStruct(&self->struct_));
+        case CI_DECL_KIND_STRUCT_GEN:
+            return format__String(
+              "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
+              "{b}, typedef_name = {s}, struct_gen = {Sr} "
+              "}",
+              to_string__Debug__CIDeclKind(self->kind),
+              to_string__Debug__CIStorageClass(self->storage_class_flag),
+              self->is_prototype,
+              self->typedef_name ? self->typedef_name->buffer : "NULL",
+              to_string__Debug__CIDeclStructGen(&self->struct_gen));
         case CI_DECL_KIND_VARIABLE:
             return format__String(
               "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
@@ -1752,6 +1973,16 @@ IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)
               self->is_prototype,
               self->typedef_name ? self->typedef_name->buffer : "NULL",
               to_string__Debug__CIDeclUnion(&self->union_));
+        case CI_DECL_KIND_UNION_GEN:
+            return format__String(
+              "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
+              "{b}, typedef_name = {s}, union_gen = {Sr} "
+              "}",
+              to_string__Debug__CIDeclKind(self->kind),
+              to_string__Debug__CIStorageClass(self->storage_class_flag),
+              self->is_prototype,
+              self->typedef_name ? self->typedef_name->buffer : "NULL",
+              to_string__Debug__CIDeclUnionGen(&self->union_gen));
         default:
             UNREACHABLE("unknown variant");
     }
@@ -1770,15 +2001,41 @@ VARIANT_DESTRUCTOR(CIDecl, function, CIDecl *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(CIDecl, function_gen, CIDecl *self)
+{
+    FREE(CIDeclFunctionGen, &self->function_gen);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(CIDecl, struct, CIDecl *self)
 {
     FREE(CIDeclStruct, &self->struct_);
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(CIDecl, struct_gen, CIDecl *self)
+{
+    if (self->typedef_name) {
+        FREE(String, self->typedef_name);
+    }
+
+    FREE(CIDeclStructGen, &self->struct_gen);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(CIDecl, union, CIDecl *self)
 {
     FREE(CIDeclUnion, &self->union_);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIDecl, union_gen, CIDecl *self)
+{
+    if (self->typedef_name) {
+        FREE(String, self->typedef_name);
+    }
+
+    FREE(CIDeclUnionGen, &self->union_gen);
     lily_free(self);
 }
 
@@ -1797,11 +2054,20 @@ DESTRUCTOR(CIDecl, CIDecl *self)
         case CI_DECL_KIND_FUNCTION:
             FREE_VARIANT(CIDecl, function, self);
             break;
+        case CI_DECL_KIND_FUNCTION_GEN:
+            FREE_VARIANT(CIDecl, function_gen, self);
+            break;
         case CI_DECL_KIND_STRUCT:
             FREE_VARIANT(CIDecl, struct, self);
             break;
+        case CI_DECL_KIND_STRUCT_GEN:
+            FREE_VARIANT(CIDecl, struct_gen, self);
+            break;
         case CI_DECL_KIND_UNION:
             FREE_VARIANT(CIDecl, union, self);
+            break;
+        case CI_DECL_KIND_UNION_GEN:
+            FREE_VARIANT(CIDecl, union_gen, self);
             break;
         case CI_DECL_KIND_VARIABLE:
             FREE_VARIANT(CIDecl, variable, self);

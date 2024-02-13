@@ -627,6 +627,10 @@ enum CIDeclKind
     CI_DECL_KIND_STRUCT = 1 << 2,
     CI_DECL_KIND_UNION = 1 << 3,
     CI_DECL_KIND_VARIABLE = 1 << 4,
+#define CI_DECL_KIND_GEN (1 << 5)
+    CI_DECL_KIND_FUNCTION_GEN = CI_DECL_KIND_FUNCTION | CI_DECL_KIND_GEN,
+    CI_DECL_KIND_STRUCT_GEN = CI_DECL_KIND_STRUCT | CI_DECL_KIND_GEN,
+    CI_DECL_KIND_UNION_GEN = CI_DECL_KIND_UNION | CI_DECL_KIND_GEN,
 };
 
 /**
@@ -797,6 +801,14 @@ inline CONSTRUCTOR(CIDeclFunction,
 
 /**
  *
+ * @brief Serialize function name.
+ */
+String *
+serialize_name__CIDeclFunction(const CIDeclFunction *self,
+                               const Vec *called_generic_params);
+
+/**
+ *
  * @brief Convert CIDeclFunction in String.
  * @note This function is only used to debug.
  */
@@ -810,6 +822,48 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunction, const CIDeclFunction *self);
  * @brief Free CIDeclFunction type.
  */
 DESTRUCTOR(CIDeclFunction, const CIDeclFunction *self);
+
+typedef struct CIDeclFunctionGen
+{
+    const CIDeclFunction *function; // const CIDeclFunction* (&)
+    String *name;
+    Vec *called_generic_params; // Vec<CIDataType*>* (&)
+} CIDeclFunctionGen;
+
+/**
+ *
+ * @brief Construct CIDeclFunctionGen type.
+ */
+inline CONSTRUCTOR(CIDeclFunctionGen,
+                   CIDeclFunctionGen,
+                   const CIDeclFunction *function,
+                   String *name,
+                   Vec *called_generic_params)
+{
+    return (CIDeclFunctionGen){ .function = function,
+                                .name = name,
+                                .called_generic_params =
+                                  called_generic_params };
+}
+
+/**
+ *
+ * @brief Convert CIDeclFunctionGen in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclFunctionGen, const CIDeclFunctionGen *self);
+#endif
+
+/**
+ *
+ * @brief Free CIDeclFunctionGen type.
+ */
+inline DESTRUCTOR(CIDeclFunctionGen, const CIDeclFunctionGen *self)
+{
+    FREE(String, self->name);
+}
 
 typedef struct CIDeclStructField
 {
@@ -866,6 +920,14 @@ inline CONSTRUCTOR(CIDeclStruct,
 
 /**
  *
+ * @brief Serialize struct name.
+ */
+String *
+serialize_name__CIDeclStruct(const CIDeclStruct *self,
+                             const Vec *called_generic_params);
+
+/**
+ *
  * @brief Convert CIDeclStruct in String.
  * @note This function is only used to debug.
  */
@@ -879,6 +941,47 @@ IMPL_FOR_DEBUG(to_string, CIDeclStruct, const CIDeclStruct *self);
  * @brief Free CIDeclStruct type.
  */
 DESTRUCTOR(CIDeclStruct, const CIDeclStruct *self);
+
+typedef struct CIDeclStructGen
+{
+    const CIDeclStruct *struct_; // const CIDeclStruct* (&)
+    String *name;
+    Vec *called_generic_params; // Vec<CIDataType*>* (&)
+} CIDeclStructGen;
+
+/**
+ *
+ * @brief Construct CIDeclStructGen type.
+ */
+inline CONSTRUCTOR(CIDeclStructGen,
+                   CIDeclStructGen,
+                   const CIDeclStruct *struct_,
+                   String *name,
+                   Vec *called_generic_params)
+{
+    return (CIDeclStructGen){ .struct_ = struct_,
+                              .name = name,
+                              .called_generic_params = called_generic_params };
+}
+
+/**
+ *
+ * @brief Convert CIDeclStructGen in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclStructGen, const CIDeclStructGen *self);
+#endif
+
+/**
+ *
+ * @brief Free CIDeclStructGen type.
+ */
+inline DESTRUCTOR(CIDeclStructGen, const CIDeclStructGen *self)
+{
+    FREE(String, self->name);
+}
 
 typedef struct CIDeclUnion
 {
@@ -904,6 +1007,14 @@ inline CONSTRUCTOR(CIDeclUnion,
 
 /**
  *
+ * @brief Serialize union name.
+ */
+String *
+serialize_name__CIDeclUnion(const CIDeclUnion *self,
+                            const Vec *called_generic_params);
+
+/**
+ *
  * @brief Convert CIDeclUnion in String.
  * @note This function is only used to debug.
  */
@@ -917,6 +1028,48 @@ IMPL_FOR_DEBUG(to_string, CIDeclUnion, const CIDeclUnion *self);
  * @brief Free CIDeclUnion type.
  */
 DESTRUCTOR(CIDeclUnion, const CIDeclUnion *self);
+
+typedef struct CIDeclUnionGen
+
+{
+    const CIDeclUnion *union_; // const CIDeclFunction* (&)
+    String *name;
+    Vec *called_generic_params; // Vec<CIDataType*>* (&)
+} CIDeclUnionGen;
+
+/**
+ *
+ * @brief Construct CIDeclUnionGen type.
+ */
+inline CONSTRUCTOR(CIDeclUnionGen,
+                   CIDeclUnionGen,
+                   const CIDeclUnion *union_,
+                   String *name,
+                   Vec *called_generic_params)
+{
+    return (CIDeclUnionGen){ .union_ = union_,
+                             .name = name,
+                             .called_generic_params = called_generic_params };
+}
+
+/**
+ *
+ * @brief Convert CIDeclUnionGen in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclUnionGen, const CIDeclUnionGen *self);
+#endif
+
+/**
+ *
+ * @brief Free CIDeclUnionGen type.
+ */
+inline DESTRUCTOR(CIDeclUnionGen, const CIDeclUnionGen *self)
+{
+    FREE(String, self->name);
+}
 
 typedef struct CIDeclVariable
 {
@@ -960,14 +1113,18 @@ typedef struct CIDecl
     enum CIDeclKind kind;
     int storage_class_flag;
     bool is_prototype;
-    String *typedef_name; // String*? (&)
+    String
+      *typedef_name; // String*? (&) | String*? (only for gen(s) declaration)
     union
     {
         CIDeclEnum enum_;
         CIDeclFunction function;
+        CIDeclFunctionGen function_gen;
         CIDeclStruct struct_;
+        CIDeclStructGen struct_gen;
         CIDeclVariable variable;
         CIDeclUnion union_;
+        CIDeclUnionGen union_gen;
     };
 } CIDecl;
 
@@ -996,6 +1153,16 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 
 /**
  *
+ * @brief Construct CIDecl type (CI_DECL_KIND_FUNCTION_GEN).
+ */
+VARIANT_CONSTRUCTOR(CIDecl *,
+                    CIDecl,
+                    function_gen,
+                    CIDecl *function,
+                    Vec *called_generic_params);
+
+/**
+ *
  * @brief Construct CIDecl type (CI_DECL_KIND_STRUCT).
  */
 VARIANT_CONSTRUCTOR(CIDecl *,
@@ -1005,6 +1172,16 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     bool is_prototype,
                     String *typedef_name,
                     CIDeclStruct struct_);
+
+/**
+ *
+ * @brief Construct CIDecl type (CI_DECL_KIND_STRUCT_GEN).
+ */
+VARIANT_CONSTRUCTOR(CIDecl *,
+                    CIDecl,
+                    struct_gen,
+                    CIDecl *struct_,
+                    Vec *called_generic_params);
 
 /**
  *
@@ -1020,6 +1197,16 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 
 /**
  *
+ * @brief Construct CIDecl type (CI_DECL_KIND_UNION_GEN).
+ */
+VARIANT_CONSTRUCTOR(CIDecl *,
+                    CIDecl,
+                    union_gen,
+                    CIDecl *union_,
+                    Vec *called_generic_params);
+
+/**
+ *
  * @brief Construct CIDecl type (CI_DECL_KIND_VARIABLE).
  */
 VARIANT_CONSTRUCTOR(CIDecl *,
@@ -1028,6 +1215,14 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     int storage_class_flag,
                     bool is_prototype,
                     CIDeclVariable variable);
+
+/**
+ *
+ * @brief Serialize typedef name.
+ */
+String *
+serialize_typedef_name__CIDecl(const CIDecl *self,
+                               const Vec *called_generic_params);
 
 /**
  *
