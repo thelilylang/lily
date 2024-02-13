@@ -114,6 +114,9 @@ static CIExpr *
 parse_primary_expr__CIParser(CIParser *self);
 
 static CIExpr *
+parse_struct_call__CIParser(CIParser *self);
+
+static CIExpr *
 parse_binary_expr__CIParser(CIParser *self, CIExpr *expr);
 
 /// @brief Parse expression.
@@ -938,6 +941,45 @@ parse_literal_expr__CIParser(CIParser *self)
 }
 
 CIExpr *
+parse_struct_call__CIParser(CIParser *self)
+{
+    Vec *fields = NEW(Vec);
+
+    while (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RBRACE &&
+           self->tokens_iters.current_token->kind != CI_TOKEN_KIND_EOF) {
+        Vec *path = NEW(Vec);
+
+        while (self->tokens_iters.current_token->kind == CI_TOKEN_KIND_DOT) {
+            next_token__CIParser(self);
+
+            if (expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, true)) {
+                push__Vec(path, self->tokens_iters.previous_token->identifier);
+            }
+        }
+
+        expect__CIParser(self, CI_TOKEN_KIND_EQ, true);
+
+        CIExpr *value = parse_expr__CIParser(self);
+
+        if (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RBRACE) {
+            expect__CIParser(self, CI_TOKEN_KIND_COMMA, true);
+        }
+
+        if (!value) {
+            FREE(Vec, path);
+
+            continue;
+        }
+
+        push__Vec(fields, NEW(CIExprStructFieldCall, path, value));
+    }
+
+    expect__CIParser(self, CI_TOKEN_KIND_RBRACE, true);
+
+    return NEW_VARIANT(CIExpr, struct_call, NEW(CIExprStructCall, fields));
+}
+
+CIExpr *
 parse_primary_expr__CIParser(CIParser *self)
 {
     if (data_type_as_expression) {
@@ -989,7 +1031,7 @@ parse_primary_expr__CIParser(CIParser *self)
             return NEW_VARIANT(CIExpr, grouping, expr);
         }
         case CI_TOKEN_KIND_LBRACE:
-            TODO("parse struct call");
+            return parse_struct_call__CIParser(self);
         case CI_TOKEN_KIND_KEYWORD_SIZEOF: {
             CIExpr *sizeof_expr = parse_expr__CIParser(self);
 
