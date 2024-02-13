@@ -351,6 +351,8 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                      .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_ARROW] = { .since = CI_STANDARD_NONE,
                               .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_AT] = { .since = CI_STANDARD_NONE,
+                           .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED] = { .since = CI_STANDARD_23,
                                              .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_ATTRIBUTE_FALLTHROUGH] = { .since = CI_STANDARD_23,
@@ -2708,6 +2710,11 @@ get_token__CIScanner(CIScanner *self, const CIScannerContext ctx)
             return NEW(CIToken,
                        CI_TOKEN_KIND_AMPERSAND,
                        clone__Location(&self->base.location));
+        // @
+        case '@':
+            return NEW(
+              CIToken, CI_TOKEN_KIND_AT, clone__Location(&self->base.location));
+
         // !=, !
         case '!':
             if (c1 == (char *)'=') {
