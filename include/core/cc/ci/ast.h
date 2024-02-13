@@ -194,6 +194,69 @@ typedef struct CIScope
  */
 CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, bool is_block);
 
+#define ADD_IN_SCOPE(hm, v) return insert__HashMap(hm, name->buffer, v);
+
+/**
+ *
+ * @brief Add enum to the scope.
+ * @return CIEnumID*? (&)
+ */
+inline const CIEnumID *
+add_enum__CIScope(const CIScope *self, const String *name, CIEnumID *value)
+{
+    ADD_IN_SCOPE(self->enums, value);
+}
+
+/**
+ *
+ * @brief Add function to the scope.
+ * @return CIFunctionID*? (&)
+ */
+inline const CIFunctionID *
+add_function__CIScope(const CIScope *self,
+                      const String *name,
+                      CIFunctionID *value)
+{
+    ADD_IN_SCOPE(self->functions, value);
+}
+
+/**
+ *
+ * @brief Add struct to the scope.
+ * @return CIStructID*? (&)
+ */
+inline const CIStructID *
+add_struct__CIScope(const CIScope *self, const String *name, CIStructID *value)
+{
+    ADD_IN_SCOPE(self->functions, value);
+}
+
+/**
+ *
+ * @brief Add union to the scope.
+ * @return CIUnionID*? (&)
+ */
+inline const CIUnionID *
+add_union__CIScope(const CIScope *self, const String *name, CIUnionID *value)
+{
+    ADD_IN_SCOPE(self->unions, value);
+}
+
+/**
+ *
+ * @brief Add variable to the scope.
+ * @return CIVariableID*? (&)
+ */
+inline const CIVariableID *
+add_variable__CIScope(const CIScope *self,
+                      const String *name,
+                      CIVariableID *value)
+{
+    ADD_IN_SCOPE(self->variables, value);
+}
+
+#define SEARCH_IN_SCOPE(hm) return get__HashMap(hm, name->buffer);
+
 /**
  *
  * @brief Search enum to the scope.
@@ -202,7 +265,7 @@ CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, bool is_block);
 inline const CIEnumID *
 search_enum__CIScope(const CIScope *self, const String *name)
 {
-    return get__HashMap(self->enums, name->buffer);
+    SEARCH_IN_SCOPE(self->enums);
 }
 
 /**
@@ -213,7 +276,7 @@ search_enum__CIScope(const CIScope *self, const String *name)
 inline const CIFunctionID *
 search_function__CIScope(const CIScope *self, const String *name)
 {
-    return get__HashMap(self->functions, name->buffer);
+    SEARCH_IN_SCOPE(self->functions);
 }
 
 /**
@@ -224,7 +287,7 @@ search_function__CIScope(const CIScope *self, const String *name)
 inline const CIStructID *
 search_struct__CIScope(const CIScope *self, const String *name)
 {
-    return get__HashMap(self->structs, name->buffer);
+    SEARCH_IN_SCOPE(self->structs);
 }
 
 /**
@@ -235,7 +298,7 @@ search_struct__CIScope(const CIScope *self, const String *name)
 inline const CIUnionID *
 search_union__CIScope(const CIScope *self, const String *name)
 {
-    return get__HashMap(self->unions, name->buffer);
+    SEARCH_IN_SCOPE(self->unions);
 }
 
 /**
@@ -246,7 +309,7 @@ search_union__CIScope(const CIScope *self, const String *name)
 inline const CIVariableID *
 search_variable__CIScope(const CIScope *self, const String *name)
 {
-    return get__HashMap(self->variables, name->buffer);
+    SEARCH_IN_SCOPE(self->variables);
 }
 
 /**
