@@ -119,6 +119,9 @@ static inline VARIANT_DESTRUCTOR(CIExpr, literal, CIExpr *self);
 /// @brief Free CIExpr type (CI_EXPR_KIND_SIZEOF).
 static VARIANT_DESTRUCTOR(CIExpr, sizeof, CIExpr *self);
 
+/// @brief Free CIExpr type (CI_EXPR_KIND_STRUCT_CALL).
+static VARIANT_DESTRUCTOR(CIExpr, struct_call, CIExpr *self);
+
 /// @brief Free CIExpr type (CI_EXPR_KIND_TERNARY).
 static VARIANT_DESTRUCTOR(CIExpr, ternary, CIExpr *self);
 
@@ -729,6 +732,10 @@ serialize__CIDataType(const CIDataType *self, String *buffer)
             break;
         case CI_DATA_TYPE_KIND_STRUCT:
             SERIALIZE_TYPE_WITH_GENERIC_PARAMS(self->struct_);
+
+            break;
+        case CI_DATA_TYPE_KIND_TYPEDEF:
+            SERIALIZE_NAME(self->typedef_, self->typedef_->len);
 
             break;
         case CI_DATA_TYPE_KIND_UNION:
@@ -2134,6 +2141,75 @@ DESTRUCTOR(CIExprFunctionCall, const CIExprFunctionCall *self)
     FREE(Vec, self->params);
 }
 
+CONSTRUCTOR(CIExprStructFieldCall *,
+            CIExprStructFieldCall,
+            Vec *path,
+            CIExpr *value)
+{
+    CIExprStructFieldCall *self = lily_malloc(sizeof(CIExprStructFieldCall));
+
+    self->path = path;
+    self->value = value;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CIExprStructFieldCall,
+               const CIExprStructFieldCall *self)
+{
+    String *res = format__String("CIExprStructFieldCall{{ path = {{ ");
+
+    for (Usize i = 0; i < self->path->len; ++i) {
+        push_str__String(res, CAST(String *, get__Vec(self->path, i))->buffer);
+
+        if (i + 1 != self->path->len) {
+            push_str__String(res, ", ");
+        }
+    }
+
+    push_str__String(res, " }");
+
+    {
+        String *s = format__String(", value = {Sr} }",
+                                   to_string__Debug__CIExpr(self->value));
+
+        APPEND_AND_FREE(res, s);
+    }
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CIExprStructFieldCall, CIExprStructFieldCall *self)
+{
+    FREE(Vec, self->path);
+    FREE(CIExpr, self->value);
+    lily_free(self);
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIExprStructCall, const CIExprStructCall *self)
+{
+    String *res = format__String("CIExprStructCall{{ fields =");
+
+    DEBUG_VEC_STRING(self->fields, res, CIExprStructFieldCall);
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CIExprStructCall, const CIExprStructCall *self)
+{
+    FREE_BUFFER_ITEMS(
+      self->fields->buffer, self->fields->len, CIExprStructFieldCall);
+    FREE(Vec, self->fields);
+}
+
 #ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string, CIExprKind, enum CIExprKind self)
@@ -2157,6 +2233,8 @@ IMPL_FOR_DEBUG(to_string, CIExprKind, enum CIExprKind self)
             return "CI_EXPR_KIND_LITERAL";
         case CI_EXPR_KIND_SIZEOF:
             return "CI_EXPR_KIND_SIZEOF";
+        case CI_EXPR_KIND_STRUCT_CALL:
+            return "CI_EXPR_KIND_STRUCT_CALL";
         case CI_EXPR_KIND_TERNARY:
             return "CI_EXPR_KIND_TERNARY";
         case CI_EXPR_KIND_UNARY:
@@ -2256,6 +2334,16 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, sizeof, CIExpr *sizeof_)
 
     self->kind = CI_EXPR_KIND_SIZEOF;
     self->sizeof_ = sizeof_;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, struct_call, CIExprStructCall struct_call)
+{
+    CIExpr *self = lily_malloc(sizeof(CIExpr));
+
+    self->kind = CI_EXPR_KIND_STRUCT_CALL;
+    self->struct_call = struct_call;
 
     return self;
 }
@@ -2370,6 +2458,8 @@ get_data_type__CIExpr(const CIExpr *self)
             }
         case CI_EXPR_KIND_SIZEOF:
             TODO("sizeof: implement size_t");
+        case CI_EXPR_KIND_STRUCT_CALL:
+            TODO("struct call");
         case CI_EXPR_KIND_TERNARY: {
             CIDataType *if_ = get_data_type__CIExpr(self->ternary.if_);
             CIDataType *else_ = get_data_type__CIExpr(self->ternary.else_);
@@ -2484,6 +2574,11 @@ IMPL_FOR_DEBUG(to_string, CIExpr, const CIExpr *self)
             return format__String("CIExpr{{ kind = {s}, sizeof_ = {Sr} }",
                                   to_string__Debug__CIExprKind(self->kind),
                                   to_string__Debug__CIExpr(self->sizeof_));
+        case CI_EXPR_KIND_STRUCT_CALL:
+            return format__String(
+              "CIExpr{{ kind = {s}, struct_call = {Sr} }",
+              to_string__Debug__CIExprKind(self->kind),
+              to_string__Debug__CIExprStructCall(&self->struct_call));
         case CI_EXPR_KIND_TERNARY:
             return format__String(
               "CIExpr{{ kind = {s}, ternary = {Sr} }",
@@ -2572,6 +2667,12 @@ VARIANT_DESTRUCTOR(CIExpr, sizeof, CIExpr *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(CIExpr, struct_call, CIExpr *self)
+{
+    FREE(CIExprStructCall, &self->struct_call);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(CIExpr, ternary, CIExpr *self)
 {
     FREE(CIExprTernary, &self->ternary);
@@ -2613,6 +2714,9 @@ DESTRUCTOR(CIExpr, CIExpr *self)
             break;
         case CI_EXPR_KIND_SIZEOF:
             FREE_VARIANT(CIExpr, sizeof, self);
+            break;
+        case CI_EXPR_KIND_STRUCT_CALL:
+            FREE_VARIANT(CIExpr, struct_call, self);
             break;
         case CI_EXPR_KIND_TERNARY:
             FREE_VARIANT(CIExpr, ternary, self);

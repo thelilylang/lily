@@ -1437,6 +1437,69 @@ IMPL_FOR_DEBUG(to_string, CIExprFunctionCall, const CIExprFunctionCall *self);
  */
 DESTRUCTOR(CIExprFunctionCall, const CIExprFunctionCall *self);
 
+typedef struct CIExprStructFieldCall
+{
+    Vec *path; // Vec<String* (&)>*
+    CIExpr *value;
+} CIExprStructFieldCall;
+
+/**
+ *
+ * @brief Construct CIExprStructFieldCall type.
+ */
+CONSTRUCTOR(CIExprStructFieldCall *,
+            CIExprStructFieldCall,
+            Vec *path,
+            CIExpr *value);
+
+/**
+ *
+ * @brief Convert CIExprStructFieldCall in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CIExprStructFieldCall,
+               const CIExprStructFieldCall *self);
+#endif
+
+/**
+ *
+ * @brief Free CIExprStructFieldCall type.
+ */
+DESTRUCTOR(CIExprStructFieldCall, CIExprStructFieldCall *self);
+
+typedef struct CIExprStructCall
+{
+    Vec *fields; // Vec<CIExprStructFieldCall*>*
+} CIExprStructCall;
+
+/**
+ *
+ * @brief Construct CIExprStructCall type.
+ */
+inline CONSTRUCTOR(CIExprStructCall, CIExprStructCall, Vec *fields)
+{
+    return (CIExprStructCall){ .fields = fields };
+}
+
+/**
+ *
+ * @brief Convert CIExprStructCall in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIExprStructCall, const CIExprStructCall *self);
+#endif
+
+/**
+ *
+ * @brief Free CIExprStructCall type.
+ */
+DESTRUCTOR(CIExprStructCall, const CIExprStructCall *self);
+
 enum CIExprKind
 {
     CI_EXPR_KIND_ALIGNOF,
@@ -1448,6 +1511,7 @@ enum CIExprKind
     CI_EXPR_KIND_IDENTIFIER,
     CI_EXPR_KIND_LITERAL,
     CI_EXPR_KIND_SIZEOF,
+    CI_EXPR_KIND_STRUCT_CALL,
     CI_EXPR_KIND_TERNARY,
     CI_EXPR_KIND_UNARY,
 };
@@ -1476,6 +1540,7 @@ struct CIExpr
         String *identifier; // String* (&)
         CIExprLiteral literal;
         CIExpr *sizeof_;
+        CIExprStructCall struct_call;
         CIExprTernary ternary;
         CIExprUnary unary;
     };
@@ -1537,6 +1602,15 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, literal, CIExprLiteral literal);
  * @brief Construct CIExpr type (CI_EXPR_KIND_SIZEOF).
  */
 VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, sizeof, CIExpr *sizeof_);
+
+/**
+ *
+ * @brief Construct CIExpr type (CI_EXPR_KIND_STRUCT_CALL).
+ */
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    struct_call,
+                    CIExprStructCall struct_call);
 
 /**
  *
