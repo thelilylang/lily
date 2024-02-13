@@ -196,6 +196,61 @@ CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, bool is_block);
 
 /**
  *
+ * @brief Search enum to the scope.
+ * @return CIEnumID*? (&)
+ */
+inline const CIEnumID *
+search_enum__CIScope(const CIScope *self, const String *name)
+{
+    return get__HashMap(self->enums, name->buffer);
+}
+
+/**
+ *
+ * @brief Search function to the scope.
+ * @return CIFunctionID*? (&)
+ */
+inline const CIFunctionID *
+search_function__CIScope(const CIScope *self, const String *name)
+{
+    return get__HashMap(self->functions, name->buffer);
+}
+
+/**
+ *
+ * @brief Search struct to the scope.
+ * @return CIStructID*? (&)
+ */
+inline const CIStructID *
+search_struct__CIScope(const CIScope *self, const String *name)
+{
+    return get__HashMap(self->structs, name->buffer);
+}
+
+/**
+ *
+ * @brief Search union to the scope.
+ * @return CIUnionID*? (&)
+ */
+inline const CIUnionID *
+search_union__CIScope(const CIScope *self, const String *name)
+{
+    return get__HashMap(self->unions, name->buffer);
+}
+
+/**
+ *
+ * @brief Search variable to the scope.
+ * @return CIVariableID*? (&)
+ */
+inline const CIVariableID *
+search_variable__CIScope(const CIScope *self, const String *name)
+{
+    return get__HashMap(self->variables, name->buffer);
+}
+
+/**
+ *
  * @brief Free CIScope type.
  */
 DESTRUCTOR(CIScope, CIScope *self);
