@@ -81,6 +81,9 @@ static void
 generate_function_literal_expr__CIGenerator(const CIExprLiteral *literal);
 
 static void
+generate_struct_call_expr__CIGenerator(const CIExprStructCall *struct_call);
+
+static void
 generate_function_expr__CIGenerator(const CIExpr *expr);
 
 static inline void
@@ -722,6 +725,30 @@ generate_function_literal_expr__CIGenerator(const CIExprLiteral *literal)
 }
 
 void
+generate_struct_call_expr__CIGenerator(const CIExprStructCall *struct_call)
+{
+    write_str__CIGenerator("{");
+
+    for (Usize i = 0; i < struct_call->fields->len; ++i) {
+        CIExprStructFieldCall *field = get__Vec(struct_call->fields, i);
+
+        for (Usize j = 0; j < field->path->len; ++j) {
+            write_String__CIGenerator(
+              format__String(".{S}", get__Vec(field->path, j)));
+        }
+
+        write_str__CIGenerator(" = ");
+        generate_function_expr__CIGenerator(field->value);
+
+        if (i + 1 != struct_call->fields->len) {
+            write_str__CIGenerator(", ");
+        }
+    }
+
+    write_str__CIGenerator("}");
+}
+
+void
 generate_function_call_expr__CIGenerator(
   const CIExprFunctionCall *function_call)
 {
@@ -786,6 +813,10 @@ generate_function_expr__CIGenerator(const CIExpr *expr)
             write_str__CIGenerator("sizeof(");
             generate_function_expr__CIGenerator(expr->sizeof_);
             write_str__CIGenerator(")");
+
+            break;
+        case CI_EXPR_KIND_STRUCT_CALL:
+            generate_struct_call_expr__CIGenerator(&expr->struct_call);
 
             break;
         case CI_EXPR_KIND_TERNARY:
