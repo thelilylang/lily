@@ -1329,8 +1329,16 @@ String *
 IMPL_FOR_DEBUG(to_string, CIDeclFunction, const CIDeclFunction *self)
 {
     String *res = format__String(
-      "CIDeclFunction{{ name = {S}, return_data_type = {Sr}, params =",
+      "CIDeclFunction{{ name = {S}, return_data_type = {Sr}, generic_params =",
       to_string__Debug__CIDataType(self->return_data_type));
+
+    if (self->generic_params) {
+        DEBUG_VEC_STRING(self->generic_params, res, CIDataType);
+    } else {
+        push_str__String(res, " NULL ");
+    }
+
+    push_str__String(res, ", params =");
 
     if (self->params) {
         DEBUG_VEC_STRING(self->params, res, CIDeclFunctionParam);
@@ -1355,6 +1363,12 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunction, const CIDeclFunction *self)
 DESTRUCTOR(CIDeclFunction, const CIDeclFunction *self)
 {
     FREE(CIDataType, self->return_data_type);
+
+    if (self->generic_params) {
+        FREE_BUFFER_ITEMS(
+          self->generic_params->buffer, self->generic_params->len, CIDataType);
+        FREE(Vec, self->generic_params);
+    }
 
     if (self->params) {
         FREE_BUFFER_ITEMS(
@@ -1617,8 +1631,9 @@ bool
 has_generic__CIDecl(const CIDecl *self)
 {
     switch (self->kind) {
-        case CI_DECL_KIND_ENUM:
         case CI_DECL_KIND_FUNCTION:
+            return self->function.generic_params;
+        case CI_DECL_KIND_ENUM:
         case CI_DECL_KIND_UNION:
         case CI_DECL_KIND_VARIABLE:
             return false;

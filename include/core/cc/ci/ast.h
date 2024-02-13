@@ -763,8 +763,9 @@ typedef struct CIDeclFunction
 {
     String *name; // String* (&)
     CIDataType *return_data_type;
-    Vec *params; // Vec<CIDeclFunctionParam*>*?
-    Vec *body;   // Vec<CIDeclFunctionItem*>*?
+    Vec *generic_params; // Vec<CIDataType*>*?
+    Vec *params;         // Vec<CIDeclFunctionParam*>*?
+    Vec *body;           // Vec<CIDeclFunctionItem*>*?
 } CIDeclFunction;
 
 /**
@@ -775,11 +776,13 @@ inline CONSTRUCTOR(CIDeclFunction,
                    CIDeclFunction,
                    String *name,
                    CIDataType *return_data_type,
+                   Vec *generic_params,
                    Vec *params,
                    Vec *body)
 {
     return (CIDeclFunction){ .name = name,
                              .return_data_type = return_data_type,
+                             .generic_params = generic_params,
                              .params = params,
                              .body = body };
 }
