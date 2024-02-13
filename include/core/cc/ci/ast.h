@@ -194,7 +194,8 @@ typedef struct CIScope
  */
 CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, bool is_block);
 
-#define ADD_IN_SCOPE(hm, v) return insert__HashMap(hm, name->buffer, v);
+#define ADD_IN_SCOPE(ty, hm) \
+    return insert__HashMap(hm, name->buffer, NEW(CIEnumID, file_id, hm->len));
 
 /**
  *
@@ -202,9 +203,9 @@ CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, bool is_block);
  * @return CIEnumID*? (&)
  */
 inline const CIEnumID *
-add_enum__CIScope(const CIScope *self, const String *name, CIEnumID *value)
+add_enum__CIScope(const CIScope *self, const String *name, CIFileID file_id)
 {
-    ADD_IN_SCOPE(self->enums, value);
+    ADD_IN_SCOPE(CIEnumID, self->enums);
 }
 
 /**
@@ -213,11 +214,9 @@ add_enum__CIScope(const CIScope *self, const String *name, CIEnumID *value)
  * @return CIFunctionID*? (&)
  */
 inline const CIFunctionID *
-add_function__CIScope(const CIScope *self,
-                      const String *name,
-                      CIFunctionID *value)
+add_function__CIScope(const CIScope *self, const String *name, CIFileID file_id)
 {
-    ADD_IN_SCOPE(self->functions, value);
+    ADD_IN_SCOPE(CIFunctionID, self->functions);
 }
 
 /**
@@ -226,9 +225,9 @@ add_function__CIScope(const CIScope *self,
  * @return CIStructID*? (&)
  */
 inline const CIStructID *
-add_struct__CIScope(const CIScope *self, const String *name, CIStructID *value)
+add_struct__CIScope(const CIScope *self, const String *name, CIFileID file_id)
 {
-    ADD_IN_SCOPE(self->functions, value);
+    ADD_IN_SCOPE(CIStructID, self->structs);
 }
 
 /**
@@ -237,9 +236,9 @@ add_struct__CIScope(const CIScope *self, const String *name, CIStructID *value)
  * @return CIUnionID*? (&)
  */
 inline const CIUnionID *
-add_union__CIScope(const CIScope *self, const String *name, CIUnionID *value)
+add_union__CIScope(const CIScope *self, const String *name, CIFileID file_id)
 {
-    ADD_IN_SCOPE(self->unions, value);
+    ADD_IN_SCOPE(CIUnionID, self->unions);
 }
 
 /**
@@ -248,11 +247,9 @@ add_union__CIScope(const CIScope *self, const String *name, CIUnionID *value)
  * @return CIVariableID*? (&)
  */
 inline const CIVariableID *
-add_variable__CIScope(const CIScope *self,
-                      const String *name,
-                      CIVariableID *value)
+add_variable__CIScope(const CIScope *self, const String *name, CIFileID file_id)
 {
-    ADD_IN_SCOPE(self->variables, value);
+    ADD_IN_SCOPE(CIVariableID, self->variables);
 }
 
 #define SEARCH_IN_SCOPE(hm) return get__HashMap(hm, name->buffer);
