@@ -59,6 +59,9 @@ static inline VARIANT_DESTRUCTOR(CIDataType, enum, CIDataType *self);
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_FUNCTION).
 static VARIANT_DESTRUCTOR(CIDataType, function, CIDataType *self);
 
+/// @brief Free CIDataType type (CI_DATA_TYPE_KIND_GENERIC).
+static inline VARIANT_DESTRUCTOR(CIDataType, generic, CIDataType *self);
+
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_PRE_CONST).
 static VARIANT_DESTRUCTOR(CIDataType, pre_const, CIDataType *self);
 
@@ -294,6 +297,8 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeKind, enum CIDataTypeKind self)
             return "CI_DATA_TYPE_KIND_FLOAT__IMAGINARY";
         case CI_DATA_TYPE_KIND_FUNCTION:
             return "CI_DATA_TYPE_KIND_FUNCTION";
+        case CI_DATA_TYPE_KIND_GENERIC:
+            return "CI_DATA_TYPE_KIND_GENERIC";
         case CI_DATA_TYPE_KIND_INT:
             return "CI_DATA_TYPE_KIND_INT";
         case CI_DATA_TYPE_KIND_LONG_DOUBLE:
@@ -504,6 +509,16 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     return self;
 }
 
+VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, generic, String *generic)
+{
+    CIDataType *self = lily_malloc(sizeof(CIDataType));
+
+    self->kind = CI_DATA_TYPE_KIND_GENERIC;
+    self->generic = generic;
+
+    return self;
+}
+
 VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, pre_const, CIDataType *pre_const)
 {
     CIDataType *self = lily_malloc(sizeof(CIDataType));
@@ -624,6 +639,8 @@ clone__CIDataType(const CIDataType *self)
                   params,
                   clone__CIDataType(self->function.return_data_type)));
         }
+        case CI_DATA_TYPE_KIND_GENERIC:
+            return NEW_VARIANT(CIDataType, generic, self->generic);
         case CI_DATA_TYPE_KIND_PRE_CONST:
             return NEW_VARIANT(
               CIDataType, pre_const, clone__CIDataType(self->pre_const));
@@ -718,6 +735,11 @@ serialize__CIDataType(const CIDataType *self, String *buffer)
             serialize_vec__CIDataType(self->function.params, buffer);
 
             break;
+        case CI_DATA_TYPE_KIND_GENERIC:
+            SERIALIZE_FMT_PUSH_TO_BUFFER(
+              "{zu}", SERIALIZE_NAME(self->generic, self->generic->len));
+
+            break;
         case CI_DATA_TYPE_KIND_PRE_CONST:
             serialize__CIDataType(self->pre_const, buffer);
 
@@ -735,7 +757,8 @@ serialize__CIDataType(const CIDataType *self, String *buffer)
 
             break;
         case CI_DATA_TYPE_KIND_TYPEDEF:
-            SERIALIZE_NAME(self->typedef_, self->typedef_->len);
+            SERIALIZE_FMT_PUSH_TO_BUFFER(
+              "{zu}", SERIALIZE_NAME(self->typedef_, self->typedef_->len));
 
             break;
         case CI_DATA_TYPE_KIND_UNION:
@@ -810,6 +833,8 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
             return !strcmp(self->enum_->buffer, other->enum_->buffer);
         case CI_DATA_TYPE_KIND_FUNCTION:
             TODO("eq__CIDataType: function data_type");
+        case CI_DATA_TYPE_KIND_GENERIC:
+            return !strcmp(self->generic->buffer, other->generic->buffer);
         case CI_DATA_TYPE_KIND_PRE_CONST:
             return eq__CIDataType(self->pre_const, other->pre_const);
         case CI_DATA_TYPE_KIND_POST_CONST:
@@ -916,6 +941,10 @@ IMPL_FOR_DEBUG(to_string, CIDataType, const CIDataType *self)
               "CIDataType{{ kind = {s}, function = {Sr} }",
               to_string__Debug__CIDataTypeKind(self->kind),
               to_string__Debug__CIDataTypeFunction(&self->function));
+        case CI_DATA_TYPE_KIND_GENERIC:
+            return format__String("CIDataType{{ kind = {s}, generic = {S} }",
+                                  to_string__Debug__CIDataTypeKind(self->kind),
+                                  self->generic);
         case CI_DATA_TYPE_KIND_PRE_CONST:
             return format__String(
               "CIDataType{{ kind = {s}, pre_const = {Sr} }",
@@ -974,6 +1003,11 @@ VARIANT_DESTRUCTOR(CIDataType, function, CIDataType *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(CIDataType, generic, CIDataType *self)
+{
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(CIDataType, pre_const, CIDataType *self)
 {
     FREE(CIDataType, self->pre_const);
@@ -1023,6 +1057,9 @@ DESTRUCTOR(CIDataType, CIDataType *self)
             break;
         case CI_DATA_TYPE_KIND_FUNCTION:
             FREE_VARIANT(CIDataType, function, self);
+            break;
+        case CI_DATA_TYPE_KIND_GENERIC:
+            FREE_VARIANT(CIDataType, generic, self);
             break;
         case CI_DATA_TYPE_KIND_PRE_CONST:
             FREE_VARIANT(CIDataType, pre_const, self);

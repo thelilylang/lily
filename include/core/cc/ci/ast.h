@@ -217,6 +217,7 @@ enum CIDataTypeKind
     CI_DATA_TYPE_KIND_FLOAT__COMPLEX,
     CI_DATA_TYPE_KIND_FLOAT__IMAGINARY,
     CI_DATA_TYPE_KIND_FUNCTION,
+    CI_DATA_TYPE_KIND_GENERIC,
     CI_DATA_TYPE_KIND_INT,
     CI_DATA_TYPE_KIND_LONG_DOUBLE,
     CI_DATA_TYPE_KIND_LONG_DOUBLE__COMPLEX,
@@ -441,6 +442,7 @@ typedef struct CIDataType
         struct CIDataType *_atomic;
         String *enum_; // String* (&)
         CIDataTypeFunction function;
+        String *generic; // String* (&)
         struct CIDataType *pre_const;
         struct CIDataType *post_const;
         struct CIDataType *ptr;
@@ -476,6 +478,12 @@ VARIANT_CONSTRUCTOR(CIDataType *,
                     CIDataType,
                     function,
                     CIDataTypeFunction function);
+
+/**
+ *
+ * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_GENERIC).
+ */
+VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, generic, String *generic);
 
 /**
  *
