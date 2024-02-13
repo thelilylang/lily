@@ -343,6 +343,8 @@ is_data_type__CIParser(CIParser *self)
         case CI_TOKEN_KIND_IDENTIFIER:
             return search_typedef__CIResultFile(
               self->file, self->tokens_iters.current_token->identifier);
+        case CI_TOKEN_KIND_AT: // TODO: check if the next token is an identifier
+                               // (not needed for the moment)
         case CI_TOKEN_KIND_KEYWORD_BOOL:
         case CI_TOKEN_KIND_KEYWORD_CHAR:
         case CI_TOKEN_KIND_KEYWORD_CONST:
@@ -391,6 +393,19 @@ parse_data_type__CIParser(CIParser *self)
                               self->tokens_iters.previous_token->identifier);
 
             break;
+        case CI_TOKEN_KIND_AT: {
+            String *generic = NULL;
+
+            if (expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, true)) {
+                generic = self->tokens_iters.current_token->identifier;
+            } else {
+                generic = generate_name_error__CIParser();
+            }
+
+            res = NEW_VARIANT(CIDataType, generic, generic);
+
+            break;
+        }
         case CI_TOKEN_KIND_KEYWORD_BOOL:
         case CI_TOKEN_KIND_KEYWORD__BOOL:
             res = NEW(CIDataType, CI_DATA_TYPE_KIND_BOOL);
