@@ -536,6 +536,8 @@ to_string__CIToken(CIToken *self)
             return from__String("&=");
         case CI_TOKEN_KIND_ARROW:
             return from__String("->");
+        case CI_TOKEN_KIND_AT:
+            return from__String("@");
         case CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED:
             if (self->attribute_deprecated) {
                 return format__String("[[deprecated(\"{S}\")]]",
@@ -908,6 +910,8 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_AMPERSAND_EQ";
         case CI_TOKEN_KIND_ARROW:
             return "CI_TOKEN_KIND_ARROW";
+        case CI_TOKEN_KIND_AT:
+            return "CI_TOKEN_KIND_AT";
         case CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED:
             return "CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED";
         case CI_TOKEN_KIND_ATTRIBUTE_FALLTHROUGH:
