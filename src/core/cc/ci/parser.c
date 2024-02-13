@@ -168,7 +168,8 @@ static CIDecl *
 parse_function__CIParser(CIParser *self,
                          int storage_class_flag,
                          CIDataType *return_data_type,
-                         String *name);
+                         String *name,
+                         Vec *generic_params);
 
 /// @brief Parse struct (union) fields.
 static Vec *
@@ -1714,7 +1715,8 @@ CIDecl *
 parse_function__CIParser(CIParser *self,
                          int storage_class_flag,
                          CIDataType *return_data_type,
-                         String *name)
+                         String *name,
+                         Vec *generic_params)
 {
     Vec *params =
       parse_function_params__CIParser(self); // Vec<CIDeclFunctionParam*>*?
@@ -1723,12 +1725,16 @@ parse_function__CIParser(CIParser *self,
         case CI_TOKEN_KIND_SEMICOLON:
             next_token__CIParser(self);
 
-            return NEW_VARIANT(
-              CIDecl,
-              function,
-              storage_class_flag,
-              true,
-              NEW(CIDeclFunction, name, return_data_type, params, NULL));
+            return NEW_VARIANT(CIDecl,
+                               function,
+                               storage_class_flag,
+                               true,
+                               NEW(CIDeclFunction,
+                                   name,
+                                   return_data_type,
+                                   generic_params,
+                                   params,
+                                   NULL));
         case CI_TOKEN_KIND_LBRACE:
             next_token__CIParser(self);
 
@@ -1740,6 +1746,7 @@ parse_function__CIParser(CIParser *self,
               NEW(CIDeclFunction,
                   name,
                   return_data_type,
+                  generic_params,
                   params,
                   parse_function_body__CIParser(self, false, false)));
         default:
@@ -1920,18 +1927,27 @@ parse_decl__CIParser(CIParser *self, bool in_function_body)
             switch (self->tokens_iters.current_token->kind) {
                 case CI_TOKEN_KIND_EQ:
                     if (generic_params) {
-                        FAILED("no generic params are expected in variable "
-                               "declaration");
+                        goto no_generic_params_expected;
                     }
 
                     return parse_variable__CIParser(
                       self, storage_class_flag, data_type, name, false);
                 case CI_TOKEN_KIND_SEMICOLON:
+                    if (generic_params) {
+                    no_generic_params_expected : {
+                        FAILED("no generic params are expected in variable "
+                               "declaration");
+                    }
+                    }
+
                     return parse_variable__CIParser(
                       self, storage_class_flag, data_type, name, true);
                 case CI_TOKEN_KIND_LPAREN:
-                    return parse_function__CIParser(
-                      self, storage_class_flag, data_type, name);
+                    return parse_function__CIParser(self,
+                                                    storage_class_flag,
+                                                    data_type,
+                                                    name,
+                                                    generic_params);
                 default:
                     if (!in_function_body) {
                         FAILED("expected `=`, `;`, `(`");
