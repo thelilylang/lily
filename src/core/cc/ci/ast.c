@@ -223,21 +223,27 @@ CONSTRUCTOR(CIUnionID *, CIUnionID, CIFileID file_id, Usize id)
     return self;
 }
 
-CONSTRUCTOR(CIVariableID *, CIVariableID, CIFileID file_id, Usize id)
+CONSTRUCTOR(CIVariableID *,
+            CIVariableID,
+            CIFileID file_id,
+            CIScopeID scope_id,
+            Usize id)
 {
     CIVariableID *self = lily_malloc(sizeof(CIVariableID));
 
     self->file_id = file_id;
+    self->scope_id = scope_id;
     self->id = id;
 
     return self;
 }
 
-CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, bool is_block)
+CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, Usize id, bool is_block)
 {
     CIScope *self = lily_malloc(sizeof(CIScope));
 
     self->parent = parent;
+    self->scope_id = NEW(CIScopeID, id);
     self->is_block = is_block;
     self->enums = NEW(HashMap);
     self->functions = NEW(HashMap);
@@ -250,9 +256,7 @@ CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, bool is_block)
 
 DESTRUCTOR(CIScope, CIScope *self)
 {
-    if (self->parent) {
-        FREE(CIScopeID, self->parent);
-    }
+    FREE(CIScopeID, self->scope_id);
 
     FREE_HASHMAP_VALUES(self->enums, CIEnumID);
     FREE(HashMap, self->enums);
@@ -2447,6 +2451,15 @@ IMPL_FOR_DEBUG(to_string, CIExprFunctionCall, const CIExprFunctionCall *self)
       format__String("CIExprFunctionCall {{ identifier = {S}, params =");
 
     DEBUG_VEC_STRING(self->params, res, CIExpr);
+
+    push_str__String(res, ", generic_params =");
+
+    if (self->generic_params) {
+        DEBUG_VEC_STRING(self->generic_params, res, CIDataType);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
     push_str__String(res, " }");
 
     return res;
@@ -2457,6 +2470,12 @@ DESTRUCTOR(CIExprFunctionCall, const CIExprFunctionCall *self)
 {
     FREE_BUFFER_ITEMS(self->params->buffer, self->params->len, CIExpr);
     FREE(Vec, self->params);
+
+    if (self->generic_params) {
+        FREE_BUFFER_ITEMS(
+          self->generic_params->buffer, self->generic_params->len, CIDataType);
+        FREE(Vec, self->generic_params);
+    }
 }
 
 CONSTRUCTOR(CIExprStructFieldCall *,

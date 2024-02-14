@@ -36,6 +36,9 @@
 #include <core/cc/ci/token.h>
 #include <core/shared/file.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+
 typedef struct CIResultFile CIResultFile;
 
 typedef struct CIResultDefine
@@ -108,15 +111,19 @@ inline DESTRUCTOR(CIResultInclude, CIResultInclude *self)
 // This structure represents the organization of an *.hci or *.ci file.
 typedef struct CIResultFile
 {
+    Usize id;
+    bool kind : 1;
     String *filename_result;
     File file_input;
-    HashMap *defines;          // HashMap<Vec<CIResultDefine*>*>*
-    HashMap *includes;         // HashMap<CIResultInclude*>*
-    OrderedHashMap *enums;     // OrderedHashMap<CIDecl*>*
-    OrderedHashMap *functions; // OrderedHashMap<CIDecl*>*
-    OrderedHashMap *structs;   // OrderedHashMap<CIDecl*>*
-    OrderedHashMap *unions;    // OrderedHashMap<CIDecl*>*
-    OrderedHashMap *variables; // OrderedHashMap<CIDecl*>*
+    HashMap *defines;    // HashMap<Vec<CIResultDefine*>*>*
+    HashMap *includes;   // HashMap<CIResultInclude*>*
+    CIScope *scope_base; // CIScope* (&)
+    Vec *scopes;         // Vec<CIScope*>*
+    Vec *enums;          // Vec<CIDecl*>*
+    Vec *functions;      // Vec<CIDecl*>*
+    Vec *structs;        // Vec<CIDecl*>*
+    Vec *unions;         // Vec<CIDecl*>*
+    Vec *variables;      // Vec<CIDecl*>*
     Usize count_error;
     CIScanner scanner;
     CIParser parser;
@@ -128,9 +135,30 @@ typedef struct CIResultFile
  */
 CONSTRUCTOR(CIResultFile *,
             CIResultFile,
+            Usize id,
+            bool kind,
             enum CIStandard standard,
             String *filename_result,
             File file_input);
+
+/**
+ *
+ * @brief Get the next scope ID.
+ */
+inline Usize
+get_next_scope_id__CIResultFile(const CIResultFile *self)
+{
+    return self->scopes->len;
+}
+
+/**
+ *
+ * @brief Add scope to scopes vector.
+ */
+CIScope *
+add_scope__CIResultFile(const CIResultFile *self,
+                        CIScopeID *parent,
+                        bool is_block);
 
 /**
  *
@@ -172,7 +200,57 @@ add_union__CIResultFile(const CIResultFile *self, CIDecl *union_);
  * returned.
  */
 const CIDecl *
-add_variable__CIResultFile(const CIResultFile *self, CIDecl *variable);
+add_variable__CIResultFile(const CIResultFile *self,
+                           const CIScope *scope,
+                           CIDecl *variable);
+
+/**
+ *
+ * @brief Get scope from id.
+ */
+CIScope *
+get_scope_from_id__CIResultFile(const CIResultFile *self,
+                                const CIScopeID *scope_id);
+
+/**
+ *
+ * @brief Get enum declaration from id.
+ */
+CIDecl *
+get_enum_from_id__CIResultFile(const CIResultFile *self,
+                               const CIEnumID *enum_id);
+
+/**
+ *
+ * @brief Get function declaration from id.
+ */
+CIDecl *
+get_function_from_id__CIResultFile(const CIResultFile *self,
+                                   const CIFunctionID *function_id);
+
+/**
+ *
+ * @brief Get struct declaration from id.
+ */
+CIDecl *
+get_struct_from_id__CIResultFile(const CIResultFile *self,
+                                 const CIStructID *struct_id);
+
+/**
+ *
+ * @brief Get union declaration from id.
+ */
+CIDecl *
+get_union_from_id__CIResultFile(const CIResultFile *self,
+                                const CIUnionID *union_id);
+
+/**
+ *
+ * @brief Get variable declaration from id.
+ */
+CIDecl *
+get_variable_from_id__CIResultFile(const CIResultFile *self,
+                                   const CIVariableID *variable_id);
 
 /**
  *
@@ -207,7 +285,9 @@ search_union__CIResultFile(const CIResultFile *self, const String *name);
  * @brief Search variable declaration in variables map.
  */
 CIDecl *
-search_variable__CIResultFile(const CIResultFile *self, const String *name);
+search_variable__CIResultFile(const CIResultFile *self,
+                              const CIScope *scope,
+                              const String *name);
 
 /**
  *
@@ -261,8 +341,8 @@ DESTRUCTOR(CIResultFile, CIResultFile *self);
 
 typedef struct CIResult
 {
-    HashMap *headers; // HashMap<CIResultFile*>*
-    HashMap *sources; // HashMap<CIResultFile*>*
+    OrderedHashMap *headers; // OrderedHashMap<CIResultFile*>*
+    OrderedHashMap *sources; // OrderedHashMap<CIResultFile*>*
 } CIResult;
 
 /**
@@ -272,49 +352,63 @@ typedef struct CIResult
 inline CONSTRUCTOR(CIResult, CIResult)
 {
     return (CIResult){
-        .headers = NEW(HashMap),
-        .sources = NEW(HashMap),
+        .headers = NEW(OrderedHashMap),
+        .sources = NEW(OrderedHashMap),
     };
 }
 
 /**
  *
- * @brief Add a header to headers HashMap.
+ * @brief Get file from FileID.
  */
-inline void
-add_header__CIResult(const CIResult *self, CIResultFile *header)
-{
-    insert__HashMap(self->headers, header->filename_result->buffer, header);
-}
+const CIResultFile *
+get_from_file_id__CIResult(const CIResult *self, const CIFileID *file_id);
 
 /**
  *
- * @brief Add a source to sources HashMap.
+ * @brief Get enum declaration from CIResult type.
  */
-inline void
-add_source__CIResult(const CIResult *self, CIResultFile *source)
-{
-    insert__HashMap(self->sources, source->filename_result->buffer, source);
-}
+const CIDecl *
+get_enum_from_id__CIResult(const CIResult *self, const CIEnumID *enum_id);
 
 /**
  *
- * @brief Check if the header is already in the headers HashMap.
+ * @brief Add a header to headers OrderedHashMap.
+ */
+CIResultFile *
+add_header__CIResult(const CIResult *self,
+                     enum CIStandard standard,
+                     String *filename_result,
+                     File file_input);
+
+/**
+ *
+ * @brief Add a source to sources OrderedHashMap.
+ */
+CIResultFile *
+add_source__CIResult(const CIResult *self,
+                     enum CIStandard standard,
+                     String *filename_result,
+                     File file_input);
+
+/**
+ *
+ * @brief Check if the header is already in the headers OrderedHashMap.
  */
 inline bool
 has_header__CIResult(const CIResult *self, const String *filename_result)
 {
-    return get__HashMap(self->headers, filename_result->buffer);
+    return get__OrderedHashMap(self->headers, filename_result->buffer);
 }
 
 /**
  *
- * @brief Check if the source is already in the sources HashMap.
+ * @brief Check if the source is already in the sources OrderedHashMap.
  */
 inline bool
 has_source__CIResult(const CIResult *self, const String *filename_result)
 {
-    return get__HashMap(self->sources, filename_result->buffer);
+    return get__OrderedHashMap(self->sources, filename_result->buffer);
 }
 
 /**

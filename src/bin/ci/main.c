@@ -88,16 +88,17 @@ main(int argc, char **argv)
 
             char *file_content = read_file__File(argv[i]);
             File file_input = NEW(File, argv[i], file_content);
-            CIResultFile *result_file =
-              NEW(CIResultFile, standard, filename_result, file_input);
-
-            run__CIResultFile(result_file);
+            CIResultFile *result_file = NULL;
 
             if (is_header) {
-                add_header__CIResult(&result, result_file);
+                result_file = add_header__CIResult(
+                  &result, standard, filename_result, file_input);
             } else {
-                add_source__CIResult(&result, result_file);
+                result_file = add_source__CIResult(
+                  &result, standard, filename_result, file_input);
             }
+
+            run__CIResultFile(result_file);
 
             lily_free(extension);
         }

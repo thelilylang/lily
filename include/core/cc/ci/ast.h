@@ -58,18 +58,22 @@ inline DESTRUCTOR(CIScopeID, CIScopeID *self)
     lily_free(self);
 }
 
+#define CI_FILE_ID_KIND_HEADER 0b0
+#define CI_FILE_ID_KIND_SOURCE 0b1
+
 typedef struct CIFileID
 {
     Usize id;
+    Uint8 kind : 1;
 } CIFileID;
 
 /**
  *
  * @brief Construct CIFileID type.
  */
-inline CONSTRUCTOR(CIFileID, CIFileID, Usize id)
+inline CONSTRUCTOR(CIFileID, CIFileID, Usize id, Uint8 kind)
 {
-    return (CIFileID){ .id = id };
+    return (CIFileID){ .id = id, .kind = kind };
 }
 
 typedef struct CIEnumID
@@ -159,6 +163,7 @@ inline DESTRUCTOR(CIUnionID, CIUnionID *self)
 typedef struct CIVariableID
 {
     CIFileID file_id;
+    CIScopeID scope_id;
     Usize id;
 } CIVariableID;
 
@@ -166,7 +171,11 @@ typedef struct CIVariableID
  *
  * @brief Construct CIVariableID type.
  */
-CONSTRUCTOR(CIVariableID *, CIVariableID, CIFileID file_id, Usize id);
+CONSTRUCTOR(CIVariableID *,
+            CIVariableID,
+            CIFileID file_id,
+            CIScopeID scope_id,
+            Usize id);
 
 /**
  *
@@ -179,7 +188,8 @@ inline DESTRUCTOR(CIVariableID, CIVariableID *self)
 
 typedef struct CIScope
 {
-    CIScopeID *parent; // CIScopeID*?
+    CIScopeID *parent; // CIScopeID*? (&)
+    CIScopeID *scope_id;
     bool is_block;
     HashMap *enums;     // HashMap<CIEnumID*>*
     HashMap *functions; // HashMap<CIFunctionID*>*
@@ -192,7 +202,7 @@ typedef struct CIScope
  *
  * @brief Construct CIScope type.
  */
-CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, bool is_block);
+CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, Usize id, bool is_block);
 
 #define ADD_IN_SCOPE(ty, hm) \
     return insert__HashMap(hm, name->buffer, NEW(CIEnumID, file_id, hm->len));
@@ -1726,8 +1736,9 @@ DESTRUCTOR(CIExprCast, const CIExprCast *self);
 
 typedef struct CIExprFunctionCall
 {
-    String *identifier; // String* (&)
-    Vec *params;        // Vec<CIExpr*>*
+    String *identifier;  // String* (&)
+    Vec *params;         // Vec<CIExpr*>*
+    Vec *generic_params; // Vec<CIDataType*>*?
 } CIExprFunctionCall;
 
 /**
@@ -1737,9 +1748,12 @@ typedef struct CIExprFunctionCall
 inline CONSTRUCTOR(CIExprFunctionCall,
                    CIExprFunctionCall,
                    String *identifier,
-                   Vec *params)
+                   Vec *params,
+                   Vec *generic_params)
 {
-    return (CIExprFunctionCall){ .identifier = identifier, .params = params };
+    return (CIExprFunctionCall){ .identifier = identifier,
+                                 .params = params,
+                                 .generic_params = generic_params };
 }
 
 /**

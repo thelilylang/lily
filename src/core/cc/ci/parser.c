@@ -234,6 +234,8 @@ static struct CIParserContext ctx;
 // statetement).
 static bool in_label = false;
 
+static CIScope *current_scope = NULL;
+
 #define ENABLE_IN_LABEL() in_label = true;
 #define DISABLE_IN_LABEL() \
     if (in_label) {        \
@@ -268,6 +270,7 @@ CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner)
     }
 
     ctx = NEW(CIParserContext);
+    current_scope = file->scope_base;
 
     return (CIParser){ .file = file,
                        .scanner = scanner,
@@ -557,6 +560,8 @@ parse_data_type__CIParser(CIParser *self)
                 case CI_TOKEN_KIND_IDENTIFIER:
                     if (storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
                         goto parse_struct;
+                    } else {
+                        goto free_generic_params;
                     }
 
                     break;
@@ -576,7 +581,11 @@ parse_data_type__CIParser(CIParser *self)
                 }
                 }
                 default:
-                    break;
+                free_generic_params : {
+                    FREE_BUFFER_ITEMS(
+                      generic_params->buffer, generic_params->len, CIDataType);
+                    FREE(Vec, generic_params);
+                }
             }
 
             break;
@@ -859,10 +868,14 @@ parse_function_call__CIParser(CIParser *self,
 
     expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
 
-    // TODO: manage generic function
+    if (generic_params) {
+        TODO("manage generic params");
+    }
 
     return NEW_VARIANT(
-      CIExpr, function_call, NEW(CIExprFunctionCall, identifier, params));
+      CIExpr,
+      function_call,
+      NEW(CIExprFunctionCall, identifier, params, generic_params));
 }
 
 CIExpr *
@@ -1707,6 +1720,13 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
 Vec *
 parse_function_body__CIParser(CIParser *self, bool in_loop, bool in_switch)
 {
+    ASSERT(current_scope);
+
+    CIScope *parent_scope = current_scope;
+
+    current_scope =
+      add_scope__CIResultFile(self->file, current_scope->scope_id, true);
+
     Vec *body = NEW(Vec); // Vec<CIDelcFunctionItem*>*
 
     while (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RBRACE &&
@@ -1718,6 +1738,8 @@ parse_function_body__CIParser(CIParser *self, bool in_loop, bool in_switch)
             push__Vec(body, item);
         }
     }
+
+    current_scope = parent_scope;
 
     DISABLE_IN_LABEL();
 
@@ -2055,7 +2077,8 @@ run__CIParser(CIParser *self)
 
                     break;
                 case CI_DECL_KIND_VARIABLE:
-                    if (add_variable__CIResultFile(self->file, decl)) {
+                    if (add_variable__CIResultFile(
+                          self->file, current_scope, decl)) {
                         FREE(CIDecl, decl);
                         FAILED("variable name is already defined");
                     }

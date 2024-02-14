@@ -169,16 +169,16 @@ static Usize tab_count = 0;
 void
 run__CIGenerator(const CIResult *result)
 {
-    HashMapIter iter_headers = NEW(HashMapIter, result->headers);
-    HashMapIter iter_sources = NEW(HashMapIter, result->sources);
+    OrderedHashMapIter iter_headers = NEW(OrderedHashMapIter, result->headers);
+    OrderedHashMapIter iter_sources = NEW(OrderedHashMapIter, result->sources);
     CIResultFile *current_header = NULL;
     CIResultFile *current_source = NULL;
 
-    while ((current_header = next__HashMapIter(&iter_headers))) {
+    while ((current_header = next__OrderedHashMapIter(&iter_headers))) {
         run_file__CIGenerator(current_header);
     }
 
-    while ((current_source = next__HashMapIter(&iter_sources))) {
+    while ((current_source = next__OrderedHashMapIter(&iter_sources))) {
         run_file__CIGenerator(current_source);
     }
 }
@@ -1141,18 +1141,18 @@ generate_decl__CIGenerator(const CIDecl *decl)
 void
 generate_decls__CIGenerator(const CIResultFile *file_result)
 {
-#define DECL_MAPS_LEN 5
-    OrderedHashMap *decl_maps[DECL_MAPS_LEN] = { file_result->enums,
-                                                 file_result->structs,
-                                                 file_result->unions,
-                                                 file_result->variables,
-                                                 file_result->functions };
+#define DECL_VECS_LEN 5
+    const Vec *decl_vecs[DECL_VECS_LEN] = { file_result->enums,
+                                            file_result->structs,
+                                            file_result->unions,
+                                            file_result->variables,
+                                            file_result->functions };
 
-    for (Usize i = 0; i < DECL_MAPS_LEN; ++i) {
-        OrderedHashMapIter iter_decls = NEW(OrderedHashMapIter, decl_maps[i]);
+    for (Usize i = 0; i < DECL_VECS_LEN; ++i) {
+        VecIter iter_decls = NEW(VecIter, decl_vecs[i]);
         CIDecl *decl = NULL;
 
-        while ((decl = next__OrderedHashMapIter(&iter_decls))) {
+        while ((decl = next__VecIter(&iter_decls))) {
             generate_decl__CIGenerator(decl);
         }
     }
@@ -1225,19 +1225,17 @@ generate_decl_prototype__CIGenerator(const CIDecl *decl)
 void
 generate_decls_prototype__CIGenerator(const CIResultFile *file_result)
 {
-#define DECL_PROTOTYPE_MAPS_LEN 4
-    OrderedHashMap *decl_maps[DECL_PROTOTYPE_MAPS_LEN] = {
-        file_result->enums,
-        file_result->structs,
-        file_result->unions,
-        file_result->functions
-    };
+#define DECL_PROTOTYPE_VECS_LEN 4
+    Vec *decl_vecs[DECL_PROTOTYPE_VECS_LEN] = { file_result->enums,
+                                                file_result->structs,
+                                                file_result->unions,
+                                                file_result->functions };
 
-    for (Usize i = 0; i < DECL_PROTOTYPE_MAPS_LEN; ++i) {
-        OrderedHashMapIter iter_decls = NEW(OrderedHashMapIter, decl_maps[i]);
+    for (Usize i = 0; i < DECL_PROTOTYPE_VECS_LEN; ++i) {
+        VecIter iter_decls = NEW(VecIter, decl_vecs[i]);
         CIDecl *decl = NULL;
 
-        while ((decl = next__OrderedHashMapIter(&iter_decls))) {
+        while ((decl = next__VecIter(&iter_decls))) {
             generate_decl_prototype__CIGenerator(decl);
         }
     }
