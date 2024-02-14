@@ -192,7 +192,8 @@ parse_variable__CIParser(CIParser *self,
                          int storage_class_flag,
                          CIDataType *data_type,
                          String *name,
-                         bool is_prototype);
+                         bool is_prototype,
+                         bool is_local);
 
 /// @brief Parse declaration.
 static CIDecl *
@@ -1909,7 +1910,8 @@ parse_variable__CIParser(CIParser *self,
                          int storage_class_flag,
                          CIDataType *data_type,
                          String *name,
-                         bool is_prototype)
+                         bool is_prototype,
+                         bool is_local)
 {
     if (in_label) {
         FAILED("Don't accept variable declaration in label");
@@ -1918,11 +1920,12 @@ parse_variable__CIParser(CIParser *self,
     next_token__CIParser(self); // skip `=` or `;`
 
     if (is_prototype) {
-        return NEW_VARIANT(CIDecl,
-                           variable,
-                           storage_class_flag,
-                           true,
-                           NEW(CIDeclVariable, data_type, name, NULL));
+        return NEW_VARIANT(
+          CIDecl,
+          variable,
+          storage_class_flag,
+          true,
+          NEW(CIDeclVariable, data_type, name, NULL, is_local));
     }
 
     CIExpr *expr = parse_expr__CIParser(self);
@@ -1939,7 +1942,7 @@ parse_variable__CIParser(CIParser *self,
                        variable,
                        storage_class_flag,
                        false,
-                       NEW(CIDeclVariable, data_type, name, expr));
+                       NEW(CIDeclVariable, data_type, name, expr, is_local));
 }
 
 CIDecl *
@@ -1974,8 +1977,12 @@ parse_decl__CIParser(CIParser *self, bool in_function_body)
                         goto no_generic_params_expected;
                     }
 
-                    res = parse_variable__CIParser(
-                      self, storage_class_flag, data_type, name, false);
+                    res = parse_variable__CIParser(self,
+                                                   storage_class_flag,
+                                                   data_type,
+                                                   name,
+                                                   false,
+                                                   in_function_body);
 
                     break;
                 case CI_TOKEN_KIND_SEMICOLON:
@@ -1986,8 +1993,12 @@ parse_decl__CIParser(CIParser *self, bool in_function_body)
                     }
                     }
 
-                    res = parse_variable__CIParser(
-                      self, storage_class_flag, data_type, name, true);
+                    res = parse_variable__CIParser(self,
+                                                   storage_class_flag,
+                                                   data_type,
+                                                   name,
+                                                   true,
+                                                   in_function_body);
 
                     break;
                 case CI_TOKEN_KIND_LPAREN:

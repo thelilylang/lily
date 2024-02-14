@@ -903,6 +903,8 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunctionParam, const CIDeclFunctionParam *self);
  */
 DESTRUCTOR(CIDeclFunctionParam, CIDeclFunctionParam *self);
 
+// TODO: Perhaps create a field scope (to have a local scope) in the
+// CIDeclFunction.
 typedef struct CIDeclFunction
 {
     String *name; // String* (&)
@@ -1208,6 +1210,7 @@ typedef struct CIDeclVariable
     CIDataType *data_type;
     String *name; // String* (&)
     CIExpr *expr; // CIExpr*?
+    bool is_local;
 } CIDeclVariable;
 
 /**
@@ -1218,10 +1221,12 @@ inline CONSTRUCTOR(CIDeclVariable,
                    CIDeclVariable,
                    CIDataType *data_type,
                    String *name,
-                   CIExpr *expr)
+                   CIExpr *expr,
+                   bool is_local)
 {
-    return (
-      CIDeclVariable){ .data_type = data_type, .name = name, .expr = expr };
+    return (CIDeclVariable){
+        .data_type = data_type, .name = name, .expr = expr, .is_local = is_local
+    };
 }
 
 /**

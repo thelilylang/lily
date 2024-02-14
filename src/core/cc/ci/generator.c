@@ -1142,6 +1142,7 @@ void
 generate_decls__CIGenerator(const CIResultFile *file_result)
 {
 #define DECL_VECS_LEN 5
+#define VARIABLES_IDX 3
     const Vec *decl_vecs[DECL_VECS_LEN] = { file_result->enums,
                                             file_result->structs,
                                             file_result->unions,
@@ -1152,8 +1153,21 @@ generate_decls__CIGenerator(const CIResultFile *file_result)
         VecIter iter_decls = NEW(VecIter, decl_vecs[i]);
         CIDecl *decl = NULL;
 
-        while ((decl = next__VecIter(&iter_decls))) {
-            generate_decl__CIGenerator(decl);
+#define GENERATE_DECL(cond)                       \
+    while ((decl = next__VecIter(&iter_decls))) { \
+        if (cond) {                               \
+            generate_decl__CIGenerator(decl);     \
+        }                                         \
+    }
+
+        switch (i) {
+            case VARIABLES_IDX:
+                // The expression `!decl->variable.is_local` is used to prevent
+                // local variables from being generated in the global scope.
+                GENERATE_DECL(!decl->variable.is_local);
+                break;
+            default:
+                GENERATE_DECL(true);
         }
     }
 }
