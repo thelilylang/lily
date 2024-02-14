@@ -238,8 +238,11 @@ add_variable__CIResultFile(const CIResultFile *self,
         return is_function_exist;
     }
 
-    const CIVariableID *is_variable_exist = add_variable__CIScope(
-      scope, variable_name, NEW(CIFileID, self->id, self->kind));
+    const CIVariableID *is_variable_exist =
+      add_variable__CIScope(scope,
+                            variable_name,
+                            *scope->scope_id,
+                            NEW(CIFileID, self->id, self->kind));
 
     if (!is_variable_exist) {
         push__Vec(self->variables, variable);

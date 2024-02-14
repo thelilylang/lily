@@ -205,7 +205,11 @@ typedef struct CIScope
 CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, Usize id, bool is_block);
 
 #define ADD_IN_SCOPE(ty, hm) \
-    return insert__HashMap(hm, name->buffer, NEW(CIEnumID, file_id, hm->len));
+    return insert__HashMap(hm, name->buffer, NEW(ty, file_id, hm->len));
+
+#define ADD_VARIABLE_IN_SCOPE(ty, scope_id, hm) \
+    return insert__HashMap(                     \
+      hm, name->buffer, NEW(ty, file_id, scope_id, hm->len));
 
 /**
  *
@@ -257,9 +261,12 @@ add_union__CIScope(const CIScope *self, const String *name, CIFileID file_id)
  * @return CIVariableID*? (&)
  */
 inline const CIVariableID *
-add_variable__CIScope(const CIScope *self, const String *name, CIFileID file_id)
+add_variable__CIScope(const CIScope *self,
+                      const String *name,
+                      CIScopeID scope_id,
+                      CIFileID file_id)
 {
-    ADD_IN_SCOPE(CIVariableID, self->variables);
+    ADD_VARIABLE_IN_SCOPE(CIVariableID, scope_id, self->variables);
 }
 
 #define SEARCH_IN_SCOPE(hm) return get__HashMap(hm, name->buffer);
@@ -1238,6 +1245,7 @@ typedef struct CIDecl
     enum CIDeclKind kind;
     int storage_class_flag;
     bool is_prototype;
+    Usize ref_count;
     String
       *typedef_name; // String*? (&) | String*? (only for gen(s) declaration)
     union
@@ -1340,6 +1348,17 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     int storage_class_flag,
                     bool is_prototype,
                     CIDeclVariable variable);
+
+/**
+ *
+ * @brief Increment `ref_count` field.
+ */
+inline CIDecl *
+ref__CIDecl(CIDecl *self)
+{
+    ++self->ref_count;
+    return self;
+}
 
 /**
  *

@@ -1674,6 +1674,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->kind = CI_DECL_KIND_ENUM;
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = is_prototype;
+    self->ref_count = 0;
     self->typedef_name = typedef_name;
     self->enum_ = enum_;
 
@@ -1692,6 +1693,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->kind = CI_DECL_KIND_FUNCTION;
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = is_prototype;
+    self->ref_count = 0;
     self->typedef_name = NULL;
     self->function = function;
 
@@ -1710,6 +1712,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->kind = CI_DECL_KIND_FUNCTION_GEN;
     self->storage_class_flag = function->storage_class_flag;
     self->is_prototype = false;
+    self->ref_count = 0;
     self->typedef_name = NULL;
     self->function_gen =
       NEW(CIDeclFunctionGen,
@@ -1733,6 +1736,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->kind = CI_DECL_KIND_STRUCT;
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = is_prototype;
+    self->ref_count = 0;
     self->typedef_name = typedef_name;
     self->struct_ = struct_;
 
@@ -1751,6 +1755,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->kind = CI_DECL_KIND_STRUCT_GEN;
     self->storage_class_flag = struct_->storage_class_flag;
     self->is_prototype = false;
+    self->ref_count = 0;
     self->typedef_name =
       serialize_typedef_name__CIDecl(struct_, called_generic_params);
     self->struct_gen =
@@ -1775,6 +1780,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->kind = CI_DECL_KIND_UNION;
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = is_prototype;
+    self->ref_count = 0;
     self->typedef_name = typedef_name;
     self->union_ = union_;
 
@@ -1793,6 +1799,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->kind = CI_DECL_KIND_UNION_GEN;
     self->storage_class_flag = union_->storage_class_flag;
     self->is_prototype = false;
+    self->ref_count = 0;
     self->typedef_name =
       serialize_typedef_name__CIDecl(union_, called_generic_params);
     self->union_gen = NEW(CIDeclUnionGen,
@@ -1815,6 +1822,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->kind = CI_DECL_KIND_VARIABLE;
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = is_prototype;
+    self->ref_count = 0;
     self->typedef_name = NULL;
     self->variable = variable;
 
@@ -2051,6 +2059,11 @@ VARIANT_DESTRUCTOR(CIDecl, variable, CIDecl *self)
 
 DESTRUCTOR(CIDecl, CIDecl *self)
 {
+    if (self->ref_count > 0) {
+        --self->ref_count;
+        return;
+    }
+
     switch (self->kind) {
         case CI_DECL_KIND_ENUM:
             FREE_VARIANT(CIDecl, enum, self);

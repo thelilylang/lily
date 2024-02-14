@@ -198,6 +198,12 @@ parse_variable__CIParser(CIParser *self,
 static CIDecl *
 parse_decl__CIParser(CIParser *self, bool in_function_body);
 
+/// @brief Add declaration to scope.
+static void
+add_decl_to_scope__CIParser(CIParser *self,
+                            CIDecl **decl_ref,
+                            bool in_function_body);
+
 /// @brief Parse storage class specifier.
 /// @return true if the token is a storage class specifier, false otherwise.
 static bool
@@ -1932,7 +1938,7 @@ parse_variable__CIParser(CIParser *self,
     return NEW_VARIANT(CIDecl,
                        variable,
                        storage_class_flag,
-                       true,
+                       false,
                        NEW(CIDeclVariable, data_type, name, expr));
 }
 
@@ -1944,6 +1950,7 @@ parse_decl__CIParser(CIParser *self, bool in_function_body)
     parse_storage_class_specifiers__CIParser(self, &storage_class_flag);
 
     CIDataType *data_type = parse_data_type__CIParser(self);
+    CIDecl *res = NULL;
 
     switch (self->tokens_iters.current_token->kind) {
         case CI_TOKEN_KIND_IDENTIFIER: {
@@ -1967,8 +1974,10 @@ parse_decl__CIParser(CIParser *self, bool in_function_body)
                         goto no_generic_params_expected;
                     }
 
-                    return parse_variable__CIParser(
+                    res = parse_variable__CIParser(
                       self, storage_class_flag, data_type, name, false);
+
+                    break;
                 case CI_TOKEN_KIND_SEMICOLON:
                     if (generic_params) {
                     no_generic_params_expected : {
@@ -1977,14 +1986,18 @@ parse_decl__CIParser(CIParser *self, bool in_function_body)
                     }
                     }
 
-                    return parse_variable__CIParser(
+                    res = parse_variable__CIParser(
                       self, storage_class_flag, data_type, name, true);
+
+                    break;
                 case CI_TOKEN_KIND_LPAREN:
-                    return parse_function__CIParser(self,
-                                                    storage_class_flag,
-                                                    data_type,
-                                                    name,
-                                                    generic_params);
+                    res = parse_function__CIParser(self,
+                                                   storage_class_flag,
+                                                   data_type,
+                                                   name,
+                                                   generic_params);
+
+                    break;
                 default:
                     if (!in_function_body) {
                         FAILED("expected `=`, `;`, `(`");
@@ -2004,6 +2017,77 @@ parse_decl__CIParser(CIParser *self, bool in_function_body)
 
             return NULL;
     }
+
+    if (res) {
+        add_decl_to_scope__CIParser(self, &res, in_function_body);
+    }
+
+    return res;
+}
+
+void
+add_decl_to_scope__CIParser(CIParser *self,
+                            CIDecl **decl_ref,
+                            bool in_function_body)
+{
+    CIDecl *decl = *decl_ref;
+
+    ASSERT(decl);
+
+    switch (decl->kind) {
+        case CI_DECL_KIND_ENUM:
+            if (add_enum__CIResultFile(self->file, decl)) {
+                FAILED("enum is already defined");
+
+                goto free;
+            }
+
+            goto exit;
+        case CI_DECL_KIND_FUNCTION:
+            if (add_function__CIResultFile(self->file, decl)) {
+                FAILED("function is already defined");
+
+                goto free;
+            }
+
+            goto exit;
+        case CI_DECL_KIND_STRUCT:
+            if (add_struct__CIResultFile(self->file, decl)) {
+                FAILED("struct is already defined");
+
+                goto free;
+            }
+
+            goto exit;
+        case CI_DECL_KIND_UNION:
+            if (add_union__CIResultFile(self->file, decl)) {
+                FAILED("union is already defined");
+
+                goto free;
+            }
+
+            goto exit;
+        case CI_DECL_KIND_VARIABLE:
+            if (add_variable__CIResultFile(self->file,
+                                           current_scope,
+                                           in_function_body ? ref__CIDecl(decl)
+                                                            : decl)) {
+                FAILED("variable is already defined");
+
+                goto free;
+            }
+
+            goto exit;
+        default:
+            UNREACHABLE("impossible situation");
+    }
+
+exit:
+    return;
+
+free:
+    FREE(CIDecl, decl);
+    *decl_ref = NULL;
 }
 
 bool
@@ -2065,29 +2149,7 @@ run__CIParser(CIParser *self)
     next_token__CIParser(self);
 
     while (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_EOF) {
-        CIDecl *decl = parse_decl__CIParser(self, false);
-
-        if (decl) {
-            switch (decl->kind) {
-                case CI_DECL_KIND_FUNCTION:
-                    if (add_function__CIResultFile(self->file, decl)) {
-                        FREE(CIDecl, decl);
-                        FAILED("function name is already defined");
-                    }
-
-                    break;
-                case CI_DECL_KIND_VARIABLE:
-                    if (add_variable__CIResultFile(
-                          self->file, current_scope, decl)) {
-                        FREE(CIDecl, decl);
-                        FAILED("variable name is already defined");
-                    }
-
-                    break;
-                default:
-                    UNREACHABLE("this situation is impossible");
-            }
-        }
+        parse_decl__CIParser(self, false);
     }
 
 #ifdef ENV_DEBUG
