@@ -1211,24 +1211,24 @@ generate_decl_prototype__CIGenerator(const CIDecl *decl)
                 generate_enum_prototype__CIGenerator(&decl->enum_);
 
                 break;
-			case CI_DECL_KIND_FUNCTION:
+            case CI_DECL_KIND_FUNCTION:
                 generate_function_prototype__CIGenerator(&decl->function);
 
                 break;
-			case CI_DECL_KIND_FUNCTION_GEN:
-				TODO("generate function gen");
+            case CI_DECL_KIND_FUNCTION_GEN:
+                TODO("generate function gen");
             case CI_DECL_KIND_STRUCT:
                 generate_struct_prototype__CIGenerator(&decl->struct_);
 
                 break;
-			case CI_DECL_KIND_STRUCT_GEN:
-				TODO("generate struct gen");
+            case CI_DECL_KIND_STRUCT_GEN:
+                TODO("generate struct gen");
             case CI_DECL_KIND_UNION:
                 generate_union_prototype__CIGenerator(&decl->union_);
 
                 break;
-			case CI_DECL_KIND_UNION_GEN:
-				TODO("generate union gen"); 
+            case CI_DECL_KIND_UNION_GEN:
+                TODO("generate union gen");
             default:
                 UNREACHABLE("this situation is impossible");
         }
