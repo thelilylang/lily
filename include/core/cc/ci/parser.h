@@ -25,9 +25,33 @@
 #ifndef LILY_CORE_CC_CI_PARSER_H
 #define LILY_CORE_CC_CI_PARSER_H
 
+#include <core/cc/ci/ast.h>
 #include <core/cc/ci/scanner.h>
 
 typedef struct CIResultFile CIResultFile;
+
+typedef struct CIParserWaitForVisit
+{
+    enum CIDeclKind kind;
+    String *name;             // String* (&)
+    Vec *generic_params_list; // Vec<Vec<CIDataType*>* (&)>*
+} CIParserWaitForVisit;
+
+/**
+ *
+ * @brief Construct CIParserWaitForVisit type.
+ */
+CONSTRUCTOR(CIParserWaitForVisit *,
+            CIParserWaitForVisit,
+            enum CIDeclKind kind,
+            String *name,
+            Vec *generic_params);
+
+/**
+ *
+ * @brief Free CIParserWaitForVisit type.
+ */
+DESTRUCTOR(CIParserWaitForVisit, CIParserWaitForVisit *self);
 
 typedef struct CIParserMacro
 {
@@ -57,7 +81,8 @@ typedef struct CIParser
     const CIScanner *scanner; // CIScanner* (&)
     Usize *count_error;       // Usize* (&)
     CITokensIters tokens_iters;
-    Stack *macros; // Vec<CIParserMacro*>*
+    Stack *macros;            // Vec<CIParserMacro*>*
+    HashMap *wait_visit_list; // HashMap<CIParserWaitForVisit*>*
 } CIParser;
 
 /**

@@ -44,6 +44,12 @@ struct CIParserContext
 
 static inline CONSTRUCTOR(struct CIParserContext, CIParserContext);
 
+static void
+add_item_to_wait_for_visit_list__CIParser(CIParser *self,
+                                          enum CIDeclKind kind,
+                                          String *name,
+                                          Vec *generic_params);
+
 static String *
 generate_name_error__CIParser();
 
@@ -256,6 +262,27 @@ CONSTRUCTOR(struct CIParserContext, CIParserContext)
                                      .current_stmt = NULL };
 }
 
+CONSTRUCTOR(CIParserWaitForVisit *,
+            CIParserWaitForVisit,
+            enum CIDeclKind kind,
+            String *name,
+            Vec *generic_params)
+{
+    CIParserWaitForVisit *self = lily_malloc(sizeof(CIParserWaitForVisit));
+
+    self->kind = kind;
+    self->name = name;
+    self->generic_params_list = init__Vec(1, generic_params);
+
+    return self;
+}
+
+DESTRUCTOR(CIParserWaitForVisit, CIParserWaitForVisit *self)
+{
+    FREE(Vec, self->generic_params_list);
+    lily_free(self);
+}
+
 CONSTRUCTOR(CIParserMacro *, CIParserMacro, Vec *params)
 {
     CIParserMacro *self = lily_malloc(sizeof(CIParserMacro));
@@ -283,7 +310,8 @@ CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner)
                        .scanner = scanner,
                        .count_error = scanner->base.count_error,
                        .tokens_iters = tokens_iters,
-                       .macros = NEW(Stack, CI_PARSER_MACROS_MAX_SIZE) };
+                       .macros = NEW(Stack, CI_PARSER_MACROS_MAX_SIZE),
+                       .wait_visit_list = NEW(HashMap) };
 }
 
 String *
@@ -296,6 +324,26 @@ generate_name_error__CIParser()
     push__Vec(names_error, name_error);
 
     return name_error;
+}
+
+void
+add_item_to_wait_for_visit_list__CIParser(CIParser *self,
+                                          enum CIDeclKind kind,
+                                          String *name,
+                                          Vec *generic_params)
+{
+    CIParserWaitForVisit *inserted_item =
+      get__HashMap(self->wait_visit_list, name->buffer);
+
+    if (inserted_item) {
+        ASSERT(inserted_item->kind == kind);
+
+        push__Vec(inserted_item->generic_params_list, generic_params);
+    } else {
+        insert__HashMap(self->wait_visit_list,
+                        name->buffer,
+                        NEW(CIParserWaitForVisit, kind, name, generic_params));
+    }
 }
 
 void
@@ -856,6 +904,13 @@ parse_function_call__CIParser(CIParser *self,
                               String *identifier,
                               Vec *generic_params)
 {
+    const CIDecl *function_decl =
+      search_function__CIResultFile(self->file, identifier);
+
+    if (!function_decl) {
+        FAILED("unknown function, impossible to call unknown function");
+    }
+
     next_token__CIParser(self); // skip `(`
 
     Vec *params = NEW(Vec); // Vec<CIExpr*>*
@@ -875,8 +930,38 @@ parse_function_call__CIParser(CIParser *self,
 
     expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
 
-    if (generic_params) {
-        TODO("manage generic params");
+    if (generic_params &&
+        !is_generic_params_contains_generic__CIDecl(generic_params)) {
+        if (function_decl->is_prototype) {
+            add_item_to_wait_for_visit_list__CIParser(
+              self,
+              function_decl->kind,
+              function_decl->function.name,
+              generic_params);
+        } else {
+            String *serialized_called_function_name =
+              serialize_name__CIDeclFunction(&function_decl->function,
+                                             generic_params);
+            const CIDecl *function_gen = search_function__CIResultFile(
+              self->file, serialized_called_function_name);
+
+            if (!function_gen) {
+                // TODO: visit function
+
+                CIDecl *function_gen_decl = NEW_VARIANT(CIDecl,
+                                                        function_gen,
+                                                        (CIDecl *)function_decl,
+                                                        generic_params);
+
+                add_decl_to_scope__CIParser(self, &function_gen_decl, false);
+            }
+
+            String *identifier_tmp = identifier;
+
+            identifier = serialized_called_function_name;
+
+            FREE(String, identifier_tmp);
+        }
     }
 
     return NEW_VARIANT(
@@ -2055,6 +2140,7 @@ add_decl_to_scope__CIParser(CIParser *self,
 
             goto exit;
         case CI_DECL_KIND_FUNCTION:
+        case CI_DECL_KIND_FUNCTION_GEN:
             if (add_function__CIResultFile(self->file, decl)) {
                 FAILED("function is already defined");
 
@@ -2063,6 +2149,7 @@ add_decl_to_scope__CIParser(CIParser *self,
 
             goto exit;
         case CI_DECL_KIND_STRUCT:
+        case CI_DECL_KIND_STRUCT_GEN:
             if (add_struct__CIResultFile(self->file, decl)) {
                 FAILED("struct is already defined");
 
@@ -2071,6 +2158,7 @@ add_decl_to_scope__CIParser(CIParser *self,
 
             goto exit;
         case CI_DECL_KIND_UNION:
+        case CI_DECL_KIND_UNION_GEN:
             if (add_union__CIResultFile(self->file, decl)) {
                 FAILED("union is already defined");
 
@@ -2163,6 +2251,8 @@ run__CIParser(CIParser *self)
         parse_decl__CIParser(self, false);
     }
 
+    // TODO: Resolve all items in `wait_visit_list`
+
 #ifdef ENV_DEBUG
     // TODO: Print debug
 #endif
@@ -2180,4 +2270,6 @@ DESTRUCTOR(CIParser, const CIParser *self)
     FREE(CITokensIters, &self->tokens_iters);
     FREE_STACK_ITEMS(self->macros, CIParserMacro);
     FREE(Stack, self->macros);
+    FREE_HASHMAP_VALUES(self->wait_visit_list, CIParserWaitForVisit);
+    FREE(HashMap, self->wait_visit_list);
 }

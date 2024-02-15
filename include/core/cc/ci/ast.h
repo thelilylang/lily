@@ -982,6 +982,13 @@ inline CONSTRUCTOR(CIDeclFunctionGen,
 
 /**
  *
+ * @brief Check if the gen function has generic.
+ */
+bool
+has_generic__CIDeclFunctionGen(const CIDeclFunctionGen *self);
+
+/**
+ *
  * @brief Convert CIDeclFunctionGen in String.
  * @note This function is only used to debug.
  */
@@ -1100,6 +1107,13 @@ inline CONSTRUCTOR(CIDeclStructGen,
 
 /**
  *
+ * @brief Check if the gen struct has generic.
+ */
+bool
+has_generic__CIDeclStructGen(const CIDeclStructGen *self);
+
+/**
+ *
  * @brief Convert CIDeclStructGen in String.
  * @note This function is only used to debug.
  */
@@ -1185,6 +1199,13 @@ inline CONSTRUCTOR(CIDeclUnionGen,
                              .name = name,
                              .called_generic_params = called_generic_params };
 }
+
+/**
+ *
+ * @brief Check if the gen union has generic.
+ */
+bool
+has_generic__CIDeclUnionGen(const CIDeclUnionGen *self);
 
 /**
  *
@@ -1353,6 +1374,13 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     int storage_class_flag,
                     bool is_prototype,
                     CIDeclVariable variable);
+
+/**
+ *
+ * @brief Check if the passed `generic_params` contains generic data type.
+ */
+bool
+is_generic_params_contains_generic__CIDecl(Vec *generic_params);
 
 /**
  *

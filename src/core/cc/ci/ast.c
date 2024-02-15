@@ -1455,6 +1455,13 @@ DESTRUCTOR(CIDeclFunction, const CIDeclFunction *self)
     }
 }
 
+bool
+has_generic__CIDeclFunctionGen(const CIDeclFunctionGen *self)
+{
+    return is_generic_params_contains_generic__CIDecl(
+      self->called_generic_params);
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclFunctionGen, const CIDeclFunctionGen *self)
@@ -1547,6 +1554,13 @@ DESTRUCTOR(CIDeclStruct, const CIDeclStruct *self)
     }
 }
 
+bool
+has_generic__CIDeclStructGen(const CIDeclStructGen *self)
+{
+    return is_generic_params_contains_generic__CIDecl(
+      self->called_generic_params);
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclStructGen, const CIDeclStructGen *self)
@@ -1616,6 +1630,13 @@ DESTRUCTOR(CIDeclUnion, const CIDeclUnion *self)
           self->fields->buffer, self->fields->len, CIDeclStructField);
         FREE(Vec, self->fields);
     }
+}
+
+bool
+has_generic__CIDeclUnionGen(const CIDeclUnionGen *self)
+{
+    return is_generic_params_contains_generic__CIDecl(
+      self->called_generic_params);
 }
 
 #ifdef ENV_DEBUG
@@ -1831,6 +1852,19 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     return self;
 }
 
+bool
+is_generic_params_contains_generic__CIDecl(Vec *generic_params)
+{
+    for (Usize i = 0; i < generic_params->len; ++i) {
+        if (CAST(CIDataType *, get__Vec(generic_params, i))->kind ==
+            CI_DATA_TYPE_KIND_GENERIC) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 String *
 serialize_typedef_name__CIDecl(const CIDecl *self,
                                const Vec *called_generic_params)
@@ -1876,18 +1910,18 @@ has_generic__CIDecl(const CIDecl *self)
         case CI_DECL_KIND_FUNCTION:
             return self->function.generic_params;
         case CI_DECL_KIND_FUNCTION_GEN:
-            TODO("function gen: has generic");
+            return has_generic__CIDeclFunctionGen(&self->function_gen);
         case CI_DECL_KIND_ENUM:
         case CI_DECL_KIND_VARIABLE:
             return false;
         case CI_DECL_KIND_STRUCT:
             return self->struct_.generic_params;
         case CI_DECL_KIND_STRUCT_GEN:
-            TODO("struct gen: has generic");
+            return has_generic__CIDeclStructGen(&self->struct_gen);
         case CI_DECL_KIND_UNION:
             return self->union_.generic_params;
         case CI_DECL_KIND_UNION_GEN:
-            TODO("union gen: has generic");
+            return has_generic__CIDeclUnionGen(&self->union_gen);
         default:
             UNREACHABLE("unknown variant");
     }
