@@ -31,6 +31,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/// @return CIDataType*? (&)
+static CIDataType *
+substitute_generic__CIGenerator(const String *generic_name);
+
+/// @return CIDataType*?
+static CIDataType *
+substitute_data_type__CIGenerator(CIDataType *data_type);
+
 static void
 run_file__CIGenerator(const CIResultFile *file_result);
 
@@ -123,6 +131,9 @@ static void
 generate_function_decl__CIGenerator(const CIDeclFunction *function);
 
 static void
+generate_function_gen_decl__CIGenerator(const CIDeclFunctionGen *function_gen);
+
+static void
 generate_struct_field__CIGenerator(const CIDeclStructField *field);
 
 static void
@@ -132,7 +143,13 @@ static void
 generate_struct_decl__CIGenerator(const CIDeclStruct *struct_);
 
 static void
+generate_struct_gen_decl__CIGenerator(const CIDeclStructGen *struct_gen);
+
+static void
 generate_union_decl__CIGenerator(const CIDeclUnion *union_);
+
+static void
+generate_union_gen_decl__CIGenerator(const CIDeclUnionGen *union_gen);
 
 static void
 generate_variable_decl__CIGenerator(const CIDeclVariable *variable);
@@ -150,10 +167,20 @@ static void
 generate_struct_prototype__CIGenerator(const CIDeclStruct *struct_);
 
 static void
+generate_struct_gen_prototype__CIGenerator(const CIDeclStructGen *struct_gen);
+
+static void
 generate_union_prototype__CIGenerator(const CIDeclUnion *union_);
 
 static void
+generate_union_gen_prototype__CIGenerator(const CIDeclUnionGen *union_gen);
+
+static void
 generate_function_prototype__CIGenerator(const CIDeclFunction *function);
+
+static void
+generate_function_gen_prototype__CIGenerator(
+  const CIDeclFunctionGen *function_gen);
 
 static void
 generate_decl_prototype__CIGenerator(const CIDecl *decl);
@@ -165,6 +192,178 @@ generate_decls_prototype__CIGenerator(const CIResultFile *file_result);
 // to multi-threading.
 static String *current_result_content = NULL;
 static Usize tab_count = 0;
+
+static Vec *current_generic_params = NULL;
+static Vec *current_called_generic_params = NULL;
+
+#define SET_CURRENT_GENERIC_PARAMS(cgp, ccgp) \
+    current_generic_params = cgp;             \
+    current_called_generic_params = ccgp;
+
+#define RESET_CURRENT_GENERIC_PARAMS() \
+    current_generic_params = NULL;     \
+    current_called_generic_params = NULL;
+
+CIDataType *
+substitute_generic__CIGenerator(const String *generic_name)
+{
+    Usize id = 0;
+
+    for (Usize i = 0; i < current_generic_params->len; ++i) {
+        CIDataType *generic_param = get__Vec(current_generic_params, i);
+
+        switch (generic_param->kind) {
+            case CI_DATA_TYPE_KIND_GENERIC:
+                if (!strcmp(generic_param->generic->buffer,
+                            generic_name->buffer)) {
+                    id = i;
+                    goto exit_loop;
+                }
+
+                break;
+            default:
+                FAILED("expected only generic data type for the moment");
+        }
+    }
+
+    FAILED("generic param name not found");
+
+    return NULL;
+
+exit_loop:
+    return get__Vec(current_called_generic_params, id);
+}
+
+CIDataType *
+substitute_data_type__CIGenerator(CIDataType *data_type)
+{
+    switch (data_type->kind) {
+        case CI_DATA_TYPE_KIND_ARRAY: {
+            CIDataType *subs = substitute_data_type__CIGenerator(data_type);
+
+            if (subs) {
+                switch (data_type->array.kind) {
+                    case CI_DATA_TYPE_ARRAY_KIND_SIZED:
+                        return NEW_VARIANT(CIDataType,
+                                           array,
+                                           NEW_VARIANT(CIDataTypeArray,
+                                                       sized,
+                                                       subs,
+                                                       data_type->array.name,
+                                                       data_type->array.size));
+                    case CI_DATA_TYPE_ARRAY_KIND_NONE:
+                        return NEW_VARIANT(CIDataType,
+                                           array,
+                                           NEW_VARIANT(CIDataTypeArray,
+                                                       none,
+                                                       subs,
+                                                       data_type->array.name));
+                    default:
+                        UNREACHABLE("unknown variant");
+                }
+            }
+
+            return ref__CIDataType(data_type);
+        }
+        case CI_DATA_TYPE_KIND__ATOMIC: {
+#define SUBSTITUTE_DATA_TYPE_WITH_MAX_ONE_GENERIC(data_type_name)   \
+    CIDataType *subs =                                              \
+      substitute_data_type__CIGenerator(data_type->data_type_name); \
+                                                                    \
+    if (subs) {                                                     \
+        return NEW_VARIANT(CIDataType, data_type_name, subs);       \
+    }                                                               \
+                                                                    \
+    return ref__CIDataType(data_type);
+
+            SUBSTITUTE_DATA_TYPE_WITH_MAX_ONE_GENERIC(_atomic);
+        }
+        case CI_DATA_TYPE_KIND_FUNCTION: {
+            Vec *subs_params = NEW(Vec);
+
+            for (Usize i = 0; i < data_type->function.params->len; ++i) {
+                CIDataType *subs_param = substitute_data_type__CIGenerator(
+                  get__Vec(data_type->function.params, i));
+
+                if (subs_param) {
+                    push__Vec(subs_params, subs_param);
+                }
+            }
+
+            CIDataType *subs_return_data_type =
+              substitute_data_type__CIGenerator(
+                data_type->function.return_data_type);
+
+            if (subs_return_data_type) {
+                return ref__CIDataType(data_type);
+            } else {
+                FREE_BUFFER_ITEMS(
+                  subs_params->buffer, subs_params->len, CIDataType);
+                FREE(Vec, subs_params);
+            }
+
+            return NEW_VARIANT(CIDataType,
+                               function,
+                               NEW(CIDataTypeFunction,
+                                   data_type->function.name,
+                                   subs_params,
+                                   subs_return_data_type));
+        }
+        case CI_DATA_TYPE_KIND_GENERIC: {
+            CIDataType *res =
+              substitute_generic__CIGenerator(data_type->generic);
+
+            if (res) {
+                return ref__CIDataType(res);
+            }
+
+            return NULL;
+        }
+        case CI_DATA_TYPE_KIND_PRE_CONST: {
+            SUBSTITUTE_DATA_TYPE_WITH_MAX_ONE_GENERIC(pre_const);
+        }
+        case CI_DATA_TYPE_KIND_POST_CONST: {
+            SUBSTITUTE_DATA_TYPE_WITH_MAX_ONE_GENERIC(post_const);
+        }
+        case CI_DATA_TYPE_KIND_PTR: {
+            SUBSTITUTE_DATA_TYPE_WITH_MAX_ONE_GENERIC(ptr);
+        }
+        case CI_DATA_TYPE_KIND_STRUCT: {
+#define SUBSTITUTE_GENERIC_DECL_DATA_TYPE(decl_name, decl_ty, variant)         \
+    if (data_type->decl_name.generic_params) {                                 \
+        Vec *subs_generic_params = NEW(Vec);                                   \
+                                                                               \
+        for (Usize i = 0; i < data_type->decl_name.generic_params->len; ++i) { \
+            CIDataType *subs_generic_param =                                   \
+              substitute_data_type__CIGenerator(                               \
+                get__Vec(data_type->decl_name.generic_params, i));             \
+                                                                               \
+            if (subs_generic_param) {                                          \
+                push__Vec(subs_generic_params, subs_generic_param);            \
+            }                                                                  \
+        }                                                                      \
+                                                                               \
+        return NEW_VARIANT(                                                    \
+          CIDataType,                                                          \
+          variant,                                                             \
+          NEW(decl_ty, data_type->decl_name.name, subs_generic_params));       \
+    }                                                                          \
+                                                                               \
+    return ref__CIDataType(data_type);
+
+            SUBSTITUTE_GENERIC_DECL_DATA_TYPE(
+              struct_, CIDataTypeStruct, struct);
+        }
+        case CI_DATA_TYPE_KIND_TYPEDEF:
+            // TODO: Maybe add generic on typedef.
+            return ref__CIDataType(data_type);
+        case CI_DATA_TYPE_KIND_UNION: {
+            SUBSTITUTE_GENERIC_DECL_DATA_TYPE(union_, CIDataTypeUnion, union);
+        }
+        default:
+            return ref__CIDataType(data_type);
+    }
+}
 
 void
 run__CIGenerator(const CIResult *result)
@@ -227,24 +426,29 @@ generate_storage_class__CIGenerator(const int *storage_class_flag)
 void
 generate_data_type__CIGenerator(const CIDataType *data_type)
 {
-    switch (data_type->kind) {
-        case CI_DATA_TYPE_KIND_ARRAY:
-            generate_data_type__CIGenerator(data_type->array.data_type);
+    CIDataType *subs_data_type =
+      substitute_data_type__CIGenerator((CIDataType *)data_type);
 
-            switch (data_type->array.kind) {
+    switch (subs_data_type->kind) {
+        case CI_DATA_TYPE_KIND_ARRAY:
+            generate_data_type__CIGenerator(subs_data_type->array.data_type);
+
+            switch (subs_data_type->array.kind) {
                 case CI_DATA_TYPE_ARRAY_KIND_NONE:
-                    write_String__CIGenerator(format__String(
-                      "{s}[]",
-                      data_type->array.name ? data_type->array.name->buffer
-                                            : ""));
+                    write_String__CIGenerator(
+                      format__String("{s}[]",
+                                     subs_data_type->array.name
+                                       ? subs_data_type->array.name->buffer
+                                       : ""));
 
                     break;
                 case CI_DATA_TYPE_ARRAY_KIND_SIZED:
-                    write_String__CIGenerator(format__String(
-                      "{s}[{zu}]",
-                      data_type->array.name ? data_type->array.name->buffer
-                                            : "",
-                      data_type->array.size));
+                    write_String__CIGenerator(
+                      format__String("{s}[{zu}]",
+                                     subs_data_type->array.name
+                                       ? subs_data_type->array.name->buffer
+                                       : "",
+                                     subs_data_type->array.size));
 
                     break;
                 default:
@@ -254,7 +458,7 @@ generate_data_type__CIGenerator(const CIDataType *data_type)
             break;
         case CI_DATA_TYPE_KIND__ATOMIC:
             write_str__CIGenerator("_Atomic ");
-            generate_data_type__CIGenerator(data_type->_atomic);
+            generate_data_type__CIGenerator(subs_data_type->_atomic);
 
             break;
         case CI_DATA_TYPE_KIND_BOOL:
@@ -291,7 +495,7 @@ generate_data_type__CIGenerator(const CIDataType *data_type)
             break;
         case CI_DATA_TYPE_KIND_ENUM:
             write_String__CIGenerator(
-              format__String("enum {S}", data_type->enum_));
+              format__String("enum {S}", subs_data_type->enum_));
 
             break;
         case CI_DATA_TYPE_KIND_FLOAT:
@@ -308,6 +512,14 @@ generate_data_type__CIGenerator(const CIDataType *data_type)
             break;
         case CI_DATA_TYPE_KIND_FUNCTION:
             TODO("function");
+        case CI_DATA_TYPE_KIND_GENERIC: {
+            String *buffer = NEW(String);
+
+            serialize__CIDataType(subs_data_type, buffer);
+            write_String__CIGenerator(buffer);
+
+            break;
+        }
         case CI_DATA_TYPE_KIND_INT:
             write_str__CIGenerator("int");
 
@@ -334,16 +546,16 @@ generate_data_type__CIGenerator(const CIDataType *data_type)
             break;
         case CI_DATA_TYPE_KIND_PRE_CONST:
             write_str__CIGenerator("const ");
-            generate_data_type__CIGenerator(data_type->pre_const);
+            generate_data_type__CIGenerator(subs_data_type->pre_const);
 
             break;
         case CI_DATA_TYPE_KIND_POST_CONST:
-            generate_data_type__CIGenerator(data_type->post_const);
+            generate_data_type__CIGenerator(subs_data_type->post_const);
             write_str__CIGenerator(" const");
 
             break;
         case CI_DATA_TYPE_KIND_PTR:
-            generate_data_type__CIGenerator(data_type->ptr);
+            generate_data_type__CIGenerator(subs_data_type->ptr);
             write_str__CIGenerator("*");
 
             break;
@@ -357,13 +569,13 @@ generate_data_type__CIGenerator(const CIDataType *data_type)
             break;
         case CI_DATA_TYPE_KIND_STRUCT:
             write_String__CIGenerator(
-              format__String("struct {S}__", data_type->struct_.name));
+              format__String("struct {S}__", subs_data_type->struct_.name));
 
-            if (data_type->struct_.generic_params) {
+            if (subs_data_type->struct_.generic_params) {
                 String *serialize_buffer = NEW(String);
 
-                serialize_vec__CIDataType(data_type->struct_.generic_params,
-                                          serialize_buffer);
+                serialize_vec__CIDataType(
+                  subs_data_type->struct_.generic_params, serialize_buffer);
                 write_String__CIGenerator(serialize_buffer);
             }
 
@@ -394,12 +606,12 @@ generate_data_type__CIGenerator(const CIDataType *data_type)
             break;
         case CI_DATA_TYPE_KIND_UNION:
             write_String__CIGenerator(
-              format__String("union {S}__", data_type->union_.name));
+              format__String("union {S}__", subs_data_type->union_.name));
 
-            if (data_type->union_.generic_params) {
+            if (subs_data_type->union_.generic_params) {
                 String *serialize_buffer = NEW(String);
 
-                serialize_vec__CIDataType(data_type->union_.generic_params,
+                serialize_vec__CIDataType(subs_data_type->union_.generic_params,
                                           serialize_buffer);
                 write_String__CIGenerator(serialize_buffer);
             }
@@ -412,6 +624,8 @@ generate_data_type__CIGenerator(const CIDataType *data_type)
         default:
             UNREACHABLE("unknown variant");
     }
+
+    FREE(CIDataType, subs_data_type);
 }
 
 void
@@ -1051,6 +1265,17 @@ generate_function_decl__CIGenerator(const CIDeclFunction *function)
 }
 
 void
+generate_function_gen_decl__CIGenerator(const CIDeclFunctionGen *function_gen)
+{
+    generate_function_gen_prototype__CIGenerator(function_gen);
+    SET_CURRENT_GENERIC_PARAMS(function_gen->function->generic_params,
+                               function_gen->called_generic_params);
+    write_str__CIGenerator(" ");
+    generate_function_body__CIGenerator(function_gen->function->body);
+    RESET_CURRENT_GENERIC_PARAMS();
+}
+
+void
 generate_struct_field__CIGenerator(const CIDeclStructField *field)
 {
     generate_data_type__CIGenerator(field->data_type);
@@ -1079,11 +1304,35 @@ generate_struct_decl__CIGenerator(const CIDeclStruct *struct_)
 }
 
 void
+generate_struct_gen_decl__CIGenerator(const CIDeclStructGen *struct_gen)
+{
+    SET_CURRENT_GENERIC_PARAMS(struct_gen->struct_->generic_params,
+                               struct_gen->called_generic_params);
+    write_String__CIGenerator(
+      format__String("struct {S} {{\n", struct_gen->name));
+    generate_struct_fields__CIGenerator(struct_gen->struct_->fields);
+    write_str__CIGenerator("}");
+    RESET_CURRENT_GENERIC_PARAMS();
+}
+
+void
 generate_union_decl__CIGenerator(const CIDeclUnion *union_)
 {
     write_String__CIGenerator(format__String("union {S} {{\n", union_->name));
     generate_struct_fields__CIGenerator(union_->fields);
     write_str__CIGenerator("}");
+}
+
+void
+generate_union_gen_decl__CIGenerator(const CIDeclUnionGen *union_gen)
+{
+    SET_CURRENT_GENERIC_PARAMS(union_gen->union_->generic_params,
+                               union_gen->called_generic_params);
+    write_String__CIGenerator(
+      format__String("union {S} {{\n", union_gen->name));
+    generate_struct_fields__CIGenerator(union_gen->union_->fields);
+    write_str__CIGenerator("}");
+    RESET_CURRENT_GENERIC_PARAMS();
 }
 
 void
@@ -1113,12 +1362,23 @@ generate_decl__CIGenerator(const CIDecl *decl)
                 break;
             case CI_DECL_KIND_FUNCTION:
                 return generate_function_decl__CIGenerator(&decl->function);
+            case CI_DECL_KIND_FUNCTION_GEN:
+                return generate_function_gen_decl__CIGenerator(
+                  &decl->function_gen);
             case CI_DECL_KIND_STRUCT:
                 generate_struct_decl__CIGenerator(&decl->struct_);
 
                 break;
+            case CI_DECL_KIND_STRUCT_GEN:
+                generate_struct_gen_decl__CIGenerator(&decl->struct_gen);
+
+                break;
             case CI_DECL_KIND_UNION:
                 generate_union_decl__CIGenerator(&decl->union_);
+
+                break;
+            case CI_DECL_KIND_UNION_GEN:
+                generate_union_gen_decl__CIGenerator(&decl->union_gen);
 
                 break;
             case CI_DECL_KIND_VARIABLE:
@@ -1185,9 +1445,21 @@ generate_struct_prototype__CIGenerator(const CIDeclStruct *struct_)
 }
 
 void
+generate_struct_gen_prototype__CIGenerator(const CIDeclStructGen *struct_gen)
+{
+    write_String__CIGenerator(format__String("struct {S}", struct_gen->name));
+}
+
+void
 generate_union_prototype__CIGenerator(const CIDeclUnion *union_)
 {
     write_String__CIGenerator(format__String("union {S}", union_->name));
+}
+
+void
+generate_union_gen_prototype__CIGenerator(const CIDeclUnionGen *union_gen)
+{
+    write_String__CIGenerator(format__String("union {S}", union_gen->name));
 }
 
 void
@@ -1196,6 +1468,18 @@ generate_function_prototype__CIGenerator(const CIDeclFunction *function)
     generate_data_type__CIGenerator(function->return_data_type);
     write_String__CIGenerator(format__String(" {S}", function->name));
     generate_function_params__CIGenerator(function->params);
+}
+
+void
+generate_function_gen_prototype__CIGenerator(
+  const CIDeclFunctionGen *function_gen)
+{
+    SET_CURRENT_GENERIC_PARAMS(function_gen->function->generic_params,
+                               function_gen->called_generic_params);
+    generate_data_type__CIGenerator(function_gen->function->return_data_type);
+    write_String__CIGenerator(format__String(" {S}", function_gen->name));
+    generate_function_params__CIGenerator(function_gen->function->params);
+    RESET_CURRENT_GENERIC_PARAMS();
 }
 
 void
@@ -1216,19 +1500,26 @@ generate_decl_prototype__CIGenerator(const CIDecl *decl)
 
                 break;
             case CI_DECL_KIND_FUNCTION_GEN:
-                TODO("generate function gen");
+                generate_function_gen_prototype__CIGenerator(
+                  &decl->function_gen);
+
+                break;
             case CI_DECL_KIND_STRUCT:
                 generate_struct_prototype__CIGenerator(&decl->struct_);
 
                 break;
             case CI_DECL_KIND_STRUCT_GEN:
-                TODO("generate struct gen");
+                generate_struct_gen_prototype__CIGenerator(&decl->struct_gen);
+
+                break;
             case CI_DECL_KIND_UNION:
                 generate_union_prototype__CIGenerator(&decl->union_);
 
                 break;
             case CI_DECL_KIND_UNION_GEN:
-                TODO("generate union gen");
+                generate_union_gen_prototype__CIGenerator(&decl->union_gen);
+
+                break;
             default:
                 UNREACHABLE("this situation is impossible");
         }

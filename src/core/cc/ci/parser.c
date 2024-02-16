@@ -455,7 +455,7 @@ parse_data_type__CIParser(CIParser *self)
             String *generic = NULL;
 
             if (expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, true)) {
-                generic = self->tokens_iters.current_token->identifier;
+                generic = self->tokens_iters.previous_token->identifier;
             } else {
                 generic = generate_name_error__CIParser();
             }
@@ -956,11 +956,7 @@ parse_function_call__CIParser(CIParser *self,
                 add_decl_to_scope__CIParser(self, &function_gen_decl, false);
             }
 
-            String *identifier_tmp = identifier;
-
             identifier = serialized_called_function_name;
-
-            FREE(String, identifier_tmp);
         }
     }
 

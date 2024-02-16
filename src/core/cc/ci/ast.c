@@ -485,6 +485,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, array, CIDataTypeArray array)
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
     self->kind = CI_DATA_TYPE_KIND_ARRAY;
+    self->ref_count = 0;
     self->array = array;
 
     return self;
@@ -495,6 +496,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, _atomic, CIDataType *_atomic)
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
     self->kind = CI_DATA_TYPE_KIND__ATOMIC;
+    self->ref_count = 0;
     self->_atomic = _atomic;
 
     return self;
@@ -505,6 +507,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, enum, String *enum_)
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
     self->kind = CI_DATA_TYPE_KIND_ENUM;
+    self->ref_count = 0;
     self->enum_ = enum_;
 
     return self;
@@ -518,6 +521,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
     self->kind = CI_DATA_TYPE_KIND_FUNCTION;
+    self->ref_count = 0;
     self->function = function;
 
     return self;
@@ -528,6 +532,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, generic, String *generic)
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
     self->kind = CI_DATA_TYPE_KIND_GENERIC;
+    self->ref_count = 0;
     self->generic = generic;
 
     return self;
@@ -538,6 +543,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, pre_const, CIDataType *pre_const)
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
     self->kind = CI_DATA_TYPE_KIND_PRE_CONST;
+    self->ref_count = 0;
     self->pre_const = pre_const;
 
     return self;
@@ -551,6 +557,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
     self->kind = CI_DATA_TYPE_KIND_POST_CONST;
+    self->ref_count = 0;
     self->post_const = post_const;
 
     return self;
@@ -561,6 +568,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, ptr, CIDataType *ptr)
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
     self->kind = CI_DATA_TYPE_KIND_PTR;
+    self->ref_count = 0;
     self->ptr = ptr;
 
     return self;
@@ -571,6 +579,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, struct, CIDataTypeStruct struct_)
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
     self->kind = CI_DATA_TYPE_KIND_STRUCT;
+    self->ref_count = 0;
     self->struct_ = struct_;
 
     return self;
@@ -581,6 +590,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, typedef, String *typedef_)
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
     self->kind = CI_DATA_TYPE_KIND_TYPEDEF;
+    self->ref_count = 0;
     self->typedef_ = typedef_;
 
     return self;
@@ -591,6 +601,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, union, CIDataTypeUnion union_)
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
     self->kind = CI_DATA_TYPE_KIND_UNION;
+    self->ref_count = 0;
     self->union_ = union_;
 
     return self;
@@ -601,6 +612,7 @@ CONSTRUCTOR(CIDataType *, CIDataType, enum CIDataTypeKind kind)
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
     self->kind = kind;
+    self->ref_count = 0;
 
     return self;
 }
@@ -751,7 +763,8 @@ serialize__CIDataType(const CIDataType *self, String *buffer)
             break;
         case CI_DATA_TYPE_KIND_GENERIC:
             SERIALIZE_FMT_PUSH_TO_BUFFER(
-              "{zu}", SERIALIZE_NAME(self->generic, self->generic->len));
+              "{zu}",
+              SERIALIZE_NAME(self->generic->buffer, self->generic->len));
 
             break;
         case CI_DATA_TYPE_KIND_PRE_CONST:
@@ -1059,6 +1072,11 @@ VARIANT_DESTRUCTOR(CIDataType, union, CIDataType *self)
 
 DESTRUCTOR(CIDataType, CIDataType *self)
 {
+    if (self->ref_count > 0) {
+        --self->ref_count;
+        return;
+    }
+
     switch (self->kind) {
         case CI_DATA_TYPE_KIND_ARRAY:
             FREE_VARIANT(CIDataType, array, self);

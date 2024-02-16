@@ -568,6 +568,7 @@ DESTRUCTOR(CIDataTypeUnion, const CIDataTypeUnion *self);
 typedef struct CIDataType
 {
     enum CIDataTypeKind kind;
+    Usize ref_count;
     union
     {
         CIDataTypeArray array;
@@ -661,6 +662,17 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, union, CIDataTypeUnion union_);
  * @brief Construct CIDataType type.
  */
 CONSTRUCTOR(CIDataType *, CIDataType, enum CIDataTypeKind kind);
+
+/**
+ *
+ * @brief Increment `ref_count`.
+ */
+inline CIDataType *
+ref__CIDataType(CIDataType *self)
+{
+    ++self->ref_count;
+    return self;
+}
 
 /**
  *
