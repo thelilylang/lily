@@ -1441,6 +1441,21 @@ is_generic_params_contains_generic__CIDecl(
 
 /**
  *
+ * @brief Get fields from decl.
+ */
+const Vec *
+get_fields__CIDecl(const CIDecl *self);
+
+/**
+ *
+ * @brief Get `generic_params` from decl.
+ * @return CIGenericParams* (&)
+ */
+CIGenericParams *
+get_generic_params__CIDecl(const CIDecl *self);
+
+/**
+ *
  * @brief Increment `ref_count` field.
  */
 inline CIDecl *

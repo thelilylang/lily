@@ -100,6 +100,24 @@ run__CIParser(CIParser *self);
 
 /**
  *
+ * @brief Substitute generic data type.
+ */
+CIDataType *
+substitute_generic__CIParser(const String *generic_name,
+                             CIGenericParams *generic_params,
+                             CIGenericParams *called_generic_params);
+
+/**
+ *
+ * @brief Substitute data type (with generic).
+ */
+CIDataType *
+substitute_data_type__CIParser(CIDataType *data_type,
+                               CIGenericParams *generic_params,
+                               CIGenericParams *called_generic_params);
+
+/**
+ *
  * @brief Free CIParser type.
  */
 DESTRUCTOR(CIParser, const CIParser *self);

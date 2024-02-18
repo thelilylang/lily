@@ -1888,6 +1888,34 @@ is_generic_params_contains_generic__CIDecl(
     return false;
 }
 
+const Vec *
+get_fields__CIDecl(const CIDecl *self)
+{
+    switch (self->kind) {
+        case CI_DECL_KIND_STRUCT:
+            return self->struct_.fields;
+        case CI_DECL_KIND_UNION:
+            return self->union_.fields;
+        default:
+            UNREACHABLE("cannot get fields from decl");
+    }
+}
+
+CIGenericParams *
+get_generic_params__CIDecl(const CIDecl *self)
+{
+    switch (self->kind) {
+        case CI_DECL_KIND_FUNCTION:
+            return self->function.generic_params;
+        case CI_DECL_KIND_STRUCT:
+            return self->struct_.generic_params;
+        case CI_DECL_KIND_UNION:
+            return self->union_.generic_params;
+        default:
+            UNREACHABLE("cannot get `generic_params`");
+    }
+}
+
 String *
 serialize_typedef_name__CIDecl(const CIDecl *self,
                                const CIGenericParams *called_generic_params)
