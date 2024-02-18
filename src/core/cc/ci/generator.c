@@ -193,8 +193,8 @@ generate_decls_prototype__CIGenerator(const CIResultFile *file_result);
 static String *current_result_content = NULL;
 static Usize tab_count = 0;
 
-static Vec *current_generic_params = NULL;
-static Vec *current_called_generic_params = NULL;
+static CIGenericParams *current_generic_params = NULL;
+static CIGenericParams *current_called_generic_params = NULL;
 
 #define SET_CURRENT_GENERIC_PARAMS(cgp, ccgp) \
     current_generic_params = cgp;             \
@@ -209,8 +209,8 @@ substitute_generic__CIGenerator(const String *generic_name)
 {
     Usize id = 0;
 
-    for (Usize i = 0; i < current_generic_params->len; ++i) {
-        CIDataType *generic_param = get__Vec(current_generic_params, i);
+    for (Usize i = 0; i < current_generic_params->params->len; ++i) {
+        CIDataType *generic_param = get__Vec(current_generic_params->params, i);
 
         switch (generic_param->kind) {
             case CI_DATA_TYPE_KIND_GENERIC:
@@ -231,7 +231,7 @@ substitute_generic__CIGenerator(const String *generic_name)
     return NULL;
 
 exit_loop:
-    return get__Vec(current_called_generic_params, id);
+    return get__Vec(current_called_generic_params->params, id);
 }
 
 CIDataType *
@@ -329,26 +329,28 @@ substitute_data_type__CIGenerator(CIDataType *data_type)
             SUBSTITUTE_DATA_TYPE_WITH_MAX_ONE_GENERIC(ptr);
         }
         case CI_DATA_TYPE_KIND_STRUCT: {
-#define SUBSTITUTE_GENERIC_DECL_DATA_TYPE(decl_name, decl_ty, variant)         \
-    if (data_type->decl_name.generic_params) {                                 \
-        Vec *subs_generic_params = NEW(Vec);                                   \
-                                                                               \
-        for (Usize i = 0; i < data_type->decl_name.generic_params->len; ++i) { \
-            CIDataType *subs_generic_param =                                   \
-              substitute_data_type__CIGenerator(                               \
-                get__Vec(data_type->decl_name.generic_params, i));             \
-                                                                               \
-            if (subs_generic_param) {                                          \
-                push__Vec(subs_generic_params, subs_generic_param);            \
-            }                                                                  \
-        }                                                                      \
-                                                                               \
-        return NEW_VARIANT(                                                    \
-          CIDataType,                                                          \
-          variant,                                                             \
-          NEW(decl_ty, data_type->decl_name.name, subs_generic_params));       \
-    }                                                                          \
-                                                                               \
+#define SUBSTITUTE_GENERIC_DECL_DATA_TYPE(decl_name, decl_ty, variant)   \
+    if (data_type->decl_name.generic_params) {                           \
+        Vec *subs_params = NEW(Vec);                                     \
+                                                                         \
+        for (Usize i = 0;                                                \
+             i < data_type->decl_name.generic_params->params->len;       \
+             ++i) {                                                      \
+            CIDataType *subs_param = substitute_data_type__CIGenerator(  \
+              get__Vec(data_type->decl_name.generic_params->params, i)); \
+                                                                         \
+            if (subs_param) {                                            \
+                push__Vec(subs_params, subs_param);                      \
+            }                                                            \
+        }                                                                \
+                                                                         \
+        return NEW_VARIANT(CIDataType,                                   \
+                           variant,                                      \
+                           NEW(decl_ty,                                  \
+                               data_type->decl_name.name,                \
+                               NEW(CIGenericParams, subs_params)));      \
+    }                                                                    \
+                                                                         \
     return ref__CIDataType(data_type);
 
             SUBSTITUTE_GENERIC_DECL_DATA_TYPE(
@@ -575,7 +577,8 @@ generate_data_type__CIGenerator(const CIDataType *data_type)
                 String *serialize_buffer = NEW(String);
 
                 serialize_vec__CIDataType(
-                  subs_data_type->struct_.generic_params, serialize_buffer);
+                  subs_data_type->struct_.generic_params->params,
+                  serialize_buffer);
                 write_String__CIGenerator(serialize_buffer);
             }
 
@@ -611,8 +614,9 @@ generate_data_type__CIGenerator(const CIDataType *data_type)
             if (subs_data_type->union_.generic_params) {
                 String *serialize_buffer = NEW(String);
 
-                serialize_vec__CIDataType(subs_data_type->union_.generic_params,
-                                          serialize_buffer);
+                serialize_vec__CIDataType(
+                  subs_data_type->union_.generic_params->params,
+                  serialize_buffer);
                 write_String__CIGenerator(serialize_buffer);
             }
 

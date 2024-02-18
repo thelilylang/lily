@@ -332,6 +332,53 @@ search_variable__CIScope(const CIScope *self, const String *name)
  */
 DESTRUCTOR(CIScope, CIScope *self);
 
+typedef struct CIGenericParams
+{
+    Usize ref_count;
+    Vec *params; // Vec<CIDataType*>*
+} CIGenericParams;
+
+/**
+ *
+ * @brief Construct CIGenericParams type.
+ */
+CONSTRUCTOR(CIGenericParams *, CIGenericParams, Vec *params);
+
+/**
+ *
+ * @brief Increment `ref_count`.
+ * @return CIGenericParams*
+ */
+inline CIGenericParams *
+ref__CIGenericParams(CIGenericParams *self)
+{
+    ++self->ref_count;
+    return self;
+}
+
+/**
+ *
+ * @brief Clone CIGenericParams type.
+ */
+CIGenericParams *
+clone__CIGenericParams(const CIGenericParams *self);
+
+/**
+ *
+ * @brief Convert CIGenericParams in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIGenericParams, const CIGenericParams *self);
+#endif
+
+/**
+ *
+ * @brief Free CIGenericParams type.
+ */
+DESTRUCTOR(CIGenericParams, CIGenericParams *self);
+
 enum CIDataTypeKind
 {
     CI_DATA_TYPE_KIND_ARRAY,
@@ -499,8 +546,8 @@ DESTRUCTOR(CIDataTypeFunction, const CIDataTypeFunction *self);
 
 typedef struct CIDataTypeStruct
 {
-    String *name;        // String* (&)
-    Vec *generic_params; // Vec<CIDataType*>*?
+    String *name;                    // String* (&)
+    CIGenericParams *generic_params; // CIGenericParams*?
 } CIDataTypeStruct;
 
 /**
@@ -510,7 +557,7 @@ typedef struct CIDataTypeStruct
 inline CONSTRUCTOR(CIDataTypeStruct,
                    CIDataTypeStruct,
                    String *name,
-                   Vec *generic_params)
+                   CIGenericParams *generic_params)
 {
     return (CIDataTypeStruct){ .name = name, .generic_params = generic_params };
 }
@@ -533,8 +580,8 @@ DESTRUCTOR(CIDataTypeStruct, const CIDataTypeStruct *self);
 
 typedef struct CIDataTypeUnion
 {
-    String *name;        // String* (&)
-    Vec *generic_params; // Vec<CIDataType*>*?
+    String *name;                    // String* (&)
+    CIGenericParams *generic_params; // CIGenericParams*?
 } CIDataTypeUnion;
 
 /**
@@ -544,7 +591,7 @@ typedef struct CIDataTypeUnion
 inline CONSTRUCTOR(CIDataTypeUnion,
                    CIDataTypeUnion,
                    String *name,
-                   Vec *generic_params)
+                   CIGenericParams *generic_params)
 {
     return (CIDataTypeUnion){ .name = name, .generic_params = generic_params };
 }
@@ -921,9 +968,9 @@ typedef struct CIDeclFunction
 {
     String *name; // String* (&)
     CIDataType *return_data_type;
-    Vec *generic_params; // Vec<CIDataType*>*?
-    Vec *params;         // Vec<CIDeclFunctionParam*>*?
-    Vec *body;           // Vec<CIDeclFunctionItem*>*?
+    CIGenericParams *generic_params; // CIGenericParams*?
+    Vec *params;                     // Vec<CIDeclFunctionParam*>*?
+    Vec *body;                       // Vec<CIDeclFunctionItem*>*?
 } CIDeclFunction;
 
 /**
@@ -934,7 +981,7 @@ inline CONSTRUCTOR(CIDeclFunction,
                    CIDeclFunction,
                    String *name,
                    CIDataType *return_data_type,
-                   Vec *generic_params,
+                   CIGenericParams *generic_params,
                    Vec *params,
                    Vec *body)
 {
@@ -951,7 +998,7 @@ inline CONSTRUCTOR(CIDeclFunction,
  */
 String *
 serialize_name__CIDeclFunction(const CIDeclFunction *self,
-                               const Vec *called_generic_params);
+                               const CIGenericParams *called_generic_params);
 
 /**
  *
@@ -973,7 +1020,7 @@ typedef struct CIDeclFunctionGen
 {
     const CIDeclFunction *function; // const CIDeclFunction* (&)
     String *name;
-    Vec *called_generic_params; // Vec<CIDataType*>* (&)
+    CIGenericParams *called_generic_params; // CIGenericParams*
 } CIDeclFunctionGen;
 
 /**
@@ -984,7 +1031,7 @@ inline CONSTRUCTOR(CIDeclFunctionGen,
                    CIDeclFunctionGen,
                    const CIDeclFunction *function,
                    String *name,
-                   Vec *called_generic_params)
+                   CIGenericParams *called_generic_params)
 {
     return (CIDeclFunctionGen){ .function = function,
                                 .name = name,
@@ -1013,10 +1060,7 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunctionGen, const CIDeclFunctionGen *self);
  *
  * @brief Free CIDeclFunctionGen type.
  */
-inline DESTRUCTOR(CIDeclFunctionGen, const CIDeclFunctionGen *self)
-{
-    FREE(String, self->name);
-}
+DESTRUCTOR(CIDeclFunctionGen, const CIDeclFunctionGen *self);
 
 typedef struct CIDeclStructField
 {
@@ -1051,9 +1095,9 @@ DESTRUCTOR(CIDeclStructField, CIDeclStructField *self);
 
 typedef struct CIDeclStruct
 {
-    String *name;        // String* (&)
-    Vec *generic_params; // Vec<CIDataType*>*?
-    Vec *fields;         // Vec<CIDeclStructField*>*?
+    String *name;                    // String* (&)
+    CIGenericParams *generic_params; // CIGenericParams*?
+    Vec *fields;                     // Vec<CIDeclStructField*>*?
 } CIDeclStruct;
 
 /**
@@ -1063,7 +1107,7 @@ typedef struct CIDeclStruct
 inline CONSTRUCTOR(CIDeclStruct,
                    CIDeclStruct,
                    String *name,
-                   Vec *generic_params,
+                   CIGenericParams *generic_params,
                    Vec *fields)
 {
     return (CIDeclStruct){ .name = name,
@@ -1077,7 +1121,7 @@ inline CONSTRUCTOR(CIDeclStruct,
  */
 String *
 serialize_name__CIDeclStruct(const CIDeclStruct *self,
-                             const Vec *called_generic_params);
+                             const CIGenericParams *called_generic_params);
 
 /**
  *
@@ -1099,7 +1143,7 @@ typedef struct CIDeclStructGen
 {
     const CIDeclStruct *struct_; // const CIDeclStruct* (&)
     String *name;
-    Vec *called_generic_params; // Vec<CIDataType*>* (&)
+    CIGenericParams *called_generic_params; // CIGenericParams*
 } CIDeclStructGen;
 
 /**
@@ -1110,7 +1154,7 @@ inline CONSTRUCTOR(CIDeclStructGen,
                    CIDeclStructGen,
                    const CIDeclStruct *struct_,
                    String *name,
-                   Vec *called_generic_params)
+                   CIGenericParams *called_generic_params)
 {
     return (CIDeclStructGen){ .struct_ = struct_,
                               .name = name,
@@ -1138,16 +1182,13 @@ IMPL_FOR_DEBUG(to_string, CIDeclStructGen, const CIDeclStructGen *self);
  *
  * @brief Free CIDeclStructGen type.
  */
-inline DESTRUCTOR(CIDeclStructGen, const CIDeclStructGen *self)
-{
-    FREE(String, self->name);
-}
+DESTRUCTOR(CIDeclStructGen, const CIDeclStructGen *self);
 
 typedef struct CIDeclUnion
 {
-    String *name;        // String* (&)
-    Vec *generic_params; // Vec<CIDataType*>*?
-    Vec *fields;         // Vec<CIDeclStructField*>*?
+    String *name;                    // String* (&)
+    CIGenericParams *generic_params; // CIGenericParams*?
+    Vec *fields;                     // Vec<CIDeclStructField*>*?
 } CIDeclUnion;
 
 /**
@@ -1157,7 +1198,7 @@ typedef struct CIDeclUnion
 inline CONSTRUCTOR(CIDeclUnion,
                    CIDeclUnion,
                    String *name,
-                   Vec *generic_params,
+                   CIGenericParams *generic_params,
                    Vec *fields)
 {
     return (CIDeclUnion){ .name = name,
@@ -1171,7 +1212,7 @@ inline CONSTRUCTOR(CIDeclUnion,
  */
 String *
 serialize_name__CIDeclUnion(const CIDeclUnion *self,
-                            const Vec *called_generic_params);
+                            const CIGenericParams *called_generic_params);
 
 /**
  *
@@ -1194,7 +1235,7 @@ typedef struct CIDeclUnionGen
 {
     const CIDeclUnion *union_; // const CIDeclFunction* (&)
     String *name;
-    Vec *called_generic_params; // Vec<CIDataType*>* (&)
+    CIGenericParams *called_generic_params; // CIGenericParams*
 } CIDeclUnionGen;
 
 /**
@@ -1205,7 +1246,7 @@ inline CONSTRUCTOR(CIDeclUnionGen,
                    CIDeclUnionGen,
                    const CIDeclUnion *union_,
                    String *name,
-                   Vec *called_generic_params)
+                   CIGenericParams *called_generic_params)
 {
     return (CIDeclUnionGen){ .union_ = union_,
                              .name = name,
@@ -1233,10 +1274,7 @@ IMPL_FOR_DEBUG(to_string, CIDeclUnionGen, const CIDeclUnionGen *self);
  *
  * @brief Free CIDeclUnionGen type.
  */
-inline DESTRUCTOR(CIDeclUnionGen, const CIDeclUnionGen *self)
-{
-    FREE(String, self->name);
-}
+DESTRUCTOR(CIDeclUnionGen, const CIDeclUnionGen *self);
 
 typedef struct CIDeclVariable
 {
@@ -1325,12 +1363,14 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 /**
  *
  * @brief Construct CIDecl type (CI_DECL_KIND_FUNCTION_GEN).
+ * @param called_generic_params CIGenericParams*? (&)
  */
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     function_gen,
                     CIDecl *function,
-                    Vec *called_generic_params);
+                    CIGenericParams *called_generic_params,
+                    String *name);
 
 /**
  *
@@ -1347,12 +1387,14 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 /**
  *
  * @brief Construct CIDecl type (CI_DECL_KIND_STRUCT_GEN).
+ * @param called_generic_params CIGenericParams* (&)
  */
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     struct_gen,
                     CIDecl *struct_,
-                    Vec *called_generic_params);
+                    CIGenericParams *called_generic_params,
+                    String *name);
 
 /**
  *
@@ -1369,12 +1411,14 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 /**
  *
  * @brief Construct CIDecl type (CI_DECL_KIND_UNION_GEN).
+ * @param called_generic_params CIGenericParams* (&)
  */
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     union_gen,
                     CIDecl *union_,
-                    Vec *called_generic_params);
+                    CIGenericParams *called_generic_params,
+                    String *name);
 
 /**
  *
@@ -1392,7 +1436,8 @@ VARIANT_CONSTRUCTOR(CIDecl *,
  * @brief Check if the passed `generic_params` contains generic data type.
  */
 bool
-is_generic_params_contains_generic__CIDecl(Vec *generic_params);
+is_generic_params_contains_generic__CIDecl(
+  const CIGenericParams *generic_params);
 
 /**
  *
@@ -1408,10 +1453,11 @@ ref__CIDecl(CIDecl *self)
 /**
  *
  * @brief Serialize typedef name.
+ * @return String*?
  */
 String *
 serialize_typedef_name__CIDecl(const CIDecl *self,
-                               const Vec *called_generic_params);
+                               const CIGenericParams *called_generic_params);
 
 /**
  *
@@ -1800,9 +1846,9 @@ DESTRUCTOR(CIExprCast, const CIExprCast *self);
 
 typedef struct CIExprFunctionCall
 {
-    String *identifier;  // String* (&)
-    Vec *params;         // Vec<CIExpr*>*
-    Vec *generic_params; // Vec<CIDataType*>*?
+    String *identifier;              // String* (&)
+    Vec *params;                     // Vec<CIExpr*>*
+    CIGenericParams *generic_params; // CIGenericParams*?
 } CIExprFunctionCall;
 
 /**
@@ -1813,7 +1859,7 @@ inline CONSTRUCTOR(CIExprFunctionCall,
                    CIExprFunctionCall,
                    String *identifier,
                    Vec *params,
-                   Vec *generic_params)
+                   CIGenericParams *generic_params)
 {
     return (CIExprFunctionCall){ .identifier = identifier,
                                  .params = params,

@@ -34,7 +34,7 @@ typedef struct CIParserWaitForVisit
 {
     enum CIDeclKind kind;
     String *name;             // String* (&)
-    Vec *generic_params_list; // Vec<Vec<CIDataType*>* (&)>*
+    Vec *generic_params_list; // Vec<CIGenericParams* (&)>*
 } CIParserWaitForVisit;
 
 /**
@@ -45,7 +45,7 @@ CONSTRUCTOR(CIParserWaitForVisit *,
             CIParserWaitForVisit,
             enum CIDeclKind kind,
             String *name,
-            Vec *generic_params);
+            CIGenericParams *generic_params);
 
 /**
  *

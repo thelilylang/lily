@@ -48,7 +48,7 @@ static void
 add_item_to_wait_for_visit_list__CIParser(CIParser *self,
                                           enum CIDeclKind kind,
                                           String *name,
-                                          Vec *generic_params);
+                                          CIGenericParams *generic_params);
 
 static String *
 generate_name_error__CIParser();
@@ -80,6 +80,23 @@ expect_with_list__CIParser(CIParser *self, Usize n, ...);
 static bool
 is_data_type__CIParser(CIParser *self);
 
+static void
+generate_struct_or_union_gen__CIParser(
+  CIParser *self,
+  String **name_ref,
+  CIGenericParams *called_generic_params,
+  CIDecl *(*search_decl)(const CIResultFile *, const String *name));
+
+static void
+generate_struct_gen__CIParser(CIParser *self,
+                              String **struct_name_ref,
+                              CIGenericParams *called_generic_params);
+
+static void
+generate_union_gen__CIParser(CIParser *self,
+                             String **union_name_ref,
+                             CIGenericParams *called_generic_params);
+
 /// @brief Parse data type.
 static CIDataType *
 parse_data_type__CIParser(CIParser *self);
@@ -100,14 +117,14 @@ parse_function_params__CIParser(CIParser *self);
 
 /// @brief Parse generic params.
 /// @return Vec<CIDataType*>*
-static Vec *
+static CIGenericParams *
 parse_generic_params__CIParser(CIParser *self);
 
 /// @brief Parser function call.
 static CIExpr *
 parse_function_call__CIParser(CIParser *self,
                               String *identifier,
-                              Vec *generic_params);
+                              CIGenericParams *generic_params);
 
 /// @brief Parse literal expression.
 /// @brief @return CIExpr*?
@@ -175,7 +192,7 @@ parse_function__CIParser(CIParser *self,
                          int storage_class_flag,
                          CIDataType *return_data_type,
                          String *name,
-                         Vec *generic_params);
+                         CIGenericParams *generic_params);
 
 /// @brief Parse struct (union) fields.
 static Vec *
@@ -186,7 +203,7 @@ static CIDecl *
 parse_struct__CIParser(CIParser *self,
                        int storage_class_flag,
                        String *name,
-                       Vec *generic_params);
+                       CIGenericParams *generic_params);
 
 /// @brief Parse union declaration.
 static CIDeclUnion
@@ -266,7 +283,7 @@ CONSTRUCTOR(CIParserWaitForVisit *,
             CIParserWaitForVisit,
             enum CIDeclKind kind,
             String *name,
-            Vec *generic_params)
+            CIGenericParams *generic_params)
 {
     CIParserWaitForVisit *self = lily_malloc(sizeof(CIParserWaitForVisit));
 
@@ -330,7 +347,7 @@ void
 add_item_to_wait_for_visit_list__CIParser(CIParser *self,
                                           enum CIDeclKind kind,
                                           String *name,
-                                          Vec *generic_params)
+                                          CIGenericParams *generic_params)
 {
     CIParserWaitForVisit *inserted_item =
       get__HashMap(self->wait_visit_list, name->buffer);
@@ -435,6 +452,86 @@ is_data_type__CIParser(CIParser *self)
         default:
             return false;
     }
+}
+
+void
+generate_struct_or_union_gen__CIParser(
+  CIParser *self,
+  String **name_ref,
+  CIGenericParams *called_generic_params,
+  CIDecl *(*search_decl)(const CIResultFile *, const String *name))
+{
+    String *name = *name_ref;
+    CIDecl *decl = search_decl(self->file, name);
+    bool is_struct = decl->kind == CI_DECL_KIND_STRUCT ? true : false;
+
+    if (!decl) {
+        FAILED("struct or union not found");
+    }
+
+    if (called_generic_params &&
+        !is_generic_params_contains_generic__CIDecl(called_generic_params)) {
+        if (decl->is_prototype) {
+            add_item_to_wait_for_visit_list__CIParser(
+              self,
+              decl->kind,
+              is_struct ? decl->struct_.name : decl->union_.name,
+              called_generic_params);
+        } else {
+            String *serialized_called_decl_name = NULL;
+
+            if (is_struct) {
+                serialized_called_decl_name = serialize_name__CIDeclStruct(
+                  &decl->struct_, called_generic_params);
+            } else {
+                serialized_called_decl_name = serialize_name__CIDeclUnion(
+                  &decl->union_, called_generic_params);
+            }
+
+            const CIDecl *decl_gen =
+              search_decl(self->file, serialized_called_decl_name);
+
+            if (!decl_gen) {
+                // TODO: visit struct or union
+
+                CIDecl *gen_decl =
+                  is_struct
+                    ? NEW_VARIANT(CIDecl,
+                                  struct_gen,
+                                  decl,
+                                  ref__CIGenericParams(called_generic_params),
+                                  serialized_called_decl_name)
+                    : NEW_VARIANT(CIDecl,
+                                  union_gen,
+                                  decl,
+                                  ref__CIGenericParams(called_generic_params),
+                                  serialized_called_decl_name);
+                add_decl_to_scope__CIParser(self, &gen_decl, false);
+            }
+
+            *name_ref = serialized_called_decl_name;
+        }
+    }
+}
+
+void
+generate_struct_gen__CIParser(CIParser *self,
+                              String **struct_name_ref,
+                              CIGenericParams *called_generic_params)
+{
+    generate_struct_or_union_gen__CIParser(self,
+                                           struct_name_ref,
+                                           called_generic_params,
+                                           &search_struct__CIResultFile);
+}
+
+void
+generate_union_gen__CIParser(CIParser *self,
+                             String **union_name_ref,
+                             CIGenericParams *called_generic_params)
+{
+    generate_struct_or_union_gen__CIParser(
+      self, union_name_ref, called_generic_params, &search_union__CIResultFile);
 }
 
 CIDataType *
@@ -564,9 +661,8 @@ parse_data_type__CIParser(CIParser *self)
         case CI_TOKEN_KIND_KEYWORD_UNION: {
             enum CITokenKind previous_token_kind =
               self->tokens_iters.previous_token->kind;
-            String *name = NULL;               // String* (&)
-            Vec *generic_params = NULL;        // Vec<CIDataType*>*?
-            Vec *generic_params_cloned = NULL; // Vec<CIDataType*>*?
+            String *name = NULL; // String* (&)
+            CIGenericParams *generic_params = NULL;
 
             // struct <name><generic_params, ...> ...;
             // struct <name><generic_params, ...> { ... } ...;
@@ -579,13 +675,6 @@ parse_data_type__CIParser(CIParser *self)
             switch (self->tokens_iters.current_token->kind) {
                 case CI_TOKEN_KIND_LSHIFT:
                     generic_params = parse_generic_params__CIParser(self);
-                    generic_params_cloned = NEW(Vec);
-
-                    for (Usize i = 0; i < generic_params->len; ++i) {
-                        push__Vec(
-                          generic_params_cloned,
-                          clone__CIDataType(get__Vec(generic_params, i)));
-                    }
 
                     break;
                 default:
@@ -594,17 +683,17 @@ parse_data_type__CIParser(CIParser *self)
 
             switch (previous_token_kind) {
                 case CI_TOKEN_KIND_KEYWORD_STRUCT:
-                    res = NEW_VARIANT(
-                      CIDataType,
-                      struct,
-                      NEW(CIDataTypeStruct, name, generic_params_cloned));
+                    res =
+                      NEW_VARIANT(CIDataType,
+                                  struct,
+                                  NEW(CIDataTypeStruct, name, generic_params));
 
                     break;
                 case CI_TOKEN_KIND_KEYWORD_UNION:
-                    res = NEW_VARIANT(
-                      CIDataType,
-                      union,
-                      NEW(CIDataTypeUnion, name, generic_params_cloned));
+                    res =
+                      NEW_VARIANT(CIDataType,
+                                  union,
+                                  NEW(CIDataTypeUnion, name, generic_params));
 
                     break;
                 default:
@@ -613,10 +702,26 @@ parse_data_type__CIParser(CIParser *self)
 
             switch (self->tokens_iters.current_token->kind) {
                 case CI_TOKEN_KIND_IDENTIFIER:
+                    switch (previous_token_kind) {
+                        case CI_TOKEN_KIND_KEYWORD_STRUCT:
+                            generate_struct_gen__CIParser(
+                              self, &name, generic_params);
+                            break;
+                        case CI_TOKEN_KIND_KEYWORD_UNION:
+                            generate_union_gen__CIParser(
+                              self, &name, generic_params);
+                            break;
+                        default:
+                            UNREACHABLE("this situation is impossible");
+                    }
+
                     if (storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
+                        expect_with_list__CIParser(self,
+                                                   2,
+                                                   CI_TOKEN_KIND_LBRACE,
+                                                   CI_TOKEN_KIND_SEMICOLON);
+
                         goto parse_struct;
-                    } else {
-                        goto free_generic_params;
                     }
 
                     break;
@@ -624,7 +729,11 @@ parse_data_type__CIParser(CIParser *self)
                 case CI_TOKEN_KIND_SEMICOLON: {
                 parse_struct : {
                     CIDecl *struct_decl = parse_struct__CIParser(
-                      self, storage_class_flag, name, generic_params);
+                      self,
+                      storage_class_flag,
+                      name,
+                      generic_params ? ref__CIGenericParams(generic_params)
+                                     : NULL);
 
                     if (add_struct__CIResultFile(self->file, struct_decl)) {
                         FREE(CIDecl, struct_decl);
@@ -636,11 +745,7 @@ parse_data_type__CIParser(CIParser *self)
                 }
                 }
                 default:
-                free_generic_params : {
-                    FREE_BUFFER_ITEMS(
-                      generic_params->buffer, generic_params->len, CIDataType);
-                    FREE(Vec, generic_params);
-                }
+                    break;
             }
 
             break;
@@ -861,19 +966,19 @@ parse_function_params__CIParser(CIParser *self)
     return params;
 }
 
-Vec *
+CIGenericParams *
 parse_generic_params__CIParser(CIParser *self)
 {
     next_token__CIParser(self); // skip `<`
 
-    Vec *generic_params = NEW(Vec); // Vec<CIDataType*>*
+    Vec *params = NEW(Vec); // Vec<CIDataType*>*
 
     while (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RSHIFT &&
            self->tokens_iters.current_token->kind != CI_TOKEN_KIND_EOF) {
         CIDataType *data_type = parse_data_type__CIParser(self);
 
         if (data_type) {
-            push__Vec(generic_params, data_type);
+            push__Vec(params, data_type);
         }
 
         if (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RSHIFT) {
@@ -881,7 +986,7 @@ parse_generic_params__CIParser(CIParser *self)
         }
     }
 
-    if (generic_params->len == 0) {
+    if (params->len == 0) {
         FAILED("expected at least one generic param");
     }
 
@@ -896,13 +1001,13 @@ parse_generic_params__CIParser(CIParser *self)
             UNREACHABLE("expected `>` or `EOF`");
     }
 
-    return generic_params;
+    return params ? NEW(CIGenericParams, params) : NULL;
 }
 
 CIExpr *
 parse_function_call__CIParser(CIParser *self,
                               String *identifier,
-                              Vec *generic_params)
+                              CIGenericParams *generic_params)
 {
     const CIDecl *function_decl =
       search_function__CIResultFile(self->file, identifier);
@@ -930,6 +1035,7 @@ parse_function_call__CIParser(CIParser *self,
 
     expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
 
+    // Generate gen function declaration
     if (generic_params &&
         !is_generic_params_contains_generic__CIDecl(generic_params)) {
         if (function_decl->is_prototype) {
@@ -948,10 +1054,12 @@ parse_function_call__CIParser(CIParser *self,
             if (!function_gen) {
                 // TODO: visit function
 
-                CIDecl *function_gen_decl = NEW_VARIANT(CIDecl,
-                                                        function_gen,
-                                                        (CIDecl *)function_decl,
-                                                        generic_params);
+                CIDecl *function_gen_decl =
+                  NEW_VARIANT(CIDecl,
+                              function_gen,
+                              (CIDecl *)function_decl,
+                              ref__CIGenericParams(generic_params),
+                              serialized_called_function_name);
 
                 add_decl_to_scope__CIParser(self, &function_gen_decl, false);
             }
@@ -1160,7 +1268,7 @@ parse_primary_expr__CIParser(CIParser *self)
         }
         case CI_TOKEN_KIND_IDENTIFIER: {
             String *identifier = self->tokens_iters.previous_token->identifier;
-            Vec *generic_params = NULL; // Vec<CIDataType*>*?
+            CIGenericParams *generic_params = NULL; // CIGenericParams*?
 
             switch (self->tokens_iters.current_token->kind) {
                 case CI_TOKEN_KIND_LSHIFT:
@@ -1841,7 +1949,7 @@ parse_function__CIParser(CIParser *self,
                          int storage_class_flag,
                          CIDataType *return_data_type,
                          String *name,
-                         Vec *generic_params)
+                         CIGenericParams *generic_params)
 {
     Vec *params =
       parse_function_params__CIParser(self); // Vec<CIDeclFunctionParam*>*?
@@ -1910,7 +2018,7 @@ CIDecl *
 parse_struct__CIParser(CIParser *self,
                        int storage_class_flag,
                        String *name,
-                       Vec *generic_params)
+                       CIGenericParams *generic_params)
 {
     next_token__CIParser(self); // skip `{` or `;`
 
@@ -1983,7 +2091,10 @@ parse_union__CIParser(CIParser *self, String *name, Vec *generic_params)
     Vec *fields =
       parse_struct_fields__CIParser(self); // Vec<CIDeclStructField*>*
 
-    return NEW(CIDeclUnion, name, fields, generic_params);
+    return NEW(CIDeclUnion,
+               name,
+               generic_params ? NEW(CIGenericParams, generic_params) : NULL,
+               fields);
 }
 
 CIDecl *
@@ -2039,7 +2150,7 @@ parse_decl__CIParser(CIParser *self, bool in_function_body)
     switch (self->tokens_iters.current_token->kind) {
         case CI_TOKEN_KIND_IDENTIFIER: {
             String *name = self->tokens_iters.current_token->identifier;
-            Vec *generic_params = NULL;
+            CIGenericParams *generic_params = NULL; // CIGenericParams*?
 
             next_token__CIParser(self);
 
