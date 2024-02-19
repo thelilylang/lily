@@ -87,7 +87,29 @@ visit_struct_or_union__CIParser(CIParser *self,
                                 CIGenericParams *called_generic_params);
 
 static void
-visit_function__CIParser(CIParser *self);
+visit_data_type__CIParser(CIParser *self,
+                          const CIDataType *data_type,
+                          CIGenericParams *called_generic_params);
+
+static void
+visit_function_decl__CIParser(CIParser *self,
+                              const CIDecl *decl,
+                              CIGenericParams *called_generic_params);
+
+static void
+visit_function_expr__CIParser(CIParser *self,
+                              const CIExpr *expr,
+                              CIGenericParams *called_generic_params);
+
+static void
+visit_function_stmt__CIParser(CIParser *self,
+                              const CIStmt *stmt,
+                              CIGenericParams *called_generic_params);
+
+static void
+visit_function__CIParser(CIParser *self,
+                         const CIDecl *function_decl,
+                         CIGenericParams *called_generic_params);
 
 static void
 generate_struct_or_union_gen__CIParser(
@@ -685,6 +707,143 @@ visit_struct_or_union__CIParser(CIParser *self,
     }
 
     return NULL;
+}
+
+void
+visit_data_type__CIParser(CIParser *self,
+                          const CIDataType *data_type,
+                          CIGenericParams *called_generic_params)
+{
+    switch (data_type->kind) {
+        case CI_DATA_TYPE_KIND_GENERIC:
+            break;
+        case CI_DATA_TYPE_KIND_STRUCT:
+            break;
+        case CI_DATA_TYPE_KIND_UNION:
+            break;
+        default:
+            break;
+    }
+}
+
+void
+visit_function_decl__CIParser(CIParser *self,
+                              const CIDecl *decl,
+                              CIGenericParams *called_generic_params)
+{
+    switch (decl->kind) {
+        case CI_DECL_KIND_VARIABLE:
+            break;
+        default:
+            break;
+    }
+}
+
+void
+visit_function_expr__CIParser(CIParser *self,
+                              const CIExpr *expr,
+                              CIGenericParams *called_generic_params)
+{
+    switch (expr->kind) {
+        case CI_EXPR_KIND_ALIGNOF:
+            visit_function_expr__CIParser(
+              self, expr->alignof_, called_generic_params);
+
+            break;
+        case CI_EXPR_KIND_BINARY:
+            visit_function_expr__CIParser(
+              self, expr->binary.left, called_generic_params);
+            visit_function_expr__CIParser(
+              self, expr->binary.right, called_generic_params);
+
+            break;
+        case CI_EXPR_KIND_CAST:
+            visit_function_expr__CIParser(
+              self, expr->cast.expr, called_generic_params);
+            visit_data_type__CIParser(
+              self, expr->cast.data_type, called_generic_params);
+
+            break;
+        case CI_EXPR_KIND_DATA_TYPE:
+            visit_data_type__CIParser(
+              self, expr->data_type, called_generic_params);
+
+            break;
+        case CI_EXPR_KIND_FUNCTION_CALL:
+            TODO("visit function call");
+
+            break;
+        case CI_EXPR_KIND_GROUPING:
+            visit_function_expr__CIParser(
+              self, expr->grouping, called_generic_params);
+
+            break;
+        case CI_EXPR_KIND_IDENTIFIER:
+            TODO("visit identifier");
+
+            break;
+        case CI_EXPR_KIND_LITERAL:
+        case CI_EXPR_KIND_STRUCT_CALL:
+            break;
+        case CI_EXPR_KIND_SIZEOF:
+            visit_function_expr__CIParser(
+              self, expr->sizeof_, called_generic_params);
+
+            break;
+        case CI_EXPR_KIND_TERNARY:
+            visit_function_expr__CIParser(
+              self, expr->ternary.cond, called_generic_params);
+            visit_function_expr__CIParser(
+              self, expr->ternary.if_, called_generic_params);
+            visit_function_expr__CIParser(
+              self, expr->ternary.else_, called_generic_params);
+
+            break;
+        case CI_EXPR_KIND_UNARY:
+            visit_function_expr__CIParser(
+              self, expr->unary.expr, called_generic_params);
+
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+void
+visit_function_stmt__CIParser(CIParser *self,
+                              const CIStmt *stmt,
+                              CIGenericParams *called_generic_params)
+{
+}
+
+void
+visit_function__CIParser(CIParser *self,
+                         const CIDecl *function_decl,
+                         CIGenericParams *called_generic_params)
+{
+    for (Usize i = 0; i < function_decl->function.body->len; ++i) {
+        CIDeclFunctionItem *item = get__Vec(function_decl->function.body, i);
+
+        switch (item->kind) {
+            case CI_DECL_FUNCTION_ITEM_KIND_DECL:
+                visit_function_decl__CIParser(
+                  self, item->decl, called_generic_params);
+
+                break;
+            case CI_DECL_FUNCTION_ITEM_KIND_EXPR:
+                visit_function_expr__CIParser(
+                  self, item->expr, called_generic_params);
+
+                break;
+            case CI_DECL_FUNCTION_ITEM_KIND_STMT:
+                visit_function_stmt__CIParser(
+                  self, &item->stmt, called_generic_params);
+
+                break;
+            default:
+                UNREACHABLE("unknown variant");
+        }
+    }
 }
 
 void
@@ -1287,12 +1446,13 @@ parse_function_call__CIParser(CIParser *self,
               self->file, serialized_called_function_name);
 
             if (!function_gen) {
-                // TODO: visit function
                 CIDataType *subs_return_data_type =
                   substitute_data_type__CIParser(
                     function_decl->function.return_data_type,
                     function_decl->function.generic_params,
                     generic_params);
+
+                visit_function__CIParser(self, function_decl, generic_params);
 
                 CIDecl *function_gen_decl =
                   NEW_VARIANT(CIDecl,
