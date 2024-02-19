@@ -25,6 +25,42 @@
 #ifndef LILY_BASE_YAML
 #define LILY_BASE_YAML
 
+#include <base/alloc.h>
+#include <base/vec.h>
+
 #include <local/src/libyaml/src/yaml.h>
+
+typedef yaml_document_t YAMLDocument;
+typedef yaml_parser_t YAMLParser;
+
+typedef struct YAMLLoadRes
+{
+    YAMLDocument *documents; // YAMLDocument*?
+    Usize len;
+} YAMLLoadRes;
+
+/**
+ *
+ * @brief Construct YAMLLoadRes type.
+ */
+inline CONSTRUCTOR(YAMLLoadRes, YAMLLoadRes, YAMLDocument *documents, Usize len)
+{
+    return (YAMLLoadRes){ .documents = documents, .len = len };
+}
+
+/**
+ *
+ * @brief Free YAMLLoadRes type.
+ */
+DESTRUCTOR(YAMLLoadRes, const YAMLLoadRes *self);
+
+/**
+ *
+ * @brief Load YAML file.
+ * @url https://github.com/thelilylang/libyaml/blob/master/tests/run-loader.c
+ * @return YAMLDocument*
+ */
+YAMLLoadRes
+load__YAML(const char *filename);
 
 #endif // LILY_BASE_YAML

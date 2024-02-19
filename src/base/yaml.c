@@ -22,4 +22,68 @@
  * SOFTWARE.
  */
 
+#include <base/macros.h>
+#include <base/new.h>
+#include <base/types.h>
 #include <base/yaml.h>
+
+#include <local/src/libyaml/src/yaml_private.h>
+
+DESTRUCTOR(YAMLLoadRes, const YAMLLoadRes *self)
+{
+    if (self->documents) {
+        for (Usize i = 0; i < self->len; ++i) {
+            yaml_document_delete(&self->documents[i]);
+        }
+
+        lily_free(self->documents);
+    }
+}
+
+YAMLLoadRes
+load__YAML(const char *filename)
+{
+    FILE *file = fopen(filename, "rb");
+
+    if (!file) {
+        FAILED("YAML: cannot open file");
+    }
+
+    YAMLParser parser;
+    YAMLDocument document;
+    bool done = false;
+    Usize documents_len = 0;
+
+    if (!yaml_parser_initialize(&parser)) {
+        FAILED("YAML: failed to initialize parser");
+    }
+
+    YAMLDocument *documents = NULL;
+
+    yaml_parser_set_input_file(&parser, file);
+
+    while (!done) {
+        if (!yaml_parser_load(&parser, &document)) {
+            FAILED("error occured in YAML file");
+        }
+
+        done = (!yaml_document_get_root_node(&document));
+
+        if (!documents) {
+            documents = malloc(sizeof(YAMLDocument));
+        } else {
+            documents =
+              realloc(documents, sizeof(YAMLDocument) * (documents_len + 1));
+        }
+
+        documents[documents_len++] = document;
+    }
+
+    yaml_parser_delete(&parser);
+
+    if (fclose(file) != 0) {
+        FAILED("YAML: failed to close file");
+    }
+
+    return NEW(YAMLLoadRes, documents, documents_len);
+}
