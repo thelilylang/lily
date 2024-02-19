@@ -1,0 +1,4 @@
+[submodule "lib/local/src/libyaml"]
+	path = lib/local/src/libyaml
+	url = https://github.com/thelilylang/libyaml.git
+	branch = lily_modifications
