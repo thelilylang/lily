@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+#include <base/yaml.h>
+
 #include <core/cc/ci/generator.h>
 #include <core/cc/ci/parser.h>
 #include <core/cc/ci/result.h>
@@ -49,10 +51,11 @@ main(int argc, char **argv)
         } else if (!strcmp(argv[1], "c23")) {
             standard = CI_STANDARD_23;
         } else {
-            UNREACHABLE("unknown standard");
+            FAILED("unknown standard");
         }
 
         CIResult result = NEW(CIResult);
+        YAMLLoadRes yaml_load_res = load__YAML("./CI.yaml");
 
         for (Usize i = 2; i < argc; ++i) {
             char *extension = get_extension__File(argv[i]);
@@ -105,6 +108,7 @@ main(int argc, char **argv)
 
         run__CIGenerator(&result);
 
+        FREE(YAMLLoadRes, &yaml_load_res);
         FREE(CIResult, &result);
     } else {
         printf("ci [standard] [ci_files...]\n");
