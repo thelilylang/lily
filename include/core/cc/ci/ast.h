@@ -1021,6 +1021,7 @@ typedef struct CIDeclFunctionGen
     const CIDeclFunction *function; // const CIDeclFunction* (&)
     String *name;
     CIGenericParams *called_generic_params; // CIGenericParams*
+    CIDataType *return_data_type;
 } CIDeclFunctionGen;
 
 /**
@@ -1031,12 +1032,13 @@ inline CONSTRUCTOR(CIDeclFunctionGen,
                    CIDeclFunctionGen,
                    const CIDeclFunction *function,
                    String *name,
-                   CIGenericParams *called_generic_params)
+                   CIGenericParams *called_generic_params,
+                   CIDataType *return_data_type)
 {
     return (CIDeclFunctionGen){ .function = function,
                                 .name = name,
-                                .called_generic_params =
-                                  called_generic_params };
+                                .called_generic_params = called_generic_params,
+                                .return_data_type = return_data_type };
 }
 
 /**
@@ -1144,6 +1146,7 @@ typedef struct CIDeclStructGen
     const CIDeclStruct *struct_; // const CIDeclStruct* (&)
     String *name;
     CIGenericParams *called_generic_params; // CIGenericParams*
+    Vec *fields;                            // Vec<CIDeclStructField*>*?
 } CIDeclStructGen;
 
 /**
@@ -1154,11 +1157,13 @@ inline CONSTRUCTOR(CIDeclStructGen,
                    CIDeclStructGen,
                    const CIDeclStruct *struct_,
                    String *name,
-                   CIGenericParams *called_generic_params)
+                   CIGenericParams *called_generic_params,
+                   Vec *fields)
 {
     return (CIDeclStructGen){ .struct_ = struct_,
                               .name = name,
-                              .called_generic_params = called_generic_params };
+                              .called_generic_params = called_generic_params,
+                              .fields = fields };
 }
 
 /**
@@ -1236,6 +1241,7 @@ typedef struct CIDeclUnionGen
     const CIDeclUnion *union_; // const CIDeclFunction* (&)
     String *name;
     CIGenericParams *called_generic_params; // CIGenericParams*
+    Vec *fields;                            // Vec<CIDeclStructField*>*?
 } CIDeclUnionGen;
 
 /**
@@ -1246,11 +1252,13 @@ inline CONSTRUCTOR(CIDeclUnionGen,
                    CIDeclUnionGen,
                    const CIDeclUnion *union_,
                    String *name,
-                   CIGenericParams *called_generic_params)
+                   CIGenericParams *called_generic_params,
+                   Vec *fields)
 {
     return (CIDeclUnionGen){ .union_ = union_,
                              .name = name,
-                             .called_generic_params = called_generic_params };
+                             .called_generic_params = called_generic_params,
+                             .fields = fields };
 }
 
 /**
@@ -1370,7 +1378,8 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     function_gen,
                     CIDecl *function,
                     CIGenericParams *called_generic_params,
-                    String *name);
+                    String *name,
+                    CIDataType *return_data_type);
 
 /**
  *
@@ -1394,7 +1403,8 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     struct_gen,
                     CIDecl *struct_,
                     CIGenericParams *called_generic_params,
-                    String *name);
+                    String *name,
+                    Vec *fields);
 
 /**
  *
@@ -1418,7 +1428,8 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     union_gen,
                     CIDecl *union_,
                     CIGenericParams *called_generic_params,
-                    String *name);
+                    String *name,
+                    Vec *fields);
 
 /**
  *

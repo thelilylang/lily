@@ -80,10 +80,14 @@ expect_with_list__CIParser(CIParser *self, Usize n, ...);
 static bool
 is_data_type__CIParser(CIParser *self);
 
-static void
+/// @return the generated fields.
+static Vec *
 visit_struct_or_union__CIParser(CIParser *self,
                                 const CIDecl *decl,
                                 CIGenericParams *called_generic_params);
+
+static void
+visit_function__CIParser(CIParser *self);
 
 static void
 generate_struct_or_union_gen__CIParser(
@@ -632,14 +636,20 @@ substitute_data_type__CIParser(CIDataType *data_type,
     }
 }
 
-void
+Vec *
 visit_struct_or_union__CIParser(CIParser *self,
                                 const CIDecl *decl,
                                 CIGenericParams *called_generic_params)
 {
     if (has_generic__CIDecl(decl)) {
         const Vec *fields = get_fields__CIDecl(decl);
+
+        if (!fields) {
+            return NULL;
+        }
+
         CIGenericParams *generic_params = get_generic_params__CIDecl(decl);
+        Vec *gen_fields = NEW(Vec);
 
         for (Usize i = 0; i < fields->len; ++i) {
             const CIDeclStructField *field = get__Vec(fields, i);
@@ -665,9 +675,16 @@ visit_struct_or_union__CIParser(CIParser *self,
                     break;
             }
 
-            FREE(CIDataType, subs_data_type);
+            if (subs_data_type) {
+                push__Vec(gen_fields,
+                          NEW(CIDeclStructField, field->name, subs_data_type));
+            }
         }
+
+        return gen_fields;
     }
+
+    return NULL;
 }
 
 void
@@ -707,7 +724,7 @@ generate_struct_or_union_gen__CIParser(
               search_decl(self->file, serialized_called_decl_name);
 
             if (!decl_gen) {
-                visit_struct_or_union__CIParser(
+                Vec *fields = visit_struct_or_union__CIParser(
                   self, decl, called_generic_params);
 
                 CIDecl *gen_decl =
@@ -716,12 +733,14 @@ generate_struct_or_union_gen__CIParser(
                                   struct_gen,
                                   decl,
                                   ref__CIGenericParams(called_generic_params),
-                                  serialized_called_decl_name)
+                                  serialized_called_decl_name,
+                                  fields)
                     : NEW_VARIANT(CIDecl,
                                   union_gen,
                                   decl,
                                   ref__CIGenericParams(called_generic_params),
-                                  serialized_called_decl_name);
+                                  serialized_called_decl_name,
+                                  fields);
                 add_decl_to_scope__CIParser(self, &gen_decl, false);
             } else {
                 FREE(String, serialized_called_decl_name);
@@ -1269,13 +1288,22 @@ parse_function_call__CIParser(CIParser *self,
 
             if (!function_gen) {
                 // TODO: visit function
+                CIDataType *subs_return_data_type =
+                  substitute_data_type__CIParser(
+                    function_decl->function.return_data_type,
+                    function_decl->function.generic_params,
+                    generic_params);
 
                 CIDecl *function_gen_decl =
                   NEW_VARIANT(CIDecl,
                               function_gen,
                               (CIDecl *)function_decl,
                               ref__CIGenericParams(generic_params),
-                              serialized_called_function_name);
+                              serialized_called_function_name,
+                              subs_return_data_type ? subs_return_data_type
+                                                    : ref__CIDataType(
+                                                        function_decl->function
+                                                          .return_data_type) /* Return a ref data type, when the substituted data type is NULL, to avoid an optional data type in the `return_data_type` field. */);
 
                 add_decl_to_scope__CIParser(self, &function_gen_decl, false);
             }

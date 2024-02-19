@@ -1161,13 +1161,10 @@ generate_struct_decl__CIGenerator(const CIDeclStruct *struct_)
 void
 generate_struct_gen_decl__CIGenerator(const CIDeclStructGen *struct_gen)
 {
-    SET_CURRENT_GENERIC_PARAMS(struct_gen->struct_->generic_params,
-                               struct_gen->called_generic_params);
     write_String__CIGenerator(
       format__String("struct {S} {{\n", struct_gen->name));
-    generate_struct_fields__CIGenerator(struct_gen->struct_->fields);
+    generate_struct_fields__CIGenerator(struct_gen->fields);
     write_str__CIGenerator("}");
-    RESET_CURRENT_GENERIC_PARAMS();
 }
 
 void
@@ -1181,13 +1178,10 @@ generate_union_decl__CIGenerator(const CIDeclUnion *union_)
 void
 generate_union_gen_decl__CIGenerator(const CIDeclUnionGen *union_gen)
 {
-    SET_CURRENT_GENERIC_PARAMS(union_gen->union_->generic_params,
-                               union_gen->called_generic_params);
     write_String__CIGenerator(
       format__String("union {S} {{\n", union_gen->name));
-    generate_struct_fields__CIGenerator(union_gen->union_->fields);
+    generate_struct_fields__CIGenerator(union_gen->fields);
     write_str__CIGenerator("}");
-    RESET_CURRENT_GENERIC_PARAMS();
 }
 
 void

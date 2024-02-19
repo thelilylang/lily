@@ -1495,10 +1495,11 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunctionGen, const CIDeclFunctionGen *self)
 {
     return format__String(
       "CIDeclFunctionGen{{ function = {Sr}, name = {S}, "
-      "called_generic_params = {Sr} }",
+      "called_generic_params = {Sr}, return_data_type = {Sr} }",
       to_string__Debug__CIDeclFunction(self->function),
       self->name,
-      to_string__Debug__CIGenericParams(self->called_generic_params));
+      to_string__Debug__CIGenericParams(self->called_generic_params),
+      to_string__Debug__CIDataType(self->return_data_type));
 }
 #endif
 
@@ -1506,6 +1507,7 @@ DESTRUCTOR(CIDeclFunctionGen, const CIDeclFunctionGen *self)
 {
     FREE(String, self->name);
     FREE(CIGenericParams, self->called_generic_params);
+    FREE(CIDataType, self->return_data_type);
 }
 
 CONSTRUCTOR(CIDeclStructField *,
@@ -1596,12 +1598,22 @@ has_generic__CIDeclStructGen(const CIDeclStructGen *self)
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclStructGen, const CIDeclStructGen *self)
 {
-    return format__String(
+    String *res = format__String(
       "CIDeclStructGen{{ struct_ = {Sr}, name = {S}, called_generic_params = "
-      "{Sr} }",
+      "{Sr}, fields =",
       to_string__Debug__CIDeclStruct(self->struct_),
       self->name,
       to_string__Debug__CIGenericParams(self->called_generic_params));
+
+    if (self->fields) {
+        DEBUG_VEC_STRING(self->fields, res, CIDeclStructField);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, " }");
+
+    return res;
 }
 #endif
 
@@ -1609,6 +1621,12 @@ DESTRUCTOR(CIDeclStructGen, const CIDeclStructGen *self)
 {
     FREE(String, self->name);
     FREE(CIGenericParams, self->called_generic_params);
+
+    if (self->fields) {
+        FREE_BUFFER_ITEMS(
+          self->fields->buffer, self->fields->len, CIDeclStructField);
+        FREE(Vec, self->fields);
+    }
 }
 
 String *
@@ -1671,10 +1689,22 @@ has_generic__CIDeclUnionGen(const CIDeclUnionGen *self)
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclUnionGen, const CIDeclUnionGen *self)
 {
-    return format__String(
-      "CIDeclUnionGen{{ union_ = {Sr}, called_generic_params = {Sr} }",
+    String *res = format__String(
+      "CIDeclUnionGen{{ union_ = {Sr}, name = {S}, called_generic_params = "
+      "{Sr}, fields =",
       to_string__Debug__CIDeclUnion(self->union_),
+      self->name,
       to_string__Debug__CIGenericParams(self->called_generic_params));
+
+    if (self->fields) {
+        DEBUG_VEC_STRING(self->fields, res, CIDeclStructField);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, " }");
+
+    return res;
 }
 #endif
 
@@ -1682,6 +1712,12 @@ DESTRUCTOR(CIDeclUnionGen, const CIDeclUnionGen *self)
 {
     FREE(String, self->name);
     FREE(CIGenericParams, self->called_generic_params);
+
+    if (self->fields) {
+        FREE_BUFFER_ITEMS(
+          self->fields->buffer, self->fields->len, CIDeclStructField);
+        FREE(Vec, self->fields);
+    }
 }
 
 #ifdef ENV_DEBUG
@@ -1758,7 +1794,8 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     function_gen,
                     CIDecl *function,
                     CIGenericParams *called_generic_params,
-                    String *name)
+                    String *name,
+                    CIDataType *return_data_type)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
     const CIDeclFunction *f = &function->function;
@@ -1768,7 +1805,8 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->is_prototype = false;
     self->ref_count = 0;
     self->typedef_name = NULL;
-    self->function_gen = NEW(CIDeclFunctionGen, f, name, called_generic_params);
+    self->function_gen =
+      NEW(CIDeclFunctionGen, f, name, called_generic_params, return_data_type);
 
     return self;
 }
@@ -1798,7 +1836,8 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     struct_gen,
                     CIDecl *struct_,
                     CIGenericParams *called_generic_params,
-                    String *name)
+                    String *name,
+                    Vec *fields)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
     const CIDeclStruct *s = &struct_->struct_;
@@ -1809,7 +1848,8 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->ref_count = 0;
     self->typedef_name =
       serialize_typedef_name__CIDecl(struct_, called_generic_params);
-    self->struct_gen = NEW(CIDeclStructGen, s, name, called_generic_params);
+    self->struct_gen =
+      NEW(CIDeclStructGen, s, name, called_generic_params, fields);
 
     return self;
 }
@@ -1839,7 +1879,8 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     union_gen,
                     CIDecl *union_,
                     CIGenericParams *called_generic_params,
-                    String *name)
+                    String *name,
+                    Vec *fields)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
     const CIDeclUnion *u = &union_->union_;
@@ -1850,7 +1891,8 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->ref_count = 0;
     self->typedef_name =
       serialize_typedef_name__CIDecl(union_, called_generic_params);
-    self->union_gen = NEW(CIDeclUnionGen, u, name, called_generic_params);
+    self->union_gen =
+      NEW(CIDeclUnionGen, u, name, called_generic_params, fields);
 
     return self;
 }
@@ -1878,10 +1920,12 @@ bool
 is_generic_params_contains_generic__CIDecl(
   const CIGenericParams *generic_params)
 {
-    for (Usize i = 0; i < generic_params->params->len; ++i) {
-        if (CAST(CIDataType *, get__Vec(generic_params->params, i))->kind ==
-            CI_DATA_TYPE_KIND_GENERIC) {
-            return true;
+    if (generic_params) {
+        for (Usize i = 0; i < generic_params->params->len; ++i) {
+            if (CAST(CIDataType *, get__Vec(generic_params->params, i))->kind ==
+                CI_DATA_TYPE_KIND_GENERIC) {
+                return true;
+            }
         }
     }
 
