@@ -1,5 +1,11 @@
 # Build
 
+First, you need to load the git submodules.
+
+```
+make submodules
+```
+
 If you only want to use `Lily` locally to try it out, run:<br>
 NOTE: Currently there is no script to install Lily on the machine.
 
@@ -87,7 +93,7 @@ Launch `lilyc`:<br>
 NOTE: This is the command to use the Lily compiler.
 
 ```bash
-./build/lilyc -h # local version
+./bin/lilyc -h # local version
 lilyc -h # installed version
 ```
 
@@ -95,7 +101,7 @@ Launch `lily`:<br>
 NOTE: This is the command to use some utility tools for the Lily language (build, init, new, ...).
 
 ```bash
-./build/lily -h  # local version
+./bin/lily -h  # local version
 lily -h # installed version
 ```
 
