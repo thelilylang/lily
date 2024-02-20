@@ -27,18 +27,26 @@ jobs:
         sudo ./llvm.sh 16 all
 
     - name: Download & Install python requirements
-      run: cd ${{github.workspace}} && pip install -r requirements.txt
+      working-directory: ${{github.workspace}}
+      run: pip install -r requirements.txt
+
+    - name: Load submodules
+      working-directory: ${{github.workspace}}
+      run: make submodules
 
     - name: Setup for Local
-      run: cd ${{github.workspace}} && ./scripts/patches/enable_local.sh
+      working-directory: ${{github.workspace}}
+      run: ./scripts/patches/enable_local.sh
 
     - name: Configure CMake
+      working-directory: ${{github.workspace}}
       # Configure CMake in a 'build/Debug' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build/Debug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_C_COMPILER=clang-16 -DCMAKE_CXX_COMPILER=clang++-16
+      run: cmake -B ./build/Debug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_C_COMPILER=clang-16 -DCMAKE_CXX_COMPILER=clang++-16
 
     - name: Build
       # Build your program with the given configuration
+      working-directory: ${{github.workspace}}
       run: cmake --build ${{github.workspace}}/build/Debug
 
     - name: Test
@@ -60,20 +68,28 @@ jobs:
       run: brew install zlib
     
     - name: Download & Install python requirements
-      run: cd ${{github.workspace}} && pip install -r requirements.txt
+      working-directory: ${{github.workspace}}
+      run: pip install -r requirements.txt
+
+    - name: Load submodules
+      working-directory: ${{github.workspace}}
+      run: make submodules
 
     - name: Setup for Local
+      working-directory: ${{github.workspace}}
       run: |
         brew install gpatch
-        cd ${{github.workspace}} && ./scripts/patches/enable_local.sh
+        ./scripts/patches/enable_local.sh
 
     - name: Setup LLVM & Configure CMake
+      working-directory: ${{github.workspace}}
       run: |
         export LLVM_DIR=$(brew --prefix llvm@16)
-        cmake -B ${{github.workspace}}/build/Debug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_C_COMPILER=$(brew --prefix llvm@16)/bin/clang -DCMAKE_CXX_COMPILER=$(brew --prefix llvm@16)/bin/clang++
+        cmake -B ./build/Debug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_C_COMPILER=$(brew --prefix llvm@16)/bin/clang -DCMAKE_CXX_COMPILER=$(brew --prefix llvm@16)/bin/clang++
 
     - name: Build
-      run: cmake --build ${{github.workspace}}/build/Debug
+      working-directory: ${{github.workspace}}
+      run: cmake --build ./build/Debug
 
     - name: Test
       working-directory: ${{github.workspace}}
