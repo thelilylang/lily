@@ -22,12 +22,57 @@
  * SOFTWARE.
  */
 
+#include <base/assert.h>
 #include <base/macros.h>
 #include <base/new.h>
 #include <base/types.h>
 #include <base/yaml.h>
 
-#include <local/src/libyaml/src/yaml_private.h>
+#include <stdarg.h>
+
+static bool
+has_mapping__YAML(const YAMLDocument *document);
+
+static Int32
+get_mapping__YAML(YAMLDocument *document);
+
+bool
+has_mapping__YAML(const YAMLDocument *document)
+{
+    for (YAMLNode *node = document->nodes.start; node < document->nodes.top;
+         ++node) {
+        if (node->type == YAML_MAPPING_NODE) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+Int32
+get_mapping__YAML(YAMLDocument *document)
+{
+    if (!has_mapping__YAML(document)) {
+        // Delete old document, with no mapping.
+        yaml_document_delete(document);
+
+        yaml_document_initialize(document, NULL, NULL, NULL, 0, 1);
+        yaml_document_add_mapping(document, NULL, YAML_ANY_MAPPING_STYLE);
+    }
+
+    return 1;
+}
+
+YAMLLoadRes
+init__YAMLLoadRes()
+{
+    YAMLDocument *documents = malloc(sizeof(YAMLDocument));
+
+    yaml_document_initialize(&*documents, NULL, NULL, NULL, 0, 1);
+    yaml_document_add_mapping(&*documents, NULL, YAML_ANY_MAPPING_STYLE);
+
+    return NEW(YAMLLoadRes, documents, 1);
+}
 
 DESTRUCTOR(YAMLLoadRes, const YAMLLoadRes *self)
 {
@@ -86,4 +131,139 @@ load__YAML(const char *filename)
     }
 
     return NEW(YAMLLoadRes, documents, documents_len);
+}
+
+void
+write__YAML(const YAMLLoadRes *self, const char *filename)
+{
+    FILE *file = fopen(filename, "wb");
+
+    if (!file) {
+        FAILED("YAML: cannot open file");
+    }
+
+    YAMLEmitter emitter;
+
+    yaml_emitter_initialize(&emitter);
+    yaml_emitter_set_output_file(&emitter, file);
+
+    for (Usize i = 0; i < self->len; ++i) {
+        yaml_emitter_dump(&emitter, &self->documents[i]);
+    }
+
+    yaml_emitter_delete(&emitter);
+
+    if (fclose(file) != 0) {
+        FAILED("YAML: failed to close file");
+    }
+}
+
+void
+dump__YAML(const YAMLLoadRes *self)
+{
+    YAMLEmitter emitter;
+
+    yaml_emitter_initialize(&emitter);
+    yaml_emitter_set_output_file(&emitter, stdout);
+
+    for (Usize i = 0; i < self->len; ++i) {
+        yaml_emitter_dump(&emitter, &self->documents[i]);
+    }
+
+    yaml_emitter_delete(&emitter);
+}
+
+#define GET_DOCUMENT(self, id) self->documents[id]
+
+// e.g.
+// year: 2024
+// Add `day` key, with `Monday` value
+//
+// Result:
+// year: 2024
+// value: Monday
+void
+add_scalar__YAML(YAMLLoadRes *self,
+                 Int32 document_id,
+                 const char *key,
+                 const char *value)
+{
+    YAMLDocument *document = &GET_DOCUMENT(self, document_id);
+
+    ASSERT(document);
+
+    YAMLNode *root_node = yaml_document_get_root_node(document);
+
+    if (!root_node) {
+        FAILED("YAML: the document is empty");
+    }
+
+    int mapping = get_mapping__YAML(document);
+
+    int key_node = yaml_document_add_scalar(
+      document, NULL, (YAMLChar *)key, strlen(key), YAML_ANY_SCALAR_STYLE);
+
+    if (!key_node) {
+        FAILED("YAML: failed to add scalar (key)");
+    }
+
+    int value_node = yaml_document_add_scalar(
+      document, NULL, (YAMLChar *)value, strlen(value), YAML_ANY_SCALAR_STYLE);
+
+    if (!value_node) {
+        FAILED("YAML: failed to add scalar (value)");
+    }
+
+    yaml_document_append_mapping_pair(document, mapping, key_node, value_node);
+}
+
+void
+add_sequence__YAML(YAMLLoadRes *self,
+                   Int32 document_id,
+                   const char *key,
+                   Usize n,
+                   ...)
+{
+    YAMLDocument *document = &GET_DOCUMENT(self, document_id);
+    va_list vl;
+
+    va_start(vl);
+
+    int sequence_id =
+      yaml_document_add_sequence(document, NULL, YAML_BLOCK_SEQUENCE_STYLE);
+
+    if (!sequence_id) {
+        FAILED("YAML: failed to add sequence");
+    }
+
+    for (Usize i = 0; i < n; ++i) {
+        const char *value = va_arg(vl, const char *);
+
+        int value_id = yaml_document_add_scalar(document,
+                                                NULL,
+                                                (YAMLChar *)value,
+                                                strlen(value),
+                                                YAML_ANY_SCALAR_STYLE);
+
+        if (!value_id) {
+            FAILED("YAML: failed to add scalar value");
+        }
+
+        if (!yaml_document_append_sequence_item(
+              document, sequence_id, value_id)) {
+            FAILED("YAML: failed to append sequence item");
+        }
+    }
+
+    Int32 sequence_key = yaml_document_add_scalar(
+      document, NULL, (YAMLChar *)key, strlen(key), YAML_ANY_SCALAR_STYLE);
+
+    if (!sequence_key) {
+        FAILED("YAML: failed to add sequence key");
+    }
+
+    yaml_document_append_mapping_pair(
+      document, get_mapping__YAML(document), sequence_key, sequence_id);
+
+    va_end(vl);
 }

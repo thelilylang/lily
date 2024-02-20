@@ -30,7 +30,11 @@
 
 #include <local/src/libyaml/src/yaml.h>
 
+typedef yaml_char_t YAMLChar;
 typedef yaml_document_t YAMLDocument;
+typedef yaml_emitter_t YAMLEmitter;
+typedef yaml_event_t YAMLEvent;
+typedef yaml_node_t YAMLNode;
 typedef yaml_parser_t YAMLParser;
 
 typedef struct YAMLLoadRes
@@ -48,6 +52,9 @@ inline CONSTRUCTOR(YAMLLoadRes, YAMLLoadRes, YAMLDocument *documents, Usize len)
     return (YAMLLoadRes){ .documents = documents, .len = len };
 }
 
+YAMLLoadRes
+init__YAMLLoadRes();
+
 /**
  *
  * @brief Free YAMLLoadRes type.
@@ -62,5 +69,40 @@ DESTRUCTOR(YAMLLoadRes, const YAMLLoadRes *self);
  */
 YAMLLoadRes
 load__YAML(const char *filename);
+
+/**
+ *
+ * @brief Write YAML file from YAMLLoadRes type.
+ */
+void
+write__YAML(const YAMLLoadRes *self, const char *filename);
+
+/**
+ *
+ * @brief Print (parsed) YAML file.
+ */
+void
+dump__YAML(const YAMLLoadRes *self);
+
+/**
+ *
+ * @brief Add YAML scalar to YAMLDocument.
+ */
+void
+add_scalar__YAML(YAMLLoadRes *self,
+                 Int32 document_id,
+                 const char *key,
+                 const char *value);
+
+/**
+ *
+ * @brief Add YAML sequence to YAMLDocument.
+ */
+void
+add_sequence__YAML(YAMLLoadRes *self,
+                   Int32 document_id,
+                   const char *key,
+                   Usize n,
+                   ...);
 
 #endif // LILY_BASE_YAML
