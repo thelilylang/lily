@@ -30,6 +30,8 @@
 
 #include <local/src/libyaml/src/yaml.h>
 
+#define FIRST_DOCUMENT 0
+
 typedef yaml_char_t YAMLChar;
 typedef yaml_document_t YAMLDocument;
 typedef yaml_emitter_t YAMLEmitter;
@@ -137,5 +139,16 @@ get_key__YAML(YAMLLoadRes *self,
 
 #define GET_KEY_ON_DEFAULT_MAPPING(self, document_id, key) \
     get_key__YAML(self, document_id, 1, key)
+
+/**
+ *
+ * @brief Get node from id.
+ * @return YAMLNode*? (&)
+ */
+inline YAMLNode *
+get_node_from_id__YAML(YAMLLoadRes *self, Usize document_id, Int32 node_id)
+{
+    return yaml_document_get_node(&self->documents[document_id], node_id);
+}
 
 #endif // LILY_BASE_YAML
