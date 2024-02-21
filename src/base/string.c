@@ -263,6 +263,20 @@ ungrow__String(String *self)
     }
 }
 
+Usize
+count_c__String(const String *self, char c)
+{
+    Usize count = 0;
+
+    for (Usize i = 0; i < self->len; ++i) {
+        if (self->buffer[i] == c) {
+            ++count;
+        }
+    }
+
+    return count;
+}
+
 DESTRUCTOR(String, String *self)
 {
     lily_free(self->buffer);

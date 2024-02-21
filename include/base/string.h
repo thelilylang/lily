@@ -209,6 +209,13 @@ ungrow__String(String *self);
 
 /**
  *
+ * @brief Count the number of repetitions of this character in this String.
+ */
+Usize
+count_c__String(const String *self, char c);
+
+/**
+ *
  * @brief Free String buffer.
  */
 DESTRUCTOR(String, String *self);
