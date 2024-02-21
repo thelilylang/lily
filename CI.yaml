@@ -1,4 +1,6 @@
 ---
+standard: c23
+
 libraries:
   - lily_base:
     path:
