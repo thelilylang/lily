@@ -259,7 +259,8 @@ set(LIBYAML_SRC
     ${CMAKE_SOURCE_DIR}/lib/local/src/libyaml/src/writer.c)
 
 add_library(lily_libyaml STATIC ${LIBYAML_SRC})
-target_include_directories(lily_libyaml PRIVATE ${LILY_INCLUDE})
+target_include_directories(lily_libyaml PRIVATE ${LILY_INCLUDE}
+                                                lib/local/src/libyaml/src)
 
 # lily_base
 set(BASE_SRC
