@@ -80,9 +80,32 @@ read_file__File(const char *path);
 
 /**
  *
+ * @brief Read file content in current working directory.
+ */
+char *
+read_file_in_cwd__File(const char *filename);
+
+/**
+ *
  * @brief Write content on a file.
  */
 void
 write_file__File(const char *path, const char *content);
+
+/**
+ *
+ * @brief Check if the file exists.
+ * @return Return true if the file exist otherwise return false.
+ */
+bool
+exists__File(const char *path);
+
+/**
+ *
+ * @brief Check whether the file exists in the current and previous folders.
+ * @return String*?
+ */
+String *
+exists_rec__File(const char *path, const char *filename);
 
 #endif // LILY_BASE_FILE_H

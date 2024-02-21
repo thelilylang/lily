@@ -87,3 +87,17 @@ replace__Str(char *self, char target, char replace)
         }
     }
 }
+
+Usize
+count_c__Str(const char *self, char c)
+{
+    Usize count = 0;
+
+    for (char *current = (char *)self; *current; ++current) {
+        if (*current == c) {
+            ++count;
+        }
+    }
+
+    return count;
+}

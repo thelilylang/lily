@@ -247,6 +247,21 @@ set_target_properties(
   lily_lld_wasm PROPERTIES COMPILE_FLAGS ${LILY_LLD_COMPILE_FLAGS} LINK_FLAGS
                                                                    " ")
 
+# lily_libyaml
+set(LIBYAML_SRC
+    ${CMAKE_SOURCE_DIR}/lib/local/src/libyaml/src/api.c
+    ${CMAKE_SOURCE_DIR}/lib/local/src/libyaml/src/dumper.c
+    ${CMAKE_SOURCE_DIR}/lib/local/src/libyaml/src/emitter.c
+    ${CMAKE_SOURCE_DIR}/lib/local/src/libyaml/src/loader.c
+    ${CMAKE_SOURCE_DIR}/lib/local/src/libyaml/src/parser.c
+    ${CMAKE_SOURCE_DIR}/lib/local/src/libyaml/src/reader.c
+    ${CMAKE_SOURCE_DIR}/lib/local/src/libyaml/src/scanner.c
+    ${CMAKE_SOURCE_DIR}/lib/local/src/libyaml/src/writer.c)
+
+add_library(lily_libyaml STATIC ${LIBYAML_SRC})
+target_include_directories(lily_libyaml PRIVATE ${LILY_INCLUDE}
+                                                lib/local/src/libyaml/src)
+
 # lily_base
 set(BASE_SRC
     ${CMAKE_SOURCE_DIR}/src/base/allocator.c
@@ -312,10 +327,11 @@ set(BASE_SRC
     ${CMAKE_SOURCE_DIR}/src/base/test.c
     ${CMAKE_SOURCE_DIR}/src/base/tree.c
     ${CMAKE_SOURCE_DIR}/src/base/tree_map.c
-    ${CMAKE_SOURCE_DIR}/src/base/vec.c)
+    ${CMAKE_SOURCE_DIR}/src/base/vec.c
+    ${CMAKE_SOURCE_DIR}/src/base/yaml.c)
 
 add_library(lily_base STATIC ${BASE_SRC})
-target_link_libraries(lily_base PUBLIC lily_builtin)
+target_link_libraries(lily_base PUBLIC lily_builtin lily_libyaml)
 target_include_directories(lily_base PRIVATE ${LILY_INCLUDE})
 
 # lily_cli

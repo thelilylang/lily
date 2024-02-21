@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
 #include <base/assert.h>
 #include <base/dir.h>
 #include <base/dir_separator.h>
@@ -41,6 +42,8 @@
 #include <errno.h>
 #include <unistd.h>
 #endif
+
+#define PATH_MAX 4096
 
 void
 create__Dir(const char *path, [[maybe_unused]] enum DirMode mode)
@@ -114,4 +117,65 @@ exists__Dir(const char *path)
     }
 
     return false;
+}
+
+char *
+get_cwd__Dir()
+{
+    char cwd[PATH_MAX];
+
+#ifdef LILY_WINDOWS_OS
+    if (_getcwd(cwd, sizeof(cwd)))
+#else
+    if (getcwd(cwd, sizeof(cwd)))
+#endif
+    {
+        char *res = lily_malloc(strlen(cwd) + 1);
+
+        strcpy(res, cwd);
+
+        return res;
+    }
+
+    return NULL;
+}
+
+Vec *
+get_files_rec__Dir(const char *path)
+{
+    DIR *dir = opendir(path);
+
+    if (!dir) {
+        return NULL;
+    }
+
+    struct dirent *dp;
+    Vec *res = NEW(Vec);
+    char current_path[PATH_MAX];
+
+    while ((dp = readdir(dir))) {
+        if (!strcmp(dp->d_name, ".") && !strcmp(dp->d_name, "..")) {
+            strcpy(current_path, path);
+            strcat(current_path, "/");
+            strcat(current_path, dp->d_name);
+
+            struct __stat__ path_stat;
+
+            __stat__(current_path, &path_stat);
+
+            if (S_ISDIR(path_stat.st_mode)) {
+                Vec *res_current_dir = get_files_rec__Dir(path);
+
+                ASSERT(res_current_dir);
+
+                append__Vec(res, res_current_dir);
+
+                FREE(Vec, res_current_dir);
+            } else {
+                push__Vec(res, from__String(current_path));
+            }
+        }
+    }
+
+    return res;
 }

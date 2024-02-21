@@ -10,10 +10,15 @@ build:
 	ninja -C build/Debug
 
 configure:
-	@mkdir -p build && cd build && cmake .. -G Ninja
+	mkdir -p build && cd build && cmake .. -G Ninja
 
 debug:
-	@mkdir -p build && cd build && cmake -H. -BDebug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_EXPORT_COMPILE_COMMANDS=YES .. -G Ninja && ln -s Debug/compile_commands.json .
+	mkdir -p build && cd build && cmake -H. -BDebug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_EXPORT_COMPILE_COMMANDS=YES .. -G Ninja && ln -s Debug/compile_commands.json .
+
+submodules:
+	git submodule init
+	git submodule update
+	cd lib/local/src/libyaml && ./bootstrap && ./configure && mv include/config.h src
 
 format:
 	${CMAKE_FORMAT} ./cmake/*.cmake
