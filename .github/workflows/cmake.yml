@@ -66,6 +66,9 @@ jobs:
 
     - name: Download & Install ZLib
       run: brew install zlib
+
+    - name: Download & Install autoconf, automake, libtool
+      run: brew install autoconf automake libtool
     
     - name: Download & Install python requirements
       working-directory: ${{github.workspace}}
