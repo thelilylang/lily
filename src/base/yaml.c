@@ -304,10 +304,10 @@ get_key__YAML(YAMLLoadRes *self,
                     YAMLNode *node_key =
                       yaml_document_get_node(document, pair->key);
 
-                    ASSERT(node_key && GET_NODE_TYPE__YAML(node_key) == YAML_SCALAR_NODE);
+                    ASSERT(node_key &&
+                           GET_NODE_TYPE__YAML(node_key) == YAML_SCALAR_NODE);
 
-                    if (!strcmp(GET_NODE_SCALAR_VALUE__YAML(node_key),
-                                key)) {
+                    if (!strcmp(GET_NODE_SCALAR_VALUE__YAML(node_key), key)) {
                         return pair->value;
                     }
                 }
