@@ -27,8 +27,10 @@
 #include <base/dir.h>
 #include <base/dir_separator.h>
 #include <base/file.h>
+#include <base/format.h>
 #include <base/macros.h>
 #include <base/new.h>
+#include <base/str.h>
 #include <base/sys.h>
 #include <base/types.h>
 
@@ -37,7 +39,10 @@
 #include <string.h>
 
 #ifdef LILY_WINDOWS_OS
+#include <io.h>
 #include <windows.h>
+#else
+#include <unistd.h>
 #endif
 
 char *
@@ -204,6 +209,24 @@ read_file__File(const char *path)
 }
 #endif
 
+char *
+read_file_in_cwd__File(const char *filename)
+{
+    char *cwd = get_cwd__Dir();
+
+    if (!cwd) {
+        printf("\x1b[31merror\x1b[0m: cannot get current working directory\n");
+        exit(1);
+    }
+
+    char *path = format("{sa}/{s}", cwd, filename);
+    char *content = read_file__File(path);
+
+    lily_free(path);
+
+    return content;
+}
+
 #ifdef LILY_WINDOWS_OS
 void
 write_file__File(const char *path, const char *content)
@@ -227,3 +250,41 @@ write_file__File(const char *path, const char *content)
     fclose(file);
 }
 #endif
+
+bool
+exists__File(const char *path)
+{
+#ifdef LILY_WINDOWS_OS
+    return !_access(path, 0);
+#else
+    return access(path, F_OK) != -1;
+#endif
+}
+
+String *
+exists_rec__File(const char *path, const char *filename)
+{
+#ifdef LILY_WINDOWS_OS
+    Usize count_folder = count_c__Str(path, '\\');
+#else
+    Usize count_folder = count_c__Str(path, '/');
+#endif
+
+    for (Usize i = 0; i < count_folder; ++i) {
+#ifdef LILY_WINDOWS_OS
+        String *path_s = format__String(
+          "{s}\\{Sr}\\{s}", path, repeat__String("..\\", i), filename);
+#else
+        String *path_s = format__String(
+          "{s}/{Sr}/{s}", path, repeat__String("../", i), filename);
+#endif
+
+        if (exists__File(path_s->buffer)) {
+            return path_s;
+        }
+
+        FREE(String, path_s);
+    }
+
+    return NULL;
+}
