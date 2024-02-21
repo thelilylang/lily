@@ -35,6 +35,7 @@ typedef yaml_document_t YAMLDocument;
 typedef yaml_emitter_t YAMLEmitter;
 typedef yaml_event_t YAMLEvent;
 typedef yaml_node_t YAMLNode;
+typedef yaml_node_pair_t YAMLNodePair;
 typedef yaml_parser_t YAMLParser;
 
 typedef struct YAMLLoadRes
@@ -90,7 +91,7 @@ dump__YAML(const YAMLLoadRes *self);
  */
 void
 add_scalar__YAML(YAMLLoadRes *self,
-                 Int32 document_id,
+                 Usize document_id,
                  const char *key,
                  const char *value);
 
@@ -100,9 +101,41 @@ add_scalar__YAML(YAMLLoadRes *self,
  */
 void
 add_sequence__YAML(YAMLLoadRes *self,
-                   Int32 document_id,
+                   Usize document_id,
                    const char *key,
                    Usize n,
                    ...);
+
+/**
+ *
+ * @brief Get YAML document from YAMLLoadRes type.
+ */
+inline YAMLDocument *
+get_document__YAML(const YAMLLoadRes *self, Usize document_id)
+{
+    return &self->documents[document_id];
+}
+
+/**
+ *
+ * @brief Add YAML document.
+ */
+void
+add_new_document__YAML(YAMLLoadRes *self);
+
+/**
+ *
+ * @brief Get value from key.
+ * @return If the key is not found return -1, otherwise return the index of the
+ * node value.
+ */
+Int32
+get_key__YAML(YAMLLoadRes *self,
+              Usize document_id,
+              Int32 mapping_id,
+              const char *key);
+
+#define GET_KEY_ON_DEFAULT_MAPPING(self, document_id, key) \
+    get_key__YAML(self, document_id, 1, key)
 
 #endif // LILY_BASE_YAML

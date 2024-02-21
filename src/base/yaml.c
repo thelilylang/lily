@@ -117,8 +117,8 @@ load__YAML(const char *filename)
         if (!documents) {
             documents = malloc(sizeof(YAMLDocument));
         } else {
-            documents =
-              realloc(documents, sizeof(YAMLDocument) * (documents_len + 1));
+            documents = lily_realloc(
+              documents, sizeof(YAMLDocument) * (documents_len + 1));
         }
 
         documents[documents_len++] = document;
@@ -184,7 +184,7 @@ dump__YAML(const YAMLLoadRes *self)
 // value: Monday
 void
 add_scalar__YAML(YAMLLoadRes *self,
-                 Int32 document_id,
+                 Usize document_id,
                  const char *key,
                  const char *value)
 {
@@ -199,7 +199,6 @@ add_scalar__YAML(YAMLLoadRes *self,
     }
 
     int mapping = get_mapping__YAML(document);
-
     int key_node = yaml_document_add_scalar(
       document, NULL, (YAMLChar *)key, strlen(key), YAML_ANY_SCALAR_STYLE);
 
@@ -219,7 +218,7 @@ add_scalar__YAML(YAMLLoadRes *self,
 
 void
 add_sequence__YAML(YAMLLoadRes *self,
-                   Int32 document_id,
+                   Usize document_id,
                    const char *key,
                    Usize n,
                    ...)
@@ -266,4 +265,58 @@ add_sequence__YAML(YAMLLoadRes *self,
       document, get_mapping__YAML(document), sequence_key, sequence_id);
 
     va_end(vl);
+}
+
+void
+add_new_document__YAML(YAMLLoadRes *self)
+{
+    YAMLDocument document;
+
+    yaml_document_initialize(&document, NULL, NULL, NULL, 0, 1);
+    yaml_document_add_mapping(&document, NULL, YAML_ANY_MAPPING_STYLE);
+
+    self->documents = lily_realloc(self->documents, self->len + 1);
+    self->documents[self->len++] = document;
+}
+
+Int32
+get_key__YAML(YAMLLoadRes *self,
+              Usize document_id,
+              Int32 mapping_id,
+              const char *key)
+{
+    Int32 id = 0;
+    YAMLDocument *document = &GET_DOCUMENT(self, document_id);
+
+    for (YAMLNode *node = document->nodes.start; node < document->nodes.top;
+         ++node, ++id) {
+        switch (node->type) {
+            case YAML_SCALAR_NODE:
+                if (!strcmp((const char *)node->data.scalar.value, key)) {
+                    return id;
+                }
+
+                break;
+            case YAML_MAPPING_NODE:
+                for (YAMLNodePair *pair = node->data.mapping.pairs.start;
+                     pair < node->data.mapping.pairs.top;
+                     ++pair) {
+                    YAMLNode *node_key =
+                      yaml_document_get_node(document, pair->key);
+
+                    ASSERT(node_key && node_key->type == YAML_SCALAR_NODE);
+
+                    if (!strcmp((const char *)node_key->data.scalar.value,
+                                key)) {
+                        return pair->value;
+                    }
+                }
+
+                break;
+            default:
+                break;
+        }
+    }
+
+    return -1;
 }
