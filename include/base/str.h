@@ -50,4 +50,11 @@ get_slice__Str(const char *self, Usize start, Usize end);
 void
 replace__Str(char *self, char target, char replace);
 
+/**
+ *
+ * @brief Count the number of repetitions of this character in this Str.
+ */
+Usize
+count_c__Str(const char *self, char c);
+
 #endif // LILY_BASE_STR_H
