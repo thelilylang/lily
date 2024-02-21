@@ -32,6 +32,12 @@
 
 #define FIRST_DOCUMENT 0
 
+#define GET_KEY_ON_DEFAULT_MAPPING__YAML(self, document_id, key) \
+    get_key__YAML(self, document_id, 1, key)
+
+#define GET_NODE_TYPE__YAML(node) node->type
+#define GET_NODE_SCALAR_VALUE__YAML(node) (char *)node->data.scalar.value
+
 typedef yaml_char_t YAMLChar;
 typedef yaml_document_t YAMLDocument;
 typedef yaml_emitter_t YAMLEmitter;
@@ -136,9 +142,6 @@ get_key__YAML(YAMLLoadRes *self,
               Usize document_id,
               Int32 mapping_id,
               const char *key);
-
-#define GET_KEY_ON_DEFAULT_MAPPING(self, document_id, key) \
-    get_key__YAML(self, document_id, 1, key)
 
 /**
  *

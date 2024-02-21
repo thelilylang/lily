@@ -55,7 +55,7 @@ main(int argc, char **argv)
 
     {
         // standard: c89 | c95 | c99 | c11 | c17 | c23
-        Int32 standard_value_id = GET_KEY_ON_DEFAULT_MAPPING(
+        Int32 standard_value_id = GET_KEY_ON_DEFAULT_MAPPING__YAML(
           &yaml_load_res, FIRST_DOCUMENT, "standard");
 
         if (standard_value_id == -1) {
@@ -67,10 +67,10 @@ main(int argc, char **argv)
 
         ASSERT(standard_value_node);
 
-        switch (standard_value_node->type) {
+        switch (GET_NODE_TYPE__YAML(standard_value_node)) {
             case YAML_SCALAR_NODE: {
                 char *standard_value =
-                  (char *)standard_value_node->data.scalar.value;
+                  GET_NODE_SCALAR_VALUE__YAML(standard_value_node);
 
                 if (!strcmp(standard_value, "c89")) {
                     standard = CI_STANDARD_89;

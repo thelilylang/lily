@@ -41,7 +41,7 @@ has_mapping__YAML(const YAMLDocument *document)
 {
     for (YAMLNode *node = document->nodes.start; node < document->nodes.top;
          ++node) {
-        if (node->type == YAML_MAPPING_NODE) {
+        if (GET_NODE_TYPE__YAML(node) == YAML_MAPPING_NODE) {
             return true;
         }
     }
@@ -290,9 +290,9 @@ get_key__YAML(YAMLLoadRes *self,
 
     for (YAMLNode *node = document->nodes.start; node < document->nodes.top;
          ++node, ++id) {
-        switch (node->type) {
+        switch (GET_NODE_TYPE__YAML(node)) {
             case YAML_SCALAR_NODE:
-                if (!strcmp((const char *)node->data.scalar.value, key)) {
+                if (!strcmp(GET_NODE_SCALAR_VALUE__YAML(node), key)) {
                     return id;
                 }
 
@@ -304,9 +304,9 @@ get_key__YAML(YAMLLoadRes *self,
                     YAMLNode *node_key =
                       yaml_document_get_node(document, pair->key);
 
-                    ASSERT(node_key && node_key->type == YAML_SCALAR_NODE);
+                    ASSERT(node_key && GET_NODE_TYPE__YAML(node_key) == YAML_SCALAR_NODE);
 
-                    if (!strcmp((const char *)node_key->data.scalar.value,
+                    if (!strcmp(GET_NODE_SCALAR_VALUE__YAML(node_key),
                                 key)) {
                         return pair->value;
                     }
