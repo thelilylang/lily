@@ -139,3 +139,43 @@ get_cwd__Dir()
 
     return NULL;
 }
+
+Vec *
+get_files_rec__Dir(const char *path)
+{
+    DIR *dir = opendir(path);
+
+    if (!dir) {
+        return NULL;
+    }
+
+    struct dirent *dp;
+    Vec *res = NEW(Vec);
+    char current_path[PATH_MAX];
+
+    while ((dp = readdir(dir))) {
+        if (!strcmp(dp->d_name, ".") && !strcmp(dp->d_name, "..")) {
+            strcpy(current_path, path);
+            strcat(current_path, "/");
+            strcat(current_path, dp->d_name);
+
+            struct __stat__ path_stat;
+
+            __stat__(current_path, &path_stat);
+
+            if (S_ISDIR(path_stat.st_mode)) {
+                Vec *res_current_dir = get_files_rec__Dir(path);
+
+                ASSERT(res_current_dir);
+
+                append__Vec(res, res_current_dir);
+
+                FREE(Vec, res_current_dir);
+            } else {
+                push__Vec(res, from__String(current_path));
+            }
+        }
+    }
+
+    return res;
+}

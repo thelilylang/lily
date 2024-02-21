@@ -25,6 +25,8 @@
 #ifndef LILY_BASE_DIR_H
 #define LILY_BASE_DIR_H
 
+#include <base/vec.h>
+
 #include <stdbool.h>
 
 // NOTE: Only useful on Unix operating systems
@@ -89,5 +91,13 @@ exists__Dir(const char *path);
  */
 char *
 get_cwd__Dir();
+
+/**
+ *
+ * @brief Gets all files in the folder recursively.
+ * @return Vec<String*>*?
+ */
+Vec *
+get_files_rec__Dir(const char *path);
 
 #endif // LILY_BASE_DIR_H
