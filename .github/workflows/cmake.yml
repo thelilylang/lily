@@ -30,7 +30,7 @@ jobs:
       working-directory: ${{github.workspace}}
       run: pip install -r requirements.txt
 
-    - name: Load submodules
+    - name: Load & Setup submodules
       working-directory: ${{github.workspace}}
       run: make submodules
 
@@ -71,7 +71,7 @@ jobs:
       working-directory: ${{github.workspace}}
       run: pip install -r requirements.txt
 
-    - name: Load submodules
+    - name: Load & Setup submodules
       working-directory: ${{github.workspace}}
       run: make submodules
 

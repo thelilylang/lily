@@ -18,6 +18,7 @@ debug:
 submodules:
 	git submodule init
 	git submodule update
+	cd lib/local/src/libyaml && ./bootstrap && ./configure && mv include/config.h src
 
 format:
 	${CMAKE_FORMAT} ./cmake/*.cmake
