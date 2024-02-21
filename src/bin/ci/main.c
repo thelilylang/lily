@@ -95,9 +95,15 @@ main(int argc, char **argv)
         }
     }
 
+    // TODO: Get the files from YAML config
+    if (argc < 2) {
+        printf("ci [ci_files...]\n");
+        exit(1);
+    }
+
     CIResult result = NEW(CIResult);
 
-    for (Usize i = 2; i < argc; ++i) {
+    for (Usize i = 1; i < argc; ++i) {
         char *extension = get_extension__File(argv[i]);
         String *filename_result = get_filename__File(argv[i]);
         bool is_header = false;
