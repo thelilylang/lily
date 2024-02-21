@@ -2,7 +2,7 @@
 libraries:
   - lily_base:
     path:
-      - src/base/
+      - src/base
       - src/base/cli
       - src/base/hash
       - src/base/memory
@@ -131,7 +131,7 @@ libraries:
     path:
       - src/core/cc/ci
 
-bin:
+bins:
   - lily:
     path: src/bin/lily/main.c
   - lilyc:
