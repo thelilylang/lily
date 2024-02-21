@@ -43,7 +43,24 @@
 #include <unistd.h>
 #endif
 
+#ifdef LILY_WINDOWS_OS
+// https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry
+#define PATH_MAX 260
+#elifdef LILY_APPLE_OS
+// On MacOS:
+// https://developer.apple.com/documentation/applicationservices/1560101-maximum_path_size/cs_max_path
+#define PATH_MAX 1024
+#elifdef LILY_BSD_OS
+// On NetBSD and probably on other BSDs, the limit path is defined in the header
+// <limits.h>: #define _POSIX_PATH_MAX			256
+#define PATH_MAX 256
+#elifdef LILY_LINUX_OS
+// On Linux the path limit is defined in the header <linux/limits.h>:
+// #define PATH_MAX        4096    /* # chars in a path name including nul */
 #define PATH_MAX 4096
+#else
+#error "this OS is not yet supported"
+#endif
 
 void
 create__Dir(const char *path, [[maybe_unused]] enum DirMode mode)
@@ -140,6 +157,50 @@ get_cwd__Dir()
     return NULL;
 }
 
+#ifdef LILY_WINDOWS_OS
+Vec *
+get_files_rec__Dir(const char *path)
+{
+    char current_path[PATH_MAX];
+
+    sprintf(current_path, "%s\\%s", path, "*");
+
+    WIN32_FIND_DATA find_file_data;
+    HANDLE h_find_file = FindFirstFile(current_path, &find_file_data);
+
+    if (h_find_file != INVALID_HANDLE_VALUE) {
+        Vec *res = NEW(Vec); // Vec<String*>*
+
+        do {
+            if (find_file_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+                if (strcmp(find_file_data.cFileName, ".") != 0 &&
+                    strcmp(find_file_data.cFileName, "..") != 0) {
+                    sprintf(
+                      current_path, "%s\\%s", path, find_file_data.cFileName);
+
+                    Vec *res_current_dir = get_files_rec__Dir(current_path);
+
+                    ASSERT(res);
+
+                    append__Vec(res, res_current_dir);
+
+                    FREE(Vec, res_current_dir);
+                }
+            } else {
+                push__Vec(
+                  res,
+                  format__String("{s}\\{s}", path, find_file_data.cFileName));
+            }
+        } while (FindNextFile(h_find_file, &find_file_data) != 0);
+
+        FindClose(h_find_file);
+
+        return res;
+    }
+
+    return NULL;
+}
+#else
 Vec *
 get_files_rec__Dir(const char *path)
 {
@@ -154,7 +215,7 @@ get_files_rec__Dir(const char *path)
     char current_path[PATH_MAX];
 
     while ((dp = readdir(dir))) {
-        if (!strcmp(dp->d_name, ".") && !strcmp(dp->d_name, "..")) {
+        if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0) {
             strcpy(current_path, path);
             strcat(current_path, "/");
             strcat(current_path, dp->d_name);
@@ -164,7 +225,7 @@ get_files_rec__Dir(const char *path)
             __stat__(current_path, &path_stat);
 
             if (S_ISDIR(path_stat.st_mode)) {
-                Vec *res_current_dir = get_files_rec__Dir(path);
+                Vec *res_current_dir = get_files_rec__Dir(current_path);
 
                 ASSERT(res_current_dir);
 
@@ -177,5 +238,8 @@ get_files_rec__Dir(const char *path)
         }
     }
 
+    closedir(dir);
+
     return res;
 }
+#endif
