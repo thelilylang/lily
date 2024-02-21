@@ -82,4 +82,12 @@ is__Dir(const char *path);
 bool
 exists__Dir(const char *path);
 
+/**
+ *
+ * @brief Get current working directory.
+ * @return char*?
+ */
+char *
+get_cwd__Dir();
+
 #endif // LILY_BASE_DIR_H

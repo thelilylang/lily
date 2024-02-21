@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
 #include <base/assert.h>
 #include <base/dir.h>
 #include <base/dir_separator.h>
@@ -41,6 +42,8 @@
 #include <errno.h>
 #include <unistd.h>
 #endif
+
+#define PATH_MAX 4096
 
 void
 create__Dir(const char *path, [[maybe_unused]] enum DirMode mode)
@@ -114,4 +117,25 @@ exists__Dir(const char *path)
     }
 
     return false;
+}
+
+char *
+get_cwd__Dir()
+{
+    char cwd[PATH_MAX];
+
+#ifdef LILY_WINDOWS_OS
+    if (_getcwd(cwd, sizeof(cwd)))
+#else
+    if (getcwd(cwd, sizeof(cwd)))
+#endif
+    {
+        char *res = lily_malloc(strlen(cwd) + 1);
+
+        strcpy(res, cwd);
+
+        return res;
+    }
+
+    return NULL;
 }
