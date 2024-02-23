@@ -546,8 +546,9 @@ DESTRUCTOR(CIDataTypeFunction, const CIDataTypeFunction *self);
 
 typedef struct CIDataTypeStruct
 {
-    String *name;                    // String* (&)
+    String *name;                    // String*? (&)
     CIGenericParams *generic_params; // CIGenericParams*?
+    Vec *fields;                     // Vec<CIDeclStructField*>*?
 } CIDataTypeStruct;
 
 /**
@@ -557,9 +558,12 @@ typedef struct CIDataTypeStruct
 inline CONSTRUCTOR(CIDataTypeStruct,
                    CIDataTypeStruct,
                    String *name,
-                   CIGenericParams *generic_params)
+                   CIGenericParams *generic_params,
+                   Vec *fields)
 {
-    return (CIDataTypeStruct){ .name = name, .generic_params = generic_params };
+    return (CIDataTypeStruct){ .name = name,
+                               .generic_params = generic_params,
+                               .fields = fields };
 }
 
 /**
@@ -580,8 +584,9 @@ DESTRUCTOR(CIDataTypeStruct, const CIDataTypeStruct *self);
 
 typedef struct CIDataTypeUnion
 {
-    String *name;                    // String* (&)
+    String *name;                    // String*? (&)
     CIGenericParams *generic_params; // CIGenericParams*?
+    Vec *fields;                     // Vec<CIDeclStructField*>*?
 } CIDataTypeUnion;
 
 /**
@@ -591,9 +596,12 @@ typedef struct CIDataTypeUnion
 inline CONSTRUCTOR(CIDataTypeUnion,
                    CIDataTypeUnion,
                    String *name,
-                   CIGenericParams *generic_params)
+                   CIGenericParams *generic_params,
+                   Vec *fields)
 {
-    return (CIDataTypeUnion){ .name = name, .generic_params = generic_params };
+    return (CIDataTypeUnion){ .name = name,
+                              .generic_params = generic_params,
+                              .fields = fields };
 }
 
 /**
@@ -1078,6 +1086,20 @@ CONSTRUCTOR(CIDeclStructField *,
             CIDeclStructField,
             String *name,
             CIDataType *data_type);
+
+/**
+ *
+ * @brief Clone CIDeclStructField type.
+ */
+CIDeclStructField *
+clone__CIDeclStructField(CIDeclStructField *self);
+
+/**
+ *
+ * @brief Clone fields Vector containing CIDeclStructField.
+ */
+Vec *
+clone_fields__CIDeclStructField(Vec *fields);
 
 /**
  *

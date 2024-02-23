@@ -477,12 +477,22 @@ DESTRUCTOR(CIDataTypeFunction, const CIDataTypeFunction *self)
 String *
 IMPL_FOR_DEBUG(to_string, CIDataTypeStruct, const CIDataTypeStruct *self)
 {
-    return format__String(
-      "CIDataTypeStruct{{ name = {S}, generic_params = {Sr} }",
-      self->name,
+    String *res = format__String(
+      "CIDataTypeStruct{{ name = {s}, generic_params = {Sr}, fields =",
+      self->name ? self->name->buffer : "NULL",
       self->generic_params
         ? to_string__Debug__CIGenericParams(self->generic_params)
         : from__String("NULL"));
+
+    if (self->fields) {
+        DEBUG_VEC_STRING(self->fields, res, CIDeclStructField);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, " }");
+
+    return res;
 }
 #endif
 
@@ -491,18 +501,34 @@ DESTRUCTOR(CIDataTypeStruct, const CIDataTypeStruct *self)
     if (self->generic_params) {
         FREE(CIGenericParams, self->generic_params);
     }
+
+    if (self->fields) {
+        FREE_BUFFER_ITEMS(
+          self->fields->buffer, self->fields->len, CIDeclStructField);
+        FREE(Vec, self->fields);
+    }
 }
 
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIDataTypeUnion, const CIDataTypeUnion *self)
 {
-    return format__String(
-      "CIDataTypeUnion{{ name = {S}, generic_params = {Sr} }",
-      self->name,
+    String *res = format__String(
+      "CIDataTypeUnion{{ name = {s}, generic_params = {Sr}, fields =",
+      self->name ? self->name->buffer : "NULL",
       self->generic_params
         ? to_string__Debug__CIGenericParams(self->generic_params)
         : from__String("NULL"));
+
+    if (self->fields) {
+        DEBUG_VEC_STRING(self->fields, res, CIDeclStructField);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, " }");
+
+    return res;
 }
 #endif
 
@@ -510,6 +536,12 @@ DESTRUCTOR(CIDataTypeUnion, const CIDataTypeUnion *self)
 {
     if (self->generic_params) {
         FREE(CIGenericParams, self->generic_params);
+    }
+
+    if (self->fields) {
+        FREE_BUFFER_ITEMS(
+          self->fields->buffer, self->fields->len, CIDeclStructField);
+        FREE(Vec, self->fields);
     }
 }
 
@@ -708,7 +740,19 @@ clone__CIDataType(const CIDataType *self)
               CIDataType, pre_const, clone__CIDataType(self->post_const));
         case CI_DATA_TYPE_KIND_PTR:
             return NEW_VARIANT(CIDataType, ptr, clone__CIDataType(self->ptr));
-        case CI_DATA_TYPE_KIND_STRUCT:
+        case CI_DATA_TYPE_KIND_STRUCT: {
+            Vec *fields = NULL;
+
+            if (self->struct_.fields) {
+                fields = NEW(Vec);
+
+                for (Usize i = 0; i < self->struct_.fields->len; ++i) {
+                    push__Vec(fields,
+                              clone__CIDeclStructField(
+                                get__Vec(self->struct_.fields, i)));
+                }
+            }
+
             return NEW_VARIANT(
               CIDataType,
               struct,
@@ -716,10 +760,24 @@ clone__CIDataType(const CIDataType *self)
                   self->struct_.name,
                   self->struct_.generic_params
                     ? clone__CIGenericParams(self->struct_.generic_params)
-                    : NULL));
+                    : NULL,
+                  fields));
+        }
         case CI_DATA_TYPE_KIND_TYPEDEF:
             return NEW_VARIANT(CIDataType, typedef, self->typedef_);
-        case CI_DATA_TYPE_KIND_UNION:
+        case CI_DATA_TYPE_KIND_UNION: {
+            Vec *fields = NULL;
+
+            if (self->union_.fields) {
+                fields = NEW(Vec);
+
+                for (Usize i = 0; i < self->union_.fields->len; ++i) {
+                    push__Vec(fields,
+                              clone__CIDeclStructField(
+                                get__Vec(self->union_.fields, i)));
+                }
+            }
+
             return NEW_VARIANT(
               CIDataType,
               union,
@@ -727,7 +785,9 @@ clone__CIDataType(const CIDataType *self)
                   self->union_.name,
                   self->union_.generic_params
                     ? clone__CIGenericParams(self->union_.generic_params)
-                    : NULL));
+                    : NULL,
+                  fields));
+        }
         default:
             return NEW(CIDataType, self->kind);
     }
@@ -1521,6 +1581,25 @@ CONSTRUCTOR(CIDeclStructField *,
     self->data_type = data_type;
 
     return self;
+}
+
+CIDeclStructField *
+clone__CIDeclStructField(CIDeclStructField *self)
+{
+    return NEW(
+      CIDeclStructField, self->name, clone__CIDataType(self->data_type));
+}
+
+Vec *
+clone_fields__CIDeclStructField(Vec *fields)
+{
+    Vec *res = NEW(Vec);
+
+    for (Usize i = 0; i < fields->len; ++i) {
+        push__Vec(res, clone__CIDeclStructField(get__Vec(fields, i)));
+    }
+
+    return res;
 }
 
 #ifdef ENV_DEBUG
