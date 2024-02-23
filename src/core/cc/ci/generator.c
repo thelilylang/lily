@@ -61,7 +61,7 @@ static void
 generate_storage_class__CIGenerator(const int *storage_class_flag);
 
 static void
-generate_data_type__CIGenerator(const CIDataType *data_type);
+generate_data_type__CIGenerator(CIDataType *data_type);
 
 static void
 generate_enum_decl__CIGenerator(const CIDeclEnum *enum_);
@@ -277,10 +277,15 @@ generate_storage_class__CIGenerator(const int *storage_class_flag)
 }
 
 void
-generate_data_type__CIGenerator(const CIDataType *data_type)
+generate_data_type__CIGenerator(CIDataType *data_type)
 {
-    CIDataType *subs_data_type =
-      substitute_data_type__CIGenerator((CIDataType *)data_type);
+    CIDataType *subs_data_type = NULL;
+
+    if (current_generic_params && current_called_generic_params) {
+        subs_data_type = substitute_data_type__CIGenerator(data_type);
+    } else {
+        subs_data_type = ref__CIDataType(data_type);
+    }
 
     switch (subs_data_type->kind) {
         case CI_DATA_TYPE_KIND_ARRAY:
@@ -421,17 +426,37 @@ generate_data_type__CIGenerator(const CIDataType *data_type)
 
             break;
         case CI_DATA_TYPE_KIND_STRUCT:
-            write_String__CIGenerator(
-              format__String("struct {S}__", subs_data_type->struct_.name));
+#define GENERATE_STRUCT_OR_UNION_DT(dt_name, s)                              \
+    if (subs_data_type->dt_name.name) {                                      \
+        write_String__CIGenerator(                                           \
+          format__String(s " {S}", subs_data_type->dt_name.name));           \
+    } else {                                                                 \
+        write_str__CIGenerator(s);                                           \
+    }                                                                        \
+                                                                             \
+    if (subs_data_type->dt_name.generic_params) {                            \
+        /* NOTE: Normally you can't declare a anonymous struct/union with    \
+        generic parameters. This possibility is rejected in the              \
+        parser. */                                                           \
+        ASSERT(subs_data_type->dt_name.name);                                \
+                                                                             \
+        write_str__CIGenerator("__");                                        \
+                                                                             \
+        String *serialize_buffer = NEW(String);                              \
+                                                                             \
+        serialize_vec__CIDataType(                                           \
+          subs_data_type->dt_name.generic_params->params, serialize_buffer); \
+        write_String__CIGenerator(serialize_buffer);                         \
+    }                                                                        \
+                                                                             \
+    if (subs_data_type->dt_name.fields) {                                    \
+        write_str__CIGenerator(" {\n");                                      \
+        generate_struct_fields__CIGenerator(subs_data_type->dt_name.fields); \
+        write_tab__CIGenerator();                                            \
+        write_str__CIGenerator("}");                                         \
+    }
 
-            if (subs_data_type->struct_.generic_params) {
-                String *serialize_buffer = NEW(String);
-
-                serialize_vec__CIDataType(
-                  subs_data_type->struct_.generic_params->params,
-                  serialize_buffer);
-                write_String__CIGenerator(serialize_buffer);
-            }
+            GENERATE_STRUCT_OR_UNION_DT(struct_, "struct");
 
             break;
         case CI_DATA_TYPE_KIND_TYPEDEF:
@@ -459,17 +484,7 @@ generate_data_type__CIGenerator(const CIDataType *data_type)
 
             break;
         case CI_DATA_TYPE_KIND_UNION:
-            write_String__CIGenerator(
-              format__String("union {S}__", subs_data_type->union_.name));
-
-            if (subs_data_type->union_.generic_params) {
-                String *serialize_buffer = NEW(String);
-
-                serialize_vec__CIDataType(
-                  subs_data_type->union_.generic_params->params,
-                  serialize_buffer);
-                write_String__CIGenerator(serialize_buffer);
-            }
+            GENERATE_STRUCT_OR_UNION_DT(union_, "union");
 
             break;
         case CI_DATA_TYPE_KIND_VOID:
@@ -1134,7 +1149,12 @@ void
 generate_struct_field__CIGenerator(const CIDeclStructField *field)
 {
     generate_data_type__CIGenerator(field->data_type);
-    write_String__CIGenerator(format__String(" {S};\n", field->name));
+
+    if (field->name) {
+        write_String__CIGenerator(format__String(" {S};\n", field->name));
+    } else {
+        write_str__CIGenerator(";\n");
+    }
 }
 
 void
@@ -1161,10 +1181,13 @@ generate_struct_decl__CIGenerator(const CIDeclStruct *struct_)
 void
 generate_struct_gen_decl__CIGenerator(const CIDeclStructGen *struct_gen)
 {
+    SET_CURRENT_GENERIC_PARAMS(struct_gen->struct_->generic_params,
+                               struct_gen->called_generic_params);
     write_String__CIGenerator(
       format__String("struct {S} {{\n", struct_gen->name));
     generate_struct_fields__CIGenerator(struct_gen->fields);
     write_str__CIGenerator("}");
+    RESET_CURRENT_GENERIC_PARAMS();
 }
 
 void
@@ -1178,10 +1201,13 @@ generate_union_decl__CIGenerator(const CIDeclUnion *union_)
 void
 generate_union_gen_decl__CIGenerator(const CIDeclUnionGen *union_gen)
 {
+    SET_CURRENT_GENERIC_PARAMS(union_gen->union_->generic_params,
+                               union_gen->called_generic_params);
     write_String__CIGenerator(
       format__String("union {S} {{\n", union_gen->name));
     generate_struct_fields__CIGenerator(union_gen->fields);
     write_str__CIGenerator("}");
+    RESET_CURRENT_GENERIC_PARAMS();
 }
 
 void

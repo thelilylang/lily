@@ -237,8 +237,11 @@ parse_struct__CIParser(CIParser *self,
                        CIGenericParams *generic_params);
 
 /// @brief Parse union declaration.
-static CIDeclUnion
-parse_union__CIParser(CIParser *self, String *name, Vec *generic_params);
+static CIDecl *
+parse_union__CIParser(CIParser *self,
+                      int storage_class_flag,
+                      String *name,
+                      CIGenericParams *generic_params);
 
 /// @brief Parse variable declaration.
 static CIDecl *
@@ -294,6 +297,8 @@ static struct CIParserContext ctx;
 // if there's a variable declaration in a label (also in case and default
 // statetement).
 static bool in_label = false;
+
+static bool parse_field = false;
 
 static CIScope *current_scope = NULL;
 
@@ -618,30 +623,52 @@ substitute_data_type__CIParser(CIDataType *data_type,
             SUBSTITUTE_DATA_TYPE_WITH_MAX_ONE_GENERIC(ptr);
         }
         case CI_DATA_TYPE_KIND_STRUCT: {
-#define SUBSTITUTE_GENERIC_DECL_DATA_TYPE(decl_name, decl_ty, variant)  \
-    if (data_type->decl_name.generic_params) {                          \
-        Vec *subs_params = NEW(Vec);                                    \
-                                                                        \
-        for (Usize i = 0;                                               \
-             i < data_type->decl_name.generic_params->params->len;      \
-             ++i) {                                                     \
-            CIDataType *subs_param = substitute_data_type__CIParser(    \
-              get__Vec(data_type->decl_name.generic_params->params, i), \
-              generic_params,                                           \
-              called_generic_params);                                   \
-                                                                        \
-            if (subs_param) {                                           \
-                push__Vec(subs_params, subs_param);                     \
-            }                                                           \
-        }                                                               \
-                                                                        \
-        return NEW_VARIANT(CIDataType,                                  \
-                           variant,                                     \
-                           NEW(decl_ty,                                 \
-                               data_type->decl_name.name,               \
-                               NEW(CIGenericParams, subs_params)));     \
-    }                                                                   \
-                                                                        \
+#define SUBSTITUTE_GENERIC_DECL_DATA_TYPE(decl_name, decl_ty, variant)         \
+    if (data_type->decl_name.generic_params || data_type->decl_name.fields) {  \
+        Vec *subs_params = NULL;                                               \
+                                                                               \
+        if (data_type->decl_name.generic_params) {                             \
+            subs_params = NEW(Vec);                                            \
+                                                                               \
+            for (Usize i = 0;                                                  \
+                 i < data_type->decl_name.generic_params->params->len;         \
+                 ++i) {                                                        \
+                CIDataType *subs_param = substitute_data_type__CIParser(       \
+                  get__Vec(data_type->decl_name.generic_params->params, i),    \
+                  generic_params,                                              \
+                  called_generic_params);                                      \
+                                                                               \
+                if (subs_param) {                                              \
+                    push__Vec(subs_params, subs_param);                        \
+                }                                                              \
+            }                                                                  \
+        }                                                                      \
+                                                                               \
+        Vec *subs_fields = NULL;                                               \
+                                                                               \
+        if (data_type->decl_name.fields) {                                     \
+            subs_fields = NEW(Vec);                                            \
+                                                                               \
+            for (Usize i = 0; i < data_type->decl_name.fields->len; ++i) {     \
+                CIDeclStructField *field =                                     \
+                  get__Vec(data_type->decl_name.fields, i);                    \
+                CIDataType *subs_field_dt = substitute_data_type__CIParser(    \
+                  field->data_type, generic_params, called_generic_params);    \
+                                                                               \
+                push__Vec(subs_fields,                                         \
+                          NEW(CIDeclStructField, field->name, subs_field_dt)); \
+            }                                                                  \
+        }                                                                      \
+                                                                               \
+        return NEW_VARIANT(                                                    \
+          CIDataType,                                                          \
+          variant,                                                             \
+          NEW(decl_ty,                                                         \
+              data_type->decl_name.name,                                       \
+              subs_params ? NEW(CIGenericParams, subs_params) : NULL,          \
+              subs_fields));                                                   \
+    }                                                                          \
+                                                                               \
     return ref__CIDataType(data_type);
 
             SUBSTITUTE_GENERIC_DECL_DATA_TYPE(
@@ -680,17 +707,21 @@ visit_struct_or_union__CIParser(CIParser *self,
 
             switch (subs_data_type->kind) {
                 case CI_DATA_TYPE_KIND_STRUCT:
-                    generate_struct_gen__CIParser(
-                      self,
-                      subs_data_type->struct_.name,
-                      subs_data_type->struct_.generic_params);
+                    if (subs_data_type->struct_.name) {
+                        generate_struct_gen__CIParser(
+                          self,
+                          subs_data_type->struct_.name,
+                          subs_data_type->struct_.generic_params);
+                    }
 
                     break;
                 case CI_DATA_TYPE_KIND_UNION:
-                    generate_union_gen__CIParser(
-                      self,
-                      subs_data_type->union_.name,
-                      subs_data_type->union_.generic_params);
+                    if (subs_data_type->union_.name) {
+                        generate_union_gen__CIParser(
+                          self,
+                          subs_data_type->union_.name,
+                          subs_data_type->union_.generic_params);
+                    }
 
                     break;
                 default:
@@ -995,7 +1026,6 @@ parse_data_type__CIParser(CIParser *self)
             res = NEW_VARIANT(CIDataType, enum, name);
 
             switch (self->tokens_iters.current_token->kind) {
-                case CI_TOKEN_KIND_IDENTIFIER:
                 case CI_TOKEN_KIND_LBRACE:
                 case CI_TOKEN_KIND_SEMICOLON: {
                     CIDecl *enum_decl =
@@ -1009,6 +1039,12 @@ parse_data_type__CIParser(CIParser *self)
 
                     break;
                 }
+                case CI_TOKEN_KIND_IDENTIFIER:
+                    if (!parse_field) {
+                        FAILED("the type is incomplete");
+                    }
+
+                    break;
                 default:
                     break;
             }
@@ -1060,9 +1096,11 @@ parse_data_type__CIParser(CIParser *self)
 
             // struct <name><generic_params, ...> ...;
             // struct <name><generic_params, ...> { ... } ...;
-            if (expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, true)) {
+            // NOTE: A union or struct can be anonymous when you parse a field.
+            if (!parse_field &&
+                expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, true)) {
                 name = self->tokens_iters.previous_token->identifier;
-            } else {
+            } else if (!parse_field) {
                 name = generate_name_error__CIParser();
             }
 
@@ -1077,17 +1115,17 @@ parse_data_type__CIParser(CIParser *self)
 
             switch (previous_token_kind) {
                 case CI_TOKEN_KIND_KEYWORD_STRUCT:
-                    res =
-                      NEW_VARIANT(CIDataType,
-                                  struct,
-                                  NEW(CIDataTypeStruct, name, generic_params));
+                    res = NEW_VARIANT(
+                      CIDataType,
+                      struct,
+                      NEW(CIDataTypeStruct, name, generic_params, NULL));
 
                     break;
                 case CI_TOKEN_KIND_KEYWORD_UNION:
-                    res =
-                      NEW_VARIANT(CIDataType,
-                                  union,
-                                  NEW(CIDataTypeUnion, name, generic_params));
+                    res = NEW_VARIANT(
+                      CIDataType,
+                      union,
+                      NEW(CIDataTypeUnion, name, generic_params, NULL));
 
                     break;
                 default:
@@ -1115,24 +1153,73 @@ parse_data_type__CIParser(CIParser *self)
                                                    CI_TOKEN_KIND_LBRACE,
                                                    CI_TOKEN_KIND_SEMICOLON);
 
-                        goto parse_struct;
+                        goto parse_struct_or_union;
                     }
 
                     break;
                 case CI_TOKEN_KIND_LBRACE:
                 case CI_TOKEN_KIND_SEMICOLON: {
-                parse_struct : {
-                    CIDecl *struct_decl = parse_struct__CIParser(
-                      self,
-                      storage_class_flag,
-                      name,
-                      generic_params ? ref__CIGenericParams(generic_params)
-                                     : NULL);
+                parse_struct_or_union : {
+                    switch (previous_token_kind) {
+                        case CI_TOKEN_KIND_KEYWORD_STRUCT: {
+                            CIDecl *struct_decl = parse_struct__CIParser(
+                              self,
+                              storage_class_flag,
+                              name,
+                              generic_params
+                                ? ref__CIGenericParams(generic_params)
+                                : NULL);
 
-                    if (add_struct__CIResultFile(self->file, struct_decl)) {
-                        FREE(CIDecl, struct_decl);
+                            if (struct_decl->struct_.name &&
+                                add_struct__CIResultFile(self->file,
+                                                         struct_decl)) {
+                                FREE(CIDecl, struct_decl);
 
-                        FAILED("struct name is already defined");
+                                FAILED("struct name is already defined");
+                            }
+
+                            if (struct_decl->struct_.fields) {
+                                res->struct_.fields =
+                                  clone_fields__CIDeclStructField(
+                                    struct_decl->struct_.fields);
+                            }
+
+                            if (!struct_decl->struct_.name) {
+                                FREE(CIDecl, struct_decl);
+                            }
+
+                            break;
+                        }
+                        case CI_TOKEN_KIND_KEYWORD_UNION: {
+                            CIDecl *union_decl = parse_union__CIParser(
+                              self,
+                              storage_class_flag,
+                              name,
+                              generic_params
+                                ? ref__CIGenericParams(generic_params)
+                                : NULL);
+
+                            if (union_decl->union_.name &&
+                                add_union__CIResultFile(self->file,
+                                                        union_decl)) {
+                                FREE(CIDecl, union_decl);
+                                FAILED("union name is already defined");
+                            }
+
+                            if (union_decl->union_.fields) {
+                                res->union_.fields =
+                                  clone_fields__CIDeclStructField(
+                                    union_decl->union_.fields);
+                            }
+
+                            if (!union_decl->union_.name) {
+                                FREE(CIDecl, union_decl);
+                            }
+
+                            break;
+                        }
+                        default:
+                            UNREACHABLE("unknown variant");
                     }
 
                     break;
@@ -2395,25 +2482,43 @@ Vec *
 parse_struct_fields__CIParser(CIParser *self)
 {
     Vec *fields = NEW(Vec); // Vec<CIDeclStructField*>*
+    bool old_parse_field = parse_field;
+
+    parse_field = true;
 
     while (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RBRACE &&
            self->tokens_iters.current_token->kind != CI_TOKEN_KIND_EOF) {
         CIDataType *data_type = parse_data_type__CIParser(self);
         String *name = NULL;
 
-        if (expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, true)) {
-            name = self->tokens_iters.previous_token->identifier;
-        } else {
-            name = generate_name_error__CIParser();
+        switch (data_type->kind) {
+            case CI_DATA_TYPE_KIND_STRUCT:
+            case CI_DATA_TYPE_KIND_UNION:
+                if (expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, false)) {
+                    name = self->tokens_iters.previous_token->identifier;
+                }
+
+                expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
+
+                break;
+            default:
+                if (expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, true)) {
+                    name = self->tokens_iters.previous_token->identifier;
+                } else {
+                    name = generate_name_error__CIParser();
+                }
+
+                expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
         }
 
         // TODO: parse bits set
 
         push__Vec(fields, NEW(CIDeclStructField, name, data_type));
-        expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
     }
 
     expect__CIParser(self, CI_TOKEN_KIND_RBRACE, true);
+
+    parse_field = old_parse_field;
 
     return fields;
 }
@@ -2467,12 +2572,11 @@ parse_struct__CIParser(CIParser *self,
 
     switch (self->tokens_iters.current_token->kind) {
         case CI_TOKEN_KIND_IDENTIFIER:
-            typedef_name = self->tokens_iters.current_token->identifier;
-
             if (storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
+                typedef_name = self->tokens_iters.current_token->identifier;
                 next_token__CIParser(self);
                 expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
-            } else {
+            } else if (!parse_field) {
                 FAILED("expected `;`");
             }
 
@@ -2489,16 +2593,27 @@ parse_struct__CIParser(CIParser *self,
                        NEW(CIDeclStruct, name, generic_params, fields));
 }
 
-CIDeclUnion
-parse_union__CIParser(CIParser *self, String *name, Vec *generic_params)
+CIDecl *
+parse_union__CIParser(CIParser *self,
+                      int storage_class_flag,
+                      String *name,
+                      CIGenericParams *generic_params)
 {
-    Vec *fields =
-      parse_struct_fields__CIParser(self); // Vec<CIDeclStructField*>*
+    CIDecl *decl =
+      parse_struct__CIParser(self, storage_class_flag, name, generic_params);
 
-    return NEW(CIDeclUnion,
-               name,
-               generic_params ? NEW(CIGenericParams, generic_params) : NULL,
-               fields);
+    if (decl) {
+        decl->kind = CI_DECL_KIND_UNION;
+
+        CIDeclUnion union_ = NEW(CIDeclUnion,
+                                 decl->struct_.name,
+                                 decl->struct_.generic_params,
+                                 decl->struct_.fields);
+
+        decl->union_ = union_;
+    }
+
+    return decl;
 }
 
 CIDecl *
