@@ -43,15 +43,15 @@ For the time being, the only real feature is generic support:
 ```c
 struct Vec<@T> {
     @T *buffer;
-    size_t len;
-    size_t capacity;
+    unsigned int len;
+    unsigned int capacity;
 };
 
 struct Vec<@T> init__Vec<@T>() {
     return (struct Vec<@T>){ .buffer = NULL, .len = 0, .capacity = 4 };
 }
 
-int main() { 
+int main() {
     struct Vec<int> v = init__Vec<int>();
 }
 ```
@@ -65,8 +65,8 @@ int main();
 
 struct Vec__16 {
 	int* buffer;
-	size_t len;
-	size_t capacity;
+	unsigned int len;
+	unsigned int capacity;
 };
 struct Vec__16 init__Vec__16() {
 	return (struct Vec__16){.buffer = NULL, .len = 0, .capacity = 4};
