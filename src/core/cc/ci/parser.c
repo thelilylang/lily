@@ -972,6 +972,13 @@ parse_data_type__CIParser(CIParser *self)
                               typedef,
                               self->tokens_iters.previous_token->identifier);
 
+            switch (self->tokens_iters.current_token->kind) {
+                case CI_TOKEN_KIND_LSHIFT:
+                    TODO("parse generic params");
+                default:
+                    break;
+            }
+
             break;
         case CI_TOKEN_KIND_AT: {
             String *generic = NULL;
@@ -1874,9 +1881,6 @@ parse_primary_expr__CIParser(CIParser *self)
             return res;
         }
         default:
-            printf(
-              "%s\n",
-              to_string__Debug__CIToken(self->tokens_iters.previous_token));
             FAILED("unexpected token");
     }
 }
