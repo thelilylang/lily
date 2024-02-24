@@ -51,8 +51,6 @@ find_library(ZSTD NAMES libzstd.a libzstdstatic.a zstd NAMES_PER_DIR)
 
 list(APPEND LILY_LLVM_LIBS "${ZLIB};${ZSTD}")
 
-set(LILY_INCLUDE include lib/local/include lib)
-
 if(MSVC)
   set(LILY_LLD_COMPILE_FLAGS "-std=c++17")
 else()
