@@ -1792,7 +1792,91 @@ parse_primary_expr__CIParser(CIParser *self)
         case CI_TOKEN_KIND_LITERAL_CONSTANT_CHARACTER:
         case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
             return parse_literal_expr__CIParser(self);
+        case CI_TOKEN_KIND_BANG:
+        case CI_TOKEN_KIND_AMPERSAND:
+        case CI_TOKEN_KIND_MINUS:
+        case CI_TOKEN_KIND_PLUS:
+        case CI_TOKEN_KIND_WAVE:
+        case CI_TOKEN_KIND_STAR:
+        case CI_TOKEN_KIND_PLUS_PLUS:
+        case CI_TOKEN_KIND_MINUS_MINUS: {
+            enum CITokenKind unary_token_kind =
+              self->tokens_iters.previous_token->kind;
+            CIExpr *expr = parse_expr__CIParser(self);
+
+            if (!expr) {
+                return NULL;
+            }
+
+            CIExpr *res = NULL;
+
+            switch (unary_token_kind) {
+                case CI_TOKEN_KIND_BANG:
+                    res = NEW_VARIANT(
+                      CIExpr,
+                      unary,
+                      NEW(CIExprUnary, CI_EXPR_UNARY_KIND_NOT, expr));
+
+                    break;
+                case CI_TOKEN_KIND_AMPERSAND:
+                    res = NEW_VARIANT(
+                      CIExpr,
+                      unary,
+                      NEW(CIExprUnary, CI_EXPR_UNARY_KIND_REF, expr));
+
+                    break;
+                case CI_TOKEN_KIND_MINUS:
+                    res = NEW_VARIANT(
+                      CIExpr,
+                      unary,
+                      NEW(CIExprUnary, CI_EXPR_UNARY_KIND_NEGATIVE, expr));
+
+                    break;
+                case CI_TOKEN_KIND_PLUS:
+                    res = NEW_VARIANT(
+                      CIExpr,
+                      unary,
+                      NEW(CIExprUnary, CI_EXPR_UNARY_KIND_POSITIVE, expr));
+
+                    break;
+                case CI_TOKEN_KIND_WAVE:
+                    res = NEW_VARIANT(
+                      CIExpr,
+                      unary,
+                      NEW(CIExprUnary, CI_EXPR_UNARY_KIND_BIT_NOT, expr));
+
+                    break;
+                case CI_TOKEN_KIND_STAR:
+                    res = NEW_VARIANT(
+                      CIExpr,
+                      unary,
+                      NEW(CIExprUnary, CI_EXPR_UNARY_KIND_DEREFERENCE, expr));
+
+                    break;
+                case CI_TOKEN_KIND_PLUS_PLUS:
+                    res = NEW_VARIANT(
+                      CIExpr,
+                      unary,
+                      NEW(CIExprUnary, CI_EXPR_UNARY_KIND_PRE_INCREMENT, expr));
+
+                    break;
+                case CI_TOKEN_KIND_MINUS_MINUS:
+                    res = NEW_VARIANT(
+                      CIExpr,
+                      unary,
+                      NEW(CIExprUnary, CI_EXPR_UNARY_KIND_PRE_DECREMENT, expr));
+
+                    break;
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+
+            return res;
+        }
         default:
+            printf(
+              "%s\n",
+              to_string__Debug__CIToken(self->tokens_iters.previous_token));
             FAILED("unexpected token");
     }
 }
@@ -1806,7 +1890,7 @@ parse_binary_expr__CIParser(CIParser *self, CIExpr *expr)
     push__Vec(stack, expr);
 
     while (
-      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_EQ_EQ ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_EQ ||
       self->tokens_iters.current_token->kind == CI_TOKEN_KIND_PLUS_EQ ||
       self->tokens_iters.current_token->kind == CI_TOKEN_KIND_MINUS_EQ ||
       self->tokens_iters.current_token->kind == CI_TOKEN_KIND_STAR_EQ ||
@@ -1814,7 +1898,7 @@ parse_binary_expr__CIParser(CIParser *self, CIExpr *expr)
       self->tokens_iters.current_token->kind == CI_TOKEN_KIND_PERCENTAGE_EQ ||
       self->tokens_iters.current_token->kind == CI_TOKEN_KIND_AMPERSAND_EQ ||
       self->tokens_iters.current_token->kind == CI_TOKEN_KIND_BAR_EQ ||
-      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_BAR_EQ ||
+      self->tokens_iters.current_token->kind == CI_TOKEN_KIND_HAT_EQ ||
       self->tokens_iters.current_token->kind ==
         CI_TOKEN_KIND_LSHIFT_LSHIFT_EQ ||
       self->tokens_iters.current_token->kind ==

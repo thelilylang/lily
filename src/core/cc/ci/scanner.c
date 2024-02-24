@@ -1115,6 +1115,7 @@ void
 next_char_by_token__CIScanner(CIScanner *self, const CIToken *token)
 {
     switch (token->kind) {
+        case CI_TOKEN_KIND_ARROW:
         case CI_TOKEN_KIND_PLUS_PLUS:
         case CI_TOKEN_KIND_MINUS_MINUS:
         case CI_TOKEN_KIND_LSHIFT_EQ:
@@ -2787,11 +2788,32 @@ get_token__CIScanner(CIScanner *self, const CIScannerContext ctx)
             return NEW(CIToken,
                        CI_TOKEN_KIND_SLASH,
                        clone__Location(&self->base.location));
-        // ->, -
+
+        // ++, +=, +
+        case '+':
+            if (c1 == (char *)'+') {
+                return NEW(CIToken,
+                           CI_TOKEN_KIND_PLUS_PLUS,
+                           clone__Location(&self->base.location));
+            } else if (c1 == (char *)'=') {
+                return NEW(CIToken,
+                           CI_TOKEN_KIND_PLUS_EQ,
+                           clone__Location(&self->base.location));
+            }
+
+            return NEW(CIToken,
+                       CI_TOKEN_KIND_PLUS,
+                       clone__Location(&self->base.location));
+
+        // ->, -=, -
         case '-':
             if (c1 == (char *)'>') {
                 return NEW(CIToken,
                            CI_TOKEN_KIND_ARROW,
+                           clone__Location(&self->base.location));
+            } else if (c1 == (char *)'=') {
+                return NEW(CIToken,
+                           CI_TOKEN_KIND_MINUS_EQ,
                            clone__Location(&self->base.location));
             }
 
