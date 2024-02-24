@@ -17,7 +17,7 @@ Here's one of the current ways of doing generics in C:
     }; \
     \
     inline struct Vec__##T init__Vec__##T() { \
-        return (Vec__##T){ .buffer = NULL, .len = 0, .capacity =4 }; \
+        return (struct Vec__##T){ .buffer = NULL, .len = 0, .capacity = 4 }; \
     }
 
 // For example:
