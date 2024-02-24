@@ -695,7 +695,17 @@ generate_function_binary_expr__CIGenerator(const CIExprBinary *binary)
             UNREACHABLE("unknown variant");
     }
 
-    write_String__CIGenerator(format__String(" {s} ", s_kind));
+    switch (binary->kind) {
+        // Glue the operator to the expression on the left and right.
+        case CI_EXPR_BINARY_KIND_ARROW:
+        case CI_EXPR_BINARY_KIND_DOT:
+            write_str__CIGenerator(s_kind);
+
+            break;
+        default:
+            write_String__CIGenerator(format__String(" {s} ", s_kind));
+    }
+
     generate_function_expr__CIGenerator(binary->right);
 }
 
