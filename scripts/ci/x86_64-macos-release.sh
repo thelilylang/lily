@@ -9,6 +9,9 @@ brew install llvm@16
 # Download & Install ZLib
 brew install zlib
 
+# Download & Install Ninja
+brew install ninja
+
 # Download & Install autoconf, automake, libtool
 brew install autoconf automake libtool
 
@@ -16,7 +19,7 @@ brew install autoconf automake libtool
 pip install -r requirements.txt
 
 # Load & Setup submodules
-make submodules
+make submodules_without_llvm
 
 # Setup for Local
 brew install gpatch
@@ -26,6 +29,7 @@ brew install gpatch
 export LLVM_DIR=$(brew --prefix llvm@16)
 cmake \
 	-B ./build \
+	-G Ninja \
 	-DCMAKE_BUILD_TYPE=Release \
 	-DLILY_DEBUG=ON \
 	-DLILY_BUILD_LLVM=ON \
