@@ -22,10 +22,9 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_EX_BIN_LILY_C
-#define LILY_EX_BIN_LILY_C
+#ifndef LILY_EX_BIN_BENCH_STRING_C
+#define LILY_EX_BIN_BENCH_STRING_C
 
-#include "../lib/lily_cli.c"
-#include "../lib/lily_command.c"
+#include "../lib/lily_base.c"
 
-#endif // LILY_EX_BIN_LILY_C
+#endif // LILY_EX_BIN_BENCH_STRING_C

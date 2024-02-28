@@ -35,7 +35,7 @@
 #include <cli/lily/config/test.h>
 #include <cli/lily/config/to.h>
 
-#include "lily_base.c"
+// #include "lily_base.c"
 
 // <cli/lily/config.h>
 extern 

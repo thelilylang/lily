@@ -27,7 +27,7 @@
 
 #include <cli/lilyc/config.h>
 
-#include "lily_base.c"
+// #include "lily_base.c"
 
 // <cli/lilyc/config.h>
 extern inline CONSTRUCTOR(LilycConfig,
