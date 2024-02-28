@@ -22,33 +22,20 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_PREPARSER_PREPROCESS_ARCH_H
-#define LILY_CORE_LILY_PREPARSER_PREPROCESS_ARCH_H
+#ifndef LILY_EX_LIB_LILY_CORE_LILY_PRECOMPILER_C
+#define LILY_EX_LIB_LILY_CORE_LILY_PRECOMPILER_C
 
-#include <base/macros.h>
-#include <base/string.h>
+#include <core/lily/precompiler/precompiler.h>
 
-typedef struct LilyPreprocessArch
-{
-    String *value;
-} LilyPreprocessArch;
+#include "lily_core_lily_package.c"
+#include "lily_base.c"
 
-/**
- *
- * @brief Construct LilyPreprocessArch type.
- */
-inline CONSTRUCTOR(LilyPreprocessArch, LilyPreprocessArch, String *value)
-{
-    return (LilyPreprocessArch){ .value = value };
-}
+// <core/lily/precompiler/precompiler.h>
+extern inline CONSTRUCTOR(LilyPrecompiler,
+                   LilyPrecompiler,
+                   LilyPreparserInfo *info,
+                   const File *file,
+                   LilyPackage *package,
+                   const char *default_path);
 
-/**
- *
- * @brief Free LilyPreprocessArch type.
- */
-inline DESTRUCTOR(LilyPreprocessArch, const LilyPreprocessArch *self)
-{
-    FREE(String, self->value);
-}
-
-#endif // LILY_CORE_LILY_PREPARSER_PREPROCESS_ARCH_H
+#endif // LILY_EX_LIB_LILY_CORE_LILY_PRECOMPILER_C

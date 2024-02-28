@@ -22,33 +22,23 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_PREPARSER_PREPROCESS_ARCH_H
-#define LILY_CORE_LILY_PREPARSER_PREPROCESS_ARCH_H
+#ifndef LILY_EX_LIB_LILY_CORE_LILY_SCANNER_C
+#define LILY_EX_LIB_LILY_CORE_LILY_SCANNER_C
 
-#include <base/macros.h>
-#include <base/string.h>
+#include <core/lily/scanner/scanner.h>
+#include <core/lily/scanner/token.h>
 
-typedef struct LilyPreprocessArch
-{
-    String *value;
-} LilyPreprocessArch;
+#include "lily_base.c"
+#include "lily_core_shared.c"
 
-/**
- *
- * @brief Construct LilyPreprocessArch type.
- */
-inline CONSTRUCTOR(LilyPreprocessArch, LilyPreprocessArch, String *value)
-{
-    return (LilyPreprocessArch){ .value = value };
-}
+// <core/lily/scanner/scanner.h>
+extern 
+inline CONSTRUCTOR(LilyScanner, LilyScanner, Source source, Usize *count_error);
 
-/**
- *
- * @brief Free LilyPreprocessArch type.
- */
-inline DESTRUCTOR(LilyPreprocessArch, const LilyPreprocessArch *self)
-{
-    FREE(String, self->value);
-}
+// <core/lily/scanner/token.h>
+extern inline CONSTRUCTOR(LilyTokenExpand,
+                   LilyTokenExpand,
+                   enum LilyTokenExpandKind kind,
+                   Vec *tokens);
 
-#endif // LILY_CORE_LILY_PREPARSER_PREPROCESS_ARCH_H
+#endif // LILY_EX_LIB_LILY_CORE_LILY_SCANNER_C

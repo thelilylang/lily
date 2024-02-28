@@ -3930,6 +3930,14 @@ IMPL_FOR_DEBUG(to_string,
 }
 #endif
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, LilyPreparserMethod, const LilyPreparserMethod *self)
+{
+    return to_string__Debug__LilyPreparserFun(self);
+}
+#endif
+
 CONSTRUCTOR(LilyPreparserAttribute,
             LilyPreparserAttribute,
             String *name,

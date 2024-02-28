@@ -22,33 +22,26 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_PREPARSER_PREPROCESS_ARCH_H
-#define LILY_CORE_LILY_PREPARSER_PREPROCESS_ARCH_H
+#ifndef LILY_EX_LIB_LILY_CORE_LILY_COMPILER_IR_C
+#define LILY_EX_LIB_LILY_CORE_LILY_COMPILER_IR_C
 
-#include <base/macros.h>
-#include <base/string.h>
+#include <core/lily/compiler/ir.h>
 
-typedef struct LilyPreprocessArch
-{
-    String *value;
-} LilyPreprocessArch;
+#include "lily_core_lily_compiler_ir_cc.c"
+#include "lily_core_lily_compiler_ir_cpp.c"
+#include "lily_core_lily_compiler_ir_llvm.c"
 
-/**
- *
- * @brief Construct LilyPreprocessArch type.
- */
-inline CONSTRUCTOR(LilyPreprocessArch, LilyPreprocessArch, String *value)
-{
-    return (LilyPreprocessArch){ .value = value };
-}
+// <core/lily/compiler/ir/ir.h>
+extern 
+inline VARIANT_CONSTRUCTOR(LilyIr, LilyIr, cc, LilyIrCc cc);
 
-/**
- *
- * @brief Free LilyPreprocessArch type.
- */
-inline DESTRUCTOR(LilyPreprocessArch, const LilyPreprocessArch *self)
-{
-    FREE(String, self->value);
-}
+extern 
+inline VARIANT_CONSTRUCTOR(LilyIr, LilyIr, cpp, LilyIrCpp cpp);
 
-#endif // LILY_CORE_LILY_PREPARSER_PREPROCESS_ARCH_H
+extern 
+inline VARIANT_CONSTRUCTOR(LilyIr, LilyIr, js, LilyIrJs js);
+
+extern 
+inline VARIANT_CONSTRUCTOR(LilyIr, LilyIr, llvm, LilyIrLlvm llvm);
+
+#endif // LILY_EX_LIB_LILY_CORE_LILY_COMPILER_IR_C

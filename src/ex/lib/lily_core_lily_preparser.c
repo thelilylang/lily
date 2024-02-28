@@ -22,33 +22,31 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_PREPARSER_PREPROCESS_ARCH_H
-#define LILY_CORE_LILY_PREPARSER_PREPROCESS_ARCH_H
+#ifndef LILY_EX_LIB_LILY_CORE_LILY_PREPARSER_C
+#define LILY_EX_LIB_LILY_CORE_LILY_PREPARSER_C
 
-#include <base/macros.h>
-#include <base/string.h>
+#include <core/lily/preparser/preprocess/allow.h>
+#include <core/lily/preparser/preprocess/arch.h>
+#include <core/lily/preparser/preprocess/link_info.h>
 
-typedef struct LilyPreprocessArch
-{
-    String *value;
-} LilyPreprocessArch;
+#include "lily_core_lily_scanner.c"
 
-/**
- *
- * @brief Construct LilyPreprocessArch type.
- */
-inline CONSTRUCTOR(LilyPreprocessArch, LilyPreprocessArch, String *value)
-{
-    return (LilyPreprocessArch){ .value = value };
-}
+// <core/lily/preparser/preprocess/allow.h>
+extern 
+inline CONSTRUCTOR(LilyPreprocessAllow, LilyPreprocessAllow, String *value);
 
-/**
- *
- * @brief Free LilyPreprocessArch type.
- */
-inline DESTRUCTOR(LilyPreprocessArch, const LilyPreprocessArch *self)
-{
-    FREE(String, self->value);
-}
+extern 
+inline DESTRUCTOR(LilyPreprocessAllow, const LilyPreprocessAllow *self);
 
-#endif // LILY_CORE_LILY_PREPARSER_PREPROCESS_ARCH_H
+// <core/lily/preparser/preprocess/arch.h>
+extern 
+inline CONSTRUCTOR(LilyPreprocessArch, LilyPreprocessArch, String *value);
+
+extern 
+inline DESTRUCTOR(LilyPreprocessArch, const LilyPreprocessArch *self);
+
+// <core/lily/preparser/preprocess/link_info.h>
+extern 
+inline CONSTRUCTOR(LilyPreprocessLinkInfo, LilyPreprocessLinkInfo);
+
+#endif // LILY_EX_LIB_LILY_CORE_LILY_PREPARSER_C

@@ -22,33 +22,26 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_PREPARSER_PREPROCESS_ARCH_H
-#define LILY_CORE_LILY_PREPARSER_PREPROCESS_ARCH_H
+#ifndef LILY_EX_LIB_LILY_CORE_LILY_DIAGNOSTIC_C
+#define LILY_EX_LIB_LILY_CORE_LILY_DIAGNOSTIC_C
 
-#include <base/macros.h>
-#include <base/string.h>
+#include <core/lily/diagnostic/error.h>
+#include <core/lily/diagnostic/warning.h>
 
-typedef struct LilyPreprocessArch
-{
-    String *value;
-} LilyPreprocessArch;
+#include "lily_core_shared.c"
+#include "lily_base.c"
 
-/**
- *
- * @brief Construct LilyPreprocessArch type.
- */
-inline CONSTRUCTOR(LilyPreprocessArch, LilyPreprocessArch, String *value)
-{
-    return (LilyPreprocessArch){ .value = value };
-}
+// <core/lily/diagnostic/error.h>
+extern 
+inline CONSTRUCTOR(LilyError, LilyError, enum LilyErrorKind kind);
 
-/**
- *
- * @brief Free LilyPreprocessArch type.
- */
-inline DESTRUCTOR(LilyPreprocessArch, const LilyPreprocessArch *self)
-{
-    FREE(String, self->value);
-}
+extern inline VARIANT_CONSTRUCTOR(LilyError,
+                           LilyError,
+                           unexpected_token,
+                           char *unexpected_token);
 
-#endif // LILY_CORE_LILY_PREPARSER_PREPROCESS_ARCH_H
+// <core/lily/diagnostic/warning.h>
+extern 
+inline CONSTRUCTOR(LilyWarning, LilyWarning, enum LilyWarningKind kind);
+
+#endif // LILY_EX_LIB_LILY_CORE_LILY_DIAGNOSTIC_C

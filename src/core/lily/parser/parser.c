@@ -33,6 +33,9 @@
 
 #include <stdio.h>
 
+// Free LilyParseBlock type.
+static inline DESTRUCTOR(LilyParseBlock, const LilyParseBlock *self);
+
 // Advance to one declaration.
 static void
 next_decl__LilyParser(LilyParser *self);
@@ -719,7 +722,7 @@ CONSTRUCTOR(LilyParseBlock, LilyParseBlock, LilyParser *parser, Vec *tokens)
                              .position = 0 };
 }
 
-inline DESTRUCTOR(LilyParseBlock, const LilyParseBlock *self)
+DESTRUCTOR(LilyParseBlock, const LilyParseBlock *self)
 {
     FREE(LilyToken, pop__Vec(self->tokens));
 }

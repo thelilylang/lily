@@ -22,33 +22,21 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_LILY_PREPARSER_PREPROCESS_ARCH_H
-#define LILY_CORE_LILY_PREPARSER_PREPROCESS_ARCH_H
+#ifndef LILY_EX_LIB_LILY_CORE_CC_CI_DIAGNOSTIC_C
+#define LILY_EX_LIB_LILY_CORE_CC_CI_DIAGNOSTIC_C
 
-#include <base/macros.h>
-#include <base/string.h>
+#include <core/cc/ci/diagnostic/error.h>
+#include <core/cc/ci/diagnostic/warning.h>
 
-typedef struct LilyPreprocessArch
-{
-    String *value;
-} LilyPreprocessArch;
+#include "lily_base.c"
+#include "lily_core_shared.c"
 
-/**
- *
- * @brief Construct LilyPreprocessArch type.
- */
-inline CONSTRUCTOR(LilyPreprocessArch, LilyPreprocessArch, String *value)
-{
-    return (LilyPreprocessArch){ .value = value };
-}
+// <core/cc/ci/diagnostic/error.h>
+extern 
+inline CONSTRUCTOR(CIError, CIError, enum CIErrorKind kind);
 
-/**
- *
- * @brief Free LilyPreprocessArch type.
- */
-inline DESTRUCTOR(LilyPreprocessArch, const LilyPreprocessArch *self)
-{
-    FREE(String, self->value);
-}
+// <core/cc/ci/diagnostic/warning.h>
+extern 
+inline CONSTRUCTOR(CIWarning, CIWarning, enum CIWarningKind kind);
 
-#endif // LILY_CORE_LILY_PREPARSER_PREPROCESS_ARCH_H
+#endif // LILY_EX_LIB_LILY_CORE_CC_CI_DIAGNOSTIC_C

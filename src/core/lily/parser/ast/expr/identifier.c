@@ -57,3 +57,14 @@ DESTRUCTOR(LilyAstExprIdentifier, const LilyAstExprIdentifier *self)
         FREE(Vec, self->generic_params);
     }
 }
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               LilyAstExprIdentifierDollar,
+               const LilyAstExprIdentifierDollar *self)
+{
+    return format__String("LilyAstExpridentifierDollar{{ name = {S} }",
+                          self->name);
+}
+#endif

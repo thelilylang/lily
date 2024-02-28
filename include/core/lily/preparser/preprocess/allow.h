@@ -26,6 +26,7 @@
 #define LILY_CORE_LILY_PREPARSER_PREPROCESS_ALLOW_H
 
 #include <base/macros.h>
+#include <base/new.h>
 #include <base/string.h>
 
 typedef struct LilyPreprocessAllow
@@ -37,7 +38,7 @@ typedef struct LilyPreprocessAllow
  *
  * @brief Construct LilyPreprocessAllow type.
  */
-inline CONSTRUCTOR(LilyPreprocessAllow, String *value)
+inline CONSTRUCTOR(LilyPreprocessAllow, LilyPreprocessAllow, String *value)
 {
     return (LilyPreprocessAllow){ .value = value };
 }
