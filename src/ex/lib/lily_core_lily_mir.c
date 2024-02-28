@@ -42,91 +42,88 @@ ref__LilyMirBlockLimit(LilyMirBlockLimit *self);
 
 // <core/lily/mir/debug_info.h>
 extern inline CONSTRUCTOR(LilyMirDebugInfoFile,
-                   LilyMirDebugInfoFile,
-                   String *filename,
-                   String *directory);
+                          LilyMirDebugInfoFile,
+                          String *filename,
+                          String *directory);
 
 extern inline CONSTRUCTOR(LilyMirDebugInfoBlock,
-                   LilyMirDebugInfoBlock,
-                   const LilyMirDebugInfo *scope,
-                   const LilyMirDebugInfoFile *file,
-                   Usize line,
-                   Usize column);
+                          LilyMirDebugInfoBlock,
+                          const LilyMirDebugInfo *scope,
+                          const LilyMirDebugInfoFile *file,
+                          Usize line,
+                          Usize column);
 
 extern inline CONSTRUCTOR(LilyMirDebugInfoLocation,
-                   LilyMirDebugInfoLocation,
-                   const LilyMirDebugInfo *scope,
-                   Usize line,
-                   Usize column);
+                          LilyMirDebugInfoLocation,
+                          const LilyMirDebugInfo *scope,
+                          Usize line,
+                          Usize column);
 
 extern inline CONSTRUCTOR(LilyMirDebugInfoSubProgram,
-                   LilyMirDebugInfoSubProgram,
-                   const LilyMirDebugInfo *scope,
-                   const LilyMirDebugInfoFile *file,
-                   Usize line,
-                   Usize column);
+                          LilyMirDebugInfoSubProgram,
+                          const LilyMirDebugInfo *scope,
+                          const LilyMirDebugInfoFile *file,
+                          Usize line,
+                          Usize column);
 
 extern inline CONSTRUCTOR(LilyMirDebugInfoEnumerator,
-                   LilyMirDebugInfoEnumerator,
-                   const char *name,
-                   Usize value,
-                   bool is_unsigned);
+                          LilyMirDebugInfoEnumerator,
+                          const char *name,
+                          Usize value,
+                          bool is_unsigned);
 
 extern inline CONSTRUCTOR(LilyMirDebugInfoGlobalVariable,
-                   LilyMirDebugInfoGlobalVariable,
-                   const LilyMirDebugInfo *scope,
-                   const LilyMirDebugInfoFile *file,
-                   const char *name,
-                   const char *linkage_name,
-                   bool is_local,
-                   bool is_definition);
+                          LilyMirDebugInfoGlobalVariable,
+                          const LilyMirDebugInfo *scope,
+                          const LilyMirDebugInfoFile *file,
+                          const char *name,
+                          const char *linkage_name,
+                          bool is_local,
+                          bool is_definition);
 
 extern inline CONSTRUCTOR(LilyMirDebugInfoLocalVariable,
-                   LilyMirDebugInfoLocalVariable,
-                   const LilyMirDebugInfo *scope,
-                   const LilyMirDebugInfoFile *file,
-                   const LilyMirDebugInfo *type,
-                   const char *name,
-                   Usize arg_count,
-                   Usize line);
+                          LilyMirDebugInfoLocalVariable,
+                          const LilyMirDebugInfo *scope,
+                          const LilyMirDebugInfoFile *file,
+                          const LilyMirDebugInfo *type,
+                          const char *name,
+                          Usize arg_count,
+                          Usize line);
 
 extern inline CONSTRUCTOR(LilyMirDebugInfoType,
-                   LilyMirDebugInfoType,
-                   const char *name,
-                   Usize size,
-                   enum LilyMirDebugInfoEncoding encoding);
+                          LilyMirDebugInfoType,
+                          const char *name,
+                          Usize size,
+                          enum LilyMirDebugInfoEncoding encoding);
 
 extern inline CONSTRUCTOR(LilyMirDebugInfoDerivedType,
-                   LilyMirDebugInfoDerivedType,
-                   const LilyMirDebugInfo *scope,
-                   const LilyMirDebugInfo *base_type,
-                   enum LilyMirDebugInfoTag tag,
-                   const char *name,
-                   Usize size,
-                   Usize align,
-                   Usize offset);
+                          LilyMirDebugInfoDerivedType,
+                          const LilyMirDebugInfo *scope,
+                          const LilyMirDebugInfo *base_type,
+                          enum LilyMirDebugInfoTag tag,
+                          const char *name,
+                          Usize size,
+                          Usize align,
+                          Usize offset);
 
 extern inline CONSTRUCTOR(LilyMirDebugInfoCompositeType,
-                   LilyMirDebugInfoCompositeType,
-                   enum LilyMirDebugInfoTag tag,
-                   const char *name,
-                   Usize size,
-                   Usize align,
-                   const LilyMirDebugInfo *elements);
+                          LilyMirDebugInfoCompositeType,
+                          enum LilyMirDebugInfoTag tag,
+                          const char *name,
+                          Usize size,
+                          Usize align,
+                          const LilyMirDebugInfo *elements);
 
 extern inline CONSTRUCTOR(LilyMirDebugInfoElements,
-                   LilyMirDebugInfoElements,
-                   Vec *items);
+                          LilyMirDebugInfoElements,
+                          Vec *items);
 
-extern 
-inline CONSTRUCTOR(LilyMirDebugInfoManager, LilyMirDebugInfoManager);
+extern inline CONSTRUCTOR(LilyMirDebugInfoManager, LilyMirDebugInfoManager);
 
 // <core/lily/mir/dt.h>
-extern 
-inline VARIANT_CONSTRUCTOR(LilyMirDtLen, LilyMirDtLen, undef);
+extern inline VARIANT_CONSTRUCTOR(LilyMirDtLen, LilyMirDtLen, undef);
 
-extern 
-inline VARIANT_CONSTRUCTOR(LilyMirDtLen, LilyMirDtLen, def, Usize len);
+extern inline VARIANT_CONSTRUCTOR(LilyMirDtLen, LilyMirDtLen, def, Usize len);
 
 extern inline LilyMirDtLen
 clone__LilyMirDtLen(const LilyMirDtLen *self);
@@ -138,187 +135,186 @@ extern inline LilyMirDtLen
 from_check_len__LilyMirDtLen(const LilyCheckedDataTypeLen *self);
 
 extern inline CONSTRUCTOR(LilyMirDtArray,
-                   LilyMirDtArray,
-                   LilyMirDtLen len,
-                   LilyMirDt *dt);
+                          LilyMirDtArray,
+                          LilyMirDtLen len,
+                          LilyMirDt *dt);
 
-extern 
-inline DESTRUCTOR(LilyMirDtArray, const LilyMirDtArray *self);
+extern inline DESTRUCTOR(LilyMirDtArray, const LilyMirDtArray *self);
 
 extern inline CONSTRUCTOR(LilyMirDtResult,
-                   LilyMirDtResult,
-                   LilyMirDt *ok,
-                   LilyMirDt *err);
+                          LilyMirDtResult,
+                          LilyMirDt *ok,
+                          LilyMirDt *err);
 
-extern 
-inline DESTRUCTOR(LilyMirDtResult, const LilyMirDtResult *self);
+extern inline DESTRUCTOR(LilyMirDtResult, const LilyMirDtResult *self);
 
 // <core/lily/mir/instruction.h>
 extern inline LilyMirInstructionVal *
 ref__LilyMirInstructionVal(LilyMirInstructionVal *self);
 
 extern inline CONSTRUCTOR(LilyMirInstructionDestSrc,
-                   LilyMirInstructionDestSrc,
-                   LilyMirInstructionVal *dest,
-                   LilyMirInstructionVal *src);
+                          LilyMirInstructionDestSrc,
+                          LilyMirInstructionVal *dest,
+                          LilyMirInstructionVal *src);
 
 extern inline DESTRUCTOR(LilyMirInstructionDestSrc,
-                  const LilyMirInstructionDestSrc *self);
+                         const LilyMirInstructionDestSrc *self);
 
 extern inline CONSTRUCTOR(LilyMirInstructionSrc,
-                   LilyMirInstructionSrc,
-                   LilyMirInstructionVal *src);
+                          LilyMirInstructionSrc,
+                          LilyMirInstructionVal *src);
 
-extern 
-inline DESTRUCTOR(LilyMirInstructionSrc, const LilyMirInstructionSrc *self);
+extern inline DESTRUCTOR(LilyMirInstructionSrc,
+                         const LilyMirInstructionSrc *self);
 
 extern inline CONSTRUCTOR(LilyMirInstructionAlloc,
-                   LilyMirInstructionAlloc,
-                   LilyMirDt *dt);
+                          LilyMirInstructionAlloc,
+                          LilyMirDt *dt);
 
-extern 
-inline DESTRUCTOR(LilyMirInstructionAlloc, const LilyMirInstructionAlloc *self);
+extern inline DESTRUCTOR(LilyMirInstructionAlloc,
+                         const LilyMirInstructionAlloc *self);
 
 extern inline CONSTRUCTOR(LilyMirInstructionArg,
-                   LilyMirInstructionArg,
-                   LilyMirDt *dt,
-                   Usize id);
+                          LilyMirInstructionArg,
+                          LilyMirDt *dt,
+                          Usize id);
 
-extern 
-inline DESTRUCTOR(LilyMirInstructionArg, const LilyMirInstructionArg *self);
+extern inline DESTRUCTOR(LilyMirInstructionArg,
+                         const LilyMirInstructionArg *self);
 
 extern inline CONSTRUCTOR(LilyMirInstructionAsm,
-                   LilyMirInstructionAsm,
-                   const char *content);
+                          LilyMirInstructionAsm,
+                          const char *content);
 
 extern inline CONSTRUCTOR(LilyMirInstructionValDt,
-                   LilyMirInstructionValDt,
-                   LilyMirInstructionVal *val,
-                   LilyMirDt *dt);
+                          LilyMirInstructionValDt,
+                          LilyMirInstructionVal *val,
+                          LilyMirDt *dt);
 
-extern 
-inline DESTRUCTOR(LilyMirInstructionValDt, const LilyMirInstructionValDt *self);
+extern inline DESTRUCTOR(LilyMirInstructionValDt,
+                         const LilyMirInstructionValDt *self);
 
 extern inline CONSTRUCTOR(LilyMirInstructionBlock,
-                   LilyMirInstructionBlock,
-                   const char *name,
-                   LilyMirBlockLimit *limit,
-                   Usize id);
+                          LilyMirInstructionBlock,
+                          const char *name,
+                          LilyMirBlockLimit *limit,
+                          Usize id);
 
 extern inline CONSTRUCTOR(LilyMirInstructionCall,
-                   LilyMirInstructionCall,
-                   LilyMirDt *return_dt,
-                   const char *name,
-                   Vec *params);
+                          LilyMirInstructionCall,
+                          LilyMirDt *return_dt,
+                          const char *name,
+                          Vec *params);
 
 extern inline CONSTRUCTOR(LilyMirInstructionConst,
-                   LilyMirInstructionConst,
-                   enum LilyMirLinkage linkage,
-                   const char *name,
-                   LilyMirInstructionVal *val);
+                          LilyMirInstructionConst,
+                          enum LilyMirLinkage linkage,
+                          const char *name,
+                          LilyMirInstructionVal *val);
 
-extern 
-inline DESTRUCTOR(LilyMirInstructionConst, const LilyMirInstructionConst *self);
-
-extern inline VARIANT_CONSTRUCTOR(LilyMirInstructionFunLoadName,
-                           LilyMirInstructionFunLoadName,
-                           const,
-                           const char *const_);
+extern inline DESTRUCTOR(LilyMirInstructionConst,
+                         const LilyMirInstructionConst *self);
 
 extern inline VARIANT_CONSTRUCTOR(LilyMirInstructionFunLoadName,
-                           LilyMirInstructionFunLoadName,
-                           param,
-                           Usize param);
+                                  LilyMirInstructionFunLoadName,
+                                  const,
+                                  const char *const_);
 
 extern inline VARIANT_CONSTRUCTOR(LilyMirInstructionFunLoadName,
-                           LilyMirInstructionFunLoadName,
-                           reg,
-                           const char *reg);
+                                  LilyMirInstructionFunLoadName,
+                                  param,
+                                  Usize param);
 
 extern inline VARIANT_CONSTRUCTOR(LilyMirInstructionFunLoadName,
-                           LilyMirInstructionFunLoadName,
-                           var,
-                           const char *var);
+                                  LilyMirInstructionFunLoadName,
+                                  reg,
+                                  const char *reg);
 
-extern 
-inline DESTRUCTOR(LilyMirInstructionFunLoad, LilyMirInstructionFunLoad *self);
+extern inline VARIANT_CONSTRUCTOR(LilyMirInstructionFunLoadName,
+                                  LilyMirInstructionFunLoadName,
+                                  var,
+                                  const char *var);
+
+extern inline DESTRUCTOR(LilyMirInstructionFunLoad,
+                         LilyMirInstructionFunLoad *self);
 
 extern inline CONSTRUCTOR(LilyMirInstructionFunPrototype,
-                   LilyMirInstructionFunPrototype,
-                   const char *name,
-                   Vec *params,
-                   LilyMirDt *return_data_type,
-                   enum LilyMirLinkage linkage);
+                          LilyMirInstructionFunPrototype,
+                          const char *name,
+                          Vec *params,
+                          LilyMirDt *return_data_type,
+                          enum LilyMirLinkage linkage);
 
 extern inline CONSTRUCTOR(LilyMirInstructionGetArray,
-                   LilyMirInstructionGetArray,
-                   LilyMirDt *dt,
-                   LilyMirInstructionVal *val,
-                   Vec *indexes,
-                   bool is_const);
+                          LilyMirInstructionGetArray,
+                          LilyMirDt *dt,
+                          LilyMirInstructionVal *val,
+                          Vec *indexes,
+                          bool is_const);
 
 extern inline CONSTRUCTOR(LilyMirInstructionGetField,
-                   LilyMirInstructionGetField,
-                   LilyMirDt *dt,
-                   LilyMirInstructionVal *val,
-                   Vec *indexes);
+                          LilyMirInstructionGetField,
+                          LilyMirDt *dt,
+                          LilyMirInstructionVal *val,
+                          Vec *indexes);
 
 extern inline CONSTRUCTOR(LilyMirInstructionLoad,
-                   LilyMirInstructionLoad,
-                   LilyMirInstructionSrc src,
-                   LilyMirDt *dt);
+                          LilyMirInstructionLoad,
+                          LilyMirInstructionSrc src,
+                          LilyMirDt *dt);
 
 extern inline CONSTRUCTOR(LilyMirInstructionJmpCond,
-                   LilyMirInstructionJmpCond,
-                   LilyMirInstructionVal *cond,
-                   LilyMirInstructionBlock *then_block,
-                   LilyMirInstructionBlock *else_block);
+                          LilyMirInstructionJmpCond,
+                          LilyMirInstructionVal *cond,
+                          LilyMirInstructionBlock *then_block,
+                          LilyMirInstructionBlock *else_block);
 
 extern inline DESTRUCTOR(LilyMirInstructionJmpCond,
-                  const LilyMirInstructionJmpCond *self);
+                         const LilyMirInstructionJmpCond *self);
 
 extern inline CONSTRUCTOR(LilyMirInstructionReg,
-                   LilyMirInstructionReg,
-                   const char *name,
-                   LilyMirInstruction *inst);
+                          LilyMirInstructionReg,
+                          const char *name,
+                          LilyMirInstruction *inst);
 
 extern inline CONSTRUCTOR(LilyMirInstructionVar,
-                   LilyMirInstructionVar,
-                   char *name,
-                   LilyMirInstruction *inst);
+                          LilyMirInstructionVar,
+                          char *name,
+                          LilyMirInstruction *inst);
 
 extern inline CONSTRUCTOR(LilyMirInstructionSwitch,
-                   LilyMirInstructionSwitch,
-                   LilyMirInstructionVal *val,
-                   LilyMirInstructionBlock *default_block,
-                   Vec *cases);
+                          LilyMirInstructionSwitch,
+                          LilyMirInstructionVal *val,
+                          LilyMirInstructionBlock *default_block,
+                          Vec *cases);
 
 extern inline CONSTRUCTOR(LilyMirInstructionTry,
-                   LilyMirInstructionTry,
-                   LilyMirInstructionVal *val,
-                   LilyMirInstructionBlock *try_block,
-                   LilyMirInstructionVal *catch_val,
-                   LilyMirInstructionBlock *catch_block);
+                          LilyMirInstructionTry,
+                          LilyMirInstructionVal *val,
+                          LilyMirInstructionBlock *try_block,
+                          LilyMirInstructionVal *catch_val,
+                          LilyMirInstructionBlock *catch_block);
 
-extern 
-inline DESTRUCTOR(LilyMirInstructionTry, const LilyMirInstructionTry *self);
+extern inline DESTRUCTOR(LilyMirInstructionTry,
+                         const LilyMirInstructionTry *self);
 
 extern inline CONSTRUCTOR(LilyMirInstructionStruct,
-                   LilyMirInstructionStruct,
-                   enum LilyMirLinkage linkage,
-                   const char *name,
-                   Vec *fields,
-                   OrderedHashMap *generic_params);
+                          LilyMirInstructionStruct,
+                          enum LilyMirLinkage linkage,
+                          const char *name,
+                          Vec *fields,
+                          OrderedHashMap *generic_params);
 
 // <core/lily/mir/mir.h>
-extern
-inline DESTRUCTOR(LilyMirCurrent, LilyMirCurrent *self);
+extern inline DESTRUCTOR(LilyMirCurrent, LilyMirCurrent *self);
 
 extern inline LilyMirModule
 LilyMirCreateModule();
 
 extern inline void
-LilyMirAddVar(LilyMirScope *Scope, String *name, LilyCheckedDataType *data_type);
+LilyMirAddVar(LilyMirScope *Scope,
+              String *name,
+              LilyCheckedDataType *data_type);
 
 extern inline void
 LilyMirAddParam(LilyMirScope *Scope, LilyCheckedDataType *data_type);
@@ -366,16 +362,13 @@ extern inline bool
 LilyMirKeyIsUnique(LilyMirModule *Module, char *key);
 
 // <core/lily/mir/name_manager.h>
-extern 
-inline CONSTRUCTOR(LilyMirNameManager,
-                   LilyMirNameManager,
-                   const char *base_name);
+extern inline CONSTRUCTOR(LilyMirNameManager,
+                          LilyMirNameManager,
+                          const char *base_name);
 
 // <core/lily/mir/scope.h>
-extern 
-inline DESTRUCTOR(LilyMirScopeParam, LilyMirScopeParam *self);
+extern inline DESTRUCTOR(LilyMirScopeParam, LilyMirScopeParam *self);
 
-extern 
-inline DESTRUCTOR(LilyMirScopeVar, LilyMirScopeVar *self);
+extern inline DESTRUCTOR(LilyMirScopeVar, LilyMirScopeVar *self);
 
 #endif // LILY_EX_LIB_LILY_CORE_LILY_MIR_C

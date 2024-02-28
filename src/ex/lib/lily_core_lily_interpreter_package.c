@@ -27,16 +27,16 @@
 
 #include <core/lily/interpreter/package/package.h>
 
-#include "lily_core_lily_mir.c"
 #include "lily_core_lily_analysis.c"
+#include "lily_core_lily_interpreter_vm.c"
+#include "lily_core_lily_mir.c"
 #include "lily_core_lily_parser.c"
 #include "lily_core_lily_precompiler.c"
-#include "lily_core_lily_interpreter_vm.c"
 
 // <core/lily/interpreter/package/package.h>
 extern inline CONSTRUCTOR(LilyInterpreterAdapter,
-                   LilyInterpreterAdapter,
-                   const LilyPackageInterpreterConfig *config,
-                   bool is_root);
+                          LilyInterpreterAdapter,
+                          const LilyPackageInterpreterConfig *config,
+                          bool is_root);
 
 #endif // LILY_EX_LIB_LILY_CORE_LILY_INTERPRETER_PACKAGE_C

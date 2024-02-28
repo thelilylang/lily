@@ -28,20 +28,18 @@
 #include <core/lily/diagnostic/error.h>
 #include <core/lily/diagnostic/warning.h>
 
-#include "lily_core_shared.c"
 #include "lily_base.c"
+#include "lily_core_shared.c"
 
 // <core/lily/diagnostic/error.h>
-extern 
-inline CONSTRUCTOR(LilyError, LilyError, enum LilyErrorKind kind);
+extern inline CONSTRUCTOR(LilyError, LilyError, enum LilyErrorKind kind);
 
 extern inline VARIANT_CONSTRUCTOR(LilyError,
-                           LilyError,
-                           unexpected_token,
-                           char *unexpected_token);
+                                  LilyError,
+                                  unexpected_token,
+                                  char *unexpected_token);
 
 // <core/lily/diagnostic/warning.h>
-extern 
-inline CONSTRUCTOR(LilyWarning, LilyWarning, enum LilyWarningKind kind);
+extern inline CONSTRUCTOR(LilyWarning, LilyWarning, enum LilyWarningKind kind);
 
 #endif // LILY_EX_LIB_LILY_CORE_LILY_DIAGNOSTIC_C

@@ -30,15 +30,14 @@
 #include "lily_core_lily_compiler_ar.c"
 #include "lily_core_lily_compiler_ir.c"
 #include "lily_core_lily_compiler_linker.c"
+#include "lily_core_lily_compiler_output.c"
 #include "lily_core_lily_mir.c"
 #include "lily_core_lily_parser.c"
 #include "lily_core_lily_precompiler.c"
-#include "lily_core_lily_compiler_output.c"
 
 // <core/lily/compiler/package/package.h>
-extern 
-inline CONSTRUCTOR(LilyCompilerAdapter,
-                   LilyCompilerAdapter,
-                   const LilyPackageCompilerConfig *config);
+extern inline CONSTRUCTOR(LilyCompilerAdapter,
+                          LilyCompilerAdapter,
+                          const LilyPackageCompilerConfig *config);
 
-#endif // LILY_EX_LIB_LILY_CORE_LILY_COMPILER_PACKAGE_C 
+#endif // LILY_EX_LIB_LILY_CORE_LILY_COMPILER_PACKAGE_C

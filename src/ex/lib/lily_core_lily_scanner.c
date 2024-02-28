@@ -32,13 +32,15 @@
 #include "lily_core_shared.c"
 
 // <core/lily/scanner/scanner.h>
-extern 
-inline CONSTRUCTOR(LilyScanner, LilyScanner, Source source, Usize *count_error);
+extern inline CONSTRUCTOR(LilyScanner,
+                          LilyScanner,
+                          Source source,
+                          Usize *count_error);
 
 // <core/lily/scanner/token.h>
 extern inline CONSTRUCTOR(LilyTokenExpand,
-                   LilyTokenExpand,
-                   enum LilyTokenExpandKind kind,
-                   Vec *tokens);
+                          LilyTokenExpand,
+                          enum LilyTokenExpandKind kind,
+                          Vec *tokens);
 
 #endif // LILY_EX_LIB_LILY_CORE_LILY_SCANNER_C

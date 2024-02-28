@@ -26,73 +26,73 @@
 #define LILY_EX_LIB_LILY_CORE_LILY_INTERPRETER_VM_C
 
 #include <core/lily/interpreter/vm/memory.h>
+#include <core/lily/interpreter/vm/runtime/operator.h>
 #include <core/lily/interpreter/vm/value.h>
 #include <core/lily/interpreter/vm/vm.h>
-#include <core/lily/interpreter/vm/runtime/operator.h>
 
 #include "lily_base.c"
-#include "lily_sys.c"
 #include "lily_builtin.c"
+#include "lily_sys.c"
 
 // <core/lily/interpreter/vm/memory.h>
 extern inline VARIANT_CONSTRUCTOR(LilyInterpreterMemory,
-                           LilyInterpreterMemory,
-                           capacity,
-                           Usize capacity);
+                                  LilyInterpreterMemory,
+                                  capacity,
+                                  Usize capacity);
 
-extern 
-inline CONSTRUCTOR(LilyInterpreterMemory, LilyInterpreterMemory);
+extern inline CONSTRUCTOR(LilyInterpreterMemory, LilyInterpreterMemory);
 
 // <core/lily/interpreter/vm/value.h>
 extern inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           bytes,
-                           LilyInterpreterValueBytes *bytes);
+                                  LilyInterpreterValue,
+                                  bytes,
+                                  LilyInterpreterValueBytes *bytes);
 
 extern inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           cstr,
-                           char *cstr);
+                                  LilyInterpreterValue,
+                                  cstr,
+                                  char *cstr);
+
+extern inline VARIANT_CONSTRUCTOR(
+  LilyInterpreterValue,
+  LilyInterpreterValue,
+  dynamic_array,
+  LilyInterpreterValueDynamicArray *dynamic_array);
 
 extern inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           dynamic_array,
-                           LilyInterpreterValueDynamicArray *dynamic_array);
+                                  LilyInterpreterValue,
+                                  int8,
+                                  Int8 int8);
 
 extern inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           int8,
-                           Int8 int8);
+                                  LilyInterpreterValue,
+                                  int16,
+                                  Int16 int16);
 
 extern inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           int16,
-                           Int16 int16);
+                                  LilyInterpreterValue,
+                                  int32,
+                                  Int32 int32);
 
 extern inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           int32,
-                           Int32 int32);
+                                  LilyInterpreterValue,
+                                  int64,
+                                  Int64 int64);
 
 extern inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           int64,
-                           Int64 int64);
+                                  LilyInterpreterValue,
+                                  isize,
+                                  Isize isize);
 
 extern inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           isize,
-                           Isize isize);
+                                  LilyInterpreterValue,
+                                  float,
+                                  Float64 float_);
 
 extern inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           float,
-                           Float64 float_);
-
-extern inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           list,
-                           LilyInterpreterValueList *list);
+                                  LilyInterpreterValue,
+                                  list,
+                                  LilyInterpreterValueList *list);
 
 extern inline VARIANT_CONSTRUCTOR(
   LilyInterpreterValue,
@@ -101,58 +101,58 @@ extern inline VARIANT_CONSTRUCTOR(
   LilyInterpreterValueMultiPointersArray *multi_pointers_array);
 
 extern inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           ptr,
-                           void *ptr);
+                                  LilyInterpreterValue,
+                                  ptr,
+                                  void *ptr);
 
 extern inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           result,
-                           LilyInterpreterValueResult *result);
+                                  LilyInterpreterValue,
+                                  result,
+                                  LilyInterpreterValueResult *result);
 
 extern inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           sized_array,
-                           LilyInterpreterValueSizedArray *sized_array);
+                                  LilyInterpreterValue,
+                                  sized_array,
+                                  LilyInterpreterValueSizedArray *sized_array);
 
 extern inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           str,
-                           LilyInterpreterValueStr *str);
+                                  LilyInterpreterValue,
+                                  str,
+                                  LilyInterpreterValueStr *str);
 
 extern inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           struct,
-                           LilyInterpreterValueStruct *struct_);
+                                  LilyInterpreterValue,
+                                  struct,
+                                  LilyInterpreterValueStruct *struct_);
 
 extern inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           uint8,
-                           Uint8 uint8);
+                                  LilyInterpreterValue,
+                                  uint8,
+                                  Uint8 uint8);
 
 extern inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           uint16,
-                           Uint16 uint16);
+                                  LilyInterpreterValue,
+                                  uint16,
+                                  Uint16 uint16);
 
 extern inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           uint32,
-                           Uint32 uint32);
+                                  LilyInterpreterValue,
+                                  uint32,
+                                  Uint32 uint32);
 
 extern inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           uint64,
-                           Uint64 uint64);
+                                  LilyInterpreterValue,
+                                  uint64,
+                                  Uint64 uint64);
 
 extern inline VARIANT_CONSTRUCTOR(LilyInterpreterValue,
-                           LilyInterpreterValue,
-                           usize,
-                           Usize usize);
+                                  LilyInterpreterValue,
+                                  usize,
+                                  Usize usize);
 
 extern inline CONSTRUCTOR(LilyInterpreterValue,
-                   LilyInterpreterValue,
-                   enum LilyInterpreterValueKind kind);
+                          LilyInterpreterValue,
+                          enum LilyInterpreterValueKind kind);
 
 extern inline LilyInterpreterValue *
 ref__LilyInterpreterValue(LilyInterpreterValue *self);
@@ -204,24 +204,24 @@ ref__LilyInterpreterValueStruct(LilyInterpreterValueStruct *self);
 
 // <core/lily/interpreter/vm/vm.h>
 extern inline VARIANT_CONSTRUCTOR(LilyInterpreterVMStackFrameReturn,
-                           LilyInterpreterVMStackFrameReturn,
-                           normal,
-                           LilyInterpreterValue value);
+                                  LilyInterpreterVMStackFrameReturn,
+                                  normal,
+                                  LilyInterpreterValue value);
 
 extern inline VARIANT_CONSTRUCTOR(LilyInterpreterVMStackFrameReturn,
-                           LilyInterpreterVMStackFrameReturn,
-                           raise,
-                           LilyInterpreterValue value);
+                                  LilyInterpreterVMStackFrameReturn,
+                                  raise,
+                                  LilyInterpreterValue value);
 
 extern inline DESTRUCTOR(LilyInterpreterVMStackFrameReturn,
-                  LilyInterpreterVMStackFrameReturn *self);
+                         LilyInterpreterVMStackFrameReturn *self);
 
 extern inline CONSTRUCTOR(LilyInterpreterVMResources,
-                   LilyInterpreterVMResources,
-                   Vec *args);
+                          LilyInterpreterVMResources,
+                          Vec *args);
 
 extern inline DESTRUCTOR(LilyInterpreterVMResources,
-                  const LilyInterpreterVMResources *self);
+                         const LilyInterpreterVMResources *self);
 
 extern inline void
 set_max_heap__LilyInterpreterVM(LilyInterpreterVM *self, Usize max_heap);

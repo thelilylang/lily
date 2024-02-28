@@ -33,12 +33,11 @@
 #include <core/lily/compiler/ir/llvm/scope.h>
 
 #include "lily_base.c"
-#include "lily_core_lily_mir.c"
 #include "lily_core_lily_compiler_driver.c"
+#include "lily_core_lily_mir.c"
 
 // <core/lily/compiler/ir/llvm/attr.h>
-extern 
-inline LLVMAttributeRef
+extern inline LLVMAttributeRef
 align_attr__LilyIrLlvm(const LilyIrLlvm *self, Uint64 align);
 
 extern inline LLVMAttributeRef
@@ -121,15 +120,12 @@ LilyLLVMFinishConst(const LilyIrLlvm *Self,
                     const LilyMirInstructionVal *Val);
 
 // <core/lily/compiler/ir/llvm/pending.h>
-extern 
-inline CONSTRUCTOR(LilyIrLlvmPending, LilyIrLlvmPending);
+extern inline CONSTRUCTOR(LilyIrLlvmPending, LilyIrLlvmPending);
 
-extern
-inline LLVMBasicBlockRef
+extern inline LLVMBasicBlockRef
 get_block__LilyIrLlvmPending(const LilyIrLlvmPending *self, const char *name);
 
-extern 
-inline DESTRUCTOR(LilyIrLlvmPending, const LilyIrLlvmPending *self);
+extern inline DESTRUCTOR(LilyIrLlvmPending, const LilyIrLlvmPending *self);
 
 // <core/lily/compiler/ir/llvm/primary.h>
 extern inline LLVMTypeRef
@@ -169,8 +165,7 @@ ptr__LilyIrLlvm(const LilyIrLlvm *self, LLVMTypeRef ptr_type);
 extern inline LLVMValueRef
 get__LilyIrLlvmScopeItem(const LilyIrLlvmScopeItem *self, const char *name);
 
-extern 
-inline CONSTRUCTOR(LilyIrLlvmScope, LilyIrLlvmScope);
+extern inline CONSTRUCTOR(LilyIrLlvmScope, LilyIrLlvmScope);
 
 extern inline void
 add_scope_item__LilyIrLlvmScope(const LilyIrLlvmScope *self,

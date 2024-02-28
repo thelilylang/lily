@@ -27,15 +27,15 @@
 
 #include <core/lily/precompiler/precompiler.h>
 
-#include "lily_core_lily_package.c"
 #include "lily_base.c"
+#include "lily_core_lily_package.c"
 
 // <core/lily/precompiler/precompiler.h>
 extern inline CONSTRUCTOR(LilyPrecompiler,
-                   LilyPrecompiler,
-                   LilyPreparserInfo *info,
-                   const File *file,
-                   LilyPackage *package,
-                   const char *default_path);
+                          LilyPrecompiler,
+                          LilyPreparserInfo *info,
+                          const File *file,
+                          LilyPackage *package,
+                          const char *default_path);
 
 #endif // LILY_EX_LIB_LILY_CORE_LILY_PRECOMPILER_C

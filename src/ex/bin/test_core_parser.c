@@ -25,7 +25,7 @@
 #ifndef LILY_EX_BIN_TEST_CORE_PARSER_C
 #define LILY_EX_BIN_TEST_CORE_PARSER_C
 
-#include "../lib/lily_core_lily_parser.c"
 #include "../lib/lily_core_lily_package.c"
+#include "../lib/lily_core_lily_parser.c"
 
 #endif // LILY_EX_BIN_TEST_CORE_PARSER_C

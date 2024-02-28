@@ -32,21 +32,20 @@
 #include "lily_core_lily_scanner.c"
 
 // <core/lily/preparser/preprocess/allow.h>
-extern 
-inline CONSTRUCTOR(LilyPreprocessAllow, LilyPreprocessAllow, String *value);
+extern inline CONSTRUCTOR(LilyPreprocessAllow,
+                          LilyPreprocessAllow,
+                          String *value);
 
-extern 
-inline DESTRUCTOR(LilyPreprocessAllow, const LilyPreprocessAllow *self);
+extern inline DESTRUCTOR(LilyPreprocessAllow, const LilyPreprocessAllow *self);
 
 // <core/lily/preparser/preprocess/arch.h>
-extern 
-inline CONSTRUCTOR(LilyPreprocessArch, LilyPreprocessArch, String *value);
+extern inline CONSTRUCTOR(LilyPreprocessArch,
+                          LilyPreprocessArch,
+                          String *value);
 
-extern 
-inline DESTRUCTOR(LilyPreprocessArch, const LilyPreprocessArch *self);
+extern inline DESTRUCTOR(LilyPreprocessArch, const LilyPreprocessArch *self);
 
 // <core/lily/preparser/preprocess/link_info.h>
-extern 
-inline CONSTRUCTOR(LilyPreprocessLinkInfo, LilyPreprocessLinkInfo);
+extern inline CONSTRUCTOR(LilyPreprocessLinkInfo, LilyPreprocessLinkInfo);
 
 #endif // LILY_EX_LIB_LILY_CORE_LILY_PREPARSER_C

@@ -32,16 +32,12 @@
 #include "lily_core_lily_compiler_ir_llvm.c"
 
 // <core/lily/compiler/ir/ir.h>
-extern 
-inline VARIANT_CONSTRUCTOR(LilyIr, LilyIr, cc, LilyIrCc cc);
+extern inline VARIANT_CONSTRUCTOR(LilyIr, LilyIr, cc, LilyIrCc cc);
 
-extern 
-inline VARIANT_CONSTRUCTOR(LilyIr, LilyIr, cpp, LilyIrCpp cpp);
+extern inline VARIANT_CONSTRUCTOR(LilyIr, LilyIr, cpp, LilyIrCpp cpp);
 
-extern 
-inline VARIANT_CONSTRUCTOR(LilyIr, LilyIr, js, LilyIrJs js);
+extern inline VARIANT_CONSTRUCTOR(LilyIr, LilyIr, js, LilyIrJs js);
 
-extern 
-inline VARIANT_CONSTRUCTOR(LilyIr, LilyIr, llvm, LilyIrLlvm llvm);
+extern inline VARIANT_CONSTRUCTOR(LilyIr, LilyIr, llvm, LilyIrLlvm llvm);
 
 #endif // LILY_EX_LIB_LILY_CORE_LILY_COMPILER_IR_C

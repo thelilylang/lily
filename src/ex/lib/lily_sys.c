@@ -28,36 +28,49 @@
 #include <sys/sys.h>
 
 // <sys/sys.h>
-extern Usize __sys__$read(Int32 fd, void *buf, Usize n)
-      __attribute__((always_inline)) __attribute__((hot));
+extern Usize
+__sys__$read(Int32 fd, void *buf, Usize n) __attribute__((always_inline))
+__attribute__((hot));
 
-extern Usize __sys__$write(Int32 fd, const char *buf, Usize n)
-      __attribute__((always_inline)) __attribute__((hot));
+extern Usize
+__sys__$write(Int32 fd, const char *buf, Usize n) __attribute__((always_inline))
+__attribute__((hot));
 
-extern Int32 __sys__$open(const char *pathname, Int32 flags, Int32 mode)
-      __attribute__((always_inline)) __attribute__((hot));
+extern Int32
+__sys__$open(const char *pathname, Int32 flags, Int32 mode)
+  __attribute__((always_inline)) __attribute__((hot));
 
-extern Int32 __sys__$close(Int32 fd) __attribute__((always_inline))
-    __attribute__((hot));
+extern Int32
+__sys__$close(Int32 fd) __attribute__((always_inline)) __attribute__((hot));
 
-extern Int32 __sys__$stat_mode(const char *pathname);
+extern Int32
+__sys__$stat_mode(const char *pathname);
 
-extern Uint32 __sys__$stat_ino(const char *pathname);
+extern Uint32
+__sys__$stat_ino(const char *pathname);
 
-extern Uint32 __sys__$stat_dev(const char *pathname);
+extern Uint32
+__sys__$stat_dev(const char *pathname);
 
-extern Uint32 __sys__$stat_nlink(const char *pathname);
+extern Uint32
+__sys__$stat_nlink(const char *pathname);
 
-extern Uint64 __sys__$stat_uid(const char *pathname);
+extern Uint64
+__sys__$stat_uid(const char *pathname);
 
-extern Uint64 __sys__$stat_gid(const char *pathname);
+extern Uint64
+__sys__$stat_gid(const char *pathname);
 
-extern Int32 __sys__$stat_size(const char *pathname);
+extern Int32
+__sys__$stat_size(const char *pathname);
 
-extern Int32 __sys__$stat_atime(const char *pathname);
+extern Int32
+__sys__$stat_atime(const char *pathname);
 
-extern Int32 __sys__$stat_mtime(const char *pathname);
+extern Int32
+__sys__$stat_mtime(const char *pathname);
 
-extern Int32 __sys__$stat_ctime(const char *pathname);
+extern Int32
+__sys__$stat_ctime(const char *pathname);
 
 #endif // LILY_EX_LIB_LILY_SYS_C

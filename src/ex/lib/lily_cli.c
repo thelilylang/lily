@@ -38,72 +38,75 @@
 // #include "lily_base.c"
 
 // <cli/lily/config.h>
-extern 
-inline VARIANT_CONSTRUCTOR(LilyConfig, LilyConfig, build, LilyConfigBuild build);
+extern inline VARIANT_CONSTRUCTOR(LilyConfig,
+                                  LilyConfig,
+                                  build,
+                                  LilyConfigBuild build);
 
-extern 
-inline VARIANT_CONSTRUCTOR(LilyConfig, LilyConfig, cc, LilyConfigCc cc);
+extern inline VARIANT_CONSTRUCTOR(LilyConfig, LilyConfig, cc, LilyConfigCc cc);
 
-extern
-inline VARIANT_CONSTRUCTOR(LilyConfig, LilyConfig, compile);
+extern inline VARIANT_CONSTRUCTOR(LilyConfig, LilyConfig, compile);
 
-extern 
-inline VARIANT_CONSTRUCTOR(LilyConfig, LilyConfig, cpp, LilyConfigCpp cpp);
+extern inline VARIANT_CONSTRUCTOR(LilyConfig,
+                                  LilyConfig,
+                                  cpp,
+                                  LilyConfigCpp cpp);
 
-extern 
-inline VARIANT_CONSTRUCTOR(LilyConfig, LilyConfig, init, LilyConfigInit init);
+extern inline VARIANT_CONSTRUCTOR(LilyConfig,
+                                  LilyConfig,
+                                  init,
+                                  LilyConfigInit init);
 
-extern 
-inline VARIANT_CONSTRUCTOR(LilyConfig, LilyConfig, new, LilyConfigNew new);
+extern inline VARIANT_CONSTRUCTOR(LilyConfig,
+                                  LilyConfig,
+                                  new,
+                                  LilyConfigNew new);
 
-extern 
-inline VARIANT_CONSTRUCTOR(LilyConfig, LilyConfig, run, LilyConfigRun run);
+extern inline VARIANT_CONSTRUCTOR(LilyConfig,
+                                  LilyConfig,
+                                  run,
+                                  LilyConfigRun run);
 
-extern 
-inline VARIANT_CONSTRUCTOR(LilyConfig, LilyConfig, test, LilyConfigTest test);
+extern inline VARIANT_CONSTRUCTOR(LilyConfig,
+                                  LilyConfig,
+                                  test,
+                                  LilyConfigTest test);
 
-extern 
-inline VARIANT_CONSTRUCTOR(LilyConfig, LilyConfig, to, LilyConfigTo to);
+extern inline VARIANT_CONSTRUCTOR(LilyConfig, LilyConfig, to, LilyConfigTo to);
 
 // <cli/lily/config/build.h>
-extern 
-inline CONSTRUCTOR(LilyConfigBuild, LilyConfigBuild, bool verbose);
+extern inline CONSTRUCTOR(LilyConfigBuild, LilyConfigBuild, bool verbose);
 
 // <cli/lily/config/cc.h>
-extern 
-inline CONSTRUCTOR(LilyConfigCc, LilyConfigCc, const char *filename);
+extern inline CONSTRUCTOR(LilyConfigCc, LilyConfigCc, const char *filename);
 
 // <cli/lily/config/cpp.h>
-extern 
-inline CONSTRUCTOR(LilyConfigCpp, LilyConfigCpp, const char *filename);
+extern inline CONSTRUCTOR(LilyConfigCpp, LilyConfigCpp, const char *filename);
 
 // <cli/lily/config/init.h>
-extern 
-inline CONSTRUCTOR(LilyConfigInit, LilyConfigInit, const char *path);
+extern inline CONSTRUCTOR(LilyConfigInit, LilyConfigInit, const char *path);
 
 // <cli/lily/config/new.h>
-extern 
-inline CONSTRUCTOR(LilyConfigNew, LilyConfigNew, const char *name);
+extern inline CONSTRUCTOR(LilyConfigNew, LilyConfigNew, const char *name);
 
 // <cli/lily/config/run.h>
 extern inline CONSTRUCTOR(LilyConfigRun,
-                   LilyConfigRun,
-                   const char *filename,
-                   bool verbose,
-                   Vec *args,
-                   Usize max_stack,
-                   Usize max_heap);
+                          LilyConfigRun,
+                          const char *filename,
+                          bool verbose,
+                          Vec *args,
+                          Usize max_stack,
+                          Usize max_heap);
 
 // <cli/lily/config/test.h>
-extern 
-inline CONSTRUCTOR(LilyConfigTest, LilyConfigTest, const char *filename);
+extern inline CONSTRUCTOR(LilyConfigTest, LilyConfigTest, const char *filename);
 
 // <cli/lily/config/to.h>
 extern inline CONSTRUCTOR(LilyConfigTo,
-                   LilyConfigTo,
-                   const char *filename,
-                   bool cc,
-                   bool cpp,
-                   bool js);
+                          LilyConfigTo,
+                          const char *filename,
+                          bool cc,
+                          bool cpp,
+                          bool js);
 
 #endif // LILY_EX_LIB_LILY_CLI_C

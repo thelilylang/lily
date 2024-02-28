@@ -32,11 +32,9 @@
 #include "lily_core_shared.c"
 
 // <core/cc/ci/diagnostic/error.h>
-extern 
-inline CONSTRUCTOR(CIError, CIError, enum CIErrorKind kind);
+extern inline CONSTRUCTOR(CIError, CIError, enum CIErrorKind kind);
 
 // <core/cc/ci/diagnostic/warning.h>
-extern 
-inline CONSTRUCTOR(CIWarning, CIWarning, enum CIWarningKind kind);
+extern inline CONSTRUCTOR(CIWarning, CIWarning, enum CIWarningKind kind);
 
 #endif // LILY_EX_LIB_LILY_CORE_CC_CI_DIAGNOSTIC_C

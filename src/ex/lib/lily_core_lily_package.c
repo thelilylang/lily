@@ -25,31 +25,28 @@
 #ifndef LILY_EX_LIB_LILY_CORE_LILY_PACKAGE_C
 #define LILY_EX_LIB_LILY_CORE_LILY_PACKAGE_C
 
-#include <core/lily/package/library.h>
-#include <core/lily/package/program.h>
 #include <core/lily/package/compiler/config.h>
 #include <core/lily/package/interpreter/config.h>
+#include <core/lily/package/library.h>
+#include <core/lily/package/program.h>
 
+#include "lily_core_lily_compiler_package.c"
+#include "lily_core_lily_interpreter_package.c"
 #include "lily_core_lily_mir.c"
 #include "lily_core_lily_parser.c"
 #include "lily_core_lily_precompiler.c"
-#include "lily_core_lily_compiler_package.c"
-#include "lily_core_lily_interpreter_package.c"
 
 // <core/lily/package/library.h>
 extern inline void
 finish_set__LilyLibrary(LilyLibrary *self, String *name, enum LilyArKind ar);
 
 // <core/lily/package/program.h>
-extern 
-inline CONSTRUCTOR(LilyProgramResources, LilyProgramResources);
+extern inline CONSTRUCTOR(LilyProgramResources, LilyProgramResources);
 
-extern 
-inline DESTRUCTOR(LilyProgram, const LilyProgram *self);
+extern inline DESTRUCTOR(LilyProgram, const LilyProgram *self);
 
 // <core/lily/package/compiler/config.h>
-extern 
-inline LilyPackageCompilerConfig
+extern inline LilyPackageCompilerConfig
 default__LilyPackageCompilerConfig();
 
 extern inline LilyPackageCompilerConfig
@@ -59,13 +56,12 @@ extern inline LilyPackageCompilerConfig
 from_CompileConfig__LilyPackageCompilerConfig(const LilycConfig *lilyc_config);
 
 // <core/lily/package/interpreter/config.h>
-extern 
-inline CONSTRUCTOR(LilyPackageInterpreterConfig,
-                   LilyPackageInterpreterConfig,
-                   Vec *args,
-                   bool verbose,
-                   Usize max_heap,
-                   Usize max_stack);
+extern inline CONSTRUCTOR(LilyPackageInterpreterConfig,
+                          LilyPackageInterpreterConfig,
+                          Vec *args,
+                          bool verbose,
+                          Usize max_heap,
+                          Usize max_stack);
 
 extern inline LilyPackageInterpreterConfig
 default__LilyPackageInterpreterConfig();
