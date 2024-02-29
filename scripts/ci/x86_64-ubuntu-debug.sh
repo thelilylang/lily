@@ -28,7 +28,6 @@ cmake \
 	-G Ninja \
 	-DCMAKE_BUILD_TYPE=Debug \
 	-DLILY_DEBUG=ON \
-	-DLILY_BUILD_LLVM=ON \
 	-DCMAKE_C_COMPILER=clang-16 \
 	-DCMAKE_CXX_COMPILER=clang++-16
 

@@ -32,7 +32,6 @@ cmake \
 	-G Ninja \
 	-DCMAKE_BUILD_TYPE=Release \
 	-DLILY_DEBUG=ON \
-	-DLILY_BUILD_LLVM=ON \
 	-DCMAKE_C_COMPILER=$(brew --prefix llvm@16)/bin/clang \
 	-DCMAKE_CXX_COMPILER=$(brew --prefix llvm@16)/bin/clang++
 
