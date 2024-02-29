@@ -33,40 +33,54 @@
 #include <llvm-c/Target.h>
 #include <llvm-c/TargetMachine.h>
 
-typedef struct LilyIrLlvm
+#ifdef __cplusplus
+extern "C"
 {
-    LLVMContextRef context;
-    LLVMModuleRef module;
-    LLVMBuilderRef builder;
-    LLVMDIBuilderRef di_builder;
-    LLVMTargetRef target;
-    LLVMTargetDataRef target_data;
-    LLVMTargetMachineRef machine;
-    LLVMMetadataRef file;
-    LLVMMetadataRef compile_unit;
-    char *cpu;
-    char *features;
-    Usize cpu_len;
-    Usize features_len;
-} LilyIrLlvm;
+#endif
 
-/**
- *
- * @brief Construct LilyIrLlvm type.
- */
-CONSTRUCTOR(LilyIrLlvm, LilyIrLlvm, const char *module_name);
+    typedef struct LilyIrLlvm
+    {
+        LLVMContextRef context;
+        LLVMModuleRef module;
+        LLVMBuilderRef builder;
+        LLVMDIBuilderRef di_builder;
+        LLVMTargetRef target;
+        LLVMTargetDataRef target_data;
+        LLVMTargetMachineRef machine;
+        LLVMMetadataRef file;
+        LLVMMetadataRef compile_unit;
+        char *cpu;
+        char *features;
+        Usize cpu_len;
+        Usize features_len;
+    } LilyIrLlvm;
 
-/**
- *
- * @brief Get the current scope of the instruction.
- */
-LLVMMetadataRef
-get_current_scope__LilyIrLlvm(LLVMValueRef inst);
+    /**
+     *
+     * @brief Construct LilyIrLlvm type.
+     */
+    CONSTRUCTOR(LilyIrLlvm, LilyIrLlvm, const char *module_name);
 
-/**
- *
- * @brief Free LilyIrLlvm type.
- */
-DESTRUCTOR(LilyIrLlvm, const LilyIrLlvm *self);
+    /**
+     *
+     * @brief Get the current scope of the instruction.
+     */
+    LLVMMetadataRef get_current_scope__LilyIrLlvm(LLVMValueRef inst);
+
+    /**
+     *
+     * @brief Free LilyIrLlvm type.
+     */
+    DESTRUCTOR(LilyIrLlvm, const LilyIrLlvm *self);
+
+    /**
+     *
+     * @brief Remove fatal error handler.
+     */
+    void LilyLLVMRemoveFatalErrorHandler();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // LILY_CORE_LILY_COMPILER_IR_LLVM_H

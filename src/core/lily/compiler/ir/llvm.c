@@ -117,11 +117,9 @@ CONSTRUCTOR(LilyIrLlvm, LilyIrLlvm, const char *module_name)
 
     LLVMTargetDataRef target_data =
       LLVMCreateTargetData(LLVMGetDataLayoutStr(module));
-    char *layout = LLVMCopyStringRepOfTargetData(target_data);
 
-    LLVMSetDataLayout(module, layout);
+    LLVMSetModuleDataLayout(module, LLVMCreateTargetDataLayout(machine));
 
-    LLVMDisposeMessage(layout);
     lily_free(triple);
 
     return (LilyIrLlvm){ .context = context,
@@ -158,7 +156,11 @@ LilyLLVMInit()
     LLVMInitializeAllAsmPrinters();
     LLVMInitializeAllAsmParsers();
     LLVMEnablePrettyStackTrace();
+    // NOTE: This avoids the situation where an error handler is already
+    // installed and causes the program to crash.
+    LilyLLVMRemoveFatalErrorHandler();
     LLVMInstallFatalErrorHandler(lily_fatal_error);
+
     LLVMLoadLibraryPermanently(NULL);
 
     LLVMPassRegistryRef pass_reg = LLVMGetGlobalPassRegistry();
