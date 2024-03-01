@@ -28,6 +28,7 @@
 
 #include <command/lilyc/lilyc.h>
 
+#include <core/lily/compiler/ir/llvm/crt.h>
 #include <core/lily/compiler/package.h>
 #include <core/lily/lily.h>
 #include <core/lily/package/default_path.h>
@@ -40,19 +41,33 @@ void
 run__Lilyc(const LilycConfig *config)
 {
     if (config->run_scanner) {
-        return run_scanner__LilyCompilerPackage(config);
+        run_scanner__LilyCompilerPackage(config);
+
+        goto exit;
     } else if (config->run_preparser) {
-        return run_preparser__LilyCompilerPackage(config);
+        run_preparser__LilyCompilerPackage(config);
+
+        goto exit;
     } else if (config->run_precompiler) {
-        return run_precompiler__LilyCompilerPackage(config);
+        run_precompiler__LilyCompilerPackage(config);
+
+        goto exit;
     } else if (config->run_parser) {
-        return run_parser__LilyCompilerPackage(config);
+        run_parser__LilyCompilerPackage(config);
+
+        goto exit;
     } else if (config->run_analysis) {
-        return run_analysis__LilyCompilerPackage(config);
+        run_analysis__LilyCompilerPackage(config);
+
+        goto exit;
     } else if (config->run_mir) {
-        return run_mir__LilyCompilerPackage(config);
+        run_mir__LilyCompilerPackage(config);
+
+        goto exit;
     } else if (config->run_ir) {
-        return run_ir__LilyCompilerPackage(config);
+        run_ir__LilyCompilerPackage(config);
+
+        goto exit;
     }
 
     // Get the default path
@@ -107,4 +122,10 @@ run__Lilyc(const LilycConfig *config)
     // short, always free the program pointer after the package
     // pointer or library pointer.
     FREE(LilyProgram, &program);
+
+exit:
+#if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS)
+    // Free allocated variables to `src/core/lily/compiler/ir/llvm/crt.c`.
+    destroy_crt__LilyIrLlvmLinker();
+#endif
 }
