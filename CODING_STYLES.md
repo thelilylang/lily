@@ -42,13 +42,13 @@ len__Str(const char *s);
 
 NOTE: The prefix must be unique, to avoid function name conflicts.
 
-#### Parametter
+#### Parameter
 
-If the function is associated to a type, the first parametter, must be named `self`.
+If the function is associated to a type, the first parameter, must be named `self`.
 
 #### Inline
 
-See [src/ex/README.md](./src/ex/README.md).
+Take a look at [src/ex/README.md](./src/ex/README.md) to find out how inline functions are managed.
 
 ### Global variable
 
@@ -121,9 +121,11 @@ EXCEPTION(S): `lily_base`.<br>
 
 ## C++
 
-We using [C++20](https://en.cppreference.com/w/cpp/20) standard.
+We're using [C++20](https://en.cppreference.com/w/cpp/20) standard.
 
 ## Lily
+
+...
 
 ## Abreviations
 
@@ -131,3 +133,7 @@ We using [C++20](https://en.cppreference.com/w/cpp/20) standard.
 - ast, AST: Abstract Syntax Tree
 - ref: reference
 - vm: virtual machine
+- decl: declaration
+- expr: expression
+- stmt: statement
+- gen: generation, generator
