@@ -273,6 +273,7 @@ set(BASE_SRC
     ${CMAKE_SOURCE_DIR}/src/base/cli.c
     ${CMAKE_SOURCE_DIR}/src/base/color.c
     ${CMAKE_SOURCE_DIR}/src/base/dir.c
+    ${CMAKE_SOURCE_DIR}/src/base/env.c
     ${CMAKE_SOURCE_DIR}/src/base/error.c
     ${CMAKE_SOURCE_DIR}/src/base/file.c
     ${CMAKE_SOURCE_DIR}/src/base/format.c

@@ -31,6 +31,7 @@
 #include <base/cli/option.h>
 #include <base/cli/result/command.h>
 #include <base/cli/value.h>
+#include <base/env.h>
 #include <base/hash_map.h>
 #include <base/memory/api.h>
 #include <base/memory/arena.h>
@@ -49,6 +50,10 @@ extern inline VARIANT_CONSTRUCTOR(Allocator, Allocator, arena, Usize capacity);
 extern inline VARIANT_CONSTRUCTOR(Allocator, Allocator, global);
 
 extern inline VARIANT_CONSTRUCTOR(Allocator, Allocator, page);
+
+// <base/env.h>
+extern inline char *
+get__Env(const char *name);
 
 // <base/hash_map.h>
 extern inline CONSTRUCTOR(HashMapPair, HashMapPair, char *key, void *value);
