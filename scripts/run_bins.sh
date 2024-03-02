@@ -7,7 +7,7 @@ SUCCESS=0
 
 for bin in ./out.lily/bin/*
 do
-	./$bin
+	./scripts/exe.sh ./$bin
 
 	let code_status=$?
 
