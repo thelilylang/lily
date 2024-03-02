@@ -69,6 +69,8 @@ cc/ci
 
 cpp
 
+ex
+
 lib/builtin
 lib/local
 lib/std

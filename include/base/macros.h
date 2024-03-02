@@ -50,7 +50,7 @@
 #define MSVC_VERSION _MSC_VER
 #else
 #error \
-  "unknown compiler, please add a support for this compiler or open issue at 'https://github.com/ArthurPV/lily/tree/main'."
+  "unknown compiler, please add a support for this compiler or open issue at 'https://github.com/thelilylang/lily/tree/main'."
 #endif
 
 #if defined(GCC_VERSION) || defined(CLANG_VERSION) || defined(MSVC_VERSION)
@@ -72,7 +72,7 @@
 
 #else
 #error \
-  "unknown compiler, please add a support for this compiler or open issue at 'https://github.com/ArthurPV/lily/tree/main'."
+  "unknown compiler, please add a support for this compiler or open issue at 'https://github.com/thelilylang/lily/tree/main'."
 #endif
 
 #endif

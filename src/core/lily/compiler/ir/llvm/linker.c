@@ -27,6 +27,8 @@
 
 #include <cli/emit.h>
 #include <core/lily/compiler/driver/lld.h>
+#include <core/lily/compiler/ir/llvm/crt.h>
+#include <core/lily/compiler/ir/llvm/dl.h>
 #include <core/lily/compiler/ir/llvm/dump.h>
 #include <core/lily/compiler/ir/llvm/linker.h>
 #include <core/lily/compiler/ir/llvm/utils.h>
@@ -65,17 +67,29 @@ compile_exe__LilyIrLlvmLinker(LilyPackage *self)
 
 #if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS)
     // Link crt1, crti, crtn and libc
-    push__Vec(args, strdup("/usr/lib/crt1.o"));
-    push__Vec(args, strdup("/usr/lib/crti.o"));
-    push__Vec(args, strdup("/usr/lib/crtn.o"));
-    push__Vec(args, strdup("/usr/lib/libc.so"));
+    {
+        const char *crt0 = get_crt0_library_path__LilyIrLlvmLinker();
+        const char *crt1 = get_crt1_library_path__LilyIrLlvmLinker();
+
+        if (crt0) {
+            push__Vec(args, strdup(crt0));
+        } else if (crt1) {
+            push__Vec(args, strdup(crt1));
+        } else {
+            FAILED("crt0.o and crt1.o is not found");
+        }
+    }
+
+    push__Vec(args, strdup(get_crti_library_path__LilyIrLlvmLinker()));
+    push__Vec(args, strdup(get_crtn_library_path__LilyIrLlvmLinker()));
+    push__Vec(args, strdup(get_library_path__LilyIrLlvmLinker("libc.so.6")));
 
     // Add dynamic linker option
     push__Vec(args, strdup("-dynamic-linker"));
     push__Vec(args, strdup(DYNAMIC_LINKER));
 #elifdef LILY_APPLE_OS
     // Link libc
-    push__Vec(args, strdup("/usr/lib/libc.so"));
+    push__Vec(args, strdup("-lc"));
 #elifdef LILY_WINDOWS_OS
     push__Vec(args, strdup("/subsystem:console"));
     push__Vec(args, strdup("/defaultlib:libc.lib"));

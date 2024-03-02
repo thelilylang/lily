@@ -1,1 +1,0 @@
-#define LLD_VERSION_STRING "16.0.6"

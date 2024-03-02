@@ -88,14 +88,10 @@ inline CONSTRUCTOR(LilyAstExprIdentifierDollar,
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
-inline String *
+String *
 IMPL_FOR_DEBUG(to_string,
                LilyAstExprIdentifierDollar,
-               const LilyAstExprIdentifierDollar *self)
-{
-    return format__String("LilyAstExpridentifierDollar{{ name = {S} }",
-                          self->name);
-}
+               const LilyAstExprIdentifierDollar *self);
 #endif
 
 /**

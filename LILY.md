@@ -1051,16 +1051,28 @@ T
 T: Abc
 ```
 
-> List generic param
+> List (T = [Int32, Int32, Int32]) generic param
 
 ```
 T(...)
+```
+
+> List mut (T = [Int32, Int64, Float32]) generic param
+
+```
+T :: mut(...)
 ```
 
 > List generic param + constraint
 
 ```
 T(...): Abc
+```
+
+> List mut generic param + constraint
+
+```
+T :: mut(...): Abc
 ```
 
 > You can also add a minimum of given data type

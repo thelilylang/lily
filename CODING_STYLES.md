@@ -46,6 +46,10 @@ NOTE: The prefix must be unique, to avoid function name conflicts.
 
 If the function is associated to a type, the first parametter, must be named `self`.
 
+#### Inline
+
+See [src/ex/README.md](./src/ex/README.md).
+
 ### Global variable
 
 You must be define global variable with `static` keyword.

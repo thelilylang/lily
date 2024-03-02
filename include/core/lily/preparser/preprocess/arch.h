@@ -37,7 +37,7 @@ typedef struct LilyPreprocessArch
  *
  * @brief Construct LilyPreprocessArch type.
  */
-inline CONSTRUCTOR(LilyPreprocessArch, String *value)
+inline CONSTRUCTOR(LilyPreprocessArch, LilyPreprocessArch, String *value)
 {
     return (LilyPreprocessArch){ .value = value };
 }

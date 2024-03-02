@@ -1,4 +1,4 @@
-#!/bin/python
+#!/bin/python3
 
 import os
 import sys
@@ -15,7 +15,7 @@ class OptionConfig:
 FILES = [
     y for x in os.walk("./tests/samples") for y in glob(os.path.join(x[0], "*.lily"))
 ]
-COMMAND = "./bin/lilyc"
+COMMAND = "./bin/Debug/lilyc"
 FILES_EXCLUDED = ["./tests/samples/package/a.lily", "./tests/samples/package/b.lily"]
 
 

@@ -1,2 +1,2 @@
-#!/bin/python
+#!/bin/python3
 

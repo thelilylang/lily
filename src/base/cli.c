@@ -603,20 +603,10 @@ parse_option__Cli(Cli *self)
     }
 
     if (self->value) {
-        VecIter iter = NEW(VecIter, res);
-        CliResultValue *current = NULL;
-        Usize count_value = 0;
-
-        while ((current = next__VecIter(&iter))) {
-            if (current->kind == CLI_RESULT_KIND_VALUE) {
-                ++count_value;
-            }
-        }
-
         switch (self->value->kind) {
             case CLI_VALUE_KIND_SINGLE:
                 if (self->value->is_required) {
-                    if (count_value == 0) {
+                    if (res->len == 0) {
                         CliDiagnostic err = NEW(CliDiagnostic,
                                                 CLI_DIAGNOSTIC_KIND_ERROR,
                                                 "expected one value",
@@ -624,7 +614,7 @@ parse_option__Cli(Cli *self)
                                                 self->full_command);
 
                         emit__CliDiagnostic(&err);
-                    } else if (count_value > 1) {
+                    } else if (res->len > 1) {
                         CliDiagnostic err = NEW(CliDiagnostic,
                                                 CLI_DIAGNOSTIC_KIND_ERROR,
                                                 "too many values are given",
@@ -639,7 +629,7 @@ parse_option__Cli(Cli *self)
             case CLI_VALUE_KIND_MULTIPLE:
             case CLI_VALUE_KIND_MULTIPLE_INF:
                 if (self->value->is_required) {
-                    if (count_value == 0) {
+                    if (res->len == 0) {
                         CliDiagnostic err = NEW(CliDiagnostic,
                                                 CLI_DIAGNOSTIC_KIND_ERROR,
                                                 "expected one or more values",

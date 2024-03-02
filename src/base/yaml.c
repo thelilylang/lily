@@ -226,7 +226,7 @@ add_sequence__YAML(YAMLLoadRes *self,
     YAMLDocument *document = &GET_DOCUMENT(self, document_id);
     va_list vl;
 
-    va_start(vl);
+    va_start(vl, n);
 
     int sequence_id =
       yaml_document_add_sequence(document, NULL, YAML_BLOCK_SEQUENCE_STYLE);
