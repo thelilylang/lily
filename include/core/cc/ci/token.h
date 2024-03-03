@@ -233,7 +233,7 @@ typedef struct CITokenPreprocessorDefine
 {
     String *name;
     Vec *params; // Vec<String*>*?
-    Vec *tokens; // Vec<Vec<CIToken*>*>*?
+    Vec *tokens; // Vec<CIToken*>*?
 } CITokenPreprocessorDefine;
 
 /**

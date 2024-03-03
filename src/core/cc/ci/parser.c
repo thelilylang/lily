@@ -2747,6 +2747,43 @@ parse_variable__CIParser(CIParser *self,
 CIDecl *
 parse_decl__CIParser(CIParser *self, bool in_function_body)
 {
+    switch (self->tokens_iters.current_token->kind) {
+        case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:
+            TODO("#define preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_ELIF:
+            TODO("#elif preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:
+            TODO("#elifdef preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:
+            TODO("#elifndef preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_ELSE:
+            TODO("#else preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_EMBED:
+            TODO("#embed preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_ENDIF:
+            TODO("#endif preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_ERROR:
+            TODO("#error preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_IF:
+            TODO("#if preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
+            TODO("#ifdef preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:
+            TODO("#ifndef preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_INCLUDE:
+            TODO("#include preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_LINE:
+            TODO("#line preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_PRAGMA:
+            TODO("#pragma preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_UNDEF:
+            TODO("#undef preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_WARNING:
+            TODO("#warning preprocessor");
+        default:
+            break;
+    }
+
     storage_class_flag = CI_STORAGE_CLASS_NONE;
 
     parse_storage_class_specifiers__CIParser(self, &storage_class_flag);

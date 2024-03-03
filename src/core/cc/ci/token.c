@@ -98,21 +98,26 @@ to_string__CITokenPreprocessorDefine(const CITokenPreprocessorDefine *self)
             }
         }
 
-        push_str__String(res, ")");
+        push_str__String(res, ")\\\n");
     }
 
     if (self->tokens) {
+        Usize current_line = 0;
+
         for (Usize i = 0; i < self->tokens->len; ++i) {
-            push_str__String(res, "\\\n");
+            CIToken *token = get__Vec(self->tokens, i);
 
-            const Vec *tokens_line = get__Vec(self->tokens, i);
+            if (current_line == 0) {
+                current_line = token->location.start_line;
+            } else if (current_line != token->location.start_line) {
+                current_line = token->location.start_line;
 
-            for (Usize j = 0; j < tokens_line->len; ++j) {
-                String *token_string =
-                  to_string__CIToken(get__Vec(tokens_line, j));
-
-                APPEND_AND_FREE(res, token_string);
+                push_str__String(res, "\\\n");
             }
+
+            String *token_string = to_string__CIToken(token);
+
+            APPEND_AND_FREE(res, token_string);
         }
     }
 
@@ -147,7 +152,7 @@ IMPL_FOR_DEBUG(to_string,
     push_str__String(res, ", tokens =");
 
     if (self->tokens) {
-        DEBUG_VEC_STR_2(self->tokens, res, CIToken);
+        DEBUG_VEC_STR(self->tokens, res, CIToken);
     } else {
         push_str__String(res, " NULL");
     }
@@ -168,7 +173,7 @@ DESTRUCTOR(CITokenPreprocessorDefine, const CITokenPreprocessorDefine *self)
     }
 
     if (self->tokens) {
-        FREE_BUFFER_ITEMS_2(self->tokens->buffer, self->tokens->len, CIToken);
+        FREE_BUFFER_ITEMS(self->tokens->buffer, self->tokens->len, CIToken);
         FREE(Vec, self->tokens);
     }
 }

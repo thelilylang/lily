@@ -327,6 +327,7 @@ extern inline CONSTRUCTOR(CIScanner,
 
 extern inline CONSTRUCTOR(CIScannerContext,
                           CIScannerContext,
+                          Vec *tokens,
                           bool in_macro,
                           bool in_prepro_cond);
 

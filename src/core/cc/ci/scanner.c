@@ -155,7 +155,9 @@ is_num__CIScanner(const CIScanner *self);
 
 /// @brief Push token to tokens.
 static inline void
-push_token__CIScanner(CIScanner *self, CIToken *token);
+push_token__CIScanner(CIScanner *self,
+                      const CIScannerContext *ctx,
+                      CIToken *token);
 
 /// @brief Next char according the token.
 static void
@@ -216,7 +218,8 @@ get_keyword_part4__CIScanner(CIScanner *self, struct CITokenKindWithID *part3);
 /// @brief Scan multi-part keyword.
 /// @example long int, long long, unsigned long long, ...
 static CIToken *
-scan_multi_part_keyword__CIScanner(CIScanner *self);
+scan_multi_part_keyword__CIScanner(CIScanner *self,
+                                   const CIScannerContext *ctx);
 
 /// @brief Scan attribute.
 /// @example [[maybe_unused]], ...
@@ -273,6 +276,11 @@ scan_num__CIScanner(CIScanner *self);
 static void
 skip_space_and_backslash__CIScanner(CIScanner *self);
 
+/// @brief Scan defined preprcoessor params.
+/// @return Vec<String*>*
+static Vec *
+scan_define_preprocessor_params__CIScanner(CIScanner *self);
+
 /// @brief Scan define preprocessor.
 static CIToken *
 scan_define_preprocessor__CIScanner(CIScanner *self);
@@ -327,7 +335,9 @@ skip_and_verify__CIScanner(CIScanner *self, char target);
 
 /// @brief Scan to the next closing character.
 static CIToken *
-get_closing__CIScanner(CIScanner *self, char target);
+get_closing__CIScanner(CIScanner *self,
+                       const CIScannerContext *ctx,
+                       char target);
 
 /// @brief Check that the token is available in accordance with the standard.
 /// @note This function can modify the token type.
@@ -340,7 +350,7 @@ check_standard(CIScanner *self, CIToken *token);
 /// @param in_prepro_cond If `in_prepro_cond` is true, the scanner allow to use
 /// #elif, #elifdef, #elifndef, #else.
 static CIToken *
-get_token__CIScanner(CIScanner *self, const CIScannerContext ctx);
+get_token__CIScanner(CIScanner *self, const CIScannerContext *ctx);
 
 static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
     [CI_TOKEN_KIND_AMPERSAND] = { .since = CI_STANDARD_NONE,
@@ -1106,9 +1116,13 @@ is_num__CIScanner(const CIScanner *self)
 }
 
 void
-push_token__CIScanner(CIScanner *self, CIToken *token)
+push_token__CIScanner(CIScanner *self,
+                      const CIScannerContext *ctx,
+                      CIToken *token)
 {
-    push__Vec(self->tokens, token);
+    ASSERT(ctx->tokens);
+
+    push__Vec(ctx->tokens, token);
 }
 
 void
@@ -1684,7 +1698,7 @@ get_keyword_part4__CIScanner(CIScanner *self, struct CITokenKindWithID *part3)
 }
 
 CIToken *
-scan_multi_part_keyword__CIScanner(CIScanner *self)
+scan_multi_part_keyword__CIScanner(CIScanner *self, const CIScannerContext *ctx)
 {
 #define MAX_KEYWORD_PART 4
     struct CITokenKindWithID (*const get_keyword_part[MAX_KEYWORD_PART])(
@@ -1752,7 +1766,7 @@ scan_multi_part_keyword__CIScanner(CIScanner *self)
         if (i + 1 == part) {
             last_token = current_token;
         } else {
-            push_token__CIScanner(self, current_token);
+            push_token__CIScanner(self, ctx, current_token);
         }
     }
 
@@ -2361,15 +2375,62 @@ skip_space_and_backslash__CIScanner(CIScanner *self)
     }
 }
 
+Vec *
+scan_define_preprocessor_params__CIScanner(CIScanner *self)
+{
+    Vec *params = NEW(Vec);
+    CIScannerContext ctx = NEW(CIScannerContext, NULL, false, false);
+
+    next_char__CIScanner(self); // skip `(`
+
+    while (self->base.source.cursor.current != ')') {
+        skip_space_and_backslash__CIScanner(self);
+
+        CIToken *param = get_token__CIScanner(self, &ctx);
+
+        if (param) {
+            switch (param->kind) {
+                case CI_TOKEN_KIND_IDENTIFIER:
+                    push__Vec(params, param->identifier);
+                    next_char__CIScanner(self);
+
+                    lily_free(param);
+
+                    goto skip_comma;
+                default:
+                    FAILED("expected identifier");
+            }
+
+            next_char_by_token__CIScanner(self, param);
+            FREE(CIToken, param);
+        }
+
+    skip_comma:
+        switch (self->base.source.cursor.current) {
+            case ')':
+                break;
+            case ',':
+                next_char__CIScanner(self);
+                break;
+            default:
+                FAILED("expected `,` or `)`");
+        }
+    }
+
+    next_char__CIScanner(self); // skip `)`
+
+    return params;
+}
+
 CIToken *
 scan_define_preprocessor__CIScanner(CIScanner *self)
 {
     Location define_location = clone__Location(&self->base.location);
-    Vec *params = NULL; // Vec<CIToken*>*?
     String *name = NULL;
 
     skip_space_and_backslash__CIScanner(self);
 
+    // Get macro name
     if (is_start_ident__CIScanner(self)) {
         name = scan_identifier__CIScanner(self);
         next_char__CIScanner(self);
@@ -2377,28 +2438,44 @@ scan_define_preprocessor__CIScanner(CIScanner *self)
         FAILED("expected name");
     }
 
+    Vec *params = NULL; // Vec<String*>*?
+
+    switch (self->base.source.cursor.current) {
+        case '(':
+            params = scan_define_preprocessor_params__CIScanner(self);
+        default:
+            break;
+    }
+
     skip_space_and_backslash__CIScanner(self);
 
     Vec *tokens = NEW(Vec); // Vec<CIToken*>*
+    CIScannerContext ctx = NEW(CIScannerContext, tokens, true, false);
 
     while (self->base.source.cursor.current != '\n') {
         if (self->base.source.cursor.current == '\\') {
             next_char__CIScanner(self);
 
-            if (self->base.source.cursor.current == '\n') {
-                next_char__CIScanner(self);
-                continue;
-            } else if (self->base.source.cursor.current == ' ') {
-                // TODO: skip blank space
-            } else {
-                // TODO: skip newline, (maybe spaces).
+            switch (self->base.source.cursor.current) {
+                case '\n':
+                    next_char__CIScanner(self);
+                    continue;
+                case ' ':
+                    // TODO: skip blank space
+                    FAILED("warning: space is not expected after `\\`");
+                default:
+                    break;
             }
         }
 
-        CIToken *token =
-          get_token__CIScanner(self, NEW(CIScannerContext, false, false));
+        skip_space_and_backslash__CIScanner(self);
+
+        CIToken *token = get_token__CIScanner(self, &ctx);
 
         if (token) {
+            push__Vec(tokens, token);
+            next_char_by_token__CIScanner(self, token);
+            next_char__CIScanner(self);
         }
     }
 
@@ -2500,7 +2577,9 @@ skip_and_verify__CIScanner(CIScanner *self, char target)
 }
 
 CIToken *
-get_closing__CIScanner(CIScanner *self, char target)
+get_closing__CIScanner(CIScanner *self,
+                       const CIScannerContext *ctx,
+                       char target)
 {
     Location location_error = clone__Location(&self->base.location);
 
@@ -2526,8 +2605,7 @@ get_closing__CIScanner(CIScanner *self, char target)
             return NULL;
         }
 
-        CIToken *token =
-          get_token__CIScanner(self, NEW(CIScannerContext, false, false));
+        CIToken *token = get_token__CIScanner(self, ctx);
 
         if (token) {
             next_char_by_token__CIScanner(self, token);
@@ -2554,7 +2632,7 @@ get_closing__CIScanner(CIScanner *self, char target)
                     break;
                 default:
                     next_char__CIScanner(self);
-                    push_token__CIScanner(self, token);
+                    push_token__CIScanner(self, ctx, token);
             }
         }
     }
@@ -2685,7 +2763,7 @@ check_standard(CIScanner *self, CIToken *token)
 }
 
 CIToken *
-get_token__CIScanner(CIScanner *self, const CIScannerContext ctx)
+get_token__CIScanner(CIScanner *self, const CIScannerContext *ctx)
 {
     char *c1 = peek_char__CIScanner(self, 1);
     char *c2 = peek_char__CIScanner(self, 2);
@@ -2855,6 +2933,7 @@ get_token__CIScanner(CIScanner *self, const CIScannerContext ctx)
                                       self->base.source.cursor.position);
                         push_token__CIScanner(
                           self,
+                          ctx,
                           NEW(CIToken,
                               CI_TOKEN_KIND_HASHTAG,
                               clone__Location(&self->base.location)));
@@ -2881,23 +2960,23 @@ get_token__CIScanner(CIScanner *self, const CIScannerContext ctx)
                                 return scan_define_preprocessor__CIScanner(
                                   self);
                             case CI_TOKEN_KIND_PREPROCESSOR_ELIF:
-                                if (!ctx.in_prepro_cond) {
+                                if (!ctx->in_prepro_cond) {
                                     FAILED("#elif preprocessor is not expected "
                                            "here");
                                 }
                             case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:
-                                if (!ctx.in_prepro_cond) {
+                                if (!ctx->in_prepro_cond) {
                                     FAILED("#elifdef preprocessor is not "
                                            "expected here");
                                 }
                             case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:
-                                if (!ctx.in_prepro_cond) {
+                                if (!ctx->in_prepro_cond) {
                                     FAILED(
                                       "#elifndef preprocessor is not expected "
                                       "here");
                                 }
                             case CI_TOKEN_KIND_PREPROCESSOR_ELSE:
-                                if (!ctx.in_prepro_cond) {
+                                if (!ctx->in_prepro_cond) {
                                     FAILED("#else preprocessor is not expected "
                                            "here");
                                 }
@@ -2951,7 +3030,7 @@ get_token__CIScanner(CIScanner *self, const CIScannerContext ctx)
                        clone__Location(&self->base.location));
         // IDENTIFIER
         case IS_ID:
-            return scan_multi_part_keyword__CIScanner(self);
+            return scan_multi_part_keyword__CIScanner(self, ctx);
         // ?
         case '?':
             return NEW(CIToken,
@@ -2961,6 +3040,27 @@ get_token__CIScanner(CIScanner *self, const CIScannerContext ctx)
         case '{':
         case '[':
         case '(': {
+            // We shouldn't call `get_closing__CIScanner` when scanning a
+            // macro, because you're not trying to match closing characters.
+            if (ctx->in_macro) {
+                switch (self->base.source.cursor.current) {
+                    case '{':
+                        return NEW(CIToken,
+                                   CI_TOKEN_KIND_LBRACE,
+                                   clone__Location(&self->base.location));
+                    case '[':
+                        return NEW(CIToken,
+                                   CI_TOKEN_KIND_LHOOK,
+                                   clone__Location(&self->base.location));
+                    case '(':
+                        return NEW(CIToken,
+                                   CI_TOKEN_KIND_LPAREN,
+                                   clone__Location(&self->base.location));
+                    default:
+                        UNREACHABLE("unknown character");
+                }
+            }
+
             char match = self->base.source.cursor.current;
             CIToken *token = NULL;
 
@@ -2991,33 +3091,56 @@ get_token__CIScanner(CIScanner *self, const CIScannerContext ctx)
                     UNREACHABLE("this situation is impossible");
             }
 
-            if (!ctx.in_macro) {
-                end_token__CIScanner(self,
-                                     self->base.source.cursor.line,
-                                     self->base.source.cursor.column,
-                                     self->base.source.cursor.position);
-                end__Location(&token->location,
-                              self->base.location.end_line,
-                              self->base.location.end_column,
-                              self->base.location.end_position);
+            end_token__CIScanner(self,
+                                 self->base.source.cursor.line,
+                                 self->base.source.cursor.column,
+                                 self->base.source.cursor.position);
+            end__Location(&token->location,
+                          self->base.location.end_line,
+                          self->base.location.end_column,
+                          self->base.location.end_position);
 
-                next_char__CIScanner(self);
-                push_token__CIScanner(self, token);
+            next_char__CIScanner(self);
+            push_token__CIScanner(self, ctx, token);
 
-                switch (match) {
-                    case '{':
-                        return get_closing__CIScanner(self, '}');
-                    case '[':
-                        return get_closing__CIScanner(self, ']');
-                    case '(':
-                        return get_closing__CIScanner(self, ')');
-                    default:
-                        UNREACHABLE("this situation is impossible");
-                }
+            switch (match) {
+                case '{':
+                    return get_closing__CIScanner(self, ctx, '}');
+                case '[':
+                    return get_closing__CIScanner(self, ctx, ']');
+                case '(':
+                    return get_closing__CIScanner(self, ctx, ')');
+                default:
+                    UNREACHABLE("this situation is impossible");
             }
 
             return token;
         }
+        case '}':
+        case ']':
+        case ')':
+            // When you scan a macro, you don't check whether the closing
+            // characters match.
+            if (ctx->in_macro) {
+                switch (self->base.source.cursor.current) {
+                    case '}':
+                        return NEW(CIToken,
+                                   CI_TOKEN_KIND_RBRACE,
+                                   clone__Location(&self->base.location));
+                    case ']':
+                        return NEW(CIToken,
+                                   CI_TOKEN_KIND_RHOOK,
+                                   clone__Location(&self->base.location));
+                    case ')':
+                        return NEW(CIToken,
+                                   CI_TOKEN_KIND_RPAREN,
+                                   clone__Location(&self->base.location));
+                    default:
+                        UNREACHABLE("unknown character");
+                }
+            }
+
+            FAILED("unexpected `}`, `]` or `)`");
         // <=, <<=, <<, <
         case '<':
             if (c1 == (char *)'=') {
@@ -3136,6 +3259,8 @@ get_token__CIScanner(CIScanner *self, const CIScannerContext ctx)
 void
 run__CIScanner(CIScanner *self, bool dump_scanner)
 {
+    CIScannerContext ctx = NEW(CIScannerContext, self->tokens, false, false);
+
     if (self->base.source.file->len > 1) {
         while (self->base.source.cursor.position <
                self->base.source.file->len - 1) {
@@ -3146,8 +3271,7 @@ run__CIScanner(CIScanner *self, bool dump_scanner)
                 break;
             }
 
-            CIToken *token =
-              get_token__CIScanner(self, NEW(CIScannerContext, false, false));
+            CIToken *token = get_token__CIScanner(self, &ctx);
 
             if (token) {
                 next_char_by_token__CIScanner(self, token);
@@ -3165,7 +3289,7 @@ run__CIScanner(CIScanner *self, bool dump_scanner)
                         break;
                     default:
                         next_char__CIScanner(self);
-                        push_token__CIScanner(self, token);
+                        push_token__CIScanner(self, &ctx, token);
                 }
 
                 if (self->base.source.cursor.position >=
@@ -3186,6 +3310,7 @@ run__CIScanner(CIScanner *self, bool dump_scanner)
                          self->base.source.cursor.position);
     push_token__CIScanner(
       self,
+      &ctx,
       NEW(CIToken, CI_TOKEN_KIND_EOF, clone__Location(&self->base.location)));
 
     if (dump_scanner) {

@@ -69,6 +69,7 @@ DESTRUCTOR(CIScanner, const CIScanner *self);
 
 typedef struct CIScannerContext
 {
+    Vec *tokens; // Vec<CIToken*>*? (&)
     bool in_macro;
     bool in_prepro_cond;
 } CIScannerContext;
@@ -79,10 +80,12 @@ typedef struct CIScannerContext
  */
 inline CONSTRUCTOR(CIScannerContext,
                    CIScannerContext,
+                   Vec *tokens,
                    bool in_macro,
                    bool in_prepro_cond)
 {
-    return (CIScannerContext){ .in_macro = in_macro,
+    return (CIScannerContext){ .tokens = tokens,
+                               .in_macro = in_macro,
                                .in_prepro_cond = in_prepro_cond };
 }
 
