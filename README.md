@@ -103,11 +103,11 @@ See [BUILD.md](./BUILD.md).
 | OS              | Support (Yes/No) |
 |-----------------|------------------|
 | Windows         | No               |
-| MacOS Intel     | Yes              |
+| MacOS Intel     | No               |
 | MacOS Arm       | No               |
 | ArchLinux       | Yes              |
-| Ubuntu          | No               |
-| Linux           | No               |
+| Ubuntu          | Yes              |
+| Linux           | Yes              |
 | BSD             | No               |
 
 ## License
