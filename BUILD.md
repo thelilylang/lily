@@ -6,6 +6,10 @@ First, you need to load the git submodules.
 make submodules
 ```
 
+> [!TIP]
+> If you already have LLVM installed, you don't need to download the `llvm-project` submodule.
+> You can run the `make submodules_without_llvm` command instead.
+
 If you only want to use `Lily` locally to try it out, run:<br>
 NOTE: Currently there is no script to install Lily on the machine.
 
@@ -25,6 +29,8 @@ export CXX=clang++ # or clang++-16
 After launching the CMake configuration:
 
 ```bash
+make configure_with_llvm # We use Ninja
+# If LLVM is already installed:
 make configure # We use Ninja
 ```
 
@@ -70,6 +76,8 @@ export CXX=clang++
 After launching the CMake configuration:
 
 ```bash
+make configure_with_llvm # We use Ninja
+# If LLVM is already installed:
 make configure # We use Ninja
 ```
 
