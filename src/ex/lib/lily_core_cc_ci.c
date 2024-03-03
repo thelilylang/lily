@@ -340,7 +340,7 @@ extern inline CONSTRUCTOR(CITokenPreprocessorDefine,
 
 extern inline CONSTRUCTOR(CITokenPreprocessorEmbed,
                           CITokenPreprocessorEmbed,
-                          Vec *tokens);
+                          String *value);
 
 extern inline CONSTRUCTOR(CITokenPreprocessorLine,
                           CITokenPreprocessorLine,

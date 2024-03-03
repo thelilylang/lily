@@ -278,7 +278,7 @@ DESTRUCTOR(CITokenPreprocessorDefine, const CITokenPreprocessorDefine *self);
 
 typedef struct CITokenPreprocessorEmbed
 {
-    Vec *tokens;
+    String *value;
 } CITokenPreprocessorEmbed;
 
 /**
@@ -287,9 +287,9 @@ typedef struct CITokenPreprocessorEmbed
  */
 inline CONSTRUCTOR(CITokenPreprocessorEmbed,
                    CITokenPreprocessorEmbed,
-                   Vec *tokens)
+                   String *value)
 {
-    return (CITokenPreprocessorEmbed){ .tokens = tokens };
+    return (CITokenPreprocessorEmbed){ .value = value };
 }
 
 /**
@@ -416,6 +416,7 @@ typedef struct CIToken
         String *comment_doc;
         CITokenPreprocessorDefine preprocessor_define;
         CITokenPreprocessorEmbed preprocessor_embed;
+        String *preprocessor_error;
         CITokenPreprocessorInclude preprocessor_include;
         CITokenPreprocessorLine preprocessor_line;
         String *identifier;
@@ -577,6 +578,16 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     preprocessor_embed,
                     Location location,
                     CITokenPreprocessorEmbed preprocessor_embed);
+
+/**
+ *
+ * @brief Construct CIToken type (CI_TOKEN_KIND_PREPROCESSOR_ERROR).
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    preprocessor_error,
+                    Location location,
+                    String *preprocessor_error);
 
 /**
  *

@@ -2425,7 +2425,8 @@ scan_define_preprocessor_params__CIScanner(CIScanner *self)
 CIToken *
 scan_define_preprocessor__CIScanner(CIScanner *self)
 {
-    Location define_location = clone__Location(&self->base.location);
+    Location preprocessor_define_location =
+      clone__Location(&self->base.location);
     String *name = NULL;
 
     skip_space_and_backslash__CIScanner(self);
@@ -2481,20 +2482,91 @@ scan_define_preprocessor__CIScanner(CIScanner *self)
 
     return NEW_VARIANT(CIToken,
                        preprocessor_define,
-                       define_location,
+                       preprocessor_define_location,
                        NEW(CITokenPreprocessorDefine, name, params, tokens));
 }
 
 CIToken *
 scan_embed_preprocessor__CIScanner(CIScanner *self)
 {
-    TODO("scan #embed");
+    Location preprocessor_embed_location =
+      clone__Location(&self->base.location);
+    String *preprocessor_embed_value = NULL;
+
+    skip_space_and_backslash__CIScanner(self);
+
+    switch (self->base.source.cursor.current) {
+        case '\"': {
+            CIScannerContext ctx = NEW(CIScannerContext, NULL, false, false);
+            CIToken *string_token = get_token__CIScanner(self, &ctx);
+
+            switch (string_token->kind) {
+                case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
+                    preprocessor_embed_value =
+                      string_token->literal_constant_string;
+
+                    lily_free(string_token);
+
+                    break;
+                default:
+                    FREE(CIToken, string_token);
+
+                    FAILED("expected string token");
+            }
+
+            break;
+        }
+        default:
+            FAILED("expected string literal");
+    }
+
+    // TODO: Scan parameters (limit, suffix, prefix, if_empty)
+    // https://en.cppreference.com/w/c/preprocessor/embed
+
+    return NEW_VARIANT(CIToken,
+                       preprocessor_embed,
+                       preprocessor_embed_location,
+                       NEW(CITokenPreprocessorEmbed, preprocessor_embed_value));
 }
 
 CIToken *
 scan_error_preprocessor__CIScanner(CIScanner *self)
 {
-    TODO("scan #error");
+    Location preprocessor_error_location =
+      clone__Location(&self->base.location);
+    String *preprocessor_error_value = NULL;
+
+    skip_space_and_backslash__CIScanner(self);
+
+    switch (self->base.source.cursor.current) {
+        case '\"': {
+            CIScannerContext ctx = NEW(CIScannerContext, NULL, false, false);
+            CIToken *string_token = get_token__CIScanner(self, &ctx);
+
+            switch (string_token->kind) {
+                case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
+                    preprocessor_error_value =
+                      string_token->literal_constant_string;
+
+                    lily_free(self);
+
+                    break;
+                default:
+                    FREE(CIToken, string_token);
+
+                    FAILED("expected string token");
+            }
+
+            break;
+        }
+        default:
+            FAILED("expected error message");
+    }
+
+    return NEW_VARIANT(CIToken,
+                       preprocessor_error,
+                       preprocessor_error_location,
+                       preprocessor_error_value);
 }
 
 CIToken *
@@ -2963,22 +3035,30 @@ get_token__CIScanner(CIScanner *self, const CIScannerContext *ctx)
                                 if (!ctx->in_prepro_cond) {
                                     FAILED("#elif preprocessor is not expected "
                                            "here");
+                                } else {
+                                    TODO("scan #elif");
                                 }
                             case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:
                                 if (!ctx->in_prepro_cond) {
                                     FAILED("#elifdef preprocessor is not "
                                            "expected here");
+                                } else {
+                                    TODO("scan #elifdef");
                                 }
                             case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:
                                 if (!ctx->in_prepro_cond) {
                                     FAILED(
                                       "#elifndef preprocessor is not expected "
                                       "here");
+                                } else {
+                                    TODO("scan #elifndef");
                                 }
                             case CI_TOKEN_KIND_PREPROCESSOR_ELSE:
                                 if (!ctx->in_prepro_cond) {
                                     FAILED("#else preprocessor is not expected "
                                            "here");
+                                } else {
+                                    TODO("scan #else");
                                 }
                             case CI_TOKEN_KIND_PREPROCESSOR_EMBED:
                                 return scan_embed_preprocessor__CIScanner(self);
