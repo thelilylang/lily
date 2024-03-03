@@ -12,8 +12,14 @@ build:
 configure:
 	mkdir -p build && cd build && cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
 
+configure_with_llvm:
+	mkdir -p build && cd build && cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DLILY_BUILD_LLVM=ON
+
 debug:
 	mkdir -p build && cd build && cmake -H. -BDebug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_EXPORT_COMPILE_COMMANDS=YES .. -G Ninja && ln -sf Debug/compile_commands.json .
+
+debug_with_llvm:
+	mkdir -p build && cd build && cmake -H. -BDebug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DLILY_BUILD_LLVM=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=YES .. -G Ninja && ln -sf Debug/compile_commands.json .
 
 llvm_submodule:
 	git submodule init
