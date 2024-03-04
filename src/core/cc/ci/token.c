@@ -79,6 +79,9 @@ static VARIANT_DESTRUCTOR(CIToken, preprocessor_embed, CIToken *self);
 // Free CIToken type (CI_TOKEN_KIND_PREPROCESSOR_IF).
 static VARIANT_DESTRUCTOR(CIToken, preprocessor_if, CIToken *self);
 
+// Free CIToken type (CI_TOKEN_KIND_PREPROCESSOR_IFDEF).
+static VARIANT_DESTRUCTOR(CIToken, preprocessor_ifdef, CIToken *self);
+
 // Free CIToken type (CI_TOKEN_KIND_PREPROCESSOR_ERROR).
 static VARIANT_DESTRUCTOR(CIToken, preprocessor_error, CIToken *self);
 
@@ -294,6 +297,49 @@ DESTRUCTOR(CITokenPreprocessorIf, const CITokenPreprocessorIf *self)
 {
     FREE_BUFFER_ITEMS(self->cond->buffer, self->cond->len, CIToken);
     FREE(Vec, self->cond);
+
+    if (self->content) {
+        FREE_BUFFER_ITEMS(self->content->buffer, self->content->len, CIToken);
+        FREE(Vec, self->content);
+    }
+}
+
+String *
+to_string__CITokenPreprocessorIfdef(const CITokenPreprocessorIfdef *self)
+{
+    String *res = format__String("#ifdef {S}\n", self->identifier);
+
+    for (Usize i = 0; i < self->content->len; ++i) {
+        String *s = to_string__CIToken(get__Vec(self->content, i));
+
+        APPEND_AND_FREE(res, s);
+    }
+
+    push_str__String(res, "#endif");
+
+    return res;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CITokenPreprocessorIfdef,
+               const CITokenPreprocessorIfdef *self)
+{
+    String *res =
+      format__String("CITokenPreprocessorIfdef{{ identifier = {S}, content =",
+                     self->identifier);
+
+    DEBUG_VEC_STR(self->content, res, CIToken);
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CITokenPreprocessorIfdef, const CITokenPreprocessorIfdef *self)
+{
+    FREE(String, self->identifier);
 
     if (self->content) {
         FREE_BUFFER_ITEMS(self->content->buffer, self->content->len, CIToken);
@@ -564,6 +610,21 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_PREPROCESSOR_IF;
     self->location = location;
     self->preprocessor_if = preprocessor_if;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    preprocessor_ifdef,
+                    Location location,
+                    CITokenPreprocessorIfdef preprocessor_ifdef)
+{
+    CIToken *self = lily_malloc(sizeof(CIToken));
+
+    self->kind = CI_TOKEN_KIND_PREPROCESSOR_IFDEF;
+    self->location = location;
+    self->preprocessor_ifdef = preprocessor_ifdef;
 
     return self;
 }
@@ -928,7 +989,8 @@ to_string__CIToken(CIToken *self)
         case CI_TOKEN_KIND_PREPROCESSOR_IF:
             return to_string__CITokenPreprocessorIf(&self->preprocessor_if);
         case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
-            return from__String("#ifdef <defined_macro>");
+            return to_string__CITokenPreprocessorIfdef(
+              &self->preprocessor_ifdef);
         case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:
             return from__String("#ifndef <defined_macro>");
         case CI_TOKEN_KIND_PREPROCESSOR_INCLUDE:
@@ -1443,6 +1505,14 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                           CALL_DEBUG_IMPL(to_string,
                                           CITokenPreprocessorIf,
                                           &self->preprocessor_if));
+        case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
+            return format("LilyToken{{ kind = {s}, location = {sa}, "
+                          "preprocessor_ifdef = {Sr} }",
+                          CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
+                          CALL_DEBUG_IMPL(to_string, Location, &self->location),
+                          CALL_DEBUG_IMPL(to_string,
+                                          CITokenPreprocessorIfdef,
+                                          &self->preprocessor_ifdef));
         case CI_TOKEN_KIND_PREPROCESSOR_INCLUDE:
             return format("LilyToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_include = {Sr} }",
@@ -1565,6 +1635,12 @@ VARIANT_DESTRUCTOR(CIToken, preprocessor_if, CIToken *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(CIToken, preprocessor_ifdef, CIToken *self)
+{
+    FREE(CITokenPreprocessorIfdef, &self->preprocessor_ifdef);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(CIToken, preprocessor_error, CIToken *self)
 {
     FREE(String, self->preprocessor_error);
@@ -1627,6 +1703,9 @@ DESTRUCTOR(CIToken, CIToken *self)
             break;
         case CI_TOKEN_KIND_PREPROCESSOR_IF:
             FREE_VARIANT(CIToken, preprocessor_if, self);
+            break;
+        case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
+            FREE_VARIANT(CIToken, preprocessor_ifdef, self);
             break;
         case CI_TOKEN_KIND_PREPROCESSOR_ERROR:
             FREE_VARIANT(CIToken, preprocessor_error, self);

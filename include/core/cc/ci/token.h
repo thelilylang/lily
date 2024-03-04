@@ -46,7 +46,6 @@ typedef struct CIResultFile CIResultFile;
 #define CI_N_PREPROCESSOR 16
 
 // NOTE#1: Used only in the scanner
-// NOTE#2: It's only used in the scanner, then simplified later in the scanner.
 enum CITokenKind
 {
     CI_TOKEN_KIND_AMPERSAND,
@@ -195,16 +194,16 @@ enum CITokenKind
     CI_TOKEN_KIND_PLUS_EQ,
     CI_TOKEN_KIND_PLUS_PLUS,
     CI_TOKEN_KIND_PREPROCESSOR_DEFINE,
-    CI_TOKEN_KIND_PREPROCESSOR_ELIF,     // NOTE: #2
-    CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF,  // NOTE: #2
-    CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF, // NOTE: #2
-    CI_TOKEN_KIND_PREPROCESSOR_ELSE,     // NOTE: #2
+    CI_TOKEN_KIND_PREPROCESSOR_ELIF,
+    CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF,
+    CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF,
+    CI_TOKEN_KIND_PREPROCESSOR_ELSE,
     CI_TOKEN_KIND_PREPROCESSOR_EMBED,
-    CI_TOKEN_KIND_PREPROCESSOR_ENDIF,  // NOTE: #2
-    CI_TOKEN_KIND_PREPROCESSOR_ERROR,  // NOTE: #2
-    CI_TOKEN_KIND_PREPROCESSOR_IF,     // NOTE: #2
-    CI_TOKEN_KIND_PREPROCESSOR_IFDEF,  // NOTE: #2
-    CI_TOKEN_KIND_PREPROCESSOR_IFNDEF, // NOTE: #2
+    CI_TOKEN_KIND_PREPROCESSOR_ENDIF, // NOTE: #1
+    CI_TOKEN_KIND_PREPROCESSOR_ERROR,
+    CI_TOKEN_KIND_PREPROCESSOR_IF,
+    CI_TOKEN_KIND_PREPROCESSOR_IFDEF,
+    CI_TOKEN_KIND_PREPROCESSOR_IFNDEF,
     CI_TOKEN_KIND_PREPROCESSOR_INCLUDE,
     CI_TOKEN_KIND_PREPROCESSOR_LINE,
     CI_TOKEN_KIND_PREPROCESSOR_PRAGMA,
@@ -403,6 +402,50 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(CITokenPreprocessorIf, const CITokenPreprocessorIf *self);
 
+typedef struct CITokenPreprocessorIfdef
+{
+    String *identifier;
+    Vec *content; // Vec<CIToken*>*?
+} CITokenPreprocessorIfdef;
+
+/**
+ *
+ * @brief Construct CITokenPreprocessorIfdef type.
+ */
+inline CONSTRUCTOR(CITokenPreprocessorIfdef,
+                   CITokenPreprocessorIfdef,
+                   String *identifier,
+                   Vec *content)
+{
+    return (CITokenPreprocessorIfdef){ .identifier = identifier,
+                                       .content = content };
+}
+
+/**
+ *
+ * @brief Convert to string CITokenPreprocessorIfdef type.
+ */
+String *
+to_string__CITokenPreprocessorIfdef(const CITokenPreprocessorIfdef *self);
+
+/**
+ *
+ * @brief Convert CITokenPreprocessorIfdef in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CITokenPreprocessorIfdef,
+               const CITokenPreprocessorIfdef *self);
+#endif
+
+/**
+ *
+ * @brief Free CITokenPreprocessorIfdef type.
+ */
+DESTRUCTOR(CITokenPreprocessorIfdef, const CITokenPreprocessorIfdef *self);
+
 typedef struct CITokenPreprocessorInclude
 {
     String *value;
@@ -461,6 +504,7 @@ typedef struct CIToken
         CITokenPreprocessorEmbed preprocessor_embed;
         String *preprocessor_error;
         CITokenPreprocessorIf preprocessor_if;
+        CITokenPreprocessorIfdef preprocessor_ifdef;
         CITokenPreprocessorInclude preprocessor_include;
         CITokenPreprocessorLine preprocessor_line;
         String *identifier;
@@ -642,6 +686,16 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     preprocessor_if,
                     Location location,
                     CITokenPreprocessorIf preprocessor_if);
+
+/**
+ *
+ * @brief Construct CIToken type (CI_TOKEN_KIND_PREPROCESSOR_IFDEF).
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    preprocessor_ifdef,
+                    Location location,
+                    CITokenPreprocessorIfdef preprocessor_ifdef);
 
 /**
  *
