@@ -446,6 +446,45 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(CITokenPreprocessorIfdef, const CITokenPreprocessorIfdef *self);
 
+typedef CITokenPreprocessorIfdef CITokenPreprocessorIfndef;
+
+/**
+ *
+ * @brief Construct CITokenPreprocessorIfndef type.
+ */
+inline CONSTRUCTOR(CITokenPreprocessorIfndef,
+                   CITokenPreprocessorIfndef,
+                   String *identifier,
+                   Vec *content)
+{
+    return NEW(CITokenPreprocessorIfdef, identifier, content);
+}
+
+/**
+ *
+ * @brief Convert to string CITokenPreprocessorIfndef type.
+ */
+String *
+to_string__CITokenPreprocessorIfndef(const CITokenPreprocessorIfndef *self);
+
+/**
+ *
+ * @brief Convert CITokenPreprocessorIfndef in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CITokenPreprocessorIfndef,
+               const CITokenPreprocessorIfndef *self);
+#endif
+
+/**
+ *
+ * @brief Free CITokenPreprocessorIfndef type.
+ */
+DESTRUCTOR(CITokenPreprocessorIfndef, const CITokenPreprocessorIfndef *self);
+
 typedef struct CITokenPreprocessorInclude
 {
     String *value;
@@ -505,6 +544,7 @@ typedef struct CIToken
         String *preprocessor_error;
         CITokenPreprocessorIf preprocessor_if;
         CITokenPreprocessorIfdef preprocessor_ifdef;
+        CITokenPreprocessorIfdef preprocessor_ifndef;
         CITokenPreprocessorInclude preprocessor_include;
         CITokenPreprocessorLine preprocessor_line;
         String *preprocessor_undef;
@@ -698,6 +738,16 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     preprocessor_ifdef,
                     Location location,
                     CITokenPreprocessorIfdef preprocessor_ifdef);
+
+/**
+ *
+ * @brief Construct CIToken type (CI_TOKEN_KIND_PREPROCESSOR_IFNDEF).
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    preprocessor_ifndef,
+                    Location location,
+                    CITokenPreprocessorIfdef preprocessor_ifndef);
 
 /**
  *

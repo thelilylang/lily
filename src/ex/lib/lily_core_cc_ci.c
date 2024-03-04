@@ -357,6 +357,11 @@ extern inline CONSTRUCTOR(CITokenPreprocessorIfdef,
                           String *identifier,
                           Vec *content);
 
+extern inline CONSTRUCTOR(CITokenPreprocessorIfndef,
+                          CITokenPreprocessorIfndef,
+                          String *identifier,
+                          Vec *content);
+
 extern inline CONSTRUCTOR(CITokenPreprocessorInclude,
                           CITokenPreprocessorInclude,
                           String *value);

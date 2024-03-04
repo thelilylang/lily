@@ -2699,7 +2699,12 @@ scan_ifdef_preprocessor__CIScanner(CIScanner *self)
 CIToken *
 scan_ifndef_preprocessor__CIScanner(CIScanner *self)
 {
-    TODO("scan #ifndef");
+	CIToken *token = scan_ifdef_preprocessor__CIScanner(self);
+
+	token->kind = CI_TOKEN_KIND_PREPROCESSOR_IFNDEF;
+	token->preprocessor_ifndef = token->preprocessor_ifdef;
+
+	return token;
 }
 
 CIToken *
