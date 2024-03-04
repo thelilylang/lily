@@ -23,6 +23,8 @@
  */
 
 #include <base/assert.h>
+#include <base/atoi.h>
+#include <base/optional.h>
 #include <base/print.h>
 
 #include <core/cc/ci/scanner.h>
@@ -2453,9 +2455,24 @@ scan_define_preprocessor_content__CIScanner(CIScanner *self)
         CIToken *token = get_token__CIScanner(self, &ctx);
 
         if (token) {
-            push_token__CIScanner(self, &ctx, token);
             next_char_by_token__CIScanner(self, token);
-            next_char__CIScanner(self);
+            end_token__CIScanner(self,
+                                 self->base.source.cursor.line,
+                                 self->base.source.cursor.column,
+                                 self->base.source.cursor.position);
+            set_all__Location(&token->location, &self->base.location);
+            check_standard__CIScanner(self, token);
+
+            switch (token->kind) {
+                case CI_TOKEN_KIND_COMMENT_LINE:
+                    FAILED("comment line is not expected in macro-style");
+                case CI_TOKEN_KIND_COMMENT_BLOCK:
+                    FREE(CIToken, token);
+                    break;
+                default:
+                    next_char__CIScanner(self);
+                    push_token__CIScanner(self, &ctx, token);
+            }
         }
     }
 
@@ -2560,24 +2577,29 @@ scan_error_preprocessor__CIScanner(CIScanner *self)
             CIScannerContext ctx = NEW(CIScannerContext, NULL, false, false);
             CIToken *string_token = get_token__CIScanner(self, &ctx);
 
-            switch (string_token->kind) {
-                case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
-                    preprocessor_error_value =
-                      string_token->literal_constant_string;
+            if (string_token) {
+                switch (string_token->kind) {
+                    case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
+                        preprocessor_error_value =
+                          string_token->literal_constant_string;
 
-                    lily_free(self);
+                        lily_free(self);
 
-                    break;
-                default:
-                    FREE(CIToken, string_token);
+                        break;
+                    default:
+                        FREE(CIToken, string_token);
 
-                    FAILED("expected string token");
+                        goto expected_string_literal;
+                }
+            } else {
+                goto expected_string_literal;
             }
 
             break;
         }
         default:
-            FAILED("expected error message");
+        expected_string_literal:
+            FAILED("expected string literal");
     }
 
     return NEW_VARIANT(CIToken,
@@ -2740,17 +2762,25 @@ scan_include_preprocessor__CIScanner(CIScanner *self)
         }
         case '"': {
             CIScannerContext ctx = NEW(CIScannerContext, NULL, false, false);
-            CIToken *token = get_token__CIScanner(self, &ctx);
+            CIToken *token_include_value = get_token__CIScanner(self, &ctx);
 
-            switch (token->kind) {
-                case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
-                    preprocessor_include_value = token->literal_constant_string;
+            if (token_include_value) {
+                switch (token_include_value->kind) {
+                    case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
+                        preprocessor_include_value =
+                          token_include_value->literal_constant_string;
 
-                    lily_free(token);
+                        lily_free(token_include_value);
 
-                    break;
-                default:
-                    FAILED("expected string literal");
+                        break;
+                    default:
+                        FREE(CIToken, token_include_value);
+
+                        goto expected_string_literal;
+                }
+            } else {
+            expected_string_literal:
+                FAILED("expected string literal");
             }
 
             break;
@@ -2769,7 +2799,76 @@ scan_include_preprocessor__CIScanner(CIScanner *self)
 CIToken *
 scan_line_preprocessor__CIScanner(CIScanner *self)
 {
-    TODO("scan #line");
+    Location preprocessor_line_location = clone__Location(&self->base.location);
+    CIScannerContext ctx = NEW(CIScannerContext, NULL, false, false);
+    Usize lineno = self->base.source.cursor.line;
+    String *filename = NULL; // String*?
+
+    if (is_digit__CIScanner(self)) {
+        CIToken *token = get_token__CIScanner(self, &ctx);
+
+        if (token) {
+            switch (token->kind) {
+                case CI_TOKEN_KIND_LITERAL_CONSTANT_INT: {
+                    Optional *op = atoi_safe__Uint64(
+                      token->literal_constant_int->buffer, 10);
+
+                    if (is_some__Optional(op)) {
+                        lineno = (Usize)(Uptr)(Usize *)op->some;
+                    }
+
+                    FREE(Optional, op);
+                    lily_free(token);
+
+                    break;
+                }
+                default:
+                    FREE(CIToken, token);
+
+                    goto expected_digit;
+            }
+        } else {
+            goto expected_digit;
+        }
+    } else {
+    expected_digit:
+        FAILED("expected digit");
+    }
+
+    if (self->base.source.cursor.current != '\n') {
+        switch (self->base.source.cursor.current) {
+            case '\"': {
+                CIToken *token_filename = get_token__CIScanner(self, &ctx);
+
+                if (token_filename) {
+                    switch (token_filename->kind) {
+                        case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
+                            filename = token_filename->literal_constant_string;
+
+                            lily_free(token_filename);
+
+                            break;
+                        default:
+                            FREE(CIToken, token_filename);
+
+                            goto expected_string_literal;
+                    }
+                } else {
+                    goto expected_string_literal;
+                }
+
+                break;
+            }
+            default:
+            expected_string_literal:
+                FAILED("expected string literal");
+        }
+    }
+
+    return NEW_VARIANT(CIToken,
+                       preprocessor_line,
+                       preprocessor_line_location,
+                       NEW(CITokenPreprocessorLine, lineno, filename));
 }
 
 CIToken *
