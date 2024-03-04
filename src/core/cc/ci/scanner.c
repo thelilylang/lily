@@ -2699,18 +2699,71 @@ scan_ifdef_preprocessor__CIScanner(CIScanner *self)
 CIToken *
 scan_ifndef_preprocessor__CIScanner(CIScanner *self)
 {
-	CIToken *token = scan_ifdef_preprocessor__CIScanner(self);
+    CIToken *token = scan_ifdef_preprocessor__CIScanner(self);
 
-	token->kind = CI_TOKEN_KIND_PREPROCESSOR_IFNDEF;
-	token->preprocessor_ifndef = token->preprocessor_ifdef;
+    token->kind = CI_TOKEN_KIND_PREPROCESSOR_IFNDEF;
+    token->preprocessor_ifndef = token->preprocessor_ifdef;
 
-	return token;
+    return token;
 }
 
 CIToken *
 scan_include_preprocessor__CIScanner(CIScanner *self)
 {
-    TODO("scan #include");
+    Location preprocessor_include_location =
+      clone__Location(&self->base.location);
+    String *preprocessor_include_value = NULL;
+
+    skip_space_and_backslash__CIScanner(self);
+
+    switch (self->base.source.cursor.current) {
+        case '<': {
+            preprocessor_include_value = NEW(String);
+
+            next_char__CIScanner(self);
+
+            while (self->base.source.cursor.current != '>' &&
+                   self->base.source.cursor.position <
+                     self->base.source.file->len - 1) {
+                push__String(preprocessor_include_value,
+                             self->base.source.cursor.current);
+                next_char__CIScanner(self);
+            }
+
+            if (self->base.source.cursor.current != '>') {
+                FAILED("expected `>`");
+            } else {
+                next_char__CIScanner(self); // skip `>`
+            }
+
+            break;
+        }
+        case '"': {
+            CIScannerContext ctx = NEW(CIScannerContext, NULL, false, false);
+            CIToken *token = get_token__CIScanner(self, &ctx);
+
+            switch (token->kind) {
+                case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
+                    preprocessor_include_value = token->literal_constant_string;
+
+                    lily_free(token);
+
+                    break;
+                default:
+                    FAILED("expected string literal");
+            }
+
+            break;
+        }
+        default:
+            FAILED("expected `<` or `\"`");
+    }
+
+    return NEW_VARIANT(
+      CIToken,
+      preprocessor_include,
+      preprocessor_include_location,
+      NEW(CITokenPreprocessorInclude, preprocessor_include_value));
 }
 
 CIToken *
