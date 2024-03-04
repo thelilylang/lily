@@ -347,6 +347,11 @@ extern inline CONSTRUCTOR(CITokenPreprocessorLine,
                           Usize line,
                           String *filename);
 
+extern inline CONSTRUCTOR(CITokenPreprocessorIf,
+                          CITokenPreprocessorIf,
+                          Vec *cond,
+                          Vec *content);
+
 extern inline CONSTRUCTOR(CITokenPreprocessorInclude,
                           CITokenPreprocessorInclude,
                           String *value);

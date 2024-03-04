@@ -360,6 +360,49 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(CITokenPreprocessorLine, const CITokenPreprocessorLine *self);
 
+typedef struct CITokenPreprocessorIf
+{
+    Vec *cond;    // Vec<CIToken*>*
+    Vec *content; // Vec<CIToken*>*?
+} CITokenPreprocessorIf;
+
+/**
+ *
+ * @brief Construct CITokenPreprocessorIf type.
+ */
+inline CONSTRUCTOR(CITokenPreprocessorIf,
+                   CITokenPreprocessorIf,
+                   Vec *cond,
+                   Vec *content)
+{
+    return (CITokenPreprocessorIf){ .cond = cond, .content = content };
+}
+
+/**
+ *
+ * @brief Convert to string CITokenPreprocessorIf type.
+ */
+String *
+to_string__CITokenPreprocessorIf(const CITokenPreprocessorIf *self);
+
+/**
+ *
+ * @brief Convert CITokenPreprocessorIf in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CITokenPreprocessorIf,
+               const CITokenPreprocessorIf *self);
+#endif
+
+/**
+ *
+ * @brief Free CITokenPreprocessorIf type.
+ */
+DESTRUCTOR(CITokenPreprocessorIf, const CITokenPreprocessorIf *self);
+
 typedef struct CITokenPreprocessorInclude
 {
     String *value;
@@ -417,6 +460,7 @@ typedef struct CIToken
         CITokenPreprocessorDefine preprocessor_define;
         CITokenPreprocessorEmbed preprocessor_embed;
         String *preprocessor_error;
+        CITokenPreprocessorIf preprocessor_if;
         CITokenPreprocessorInclude preprocessor_include;
         CITokenPreprocessorLine preprocessor_line;
         String *identifier;
@@ -588,6 +632,16 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     preprocessor_error,
                     Location location,
                     String *preprocessor_error);
+
+/**
+ *
+ * @brief Construct CIToken type (CI_TOKEN_KIND_PREPROCESSOR_IF).
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    preprocessor_if,
+                    Location location,
+                    CITokenPreprocessorIf preprocessor_if);
 
 /**
  *

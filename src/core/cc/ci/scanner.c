@@ -281,6 +281,11 @@ skip_space_and_backslash__CIScanner(CIScanner *self);
 static Vec *
 scan_define_preprocessor_params__CIScanner(CIScanner *self);
 
+/// @brief Scan define preprocessor content.
+/// @return Vec<CIToken*>*?
+static Vec *
+scan_define_preprocessor_content__CIScanner(CIScanner *self);
+
 /// @brief Scan define preprocessor.
 static CIToken *
 scan_define_preprocessor__CIScanner(CIScanner *self);
@@ -342,7 +347,7 @@ get_closing__CIScanner(CIScanner *self,
 /// @brief Check that the token is available in accordance with the standard.
 /// @note This function can modify the token type.
 static void
-check_standard(CIScanner *self, CIToken *token);
+check_standard__CIScanner(CIScanner *self, CIToken *token);
 
 /// @brief Get token from characters.
 /// @param in_macro If `in_macro` is true, the scanner checks whether the
@@ -2360,18 +2365,28 @@ scan_num__CIScanner(CIScanner *self)
 void
 skip_space_and_backslash__CIScanner(CIScanner *self)
 {
-    bool after_backslash = false;
-
     while (
+      self->base.source.cursor.current != '\n' &&
       (is_space__CIScanner(self) || self->base.source.cursor.current == '\\') &&
       self->base.source.cursor.position < self->base.source.file->len - 1) {
-        if (after_backslash && self->base.source.cursor.current == '\n') {
-            after_backslash = false;
-        } else if (self->base.source.cursor.current == '\\') {
-            after_backslash = true;
-        }
+        skip_space__CIScanner(self);
 
-        next_char__CIScanner(self);
+        while (self->base.source.cursor.current == '\\') {
+            next_char__CIScanner(self);
+
+            switch (self->base.source.cursor.current) {
+                case '\n':
+                    next_char__CIScanner(self);
+                    break;
+                default:
+                    if (is_space__CIScanner(self)) {
+                        // TODO: skip blank space
+                        FAILED("warning: space is not expected after `\\`");
+                    } else {
+                        FAILED("expected new line");
+                    }
+            }
+        }
     }
 }
 
@@ -2422,6 +2437,37 @@ scan_define_preprocessor_params__CIScanner(CIScanner *self)
     return params;
 }
 
+Vec *
+scan_define_preprocessor_content__CIScanner(CIScanner *self)
+{
+    Vec *tokens = NEW(Vec); // Vec<CIToken*>*
+    CIScannerContext ctx = NEW(CIScannerContext, tokens, true, false);
+
+    while (self->base.source.cursor.current != '\n') {
+        skip_space_and_backslash__CIScanner(self);
+
+        if (self->base.source.cursor.current == '\n') {
+            break;
+        }
+
+        CIToken *token = get_token__CIScanner(self, &ctx);
+
+        if (token) {
+            push_token__CIScanner(self, &ctx, token);
+            next_char_by_token__CIScanner(self, token);
+            next_char__CIScanner(self);
+        }
+    }
+
+    if (tokens->len == 0) {
+        FREE(Vec, tokens);
+
+        return NULL;
+    }
+
+    return tokens;
+}
+
 CIToken *
 scan_define_preprocessor__CIScanner(CIScanner *self)
 {
@@ -2448,42 +2494,13 @@ scan_define_preprocessor__CIScanner(CIScanner *self)
             break;
     }
 
-    skip_space_and_backslash__CIScanner(self);
-
-    Vec *tokens = NEW(Vec); // Vec<CIToken*>*
-    CIScannerContext ctx = NEW(CIScannerContext, tokens, true, false);
-
-    while (self->base.source.cursor.current != '\n') {
-        if (self->base.source.cursor.current == '\\') {
-            next_char__CIScanner(self);
-
-            switch (self->base.source.cursor.current) {
-                case '\n':
-                    next_char__CIScanner(self);
-                    continue;
-                case ' ':
-                    // TODO: skip blank space
-                    FAILED("warning: space is not expected after `\\`");
-                default:
-                    break;
-            }
-        }
-
-        skip_space_and_backslash__CIScanner(self);
-
-        CIToken *token = get_token__CIScanner(self, &ctx);
-
-        if (token) {
-            push__Vec(tokens, token);
-            next_char_by_token__CIScanner(self, token);
-            next_char__CIScanner(self);
-        }
-    }
-
     return NEW_VARIANT(CIToken,
                        preprocessor_define,
                        preprocessor_define_location,
-                       NEW(CITokenPreprocessorDefine, name, params, tokens));
+                       NEW(CITokenPreprocessorDefine,
+                           name,
+                           params,
+                           scan_define_preprocessor_content__CIScanner(self)));
 }
 
 CIToken *
@@ -2572,7 +2589,65 @@ scan_error_preprocessor__CIScanner(CIScanner *self)
 CIToken *
 scan_if_preprocessor__CIScanner(CIScanner *self)
 {
-    TODO("scan #if");
+    Vec *preprocessor_if_cond =
+      scan_define_preprocessor_content__CIScanner(self); // Vec<CIToken*>*
+    Vec *preprocessor_if_content = NEW(Vec);
+    CIScannerContext ctx =
+      NEW(CIScannerContext, preprocessor_if_content, false, true);
+    CIToken *current_token = NULL;
+
+    skip_space__CIScanner(self);
+
+    current_token = get_token__CIScanner(self, &ctx);
+
+    while (current_token &&
+           current_token->kind != CI_TOKEN_KIND_PREPROCESSOR_ENDIF) {
+        if (current_token) {
+            next_char_by_token__CIScanner(self, current_token);
+            end_token__CIScanner(self,
+                                 self->base.source.cursor.line,
+                                 self->base.source.cursor.column,
+                                 self->base.source.cursor.position);
+            set_all__Location(&current_token->location, &self->base.location);
+            check_standard__CIScanner(self, current_token);
+
+            switch (current_token->kind) {
+                case CI_TOKEN_KIND_COMMENT_LINE:
+                case CI_TOKEN_KIND_COMMENT_BLOCK:
+                    FREE(CIToken, current_token);
+                    break;
+                default:
+                    next_char__CIScanner(self);
+                    push_token__CIScanner(self, &ctx, current_token);
+            }
+
+            if (self->base.source.cursor.position >=
+                self->base.source.file->len - 1) {
+                FAILED("expected #endif");
+
+                break;
+            }
+        }
+
+        skip_space__CIScanner(self);
+
+        current_token = get_token__CIScanner(self, &ctx);
+    }
+
+    if (!preprocessor_if_cond) {
+        FAILED("expected expression in #if preprocessor condition");
+    }
+
+    if (!current_token) {
+        FAILED("unexpected error in #if preprocessor condition");
+    }
+
+    return NEW_VARIANT(CIToken,
+                       preprocessor_if,
+                       clone__Location(&self->base.location),
+                       NEW(CITokenPreprocessorIf,
+                           preprocessor_if_cond,
+                           preprocessor_if_content));
 }
 
 CIToken *
@@ -2695,7 +2770,7 @@ get_closing__CIScanner(CIScanner *self,
                     set_all__Location(&token->location, &self->base.location);
             }
 
-            check_standard(self, token);
+            check_standard__CIScanner(self, token);
 
             switch (token->kind) {
                 case CI_TOKEN_KIND_COMMENT_LINE:
@@ -2733,7 +2808,7 @@ get_closing__CIScanner(CIScanner *self,
 }
 
 void
-check_standard(CIScanner *self, CIToken *token)
+check_standard__CIScanner(CIScanner *self, CIToken *token)
 {
     ASSERT(token->kind < CI_TOKEN_KIND_MAX);
 
@@ -3062,6 +3137,11 @@ get_token__CIScanner(CIScanner *self, const CIScannerContext *ctx)
                                 }
                             case CI_TOKEN_KIND_PREPROCESSOR_EMBED:
                                 return scan_embed_preprocessor__CIScanner(self);
+                            case CI_TOKEN_KIND_PREPROCESSOR_ENDIF:
+                                return NEW(
+                                  CIToken,
+                                  CI_TOKEN_KIND_PREPROCESSOR_ENDIF,
+                                  clone__Location(&self->base.location));
                             case CI_TOKEN_KIND_PREPROCESSOR_ERROR:
                                 return scan_error_preprocessor__CIScanner(self);
                             case CI_TOKEN_KIND_PREPROCESSOR_IF:
@@ -3360,7 +3440,7 @@ run__CIScanner(CIScanner *self, bool dump_scanner)
                                      self->base.source.cursor.column,
                                      self->base.source.cursor.position);
                 set_all__Location(&token->location, &self->base.location);
-                check_standard(self, token);
+                check_standard__CIScanner(self, token);
 
                 switch (token->kind) {
                     case CI_TOKEN_KIND_COMMENT_LINE:
