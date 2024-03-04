@@ -91,6 +91,12 @@ static VARIANT_DESTRUCTOR(CIToken, preprocessor_include, CIToken *self);
 // Free CIToken type (CI_TOKEN_KIND_PREPROCESSOR_LINE).
 static VARIANT_DESTRUCTOR(CIToken, preprocessor_line, CIToken *self);
 
+// Free CIToken type (CI_TOKEN_KIND_PREPROCESSOR_UNDEF).
+static VARIANT_DESTRUCTOR(CIToken, preprocessor_undef, CIToken *self);
+
+// Free CIToken type (CI_TOKEN_KIND_PREPROCESSOR_WARNING).
+static VARIANT_DESTRUCTOR(CIToken, preprocessor_warning, CIToken *self);
+
 String *
 to_string__CITokenPreprocessorDefine(const CITokenPreprocessorDefine *self)
 {
@@ -659,6 +665,36 @@ VARIANT_CONSTRUCTOR(CIToken *,
     return self;
 }
 
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    preprocessor_undef,
+                    Location location,
+                    String *preprocessor_undef)
+{
+    CIToken *self = lily_malloc(sizeof(CIToken));
+
+    self->kind = CI_TOKEN_KIND_PREPROCESSOR_UNDEF;
+    self->location = location;
+    self->preprocessor_undef = preprocessor_undef;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    preprocessor_warning,
+                    Location location,
+                    String *preprocessor_warning)
+{
+    CIToken *self = lily_malloc(sizeof(CIToken));
+
+    self->kind = CI_TOKEN_KIND_PREPROCESSOR_WARNING;
+    self->location = location;
+    self->preprocessor_warning = preprocessor_warning;
+
+    return self;
+}
+
 String *
 to_string__CIToken(CIToken *self)
 {
@@ -998,6 +1034,10 @@ to_string__CIToken(CIToken *self)
               &self->preprocessor_include);
         case CI_TOKEN_KIND_PREPROCESSOR_LINE:
             return to_string__CITokenPreprocessorLine(&self->preprocessor_line);
+        case CI_TOKEN_KIND_PREPROCESSOR_UNDEF:
+            return format__String("#undef {S}", self->preprocessor_undef);
+        case CI_TOKEN_KIND_PREPROCESSOR_WARNING:
+            return format__String("#warning {S}", self->preprocessor_warning);
         case CI_TOKEN_KIND_RBRACE:
             return from__String("}");
         case CI_TOKEN_KIND_RHOOK:
@@ -1529,6 +1569,18 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                           CALL_DEBUG_IMPL(to_string,
                                           CITokenPreprocessorLine,
                                           &self->preprocessor_line));
+        case CI_TOKEN_KIND_PREPROCESSOR_UNDEF:
+            return format("LilyToken{{ kind = {s}, location = {sa}, "
+                          "preprocessor_undef = {S} }",
+                          CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
+                          CALL_DEBUG_IMPL(to_string, Location, &self->location),
+                          self->preprocessor_undef);
+        case CI_TOKEN_KIND_PREPROCESSOR_WARNING:
+            return format("LilyToken{{ kind = {s}, location = {sa}, "
+                          "preprocessor_warning = {S} }",
+                          CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
+                          CALL_DEBUG_IMPL(to_string, Location, &self->location),
+                          self->preprocessor_warning);
         default:
             return format(
               "LilyToken{{ kind = {s}, location = {sa} }",
@@ -1659,6 +1711,18 @@ VARIANT_DESTRUCTOR(CIToken, preprocessor_line, CIToken *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(CIToken, preprocessor_undef, CIToken *self)
+{
+    FREE(String, self->preprocessor_undef);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIToken, preprocessor_warning, CIToken *self)
+{
+    FREE(String, self->preprocessor_warning);
+    lily_free(self);
+}
+
 DESTRUCTOR(CIToken, CIToken *self)
 {
     switch (self->kind) {
@@ -1715,6 +1779,12 @@ DESTRUCTOR(CIToken, CIToken *self)
             break;
         case CI_TOKEN_KIND_PREPROCESSOR_LINE:
             FREE_VARIANT(CIToken, preprocessor_line, self);
+            break;
+        case CI_TOKEN_KIND_PREPROCESSOR_UNDEF:
+            FREE_VARIANT(CIToken, preprocessor_undef, self);
+            break;
+        case CI_TOKEN_KIND_PREPROCESSOR_WARNING:
+            FREE_VARIANT(CIToken, preprocessor_warning, self);
             break;
         default:
             lily_free(self);

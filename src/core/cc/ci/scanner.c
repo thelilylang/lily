@@ -2723,13 +2723,43 @@ scan_pragma_preprocessor__CIScanner(CIScanner *self)
 CIToken *
 scan_undef_preprocessor__CIScanner(CIScanner *self)
 {
-    TODO("scan #undef");
+    Location preprocessor_undef_location =
+      clone__Location(&self->base.location);
+    String *preprocessor_undef_identifier = NULL;
+
+    skip_space_and_backslash__CIScanner(self);
+
+    {
+        CIScannerContext ctx = NEW(CIScannerContext, NULL, false, false);
+        CIToken *token = get_token__CIScanner(self, &ctx);
+
+        if (token) {
+            switch (token->kind) {
+                case CI_TOKEN_KIND_IDENTIFIER:
+                    preprocessor_undef_identifier = token->identifier;
+
+                    break;
+                default:
+                    FAILED("expected identifier");
+            }
+        }
+    }
+
+    return NEW_VARIANT(CIToken,
+                       preprocessor_undef,
+                       preprocessor_undef_location,
+                       preprocessor_undef_identifier);
 }
 
 CIToken *
 scan_warning_preprocessor__CIScanner(CIScanner *self)
 {
-    TODO("scan #warning");
+    CIToken *token = scan_error_preprocessor__CIScanner(self);
+
+    token->kind = CI_TOKEN_KIND_PREPROCESSOR_WARNING;
+    token->preprocessor_warning = token->preprocessor_error;
+
+    return token;
 }
 
 CIToken *

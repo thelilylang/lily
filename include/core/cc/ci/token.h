@@ -507,6 +507,8 @@ typedef struct CIToken
         CITokenPreprocessorIfdef preprocessor_ifdef;
         CITokenPreprocessorInclude preprocessor_include;
         CITokenPreprocessorLine preprocessor_line;
+        String *preprocessor_undef;
+        String *preprocessor_warning;
         String *identifier;
         String *literal_constant_int;
         String *literal_constant_float;
@@ -716,6 +718,26 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     preprocessor_line,
                     Location location,
                     CITokenPreprocessorLine preprocessor_line);
+
+/**
+ *
+ * @brief Construct CIToken type (CI_TOKEN_KIND_PREPROCESSOR_WARNING).
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    preprocessor_warning,
+                    Location location,
+                    String *preprocessor_warning);
+
+/**
+ *
+ * @brief Construct CIToken type (CI_TOKEN_KIND_PREPROCESSOR_UNDEF).
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    preprocessor_undef,
+                    Location location,
+                    String *preprocessor_undef);
 
 /**
  *
