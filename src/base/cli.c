@@ -540,7 +540,7 @@ parse_value__Cli(Cli *self, const CliValue *value)
 Vec *
 parse_option__Cli(Cli *self)
 {
-    Vec *res = NEW(Vec);
+    Vec *res = NEW(Vec); // Vec<CliResult*>*
     char *current = NULL;
 
     while ((current = next__VecIter(&self->args_iter))) {
@@ -602,11 +602,23 @@ parse_option__Cli(Cli *self)
         }
     }
 
+    // Check whether the number of values corresponds to the expected value type
+    // (SINGLE, MULTIPLE, MULTIPLE_INF).
     if (self->value) {
+        VecIter iter = NEW(VecIter, res);
+        CliResult *current = NULL;
+        Usize count_value = 0;
+
+        while ((current = next__VecIter(&iter))) {
+            if (current->kind == CLI_RESULT_KIND_VALUE) {
+                ++count_value;
+            }
+        }
+
         switch (self->value->kind) {
             case CLI_VALUE_KIND_SINGLE:
                 if (self->value->is_required) {
-                    if (res->len == 0) {
+                    if (count_value == 0) {
                         CliDiagnostic err = NEW(CliDiagnostic,
                                                 CLI_DIAGNOSTIC_KIND_ERROR,
                                                 "expected one value",
@@ -614,7 +626,7 @@ parse_option__Cli(Cli *self)
                                                 self->full_command);
 
                         emit__CliDiagnostic(&err);
-                    } else if (res->len > 1) {
+                    } else if (count_value > 1) {
                         CliDiagnostic err = NEW(CliDiagnostic,
                                                 CLI_DIAGNOSTIC_KIND_ERROR,
                                                 "too many values are given",
@@ -629,7 +641,7 @@ parse_option__Cli(Cli *self)
             case CLI_VALUE_KIND_MULTIPLE:
             case CLI_VALUE_KIND_MULTIPLE_INF:
                 if (self->value->is_required) {
-                    if (res->len == 0) {
+                    if (count_value == 0) {
                         CliDiagnostic err = NEW(CliDiagnostic,
                                                 CLI_DIAGNOSTIC_KIND_ERROR,
                                                 "expected one or more values",
