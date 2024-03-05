@@ -329,7 +329,8 @@ extern inline CONSTRUCTOR(CIScannerContext,
                           CIScannerContext,
                           Vec *tokens,
                           bool in_macro,
-                          bool in_prepro_cond);
+                          bool in_prepro_if,
+                          bool in_prepro_else);
 
 // <core/cc/ci/token.h>
 extern inline CONSTRUCTOR(CITokenPreprocessorDefine,
@@ -349,6 +350,11 @@ extern inline CONSTRUCTOR(CITokenPreprocessorLine,
 
 extern inline CONSTRUCTOR(CITokenPreprocessorIf,
                           CITokenPreprocessorIf,
+                          Vec *cond,
+                          Vec *content);
+
+extern inline CONSTRUCTOR(CITokenPreprocessorElif,
+                          CITokenPreprocessorElif,
                           Vec *cond,
                           Vec *content);
 

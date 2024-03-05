@@ -292,6 +292,10 @@ scan_define_preprocessor_content__CIScanner(CIScanner *self);
 static CIToken *
 scan_define_preprocessor__CIScanner(CIScanner *self);
 
+/// @brief Scan elif preprocessor.
+static CIToken *
+scan_elif_preprocessor__CIScanner(CIScanner *self);
+
 /// @brief Scan embed preprocessor.
 static CIToken *
 scan_embed_preprocessor__CIScanner(CIScanner *self);
@@ -2396,7 +2400,7 @@ Vec *
 scan_define_preprocessor_params__CIScanner(CIScanner *self)
 {
     Vec *params = NEW(Vec);
-    CIScannerContext ctx = NEW(CIScannerContext, NULL, false, false);
+    CIScannerContext ctx = NEW(CIScannerContext, NULL, false, false, false);
 
     next_char__CIScanner(self); // skip `(`
 
@@ -2443,7 +2447,7 @@ Vec *
 scan_define_preprocessor_content__CIScanner(CIScanner *self)
 {
     Vec *tokens = NEW(Vec); // Vec<CIToken*>*
-    CIScannerContext ctx = NEW(CIScannerContext, tokens, true, false);
+    CIScannerContext ctx = NEW(CIScannerContext, tokens, true, false, false);
 
     while (self->base.source.cursor.current != '\n') {
         skip_space_and_backslash__CIScanner(self);
@@ -2521,6 +2525,18 @@ scan_define_preprocessor__CIScanner(CIScanner *self)
 }
 
 CIToken *
+scan_elif_preprocessor__CIScanner(CIScanner *self)
+{
+    CIToken *token_if_preprocessor = scan_if_preprocessor__CIScanner(self);
+
+    token_if_preprocessor->kind = CI_TOKEN_KIND_PREPROCESSOR_ELIF;
+    token_if_preprocessor->preprocessor_elif =
+      token_if_preprocessor->preprocessor_if;
+
+    return token_if_preprocessor;
+}
+
+CIToken *
 scan_embed_preprocessor__CIScanner(CIScanner *self)
 {
     Location preprocessor_embed_location =
@@ -2531,7 +2547,8 @@ scan_embed_preprocessor__CIScanner(CIScanner *self)
 
     switch (self->base.source.cursor.current) {
         case '\"': {
-            CIScannerContext ctx = NEW(CIScannerContext, NULL, false, false);
+            CIScannerContext ctx =
+              NEW(CIScannerContext, NULL, false, false, false);
             CIToken *string_token = get_token__CIScanner(self, &ctx);
 
             switch (string_token->kind) {
@@ -2574,7 +2591,8 @@ scan_error_preprocessor__CIScanner(CIScanner *self)
 
     switch (self->base.source.cursor.current) {
         case '\"': {
-            CIScannerContext ctx = NEW(CIScannerContext, NULL, false, false);
+            CIScannerContext ctx =
+              NEW(CIScannerContext, NULL, false, false, false);
             CIToken *string_token = get_token__CIScanner(self, &ctx);
 
             if (string_token) {
@@ -2618,7 +2636,7 @@ scan_if_preprocessor__CIScanner(CIScanner *self)
 #define SCAN_IF_PREPROCESSOR_CONTENT()                                         \
     Vec *preprocessor_if_content = NEW(Vec); /* Vec<CIToken*>* */              \
     CIScannerContext ctx =                                                     \
-      NEW(CIScannerContext, preprocessor_if_content, false, true);             \
+      NEW(CIScannerContext, preprocessor_if_content, false, true, false);      \
     CIToken *current_token = NULL;                                             \
                                                                                \
     skip_space__CIScanner(self);                                               \
@@ -2687,7 +2705,7 @@ scan_ifdef_preprocessor__CIScanner(CIScanner *self)
     skip_space_and_backslash__CIScanner(self);
 
     {
-        CIScannerContext ctx = NEW(CIScannerContext, NULL, false, true);
+        CIScannerContext ctx = NEW(CIScannerContext, NULL, false, true, false);
         CIToken *token = get_token__CIScanner(self, &ctx);
 
         if (token) {
@@ -2761,7 +2779,8 @@ scan_include_preprocessor__CIScanner(CIScanner *self)
             break;
         }
         case '"': {
-            CIScannerContext ctx = NEW(CIScannerContext, NULL, false, false);
+            CIScannerContext ctx =
+              NEW(CIScannerContext, NULL, false, false, false);
             CIToken *token_include_value = get_token__CIScanner(self, &ctx);
 
             if (token_include_value) {
@@ -2800,7 +2819,7 @@ CIToken *
 scan_line_preprocessor__CIScanner(CIScanner *self)
 {
     Location preprocessor_line_location = clone__Location(&self->base.location);
-    CIScannerContext ctx = NEW(CIScannerContext, NULL, false, false);
+    CIScannerContext ctx = NEW(CIScannerContext, NULL, false, false, false);
     Usize lineno = self->base.source.cursor.line;
     String *filename = NULL; // String*?
 
@@ -2887,7 +2906,7 @@ scan_undef_preprocessor__CIScanner(CIScanner *self)
     skip_space_and_backslash__CIScanner(self);
 
     {
-        CIScannerContext ctx = NEW(CIScannerContext, NULL, false, false);
+        CIScannerContext ctx = NEW(CIScannerContext, NULL, false, false, false);
         CIToken *token = get_token__CIScanner(self, &ctx);
 
         if (token) {
@@ -3329,36 +3348,49 @@ get_token__CIScanner(CIScanner *self, const CIScannerContext *ctx)
                     default:
                         jump__CIScanner(self, id->len + 1);
 
+                        if (ctx->in_macro) {
+                            FAILED("preporcessors are not expected in macro");
+                        }
+
                         switch (kind) {
                             case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:
                                 return scan_define_preprocessor__CIScanner(
                                   self);
                             case CI_TOKEN_KIND_PREPROCESSOR_ELIF:
-                                if (!ctx->in_prepro_cond) {
+                                if (!ctx->in_prepro_if) {
                                     FAILED("#elif preprocessor is not expected "
                                            "here");
+                                } else if (ctx->in_prepro_else) {
+                                    FAILED("cannot add #elif after #else");
                                 } else {
-                                    TODO("scan #elif");
+                                    return scan_elif_preprocessor__CIScanner(
+                                      self);
                                 }
                             case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:
-                                if (!ctx->in_prepro_cond) {
+                                if (!ctx->in_prepro_if) {
                                     FAILED("#elifdef preprocessor is not "
                                            "expected here");
+                                } else if (ctx->in_prepro_else) {
+                                    FAILED("cannot add #elifdef after #else");
                                 } else {
                                     TODO("scan #elifdef");
                                 }
                             case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:
-                                if (!ctx->in_prepro_cond) {
+                                if (!ctx->in_prepro_if) {
                                     FAILED(
                                       "#elifndef preprocessor is not expected "
                                       "here");
+                                } else if (ctx->in_prepro_else) {
+                                    FAILED("cannot add #elifndef after #else");
                                 } else {
                                     TODO("scan #elifndef");
                                 }
                             case CI_TOKEN_KIND_PREPROCESSOR_ELSE:
-                                if (!ctx->in_prepro_cond) {
+                                if (!ctx->in_prepro_if) {
                                     FAILED("#else preprocessor is not expected "
                                            "here");
+                                } else if (ctx->in_prepro_else) {
+                                    FAILED("cannot add #else after #else");
                                 } else {
                                     TODO("scan #else");
                                 }
@@ -3372,10 +3404,22 @@ get_token__CIScanner(CIScanner *self, const CIScannerContext *ctx)
                             case CI_TOKEN_KIND_PREPROCESSOR_ERROR:
                                 return scan_error_preprocessor__CIScanner(self);
                             case CI_TOKEN_KIND_PREPROCESSOR_IF:
+                                if (ctx->in_prepro_else) {
+                                    FAILED("cannot add #if after #else");
+                                }
+
                                 return scan_if_preprocessor__CIScanner(self);
                             case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
+                                if (ctx->in_prepro_else) {
+                                    FAILED("cannot add #ifdef after #else");
+                                }
+
                                 return scan_ifdef_preprocessor__CIScanner(self);
                             case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:
+                                if (ctx->in_prepro_else) {
+                                    FAILED("cannot add #ifndef after #else");
+                                }
+
                                 return scan_ifndef_preprocessor__CIScanner(
                                   self);
                             case CI_TOKEN_KIND_PREPROCESSOR_INCLUDE:
@@ -3644,14 +3688,10 @@ get_token__CIScanner(CIScanner *self, const CIScannerContext *ctx)
 }
 
 void
-get_tokens__CIScanner(CIScanner *self, const CIScannerContext *ctx)
-{
-}
-
-void
 run__CIScanner(CIScanner *self, bool dump_scanner)
 {
-    CIScannerContext ctx = NEW(CIScannerContext, self->tokens, false, false);
+    CIScannerContext ctx =
+      NEW(CIScannerContext, self->tokens, false, false, false);
 
     if (self->base.source.file->len > 1) {
         while (self->base.source.cursor.position <
