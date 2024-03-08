@@ -1735,7 +1735,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                           "literal_constant_string = {S} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
-                          self->literal_constant_character);
+                          self->literal_constant_string);
         case CI_TOKEN_KIND_MACRO_PARAM:
             return format(
               "LilyToken{{ kind = {s}, location = {sa}, macro_param = {zu} }",

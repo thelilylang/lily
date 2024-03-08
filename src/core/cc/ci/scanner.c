@@ -28,6 +28,7 @@
 #include <base/print.h>
 
 #include <core/cc/ci/scanner.h>
+#include <core/cc/ci/ci.h>
 #include <core/shared/diagnostic.h>
 
 #include <stdio.h>
@@ -3901,6 +3902,7 @@ run__CIScanner(CIScanner *self, bool dump_scanner)
       &ctx,
       NEW(CIToken, CI_TOKEN_KIND_EOF, clone__Location(&self->base.location)));
 
+#ifndef CI_DEBUG_SCANNER
     if (dump_scanner) {
         printf("====Scanner(%s)====\n", self->base.source.file->name);
 
@@ -3908,6 +3910,13 @@ run__CIScanner(CIScanner *self, bool dump_scanner)
             PRINTLN("{Sr}", to_string__CIToken(get__Vec(self->tokens, i)));
         }
     }
+#else
+    printf("====Scanner(%s)====\n", self->base.source.file->name);
+
+    for (Usize i = 0; i < self->tokens->len; ++i) {
+        CALL_DEBUG(CIToken, get__Vec(self->tokens, i));
+    }
+#endif
 
     if (*self->base.count_error > 0) {
         exit(1);
