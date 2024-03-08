@@ -603,6 +603,47 @@ IMPL_FOR_DEBUG(to_string,
 DESTRUCTOR(CITokenPreprocessorElifndef,
            const CITokenPreprocessorElifndef *self);
 
+typedef struct CITokenPreprocessorElse
+{
+    Vec *content; // Vec<CIToken*>*?
+} CITokenPreprocessorElse;
+
+/**
+ *
+ * @brief Construct CITokenPreprocessorElse type.
+ */
+inline CONSTRUCTOR(CITokenPreprocessorElse,
+                   CITokenPreprocessorElse,
+                   Vec *content)
+{
+    return (CITokenPreprocessorElse){ .content = content };
+}
+
+/**
+ *
+ * @brief Convert to string CITokenPreprocessorElse type.
+ */
+String *
+to_string__CITokenPreprocessorElse(const CITokenPreprocessorElse *self);
+
+/**
+ *
+ * @brief Convert CITokenPreprocessorElse in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CITokenPreprocessorElse,
+               const CITokenPreprocessorElse *self);
+#endif
+
+/**
+ *
+ * @brief Free CITokenPreprocessorElse type.
+ */
+DESTRUCTOR(CITokenPreprocessorElse, const CITokenPreprocessorElse *self);
+
 typedef struct CITokenPreprocessorInclude
 {
     String *value;
@@ -661,6 +702,7 @@ typedef struct CIToken
         CITokenPreprocessorElif preprocessor_elif;
         CITokenPreprocessorElifdef preprocessor_elifdef;
         CITokenPreprocessorElifndef preprocessor_elifndef;
+        CITokenPreprocessorElse preprocessor_else;
         CITokenPreprocessorEmbed preprocessor_embed;
         String *preprocessor_error;
         CITokenPreprocessorIf preprocessor_if;
@@ -849,6 +891,16 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     preprocessor_elifndef,
                     Location location,
                     CITokenPreprocessorElifndef preprocessor_elifndef);
+
+/**
+ *
+ * @brief Construct CIToken type (CI_TOKEN_KIND_PREPROCESSOR_ELSE).
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    preprocessor_else,
+                    Location location,
+                    CITokenPreprocessorElse preprocessor_else);
 
 /**
  *

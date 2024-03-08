@@ -24,6 +24,7 @@
 
 #include <base/assert.h>
 #include <base/atoi.h>
+#include <base/macros.h>
 #include <base/optional.h>
 #include <base/print.h>
 
@@ -307,6 +308,11 @@ scan_elifdef_preprocessor__CIScanner(CIScanner *self,
 static CIToken *
 scan_elifndef_preprocessor__CIScanner(CIScanner *self,
                                       const CIScannerContext *ctx_parent);
+
+/// @brief Scan else preprocessor.
+static CIToken *
+scan_else_preprocessor__CIScanner(CIScanner *self,
+                                  const CIScannerContext *ctx_parent);
 
 /// @brief Scan embed preprocessor.
 static CIToken *
@@ -2580,62 +2586,67 @@ CIToken *
 scan_elif_preprocessor__CIScanner(CIScanner *self,
                                   const CIScannerContext *ctx_parent)
 {
-#define SCAN_IF_PREPROCESSOR_CONTENT(cond, is_def_preprocessor, ctx_parent)   \
-    [[maybe_unused]] Location preprocessor_if_location =                      \
-      clone__Location(&self->base.location);                                  \
-    /*                                                                        \
-     We scan the if condition (`preprocessor_if_cond`), if it's not a         \
-     conditional preprocessor looking at a macro is defined or not (like      \
-    #ifdef, #ifndef,                                                          \
-     ...).                                                                    \
-     \                                                                        \
-    In other words, when `is_def_preprocessor` is true, it means it's a       \
-    conditional preprocessor like #ifdef, #ifndef, etc. Otherwise, it means   \
-    it's a conditional preprocessor with a condition such as #if, #elif, etc. \
-    */                                                                        \
-    Vec *preprocessor_if_cond =                                               \
-      is_def_preprocessor ? NULL                                              \
-                          : scan_define_preprocessor_content__CIScanner(      \
-                              self);         /* Vec<CIToken*>*? */            \
-    Vec *preprocessor_if_content = NEW(Vec); /* Vec<CIToken*>* */             \
-    CIScannerContext ctx =                                                    \
-      NEW(CIScannerContext, preprocessor_if_content, false, true, false);     \
-    CIToken *current_token = NULL;                                            \
-                                                                              \
-    skip_space__CIScanner(self);                                              \
-                                                                              \
-    current_token =                                                           \
-      get_token__CIScanner(self, &ctx, ctx_parent ? ctx_parent : &ctx);       \
-                                                                              \
-    while (current_token && cond) {                                           \
-        if (current_token) {                                                  \
-            DEFAULT_LAST_SET_AND_CHECK(current_token);                        \
-                                                                              \
-            switch (current_token->kind) {                                    \
-                case CI_TOKEN_KIND_COMMENT_LINE:                              \
-                    DEFAULT_FILTER_TOKEN(current_token, &ctx);                \
-            }                                                                 \
-                                                                              \
-            if (self->base.source.cursor.position >=                          \
-                self->base.source.file->len - 1) {                            \
-                FAILED("expected #endif");                                    \
-                                                                              \
-                break;                                                        \
-            }                                                                 \
-        }                                                                     \
-                                                                              \
-        skip_space__CIScanner(self);                                          \
-                                                                              \
-        current_token =                                                       \
-          get_token__CIScanner(self, &ctx, ctx_parent ? ctx_parent : &ctx);   \
-    }                                                                         \
-                                                                              \
-    if (!current_token) {                                                     \
-        FAILED("unexpected error in #if preprocessor condition");             \
-    }                                                                         \
-                                                                              \
-    if (!preprocessor_if_cond && !is_def_preprocessor) {                      \
-        FAILED("expected expression in #if preprocessor condition");          \
+#define SCAN_IF_PREPROCESSOR_CONTENT(                                       \
+  cond, is_def_preprocessor, ctx_parent, in_prepro_if, in_prepro_else)      \
+    [[maybe_unused]] Location preprocessor_if_location =                    \
+      clone__Location(&self->base.location);                                \
+    /*                                                                      \
+     We scan the if condition (`preprocessor_if_cond`), if it's not a       \
+     conditional preprocessor looking at a macro is defined or not (like    \
+    #ifdef, #ifndef,                                                        \
+     ...).                                                                  \
+     \                                                                      \
+    In other words, when `is_def_preprocessor` is true, it means it's a     \
+    conditional preprocessor like #ifdef, #ifndef, (also can be useful for  \
+    #else), etc. Otherwise, it means it's a conditional preprocessor with a \
+    condition such as #if, #elif, etc.                                      \
+    */                                                                      \
+    Vec *preprocessor_if_cond =                                             \
+      is_def_preprocessor ? NULL                                            \
+                          : scan_define_preprocessor_content__CIScanner(    \
+                              self);         /* Vec<CIToken*>*? */          \
+    Vec *preprocessor_if_content = NEW(Vec); /* Vec<CIToken*>* */           \
+    CIScannerContext ctx = NEW(CIScannerContext,                            \
+                               preprocessor_if_content,                     \
+                               false,                                       \
+                               in_prepro_if,                                \
+                               in_prepro_else);                             \
+    CIToken *current_token = NULL;                                          \
+                                                                            \
+    skip_space__CIScanner(self);                                            \
+                                                                            \
+    current_token =                                                         \
+      get_token__CIScanner(self, &ctx, ctx_parent ? ctx_parent : &ctx);     \
+                                                                            \
+    while (current_token && cond) {                                         \
+        if (current_token) {                                                \
+            DEFAULT_LAST_SET_AND_CHECK(current_token);                      \
+                                                                            \
+            switch (current_token->kind) {                                  \
+                case CI_TOKEN_KIND_COMMENT_LINE:                            \
+                    DEFAULT_FILTER_TOKEN(current_token, &ctx);              \
+            }                                                               \
+                                                                            \
+            if (self->base.source.cursor.position >=                        \
+                self->base.source.file->len - 1) {                          \
+                FAILED("expected #endif");                                  \
+                                                                            \
+                break;                                                      \
+            }                                                               \
+        }                                                                   \
+                                                                            \
+        skip_space__CIScanner(self);                                        \
+                                                                            \
+        current_token =                                                     \
+          get_token__CIScanner(self, &ctx, ctx_parent ? ctx_parent : &ctx); \
+    }                                                                       \
+                                                                            \
+    if (!current_token) {                                                   \
+        FAILED("unexpected error in #if preprocessor condition");           \
+    }                                                                       \
+                                                                            \
+    if (!preprocessor_if_cond && !is_def_preprocessor) {                    \
+        FAILED("expected expression in #if preprocessor condition");        \
     }
 
 #define PREPROCESSOR_FILTER_CURRENT_TOKEN(ret)                                   \
@@ -2693,7 +2704,8 @@ scan_elif_preprocessor__CIScanner(CIScanner *self,
       current_token->kind != CI_TOKEN_KIND_PREPROCESSOR_ENDIF
 
 #define SCAN_ELIF_PREPROCESSOR()                                            \
-    SCAN_IF_PREPROCESSOR_CONTENT(ELIF_END_COND, false, ctx_parent);         \
+    SCAN_IF_PREPROCESSOR_CONTENT(                                           \
+      ELIF_END_COND, false, ctx_parent, true, false);                       \
                                                                             \
     CIToken *preprocessor_elif = NEW_VARIANT(CIToken,                       \
                                              preprocessor_elif,             \
@@ -2742,7 +2754,7 @@ scan_elifdef_preprocessor__CIScanner(CIScanner *self,
         }                                                              \
     }                                                                  \
                                                                        \
-    SCAN_IF_PREPROCESSOR_CONTENT(cond, true, ctx_parent);
+    SCAN_IF_PREPROCESSOR_CONTENT(cond, true, ctx_parent, true, false);
 
 #define SCAN_ELIFDEF_PREPROCESSOR(ty, k)                                \
     SCAN_IFDEF_PREPROCESSOR(ELIF_END_COND, ctx_parent);                 \
@@ -2764,6 +2776,28 @@ scan_elifndef_preprocessor__CIScanner(CIScanner *self,
 {
     SCAN_ELIFDEF_PREPROCESSOR(CITokenPreprocessorElifndef,
                               preprocessor_elifndef);
+}
+
+CIToken *
+scan_else_preprocessor__CIScanner(CIScanner *self,
+                                  const CIScannerContext *ctx_parent)
+{
+    skip_space_and_backslash__CIScanner(self);
+
+    SCAN_IF_PREPROCESSOR_CONTENT(current_token->kind !=
+                                   CI_TOKEN_KIND_PREPROCESSOR_ENDIF,
+                                 true,
+                                 ctx_parent,
+                                 true,
+                                 true);
+
+    CIToken *res =
+      NEW_VARIANT(CIToken,
+                  preprocessor_else,
+                  preprocessor_if_location,
+                  NEW(CITokenPreprocessorElse, preprocessor_if_content));
+
+    PREPROCESSOR_FILTER_CURRENT_TOKEN(res);
 }
 
 CIToken *
@@ -2859,8 +2893,12 @@ scan_error_preprocessor__CIScanner(CIScanner *self)
 CIToken *
 scan_if_preprocessor__CIScanner(CIScanner *self)
 {
-    SCAN_IF_PREPROCESSOR_CONTENT(
-      current_token->kind != CI_TOKEN_KIND_PREPROCESSOR_ENDIF, false, NULL);
+    SCAN_IF_PREPROCESSOR_CONTENT(current_token->kind !=
+                                   CI_TOKEN_KIND_PREPROCESSOR_ENDIF,
+                                 false,
+                                 NULL,
+                                 true,
+                                 false);
 
 #define DROP_ENDIF()                                               \
     if (current_token &&                                           \
@@ -3560,7 +3598,8 @@ get_token__CIScanner(CIScanner *self,
                                 } else {
                                     ASSERT(ctx_parent);
 
-                                    TODO("scan #else");
+                                    return scan_else_preprocessor__CIScanner(
+                                      self, ctx_parent);
                                 }
                             case CI_TOKEN_KIND_PREPROCESSOR_EMBED:
                                 return scan_embed_preprocessor__CIScanner(self);
