@@ -31,7 +31,7 @@
 #define CI_DEBUG_SCANNER
 
 #ifndef ENV_DEBUG
-#undef DEBUG_SCANNER
+#undef CI_DEBUG_SCANNER
 #endif
 
 #endif // LILY_CORE_CC_CI_H
