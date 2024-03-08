@@ -74,7 +74,7 @@ wrap_item_in_body__LilyCheckedBodyFunItem(LilyCheckedBodyFunItem *self,
                     UNREACHABLE("unknown variant");
             }
         case LILY_CHECKED_BODY_FUN_ITEM_KIND_EXPR: {
-        simple_wrap : {
+        simple_wrap: {
             Vec *body = init__Vec(1, self);
 
             switch (parent->decls.kind) {

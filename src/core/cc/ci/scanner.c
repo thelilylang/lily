@@ -27,8 +27,8 @@
 #include <base/optional.h>
 #include <base/print.h>
 
-#include <core/cc/ci/scanner.h>
 #include <core/cc/ci/ci.h>
+#include <core/cc/ci/scanner.h>
 #include <core/shared/diagnostic.h>
 
 #include <stdio.h>

@@ -1720,7 +1720,7 @@ parse_path_access__LilyParseBlock(LilyParseBlock *self,
 
     while (self->current->kind == LILY_TOKEN_KIND_DOT) {
         if (current_access->kind != LILY_AST_EXPR_KIND_ACCESS) {
-        update_current_access : {
+        update_current_access: {
             current_access = NEW_VARIANT(
               LilyAstExpr,
               access,
@@ -2175,7 +2175,7 @@ parse_binary_expr__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *expr)
                 break;                                                         \
             }                                                                  \
             default: {                                                         \
-            parse_param_normal : {                                             \
+            parse_param_normal: {                                              \
                 Location location_param =                                      \
                   clone__Location(&self->current->location);                   \
                 LilyAstExpr *value = parse_expr__LilyParseBlock(self);         \
@@ -3526,7 +3526,7 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self, bool not_parse_access)
 
                             break;
                         default:
-                        expected_path : {
+                        expected_path: {
                             emit__Diagnostic(
                               NEW_VARIANT(
                                 Diagnostic,
@@ -3578,7 +3578,7 @@ parse_primary_expr__LilyParseBlock(LilyParseBlock *self, bool not_parse_access)
         case LILY_TOKEN_KIND_SEMICOLON:
             return NULL;
         default: {
-        unexpected_token : {
+        unexpected_token: {
             String *previous_s = to_string__LilyToken(self->previous);
 
             emit__Diagnostic(
@@ -5055,7 +5055,7 @@ parse_record_call_pattern__LilyParseBlock(LilyParseBlock *self, LilyAstExpr *id)
             }
         }
 
-    end_of_the_loop : {
+    end_of_the_loop: {
         CHECK_COMMA(LILY_TOKEN_KIND_R_BRACE);
     }
     }
@@ -6139,7 +6139,7 @@ parse_fun_param__LilyParseBlock(LilyParseBlock *self)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_COLON_EQ:
-        parse_expr : {
+        parse_expr: {
             next_token__LilyParseBlock(self);
 
             expr = parse_expr__LilyParseBlock(self);
@@ -6488,7 +6488,7 @@ parse_method_param__LilyParseBlock(LilyParseBlock *self)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_COLON_EQ:
-        parse_expr : {
+        parse_expr: {
             next_token__LilyParseBlock(self);
 
             expr = parse_expr__LilyParseBlock(self);
@@ -7827,7 +7827,7 @@ is_block__LilyParser(const Vec *tokens)
                                 return;                                            \
                             }                                                      \
                                                                                    \
-                        exit_loop : {                                              \
+                        exit_loop: {                                               \
                         }                                                          \
                                                                                    \
                         break;                                                     \

@@ -1370,7 +1370,7 @@ scan_multiline_string__LilyScanner(LilyScanner *self)
 {
     String *res = NEW(String);
 
-scan_line : {
+scan_line: {
     jump__LilyScanner(self, 2); // skip `\\`
 
     // Check if the multiline string literal is not closed. While the current
@@ -2613,7 +2613,7 @@ get_token__LilyScanner(LilyScanner *self)
 
                         goto keyword;
                     default:
-                    keyword : {
+                    keyword: {
                         FREE(String, id);
                         return NEW(LilyToken,
                                    kind,

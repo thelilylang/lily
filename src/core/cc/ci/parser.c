@@ -1166,7 +1166,7 @@ parse_data_type__CIParser(CIParser *self)
                     break;
                 case CI_TOKEN_KIND_LBRACE:
                 case CI_TOKEN_KIND_SEMICOLON: {
-                parse_struct_or_union : {
+                parse_struct_or_union: {
                     switch (previous_token_kind) {
                         case CI_TOKEN_KIND_KEYWORD_STRUCT: {
                             CIDecl *struct_decl = parse_struct__CIParser(
@@ -2463,7 +2463,7 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
         case CI_TOKEN_KIND_KEYWORD_SWITCH:
         case CI_TOKEN_KIND_KEYWORD_WHILE:
         case CI_TOKEN_KIND_LBRACE:
-        parse_stmt : {
+        parse_stmt: {
             DISABLE_IN_LABEL();
 
             return parse_stmt__CIParser(self, in_loop, in_switch);
@@ -2471,7 +2471,7 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
         case CI_TOKEN_KIND_SEMICOLON:
             return NULL;
         default:
-        default_case : {
+        default_case: {
             if (is_data_type__CIParser(self)) {
                 CIDecl *decl = parse_decl__CIParser(self, true);
 
@@ -2823,7 +2823,7 @@ parse_decl__CIParser(CIParser *self, bool in_function_body)
                     break;
                 case CI_TOKEN_KIND_SEMICOLON:
                     if (generic_params) {
-                    no_generic_params_expected : {
+                    no_generic_params_expected: {
                         FAILED("no generic params are expected in variable "
                                "declaration");
                     }
