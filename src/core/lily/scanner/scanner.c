@@ -1794,18 +1794,19 @@ get_closing__LilyScanner(LilyScanner *self, char target)
                     set_all__Location(&token->location, &self->base.location);
             }
 
-#define FILTER_TOKEN()                            \
-    switch (token->kind) {                        \
-        case LILY_TOKEN_KIND_COMMENT_LINE:        \
-        case LILY_TOKEN_KIND_COMMENT_BLOCK:       \
-            FREE(LilyToken, token);               \
-            break;                                \
-        default:                                  \
-            next_char__LilyScanner(self);         \
-            push_token__LilyScanner(self, token); \
-    }
+#define DEFAULT_FILTER_TOKEN(token)           \
+    case LILY_TOKEN_KIND_COMMENT_LINE:        \
+    case LILY_TOKEN_KIND_COMMENT_BLOCK:       \
+        FREE(LilyToken, token);               \
+        break;                                \
+    default:                                  \
+        next_char__LilyScanner(self);         \
+        push_token__LilyScanner(self, token); \
+        break;
 
-            FILTER_TOKEN();
+            switch (token->kind) {
+                DEFAULT_FILTER_TOKEN(token);
+            }
         }
     }
 
@@ -2675,7 +2676,9 @@ run__LilyScanner(LilyScanner *self, bool dump_scanner)
                                        self->base.source.cursor.position);
                 set_all__Location(&token->location, &self->base.location);
 
-                FILTER_TOKEN();
+                switch (token->kind) {
+                    DEFAULT_FILTER_TOKEN(token);
+                }
 
                 if (self->base.source.cursor.position >=
                     self->base.source.file->len - 1) {
