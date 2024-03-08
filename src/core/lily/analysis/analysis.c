@@ -3194,7 +3194,7 @@ check_identifier_expr__LilyAnalysis(LilyAnalysis *self,
                                 goto unknown_defined_data_type;
                             }
                         } else {
-                        unknown_defined_data_type : {
+                        unknown_defined_data_type: {
                             // TODO: add support for lambda function and method
                             LilyCheckedScopeDecls *current_fun =
                               get_current_fun__LilyCheckedScope(scope);
@@ -3532,7 +3532,7 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
 
                             break;
                         default:
-                        expected_fun_call : {
+                        expected_fun_call: {
                             ANALYSIS_EMIT_DIAGNOSTIC(
                               self,
                               simple_lily_error,
@@ -4119,7 +4119,7 @@ valid_cast__LilyAnalysis(LilyAnalysis *self,
                 case LILY_CHECKED_DATA_TYPE_KIND_UINT8:
                 case LILY_CHECKED_DATA_TYPE_KIND_USIZE:
                     if (dest->kind == src->kind) {
-                    cannot_cast_to_the_same_data_type : {
+                    cannot_cast_to_the_same_data_type: {
                         ANALYSIS_EMIT_DIAGNOSTIC(
                           self,
                           simple_lily_error,
@@ -4544,7 +4544,7 @@ valid_function_signature__LilyAnalysis(LilyAnalysis *self,
 
                                 break;
                             default:
-                            valid_data_type_of_param : {
+                            valid_data_type_of_param: {
                                 if (!eq__LilyCheckedDataType(
                                       param->data_type,
                                       param_call->value->data_type)) {
@@ -5558,7 +5558,7 @@ check_fun_call_expr__LilyAnalysis(LilyAnalysis *self,
                                 ->value->data_type);
                 }
             } else {
-            params_signature : {
+            params_signature: {
                 for (Usize i = 0; i < fun->fun.params->len; ++i) {
                     LilyCheckedDeclFunParam *param =
                       get__Vec(fun->fun.params, i);
@@ -5833,7 +5833,7 @@ check_call_expr__LilyAnalysis(LilyAnalysis *self,
 
             if (!is_builtin_function__LilyBuiltin(
                   expr->call.fun_builtin.name->buffer)) {
-            bad_builtin_function : {
+            bad_builtin_function: {
                 ANALYSIS_EMIT_DIAGNOSTIC(
                   self,
                   simple_lily_error,
@@ -7110,7 +7110,7 @@ check_literal_expr__LilyAnalysis(LilyAnalysis *self,
                         goto get_nil_cg_dt;
                 }
             } else {
-            get_nil_cg_dt : {
+            get_nil_cg_dt: {
                 const LilyCheckedScopeDecls *current_parent =
                   get_parent__LilyCheckedScope(scope);
                 String *compiler_generic_name = NULL;
@@ -7179,7 +7179,7 @@ check_literal_expr__LilyAnalysis(LilyAnalysis *self,
                         goto get_none_unknown_dt;
                 }
             } else {
-            get_none_unknown_dt : {
+            get_none_unknown_dt: {
                 return NEW_VARIANT(
                   LilyCheckedExpr,
                   literal,
@@ -7570,7 +7570,7 @@ check_unary_expr__LilyAnalysis(LilyAnalysis *self,
                               LILY_CHECKED_EXPR_UNARY_KIND_REF,
                               right));
                     case LILY_CHECKED_DATA_TYPE_KIND_REF:
-                    get_ref : {
+                    get_ref: {
                         return NEW_VARIANT(
                           LilyCheckedExpr,
                           unary,
@@ -9108,7 +9108,7 @@ check_literal_pattern__LilyAnalysis(LilyAnalysis *self,
                         goto get_nil_unknown_dt;
                 }
             } else {
-            get_nil_unknown_dt : {
+            get_nil_unknown_dt: {
                 res = NEW_VARIANT(
                   LilyCheckedPattern,
                   literal,
@@ -9144,7 +9144,7 @@ check_literal_pattern__LilyAnalysis(LilyAnalysis *self,
                         goto get_none_unknown_dt;
                 }
             } else {
-            get_none_unknown_dt : {
+            get_none_unknown_dt: {
                 res = NEW_VARIANT(
                   LilyCheckedPattern,
                   literal,
@@ -11300,7 +11300,7 @@ check_fun__LilyAnalysis(LilyAnalysis *self, LilyCheckedDecl *fun)
                     if (!fun->fun.has_return) {
                         // TODO: add compiler choice to the return data type.
                         // [Unit, CVoid]
-                    update_return_data_type : {
+                    update_return_data_type: {
                         fun->fun.return_data_type->kind =
                           LILY_CHECKED_DATA_TYPE_KIND_UNIT;
                     }

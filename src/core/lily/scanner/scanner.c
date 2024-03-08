@@ -1370,7 +1370,7 @@ scan_multiline_string__LilyScanner(LilyScanner *self)
 {
     String *res = NEW(String);
 
-scan_line : {
+scan_line: {
     jump__LilyScanner(self, 2); // skip `\\`
 
     // Check if the multiline string literal is not closed. While the current
@@ -1794,18 +1794,19 @@ get_closing__LilyScanner(LilyScanner *self, char target)
                     set_all__Location(&token->location, &self->base.location);
             }
 
-#define FILTER_TOKEN()                            \
-    switch (token->kind) {                        \
-        case LILY_TOKEN_KIND_COMMENT_LINE:        \
-        case LILY_TOKEN_KIND_COMMENT_BLOCK:       \
-            FREE(LilyToken, token);               \
-            break;                                \
-        default:                                  \
-            next_char__LilyScanner(self);         \
-            push_token__LilyScanner(self, token); \
-    }
+#define DEFAULT_FILTER_TOKEN(token)           \
+    case LILY_TOKEN_KIND_COMMENT_LINE:        \
+    case LILY_TOKEN_KIND_COMMENT_BLOCK:       \
+        FREE(LilyToken, token);               \
+        break;                                \
+    default:                                  \
+        next_char__LilyScanner(self);         \
+        push_token__LilyScanner(self, token); \
+        break;
 
-            FILTER_TOKEN();
+            switch (token->kind) {
+                DEFAULT_FILTER_TOKEN(token);
+            }
         }
     }
 
@@ -2612,7 +2613,7 @@ get_token__LilyScanner(LilyScanner *self)
 
                         goto keyword;
                     default:
-                    keyword : {
+                    keyword: {
                         FREE(String, id);
                         return NEW(LilyToken,
                                    kind,
@@ -2675,7 +2676,9 @@ run__LilyScanner(LilyScanner *self, bool dump_scanner)
                                        self->base.source.cursor.position);
                 set_all__Location(&token->location, &self->base.location);
 
-                FILTER_TOKEN();
+                switch (token->kind) {
+                    DEFAULT_FILTER_TOKEN(token);
+                }
 
                 if (self->base.source.cursor.position >=
                     self->base.source.file->len - 1) {

@@ -7108,7 +7108,7 @@ preparse_macro__LilyPreparser(LilyPreparser *self)
 
     goto get_tokens;
 
-get_brace_content : {
+get_brace_content: {
     while (self->current->kind != LILY_TOKEN_KIND_R_BRACE) {
         push__Vec(tokens, self->current);
         next_token__LilyPreparser(self);
@@ -7120,7 +7120,7 @@ get_brace_content : {
     goto get_tokens;
 }
 
-get_tokens : {
+get_tokens: {
     while (self->current->kind != LILY_TOKEN_KIND_R_BRACE &&
            self->current->kind != LILY_TOKEN_KIND_L_BRACE &&
            self->current->kind != LILY_TOKEN_KIND_EOF) {
@@ -7293,7 +7293,7 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
 
                 break;
             case LILY_TOKEN_KIND_DOT:
-            get_pkg_name : {
+            get_pkg_name: {
                 next_token__LilyPreparser(self);
 
                 switch (self->current->kind) {
@@ -7337,7 +7337,7 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
                                     }
                                 }
                             } else {
-                            unexpected_character : {
+                            unexpected_character: {
                                 emit__Diagnostic(
                                   NEW_VARIANT(
                                     Diagnostic,
@@ -7419,7 +7419,7 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
                         if (self->current->kind !=
                               LILY_TOKEN_KIND_KEYWORD_END &&
                             self->current->kind == LILY_TOKEN_KIND_SEMICOLON) {
-                        expected_semicolon : {
+                        expected_semicolon: {
                             switch (self->current->kind) {
                                 case LILY_TOKEN_KIND_SEMICOLON:
                                     next_token__LilyPreparser(self);
@@ -7450,7 +7450,7 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
 
                         break;
                     default:
-                    expected_sub_pkg_name : {
+                    expected_sub_pkg_name: {
                         emit__Diagnostic(
                           NEW_VARIANT(
                             Diagnostic,
@@ -7470,7 +7470,7 @@ preparse_package__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
                 break;
             }
             default:
-            expected_dot : {
+            expected_dot: {
                 String *current_s = to_string__LilyToken(self->current);
 
                 emit__Diagnostic(
@@ -7601,7 +7601,7 @@ preparse_module_body__LilyPreparser(LilyPreparser *self)
             }
         }
         default: {
-        unexpected_token : {
+        unexpected_token: {
             String *current_s = to_string__LilyToken(self->current);
 
             emit__Diagnostic(
@@ -7640,7 +7640,7 @@ preparse_module__LilyPreparser(LilyPreparser *self)
     Vec *body = NEW(Vec);
 
     // 1. Get the name
-parse_module_name : {
+parse_module_name: {
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
             if (name) {
@@ -8033,7 +8033,7 @@ preparse_break_block__LilyPreparser(LilyPreparser *self)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON: {
-        finish_to_preparse_break_stmt : {
+        finish_to_preparse_break_stmt: {
             END_LOCATION(&location, self->current->location);
             next_token__LilyPreparser(self);
 
@@ -8236,7 +8236,7 @@ preparse_if_block__LilyPreparser(LilyPreparser *self)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_EOF:
-        if_expected_do : {
+        if_expected_do: {
             emit__Diagnostic(
               NEW_VARIANT(
                 Diagnostic,
@@ -8275,7 +8275,7 @@ preparse_if_block__LilyPreparser(LilyPreparser *self)
                     goto if_expected_do;
             }
         case LILY_TOKEN_KIND_KEYWORD_DO:
-        if_do : {
+        if_do: {
             next_token__LilyPreparser(self);
 
             break;
@@ -8322,7 +8322,7 @@ preparse_if_block__LilyPreparser(LilyPreparser *self)
 
                 switch (self->current->kind) {
                     case LILY_TOKEN_KIND_EOF:
-                    elif_expected_do : {
+                    elif_expected_do: {
                         emit__Diagnostic(
                           NEW_VARIANT(
                             Diagnostic,
@@ -8356,7 +8356,7 @@ preparse_if_block__LilyPreparser(LilyPreparser *self)
                                 goto elif_expected_do;
                         }
                     case LILY_TOKEN_KIND_KEYWORD_DO:
-                    elif_do : {
+                    elif_do: {
                         next_token__LilyPreparser(self);
 
                         break;
@@ -8372,7 +8372,7 @@ preparse_if_block__LilyPreparser(LilyPreparser *self)
                 if (!elif_block) {
                     // Clean up allocations
 
-                clean_up_elif : {
+                clean_up_elif: {
                     FREE(Vec, if_expr);
 
                     FREE_BUFFER_ITEMS(if_block->buffer,
@@ -8681,7 +8681,7 @@ preparse_for_block__LilyPreparser(LilyPreparser *self)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_EOF:
-        for_expected_do : {
+        for_expected_do: {
             emit__Diagnostic(
               NEW_VARIANT(Diagnostic,
                           simple_lily_error,
@@ -8719,7 +8719,7 @@ preparse_for_block__LilyPreparser(LilyPreparser *self)
                     goto for_expected_do;
             }
         case LILY_TOKEN_KIND_KEYWORD_DO:
-        for_do : {
+        for_do: {
             next_token__LilyPreparser(self);
 
             break;
@@ -9345,7 +9345,7 @@ preparse_match_block__LilyPreparser(LilyPreparser *self)
 
                         // Clean up allocations
 
-                    clean_up_pattern : {
+                    clean_up_pattern: {
                         FREE(Vec, expr);
 
                         FREE_BUFFER_ITEMS(patterns->buffer, patterns->len, Vec);
@@ -9490,7 +9490,7 @@ preparse_next_block__LilyPreparser(LilyPreparser *self)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON: {
-        finish_to_preparse_break_stmt : {
+        finish_to_preparse_break_stmt: {
             END_LOCATION(&location, self->current->location);
             next_token__LilyPreparser(self);
 
@@ -10164,7 +10164,7 @@ preparse_block__LilyPreparser(LilyPreparser *self,
         }
 
         default:
-        preparse_exprs : {
+        preparse_exprs: {
             Location location = clone__Location(&self->current->location);
             Vec *exprs = NEW(Vec); // Vec<LilyToken* (&)>*
 
@@ -10306,7 +10306,7 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
         case LILY_TOKEN_KIND_AT:
             next_token__LilyPreparser(self);
 
-        parse_object_impl_name : {
+        parse_object_impl_name: {
             switch (self->current->kind) {
                 case LILY_TOKEN_KIND_IDENTIFIER_NORMAL:
                     if (object_impl) {
@@ -10408,7 +10408,7 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
         case LILY_TOKEN_KIND_KEYWORD_WHEN:
             when = NEW(Vec);
 
-        preparse_when_expr : {
+        preparse_when_expr: {
             next_token__LilyPreparser(self);
 
             switch (self->current->kind) {
@@ -10457,7 +10457,7 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
         case LILY_TOKEN_KIND_KEYWORD_REQ:
             req = NEW(Vec);
 
-        preparse_req_expr : {
+        preparse_req_expr: {
             next_token__LilyPreparser(self);
 
             switch (self->current->kind) {
@@ -10503,7 +10503,7 @@ preparse_fun__LilyPreparser(LilyPreparser *self)
             break;
         }
         case LILY_TOKEN_KIND_KEYWORD_COMPTIME:
-        preparse_comptime_expr : {
+        preparse_comptime_expr: {
             next_token__LilyPreparser(self);
 
             switch (self->current->kind) {
@@ -11119,7 +11119,7 @@ preparse_attribute_for_class__LilyPreparser(LilyPreparser *self,
             break;
     }
 
-return_attribute : {
+return_attribute: {
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_SEMICOLON:
             END_LOCATION(&location, self->current->location);
@@ -11435,7 +11435,7 @@ preparse_class_body__LilyPreparser(LilyPreparser *self)
                             goto unexpected_token_macro_expand;
                     }
                 } else {
-                unexpected_token_macro_expand : {
+                unexpected_token_macro_expand: {
                     String *current_s = to_string__LilyToken(self->current);
 
                     emit__Diagnostic(NEW_VARIANT(Diagnostic,
@@ -11494,7 +11494,7 @@ preparse_class_body__LilyPreparser(LilyPreparser *self)
 
     return body;
 
-clean_up : {
+clean_up: {
     // Clean up allocations
 
     FREE_BUFFER_ITEMS(body->buffer, body->len, LilyPreparserTraitBodyItem);
@@ -11546,7 +11546,7 @@ preparse_class__LilyPreparser(LilyPreparser *self,
 
             // Clean up allocations
 
-        clean_up : {
+        clean_up: {
             FREE(String, name);
 
             if (impls) {
@@ -11892,7 +11892,7 @@ preparse_trait_body__LilyPreparser(LilyPreparser *self)
                             goto unexpected_token_macro_expand;
                     }
                 } else {
-                unexpected_token_macro_expand : {
+                unexpected_token_macro_expand: {
                     String *current_s = to_string__LilyToken(self->current);
 
                     emit__Diagnostic(NEW_VARIANT(Diagnostic,
@@ -11954,7 +11954,7 @@ preparse_trait_body__LilyPreparser(LilyPreparser *self)
 
     return body;
 
-clean_up : {
+clean_up: {
     // Clean up allocations
 
     FREE_BUFFER_ITEMS(body->buffer, body->len, LilyPreparserTraitBodyItem);
@@ -11998,7 +11998,7 @@ preparse_trait__LilyPreparser(LilyPreparser *self,
                 from__String("expected `end` keyword to close trait")),
               &self->count_error);
 
-        clean_up : {
+        clean_up: {
             FREE(String, name);
 
             if (inherits) {
@@ -12297,7 +12297,7 @@ preparse_record_object_body__LilyPreparser(LilyPreparser *self)
             }
 
             default: {
-            unexpected_token : {
+            unexpected_token: {
                 String *current_s = to_string__LilyToken(self->current);
 
                 emit__Diagnostic(
@@ -12324,7 +12324,7 @@ preparse_record_object_body__LilyPreparser(LilyPreparser *self)
 
     return body;
 
-clean_up : {
+clean_up: {
     FREE_BUFFER_ITEMS(
       body->buffer, body->len, LilyPreparserRecordObjectBodyItem);
     FREE(Vec, body);
@@ -12363,7 +12363,7 @@ preparse_record_object__LilyPreparser(LilyPreparser *self,
                 from__String("expected `end` keyword to close record object")),
               &self->count_error);
 
-        clean_up : {
+        clean_up: {
             FREE(String, name);
 
             if (impls) {
@@ -12600,7 +12600,7 @@ preparse_enum_object_body__LilyPreparser(LilyPreparser *self)
 
     return body;
 
-clean_up : {
+clean_up: {
     // Clean up allocations
 
     FREE_BUFFER_ITEMS(body->buffer, body->len, LilyPreparserEnumObjectBodyItem);
@@ -12640,7 +12640,7 @@ preparse_enum_object__LilyPreparser(LilyPreparser *self,
                 from__String("expected `end` keyword to close enum object")),
               &self->count_error);
 
-        clean_up : {
+        clean_up: {
             FREE(String, name);
 
             if (impls) {
@@ -12893,14 +12893,14 @@ preparse_object__LilyPreparser(LilyPreparser *self, bool is_close)
 
     switch (self->current->kind) {
         case LILY_TOKEN_KIND_KEYWORD_IMPL: {
-        preparse_impl : {
+        preparse_impl: {
             location_impl = &self->current->location;
             PREPARSE_INHERIT_OR_IMPL(
               impls, preparse_inherit, LILY_TOKEN_KIND_KEYWORD_INHERIT);
         }
         }
         case LILY_TOKEN_KIND_KEYWORD_INHERIT: {
-        preparse_inherit : {
+        preparse_inherit: {
             location_inherit = &self->current->location;
             PREPARSE_INHERIT_OR_IMPL(
               inherits, preparse_impl, LILY_TOKEN_KIND_KEYWORD_IMPL);
@@ -13414,7 +13414,7 @@ preparse_record_body__LilyPreparser(LilyPreparser *self)
                 break;
             }
             default: {
-            unexpected_token : {
+            unexpected_token: {
                 String *current_s = to_string__LilyToken(self->current);
 
                 emit__Diagnostic(
@@ -13441,7 +13441,7 @@ preparse_record_body__LilyPreparser(LilyPreparser *self)
 
     return body;
 
-clean_up : {
+clean_up: {
     FREE_BUFFER_ITEMS(body->buffer, body->len, LilyPreparserRecordBodyItem);
     FREE(Vec, body);
 
@@ -13487,7 +13487,7 @@ preparse_record__LilyPreparser(LilyPreparser *self,
                 NULL),
               &self->count_error);
 
-        clean_up : {
+        clean_up: {
             FREE(String, name);
 
             FREE_BUFFER_ITEMS(
@@ -13711,7 +13711,7 @@ preparse_enum_body__LilyPreparser(LilyPreparser *self)
 
     return body;
 
-clean_up : {
+clean_up: {
     FREE_BUFFER_ITEMS(body->buffer, body->len, LilyPreparserEnumBodyItem);
     FREE(Vec, body);
 
@@ -13754,7 +13754,7 @@ preparse_enum__LilyPreparser(LilyPreparser *self,
                 NULL),
               &self->count_error);
 
-        clean_up : {
+        clean_up: {
             FREE(String, name);
 
             FREE_BUFFER_ITEMS(
@@ -14715,7 +14715,7 @@ run__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
                     }
 
                     case LILY_TOKEN_KIND_KEYWORD_CLOSE: {
-                    preparse_close : {
+                    preparse_close: {
                         next_token__LilyPreparser(self);
 
                         switch (self->current->kind) {
@@ -15061,7 +15061,7 @@ run__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
                 break;
 
             default: {
-            unexpected_token : {
+            unexpected_token: {
                 String *current_s = to_string__LilyToken(self->current);
 
                 emit__Diagnostic(
@@ -15086,7 +15086,7 @@ run__LilyPreparser(LilyPreparser *self, LilyPreparserInfo *info)
         }
     }
 
-exit_preparser : {
+exit_preparser: {
 }
 
 #ifdef DEBUG_PREPARSER

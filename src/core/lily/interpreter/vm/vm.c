@@ -3837,7 +3837,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         VM_SET_CURRENT_BLOCK_INST(current_block_inst->reg.inst);
         VM_GOTO_INST(current_block_inst);
 
-    reg_finish : {
+    reg_finish: {
         add_reg__LilyInterpreterVMStackBlockFrame(
           current_block_frame, reg_name, VM_PEEK(stack));
         EAT_NEXT_LABEL();
@@ -3851,7 +3851,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         VM_SET_CURRENT_BLOCK_INST(current_block_inst->ret);
         VM_GOTO_INST(current_block_inst);
 
-    ret_finish : {
+    ret_finish: {
         LilyInterpreterValue ret_value = VM_POP(stack);
 
         ASSERT(current_frame);
@@ -4382,7 +4382,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         VM_SET_CURRENT_BLOCK_INST(current_block_inst->var.inst);
         VM_GOTO_INST(current_block_inst);
 
-    var_finish : {
+    var_finish: {
         EAT_NEXT_LABEL();
     }
     }
@@ -4558,12 +4558,12 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 void
 run_insts__LilyInterpreterVM(LilyInterpreterVM *self)
 {
-run : {
+run: {
     run_inst__LilyInterpreterVM(self);
     VM_NEXT_INST(run, exit);
 }
 
-exit : {
+exit: {
     return;
 }
 }
@@ -4580,12 +4580,12 @@ run__LilyInterpreterVM(LilyInterpreterVM *self)
 {
     // TODO: Instead of call `run_inst__*`, execute all instructions and the VM
     // in one function.
-run_vm : {
+run_vm: {
     run_inst__LilyInterpreterVM(self);
     VM_NEXT_INST(run_vm, exit_vm);
 }
 
-exit_vm : {
+exit_vm: {
     // Clean up
 
     FREE(LilyInterpreterVMStack, &local_stack);

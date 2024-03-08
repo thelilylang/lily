@@ -87,7 +87,7 @@ add_package__LilyPackageDependencyTree(LilyPackageDependencyTree *self,
               get__Vec(package->package_dependencies, i);
             LilyPackageDependencyTree *dependency = NULL;
 
-        add_dependency : {
+        add_dependency: {
             for (Usize i = 0; i < trees->len && !dependency; ++i) {
                 dependency = is_added__LilyPackageDependencyTree(
                   get__Vec(trees, i), dependency_pkg);

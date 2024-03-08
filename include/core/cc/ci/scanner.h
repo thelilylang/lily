@@ -69,8 +69,10 @@ DESTRUCTOR(CIScanner, const CIScanner *self);
 
 typedef struct CIScannerContext
 {
+    Vec *tokens; // Vec<CIToken*>*? (&)
     bool in_macro;
-    bool in_prepro_cond;
+    bool in_prepro_if;
+    bool in_prepro_else;
 } CIScannerContext;
 
 /**
@@ -79,11 +81,15 @@ typedef struct CIScannerContext
  */
 inline CONSTRUCTOR(CIScannerContext,
                    CIScannerContext,
+                   Vec *tokens,
                    bool in_macro,
-                   bool in_prepro_cond)
+                   bool in_prepro_if,
+                   bool in_prepro_else)
 {
-    return (CIScannerContext){ .in_macro = in_macro,
-                               .in_prepro_cond = in_prepro_cond };
+    return (CIScannerContext){ .tokens = tokens,
+                               .in_macro = in_macro,
+                               .in_prepro_if = in_prepro_if,
+                               .in_prepro_else = in_prepro_else };
 }
 
 #endif // LILY_CORE_CC_CI_SCANNER_H

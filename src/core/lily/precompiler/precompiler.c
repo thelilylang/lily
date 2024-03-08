@@ -929,7 +929,7 @@ precompile_import_access__LilyPrecompiler(LilyPrecompiler *self,
                 goto select_success_way;
             }
 
-        expected_r_brace : {
+        expected_r_brace: {
             if (!import_value->buffer[*position]) {
                 emit__Diagnostic(
                   NEW_VARIANT(
@@ -948,7 +948,7 @@ precompile_import_access__LilyPrecompiler(LilyPrecompiler *self,
             }
         }
 
-        select_success_way : {
+        select_success_way: {
             push__Vec(values,
                       NEW_VARIANT(LilyImportValue, select, selector_res));
         }

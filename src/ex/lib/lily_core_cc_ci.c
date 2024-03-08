@@ -327,8 +327,10 @@ extern inline CONSTRUCTOR(CIScanner,
 
 extern inline CONSTRUCTOR(CIScannerContext,
                           CIScannerContext,
+                          Vec *tokens,
                           bool in_macro,
-                          bool in_prepro_cond);
+                          bool in_prepro_if,
+                          bool in_prepro_else);
 
 // <core/cc/ci/token.h>
 extern inline CONSTRUCTOR(CITokenPreprocessorDefine,
@@ -339,12 +341,46 @@ extern inline CONSTRUCTOR(CITokenPreprocessorDefine,
 
 extern inline CONSTRUCTOR(CITokenPreprocessorEmbed,
                           CITokenPreprocessorEmbed,
-                          Vec *tokens);
+                          String *value);
 
 extern inline CONSTRUCTOR(CITokenPreprocessorLine,
                           CITokenPreprocessorLine,
                           Usize line,
                           String *filename);
+
+extern inline CONSTRUCTOR(CITokenPreprocessorIf,
+                          CITokenPreprocessorIf,
+                          Vec *cond,
+                          Vec *content);
+
+extern inline CONSTRUCTOR(CITokenPreprocessorElif,
+                          CITokenPreprocessorElif,
+                          Vec *cond,
+                          Vec *content);
+
+extern inline CONSTRUCTOR(CITokenPreprocessorIfdef,
+                          CITokenPreprocessorIfdef,
+                          String *identifier,
+                          Vec *content);
+
+extern inline CONSTRUCTOR(CITokenPreprocessorIfndef,
+                          CITokenPreprocessorIfndef,
+                          String *identifier,
+                          Vec *content);
+
+extern inline CONSTRUCTOR(CITokenPreprocessorElifdef,
+                          CITokenPreprocessorElifdef,
+                          String *identifier,
+                          Vec *content);
+
+extern inline CONSTRUCTOR(CITokenPreprocessorElifndef,
+                          CITokenPreprocessorElifndef,
+                          String *identifier,
+                          Vec *content);
+
+extern inline CONSTRUCTOR(CITokenPreprocessorElse,
+                          CITokenPreprocessorElse,
+                          Vec *content);
 
 extern inline CONSTRUCTOR(CITokenPreprocessorInclude,
                           CITokenPreprocessorInclude,

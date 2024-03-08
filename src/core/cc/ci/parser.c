@@ -1166,7 +1166,7 @@ parse_data_type__CIParser(CIParser *self)
                     break;
                 case CI_TOKEN_KIND_LBRACE:
                 case CI_TOKEN_KIND_SEMICOLON: {
-                parse_struct_or_union : {
+                parse_struct_or_union: {
                     switch (previous_token_kind) {
                         case CI_TOKEN_KIND_KEYWORD_STRUCT: {
                             CIDecl *struct_decl = parse_struct__CIParser(
@@ -2463,7 +2463,7 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
         case CI_TOKEN_KIND_KEYWORD_SWITCH:
         case CI_TOKEN_KIND_KEYWORD_WHILE:
         case CI_TOKEN_KIND_LBRACE:
-        parse_stmt : {
+        parse_stmt: {
             DISABLE_IN_LABEL();
 
             return parse_stmt__CIParser(self, in_loop, in_switch);
@@ -2471,7 +2471,7 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
         case CI_TOKEN_KIND_SEMICOLON:
             return NULL;
         default:
-        default_case : {
+        default_case: {
             if (is_data_type__CIParser(self)) {
                 CIDecl *decl = parse_decl__CIParser(self, true);
 
@@ -2747,6 +2747,43 @@ parse_variable__CIParser(CIParser *self,
 CIDecl *
 parse_decl__CIParser(CIParser *self, bool in_function_body)
 {
+    switch (self->tokens_iters.current_token->kind) {
+        case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:
+            TODO("#define preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_ELIF:
+            TODO("#elif preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:
+            TODO("#elifdef preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:
+            TODO("#elifndef preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_ELSE:
+            TODO("#else preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_EMBED:
+            TODO("#embed preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_ENDIF:
+            TODO("#endif preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_ERROR:
+            TODO("#error preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_IF:
+            TODO("#if preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
+            TODO("#ifdef preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:
+            TODO("#ifndef preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_INCLUDE:
+            TODO("#include preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_LINE:
+            TODO("#line preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_PRAGMA:
+            TODO("#pragma preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_UNDEF:
+            TODO("#undef preprocessor");
+        case CI_TOKEN_KIND_PREPROCESSOR_WARNING:
+            TODO("#warning preprocessor");
+        default:
+            break;
+    }
+
     storage_class_flag = CI_STORAGE_CLASS_NONE;
 
     parse_storage_class_specifiers__CIParser(self, &storage_class_flag);
@@ -2786,7 +2823,7 @@ parse_decl__CIParser(CIParser *self, bool in_function_body)
                     break;
                 case CI_TOKEN_KIND_SEMICOLON:
                     if (generic_params) {
-                    no_generic_params_expected : {
+                    no_generic_params_expected: {
                         FAILED("no generic params are expected in variable "
                                "declaration");
                     }
