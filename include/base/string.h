@@ -216,6 +216,34 @@ count_c__String(const String *self, char c);
 
 /**
  *
+ * @brief Write Uint8 character on the String's buffer.
+ */
+void
+write_u8__String(String *self, Uint8 v);
+
+/**
+ *
+ * @brief Write Uint16 character on the String's buffer.
+ */
+void
+write_u16__String(String *self, Uint16 v);
+
+/**
+ *
+ * @brief Write Uint32 character on the String's buffer.
+ */
+void
+write_u32__String(String *self, Uint32 v);
+
+/**
+ *
+ * @brief Write Uint64 character on the String's buffer.
+ */
+void
+write_u64__String(String *self, Uint64 v);
+
+/**
+ *
  * @brief Free String buffer.
  */
 DESTRUCTOR(String, String *self);

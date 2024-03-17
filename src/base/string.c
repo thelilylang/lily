@@ -277,6 +277,41 @@ count_c__String(const String *self, char c)
     return count;
 }
 
+void
+write_u8__String(String *self, Uint8 v)
+{
+    push__String(self, (v >> 0) & 0xFF);
+}
+
+void
+write_u16__String(String *self, Uint16 v)
+{
+    push__String(self, (v >> 0) & 0xFF);
+    push__String(self, (v >> 8) & 0xFF);
+}
+
+void
+write_u32__String(String *self, Uint32 v)
+{
+    push__String(self, (v >> 0) & 0xFF);
+    push__String(self, (v >> 8) & 0xFF);
+    push__String(self, (v >> 16) & 0xFF);
+    push__String(self, (v >> 24) & 0xFF);
+}
+
+void
+write_u64__String(String *self, Uint64 v)
+{
+    push__String(self, (v >> 0) & 0xFF);
+    push__String(self, (v >> 8) & 0xFF);
+    push__String(self, (v >> 16) & 0xFF);
+    push__String(self, (v >> 24) & 0xFF);
+    push__String(self, (v >> 32) & 0xFF);
+    push__String(self, (v >> 40) & 0xFF);
+    push__String(self, (v >> 48) & 0xFF);
+    push__String(self, (v >> 56) & 0xFF);
+}
+
 DESTRUCTOR(String, String *self)
 {
     lily_free(self->buffer);
