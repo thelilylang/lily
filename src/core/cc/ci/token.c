@@ -30,6 +30,7 @@
 #include <base/print.h>
 #endif
 
+#include <core/cc/ci/parser.h>
 #include <core/cc/ci/token.h>
 
 #include <stdio.h>
@@ -1355,6 +1356,23 @@ to_string__CIToken(CIToken *self)
     }
 }
 
+bool
+is_conditional_preprocessor__CITokenKind(enum CITokenKind kind)
+{
+    switch (kind) {
+        case CI_TOKEN_KIND_PREPROCESSOR_ELIF:
+        case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:
+        case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:
+        case CI_TOKEN_KIND_PREPROCESSOR_ELSE:
+        case CI_TOKEN_KIND_PREPROCESSOR_IF:
+        case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
+        case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:
+            return true;
+        default:
+            return false;
+    }
+}
+
 #ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
@@ -2167,6 +2185,65 @@ CONSTRUCTOR(CITokensIter *, CITokensIter, const Vec *vec)
     self->peek.in_use = false;
 
     return self;
+}
+
+CIToken *
+get_conditional_preprocessor__CITokensIters(CITokensIters *self)
+{
+    if (self->current_token) {
+        // Begin to parse condition expression.
+        switch (self->current_token->kind) {
+            case CI_TOKEN_KIND_PREPROCESSOR_IF:
+                add_iter__CITokensIters(
+                  self,
+                  NEW(CITokensIter, self->current_token->preprocessor_if.cond));
+
+                break;
+            case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
+                TODO("resolve ifdef condition");
+            case CI_TOKEN_KIND_PREPROCESSOR_ELIF:
+                add_iter__CITokensIters(
+                  self,
+                  NEW(CITokensIter,
+                      self->current_token->preprocessor_elif.cond));
+
+                break;
+            case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:
+                TODO("resolve elifdef condition");
+            case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:
+                TODO("resolve elifndef condition");
+            case CI_TOKEN_KIND_PREPROCESSOR_ELSE:
+                return self->current_token;
+            default:
+                UNREACHABLE("cannot get this kind of token");
+        }
+
+        // CIExpr *expr_cond = parse_expr__CIParser();
+    }
+
+    return NULL;
+}
+
+void
+jump_in_token_block__CITokensIters(CITokensIters *self)
+{
+    ASSERT(self->current_token);
+
+    switch (self->current_token->kind) {
+        case CI_TOKEN_KIND_PREPROCESSOR_ENDIF:
+            UNREACHABLE("#endif is not expected at this point");
+        case CI_TOKEN_KIND_PREPROCESSOR_IF:
+        case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
+        case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:
+            get_conditional_preprocessor__CITokensIters(self);
+
+            if (self->current_token) {
+            }
+        case CI_TOKEN_KIND_IDENTIFIER:
+            TODO("check if is macro");
+        default:
+            break;
+    }
 }
 
 void

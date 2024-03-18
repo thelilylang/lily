@@ -238,6 +238,9 @@ extern inline CONSTRUCTOR(CIExprFunctionCall,
                           Vec *params,
                           CIGenericParams *generic_params);
 
+extern inline CIExpr *
+ref__CIExpr(CIExpr *self);
+
 extern inline CONSTRUCTOR(CIExprStructCall, CIExprStructCall, Vec *fields);
 
 extern inline CONSTRUCTOR(CIStmtBlock, CIStmtBlock, Vec *body);
@@ -394,6 +397,9 @@ extern inline DESTRUCTOR(CITokensIter, CITokensIter *self);
 extern inline CONSTRUCTOR(CITokensIters, CITokensIters);
 
 extern inline void
-add_iter__CITokensIters(CITokensIters *self, CITokensIter *iter);
+add_iter__CITokensIters(const CITokensIters *self, CITokensIter *iter);
+
+extern inline void
+pop_iter__CITokensIters(const CITokensIters *self);
 
 #endif // LILY_EX_LIB_LILY_CORE_CC_CI_C

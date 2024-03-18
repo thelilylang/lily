@@ -1002,6 +1002,13 @@ to_string__CIToken(CIToken *self);
 
 /**
  *
+ * @brief Check if the kind of token is a conditional preprocessor.
+ */
+bool
+is_conditional_preprocessor__CITokenKind(enum CITokenKind kind);
+
+/**
+ *
  * @brief Convert CITokenKind in string.
  * @note This function is only used to debug.
  */
@@ -1085,13 +1092,38 @@ inline CONSTRUCTOR(CITokensIters, CITokensIters)
 
 /**
  *
- * @brief Add new iter as current.
+ * @brief Add new iter from iters.
  */
 inline void
-add_iter__CITokensIters(CITokensIters *self, CITokensIter *iter)
+add_iter__CITokensIters(const CITokensIters *self, CITokensIter *iter)
 {
     push__Stack(self->iters, iter);
 }
+
+/**
+ *
+ * @brief Pop iter from iters.
+ */
+inline void
+pop_iter__CITokensIters(const CITokensIters *self)
+{
+    pop__Stack(self->iters);
+}
+
+/**
+ *
+ * @brief Determine which branch of conditional preprocessor to jump.
+ */
+CIToken *
+get_conditional_preprocessor__CITokensIters(CITokensIters *self);
+
+/**
+ *
+ * @brief Jump into token block such as macro call, conditional preprocessor,
+ * etc.
+ */
+void
+jump_in_token_block__CITokensIters(CITokensIters *self);
 
 /**
  *
