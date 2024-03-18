@@ -2022,6 +2022,7 @@ IMPL_FOR_DEBUG(to_string, CIExprKind, enum CIExprKind self);
 struct CIExpr
 {
     enum CIExprKind kind;
+    Usize ref_count;
     union
     {
         CIExpr *alignof_;
@@ -2126,6 +2127,18 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, unary, CIExprUnary unary);
  */
 CIDataType *
 get_data_type__CIExpr(const CIExpr *self);
+
+/**
+ *
+ * @brief Increment `ref_count`.
+ * @return CIExpr*
+ */
+inline CIExpr *
+ref__CIExpr(CIExpr *self)
+{
+    ++self->ref_count;
+    return self;
+}
 
 /**
  *

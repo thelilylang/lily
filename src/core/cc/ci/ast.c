@@ -2812,6 +2812,7 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, alignof, CIExpr *alignof_)
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
     self->kind = CI_EXPR_KIND_ALIGNOF;
+    self->ref_count = 0;
     self->alignof_ = alignof_;
 
     return self;
@@ -2822,6 +2823,7 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, binary, CIExprBinary binary)
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
     self->kind = CI_EXPR_KIND_BINARY;
+    self->ref_count = 0;
     self->binary = binary;
 
     return self;
@@ -2832,6 +2834,7 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, cast, CIExprCast cast)
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
     self->kind = CI_EXPR_KIND_CAST;
+    self->ref_count = 0;
     self->cast = cast;
 
     return self;
@@ -2842,6 +2845,7 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, data_type, CIDataType *data_type)
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
     self->kind = CI_EXPR_KIND_DATA_TYPE;
+    self->ref_count = 0;
     self->data_type = data_type;
 
     return self;
@@ -2855,6 +2859,7 @@ VARIANT_CONSTRUCTOR(CIExpr *,
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
     self->kind = CI_EXPR_KIND_FUNCTION_CALL;
+    self->ref_count = 0;
     self->function_call = function_call;
 
     return self;
@@ -2865,6 +2870,7 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, grouping, CIExpr *grouping)
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
     self->kind = CI_EXPR_KIND_GROUPING;
+    self->ref_count = 0;
     self->grouping = grouping;
 
     return self;
@@ -2875,6 +2881,7 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, identifier, String *identifier)
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
     self->kind = CI_EXPR_KIND_IDENTIFIER;
+    self->ref_count = 0;
     self->identifier = identifier;
 
     return self;
@@ -2885,6 +2892,7 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, literal, CIExprLiteral literal)
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
     self->kind = CI_EXPR_KIND_LITERAL;
+    self->ref_count = 0;
     self->literal = literal;
 
     return self;
@@ -2895,6 +2903,7 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, sizeof, CIExpr *sizeof_)
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
     self->kind = CI_EXPR_KIND_SIZEOF;
+    self->ref_count = 0;
     self->sizeof_ = sizeof_;
 
     return self;
@@ -2905,6 +2914,7 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, struct_call, CIExprStructCall struct_call)
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
     self->kind = CI_EXPR_KIND_STRUCT_CALL;
+    self->ref_count = 0;
     self->struct_call = struct_call;
 
     return self;
@@ -2915,6 +2925,7 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, ternary, CIExprTernary ternary)
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
     self->kind = CI_EXPR_KIND_TERNARY;
+    self->ref_count = 0;
     self->ternary = ternary;
 
     return self;
@@ -2925,6 +2936,7 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, unary, CIExprUnary unary)
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
     self->kind = CI_EXPR_KIND_UNARY;
+    self->ref_count = 0;
     self->unary = unary;
 
     return self;
@@ -3249,6 +3261,11 @@ VARIANT_DESTRUCTOR(CIExpr, unary, CIExpr *self)
 
 DESTRUCTOR(CIExpr, CIExpr *self)
 {
+    if (self->ref_count > 0) {
+        --self->ref_count;
+        return;
+    }
+
     switch (self->kind) {
         case CI_EXPR_KIND_ALIGNOF:
             FREE_VARIANT(CIExpr, alignof, self);
