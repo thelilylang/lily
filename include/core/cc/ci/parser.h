@@ -100,6 +100,14 @@ run__CIParser(CIParser *self);
 
 /**
  *
+ * @brief Parse expression.
+ * @return CIExpr*?
+ */
+CIExpr *
+parse_expr__CIParser(CIParser *self);
+
+/**
+ *
  * @brief Substitute generic data type.
  */
 CIDataType *
