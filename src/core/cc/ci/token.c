@@ -2210,11 +2210,10 @@ pop_iter__CITokensIters(CITokensIters *self)
     //
     //	After pop:
     //
-    // <elif_preprocessor_content>
-    // 		<if_preprocessor_block>
-    // 			<elif_preprocessor_content>
-    // 				<if_preprocessor_block>
-    // 					<main_vec>
+    // 	<if_preprocessor_block>
+    // 		<elif_preprocessor_content>
+    // 			<if_preprocessor_block>
+    // 				<main_vec>
 
     // NOTE: Normally, it's impossible to pop the last element (iter), as we
     // check at the start of the next_token function if the current token is not
