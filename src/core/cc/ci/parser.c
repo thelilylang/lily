@@ -1948,11 +1948,13 @@ jump_in_token_block__CIParser(CIParser *self)
 void
 next_token__CIParser(CIParser *self)
 {
-    switch (self->tokens_iters.current_token->kind) {
-        case CI_TOKEN_KIND_EOF:
-            return;
-        default:
-            break;
+    if (self->tokens_iters.current_token) {
+        switch (self->tokens_iters.current_token->kind) {
+            case CI_TOKEN_KIND_EOF:
+                return;
+            default:
+                break;
+        }
     }
 
     ASSERT(!empty__Stack(self->tokens_iters.iters));
