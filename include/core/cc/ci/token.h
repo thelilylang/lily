@@ -1104,43 +1104,8 @@ add_iter__CITokensIters(const CITokensIters *self, CITokensIter *iter)
  *
  * @brief Pop iter from iters.
  */
-inline void
-pop_iter__CITokensIters(const CITokensIters *self)
-{
-    pop__Stack(self->iters);
-}
-
-/**
- *
- * @brief Determine which branch of conditional preprocessor to jump.
- */
-CIToken *
-get_conditional_preprocessor__CITokensIters(CITokensIters *self);
-
-/**
- *
- * @brief Jump into token block such as macro call, conditional preprocessor,
- * etc.
- */
 void
-jump_in_token_block__CITokensIters(CITokensIters *self);
-
-/**
- *
- * @brief Advance to one token on the current iterator.
- */
-void
-next_token__CITokensIters(CITokensIters *self);
-
-/**
- *
- * @brief Peek token at position + n.
- */
-CIToken *
-peek_token__CITokensIters(const CITokensIters *self,
-                          const CIResultFile *file,
-                          Stack *macros,
-                          Usize n);
+pop_iter__CITokensIters(CITokensIters *self);
 
 /**
  *

@@ -400,6 +400,6 @@ extern inline void
 add_iter__CITokensIters(const CITokensIters *self, CITokensIter *iter);
 
 extern inline void
-pop_iter__CITokensIters(const CITokensIters *self);
+pop_iter__CITokensIters(CITokensIters *self);
 
 #endif // LILY_EX_LIB_LILY_CORE_CC_CI_C

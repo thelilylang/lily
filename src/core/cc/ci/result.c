@@ -43,13 +43,11 @@ DESTRUCTOR(CIResultDefineVec, CIResultDefineVec self)
 
 CONSTRUCTOR(CIResultDefine *,
             CIResultDefine,
-            const CITokenPreprocessorDefine *define,
-            const Location *undef_location)
+            const CITokenPreprocessorDefine *define)
 {
     CIResultDefine *self = lily_malloc(sizeof(CIResultDefine));
 
     self->define = define;
-    self->undef_location = undef_location;
 
     return self;
 }
@@ -113,6 +111,31 @@ add_scope__CIResultFile(const CIResultFile *self,
     push__Vec(self->scopes, scope);
 
     return scope;
+}
+
+const CIResultDefine *
+add_define__CIResultFile(const CIResultFile *self,
+                         CIResultDefine *result_define)
+{
+    return insert__HashMap(
+      self->defines, result_define->define->name->buffer, result_define);
+}
+
+const CIResultDefine *
+get_define__CIResultFile(const CIResultFile *self, String *name)
+{
+    return get__HashMap(self->defines, name->buffer);
+}
+
+bool
+undef_define__CIResultFile(const CIResultFile *self, String *name)
+{
+    CIResultDefine *is_exist = remove__HashMap(self->defines, name->buffer);
+    bool res = is_exist;
+
+    FREE(CIResultDefine, is_exist);
+
+    return res;
 }
 
 const CIDecl *

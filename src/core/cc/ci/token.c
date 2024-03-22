@@ -2187,166 +2187,41 @@ CONSTRUCTOR(CITokensIter *, CITokensIter, const Vec *vec)
     return self;
 }
 
-CIToken *
-get_conditional_preprocessor__CITokensIters(CITokensIters *self)
-{
-    if (self->current_token) {
-        // Begin to parse condition expression.
-        switch (self->current_token->kind) {
-            case CI_TOKEN_KIND_PREPROCESSOR_IF:
-                add_iter__CITokensIters(
-                  self,
-                  NEW(CITokensIter, self->current_token->preprocessor_if.cond));
-
-                break;
-            case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
-                TODO("resolve ifdef condition");
-            case CI_TOKEN_KIND_PREPROCESSOR_ELIF:
-                add_iter__CITokensIters(
-                  self,
-                  NEW(CITokensIter,
-                      self->current_token->preprocessor_elif.cond));
-
-                break;
-            case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:
-                TODO("resolve elifdef condition");
-            case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:
-                TODO("resolve elifndef condition");
-            case CI_TOKEN_KIND_PREPROCESSOR_ELSE:
-                return self->current_token;
-            default:
-                UNREACHABLE("cannot get this kind of token");
-        }
-
-        // CIExpr *expr_cond = parse_expr__CIParser();
-    }
-
-    return NULL;
-}
-
 void
-jump_in_token_block__CITokensIters(CITokensIters *self)
+pop_iter__CITokensIters(CITokensIters *self)
 {
-    ASSERT(self->current_token);
+    // e.g.
+    //
+    // Stack:
+    //
+    // Top
+    // ^
+    // |
+    // |
+    // Bottom
+    //
+    // Before pop:
+    //
+    // <elif_preprocessor_content>
+    // 		<if_preprocessor_block>
+    //			<elif_preprocessor_content>
+    //				<if_preprocessor_block>
+    //					<main_vec>
+    //
+    //	After pop:
+    //
+    // <elif_preprocessor_content>
+    // 		<if_preprocessor_block>
+    // 			<elif_preprocessor_content>
+    // 				<if_preprocessor_block>
+    // 					<main_vec>
 
-    switch (self->current_token->kind) {
-        case CI_TOKEN_KIND_PREPROCESSOR_ENDIF:
-            UNREACHABLE("#endif is not expected at this point");
-        case CI_TOKEN_KIND_PREPROCESSOR_IF:
-        case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
-        case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:
-            get_conditional_preprocessor__CITokensIters(self);
+    // NOTE: Normally, it's impossible to pop the last element (iter), as we
+    // check at the start of the next_token function if the current token is not
+    // EOF.
+    ASSERT(self->iters->len > 1);
 
-            if (self->current_token) {
-            }
-        case CI_TOKEN_KIND_IDENTIFIER:
-            TODO("check if is macro");
-        default:
-            break;
-    }
-}
-
-void
-next_token__CITokensIters(CITokensIters *self)
-{
-    if (!empty__Stack(self->iters)) {
-        CITokensIter *top = peek__Stack(self->iters);
-
-        if (top->iter.count == 0) {
-            self->current_token = next__VecIter(&top->iter);
-
-            // If the `previous_token` is `NULL`, we assign the `current_token`
-            // to it. Otherwise, we assign nothing because that means we keep
-            // the last token of the previous iterator.
-            if (!self->previous_token) {
-                self->previous_token = self->current_token;
-            }
-        } else {
-            self->previous_token = self->current_token;
-            self->current_token = next__VecIter(&top->iter);
-
-            // If the `current_token` is `NULL`, that means we have reached the
-            // end of the current iter (top). So we pop the current iter from
-            // the stack and call `next_token__CITokensIters` again.
-            if (!self->current_token) {
-                FREE(CITokensIter, pop__Stack(self->iters));
-
-                return next_token__CITokensIters(self);
-            }
-        }
-    }
-}
-
-CIToken *
-peek_token__CITokensIters(const CITokensIters *self,
-                          const CIResultFile *file,
-                          Stack *macros,
-                          Usize n)
-{
-    CIToken *current_token = self->current_token;
-    Vec *iters_vec = NEW(Vec);  // Vec<CITokensIter*>*
-    Vec *macros_vec = NEW(Vec); // Vec<CIParserMacro*>*
-
-    for (Usize i = self->iters->len; i--;) {
-        push__Vec(iters_vec, visit__Stack(self->iters, i));
-    }
-
-    CITokensIter *current_iter =
-      pop__Vec(iters_vec); // CITokensIter*? (&) | CITokensIter*?
-
-    current_iter->peek.count = current_iter->iter.count;
-    current_iter->peek.in_use = true;
-
-    for (Usize i = 0; i < n && current_iter && current_token;) {
-        current_token =
-          safe_get__Vec(current_iter->iter.vec, current_iter->peek.count);
-
-        if (current_token) {
-            switch (current_token->kind) {
-                case CI_TOKEN_KIND_MACRO_PARAM:
-                    push__Vec(iters_vec, current_iter);
-                    current_iter = NEW(CITokensIter, peek__Stack(macros));
-
-                    continue;
-                case CI_TOKEN_KIND_IDENTIFIER:
-                    TODO("macro");
-                case CI_TOKEN_KIND_PAREN_CALL:
-                    TODO("paren call");
-                default:
-                    ++i;
-                    ++current_iter->peek.count;
-            }
-        } else {
-            if (iters_vec->len > 0) {
-                // Check if check if the current iterator is in the stack.
-                if (iters_vec->len + 1 > self->iters->len) {
-                    FREE(CITokensIter, current_iter);
-                } else {
-                    current_iter->peek.in_use = false;
-                }
-
-                current_iter = pop__Vec(iters_vec);
-
-                if (!current_iter->peek.in_use) {
-                    current_iter->peek.count = current_iter->iter.count;
-                    current_iter->peek.in_use = true;
-                } else {
-                    ++current_iter->peek.count;
-                }
-            } else {
-                break;
-            }
-        }
-    }
-
-    if (current_iter) {
-        current_iter->peek.in_use = false;
-    }
-
-    FREE(Vec, iters_vec);
-    FREE(Vec, macros_vec);
-
-    return current_token;
+    pop__Stack(self->iters);
 }
 
 DESTRUCTOR(CITokensIters, const CITokensIters *self)
