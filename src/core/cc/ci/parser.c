@@ -2017,11 +2017,11 @@ peek_token__CIParser(CIParser *self, Usize n)
                     continue;
                 case CI_TOKEN_KIND_IDENTIFIER:
                     TODO("macro");
-				case CI_TOKEN_KIND_PAREN_CALL:
+                case CI_TOKEN_KIND_PAREN_CALL:
                     TODO("paren call");
                 default:
-					++current_iter->peek.count;
-					++i;
+                    ++current_iter->peek.count;
+                    ++i;
             }
         } else {
             if (iters_vec->len > 0) {
