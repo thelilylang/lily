@@ -2078,7 +2078,6 @@ get_character__CIScanner(CIScanner *self, char previous)
             break;
         default:
             res = format__String("{c}", previous);
-            break;
     }
 
     if (previous == '\\') {
@@ -3022,7 +3021,7 @@ scan_include_preprocessor__CIScanner(CIScanner *self)
 
             break;
         }
-        case '"': {
+        case '\"': {
             CIScannerContext ctx =
               NEW(CIScannerContext, CI_SCANNER_CONTEXT_LOCATION_NONE, NULL);
             CIToken *token_include_value =
@@ -3034,6 +3033,7 @@ scan_include_preprocessor__CIScanner(CIScanner *self)
                         preprocessor_include_value =
                           token_include_value->literal_constant_string;
 
+                        next_char__CIScanner(self);
                         lily_free(token_include_value);
 
                         break;
