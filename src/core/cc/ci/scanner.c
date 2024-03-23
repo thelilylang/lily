@@ -285,10 +285,12 @@ skip_space_and_backslash__CIScanner(CIScanner *self);
 static Vec *
 scan_define_preprocessor_params__CIScanner(CIScanner *self);
 
-/// @brief Scan define preprocessor content.
+/// @brief Scan preprocessor content.
 /// @return Vec<CIToken*>*?
 static Vec *
-scan_define_preprocessor_content__CIScanner(CIScanner *self);
+scan_preprocessor_content__CIScanner(CIScanner *self,
+                                     enum CIScannerContextLocation ctx_location,
+                                     Vec *params);
 
 /// @brief Scan define preprocessor.
 static CIToken *
@@ -1785,8 +1787,31 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, const CIScannerContext *ctx)
 
         switch (current->kind) {
             case CI_TOKEN_KIND_IDENTIFIER:
-                current_token = NEW_VARIANT(
-                  CIToken, identifier, current->location, current->id);
+                if (is_in_macro__CIScannerContext(ctx) && ctx->macro) {
+                    // Determine whether the `current->id` does not correspond
+                    // to a macro parameter.
+                    for (Usize i = 0; i < ctx->macro->len; ++i) {
+                        String *param = get__Vec(ctx->macro, i);
+
+                        if (!strcmp(param->buffer, current->id->buffer)) {
+                            current_token = NEW_VARIANT(
+                              CIToken, macro_param, current->location, i);
+
+                            FREE(String, current->id);
+
+                            goto exit_identifier_case;
+                        }
+                    }
+
+                    goto create_token_identifier;
+                } else {
+                create_token_identifier:
+                    current_token = NEW_VARIANT(
+                      CIToken, identifier, current->location, current->id);
+                }
+
+            exit_identifier_case:
+
                 break;
             default:
                 FREE(String, current->id);
@@ -2422,7 +2447,7 @@ Vec *
 scan_define_preprocessor_params__CIScanner(CIScanner *self)
 {
     Vec *params = NEW(Vec);
-    CIScannerContext ctx = NEW(CIScannerContext, NULL, false, false, false);
+    CIScannerContext ctx = NEW_VARIANT(CIScannerContext, macro, NULL, NULL);
 
     next_char__CIScanner(self); // skip `(`
 
@@ -2466,10 +2491,15 @@ scan_define_preprocessor_params__CIScanner(CIScanner *self)
 }
 
 Vec *
-scan_define_preprocessor_content__CIScanner(CIScanner *self)
+scan_preprocessor_content__CIScanner(CIScanner *self,
+                                     enum CIScannerContextLocation ctx_location,
+                                     Vec *params)
 {
     Vec *tokens = NEW(Vec); // Vec<CIToken*>*
-    CIScannerContext ctx = NEW(CIScannerContext, tokens, true, false, false);
+    CIScannerContext ctx =
+      ctx_location == CI_SCANNER_CONTEXT_LOCATION_MACRO
+        ? NEW_VARIANT(CIScannerContext, macro, tokens, params)
+        : NEW(CIScannerContext, ctx_location, tokens);
 
     while (self->base.source.cursor.current != '\n') {
         skip_space_and_backslash__CIScanner(self);
@@ -2579,74 +2609,82 @@ scan_define_preprocessor__CIScanner(CIScanner *self)
                        NEW(CITokenPreprocessorDefine,
                            name,
                            params,
-                           scan_define_preprocessor_content__CIScanner(self)));
+                           scan_preprocessor_content__CIScanner(
+                             self, CI_SCANNER_CONTEXT_LOCATION_MACRO, params)));
 }
 
 CIToken *
 scan_elif_preprocessor__CIScanner(CIScanner *self,
                                   const CIScannerContext *ctx_parent)
 {
-#define SCAN_IF_PREPROCESSOR_CONTENT(                                       \
-  cond, is_def_preprocessor, ctx_parent, in_prepro_if, in_prepro_else)      \
-    [[maybe_unused]] Location preprocessor_if_location =                    \
-      clone__Location(&self->base.location);                                \
-    /*                                                                      \
-     We scan the if condition (`preprocessor_if_cond`), if it's not a       \
-     conditional preprocessor looking at a macro is defined or not (like    \
-    #ifdef, #ifndef,                                                        \
-     ...).                                                                  \
-     \                                                                      \
-    In other words, when `is_def_preprocessor` is true, it means it's a     \
-    conditional preprocessor like #ifdef, #ifndef, (also can be useful for  \
-    #else), etc. Otherwise, it means it's a conditional preprocessor with a \
-    condition such as #if, #elif, etc.                                      \
-    */                                                                      \
-    Vec *preprocessor_if_cond =                                             \
-      is_def_preprocessor ? NULL                                            \
-                          : scan_define_preprocessor_content__CIScanner(    \
-                              self);         /* Vec<CIToken*>*? */          \
-    Vec *preprocessor_if_content = NEW(Vec); /* Vec<CIToken*>* */           \
-    CIScannerContext ctx = NEW(CIScannerContext,                            \
-                               preprocessor_if_content,                     \
-                               false,                                       \
-                               in_prepro_if,                                \
-                               in_prepro_else);                             \
-    CIToken *current_token = NULL;                                          \
-                                                                            \
-    skip_space__CIScanner(self);                                            \
-                                                                            \
-    current_token =                                                         \
-      get_token__CIScanner(self, &ctx, ctx_parent ? ctx_parent : &ctx);     \
-                                                                            \
-    while (current_token && cond) {                                         \
-        if (current_token) {                                                \
-            DEFAULT_LAST_SET_AND_CHECK(current_token);                      \
-                                                                            \
-            switch (current_token->kind) {                                  \
-                case CI_TOKEN_KIND_COMMENT_LINE:                            \
-                    DEFAULT_FILTER_TOKEN(current_token, &ctx);              \
-            }                                                               \
-                                                                            \
-            if (self->base.source.cursor.position >=                        \
-                self->base.source.file->len - 1) {                          \
-                FAILED("expected #endif");                                  \
-                                                                            \
-                break;                                                      \
-            }                                                               \
-        }                                                                   \
-                                                                            \
-        skip_space__CIScanner(self);                                        \
-                                                                            \
-        current_token =                                                     \
-          get_token__CIScanner(self, &ctx, ctx_parent ? ctx_parent : &ctx); \
-    }                                                                       \
-                                                                            \
-    if (!current_token) {                                                   \
-        FAILED("unexpected error in #if preprocessor condition");           \
-    }                                                                       \
-                                                                            \
-    if (!preprocessor_if_cond && !is_def_preprocessor) {                    \
-        FAILED("expected expression in #if preprocessor condition");        \
+#define SCAN_IF_PREPROCESSOR_CONTENT(cond,                                     \
+                                     is_def_preprocessor,                      \
+                                     ctx_parent,                               \
+                                     ctx_location,                             \
+                                     in_prepro_if,                             \
+                                     in_prepro_else)                           \
+                                                                               \
+    ASSERT(in_prepro_if || in_prepro_else);                                    \
+                                                                               \
+    [[maybe_unused]] Location preprocessor_if_location =                       \
+      clone__Location(&self->base.location);                                   \
+    /*                                                                         \
+     We scan the if condition (`preprocessor_if_cond`), if it's not a          \
+     conditional preprocessor looking at a macro is defined or not (like       \
+    #ifdef, #ifndef,                                                           \
+     ...).                                                                     \
+     \                                                                         \
+    In other words, when `is_def_preprocessor` is true, it means it's a        \
+    conditional preprocessor like #ifdef, #ifndef, (also can be useful for     \
+    #else), etc. Otherwise, it means it's a conditional preprocessor with a    \
+    condition such as #if, #elif, etc.                                         \
+    */                                                                         \
+    Vec *preprocessor_if_cond =                                                \
+      is_def_preprocessor ? NULL                                               \
+                          : scan_preprocessor_content__CIScanner(              \
+                              self, ctx_location, NULL); /* Vec<CIToken*>*? */ \
+    Vec *preprocessor_if_content = NEW(Vec);             /* Vec<CIToken*>* */  \
+    CIScannerContext ctx =                                                     \
+      NEW(CIScannerContext,                                                    \
+          in_prepro_else ? CI_SCANNER_CONTEXT_LOCATION_PREPROCESSOR_ELSE       \
+                         : CI_SCANNER_CONTEXT_LOCATION_PREPROCESSOR_IF,        \
+          preprocessor_if_content);                                            \
+    CIToken *current_token = NULL;                                             \
+                                                                               \
+    skip_space__CIScanner(self);                                               \
+                                                                               \
+    current_token =                                                            \
+      get_token__CIScanner(self, &ctx, ctx_parent ? ctx_parent : &ctx);        \
+                                                                               \
+    while (current_token && cond) {                                            \
+        if (current_token) {                                                   \
+            DEFAULT_LAST_SET_AND_CHECK(current_token);                         \
+                                                                               \
+            switch (current_token->kind) {                                     \
+                case CI_TOKEN_KIND_COMMENT_LINE:                               \
+                    DEFAULT_FILTER_TOKEN(current_token, &ctx);                 \
+            }                                                                  \
+                                                                               \
+            if (self->base.source.cursor.position >=                           \
+                self->base.source.file->len - 1) {                             \
+                FAILED("expected #endif");                                     \
+                                                                               \
+                break;                                                         \
+            }                                                                  \
+        }                                                                      \
+                                                                               \
+        skip_space__CIScanner(self);                                           \
+                                                                               \
+        current_token =                                                        \
+          get_token__CIScanner(self, &ctx, ctx_parent ? ctx_parent : &ctx);    \
+    }                                                                          \
+                                                                               \
+    if (!current_token) {                                                      \
+        FAILED("unexpected error in #if preprocessor condition");              \
+    }                                                                          \
+                                                                               \
+    if (!preprocessor_if_cond && !is_def_preprocessor) {                       \
+        FAILED("expected expression in #if preprocessor condition");           \
     }
 
 #define PREPROCESSOR_FILTER_CURRENT_TOKEN(ret)                                   \
@@ -2703,17 +2741,21 @@ scan_elif_preprocessor__CIScanner(CIScanner *self,
       current_token->kind != CI_TOKEN_KIND_PREPROCESSOR_ELSE &&     \
       current_token->kind != CI_TOKEN_KIND_PREPROCESSOR_ENDIF
 
-#define SCAN_ELIF_PREPROCESSOR()                                            \
-    SCAN_IF_PREPROCESSOR_CONTENT(                                           \
-      ELIF_END_COND, false, ctx_parent, true, false);                       \
-                                                                            \
-    CIToken *preprocessor_elif = NEW_VARIANT(CIToken,                       \
-                                             preprocessor_elif,             \
-                                             preprocessor_if_location,      \
-                                             NEW(CITokenPreprocessorElif,   \
-                                                 preprocessor_if_cond,      \
-                                                 preprocessor_if_content)); \
-                                                                            \
+#define SCAN_ELIF_PREPROCESSOR()                                              \
+    SCAN_IF_PREPROCESSOR_CONTENT(ELIF_END_COND,                               \
+                                 false,                                       \
+                                 ctx_parent,                                  \
+                                 CI_SCANNER_CONTEXT_LOCATION_PREPROCESSOR_IF, \
+                                 true,                                        \
+                                 false);                                      \
+                                                                              \
+    CIToken *preprocessor_elif = NEW_VARIANT(CIToken,                         \
+                                             preprocessor_elif,               \
+                                             preprocessor_if_location,        \
+                                             NEW(CITokenPreprocessorElif,     \
+                                                 preprocessor_if_cond,        \
+                                                 preprocessor_if_content));   \
+                                                                              \
     PREPROCESSOR_FILTER_CURRENT_TOKEN(preprocessor_elif);
 
     SCAN_ELIF_PREPROCESSOR();
@@ -2723,38 +2765,43 @@ CIToken *
 scan_elifdef_preprocessor__CIScanner(CIScanner *self,
                                      const CIScannerContext *ctx_parent)
 {
-#define SCAN_IFDEF_PREPROCESSOR(cond, ctx_parent)                      \
-    Location preprocessor_ifdef_location =                             \
-      clone__Location(&self->base.location);                           \
-    String *preprocessor_ifdef_identifier = NULL;                      \
-                                                                       \
-    skip_space_and_backslash__CIScanner(self);                         \
-                                                                       \
-    {                                                                  \
-        CIScannerContext ctx =                                         \
-          NEW(CIScannerContext, NULL, false, true, false);             \
-        CIToken *token = get_token__CIScanner(self, &ctx, ctx_parent); \
-                                                                       \
-        if (token) {                                                   \
-            switch (token->kind) {                                     \
-                case CI_TOKEN_KIND_IDENTIFIER:                         \
-                    preprocessor_ifdef_identifier = token->identifier; \
-                    next_char__CIScanner(self);                        \
-                    lily_free(token);                                  \
-                                                                       \
-                    break;                                             \
-                default:                                               \
-                    FREE(CIToken, token);                              \
-                                                                       \
-                    goto expected_identifier;                          \
-            }                                                          \
-        } else {                                                       \
-        expected_identifier:                                           \
-            FAILED("expected identifier");                             \
-        }                                                              \
-    }                                                                  \
-                                                                       \
-    SCAN_IF_PREPROCESSOR_CONTENT(cond, true, ctx_parent, true, false);
+#define SCAN_IFDEF_PREPROCESSOR(cond, ctx_parent)                             \
+    Location preprocessor_ifdef_location =                                    \
+      clone__Location(&self->base.location);                                  \
+    String *preprocessor_ifdef_identifier = NULL;                             \
+                                                                              \
+    skip_space_and_backslash__CIScanner(self);                                \
+                                                                              \
+    {                                                                         \
+        CIScannerContext ctx =                                                \
+          NEW_VARIANT(CIScannerContext, preprocessor_if, NULL);               \
+        CIToken *token = get_token__CIScanner(self, &ctx, ctx_parent);        \
+                                                                              \
+        if (token) {                                                          \
+            switch (token->kind) {                                            \
+                case CI_TOKEN_KIND_IDENTIFIER:                                \
+                    preprocessor_ifdef_identifier = token->identifier;        \
+                    next_char__CIScanner(self);                               \
+                    lily_free(token);                                         \
+                                                                              \
+                    break;                                                    \
+                default:                                                      \
+                    FREE(CIToken, token);                                     \
+                                                                              \
+                    goto expected_identifier;                                 \
+            }                                                                 \
+        } else {                                                              \
+        expected_identifier:                                                  \
+            FAILED("expected identifier");                                    \
+        }                                                                     \
+    }                                                                         \
+                                                                              \
+    SCAN_IF_PREPROCESSOR_CONTENT(cond,                                        \
+                                 true,                                        \
+                                 ctx_parent,                                  \
+                                 CI_SCANNER_CONTEXT_LOCATION_PREPROCESSOR_IF, \
+                                 true,                                        \
+                                 false);
 
 #define SCAN_ELIFDEF_PREPROCESSOR(ty, k)                                \
     SCAN_IFDEF_PREPROCESSOR(ELIF_END_COND, ctx_parent);                 \
@@ -2788,7 +2835,8 @@ scan_else_preprocessor__CIScanner(CIScanner *self,
                                    CI_TOKEN_KIND_PREPROCESSOR_ENDIF,
                                  true,
                                  ctx_parent,
-                                 true,
+                                 CI_SCANNER_CONTEXT_LOCATION_PREPROCESSOR_ELSE,
+                                 false,
                                  true);
 
     CIToken *res =
@@ -2812,7 +2860,7 @@ scan_embed_preprocessor__CIScanner(CIScanner *self)
     switch (self->base.source.cursor.current) {
         case '\"': {
             CIScannerContext ctx =
-              NEW(CIScannerContext, NULL, false, false, false);
+              NEW(CIScannerContext, CI_SCANNER_CONTEXT_LOCATION_NONE, NULL);
             CIToken *string_token = get_token__CIScanner(self, &ctx, NULL);
 
             switch (string_token->kind) {
@@ -2856,7 +2904,7 @@ scan_error_preprocessor__CIScanner(CIScanner *self)
     switch (self->base.source.cursor.current) {
         case '\"': {
             CIScannerContext ctx =
-              NEW(CIScannerContext, NULL, false, false, false);
+              NEW(CIScannerContext, CI_SCANNER_CONTEXT_LOCATION_NONE, NULL);
             CIToken *string_token = get_token__CIScanner(self, &ctx, NULL);
 
             if (string_token) {
@@ -2897,6 +2945,7 @@ scan_if_preprocessor__CIScanner(CIScanner *self)
                                    CI_TOKEN_KIND_PREPROCESSOR_ENDIF,
                                  false,
                                  NULL,
+                                 CI_SCANNER_CONTEXT_LOCATION_PREPROCESSOR_IF,
                                  true,
                                  false);
 
@@ -2975,7 +3024,7 @@ scan_include_preprocessor__CIScanner(CIScanner *self)
         }
         case '"': {
             CIScannerContext ctx =
-              NEW(CIScannerContext, NULL, false, false, false);
+              NEW(CIScannerContext, CI_SCANNER_CONTEXT_LOCATION_NONE, NULL);
             CIToken *token_include_value =
               get_token__CIScanner(self, &ctx, NULL);
 
@@ -3015,7 +3064,8 @@ CIToken *
 scan_line_preprocessor__CIScanner(CIScanner *self)
 {
     Location preprocessor_line_location = clone__Location(&self->base.location);
-    CIScannerContext ctx = NEW(CIScannerContext, NULL, false, false, false);
+    CIScannerContext ctx =
+      NEW(CIScannerContext, CI_SCANNER_CONTEXT_LOCATION_NONE, NULL);
     Usize lineno = self->base.source.cursor.line;
     String *filename = NULL; // String*?
 
@@ -3103,7 +3153,8 @@ scan_undef_preprocessor__CIScanner(CIScanner *self)
     skip_space_and_backslash__CIScanner(self);
 
     {
-        CIScannerContext ctx = NEW(CIScannerContext, NULL, false, false, false);
+        CIScannerContext ctx =
+          NEW(CIScannerContext, CI_SCANNER_CONTEXT_LOCATION_NONE, NULL);
         CIToken *token = get_token__CIScanner(self, &ctx, NULL);
 
         if (token) {
@@ -3508,6 +3559,10 @@ get_token__CIScanner(CIScanner *self,
               CIToken, CI_TOKEN_KIND_EQ, clone__Location(&self->base.location));
         // #
         case '#': {
+            if (is_in_macro__CIScannerContext(ctx)) {
+                FAILED("cannot add preprocessor in macro");
+            }
+
             if (is_start_ident_with_peeked_char__CIScanner(self, c1)) {
                 String *id = scan_identifier_with_peek_char__CIScanner(self);
                 enum CITokenKind kind = get_preprocessor__CIScanner(id);
@@ -3544,7 +3599,7 @@ get_token__CIScanner(CIScanner *self,
 
                         FREE(String, id);
 
-                        if (ctx->in_macro) {
+                        if (is_in_macro__CIScannerContext(ctx)) {
                             FAILED("preporcessors are not expected in macro");
                         }
 
@@ -3553,10 +3608,11 @@ get_token__CIScanner(CIScanner *self,
                                 return scan_define_preprocessor__CIScanner(
                                   self);
                             case CI_TOKEN_KIND_PREPROCESSOR_ELIF:
-                                if (!ctx->in_prepro_if) {
+                                if (!is_in_prepro_if__CIScannerContext(ctx)) {
                                     FAILED("#elif preprocessor is not expected "
                                            "here");
-                                } else if (ctx->in_prepro_else) {
+                                } else if (is_in_prepro_else__CIScannerContext(
+                                             ctx)) {
                                     FAILED("cannot add #elif after #else");
                                 } else {
                                     ASSERT(ctx_parent);
@@ -3565,10 +3621,11 @@ get_token__CIScanner(CIScanner *self,
                                       self, ctx_parent);
                                 }
                             case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:
-                                if (!ctx->in_prepro_if) {
+                                if (!is_in_prepro_if__CIScannerContext(ctx)) {
                                     FAILED("#elifdef preprocessor is not "
                                            "expected here");
-                                } else if (ctx->in_prepro_else) {
+                                } else if (is_in_prepro_else__CIScannerContext(
+                                             ctx)) {
                                     FAILED("cannot add #elifdef after #else");
                                 } else {
                                     ASSERT(ctx_parent);
@@ -3577,11 +3634,12 @@ get_token__CIScanner(CIScanner *self,
                                       self, ctx_parent);
                                 }
                             case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:
-                                if (!ctx->in_prepro_if) {
+                                if (!is_in_prepro_if__CIScannerContext(ctx)) {
                                     FAILED(
                                       "#elifndef preprocessor is not expected "
                                       "here");
-                                } else if (ctx->in_prepro_else) {
+                                } else if (is_in_prepro_else__CIScannerContext(
+                                             ctx)) {
                                     FAILED("cannot add #elifndef after #else");
                                 } else {
                                     ASSERT(ctx_parent);
@@ -3590,10 +3648,11 @@ get_token__CIScanner(CIScanner *self,
                                       self, ctx_parent);
                                 }
                             case CI_TOKEN_KIND_PREPROCESSOR_ELSE:
-                                if (!ctx->in_prepro_if) {
+                                if (!is_in_prepro_if__CIScannerContext(ctx)) {
                                     FAILED("#else preprocessor is not expected "
                                            "here");
-                                } else if (ctx->in_prepro_else) {
+                                } else if (is_in_prepro_else__CIScannerContext(
+                                             ctx)) {
                                     FAILED("cannot add #else after #else");
                                 } else {
                                     ASSERT(ctx_parent);
@@ -3611,19 +3670,19 @@ get_token__CIScanner(CIScanner *self,
                             case CI_TOKEN_KIND_PREPROCESSOR_ERROR:
                                 return scan_error_preprocessor__CIScanner(self);
                             case CI_TOKEN_KIND_PREPROCESSOR_IF:
-                                if (ctx->in_prepro_else) {
+                                if (is_in_prepro_else__CIScannerContext(ctx)) {
                                     FAILED("cannot add #if after #else");
                                 }
 
                                 return scan_if_preprocessor__CIScanner(self);
                             case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
-                                if (ctx->in_prepro_else) {
+                                if (is_in_prepro_else__CIScannerContext(ctx)) {
                                     FAILED("cannot add #ifdef after #else");
                                 }
 
                                 return scan_ifdef_preprocessor__CIScanner(self);
                             case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:
-                                if (ctx->in_prepro_else) {
+                                if (is_in_prepro_else__CIScannerContext(ctx)) {
                                     FAILED("cannot add #ifndef after #else");
                                 }
 
@@ -3666,7 +3725,7 @@ get_token__CIScanner(CIScanner *self,
             return NEW(CIToken,
                        CI_TOKEN_KIND_HAT,
                        clone__Location(&self->base.location));
-        // IDENTIFIER
+        // IDENTIFIER, KEYWORD
         case IS_ID:
             return scan_multi_part_keyword__CIScanner(self, ctx);
         // ?
@@ -3680,7 +3739,7 @@ get_token__CIScanner(CIScanner *self,
         case '(': {
             // We shouldn't call `get_closing__CIScanner` when scanning a
             // macro, because you're not trying to match closing characters.
-            if (ctx->in_macro) {
+            if (is_in_macro__CIScannerContext(ctx)) {
                 switch (self->base.source.cursor.current) {
                     case '{':
                         return NEW(CIToken,
@@ -3759,7 +3818,7 @@ get_token__CIScanner(CIScanner *self,
         case ')':
             // When you scan a macro, you don't check whether the closing
             // characters match.
-            if (ctx->in_macro) {
+            if (is_in_macro__CIScannerContext(ctx)) {
                 switch (self->base.source.cursor.current) {
                     case '}':
                         return NEW(CIToken,
@@ -3898,7 +3957,7 @@ void
 run__CIScanner(CIScanner *self, bool dump_scanner)
 {
     CIScannerContext ctx =
-      NEW(CIScannerContext, self->tokens, false, false, false);
+      NEW(CIScannerContext, CI_SCANNER_CONTEXT_LOCATION_NONE, self->tokens);
 
     if (self->base.source.file->len > 1) {
         while (self->base.source.cursor.position <

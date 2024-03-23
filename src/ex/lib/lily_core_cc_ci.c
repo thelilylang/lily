@@ -328,12 +328,35 @@ extern inline CONSTRUCTOR(CIScanner,
                           Usize *count_error,
                           enum CIStandard standard);
 
+extern inline VARIANT_CONSTRUCTOR(CIScannerContext,
+                                  CIScannerContext,
+                                  macro,
+                                  Vec *macro,
+                                  Vec *tokens);
+
+extern inline VARIANT_CONSTRUCTOR(CIScannerContext,
+                                  CIScannerContext,
+                                  preprocessor_if,
+                                  Vec *tokens);
+
+extern inline VARIANT_CONSTRUCTOR(CIScannerContext,
+                                  CIScannerContext,
+                                  preprocessor_else,
+                                  Vec *tokens);
+
 extern inline CONSTRUCTOR(CIScannerContext,
                           CIScannerContext,
-                          Vec *tokens,
-                          bool in_macro,
-                          bool in_prepro_if,
-                          bool in_prepro_else);
+                          enum CIScannerContextLocation ctx_location,
+                          Vec *tokens);
+
+extern inline bool
+is_in_macro__CIScannerContext(const CIScannerContext *self);
+
+extern inline bool
+is_in_prepro_if__CIScannerContext(const CIScannerContext *self);
+
+extern inline bool
+is_in_prepro_else__CIScannerContext(const CIScannerContext *self);
 
 // <core/cc/ci/token.h>
 extern inline CONSTRUCTOR(CITokenPreprocessorDefine,

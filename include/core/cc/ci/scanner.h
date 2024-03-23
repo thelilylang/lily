@@ -67,13 +67,75 @@ run__CIScanner(CIScanner *self, bool dump_scanner);
  */
 DESTRUCTOR(CIScanner, const CIScanner *self);
 
+enum CIScannerContextLocation
+{
+    // #define
+    CI_SCANNER_CONTEXT_LOCATION_MACRO,
+    // #if, #ifdef, #ifndef, #elif, #elifdef or #elifndef
+    CI_SCANNER_CONTEXT_LOCATION_PREPROCESSOR_IF,
+    // #else
+    CI_SCANNER_CONTEXT_LOCATION_PREPROCESSOR_ELSE,
+    // All other location contexts
+    CI_SCANNER_CONTEXT_LOCATION_NONE
+};
+
 typedef struct CIScannerContext
 {
+    enum CIScannerContextLocation ctx_location;
     Vec *tokens; // Vec<CIToken*>*? (&)
-    bool in_macro;
-    bool in_prepro_if;
-    bool in_prepro_else;
+    union
+    {
+        // Macro parameters
+        Vec *macro; // Vec<String*>* (&)
+    };
 } CIScannerContext;
+
+/**
+ *
+ * @brief Construct CIScannerContext type
+ * (CI_SANNER_CONTEXT_LOCATION_MACRO).
+ */
+inline VARIANT_CONSTRUCTOR(CIScannerContext,
+                           CIScannerContext,
+                           macro,
+                           Vec *tokens,
+                           Vec *macro)
+{
+    return (CIScannerContext){ .ctx_location =
+                                 CI_SCANNER_CONTEXT_LOCATION_MACRO,
+                               .tokens = tokens,
+                               .macro = macro };
+}
+
+/**
+ *
+ * @brief Construct CIScannerContext type
+ * (CI_SANNER_CONTEXT_LOCATION_PREPROCESSOR_IF).
+ */
+inline VARIANT_CONSTRUCTOR(CIScannerContext,
+                           CIScannerContext,
+                           preprocessor_if,
+                           Vec *tokens)
+{
+    return (CIScannerContext){ .ctx_location =
+                                 CI_SCANNER_CONTEXT_LOCATION_PREPROCESSOR_IF,
+                               .tokens = tokens };
+}
+
+/**
+ *
+ * @brief Construct CIScannerContext type
+ * (CI_SANNER_CONTEXT_LOCATION_PREPROCESSOR_ELSE).
+ */
+inline VARIANT_CONSTRUCTOR(CIScannerContext,
+                           CIScannerContext,
+                           preprocessor_else,
+                           Vec *tokens)
+{
+    return (CIScannerContext){ .ctx_location =
+                                 CI_SCANNER_CONTEXT_LOCATION_PREPROCESSOR_ELSE,
+                               .tokens = tokens };
+}
 
 /**
  *
@@ -81,15 +143,41 @@ typedef struct CIScannerContext
  */
 inline CONSTRUCTOR(CIScannerContext,
                    CIScannerContext,
-                   Vec *tokens,
-                   bool in_macro,
-                   bool in_prepro_if,
-                   bool in_prepro_else)
+                   enum CIScannerContextLocation ctx_location,
+                   Vec *tokens)
 {
-    return (CIScannerContext){ .tokens = tokens,
-                               .in_macro = in_macro,
-                               .in_prepro_if = in_prepro_if,
-                               .in_prepro_else = in_prepro_else };
+    return (CIScannerContext){ .ctx_location = ctx_location, .tokens = tokens };
+}
+
+/**
+ *
+ * @brief Determine whether you are in a macro.
+ */
+inline bool
+is_in_macro__CIScannerContext(const CIScannerContext *self)
+{
+    return self->ctx_location == CI_SCANNER_CONTEXT_LOCATION_MACRO;
+}
+
+/**
+ *
+ * @brief Determine whether you are in #if, #ifdef, #ifndef, #elif, #elifdef or
+ * #elifndef preprocessor.
+ */
+inline bool
+is_in_prepro_if__CIScannerContext(const CIScannerContext *self)
+{
+    return self->ctx_location == CI_SCANNER_CONTEXT_LOCATION_PREPROCESSOR_IF;
+}
+
+/**
+ *
+ * @brief Determine whether you are in #else preprocessor.
+ */
+inline bool
+is_in_prepro_else__CIScannerContext(const CIScannerContext *self)
+{
+    return self->ctx_location == CI_SCANNER_CONTEXT_LOCATION_PREPROCESSOR_ELSE;
 }
 
 #endif // LILY_CORE_CC_CI_SCANNER_H

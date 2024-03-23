@@ -720,6 +720,8 @@ typedef struct CIToken
         String *literal_constant_bin;
         char literal_constant_character;
         String *literal_constant_string;
+        // The `macro_param` corresponds to the position index in the macro
+        // (#define) params vector (preprocessor_define.params).
         Usize macro_param;
     };
 } CIToken;
