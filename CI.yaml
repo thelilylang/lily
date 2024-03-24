@@ -1,6 +1,10 @@
 ---
 standard: c23
 
+include_dirs:
+  - include
+  - lib
+
 libraries:
   - lily_base:
     path:

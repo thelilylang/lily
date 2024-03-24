@@ -39,6 +39,16 @@ skip_space__Scanner(Scanner *self)
 }
 
 void
+skip_space_except_new_line__Scanner(Scanner *self)
+{
+    while (self->source.cursor.current != '\n' &&
+           isspace(self->source.cursor.current) &&
+           self->source.cursor.position < self->source.file->len - 1) {
+        next_char__Scanner(self);
+    }
+}
+
+void
 jump__Scanner(Scanner *self, Usize n)
 {
     for (Usize i = 0; i < n; ++i)

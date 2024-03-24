@@ -15,6 +15,7 @@ set(CI_SRC
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/ast.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/file.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/generator.c
+    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/include.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/parser.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/result.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/scanner.c

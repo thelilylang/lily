@@ -38,6 +38,20 @@
 #define GET_NODE_TYPE__YAML(node) node->type
 #define GET_NODE_SCALAR_VALUE__YAML(node) (char *)node->data.scalar.value
 
+#define ITER_ON_SEQUENCE_NODE__YAML(load, document, node, item, body)          \
+    for (yaml_node_item_t *item = node->data.sequence.items.start;             \
+         item < node->data.sequence.items.top;                                 \
+         ++item) {                                                             \
+        YAMLNode *item##_node = get_node_from_id__YAML(load, document, *item); \
+                                                                               \
+        ASSERT(item##_node);                                                   \
+                                                                               \
+        [[maybe_unused]] char *item##_value =                                  \
+          GET_NODE_SCALAR_VALUE__YAML(item##_node);                            \
+                                                                               \
+        body;                                                                  \
+    }
+
 typedef yaml_char_t YAMLChar;
 typedef yaml_document_t YAMLDocument;
 typedef yaml_emitter_t YAMLEmitter;

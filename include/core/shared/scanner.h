@@ -102,6 +102,13 @@ skip_space__Scanner(Scanner *self);
 
 /**
  *
+ * @brief Skip space, but except new line (tab, ...).
+ */
+void
+skip_space_except_new_line__Scanner(Scanner *self);
+
+/**
+ *
  * @brief Next char n times.
  */
 void

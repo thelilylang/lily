@@ -28,6 +28,7 @@
 #include <base/atof.h>
 #include <base/atoi.h>
 
+#include <core/cc/ci/include.h>
 #include <core/cc/ci/parser.h>
 #include <core/cc/ci/result.h>
 
@@ -431,6 +432,11 @@ parse_variable__CIParser(CIParser *self,
                          String *name,
                          bool is_prototype,
                          bool is_local);
+
+/// @brief Resolve `#include` preprocessor.
+static void
+resolve_include_preprocessor__CIParser(CIParser *self,
+                                       CIToken *include_preprocessor);
 
 /// @brief Parse declaration.
 static CIDecl *
@@ -4390,6 +4396,35 @@ parse_variable__CIParser(CIParser *self,
                        NEW(CIDeclVariable, data_type, name, expr, is_local));
 }
 
+void
+resolve_include_preprocessor__CIParser(CIParser *self,
+                                       CIToken *include_preprocessor)
+{
+    const Vec *include_dirs = get_include_dirs__CIInclude();
+
+    for (Usize i = 0; i < include_dirs->len; ++i) {
+        const char *include_dir = get__Vec(include_dirs, i);
+        // include_dir + '/' + preprocessor_include.value
+        String *full_include_path =
+          format__String("{s}/{S}",
+                         include_dir,
+                         include_preprocessor->preprocessor_include.value);
+
+        if (exists__File(full_include_path->buffer)) {
+            TODO("scan this file");
+
+            goto exit;
+        } else {
+            continue;
+        }
+    }
+
+    FAILED("the include file is not found");
+
+exit:
+    TODO("#include preprocessor");
+}
+
 CIDecl *
 parse_decl__CIParser(CIParser *self, bool in_function_body)
 {
@@ -4417,7 +4452,10 @@ parse_decl__CIParser(CIParser *self, bool in_function_body)
         case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:
             TODO("#ifndef preprocessor");
         case CI_TOKEN_KIND_PREPROCESSOR_INCLUDE:
-            TODO("#include preprocessor");
+            resolve_include_preprocessor__CIParser(
+              self, self->tokens_iters.current_token);
+
+            break;
         case CI_TOKEN_KIND_PREPROCESSOR_LINE:
             TODO("#line preprocessor");
         case CI_TOKEN_KIND_PREPROCESSOR_PRAGMA:

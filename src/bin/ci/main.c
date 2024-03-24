@@ -27,6 +27,7 @@
 #include <base/yaml.h>
 
 #include <core/cc/ci/generator.h>
+#include <core/cc/ci/include.h>
 #include <core/cc/ci/parser.h>
 #include <core/cc/ci/result.h>
 #include <core/cc/ci/scanner.h>
@@ -95,6 +96,44 @@ main(int argc, char **argv)
         }
     }
 
+    {
+        // include_dirs:
+        //   - dir
+        //   - dir2
+        //   ...
+
+        // Initialize include directories workspace
+        init_include_dirs__CIInclude();
+
+        Int32 include_dirs_value_id = GET_KEY_ON_DEFAULT_MAPPING__YAML(
+          &yaml_load_res, FIRST_DOCUMENT, "include_dirs");
+
+        if (include_dirs_value_id != -1) {
+            YAMLNode *include_dirs_value_node = get_node_from_id__YAML(
+              &yaml_load_res, FIRST_DOCUMENT, include_dirs_value_id);
+
+            ASSERT(include_dirs_value_node);
+
+            switch (GET_NODE_TYPE__YAML(include_dirs_value_node)) {
+                case YAML_SEQUENCE_NODE:
+                    ITER_ON_SEQUENCE_NODE__YAML(
+                      &yaml_load_res,
+                      FIRST_DOCUMENT,
+                      include_dirs_value_node,
+                      include_dir,
+                      { add_include_dir__CIInclude(include_dir_value); });
+
+                    break;
+                default:
+                    FAILED("expected sequence node:\n"
+                           "include_dirs:\n"
+                           "  - dir\n"
+                           "  - dir2\n"
+                           "  ...");
+            }
+        }
+    }
+
     // TODO: Get the files from YAML config
     if (argc < 2) {
         printf("ci [ci_files...]\n");
@@ -155,4 +194,5 @@ main(int argc, char **argv)
     FREE(CIResult, &result);
     FREE(String, path_ci_config);
     FREE(YAMLLoadRes, &yaml_load_res);
+    destroy__CIInclude();
 }

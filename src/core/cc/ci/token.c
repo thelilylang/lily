@@ -1740,7 +1740,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
 {
     switch (self->kind) {
         case CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "attribute_deprecated = {s} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1748,7 +1748,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                             ? self->attribute_deprecated->buffer
                             : "NULL");
         case CI_TOKEN_KIND_ATTRIBUTE_NODISCARD:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "attribute_nodiscard = {s} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1757,66 +1757,66 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                             : "NULL");
         case CI_TOKEN_KIND_COMMENT_DOC:
             return format(
-              "LilyToken{{ kind = {s}, location = {sa}, comment_doc = {S} }",
+              "CIToken{{ kind = {s}, location = {sa}, comment_doc = {S} }",
               CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
               CALL_DEBUG_IMPL(to_string, Location, &self->location),
               self->comment_doc);
         case CI_TOKEN_KIND_IDENTIFIER:
             return format(
-              "LilyToken{{ kind = {s}, location = {sa}, identifier = {S} }",
+              "CIToken{{ kind = {s}, location = {sa}, identifier = {S} }",
               CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
               CALL_DEBUG_IMPL(to_string, Location, &self->location),
               self->identifier);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_INT:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "literal_constant_int = {S} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_constant_int);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_FLOAT:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "literal_constant_float = {S} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_constant_float);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_OCTAL:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "literal_constant_octal = {S} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_constant_octal);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_HEX:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "literal_constant_hex = {S} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_constant_hex);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_BIN:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "literal_constant_bin = {S} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_constant_bin);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_CHARACTER:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "literal_constant_character = {c} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_constant_character);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "literal_constant_string = {S} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_constant_string);
         case CI_TOKEN_KIND_MACRO_PARAM:
             return format(
-              "LilyToken{{ kind = {s}, location = {sa}, macro_param = {zu} }",
+              "CIToken{{ kind = {s}, location = {sa}, macro_param = {zu} }",
               CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
               CALL_DEBUG_IMPL(to_string, Location, &self->location),
               self->macro_param);
         case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_include = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1824,13 +1824,13 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                                           CITokenPreprocessorDefine,
                                           &self->preprocessor_define));
         case CI_TOKEN_KIND_PREPROCESSOR_ERROR:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_error = {S} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->preprocessor_error);
         case CI_TOKEN_KIND_PREPROCESSOR_ELIF:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_elif = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1838,7 +1838,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                                           CITokenPreprocessorElif,
                                           &self->preprocessor_elif));
         case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_elifdef = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1846,7 +1846,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                                           CITokenPreprocessorElifdef,
                                           &self->preprocessor_elifdef));
         case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_elifndef = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1854,7 +1854,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                                           CITokenPreprocessorElifndef,
                                           &self->preprocessor_elifndef));
         case CI_TOKEN_KIND_PREPROCESSOR_ELSE:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_else = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1862,7 +1862,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                                           CITokenPreprocessorElse,
                                           &self->preprocessor_else));
         case CI_TOKEN_KIND_PREPROCESSOR_EMBED:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_embed = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1870,7 +1870,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                                           CITokenPreprocessorEmbed,
                                           &self->preprocessor_embed));
         case CI_TOKEN_KIND_PREPROCESSOR_IF:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_if = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1878,7 +1878,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                                           CITokenPreprocessorIf,
                                           &self->preprocessor_if));
         case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_ifdef = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1886,7 +1886,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                                           CITokenPreprocessorIfdef,
                                           &self->preprocessor_ifdef));
         case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_ifndef = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1894,7 +1894,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                                           CITokenPreprocessorIfndef,
                                           &self->preprocessor_ifndef));
         case CI_TOKEN_KIND_PREPROCESSOR_INCLUDE:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_include = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1902,7 +1902,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                                           CITokenPreprocessorInclude,
                                           &self->preprocessor_include));
         case CI_TOKEN_KIND_PREPROCESSOR_LINE:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_line = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1910,20 +1910,20 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                                           CITokenPreprocessorLine,
                                           &self->preprocessor_line));
         case CI_TOKEN_KIND_PREPROCESSOR_UNDEF:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_undef = {S} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->preprocessor_undef);
         case CI_TOKEN_KIND_PREPROCESSOR_WARNING:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_warning = {S} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->preprocessor_warning);
         default:
             return format(
-              "LilyToken{{ kind = {s}, location = {sa} }",
+              "CIToken{{ kind = {s}, location = {sa} }",
               CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
               CALL_DEBUG_IMPL(to_string, Location, &self->location));
     }
