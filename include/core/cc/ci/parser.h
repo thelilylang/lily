@@ -80,6 +80,7 @@ typedef struct CIParser
     CIResultFile *file;       // CIResultFile* (&)
     const CIScanner *scanner; // CIScanner* (&)
     Usize *count_error;       // Usize* (&)
+	Usize *count_warning; // Usize* (&)
     CITokensIters tokens_iters;
     Stack *macros;            // Vec<CIParserMacro*>*
     HashMap *wait_visit_list; // HashMap<CIParserWaitForVisit*>*

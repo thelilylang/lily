@@ -41,20 +41,38 @@ enum CIErrorKind
     CI_ERROR_KIND_REQUIRED_C11_OR_LATER,
     CI_ERROR_KIND_REQUIRED_C17_OR_LATER,
     CI_ERROR_KIND_REQUIRED_C23_OR_LATER,
+    CI_ERROR_KIND_PREPROCESSOR_ERROR
 };
 
 typedef struct CIError
 {
     enum CIErrorKind kind;
+    union
+    {
+        char *preprocessor_error; // char* (&)
+    };
 } CIError;
 
 /**
  *
- * @brief Construct CIError.
+ * @brief Construct CIError type.
  */
 inline CONSTRUCTOR(CIError, CIError, enum CIErrorKind kind)
 {
     return (CIError){ .kind = kind };
+}
+
+/**
+ *
+ * @brief Construct CIError type (CI_ERROR_KIND_PREPROCESSOR_ERROR).
+ */
+inline VARIANT_CONSTRUCTOR(CIError,
+                           CIError,
+                           preprocessor_error,
+                           char *preprocessor_error)
+{
+    return (CIError){ .kind = CI_ERROR_KIND_PREPROCESSOR_ERROR,
+                      .preprocessor_error = preprocessor_error };
 }
 
 /**

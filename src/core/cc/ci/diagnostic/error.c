@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/alloc.h>
 #include <base/color.h>
 #include <base/format.h>
 
@@ -58,6 +59,8 @@ to_msg__CIError(const CIError *self)
             return "required C17 or later standard";
         case CI_ERROR_KIND_REQUIRED_C23_OR_LATER:
             return "required C23 or later standard";
+        case CI_ERROR_KIND_PREPROCESSOR_ERROR:
+            return self->preprocessor_error;
         default:
             UNREACHABLE("unknown variant");
     }
@@ -89,6 +92,8 @@ to_code__CIError(const CIError *self)
             return "0010";
         case CI_ERROR_KIND_REQUIRED_C23_OR_LATER:
             return "0011";
+        case CI_ERROR_KIND_PREPROCESSOR_ERROR:
+            return "0012";
         default:
             UNREACHABLE("unknown variant");
     }

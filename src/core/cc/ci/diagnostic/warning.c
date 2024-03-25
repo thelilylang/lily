@@ -36,6 +36,8 @@ to_msg__CIWarning(const CIWarning *self)
     switch (self->kind) {
         case CI_WARNING_KIND_UNUSED:
             return "unused";
+        case CI_WARNING_KIND_PREPROCESSOR_WARNING:
+            return self->preprocessor_warning;
         default:
             UNREACHABLE("unknown variant");
     }
@@ -47,6 +49,8 @@ to_code__CIWarning(const CIWarning *self)
     switch (self->kind) {
         case CI_WARNING_KIND_UNUSED:
             return "0001";
+        case CI_WARNING_KIND_PREPROCESSOR_WARNING:
+            return "0002";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -57,7 +61,7 @@ to_string__CIWarning(const CIWarning *self)
 {
     char *msg = to_msg__CIWarning(self);
     char *res =
-      format("{sa}[{s}]: {s}", RED("error"), to_code__CIWarning(self), msg);
+      format("{sa}[{s}]: {s}", YELLOW("warning"), to_code__CIWarning(self), msg);
 
     return res;
 }

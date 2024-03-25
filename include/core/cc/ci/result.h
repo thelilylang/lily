@@ -123,6 +123,7 @@ typedef struct CIResultFile
     Vec *unions;         // Vec<CIDecl*>*
     Vec *variables;      // Vec<CIDecl*>*
     Usize count_error;
+	Usize count_warning;
     CIScanner scanner;
     CIParser parser;
 } CIResultFile;

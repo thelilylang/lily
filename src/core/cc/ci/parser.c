@@ -28,9 +28,11 @@
 #include <base/atof.h>
 #include <base/atoi.h>
 
+#include <core/cc/ci/diagnostic/error.h>
 #include <core/cc/ci/include.h>
 #include <core/cc/ci/parser.h>
 #include <core/cc/ci/result.h>
+#include <core/shared/diagnostic.h>
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -433,10 +435,80 @@ parse_variable__CIParser(CIParser *self,
                          bool is_prototype,
                          bool is_local);
 
+/// @brief Resolve `#define` preprocessor.
+static void
+resolve_preprocessor_define__CIParser(CIParser *self,
+                                      CIToken *preprocessor_define_token);
+
+/// @brief Resolve `#elif` preprocessor.
+static void
+resolve_preprocessor_elif__CIParser(CIParser *self,
+                                    CIToken *preprocessor_elif_token);
+
+/// @brief Resolve `#elifdef` preprocessor.
+static void
+resolve_preprocessor_elifdef__CIParser(CIParser *self,
+                                       CIToken *preprocessor_elifdef_token);
+
+/// @brief Resolve `#elifndef` preprocessor.
+static void
+resolve_preprocessor_elifndef__CIParser(CIParser *self,
+                                        CIToken *preprocessor_elifndef_token);
+
+/// @brief Resolve `#else` preprocessor.
+static void
+resolve_preprocessor_else__CIParser(CIParser *self,
+                                    CIToken *preprocessor_else_token);
+
+/// @brief Resolve `#embed` preprocessor.
+static void
+resolve_preprocessor_embed__CIParser(CIParser *self,
+                                     CIToken *preprocessor_embed_token);
+
+/// @brief Resolve `#error` preprocessor.
+static void
+resolve_preprocessor_error__CIParser(CIParser *self,
+                                     CIToken *preprocessor_error_token);
+
+/// @brief Resolve `#if` preprocessor.
+static void
+resolve_preprocessor_if__CIParser(CIParser *self,
+                                  CIToken *preprocessor_if_token);
+
+/// @brief Resolve `#ifdef` preprocessor.
+static void
+resolve_preprocessor_ifdef__CIParser(CIParser *self,
+                                     CIToken *preprocessor_ifdef_token);
+
+/// @brief Resolve `#ifndef` preprocessor.
+static void
+resolve_preprocessor_ifndef__CIParser(CIParser *self,
+                                      CIToken *preprocessor_ifndef_token);
+
 /// @brief Resolve `#include` preprocessor.
 static void
-resolve_include_preprocessor__CIParser(CIParser *self,
-                                       CIToken *include_preprocessor);
+resolve_preprocessor_include__CIParser(CIParser *self,
+                                       CIToken *preprocessor_include_token);
+
+/// @brief Resolve `#line` preprocessor.
+static void
+resolve_preprocessor_line__CIParser(CIParser *self,
+                                    CIToken *preprocessor_line_token);
+
+/// @brief Resolve `#pragma` preprocessor.
+static void
+resolve_preprocessor_pragma__CIParser(CIParser *self,
+                                      CIToken *preprocessor_pragma_token);
+
+/// @brief Resolve `#undef` preprocessor.
+static void
+resolve_preprocessor_undef__CIParser(CIParser *self,
+                                     CIToken *preprocessor_undef_token);
+
+/// @brief Resolve `#warning` preprocessor.
+static void
+resolve_preprocessor_warning__CIParser(CIParser *self,
+                                       CIToken *preprocessor_warning_token);
 
 /// @brief Parse declaration.
 static CIDecl *
@@ -567,7 +639,8 @@ CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner)
 
     return (CIParser){ .file = file,
                        .scanner = scanner,
-                       .count_error = scanner->base.count_error,
+                       .count_error = &file->count_error,
+					   .count_warning = &file->count_warning,
                        .tokens_iters = tokens_iters,
                        .macros = NEW(Stack, CI_PARSER_MACROS_MAX_SIZE),
                        .wait_visit_list = NEW(HashMap) };
@@ -4397,18 +4470,100 @@ parse_variable__CIParser(CIParser *self,
 }
 
 void
-resolve_include_preprocessor__CIParser(CIParser *self,
-                                       CIToken *include_preprocessor)
+resolve_preprocessor_define__CIParser(CIParser *self,
+                                      CIToken *preprocessor_define_token)
+{
+    TODO("resolve #define preprocessor");
+}
+
+void
+resolve_preprocessor_elif__CIParser(CIParser *self,
+                                    CIToken *preprocessor_elif_token)
+{
+    TODO("resolve #elif preprocessor");
+}
+
+void
+resolve_preprocessor_elifdef__CIParser(CIParser *self,
+                                       CIToken *preprocessor_elifdef_token)
+{
+    TODO("resolve #elifdef preprocessor");
+}
+
+void
+resolve_preprocessor_elifndef__CIParser(CIParser *self,
+                                        CIToken *preprocessor_elifndef_token)
+{
+    TODO("resolve #elifndef preprocessor");
+}
+
+void
+resolve_preprocessor_else__CIParser(CIParser *self,
+                                    CIToken *preprocessor_else_token)
+{
+    TODO("resolve #else preprocessor");
+}
+
+void
+resolve_preprocessor_embed__CIParser(CIParser *self,
+                                     CIToken *preprocessor_embed_token)
+{
+    TODO("resolve #embed preprocessor");
+}
+
+void
+resolve_preprocessor_error__CIParser(CIParser *self,
+                                     CIToken *preprocessor_error_token)
+{
+    emit__Diagnostic(
+      NEW_VARIANT(
+        Diagnostic,
+        simple_ci_error,
+        self->file->scanner.base.source.file,
+        &preprocessor_error_token->location,
+        NEW_VARIANT(CIError,
+                    preprocessor_error,
+                    preprocessor_error_token->preprocessor_error->buffer),
+        NULL,
+        NULL,
+        NULL),
+      self->count_error);
+}
+
+void
+resolve_preprocessor_if__CIParser(CIParser *self,
+                                  CIToken *preprocessor_if_token)
+{
+    TODO("resolve #if preprocessor");
+}
+
+void
+resolve_preprocessor_ifdef__CIParser(CIParser *self,
+                                     CIToken *preprocessor_ifdef_token)
+{
+    TODO("resolve #ifdef preprocessor");
+}
+
+void
+resolve_preprocessor_ifndef__CIParser(CIParser *self,
+                                      CIToken *preprocessor_ifndef_token)
+{
+    TODO("resolve #ifndef preprocessor");
+}
+
+void
+resolve_preprocessor_include__CIParser(CIParser *self,
+                                       CIToken *preprocessor_include_token)
 {
     const Vec *include_dirs = get_include_dirs__CIInclude();
 
     for (Usize i = 0; i < include_dirs->len; ++i) {
         const char *include_dir = get__Vec(include_dirs, i);
         // include_dir + '/' + preprocessor_include.value
-        String *full_include_path =
-          format__String("{s}/{S}",
-                         include_dir,
-                         include_preprocessor->preprocessor_include.value);
+        String *full_include_path = format__String(
+          "{s}/{S}",
+          include_dir,
+          preprocessor_include_token->preprocessor_include.value);
 
         if (exists__File(full_include_path->buffer)) {
             TODO("scan this file");
@@ -4425,48 +4580,137 @@ exit:
     TODO("#include preprocessor");
 }
 
+void
+resolve_preprocessor_line__CIParser(CIParser *self,
+                                    CIToken *preprocessor_line_token)
+{
+    TODO("resolve #line preprocessor");
+}
+
+void
+resolve_preprocessor_pragma__CIParser(CIParser *self,
+                                      CIToken *preprocessor_pragma_token)
+{
+    TODO("resolve #pragma preprocessor");
+}
+
+void
+resolve_preprocessor_undef__CIParser(CIParser *self,
+                                     CIToken *preprocessor_undef_token)
+{
+    TODO("resolve #undef preprocessor");
+}
+
+void
+resolve_preprocessor_warning__CIParser(CIParser *self,
+                                       CIToken *preprocessor_warning_token)
+{
+	emit_warning__Diagnostic(
+      NEW_VARIANT(
+        Diagnostic,
+        simple_ci_warning,
+        self->file->scanner.base.source.file,
+        &preprocessor_warning_token->location,
+        NEW_VARIANT(CIWarning,
+                    preprocessor_warning,
+                    preprocessor_warning_token->preprocessor_warning->buffer),
+        NULL,
+        NULL,
+        NULL),
+	  NULL,
+      self->count_warning);
+}
+
 CIDecl *
 parse_decl__CIParser(CIParser *self, bool in_function_body)
 {
     switch (self->tokens_iters.current_token->kind) {
         case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:
-            TODO("#define preprocessor");
+            resolve_preprocessor_define__CIParser(
+              self, self->tokens_iters.current_token);
+
+            break;
         case CI_TOKEN_KIND_PREPROCESSOR_ELIF:
-            TODO("#elif preprocessor");
+            resolve_preprocessor_elif__CIParser(
+              self, self->tokens_iters.current_token);
+
+            break;
         case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:
-            TODO("#elifdef preprocessor");
+            resolve_preprocessor_elifdef__CIParser(
+              self, self->tokens_iters.current_token);
+
+            break;
         case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:
-            TODO("#elifndef preprocessor");
+            resolve_preprocessor_elifndef__CIParser(
+              self, self->tokens_iters.current_token);
+
+            break;
         case CI_TOKEN_KIND_PREPROCESSOR_ELSE:
-            TODO("#else preprocessor");
+            resolve_preprocessor_else__CIParser(
+              self, self->tokens_iters.current_token);
+
+            break;
         case CI_TOKEN_KIND_PREPROCESSOR_EMBED:
-            TODO("#embed preprocessor");
+            resolve_preprocessor_embed__CIParser(
+              self, self->tokens_iters.current_token);
+
+            break;
         case CI_TOKEN_KIND_PREPROCESSOR_ENDIF:
-            TODO("#endif preprocessor");
+            break;
         case CI_TOKEN_KIND_PREPROCESSOR_ERROR:
-            TODO("#error preprocessor");
+            resolve_preprocessor_error__CIParser(
+              self, self->tokens_iters.current_token);
+
+            break;
         case CI_TOKEN_KIND_PREPROCESSOR_IF:
-            TODO("#if preprocessor");
+            resolve_preprocessor_if__CIParser(self,
+                                              self->tokens_iters.current_token);
+
+            break;
         case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
-            TODO("#ifdef preprocessor");
+            resolve_preprocessor_ifdef__CIParser(
+              self, self->tokens_iters.current_token);
+
+            break;
         case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:
-            TODO("#ifndef preprocessor");
+            resolve_preprocessor_ifndef__CIParser(
+              self, self->tokens_iters.current_token);
+
+            break;
         case CI_TOKEN_KIND_PREPROCESSOR_INCLUDE:
-            resolve_include_preprocessor__CIParser(
+            resolve_preprocessor_include__CIParser(
               self, self->tokens_iters.current_token);
 
             break;
         case CI_TOKEN_KIND_PREPROCESSOR_LINE:
-            TODO("#line preprocessor");
-        case CI_TOKEN_KIND_PREPROCESSOR_PRAGMA:
-            TODO("#pragma preprocessor");
-        case CI_TOKEN_KIND_PREPROCESSOR_UNDEF:
-            TODO("#undef preprocessor");
-        case CI_TOKEN_KIND_PREPROCESSOR_WARNING:
-            TODO("#warning preprocessor");
-        default:
+            resolve_preprocessor_line__CIParser(
+              self, self->tokens_iters.current_token);
+
             break;
+        case CI_TOKEN_KIND_PREPROCESSOR_PRAGMA:
+            resolve_preprocessor_pragma__CIParser(
+              self, self->tokens_iters.current_token);
+
+            break;
+        case CI_TOKEN_KIND_PREPROCESSOR_UNDEF:
+            resolve_preprocessor_undef__CIParser(
+              self, self->tokens_iters.current_token);
+
+            break;
+        case CI_TOKEN_KIND_PREPROCESSOR_WARNING:
+            resolve_preprocessor_warning__CIParser(
+              self, self->tokens_iters.current_token);
+
+            break;
+        default:
+            goto parse_decl;
     }
+
+    next_token__CIParser(self);
+
+    return NULL;
+
+parse_decl:
 
     storage_class_flag = CI_STORAGE_CLASS_NONE;
 

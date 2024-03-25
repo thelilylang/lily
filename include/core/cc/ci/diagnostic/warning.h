@@ -29,12 +29,17 @@
 
 enum CIWarningKind
 {
-    CI_WARNING_KIND_UNUSED
+    CI_WARNING_KIND_UNUSED,
+    CI_WARNING_KIND_PREPROCESSOR_WARNING
 };
 
 typedef struct CIWarning
 {
     enum CIWarningKind kind;
+    union
+    {
+        char *preprocessor_warning;
+    };
 } CIWarning;
 
 /**
@@ -44,6 +49,19 @@ typedef struct CIWarning
 inline CONSTRUCTOR(CIWarning, CIWarning, enum CIWarningKind kind)
 {
     return (CIWarning){ .kind = kind };
+}
+
+/**
+ *
+ * @brief Construct CIWarning type (CI_ERROR_KIND_PREPROCESSOR_WARNING).
+ */
+inline VARIANT_CONSTRUCTOR(CIWarning,
+                           CIWarning,
+                           preprocessor_warning,
+                           char *preprocessor_warning)
+{
+    return (CIWarning){ .kind = CI_WARNING_KIND_PREPROCESSOR_WARNING,
+                        .preprocessor_warning = preprocessor_warning };
 }
 
 /**
