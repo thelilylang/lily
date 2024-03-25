@@ -640,7 +640,7 @@ CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner)
     return (CIParser){ .file = file,
                        .scanner = scanner,
                        .count_error = &file->count_error,
-					   .count_warning = &file->count_warning,
+                       .count_warning = &file->count_warning,
                        .tokens_iters = tokens_iters,
                        .macros = NEW(Stack, CI_PARSER_MACROS_MAX_SIZE),
                        .wait_visit_list = NEW(HashMap) };
@@ -4605,7 +4605,7 @@ void
 resolve_preprocessor_warning__CIParser(CIParser *self,
                                        CIToken *preprocessor_warning_token)
 {
-	emit_warning__Diagnostic(
+    emit_warning__Diagnostic(
       NEW_VARIANT(
         Diagnostic,
         simple_ci_warning,
@@ -4617,7 +4617,7 @@ resolve_preprocessor_warning__CIParser(CIParser *self,
         NULL,
         NULL,
         NULL),
-	  NULL,
+      NULL,
       self->count_warning);
 }
 

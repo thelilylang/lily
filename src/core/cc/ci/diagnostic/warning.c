@@ -60,8 +60,8 @@ char *
 to_string__CIWarning(const CIWarning *self)
 {
     char *msg = to_msg__CIWarning(self);
-    char *res =
-      format("{sa}[{s}]: {s}", YELLOW("warning"), to_code__CIWarning(self), msg);
+    char *res = format(
+      "{sa}[{s}]: {s}", YELLOW("warning"), to_code__CIWarning(self), msg);
 
     return res;
 }

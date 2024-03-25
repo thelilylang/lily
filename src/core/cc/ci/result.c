@@ -90,7 +90,7 @@ CONSTRUCTOR(CIResultFile *,
     self->unions = NEW(Vec);
     self->variables = NEW(Vec);
     self->count_error = 0;
-	self->count_warning = 0;
+    self->count_warning = 0;
     self->scanner =
       NEW(CIScanner,
           NEW(Source, NEW(Cursor, self->file_input.content), &self->file_input),
