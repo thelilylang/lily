@@ -470,7 +470,13 @@ static void
 resolve_preprocessor_warning__CIParser(CIParser *self,
                                        CIToken *preprocessor_warning_token);
 
-/// @brief Parse declaration or resolve preprocessor (#define, #if, ...).
+/// @brief Resolve preprocessor (not conditional preprocessor).
+/// @return Return true if a preprocessor has been resolved, otherwise return
+/// false.
+static bool
+resolve_preprocessor__CIParser(CIParser *self);
+
+/// @brief Parse declaration.
 static CIDecl *
 parse_decl__CIParser(CIParser *self, bool in_function_body);
 
@@ -1987,44 +1993,60 @@ jump_in_token_block__CIParser(CIParser *self)
 void
 next_token__CIParser(CIParser *self)
 {
-    if (self->tokens_iters.current_token) {
-        switch (self->tokens_iters.current_token->kind) {
-            case CI_TOKEN_KIND_EOF:
-                return;
-            default:
-                break;
+    while (true) {
+        if (self->tokens_iters.current_token) {
+            switch (self->tokens_iters.current_token->kind) {
+                case CI_TOKEN_KIND_EOF:
+                    return;
+                default:
+                    break;
+            }
         }
-    }
 
-    ASSERT(!empty__Stack(self->tokens_iters.iters));
+        ASSERT(!empty__Stack(self->tokens_iters.iters));
 
-    CITokensIter *top = peek__Stack(self->tokens_iters.iters);
+        CITokensIter *top = peek__Stack(self->tokens_iters.iters);
 
-    if (top->iter.count == 0) {
-        self->tokens_iters.current_token = next__VecIter(&top->iter);
+        if (top->iter.count == 0) {
+            self->tokens_iters.current_token = next__VecIter(&top->iter);
 
-        // If the `previous_token` is `NULL`, we assign the `current_token`
-        // to it. Otherwise, we assign nothing because that means we keep
-        // the last token of the previous iterator.
-        if (!self->tokens_iters.previous_token) {
+            // If the `previous_token` is `NULL`, we assign the `current_token`
+            // to it. Otherwise, we assign nothing because that means we keep
+            // the last token of the previous iterator.
+            if (!self->tokens_iters.previous_token) {
+                self->tokens_iters.previous_token =
+                  self->tokens_iters.current_token;
+            }
+        } else {
             self->tokens_iters.previous_token =
               self->tokens_iters.current_token;
-        }
-    } else {
-        self->tokens_iters.previous_token = self->tokens_iters.current_token;
-        self->tokens_iters.current_token = next__VecIter(&top->iter);
+            self->tokens_iters.current_token = next__VecIter(&top->iter);
 
-        // If the `current_token` is `NULL`, that means we have reached the
-        // end of the current iter (top). So we pop the current iter from
-        // the stack and call `next_token__CITokensIters` again.
-        if (!self->tokens_iters.current_token) {
-            FREE(CITokensIter, pop__Stack(self->tokens_iters.iters));
+            // If the `current_token` is `NULL`, that means we have reached the
+            // end of the current iter (top). So we pop the current iter from
+            // the stack and call `next_token__CITokensIters` again.
+            if (!self->tokens_iters.current_token) {
+                FREE(CITokensIter, pop__Stack(self->tokens_iters.iters));
 
-            return next_token__CIParser(self);
+                return next_token__CIParser(self);
+            }
         }
+
+        // Resolve preprocessor like #error, #warning, #embed, #include, ...
+        // (not conditional preprocessor).
+        //
+        // If we know that a preprocessor has been solved (when
+        // `resolve_preprocessor__CIParser(self)` == true), we want to move one
+        // token forward again, to skip it.
+        if (resolve_preprocessor__CIParser(self)) {
+            continue;
+        }
+
+        // Jump in token block such as #if, #ifdef, macro call, ...
+        jump_in_token_block__CIParser(self);
+
+        break;
     }
-
-    jump_in_token_block__CIParser(self);
 }
 
 CIToken *
@@ -4525,25 +4547,10 @@ resolve_preprocessor_warning__CIParser(CIParser *self,
       self->count_warning);
 }
 
-CIDecl *
-parse_decl__CIParser(CIParser *self, bool in_function_body)
+bool
+resolve_preprocessor__CIParser(CIParser *self)
 {
     switch (self->tokens_iters.current_token->kind) {
-        case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:
-        case CI_TOKEN_KIND_PREPROCESSOR_ELIF:
-        case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:
-        case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:
-        case CI_TOKEN_KIND_PREPROCESSOR_ELSE:
-        case CI_TOKEN_KIND_PREPROCESSOR_IF:
-        case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
-        case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:
-            UNREACHABLE("this kind of preprocessor is considered a block token "
-                        "and is directly managed in the token advancement "
-                        "system (next_token__CIParser, ...) (so it's "
-                        "impossible to encounter)");
-        case CI_TOKEN_KIND_PREPROCESSOR_ENDIF:
-            UNREACHABLE("the #endif preprocessor cannot be encountered because "
-                        "the scanner does not add the token stream.");
         case CI_TOKEN_KIND_PREPROCESSOR_EMBED:
             resolve_preprocessor_embed__CIParser(
               self, self->tokens_iters.current_token);
@@ -4580,15 +4587,15 @@ parse_decl__CIParser(CIParser *self, bool in_function_body)
 
             break;
         default:
-            goto parse_decl;
+            return false;
     }
 
-    next_token__CIParser(self);
+    return true;
+}
 
-    return NULL;
-
-parse_decl:
-
+CIDecl *
+parse_decl__CIParser(CIParser *self, bool in_function_body)
+{
     storage_class_flag = CI_STORAGE_CLASS_NONE;
 
     parse_storage_class_specifiers__CIParser(self, &storage_class_flag);
