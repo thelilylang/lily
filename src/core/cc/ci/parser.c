@@ -27,6 +27,7 @@
 #include <base/assert.h>
 #include <base/atof.h>
 #include <base/atoi.h>
+#include <base/format.h>
 
 #include <core/cc/ci/diagnostic/error.h>
 #include <core/cc/ci/include.h>
@@ -4486,13 +4487,15 @@ resolve_preprocessor_include__CIParser(CIParser *self,
     for (Usize i = 0; i < include_dirs->len; ++i) {
         const char *include_dir = get__Vec(include_dirs, i);
         // include_dir + '/' + preprocessor_include.value
-        String *full_include_path = format__String(
-          "{s}/{S}",
-          include_dir,
-          preprocessor_include_token->preprocessor_include.value);
+        char *full_include_path =
+          format("{s}/{S}",
+                 include_dir,
+                 preprocessor_include_token->preprocessor_include.value);
 
-        if (exists__File(full_include_path->buffer)) {
-            TODO("scan this file");
+        if (exists__File(full_include_path)) {
+            add_and_run__CIResult(self->file->result,
+                                  full_include_path,
+                                  self->file->scanner.standard);
 
             goto exit;
         } else {

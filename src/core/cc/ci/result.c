@@ -68,6 +68,7 @@ CONSTRUCTOR(CIResultInclude *,
 
 CONSTRUCTOR(CIResultFile *,
             CIResultFile,
+            const CIResult *result,
             Usize id,
             bool kind,
             enum CIStandard standard,
@@ -76,6 +77,7 @@ CONSTRUCTOR(CIResultFile *,
 {
     CIResultFile *self = lily_malloc(sizeof(CIResultFile));
 
+    self->result = result;
     self->id = id;
     self->kind = kind;
     self->filename_result = filename_result;
@@ -463,6 +465,7 @@ DESTRUCTOR(CIResultFile, CIResultFile *self)
 {
     FREE(String, self->filename_result);
     lily_free(self->file_input.content);
+    lily_free(self->file_input.name);
     FREE_HASHMAP_VALUES(self->defines, CIResultDefineVec);
     FREE(HashMap, self->defines);
     FREE_HASHMAP_VALUES(self->includes, CIResultInclude);
@@ -510,6 +513,7 @@ search_enum_from_id__CIResult(const CIResult *self, const CIEnumID *enum_id)
 
 #define ADD_FILE__CI_RESULT(kind)                                 \
     CIResultFile *result_file = NEW(CIResultFile,                 \
+                                    self,                         \
                                     self->headers->len,           \
                                     kind,                         \
                                     standard,                     \
@@ -539,6 +543,54 @@ add_source__CIResult(const CIResult *self,
                      File file_input)
 {
     ADD_FILE__CI_RESULT(CI_FILE_ID_KIND_SOURCE);
+}
+
+void
+add_and_run__CIResult(const CIResult *self,
+                      char *path,
+                      enum CIStandard standard)
+{
+    char *extension = get_extension__File(path);
+    String *filename_result = get_filename__File(path);
+    bool is_header = false;
+
+    if (!strcmp(extension, ".ci") || !strcmp(extension, ".c")) {
+        push_str__String(filename_result, ".c");
+    } else if (!strcmp(extension, ".hci") || !strcmp(extension, ".h")) {
+        push_str__String(filename_result, ".h");
+    } else {
+        lily_free(extension);
+        FREE(String, filename_result);
+
+        FAILED("unknown extension, expected `.ci`, `.c`, `.hci` or `.h`");
+    }
+
+    const bool has_header = has_header__CIResult(self, filename_result);
+    const bool has_source =
+      !is_header ? has_source__CIResult(self, filename_result) : false;
+
+    if (has_header || has_source) {
+        lily_free(extension);
+        FREE(String, filename_result);
+
+        return;
+    }
+
+    char *file_content = read_file__File(path);
+    File file_input = NEW(File, path, file_content);
+    CIResultFile *result_file = NULL;
+
+    if (is_header) {
+        result_file =
+          add_header__CIResult(self, standard, filename_result, file_input);
+    } else {
+        result_file =
+          add_source__CIResult(self, standard, filename_result, file_input);
+    }
+
+    run__CIResultFile(result_file);
+
+    lily_free(extension);
 }
 
 DESTRUCTOR(CIResult, const CIResult *self)

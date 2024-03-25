@@ -143,50 +143,7 @@ main(int argc, char **argv)
     CIResult result = NEW(CIResult);
 
     for (Usize i = 1; i < argc; ++i) {
-        char *extension = get_extension__File(argv[i]);
-        String *filename_result = get_filename__File(argv[i]);
-        bool is_header = false;
-
-        if (!strcmp(extension, ".ci")) {
-            push_str__String(filename_result, ".c");
-        } else if (!strcmp(extension, ".hci")) {
-            push_str__String(filename_result, ".h");
-            is_header = true;
-        } else {
-            lily_free(extension);
-            FREE(String, filename_result);
-            FREE(CIResult, &result);
-
-            FAILED("unknown extension, expected `.ci` or `.hci`");
-        }
-
-        const bool has_header =
-          is_header ? has_header__CIResult(&result, filename_result) : false;
-        const bool has_source =
-          !is_header ? has_source__CIResult(&result, filename_result) : false;
-
-        if (has_header || has_source) {
-            lily_free(extension);
-            FREE(String, filename_result);
-
-            continue;
-        }
-
-        char *file_content = read_file__File(argv[i]);
-        File file_input = NEW(File, argv[i], file_content);
-        CIResultFile *result_file = NULL;
-
-        if (is_header) {
-            result_file = add_header__CIResult(
-              &result, standard, filename_result, file_input);
-        } else {
-            result_file = add_source__CIResult(
-              &result, standard, filename_result, file_input);
-        }
-
-        run__CIResultFile(result_file);
-
-        lily_free(extension);
+        add_and_run__CIResult(&result, strdup(argv[i]), standard);
     }
 
     run__CIGenerator(&result);

@@ -40,6 +40,7 @@
 #include <stdlib.h>
 
 typedef struct CIResultFile CIResultFile;
+typedef struct CIResult CIResult;
 
 typedef struct CIResultDefine
 {
@@ -109,6 +110,7 @@ inline DESTRUCTOR(CIResultInclude, CIResultInclude *self)
 // This structure represents the organization of an *.hci or *.ci file.
 typedef struct CIResultFile
 {
+    const CIResult *result; // const CIResult* (&)
     Usize id;
     bool kind : 1;
     String *filename_result;
@@ -134,6 +136,7 @@ typedef struct CIResultFile
  */
 CONSTRUCTOR(CIResultFile *,
             CIResultFile,
+            const CIResult *result,
             Usize id,
             bool kind,
             enum CIStandard standard,
@@ -440,6 +443,16 @@ has_source__CIResult(const CIResult *self, const String *filename_result)
 {
     return get__OrderedHashMap(self->sources, filename_result->buffer);
 }
+
+/**
+ *
+ * @brief Add & Run from the passed path.
+ * @param path char*
+ */
+void
+add_and_run__CIResult(const CIResult *self,
+                      char *path,
+                      enum CIStandard standard);
 
 /**
  *
