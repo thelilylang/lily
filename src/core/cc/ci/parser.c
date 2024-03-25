@@ -451,17 +451,17 @@ resolve_preprocessor_include__CIParser(CIParser *self,
                                        CIToken *preprocessor_include_token);
 
 /// @brief Resolve `#line` preprocessor.
-static void
+static inline bool
 resolve_preprocessor_line__CIParser(CIParser *self,
                                     CIToken *preprocessor_line_token);
 
 /// @brief Resolve `#pragma` preprocessor.
-static void
+static bool
 resolve_preprocessor_pragma__CIParser(CIParser *self,
                                       CIToken *preprocessor_pragma_token);
 
 /// @brief Resolve `#undef` preprocessor.
-static void
+static inline void
 resolve_preprocessor_undef__CIParser(CIParser *self,
                                      CIToken *preprocessor_undef_token);
 
@@ -4506,17 +4506,22 @@ exit:
     TODO("#include preprocessor");
 }
 
-void
+bool
 resolve_preprocessor_line__CIParser(CIParser *self,
                                     CIToken *preprocessor_line_token)
 {
-    TODO("resolve #line preprocessor");
+    // NOTE: We cannot resolve the `#line` preprocessor in the case of a
+    // transpiler.
+    return false;
 }
 
-void
+bool
 resolve_preprocessor_pragma__CIParser(CIParser *self,
                                       CIToken *preprocessor_pragma_token)
 {
+    // NOTE: In the case of a `#pragma`, we can only solve `#pragma once`, but
+    // all other #pragma cases are not really possible to solve in the case of a
+    // transpiler.
     TODO("resolve #pragma preprocessor");
 }
 
@@ -4524,7 +4529,8 @@ void
 resolve_preprocessor_undef__CIParser(CIParser *self,
                                      CIToken *preprocessor_undef_token)
 {
-    TODO("resolve #undef preprocessor");
+    undef_define__CIResultFile(self->file,
+                               preprocessor_undef_token->preprocessor_undef);
 }
 
 void
@@ -4567,15 +4573,11 @@ resolve_preprocessor__CIParser(CIParser *self)
 
             break;
         case CI_TOKEN_KIND_PREPROCESSOR_LINE:
-            resolve_preprocessor_line__CIParser(
+            return resolve_preprocessor_line__CIParser(
               self, self->tokens_iters.current_token);
-
-            break;
         case CI_TOKEN_KIND_PREPROCESSOR_PRAGMA:
-            resolve_preprocessor_pragma__CIParser(
+            return resolve_preprocessor_pragma__CIParser(
               self, self->tokens_iters.current_token);
-
-            break;
         case CI_TOKEN_KIND_PREPROCESSOR_UNDEF:
             resolve_preprocessor_undef__CIParser(
               self, self->tokens_iters.current_token);
