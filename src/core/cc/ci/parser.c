@@ -435,31 +435,6 @@ parse_variable__CIParser(CIParser *self,
                          bool is_prototype,
                          bool is_local);
 
-/// @brief Resolve `#define` preprocessor.
-static void
-resolve_preprocessor_define__CIParser(CIParser *self,
-                                      CIToken *preprocessor_define_token);
-
-/// @brief Resolve `#elif` preprocessor.
-static void
-resolve_preprocessor_elif__CIParser(CIParser *self,
-                                    CIToken *preprocessor_elif_token);
-
-/// @brief Resolve `#elifdef` preprocessor.
-static void
-resolve_preprocessor_elifdef__CIParser(CIParser *self,
-                                       CIToken *preprocessor_elifdef_token);
-
-/// @brief Resolve `#elifndef` preprocessor.
-static void
-resolve_preprocessor_elifndef__CIParser(CIParser *self,
-                                        CIToken *preprocessor_elifndef_token);
-
-/// @brief Resolve `#else` preprocessor.
-static void
-resolve_preprocessor_else__CIParser(CIParser *self,
-                                    CIToken *preprocessor_else_token);
-
 /// @brief Resolve `#embed` preprocessor.
 static void
 resolve_preprocessor_embed__CIParser(CIParser *self,
@@ -469,21 +444,6 @@ resolve_preprocessor_embed__CIParser(CIParser *self,
 static void
 resolve_preprocessor_error__CIParser(CIParser *self,
                                      CIToken *preprocessor_error_token);
-
-/// @brief Resolve `#if` preprocessor.
-static void
-resolve_preprocessor_if__CIParser(CIParser *self,
-                                  CIToken *preprocessor_if_token);
-
-/// @brief Resolve `#ifdef` preprocessor.
-static void
-resolve_preprocessor_ifdef__CIParser(CIParser *self,
-                                     CIToken *preprocessor_ifdef_token);
-
-/// @brief Resolve `#ifndef` preprocessor.
-static void
-resolve_preprocessor_ifndef__CIParser(CIParser *self,
-                                      CIToken *preprocessor_ifndef_token);
 
 /// @brief Resolve `#include` preprocessor.
 static void
@@ -510,7 +470,7 @@ static void
 resolve_preprocessor_warning__CIParser(CIParser *self,
                                        CIToken *preprocessor_warning_token);
 
-/// @brief Parse declaration.
+/// @brief Parse declaration or resolve preprocessor (#define, #if, ...).
 static CIDecl *
 parse_decl__CIParser(CIParser *self, bool in_function_body);
 
@@ -4470,41 +4430,6 @@ parse_variable__CIParser(CIParser *self,
 }
 
 void
-resolve_preprocessor_define__CIParser(CIParser *self,
-                                      CIToken *preprocessor_define_token)
-{
-    TODO("resolve #define preprocessor");
-}
-
-void
-resolve_preprocessor_elif__CIParser(CIParser *self,
-                                    CIToken *preprocessor_elif_token)
-{
-    TODO("resolve #elif preprocessor");
-}
-
-void
-resolve_preprocessor_elifdef__CIParser(CIParser *self,
-                                       CIToken *preprocessor_elifdef_token)
-{
-    TODO("resolve #elifdef preprocessor");
-}
-
-void
-resolve_preprocessor_elifndef__CIParser(CIParser *self,
-                                        CIToken *preprocessor_elifndef_token)
-{
-    TODO("resolve #elifndef preprocessor");
-}
-
-void
-resolve_preprocessor_else__CIParser(CIParser *self,
-                                    CIToken *preprocessor_else_token)
-{
-    TODO("resolve #else preprocessor");
-}
-
-void
 resolve_preprocessor_embed__CIParser(CIParser *self,
                                      CIToken *preprocessor_embed_token)
 {
@@ -4528,27 +4453,6 @@ resolve_preprocessor_error__CIParser(CIParser *self,
         NULL,
         NULL),
       self->count_error);
-}
-
-void
-resolve_preprocessor_if__CIParser(CIParser *self,
-                                  CIToken *preprocessor_if_token)
-{
-    TODO("resolve #if preprocessor");
-}
-
-void
-resolve_preprocessor_ifdef__CIParser(CIParser *self,
-                                     CIToken *preprocessor_ifdef_token)
-{
-    TODO("resolve #ifdef preprocessor");
-}
-
-void
-resolve_preprocessor_ifndef__CIParser(CIParser *self,
-                                      CIToken *preprocessor_ifndef_token)
-{
-    TODO("resolve #ifndef preprocessor");
 }
 
 void
@@ -4626,54 +4530,27 @@ parse_decl__CIParser(CIParser *self, bool in_function_body)
 {
     switch (self->tokens_iters.current_token->kind) {
         case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:
-            resolve_preprocessor_define__CIParser(
-              self, self->tokens_iters.current_token);
-
-            break;
         case CI_TOKEN_KIND_PREPROCESSOR_ELIF:
-            resolve_preprocessor_elif__CIParser(
-              self, self->tokens_iters.current_token);
-
-            break;
         case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:
-            resolve_preprocessor_elifdef__CIParser(
-              self, self->tokens_iters.current_token);
-
-            break;
         case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:
-            resolve_preprocessor_elifndef__CIParser(
-              self, self->tokens_iters.current_token);
-
-            break;
         case CI_TOKEN_KIND_PREPROCESSOR_ELSE:
-            resolve_preprocessor_else__CIParser(
-              self, self->tokens_iters.current_token);
-
-            break;
+        case CI_TOKEN_KIND_PREPROCESSOR_IF:
+        case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
+        case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:
+            UNREACHABLE("this kind of preprocessor is considered a block token "
+                        "and is directly managed in the token advancement "
+                        "system (next_token__CIParser, ...) (so it's "
+                        "impossible to encounter)");
+        case CI_TOKEN_KIND_PREPROCESSOR_ENDIF:
+            UNREACHABLE("the #endif preprocessor cannot be encountered because "
+                        "the scanner does not add the token stream.");
         case CI_TOKEN_KIND_PREPROCESSOR_EMBED:
             resolve_preprocessor_embed__CIParser(
               self, self->tokens_iters.current_token);
 
             break;
-        case CI_TOKEN_KIND_PREPROCESSOR_ENDIF:
-            break;
         case CI_TOKEN_KIND_PREPROCESSOR_ERROR:
             resolve_preprocessor_error__CIParser(
-              self, self->tokens_iters.current_token);
-
-            break;
-        case CI_TOKEN_KIND_PREPROCESSOR_IF:
-            resolve_preprocessor_if__CIParser(self,
-                                              self->tokens_iters.current_token);
-
-            break;
-        case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
-            resolve_preprocessor_ifdef__CIParser(
-              self, self->tokens_iters.current_token);
-
-            break;
-        case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:
-            resolve_preprocessor_ifndef__CIParser(
               self, self->tokens_iters.current_token);
 
             break;
