@@ -2941,7 +2941,8 @@ scan_error_preprocessor__CIScanner(CIScanner *self)
                         preprocessor_error_value =
                           string_token->literal_constant_string;
 
-                        lily_free(self);
+                        lily_free(string_token);
+                        next_char__CIScanner(self);
 
                         break;
                     default:
