@@ -71,6 +71,8 @@ enum CIScannerContextLocation
 {
     // #define
     CI_SCANNER_CONTEXT_LOCATION_MACRO,
+    // #if, #elif condition
+    CI_SCANNER_CONTEXT_LOCATION_PREPROCESSOR_COND,
     // #if, #ifdef, #ifndef, #elif, #elifdef or #elifndef
     CI_SCANNER_CONTEXT_LOCATION_PREPROCESSOR_IF,
     // #else
@@ -105,6 +107,21 @@ inline VARIANT_CONSTRUCTOR(CIScannerContext,
                                  CI_SCANNER_CONTEXT_LOCATION_MACRO,
                                .tokens = tokens,
                                .macro = macro };
+}
+
+/**
+ *
+ * @brief Construct CIScannerContext type
+ * (CI_SANNER_CONTEXT_LOCATION_PREPROCESSOR_COND).
+ */
+inline VARIANT_CONSTRUCTOR(CIScannerContext,
+                           CIScannerContext,
+                           preprocessor_cond,
+                           Vec *tokens)
+{
+    return (CIScannerContext){ .ctx_location =
+                                 CI_SCANNER_CONTEXT_LOCATION_PREPROCESSOR_COND,
+                               .tokens = tokens };
 }
 
 /**
@@ -151,7 +168,7 @@ inline CONSTRUCTOR(CIScannerContext,
 
 /**
  *
- * @brief Determine whether you are in a macro.
+ * @brief Determine whether we are in a macro.
  */
 inline bool
 is_in_macro__CIScannerContext(const CIScannerContext *self)
@@ -161,7 +178,17 @@ is_in_macro__CIScannerContext(const CIScannerContext *self)
 
 /**
  *
- * @brief Determine whether you are in #if, #ifdef, #ifndef, #elif, #elifdef or
+ * @brief Determine whether we are in #if, #elif condition.
+ */
+inline bool
+is_in_prepro_cond__CIScannerContext(const CIScannerContext *self)
+{
+    return self->ctx_location == CI_SCANNER_CONTEXT_LOCATION_PREPROCESSOR_COND;
+}
+
+/**
+ *
+ * @brief Determine whether we are in #if, #ifdef, #ifndef, #elif, #elifdef or
  * #elifndef preprocessor.
  */
 inline bool
@@ -172,7 +199,7 @@ is_in_prepro_if__CIScannerContext(const CIScannerContext *self)
 
 /**
  *
- * @brief Determine whether you are in #else preprocessor.
+ * @brief Determine whether we are in #else preprocessor.
  */
 inline bool
 is_in_prepro_else__CIScannerContext(const CIScannerContext *self)

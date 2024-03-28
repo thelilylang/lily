@@ -33,6 +33,9 @@
 
 #include <ctype.h>
 
+#define SCANNER_HAS_REACH_END(self) \
+    (self.source.cursor.position >= self.source.file->len - 1)
+
 typedef struct Scanner
 {
     Location location;

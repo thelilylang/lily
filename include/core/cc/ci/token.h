@@ -183,6 +183,7 @@ enum CITokenKind
     CI_TOKEN_KIND_LITERAL_CONSTANT_BIN,
     CI_TOKEN_KIND_LITERAL_CONSTANT_CHARACTER,
     CI_TOKEN_KIND_LITERAL_CONSTANT_STRING,
+    CI_TOKEN_KIND_MACRO_DEFINED,
     CI_TOKEN_KIND_MACRO_PARAM,
     CI_TOKEN_KIND_MINUS,
     CI_TOKEN_KIND_MINUS_EQ,
@@ -720,6 +721,7 @@ typedef struct CIToken
         String *literal_constant_bin;
         char literal_constant_character;
         String *literal_constant_string;
+        String *macro_defined;
         // The `macro_param` corresponds to the position index in the macro
         // (#define) params vector (preprocessor_define.params).
         Usize macro_param;
@@ -853,6 +855,16 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     macro_param,
                     Location location,
                     Usize macro_param);
+
+/**
+ *
+ * @brief Construct CIToken type (CI_TOKEN_KIND_MACRO_DEFINED).
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    macro_defined,
+                    Location location,
+                    String *macro_defined);
 
 /**
  *
@@ -1102,8 +1114,10 @@ inline CONSTRUCTOR(CITokensIters, CITokensIters)
 /**
  *
  * @brief Add new iter from iters.
+ * @return If the return value is true, this means that the iterator has been
+ * added, otherwise it means that no iterator has been added.
  */
-void
+bool
 add_iter__CITokensIters(const CITokensIters *self, CITokensIter *tokens_iter);
 
 /**

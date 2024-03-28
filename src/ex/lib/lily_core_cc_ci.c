@@ -336,6 +336,11 @@ extern inline VARIANT_CONSTRUCTOR(CIScannerContext,
 
 extern inline VARIANT_CONSTRUCTOR(CIScannerContext,
                                   CIScannerContext,
+                                  preprocessor_cond,
+                                  Vec *tokens);
+
+extern inline VARIANT_CONSTRUCTOR(CIScannerContext,
+                                  CIScannerContext,
                                   preprocessor_if,
                                   Vec *tokens);
 
@@ -351,6 +356,9 @@ extern inline CONSTRUCTOR(CIScannerContext,
 
 extern inline bool
 is_in_macro__CIScannerContext(const CIScannerContext *self);
+
+extern inline bool
+is_in_prepro_cond__CIScannerContext(const CIScannerContext *self);
 
 extern inline bool
 is_in_prepro_if__CIScannerContext(const CIScannerContext *self);
