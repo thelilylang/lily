@@ -2254,16 +2254,20 @@ CONSTRUCTOR(CITokensIter *, CITokensIter, const Vec *vec)
     return self;
 }
 
-void
+bool
 add_iter__CITokensIters(const CITokensIters *self, CITokensIter *tokens_iter)
 {
     // If the vector is null or if its length is 0, it cannot be added to the
     // stack.
     if (tokens_iter->iter.vec && tokens_iter->iter.vec->len > 0) {
-        return push__Stack(self->iters, tokens_iter);
+        push__Stack(self->iters, tokens_iter);
+
+        return true;
     }
 
     FREE(CITokensIter, tokens_iter);
+
+    return false;
 }
 
 void

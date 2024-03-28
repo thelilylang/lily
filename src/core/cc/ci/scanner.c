@@ -386,6 +386,8 @@ get_token__CIScanner(CIScanner *self,
                      const CIScannerContext *ctx,
                      const CIScannerContext *ctx_parent);
 
+#define HAS_REACH_END(self) SCANNER_HAS_REACH_END((self)->base)
+
 static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
     [CI_TOKEN_KIND_AMPERSAND] = { .since = CI_STANDARD_NONE,
                                   .until = CI_STANDARD_NONE },
@@ -1854,11 +1856,12 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, const CIScannerContext *ctx)
 
                             switch (self->base.source.cursor.current) {
                                 case ')':
-                                    next_char__CIScanner(self);
                                     break;
                                 default:
                                     FAILED("expected `)`");
                             }
+                        } else {
+                            previous_char__CIScanner(self);
                         }
 
                         current_token = NEW_VARIANT(CIToken,
@@ -2111,8 +2114,7 @@ get_character__CIScanner(CIScanner *self, char previous)
                                   self->base.source.cursor.column,
                                   self->base.source.cursor.position);
 
-                    if (self->base.source.cursor.position >=
-                        self->base.source.file->len - 1) {
+                    if (HAS_REACH_END(self)) {
                         emit__Diagnostic(
                           NEW_VARIANT(
                             Diagnostic,
@@ -2497,7 +2499,7 @@ skip_space_and_backslash__CIScanner(CIScanner *self)
     while (
       self->base.source.cursor.current != '\n' &&
       (is_space__CIScanner(self) || self->base.source.cursor.current == '\\') &&
-      self->base.source.cursor.position < self->base.source.file->len - 1) {
+      !HAS_REACH_END(self)) {
         skip_space__CIScanner(self);
 
         while (self->base.source.cursor.current == '\\') {
@@ -2731,7 +2733,7 @@ scan_elif_preprocessor__CIScanner(CIScanner *self,
     current_token =                                                         \
       get_token__CIScanner(self, &ctx, ctx_parent ? ctx_parent : &ctx);     \
                                                                             \
-    while (current_token && cond) {                                         \
+    while (!HAS_REACH_END(self) && current_token && cond) {                 \
         if (current_token) {                                                \
             DEFAULT_LAST_SET_AND_CHECK(current_token);                      \
                                                                             \
@@ -2740,8 +2742,7 @@ scan_elif_preprocessor__CIScanner(CIScanner *self,
                     DEFAULT_FILTER_TOKEN(current_token, &ctx);              \
             }                                                               \
                                                                             \
-            if (self->base.source.cursor.position >=                        \
-                self->base.source.file->len - 1) {                          \
+            if (HAS_REACH_END(self)) {                                      \
                 FAILED("expected #endif");                                  \
                                                                             \
                 break;                                                      \
@@ -3065,8 +3066,7 @@ scan_include_preprocessor__CIScanner(CIScanner *self)
             next_char__CIScanner(self);
 
             while (self->base.source.cursor.current != '>' &&
-                   self->base.source.cursor.position <
-                     self->base.source.file->len - 1) {
+                   !HAS_REACH_END(self)) {
                 push__String(preprocessor_include_value,
                              self->base.source.cursor.current);
                 next_char__CIScanner(self);
@@ -3867,12 +3867,10 @@ run__CIScanner(CIScanner *self, bool dump_scanner)
       NEW(CIScannerContext, CI_SCANNER_CONTEXT_LOCATION_NONE, self->tokens);
 
     if (self->base.source.file->len > 1) {
-        while (self->base.source.cursor.position <
-               self->base.source.file->len - 1) {
+        while (!HAS_REACH_END(self)) {
             skip_space__CIScanner(self);
 
-            if (self->base.source.cursor.position >=
-                self->base.source.file->len - 1) {
+            if (HAS_REACH_END(self)) {
                 break;
             }
 
@@ -3886,8 +3884,7 @@ run__CIScanner(CIScanner *self, bool dump_scanner)
                         DEFAULT_FILTER_TOKEN(token, &ctx);
                 }
 
-                if (self->base.source.cursor.position >=
-                    self->base.source.file->len - 1) {
+                if (HAS_REACH_END(self)) {
                     break;
                 }
             }

@@ -1893,7 +1893,7 @@ check_if_resolved_expr_is_true__CIParser(CIParser *self, CIExpr *expr)
                                                                              \
         FREE(CIExpr, cond);                                                  \
                                                                              \
-        add_iter__CITokensIters(                                             \
+        bool content_is_add = add_iter__CITokensIters(                       \
           &self->tokens_iters,                                               \
           NEW(CITokensIter, preprocessor->preprocessor_##k.content));        \
                                                                              \
@@ -1906,7 +1906,9 @@ check_if_resolved_expr_is_true__CIParser(CIParser *self, CIExpr *expr)
                                                                              \
         FREE(CIExpr, resolved_cond);                                         \
                                                                              \
-        next_conditional_preprocessor__CIParser(self);                       \
+        if (content_is_add) {                                                \
+            next_conditional_preprocessor__CIParser(self);                   \
+        }                                                                    \
                                                                              \
         return select_conditional_preprocessor__CIParser(self);              \
     }
@@ -1919,7 +1921,7 @@ check_if_resolved_expr_is_true__CIParser(CIParser *self, CIExpr *expr)
           self->file,                                                       \
           self->tokens_iters.current_token->preprocessor_##k.identifier);   \
                                                                             \
-        add_iter__CITokensIters(                                            \
+        bool content_is_add = add_iter__CITokensIters(                      \
           &self->tokens_iters,                                              \
           NEW(CITokensIter,                                                 \
               self->tokens_iters.current_token->preprocessor_##k.content)); \
@@ -1930,7 +1932,9 @@ check_if_resolved_expr_is_true__CIParser(CIParser *self, CIExpr *expr)
             return self->tokens_iters.current_token;                        \
         }                                                                   \
                                                                             \
-        next_conditional_preprocessor__CIParser(self);                      \
+        if (content_is_add) {                                               \
+            next_conditional_preprocessor__CIParser(self);                  \
+        }                                                                   \
                                                                             \
         return select_conditional_preprocessor__CIParser(self);             \
     }
@@ -1994,7 +1998,8 @@ jump_in_token_block__CIParser(CIParser *self)
               select_conditional_preprocessor__CIParser(self);
 
             if (!conditional_preprocessor &&
-                has_reach_end__CITokensIters(&self->tokens_iters)) {
+                has_reach_end__CITokensIters(&self->tokens_iters) &&
+                self->tokens_iters.iters->len > 1) {
                 pop_iter__CITokensIters(&self->tokens_iters);
             }
 

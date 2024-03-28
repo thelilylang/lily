@@ -1114,8 +1114,10 @@ inline CONSTRUCTOR(CITokensIters, CITokensIters)
 /**
  *
  * @brief Add new iter from iters.
+ * @return If the return value is true, this means that the iterator has been
+ * added, otherwise it means that no iterator has been added.
  */
-void
+bool
 add_iter__CITokensIters(const CITokensIters *self, CITokensIter *tokens_iter);
 
 /**
