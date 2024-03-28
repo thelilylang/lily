@@ -31,16 +31,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef Vec *CIResultDefineVec;
-
-DESTRUCTOR(CIResultDefineVec, CIResultDefineVec self);
-
-DESTRUCTOR(CIResultDefineVec, CIResultDefineVec self)
-{
-    FREE_BUFFER_ITEMS(self->buffer, self->len, CIResultDefine);
-    FREE(Vec, self);
-}
-
 CONSTRUCTOR(CIResultDefine *,
             CIResultDefine,
             const CITokenPreprocessorDefine *define)
@@ -466,7 +456,7 @@ DESTRUCTOR(CIResultFile, CIResultFile *self)
     FREE(String, self->filename_result);
     lily_free(self->file_input.content);
     lily_free(self->file_input.name);
-    FREE_HASHMAP_VALUES(self->defines, CIResultDefineVec);
+    FREE_HASHMAP_VALUES(self->defines, CIResultDefine);
     FREE(HashMap, self->defines);
     FREE_HASHMAP_VALUES(self->includes, CIResultInclude);
     FREE(HashMap, self->includes);
@@ -545,7 +535,7 @@ add_source__CIResult(const CIResult *self,
     ADD_FILE__CI_RESULT(CI_FILE_ID_KIND_SOURCE);
 }
 
-void
+bool
 add_and_run__CIResult(const CIResult *self,
                       char *path,
                       enum CIStandard standard)
@@ -558,14 +548,18 @@ add_and_run__CIResult(const CIResult *self,
         push_str__String(filename_result, ".c");
     } else if (!strcmp(extension, ".hci") || !strcmp(extension, ".h")) {
         push_str__String(filename_result, ".h");
+        is_header = true;
     } else {
         lily_free(extension);
         FREE(String, filename_result);
 
         FAILED("unknown extension, expected `.ci`, `.c`, `.hci` or `.h`");
+
+        return false;
     }
 
-    const bool has_header = has_header__CIResult(self, filename_result);
+    const bool has_header =
+      is_header ? has_header__CIResult(self, filename_result) : false;
     const bool has_source =
       !is_header ? has_source__CIResult(self, filename_result) : false;
 
@@ -573,7 +567,7 @@ add_and_run__CIResult(const CIResult *self,
         lily_free(extension);
         FREE(String, filename_result);
 
-        return;
+        return false;
     }
 
     char *file_content = read_file__File(path);
@@ -591,6 +585,8 @@ add_and_run__CIResult(const CIResult *self,
     run__CIResultFile(result_file);
 
     lily_free(extension);
+
+    return true;
 }
 
 DESTRUCTOR(CIResult, const CIResult *self)

@@ -1011,6 +1011,13 @@ is_conditional_preprocessor__CITokenKind(enum CITokenKind kind);
 
 /**
  *
+ * @brief Check if the kind of token is a preprocessor.
+ */
+bool
+is_preprocessor__CITokenKind(enum CITokenKind kind);
+
+/**
+ *
  * @brief Convert CITokenKind in string.
  * @note This function is only used to debug.
  */
@@ -1096,11 +1103,8 @@ inline CONSTRUCTOR(CITokensIters, CITokensIters)
  *
  * @brief Add new iter from iters.
  */
-inline void
-add_iter__CITokensIters(const CITokensIters *self, CITokensIter *iter)
-{
-    push__Stack(self->iters, iter);
-}
+void
+add_iter__CITokensIters(const CITokensIters *self, CITokensIter *tokens_iter);
 
 /**
  *
@@ -1108,6 +1112,13 @@ add_iter__CITokensIters(const CITokensIters *self, CITokensIter *iter)
  */
 void
 pop_iter__CITokensIters(CITokensIters *self);
+
+/**
+ *
+ * @brief Check if the current iter has reach end.
+ */
+bool
+has_reach_end__CITokensIters(CITokensIters *self);
 
 /**
  *

@@ -1373,6 +1373,25 @@ is_conditional_preprocessor__CITokenKind(enum CITokenKind kind)
     }
 }
 
+bool
+is_preprocessor__CITokenKind(enum CITokenKind kind)
+{
+    switch (kind) {
+        case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:
+        case CI_TOKEN_KIND_PREPROCESSOR_EMBED:
+        case CI_TOKEN_KIND_PREPROCESSOR_ENDIF:
+        case CI_TOKEN_KIND_PREPROCESSOR_ERROR:
+        case CI_TOKEN_KIND_PREPROCESSOR_INCLUDE:
+        case CI_TOKEN_KIND_PREPROCESSOR_LINE:
+        case CI_TOKEN_KIND_PREPROCESSOR_PRAGMA:
+        case CI_TOKEN_KIND_PREPROCESSOR_UNDEF:
+        case CI_TOKEN_KIND_PREPROCESSOR_WARNING:
+            return true;
+        default:
+            return is_conditional_preprocessor__CITokenKind(kind);
+    }
+}
+
 #ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
@@ -2188,6 +2207,18 @@ CONSTRUCTOR(CITokensIter *, CITokensIter, const Vec *vec)
 }
 
 void
+add_iter__CITokensIters(const CITokensIters *self, CITokensIter *tokens_iter)
+{
+    // If the vector is null or if its length is 0, it cannot be added to the
+    // stack.
+    if (tokens_iter->iter.vec && tokens_iter->iter.vec->len > 0) {
+        return push__Stack(self->iters, tokens_iter);
+    }
+
+    FREE(CITokensIter, tokens_iter);
+}
+
+void
 pop_iter__CITokensIters(CITokensIters *self)
 {
     // e.g.
@@ -2220,7 +2251,15 @@ pop_iter__CITokensIters(CITokensIters *self)
     // EOF.
     ASSERT(self->iters->len > 1);
 
-    pop__Stack(self->iters);
+    FREE(CITokensIter, pop__Stack(self->iters));
+}
+
+bool
+has_reach_end__CITokensIters(CITokensIters *self)
+{
+    CITokensIter *iter = peek__Stack(self->iters);
+
+    return iter->iter.count < iter->iter.vec->len;
 }
 
 DESTRUCTOR(CITokensIters, const CITokensIters *self)

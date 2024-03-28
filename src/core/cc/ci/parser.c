@@ -246,6 +246,13 @@ jump_in_token_block__CIParser(CIParser *self);
 static void
 next_token__CIParser(CIParser *self);
 
+/// @brief This function is used when a new iterator is pushed to the stack and
+/// we want the current token to represent the first token obtained by the
+/// previously added iterator.
+/// @param advance Call either `current__VecIter` or `next__VecIter`.
+static void
+init_next_token__CIParser(CIParser *self, bool advance);
+
 /// @brief Peek token at position + n.
 static CIToken *
 peek_token__CIParser(CIParser *self, Usize n);
@@ -593,9 +600,6 @@ CONSTRUCTOR(CIParserMacro *, CIParserMacro, Vec *params)
 CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner)
 {
     CITokensIters tokens_iters = NEW(CITokensIters);
-    CITokensIter *iter = NEW(CITokensIter, scanner->tokens);
-
-    add_iter__CITokensIters(&tokens_iters, iter);
 
     if (!names_error) {
         names_error = NEW(Vec);
@@ -1821,6 +1825,7 @@ next_conditional_preprocessor__CIParser(CIParser *self)
 
     // Move onto the next conditional preprocessor.
     while (
+      self->tokens_iters.current_token->kind != CI_TOKEN_KIND_EOF &&
       (self->tokens_iters.previous_token = self->tokens_iters.current_token) &&
       (self->tokens_iters.current_token = next__VecIter(&tokens_iter->iter))) {
         if (is_conditional_preprocessor__CITokenKind(
@@ -1828,6 +1833,8 @@ next_conditional_preprocessor__CIParser(CIParser *self)
             return self->tokens_iters.current_token;
         }
     }
+
+    pop_iter__CITokensIters(&self->tokens_iters);
 
     return NULL;
 }
@@ -1890,6 +1897,7 @@ check_if_resolved_expr_is_true__CIParser(CIParser *self, CIExpr *expr)
               self->tokens_iters.current_token->preprocessor_##k.content));  \
                                                                              \
         if (check_if_resolved_expr_is_true__CIParser(self, resolved_cond)) { \
+            init_next_token__CIParser(self, false);                          \
             FREE(CIExpr, resolved_cond);                                     \
                                                                              \
             return self->tokens_iters.current_token;                         \
@@ -1902,25 +1910,26 @@ check_if_resolved_expr_is_true__CIParser(CIParser *self, CIExpr *expr)
         return select_conditional_preprocessor__CIParser(self);              \
     }
 
-#define SELECT_IFDEF_CONDITIONAL_PREPROCESSOR(k)                              \
-    {                                                                         \
-        const CIResultDefine *is_def = get_define__CIResultFile(              \
-          self->file,                                                         \
-          self->tokens_iters.current_token->preprocessor_##k.identifier);     \
-                                                                              \
-        if (is_def) {                                                         \
-            add_iter__CITokensIters(                                          \
-              &self->tokens_iters,                                            \
-              NEW(                                                            \
-                CITokensIter,                                                 \
-                self->tokens_iters.current_token->preprocessor_##k.content)); \
-                                                                              \
-            return self->tokens_iters.current_token;                          \
-        }                                                                     \
-                                                                              \
-        next_conditional_preprocessor__CIParser(self);                        \
-                                                                              \
-        return select_conditional_preprocessor__CIParser(self);               \
+#define SELECT_IFDEF_CONDITIONAL_PREPROCESSOR(k, reverse)                   \
+    {                                                                       \
+        const CIResultDefine *is_def = get_define__CIResultFile(            \
+          self->file,                                                       \
+          self->tokens_iters.current_token->preprocessor_##k.identifier);   \
+                                                                            \
+        add_iter__CITokensIters(                                            \
+          &self->tokens_iters,                                              \
+          NEW(CITokensIter,                                                 \
+              self->tokens_iters.current_token->preprocessor_##k.content)); \
+                                                                            \
+        if (is_def || reverse) {                                            \
+            init_next_token__CIParser(self, false);                         \
+                                                                            \
+            return self->tokens_iters.current_token;                        \
+        }                                                                   \
+                                                                            \
+        next_conditional_preprocessor__CIParser(self);                      \
+                                                                            \
+        return select_conditional_preprocessor__CIParser(self);             \
     }
 
 CIToken *
@@ -1931,15 +1940,15 @@ select_conditional_preprocessor__CIParser(CIParser *self)
             case CI_TOKEN_KIND_PREPROCESSOR_IF:
                 SELECT_IF_CONDITIONAL_PREPROCESSOR(if);
             case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
-                SELECT_IFDEF_CONDITIONAL_PREPROCESSOR(ifdef);
+                SELECT_IFDEF_CONDITIONAL_PREPROCESSOR(ifdef, false);
             case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:
-                SELECT_IFDEF_CONDITIONAL_PREPROCESSOR(ifndef);
+                SELECT_IFDEF_CONDITIONAL_PREPROCESSOR(ifndef, true);
             case CI_TOKEN_KIND_PREPROCESSOR_ELIF:
                 SELECT_IF_CONDITIONAL_PREPROCESSOR(elif);
             case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:
-                SELECT_IFDEF_CONDITIONAL_PREPROCESSOR(elifdef);
+                SELECT_IFDEF_CONDITIONAL_PREPROCESSOR(elifdef, false);
             case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:
-                SELECT_IFDEF_CONDITIONAL_PREPROCESSOR(elifndef);
+                SELECT_IFDEF_CONDITIONAL_PREPROCESSOR(elifndef, true);
             case CI_TOKEN_KIND_PREPROCESSOR_ELSE:
                 add_iter__CITokensIters(&self->tokens_iters,
                                         NEW(CITokensIter,
@@ -1952,7 +1961,7 @@ select_conditional_preprocessor__CIParser(CIParser *self)
         }
     }
 
-    pop_iter__CITokensIters(&self->tokens_iters);
+    // pop_iter__CITokensIters(&self->tokens_iters);
 
     return NULL;
 }
@@ -1966,6 +1975,10 @@ jump_in_token_block__CIParser(CIParser *self)
         case CI_TOKEN_KIND_PREPROCESSOR_ENDIF:
             UNREACHABLE("#endif is not expected at this point");
         case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:
+            add_define__CIResultFile(
+              self->file,
+              NEW(CIResultDefine,
+                  &self->tokens_iters.current_token->preprocessor_define));
             add_iter__CITokensIters(
               &self->tokens_iters,
               NEW(
@@ -1979,10 +1992,12 @@ jump_in_token_block__CIParser(CIParser *self)
             CIToken *conditional_preprocessor =
               select_conditional_preprocessor__CIParser(self);
 
-            if (!conditional_preprocessor) {
+            if (!conditional_preprocessor &&
+                has_reach_end__CITokensIters(&self->tokens_iters)) {
                 pop_iter__CITokensIters(&self->tokens_iters);
-                next_token__CIParser(self);
             }
+
+            init_next_token__CIParser(self, true);
 
             return;
         }
@@ -1995,6 +2010,8 @@ void
 next_token__CIParser(CIParser *self)
 {
     while (true) {
+        ASSERT(!empty__Stack(self->tokens_iters.iters));
+
         if (self->tokens_iters.current_token) {
             switch (self->tokens_iters.current_token->kind) {
                 case CI_TOKEN_KIND_EOF:
@@ -2004,20 +2021,10 @@ next_token__CIParser(CIParser *self)
             }
         }
 
-        ASSERT(!empty__Stack(self->tokens_iters.iters));
-
         CITokensIter *top = peek__Stack(self->tokens_iters.iters);
 
         if (top->iter.count == 0) {
-            self->tokens_iters.current_token = next__VecIter(&top->iter);
-
-            // If the `previous_token` is `NULL`, we assign the `current_token`
-            // to it. Otherwise, we assign nothing because that means we keep
-            // the last token of the previous iterator.
-            if (!self->tokens_iters.previous_token) {
-                self->tokens_iters.previous_token =
-                  self->tokens_iters.current_token;
-            }
+            init_next_token__CIParser(self, true);
         } else {
             self->tokens_iters.previous_token =
               self->tokens_iters.current_token;
@@ -2027,9 +2034,9 @@ next_token__CIParser(CIParser *self)
             // end of the current iter (top). So we pop the current iter from
             // the stack and call `next_token__CITokensIters` again.
             if (!self->tokens_iters.current_token) {
-                FREE(CITokensIter, pop__Stack(self->tokens_iters.iters));
+                pop_iter__CITokensIters(&self->tokens_iters);
 
-                return next_token__CIParser(self);
+                continue;
             }
         }
 
@@ -2045,6 +2052,44 @@ next_token__CIParser(CIParser *self)
 
         // Jump in token block such as #if, #ifdef, macro call, ...
         jump_in_token_block__CIParser(self);
+
+        if (is_preprocessor__CITokenKind(
+              self->tokens_iters.current_token->kind)) {
+            continue;
+        }
+
+        break;
+    }
+}
+
+static void
+init_next_token__CIParser(CIParser *self, bool advance)
+{
+    while (true) {
+        ASSERT(!empty__Stack(self->tokens_iters.iters));
+
+        CITokensIter *top = peek__Stack(self->tokens_iters.iters);
+
+        if (self->tokens_iters.current_token &&
+            self->tokens_iters.current_token->kind == CI_TOKEN_KIND_EOF) {
+            return;
+        }
+
+        self->tokens_iters.previous_token = self->tokens_iters.current_token;
+        self->tokens_iters.current_token =
+          advance ? next__VecIter(&top->iter) : current__VecIter(&top->iter);
+
+        // If the `previous_token` is `NULL`, we assign the `current_token`
+        // to it. Otherwise, we assign nothing because that means we keep
+        // the last token of the previous iterator.
+        if (!self->tokens_iters.previous_token) {
+            self->tokens_iters.previous_token =
+              self->tokens_iters.current_token;
+        } else if (!self->tokens_iters.current_token &&
+                   self->tokens_iters.iters->len > 1) {
+            pop_iter__CITokensIters(&self->tokens_iters);
+            continue;
+        }
 
         break;
     }
@@ -4493,9 +4538,11 @@ resolve_preprocessor_include__CIParser(CIParser *self,
                  preprocessor_include_token->preprocessor_include.value);
 
         if (exists__File(full_include_path)) {
-            add_and_run__CIResult(self->file->result,
-                                  full_include_path,
-                                  self->file->scanner.standard);
+            if (!add_and_run__CIResult(self->file->result,
+                                       full_include_path,
+                                       self->file->scanner.standard)) {
+                lily_free(full_include_path);
+            }
 
             goto exit;
         } else {
@@ -4506,7 +4553,6 @@ resolve_preprocessor_include__CIParser(CIParser *self,
     FAILED("the include file is not found");
 
 exit:
-    TODO("#include preprocessor");
 }
 
 bool
@@ -4812,6 +4858,10 @@ parse_storage_class_specifiers__CIParser(CIParser *self,
 void
 run__CIParser(CIParser *self)
 {
+    // Initialize the first iterator.
+    add_iter__CITokensIters(&self->tokens_iters,
+                            NEW(CITokensIter, self->scanner->tokens));
+
     // Initialize the first token.
     next_token__CIParser(self);
 

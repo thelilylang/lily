@@ -279,3 +279,9 @@ next__VecIter(VecIter *self)
 {
     return safe_get__Vec(self->vec, self->count++);
 }
+
+void *
+current__VecIter(VecIter *self)
+{
+    return safe_get__Vec(self->vec, self->count);
+}

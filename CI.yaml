@@ -2,8 +2,10 @@
 standard: c23
 
 include_dirs:
-  - include
-  - lib
+  - include:
+    gen: true
+  - lib:
+    gen: false
 
 libraries:
   - lily_base:

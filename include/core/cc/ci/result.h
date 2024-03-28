@@ -190,6 +190,13 @@ undef_define__CIResultFile(const CIResultFile *self, String *name);
 
 /**
  *
+ * @brief Add include preprocessor to `includes` map.
+ */
+void
+add_include__CIResultFile(const CIResultFile *self);
+
+/**
+ *
  * @brief Add enum declaration to enums field. If the enum name is already
  * defined, the declaration pointer is returned, otherwise NULL is returned.
  * @return const CIDecl*?
@@ -448,8 +455,10 @@ has_source__CIResult(const CIResult *self, const String *filename_result)
  *
  * @brief Add & Run from the passed path.
  * @param path char*
+ * @return If true, the file has been successfully added and ran; otherwise, it
+ * returns false.
  */
-void
+bool
 add_and_run__CIResult(const CIResult *self,
                       char *path,
                       enum CIStandard standard);
