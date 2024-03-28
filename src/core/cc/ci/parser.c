@@ -1867,8 +1867,8 @@ check_if_resolved_expr_is_true__CIParser(CIParser *self, CIExpr *expr)
     }
 }
 
-#define PREPROCESSOR_PARSE_EXPR(name)                         \
-    CIExpr *name = parse_expr__CIParser(self);                \
+#define PREPROCESSOR_PARSE_EXPR(n)                            \
+    CIExpr *n = parse_expr__CIParser(self);                   \
                                                               \
     if (!has_reach_end__CITokensIters(&self->tokens_iters)) { \
         FAILED("expected only one expression");               \
@@ -3635,6 +3635,18 @@ parse_primary_expr__CIParser(CIParser *self)
             }
 
             return res;
+        }
+        case CI_TOKEN_KIND_MACRO_DEFINED: {
+            const CIResultDefine *is_def = get_define__CIResultFile(
+              self->file, self->tokens_iters.previous_token->macro_defined);
+
+            if (is_def) {
+                return NEW_VARIANT(
+                  CIExpr, literal, NEW_VARIANT(CIExprLiteral, bool, true));
+            }
+
+            return NEW_VARIANT(
+              CIExpr, literal, NEW_VARIANT(CIExprLiteral, bool, false));
         }
         default:
             FAILED("unexpected token");
