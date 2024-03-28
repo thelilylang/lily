@@ -2259,7 +2259,7 @@ has_reach_end__CITokensIters(CITokensIters *self)
 {
     CITokensIter *iter = peek__Stack(self->iters);
 
-    return iter->iter.count < iter->iter.vec->len;
+    return iter->iter.count >= iter->iter.vec->len - 1;
 }
 
 DESTRUCTOR(CITokensIters, const CITokensIters *self)

@@ -1867,23 +1867,25 @@ check_if_resolved_expr_is_true__CIParser(CIParser *self, CIExpr *expr)
     }
 }
 
-#define PREPROCESSOR_PARSE_EXPR(name)                     \
-    Usize old_iters_len = self->tokens_iters.iters->len;  \
-    CIExpr *name = parse_expr__CIParser(self);            \
-                                                          \
-    if (old_iters_len >= self->tokens_iters.iters->len) { \
-        FAILED("expected only one expression");           \
-    } else {                                              \
-        pop_iter__CITokensIters(&self->tokens_iters);     \
+#define PREPROCESSOR_PARSE_EXPR(name)                         \
+    CIExpr *name = parse_expr__CIParser(self);                \
+                                                              \
+    if (!has_reach_end__CITokensIters(&self->tokens_iters)) { \
+        FAILED("expected only one expression");               \
+    } else {                                                  \
+        pop_iter__CITokensIters(&self->tokens_iters);         \
+        init_next_token__CIParser(self, false);               \
     }
 
 #define SELECT_IF_CONDITIONAL_PREPROCESSOR(k)                                \
     {                                                                        \
+        CIToken *preprocessor = self->tokens_iters.current_token;            \
+                                                                             \
         /* Add condition to the stack. */                                    \
         add_iter__CITokensIters(                                             \
           &self->tokens_iters,                                               \
-          NEW(CITokensIter,                                                  \
-              self->tokens_iters.current_token->preprocessor_##k.cond));     \
+          NEW(CITokensIter, preprocessor->preprocessor_##k.cond));           \
+        init_next_token__CIParser(self, false);                              \
                                                                              \
         PREPROCESSOR_PARSE_EXPR(cond);                                       \
                                                                              \
@@ -1893,8 +1895,7 @@ check_if_resolved_expr_is_true__CIParser(CIParser *self, CIExpr *expr)
                                                                              \
         add_iter__CITokensIters(                                             \
           &self->tokens_iters,                                               \
-          NEW(CITokensIter,                                                  \
-              self->tokens_iters.current_token->preprocessor_##k.content));  \
+          NEW(CITokensIter, preprocessor->preprocessor_##k.content));        \
                                                                              \
         if (check_if_resolved_expr_is_true__CIParser(self, resolved_cond)) { \
             init_next_token__CIParser(self, false);                          \
@@ -1910,6 +1911,8 @@ check_if_resolved_expr_is_true__CIParser(CIParser *self, CIExpr *expr)
         return select_conditional_preprocessor__CIParser(self);              \
     }
 
+// The `inverse` parameter is used for `#ifndef`, `#elifndef` cases, to
+// invert the condition.
 #define SELECT_IFDEF_CONDITIONAL_PREPROCESSOR(k, reverse)                   \
     {                                                                       \
         const CIResultDefine *is_def = get_define__CIResultFile(            \
@@ -1960,8 +1963,6 @@ select_conditional_preprocessor__CIParser(CIParser *self)
                 return NULL;
         }
     }
-
-    // pop_iter__CITokensIters(&self->tokens_iters);
 
     return NULL;
 }
@@ -2075,7 +2076,9 @@ init_next_token__CIParser(CIParser *self, bool advance)
             return;
         }
 
-        self->tokens_iters.previous_token = self->tokens_iters.current_token;
+        self->tokens_iters.previous_token =
+          advance ? self->tokens_iters.current_token
+                  : self->tokens_iters.previous_token;
         self->tokens_iters.current_token =
           advance ? next__VecIter(&top->iter) : current__VecIter(&top->iter);
 
