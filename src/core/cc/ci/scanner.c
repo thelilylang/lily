@@ -285,6 +285,10 @@ scan_num__CIScanner(CIScanner *self);
 static void
 skip_space_and_backslash__CIScanner(CIScanner *self);
 
+/// @brief Skip backslash.
+static void
+skip_backslash__CIScanner(CIScanner *self);
+
 /// @brief Scan defined preprcoessor params.
 /// @return Vec<String*>*
 static Vec *
@@ -2425,6 +2429,14 @@ scan_num__CIScanner(CIScanner *self)
                        res);
 }
 
+#define BACKSLASH_DIAGNOSTIC()                               \
+    if (is_space__CIScanner(self)) {                         \
+        /* TODO: skip blank space */                         \
+        FAILED("warning: space is not expected after `\\`"); \
+    } else {                                                 \
+        FAILED("expected new line");                         \
+    }
+
 void
 skip_space_and_backslash__CIScanner(CIScanner *self)
 {
@@ -2442,13 +2454,24 @@ skip_space_and_backslash__CIScanner(CIScanner *self)
                     next_char__CIScanner(self);
                     break;
                 default:
-                    if (is_space__CIScanner(self)) {
-                        // TODO: skip blank space
-                        FAILED("warning: space is not expected after `\\`");
-                    } else {
-                        FAILED("expected new line");
-                    }
+                    BACKSLASH_DIAGNOSTIC();
             }
+        }
+    }
+}
+
+void
+skip_backslash__CIScanner(CIScanner *self)
+{
+    while (self->base.source.cursor.current == '\\') {
+        next_char__CIScanner(self);
+
+        switch (self->base.source.cursor.current) {
+            case '\n':
+                next_char__CIScanner(self);
+                break;
+            default:
+                BACKSLASH_DIAGNOSTIC();
         }
     }
 }
@@ -2925,40 +2948,15 @@ scan_error_preprocessor__CIScanner(CIScanner *self)
 {
     Location preprocessor_error_location =
       clone__Location(&self->base.location);
-    String *preprocessor_error_value = NULL;
+    String *preprocessor_error_value = NEW(String);
 
     skip_space_and_backslash__CIScanner(self);
 
-    switch (self->base.source.cursor.current) {
-        case '\"': {
-            CIScannerContext ctx =
-              NEW(CIScannerContext, CI_SCANNER_CONTEXT_LOCATION_NONE, NULL);
-            CIToken *string_token = get_token__CIScanner(self, &ctx, NULL);
-
-            if (string_token) {
-                switch (string_token->kind) {
-                    case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
-                        preprocessor_error_value =
-                          string_token->literal_constant_string;
-
-                        lily_free(string_token);
-                        next_char__CIScanner(self);
-
-                        break;
-                    default:
-                        FREE(CIToken, string_token);
-
-                        goto expected_string_literal;
-                }
-            } else {
-                goto expected_string_literal;
-            }
-
-            break;
-        }
-        default:
-        expected_string_literal:
-            FAILED("expected string literal");
+    while (self->base.source.cursor.current != '\n') {
+        push__String(preprocessor_error_value,
+                     self->base.source.cursor.current);
+        next_char__CIScanner(self);
+        skip_backslash__CIScanner(self);
     }
 
     return NEW_VARIANT(CIToken,
