@@ -3180,8 +3180,17 @@ scan_undef_preprocessor__CIScanner(CIScanner *self)
                 case CI_TOKEN_KIND_IDENTIFIER:
                     preprocessor_undef_identifier = token->identifier;
 
+                    next_char__CIScanner(self);
+                    lily_free(token);
+
                     break;
                 default:
+                    // Advance
+                    next_char_by_token__CIScanner(self, token);
+                    next_char__CIScanner(self);
+
+                    FREE(CIToken, token);
+
                     FAILED("expected identifier");
             }
         }
