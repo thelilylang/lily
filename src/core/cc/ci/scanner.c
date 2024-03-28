@@ -369,16 +369,6 @@ scan_warning_preprocessor__CIScanner(CIScanner *self);
 static CIToken *
 get_num__CIScanner(CIScanner *self);
 
-/// @brief Skip and verify if the next character is the target.
-static bool
-skip_and_verify__CIScanner(CIScanner *self, char target);
-
-/// @brief Scan to the next closing character.
-static CIToken *
-get_closing__CIScanner(CIScanner *self,
-                       const CIScannerContext *ctx,
-                       char target);
-
 /// @brief Check that the token is available in accordance with the standard.
 /// @note This function can modify the token type.
 static void
@@ -3238,92 +3228,6 @@ get_num__CIScanner(CIScanner *self)
     }
 }
 
-bool
-skip_and_verify__CIScanner(CIScanner *self, char target)
-{
-    skip_space__CIScanner(self);
-    return self->base.source.cursor.current != target;
-}
-
-CIToken *
-get_closing__CIScanner(CIScanner *self,
-                       const CIScannerContext *ctx,
-                       char target)
-{
-    Location location_error = clone__Location(&self->base.location);
-
-    skip_space__CIScanner(self);
-
-    // Check if the closing delimiter is not closed.
-    while (skip_and_verify__CIScanner(self, target)) {
-        if (self->base.source.cursor.position >=
-            self->base.source.file->len - 1) {
-            emit__Diagnostic(
-              NEW_VARIANT(
-                Diagnostic,
-                simple_ci_error,
-                self->base.source.file,
-                &location_error,
-                NEW(CIError, CI_ERROR_KIND_MISMATCHED_CLOSING_DELIMITER),
-                NULL,
-                NULL,
-                from__String("expected closing delimiter after this token, "
-                             "such as `)`, `}` or `]`")),
-              self->base.count_error);
-
-            return NULL;
-        }
-
-        CIToken *token = get_token__CIScanner(self, ctx, NULL);
-
-        if (token) {
-            next_char_by_token__CIScanner(self, token);
-            end_token__CIScanner(self,
-                                 self->base.source.cursor.line,
-                                 self->base.source.cursor.column,
-                                 self->base.source.cursor.position);
-
-            switch (token->kind) {
-                case CI_TOKEN_KIND_LPAREN:
-                case CI_TOKEN_KIND_LBRACE:
-                case CI_TOKEN_KIND_LHOOK:
-                    break;
-                default:
-                    set_all__Location(&token->location, &self->base.location);
-            }
-
-            check_standard__CIScanner(self, token);
-
-            switch (token->kind) {
-                case CI_TOKEN_KIND_COMMENT_LINE:
-                    DEFAULT_FILTER_TOKEN(token, ctx);
-            }
-        }
-    }
-
-    start_token__CIScanner(self,
-                           self->base.source.cursor.line,
-                           self->base.source.cursor.column,
-                           self->base.source.cursor.position);
-
-    switch (target) {
-        case ')':
-            return NEW(CIToken,
-                       CI_TOKEN_KIND_RPAREN,
-                       clone__Location(&self->base.location));
-        case '}':
-            return NEW(CIToken,
-                       CI_TOKEN_KIND_RBRACE,
-                       clone__Location(&self->base.location));
-        case ']':
-            return NEW(CIToken,
-                       CI_TOKEN_KIND_RHOOK,
-                       clone__Location(&self->base.location));
-        default:
-            UNREACHABLE("this way is not possible");
-    }
-}
-
 void
 check_standard__CIScanner(CIScanner *self, CIToken *token)
 {
@@ -3761,111 +3665,36 @@ get_token__CIScanner(CIScanner *self,
             return NEW(CIToken,
                        CI_TOKEN_KIND_INTERROGATION,
                        clone__Location(&self->base.location));
-        // {}, [], ()
+        // {
         case '{':
+            return NEW(CIToken,
+                       CI_TOKEN_KIND_LBRACE,
+                       clone__Location(&self->base.location));
+        // [
         case '[':
-        case '(': {
-            // We shouldn't call `get_closing__CIScanner` when scanning a
-            // macro, because you're not trying to match closing characters.
-            if (is_in_macro__CIScannerContext(ctx)) {
-                switch (self->base.source.cursor.current) {
-                    case '{':
-                        return NEW(CIToken,
-                                   CI_TOKEN_KIND_LBRACE,
-                                   clone__Location(&self->base.location));
-                    case '[':
-                        return NEW(CIToken,
-                                   CI_TOKEN_KIND_LHOOK,
-                                   clone__Location(&self->base.location));
-                    case '(':
-                        return NEW(CIToken,
-                                   CI_TOKEN_KIND_LPAREN,
-                                   clone__Location(&self->base.location));
-                    default:
-                        UNREACHABLE("unknown character");
-                }
-            }
-
-            char match = self->base.source.cursor.current;
-            CIToken *token = NULL;
-
-            switch (match) {
-                case '{':
-                    token = NEW(CIToken,
-                                CI_TOKEN_KIND_LBRACE,
-                                clone__Location(&self->base.location));
-
-                    break;
-                case '[':
-                    if (c1 == (char *)'[') {
-                        return scan_attribute__CIScanner(self);
-                    }
-
-                    token = NEW(CIToken,
-                                CI_TOKEN_KIND_LHOOK,
-                                clone__Location(&self->base.location));
-
-                    break;
-                case '(':
-                    token = NEW(CIToken,
-                                CI_TOKEN_KIND_LPAREN,
-                                clone__Location(&self->base.location));
-
-                    break;
-                default:
-                    UNREACHABLE("this situation is impossible");
-            }
-
-            end_token__CIScanner(self,
-                                 self->base.source.cursor.line,
-                                 self->base.source.cursor.column,
-                                 self->base.source.cursor.position);
-            end__Location(&token->location,
-                          self->base.location.end_line,
-                          self->base.location.end_column,
-                          self->base.location.end_position);
-
-            next_char__CIScanner(self);
-            push_token__CIScanner(self, ctx, token);
-
-            switch (match) {
-                case '{':
-                    return get_closing__CIScanner(self, ctx, '}');
-                case '[':
-                    return get_closing__CIScanner(self, ctx, ']');
-                case '(':
-                    return get_closing__CIScanner(self, ctx, ')');
-                default:
-                    UNREACHABLE("this situation is impossible");
-            }
-
-            return token;
-        }
+            return NEW(CIToken,
+                       CI_TOKEN_KIND_LHOOK,
+                       clone__Location(&self->base.location));
+        // (
+        case '(':
+            return NEW(CIToken,
+                       CI_TOKEN_KIND_LPAREN,
+                       clone__Location(&self->base.location));
+        // }
         case '}':
+            return NEW(CIToken,
+                       CI_TOKEN_KIND_RBRACE,
+                       clone__Location(&self->base.location));
+        // ]
         case ']':
+            return NEW(CIToken,
+                       CI_TOKEN_KIND_RHOOK,
+                       clone__Location(&self->base.location));
+        // )
         case ')':
-            // When you scan a macro, you don't check whether the closing
-            // characters match.
-            if (is_in_macro__CIScannerContext(ctx)) {
-                switch (self->base.source.cursor.current) {
-                    case '}':
-                        return NEW(CIToken,
-                                   CI_TOKEN_KIND_RBRACE,
-                                   clone__Location(&self->base.location));
-                    case ']':
-                        return NEW(CIToken,
-                                   CI_TOKEN_KIND_RHOOK,
-                                   clone__Location(&self->base.location));
-                    case ')':
-                        return NEW(CIToken,
-                                   CI_TOKEN_KIND_RPAREN,
-                                   clone__Location(&self->base.location));
-                    default:
-                        UNREACHABLE("unknown character");
-                }
-            }
-
-            FAILED("unexpected `}`, `]` or `)`");
+            return NEW(CIToken,
+                       CI_TOKEN_KIND_RPAREN,
+                       clone__Location(&self->base.location));
         // <=, <<=, <<, <
         case '<':
             if (c1 == (char *)'=') {
