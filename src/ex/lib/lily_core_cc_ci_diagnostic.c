@@ -34,7 +34,17 @@
 // <core/cc/ci/diagnostic/error.h>
 extern inline CONSTRUCTOR(CIError, CIError, enum CIErrorKind kind);
 
+extern inline VARIANT_CONSTRUCTOR(CIError,
+                                  CIError,
+                                  preprocessor_error,
+                                  char *preprocessor_error);
+
 // <core/cc/ci/diagnostic/warning.h>
 extern inline CONSTRUCTOR(CIWarning, CIWarning, enum CIWarningKind kind);
+
+extern inline VARIANT_CONSTRUCTOR(CIWarning,
+                                  CIWarning,
+                                  preprocessor_warning,
+                                  char *preprocessor_warning);
 
 #endif // LILY_EX_LIB_LILY_CORE_CC_CI_DIAGNOSTIC_C

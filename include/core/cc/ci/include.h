@@ -22,46 +22,40 @@
  * SOFTWARE.
  */
 
-#include <base/color.h>
-#include <base/format.h>
+#ifndef LILY_CORE_CC_CI_INCLUDE_H
+#define LILY_CORE_CC_CI_INCLUDE_H
 
-#include <core/cc/ci/diagnostic/warning.h>
+#include <base/platform.h>
+#include <base/vec.h>
 
-#include <stdio.h>
-#include <stdlib.h>
+/**
+ *
+ * @brief Initialize include directories vector.
+ */
+void
+init_include_dirs__CIInclude();
 
-char *
-to_msg__CIWarning(const CIWarning *self)
-{
-    switch (self->kind) {
-        case CI_WARNING_KIND_UNUSED:
-            return "unused";
-        case CI_WARNING_KIND_PREPROCESSOR_WARNING:
-            return self->preprocessor_warning;
-        default:
-            UNREACHABLE("unknown variant");
-    }
-}
+/**
+ *
+ * @brief Add include directory to `include_dirs` vector.
+ */
+void
+add_include_dir__CIInclude(char *include_dir);
 
-char *
-to_code__CIWarning(const CIWarning *self)
-{
-    switch (self->kind) {
-        case CI_WARNING_KIND_UNUSED:
-            return "0001";
-        case CI_WARNING_KIND_PREPROCESSOR_WARNING:
-            return "0002";
-        default:
-            UNREACHABLE("unknown variant");
-    }
-}
+/**
+ *
+ * @brief Get `include_dirs` vector.
+ * @return Vec<char* (&)>* (&)
+ */
+const Vec *
+get_include_dirs__CIInclude();
 
-char *
-to_string__CIWarning(const CIWarning *self)
-{
-    char *msg = to_msg__CIWarning(self);
-    char *res = format(
-      "{sa}[{s}]: {s}", YELLOW("warning"), to_code__CIWarning(self), msg);
+/**
+ *
+ * @brief Free `include_dirs` vector.
+ * @see src/core/cc/ci/include.c
+ */
+void
+destroy__CIInclude();
 
-    return res;
-}
+#endif // LILY_CORE_CC_CI_INCLUDE_H

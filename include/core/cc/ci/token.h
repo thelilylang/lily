@@ -720,6 +720,8 @@ typedef struct CIToken
         String *literal_constant_bin;
         char literal_constant_character;
         String *literal_constant_string;
+        // The `macro_param` corresponds to the position index in the macro
+        // (#define) params vector (preprocessor_define.params).
         Usize macro_param;
     };
 } CIToken;
@@ -1002,6 +1004,20 @@ to_string__CIToken(CIToken *self);
 
 /**
  *
+ * @brief Check if the kind of token is a conditional preprocessor.
+ */
+bool
+is_conditional_preprocessor__CITokenKind(enum CITokenKind kind);
+
+/**
+ *
+ * @brief Check if the kind of token is a preprocessor.
+ */
+bool
+is_preprocessor__CITokenKind(enum CITokenKind kind);
+
+/**
+ *
  * @brief Convert CITokenKind in string.
  * @note This function is only used to debug.
  */
@@ -1085,30 +1101,24 @@ inline CONSTRUCTOR(CITokensIters, CITokensIters)
 
 /**
  *
- * @brief Add new iter as current.
- */
-inline void
-add_iter__CITokensIters(CITokensIters *self, CITokensIter *iter)
-{
-    push__Stack(self->iters, iter);
-}
-
-/**
- *
- * @brief Advance to one token on the current iterator.
+ * @brief Add new iter from iters.
  */
 void
-next_token__CITokensIters(CITokensIters *self);
+add_iter__CITokensIters(const CITokensIters *self, CITokensIter *tokens_iter);
 
 /**
  *
- * @brief Peek token at position + n.
+ * @brief Pop iter from iters.
  */
-CIToken *
-peek_token__CITokensIters(const CITokensIters *self,
-                          const CIResultFile *file,
-                          Stack *macros,
-                          Usize n);
+void
+pop_iter__CITokensIters(CITokensIters *self);
+
+/**
+ *
+ * @brief Check if the current iter has reach end.
+ */
+bool
+has_reach_end__CITokensIters(CITokensIters *self);
 
 /**
  *

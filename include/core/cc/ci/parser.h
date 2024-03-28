@@ -80,6 +80,7 @@ typedef struct CIParser
     CIResultFile *file;       // CIResultFile* (&)
     const CIScanner *scanner; // CIScanner* (&)
     Usize *count_error;       // Usize* (&)
+    Usize *count_warning;     // Usize* (&)
     CITokensIters tokens_iters;
     Stack *macros;            // Vec<CIParserMacro*>*
     HashMap *wait_visit_list; // HashMap<CIParserWaitForVisit*>*
@@ -97,6 +98,14 @@ CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner);
  */
 void
 run__CIParser(CIParser *self);
+
+/**
+ *
+ * @brief Parse expression.
+ * @return CIExpr*?
+ */
+CIExpr *
+parse_expr__CIParser(CIParser *self);
 
 /**
  *

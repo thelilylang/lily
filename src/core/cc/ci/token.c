@@ -30,6 +30,7 @@
 #include <base/print.h>
 #endif
 
+#include <core/cc/ci/parser.h>
 #include <core/cc/ci/token.h>
 
 #include <stdio.h>
@@ -1355,6 +1356,42 @@ to_string__CIToken(CIToken *self)
     }
 }
 
+bool
+is_conditional_preprocessor__CITokenKind(enum CITokenKind kind)
+{
+    switch (kind) {
+        case CI_TOKEN_KIND_PREPROCESSOR_ELIF:
+        case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:
+        case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:
+        case CI_TOKEN_KIND_PREPROCESSOR_ELSE:
+        case CI_TOKEN_KIND_PREPROCESSOR_IF:
+        case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
+        case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool
+is_preprocessor__CITokenKind(enum CITokenKind kind)
+{
+    switch (kind) {
+        case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:
+        case CI_TOKEN_KIND_PREPROCESSOR_EMBED:
+        case CI_TOKEN_KIND_PREPROCESSOR_ENDIF:
+        case CI_TOKEN_KIND_PREPROCESSOR_ERROR:
+        case CI_TOKEN_KIND_PREPROCESSOR_INCLUDE:
+        case CI_TOKEN_KIND_PREPROCESSOR_LINE:
+        case CI_TOKEN_KIND_PREPROCESSOR_PRAGMA:
+        case CI_TOKEN_KIND_PREPROCESSOR_UNDEF:
+        case CI_TOKEN_KIND_PREPROCESSOR_WARNING:
+            return true;
+        default:
+            return is_conditional_preprocessor__CITokenKind(kind);
+    }
+}
+
 #ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
@@ -1722,7 +1759,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
 {
     switch (self->kind) {
         case CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "attribute_deprecated = {s} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1730,7 +1767,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                             ? self->attribute_deprecated->buffer
                             : "NULL");
         case CI_TOKEN_KIND_ATTRIBUTE_NODISCARD:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "attribute_nodiscard = {s} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1739,66 +1776,66 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                             : "NULL");
         case CI_TOKEN_KIND_COMMENT_DOC:
             return format(
-              "LilyToken{{ kind = {s}, location = {sa}, comment_doc = {S} }",
+              "CIToken{{ kind = {s}, location = {sa}, comment_doc = {S} }",
               CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
               CALL_DEBUG_IMPL(to_string, Location, &self->location),
               self->comment_doc);
         case CI_TOKEN_KIND_IDENTIFIER:
             return format(
-              "LilyToken{{ kind = {s}, location = {sa}, identifier = {S} }",
+              "CIToken{{ kind = {s}, location = {sa}, identifier = {S} }",
               CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
               CALL_DEBUG_IMPL(to_string, Location, &self->location),
               self->identifier);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_INT:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "literal_constant_int = {S} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_constant_int);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_FLOAT:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "literal_constant_float = {S} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_constant_float);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_OCTAL:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "literal_constant_octal = {S} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_constant_octal);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_HEX:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "literal_constant_hex = {S} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_constant_hex);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_BIN:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "literal_constant_bin = {S} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_constant_bin);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_CHARACTER:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "literal_constant_character = {c} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_constant_character);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "literal_constant_string = {S} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->literal_constant_string);
         case CI_TOKEN_KIND_MACRO_PARAM:
             return format(
-              "LilyToken{{ kind = {s}, location = {sa}, macro_param = {zu} }",
+              "CIToken{{ kind = {s}, location = {sa}, macro_param = {zu} }",
               CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
               CALL_DEBUG_IMPL(to_string, Location, &self->location),
               self->macro_param);
         case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_include = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1806,13 +1843,13 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                                           CITokenPreprocessorDefine,
                                           &self->preprocessor_define));
         case CI_TOKEN_KIND_PREPROCESSOR_ERROR:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_error = {S} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->preprocessor_error);
         case CI_TOKEN_KIND_PREPROCESSOR_ELIF:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_elif = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1820,7 +1857,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                                           CITokenPreprocessorElif,
                                           &self->preprocessor_elif));
         case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_elifdef = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1828,7 +1865,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                                           CITokenPreprocessorElifdef,
                                           &self->preprocessor_elifdef));
         case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_elifndef = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1836,7 +1873,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                                           CITokenPreprocessorElifndef,
                                           &self->preprocessor_elifndef));
         case CI_TOKEN_KIND_PREPROCESSOR_ELSE:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_else = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1844,7 +1881,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                                           CITokenPreprocessorElse,
                                           &self->preprocessor_else));
         case CI_TOKEN_KIND_PREPROCESSOR_EMBED:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_embed = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1852,7 +1889,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                                           CITokenPreprocessorEmbed,
                                           &self->preprocessor_embed));
         case CI_TOKEN_KIND_PREPROCESSOR_IF:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_if = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1860,7 +1897,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                                           CITokenPreprocessorIf,
                                           &self->preprocessor_if));
         case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_ifdef = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1868,7 +1905,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                                           CITokenPreprocessorIfdef,
                                           &self->preprocessor_ifdef));
         case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_ifndef = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1876,7 +1913,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                                           CITokenPreprocessorIfndef,
                                           &self->preprocessor_ifndef));
         case CI_TOKEN_KIND_PREPROCESSOR_INCLUDE:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_include = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1884,7 +1921,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                                           CITokenPreprocessorInclude,
                                           &self->preprocessor_include));
         case CI_TOKEN_KIND_PREPROCESSOR_LINE:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_line = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
@@ -1892,20 +1929,20 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                                           CITokenPreprocessorLine,
                                           &self->preprocessor_line));
         case CI_TOKEN_KIND_PREPROCESSOR_UNDEF:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_undef = {S} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->preprocessor_undef);
         case CI_TOKEN_KIND_PREPROCESSOR_WARNING:
-            return format("LilyToken{{ kind = {s}, location = {sa}, "
+            return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_warning = {S} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->preprocessor_warning);
         default:
             return format(
-              "LilyToken{{ kind = {s}, location = {sa} }",
+              "CIToken{{ kind = {s}, location = {sa} }",
               CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
               CALL_DEBUG_IMPL(to_string, Location, &self->location));
     }
@@ -2170,106 +2207,59 @@ CONSTRUCTOR(CITokensIter *, CITokensIter, const Vec *vec)
 }
 
 void
-next_token__CITokensIters(CITokensIters *self)
+add_iter__CITokensIters(const CITokensIters *self, CITokensIter *tokens_iter)
 {
-    if (!empty__Stack(self->iters)) {
-        CITokensIter *top = peek__Stack(self->iters);
-
-        if (top->iter.count == 0) {
-            self->current_token = next__VecIter(&top->iter);
-
-            // If the `previous_token` is `NULL`, we assign the `current_token`
-            // to it. Otherwise, we assign nothing because that means we keep
-            // the last token of the previous iterator.
-            if (!self->previous_token) {
-                self->previous_token = self->current_token;
-            }
-        } else {
-            self->previous_token = self->current_token;
-            self->current_token = next__VecIter(&top->iter);
-
-            // If the `current_token` is `NULL`, that means we have reached the
-            // end of the current iter (top). So we pop the current iter from
-            // the stack and call `next_token__CITokensIters` again.
-            if (!self->current_token) {
-                FREE(CITokensIter, pop__Stack(self->iters));
-
-                return next_token__CITokensIters(self);
-            }
-        }
+    // If the vector is null or if its length is 0, it cannot be added to the
+    // stack.
+    if (tokens_iter->iter.vec && tokens_iter->iter.vec->len > 0) {
+        return push__Stack(self->iters, tokens_iter);
     }
+
+    FREE(CITokensIter, tokens_iter);
 }
 
-CIToken *
-peek_token__CITokensIters(const CITokensIters *self,
-                          const CIResultFile *file,
-                          Stack *macros,
-                          Usize n)
+void
+pop_iter__CITokensIters(CITokensIters *self)
 {
-    CIToken *current_token = self->current_token;
-    Vec *iters_vec = NEW(Vec);  // Vec<CITokensIter*>*
-    Vec *macros_vec = NEW(Vec); // Vec<CIParserMacro*>*
+    // e.g.
+    //
+    // Stack:
+    //
+    // Top
+    // ^
+    // |
+    // |
+    // Bottom
+    //
+    // Before pop:
+    //
+    // <elif_preprocessor_content>
+    // 		<if_preprocessor_block>
+    //			<elif_preprocessor_content>
+    //				<if_preprocessor_block>
+    //					<main_vec>
+    //
+    //	After pop:
+    //
+    // 	<if_preprocessor_block>
+    // 		<elif_preprocessor_content>
+    // 			<if_preprocessor_block>
+    // 				<main_vec>
 
-    for (Usize i = self->iters->len; i--;) {
-        push__Vec(iters_vec, visit__Stack(self->iters, i));
-    }
+    // NOTE: Normally, it's impossible to pop the last element (iter), as we
+    // check at the start of the next_token function if the current token is not
+    // EOF.
+    ASSERT(self->iters->len > 1);
 
-    CITokensIter *current_iter =
-      pop__Vec(iters_vec); // CITokensIter*? (&) | CITokensIter*?
+    FREE(CITokensIter, pop__Stack(self->iters));
+}
 
-    current_iter->peek.count = current_iter->iter.count;
-    current_iter->peek.in_use = true;
+bool
+has_reach_end__CITokensIters(CITokensIters *self)
+{
+    CITokensIter *iter = peek__Stack(self->iters);
 
-    for (Usize i = 0; i < n && current_iter && current_token;) {
-        current_token =
-          safe_get__Vec(current_iter->iter.vec, current_iter->peek.count);
-
-        if (current_token) {
-            switch (current_token->kind) {
-                case CI_TOKEN_KIND_MACRO_PARAM:
-                    push__Vec(iters_vec, current_iter);
-                    current_iter = NEW(CITokensIter, peek__Stack(macros));
-
-                    continue;
-                case CI_TOKEN_KIND_IDENTIFIER:
-                    TODO("macro");
-                case CI_TOKEN_KIND_PAREN_CALL:
-                    TODO("paren call");
-                default:
-                    ++i;
-                    ++current_iter->peek.count;
-            }
-        } else {
-            if (iters_vec->len > 0) {
-                // Check if check if the current iterator is in the stack.
-                if (iters_vec->len + 1 > self->iters->len) {
-                    FREE(CITokensIter, current_iter);
-                } else {
-                    current_iter->peek.in_use = false;
-                }
-
-                current_iter = pop__Vec(iters_vec);
-
-                if (!current_iter->peek.in_use) {
-                    current_iter->peek.count = current_iter->iter.count;
-                    current_iter->peek.in_use = true;
-                } else {
-                    ++current_iter->peek.count;
-                }
-            } else {
-                break;
-            }
-        }
-    }
-
-    if (current_iter) {
-        current_iter->peek.in_use = false;
-    }
-
-    FREE(Vec, iters_vec);
-    FREE(Vec, macros_vec);
-
-    return current_token;
+    return iter->iter.count >= iter->iter.vec->len - 1;
 }
 
 DESTRUCTOR(CITokensIters, const CITokensIters *self)

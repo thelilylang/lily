@@ -265,4 +265,11 @@ inline CONSTRUCTOR(VecIter, VecIter, const Vec *vec)
 void *
 next__VecIter(VecIter *self);
 
+/**
+ *
+ * @brief Get the current value.
+ */
+void *
+current__VecIter(VecIter *self);
+
 #endif // LILY_BASE_VEC_H

@@ -22,46 +22,52 @@
  * SOFTWARE.
  */
 
-#include <base/color.h>
-#include <base/format.h>
+#include <base/assert.h>
+#include <base/new.h>
 
-#include <core/cc/ci/diagnostic/warning.h>
+#include <core/cc/ci/include.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
-char *
-to_msg__CIWarning(const CIWarning *self)
+#if defined(LILY_LINUX_OS) || defined(LILY_APPLE_OS) || defined(LILY_BSD_OS)
+static const char *default_include_dirs[] = { ".", "/usr/include" };
+static Usize default_include_dirs_len = 2;
+#elifdef LILY_WINDOWS_OS
+static const char *default_include_dirs[] = { "." };
+static Usize default_include_dirs_len = 1;
+#else
+#error "this OS is not yet supported"
+#endif
+
+static Vec *include_dirs = NULL; // Vec<char* (&)>*?
+
+void
+init_include_dirs__CIInclude()
 {
-    switch (self->kind) {
-        case CI_WARNING_KIND_UNUSED:
-            return "unused";
-        case CI_WARNING_KIND_PREPROCESSOR_WARNING:
-            return self->preprocessor_warning;
-        default:
-            UNREACHABLE("unknown variant");
+    include_dirs = NEW(Vec);
+
+    for (Usize i = 0; i < default_include_dirs_len; ++i) {
+        push__Vec(include_dirs, (char *)default_include_dirs[i]);
     }
 }
 
-char *
-to_code__CIWarning(const CIWarning *self)
+void
+add_include_dir__CIInclude(char *include_dir)
 {
-    switch (self->kind) {
-        case CI_WARNING_KIND_UNUSED:
-            return "0001";
-        case CI_WARNING_KIND_PREPROCESSOR_WARNING:
-            return "0002";
-        default:
-            UNREACHABLE("unknown variant");
-    }
+    ASSERT(include_dirs);
+
+    push__Vec(include_dirs, include_dir);
 }
 
-char *
-to_string__CIWarning(const CIWarning *self)
+const Vec *
+get_include_dirs__CIInclude()
 {
-    char *msg = to_msg__CIWarning(self);
-    char *res = format(
-      "{sa}[{s}]: {s}", YELLOW("warning"), to_code__CIWarning(self), msg);
+    return include_dirs;
+}
 
-    return res;
+void
+destroy__CIInclude()
+{
+    FREE(Vec, include_dirs);
 }

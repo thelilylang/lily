@@ -40,12 +40,12 @@
 #include <stdlib.h>
 
 typedef struct CIResultFile CIResultFile;
+typedef struct CIResult CIResult;
 
 typedef struct CIResultDefine
 {
     const CITokenPreprocessorDefine
-      *define;                      // const CITokenPreprocessorDefine* (&)
-    const Location *undef_location; // const Location*? (&)
+      *define; // const CITokenPreprocessorDefine* (&)
 } CIResultDefine;
 
 /**
@@ -54,8 +54,7 @@ typedef struct CIResultDefine
  */
 CONSTRUCTOR(CIResultDefine *,
             CIResultDefine,
-            const CITokenPreprocessorDefine *define,
-            const Location *undef_location);
+            const CITokenPreprocessorDefine *define);
 
 /**
  *
@@ -111,11 +110,12 @@ inline DESTRUCTOR(CIResultInclude, CIResultInclude *self)
 // This structure represents the organization of an *.hci or *.ci file.
 typedef struct CIResultFile
 {
+    const CIResult *result; // const CIResult* (&)
     Usize id;
     bool kind : 1;
     String *filename_result;
     File file_input;
-    HashMap *defines;    // HashMap<Vec<CIResultDefine*>*>*
+    HashMap *defines;    // HashMap<CIResultDefine*>*
     HashMap *includes;   // HashMap<CIResultInclude*>*
     CIScope *scope_base; // CIScope* (&)
     Vec *scopes;         // Vec<CIScope*>*
@@ -125,6 +125,7 @@ typedef struct CIResultFile
     Vec *unions;         // Vec<CIDecl*>*
     Vec *variables;      // Vec<CIDecl*>*
     Usize count_error;
+    Usize count_warning;
     CIScanner scanner;
     CIParser parser;
 } CIResultFile;
@@ -135,6 +136,7 @@ typedef struct CIResultFile
  */
 CONSTRUCTOR(CIResultFile *,
             CIResultFile,
+            const CIResult *result,
             Usize id,
             bool kind,
             enum CIStandard standard,
@@ -162,8 +164,42 @@ add_scope__CIResultFile(const CIResultFile *self,
 
 /**
  *
+ * @brief Add define to defines field. If the define is already defined, the
+ * result define pointer is rerturned, otherwise NULL is returned.
+ * @return const CIResultDefine*?
+ */
+const CIResultDefine *
+add_define__CIResultFile(const CIResultFile *self,
+                         CIResultDefine *result_define);
+
+/**
+ *
+ * @brief Search define.
+ * @return const CIResultDefine*?
+ */
+const CIResultDefine *
+get_define__CIResultFile(const CIResultFile *self, String *name);
+
+/**
+ *
+ * @brief Undef define.
+ * @example #undef <name>
+ */
+bool
+undef_define__CIResultFile(const CIResultFile *self, String *name);
+
+/**
+ *
+ * @brief Add include preprocessor to `includes` map.
+ */
+void
+add_include__CIResultFile(const CIResultFile *self);
+
+/**
+ *
  * @brief Add enum declaration to enums field. If the enum name is already
  * defined, the declaration pointer is returned, otherwise NULL is returned.
+ * @return const CIDecl*?
  */
 const CIDecl *
 add_enum__CIResultFile(const CIResultFile *self, CIDecl *enum_);
@@ -173,6 +209,7 @@ add_enum__CIResultFile(const CIResultFile *self, CIDecl *enum_);
  * @brief Add function declaration to functions field. If the function name is
  * already defined, the declaration pointer is returned, otherwise NULL is
  * returned.
+ * @return const CIDecl*?
  */
 const CIDecl *
 add_function__CIResultFile(const CIResultFile *self, CIDecl *function);
@@ -181,6 +218,7 @@ add_function__CIResultFile(const CIResultFile *self, CIDecl *function);
  *
  * @brief Add struct declaration to structs field. If the struct name is already
  * defined, the declaration pointer is returned, otherwise NULL is returned.
+ * @return const CIDecl*?
  */
 const CIDecl *
 add_struct__CIResultFile(const CIResultFile *self, CIDecl *struct_);
@@ -189,6 +227,7 @@ add_struct__CIResultFile(const CIResultFile *self, CIDecl *struct_);
  *
  * @brief Add union declaration to unions field. If the union name is already
  * defined, the declaration pointer is returned, otherwise NULL is returned.
+ * @return const CIDecl*?
  */
 const CIDecl *
 add_union__CIResultFile(const CIResultFile *self, CIDecl *union_);
@@ -198,6 +237,7 @@ add_union__CIResultFile(const CIResultFile *self, CIDecl *union_);
  * @brief Add variable declaration to variables field. If the variable name is
  * already defined, the declaration pointer is returned, otherwise NULL is
  * returned.
+ * @return const CIDecl*?
  */
 const CIDecl *
 add_variable__CIResultFile(const CIResultFile *self,
@@ -410,6 +450,18 @@ has_source__CIResult(const CIResult *self, const String *filename_result)
 {
     return get__OrderedHashMap(self->sources, filename_result->buffer);
 }
+
+/**
+ *
+ * @brief Add & Run from the passed path.
+ * @param path char*
+ * @return If true, the file has been successfully added and ran; otherwise, it
+ * returns false.
+ */
+bool
+add_and_run__CIResult(const CIResult *self,
+                      char *path,
+                      enum CIStandard standard);
 
 /**
  *

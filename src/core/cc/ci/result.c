@@ -31,25 +31,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef Vec *CIResultDefineVec;
-
-DESTRUCTOR(CIResultDefineVec, CIResultDefineVec self);
-
-DESTRUCTOR(CIResultDefineVec, CIResultDefineVec self)
-{
-    FREE_BUFFER_ITEMS(self->buffer, self->len, CIResultDefine);
-    FREE(Vec, self);
-}
-
 CONSTRUCTOR(CIResultDefine *,
             CIResultDefine,
-            const CITokenPreprocessorDefine *define,
-            const Location *undef_location)
+            const CITokenPreprocessorDefine *define)
 {
     CIResultDefine *self = lily_malloc(sizeof(CIResultDefine));
 
     self->define = define;
-    self->undef_location = undef_location;
 
     return self;
 }
@@ -70,6 +58,7 @@ CONSTRUCTOR(CIResultInclude *,
 
 CONSTRUCTOR(CIResultFile *,
             CIResultFile,
+            const CIResult *result,
             Usize id,
             bool kind,
             enum CIStandard standard,
@@ -78,6 +67,7 @@ CONSTRUCTOR(CIResultFile *,
 {
     CIResultFile *self = lily_malloc(sizeof(CIResultFile));
 
+    self->result = result;
     self->id = id;
     self->kind = kind;
     self->filename_result = filename_result;
@@ -92,6 +82,7 @@ CONSTRUCTOR(CIResultFile *,
     self->unions = NEW(Vec);
     self->variables = NEW(Vec);
     self->count_error = 0;
+    self->count_warning = 0;
     self->scanner =
       NEW(CIScanner,
           NEW(Source, NEW(Cursor, self->file_input.content), &self->file_input),
@@ -113,6 +104,31 @@ add_scope__CIResultFile(const CIResultFile *self,
     push__Vec(self->scopes, scope);
 
     return scope;
+}
+
+const CIResultDefine *
+add_define__CIResultFile(const CIResultFile *self,
+                         CIResultDefine *result_define)
+{
+    return insert__HashMap(
+      self->defines, result_define->define->name->buffer, result_define);
+}
+
+const CIResultDefine *
+get_define__CIResultFile(const CIResultFile *self, String *name)
+{
+    return get__HashMap(self->defines, name->buffer);
+}
+
+bool
+undef_define__CIResultFile(const CIResultFile *self, String *name)
+{
+    CIResultDefine *is_exist = remove__HashMap(self->defines, name->buffer);
+    bool res = is_exist;
+
+    FREE(CIResultDefine, is_exist);
+
+    return res;
 }
 
 const CIDecl *
@@ -439,7 +455,8 @@ DESTRUCTOR(CIResultFile, CIResultFile *self)
 {
     FREE(String, self->filename_result);
     lily_free(self->file_input.content);
-    FREE_HASHMAP_VALUES(self->defines, CIResultDefineVec);
+    lily_free(self->file_input.name);
+    FREE_HASHMAP_VALUES(self->defines, CIResultDefine);
     FREE(HashMap, self->defines);
     FREE_HASHMAP_VALUES(self->includes, CIResultInclude);
     FREE(HashMap, self->includes);
@@ -486,6 +503,7 @@ search_enum_from_id__CIResult(const CIResult *self, const CIEnumID *enum_id)
 
 #define ADD_FILE__CI_RESULT(kind)                                 \
     CIResultFile *result_file = NEW(CIResultFile,                 \
+                                    self,                         \
                                     self->headers->len,           \
                                     kind,                         \
                                     standard,                     \
@@ -515,6 +533,60 @@ add_source__CIResult(const CIResult *self,
                      File file_input)
 {
     ADD_FILE__CI_RESULT(CI_FILE_ID_KIND_SOURCE);
+}
+
+bool
+add_and_run__CIResult(const CIResult *self,
+                      char *path,
+                      enum CIStandard standard)
+{
+    char *extension = get_extension__File(path);
+    String *filename_result = get_filename__File(path);
+    bool is_header = false;
+
+    if (!strcmp(extension, ".ci") || !strcmp(extension, ".c")) {
+        push_str__String(filename_result, ".c");
+    } else if (!strcmp(extension, ".hci") || !strcmp(extension, ".h")) {
+        push_str__String(filename_result, ".h");
+        is_header = true;
+    } else {
+        lily_free(extension);
+        FREE(String, filename_result);
+
+        FAILED("unknown extension, expected `.ci`, `.c`, `.hci` or `.h`");
+
+        return false;
+    }
+
+    const bool has_header =
+      is_header ? has_header__CIResult(self, filename_result) : false;
+    const bool has_source =
+      !is_header ? has_source__CIResult(self, filename_result) : false;
+
+    if (has_header || has_source) {
+        lily_free(extension);
+        FREE(String, filename_result);
+
+        return false;
+    }
+
+    char *file_content = read_file__File(path);
+    File file_input = NEW(File, path, file_content);
+    CIResultFile *result_file = NULL;
+
+    if (is_header) {
+        result_file =
+          add_header__CIResult(self, standard, filename_result, file_input);
+    } else {
+        result_file =
+          add_source__CIResult(self, standard, filename_result, file_input);
+    }
+
+    run__CIResultFile(result_file);
+
+    lily_free(extension);
+
+    return true;
 }
 
 DESTRUCTOR(CIResult, const CIResult *self)
