@@ -98,8 +98,6 @@ Example:
 Output: no errors
  */
 
-// TODO: Improve (and at) keyword scanning with a lookup table.
-
 /// @brief Get keyword from id.
 static enum LilyTokenKind
 get_keyword__LilyScanner(const String *id);
@@ -290,6 +288,8 @@ verify_identifier_string__LilyScanner(
 
 static LilyToken *
 get_token__LilyScanner(LilyScanner *self);
+
+#define HAS_REACH_END(self) SCANNER_HAS_REACH_END((self)->base)
 
 // NOTE: This table must be sorted in ascending order.
 static const SizedStr lily_keywords[LILY_N_KEYWORD] = {
@@ -1077,8 +1077,7 @@ get_character__LilyScanner(LilyScanner *self, char previous)
                                   self->base.source.cursor.column,
                                   self->base.source.cursor.position);
 
-                    if (self->base.source.cursor.position >=
-                        self->base.source.file->len - 1) {
+                    if (HAS_REACH_END(self)) {
                         emit__Diagnostic(
                           NEW_VARIANT(
                             Diagnostic,
@@ -1182,8 +1181,7 @@ scan_comment_doc__LilyScanner(LilyScanner *self)
     while (self->base.source.cursor.current != '\n') {
         next_char__LilyScanner(self);
 
-        if (self->base.source.cursor.position >=
-            self->base.source.file->len - 1) {
+        if (HAS_REACH_END(self)) {
             break;
         }
 
@@ -1758,8 +1756,7 @@ get_closing__LilyScanner(LilyScanner *self, char target)
 
     // Check if the closing delimiter is not closed.
     while (skip_and_verify__LilyScanner(self, target)) {
-        if (self->base.source.cursor.position >=
-            self->base.source.file->len - 1) {
+        if (HAS_REACH_END(self)) {
             emit__Diagnostic(
               NEW_VARIANT(
                 Diagnostic,
@@ -2657,12 +2654,10 @@ void
 run__LilyScanner(LilyScanner *self, bool dump_scanner)
 {
     if (self->base.source.file->len > 1) {
-        while (self->base.source.cursor.position <
-               self->base.source.file->len - 1) {
+        while (!HAS_REACH_END(self)) {
             skip_space__LilyScanner(self);
 
-            if (self->base.source.cursor.position >=
-                self->base.source.file->len - 1) {
+            if (HAS_REACH_END(self)) {
                 break;
             }
 
@@ -2680,8 +2675,7 @@ run__LilyScanner(LilyScanner *self, bool dump_scanner)
                     DEFAULT_FILTER_TOKEN(token);
                 }
 
-                if (self->base.source.cursor.position >=
-                    self->base.source.file->len - 1) {
+                if (HAS_REACH_END(self)) {
                     break;
                 }
             }
