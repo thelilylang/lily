@@ -73,7 +73,8 @@ enum CITokenKind
     CI_TOKEN_KIND_COMMENT_DOC,
     CI_TOKEN_KIND_DOT,
     CI_TOKEN_KIND_DOT_DOT_DOT,
-    CI_TOKEN_KIND_EOF,
+    CI_TOKEN_KIND_EOF,  // End Of File
+    CI_TOKEN_KIND_EOPC, // End Of Preprocessor Condition
     CI_TOKEN_KIND_EQ,
     CI_TOKEN_KIND_EQ_EQ,
     CI_TOKEN_KIND_HASHTAG,

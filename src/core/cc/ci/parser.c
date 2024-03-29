@@ -884,7 +884,9 @@ generate_name_error__CIParser()
             }                                                                 \
     }                                                                         \
     return NEW_VARIANT(                                                       \
-      CIExpr, binary, NEW(CIExprBinary, binary_kind, lhs, rhs));
+      CIExpr,                                                                 \
+      binary,                                                                 \
+      NEW(CIExprBinary, binary_kind, ref__CIExpr(lhs), ref__CIExpr(rhs)));
 
 CIExpr *
 resolve_add_expr__CIParser(CIParser *self,
@@ -1116,7 +1118,9 @@ resolve_div_expr__CIParser(CIParser *self,
             }                                                                \
     }                                                                        \
     return NEW_VARIANT(                                                      \
-      CIExpr, binary, NEW(CIExprBinary, binary_kind, lhs, rhs));
+      CIExpr,                                                                \
+      binary,                                                                \
+      NEW(CIExprBinary, binary_kind, ref__CIExpr(lhs), ref__CIExpr(rhs)));
 
 CIExpr *
 resolve_mod_expr__CIParser(CIParser *self,
@@ -1365,7 +1369,9 @@ resolve_bit_rshift_expr__CIParser(CIParser *self,
             }                                                                \
     }                                                                        \
     return NEW_VARIANT(                                                      \
-      CIExpr, binary, NEW(CIExprBinary, binary_kind, lhs, rhs));
+      CIExpr,                                                                \
+      binary,                                                                \
+      NEW(CIExprBinary, binary_kind, ref__CIExpr(lhs), ref__CIExpr(rhs)));
 
 CIExpr *
 resolve_logical_and_expr__CIParser(CIParser *self,
@@ -1642,7 +1648,9 @@ resolve_logical_or_expr__CIParser(CIParser *self,
             }                                                                 \
     }                                                                         \
     return NEW_VARIANT(                                                       \
-      CIExpr, binary, NEW(CIExprBinary, binary_kind, lhs, rhs));
+      CIExpr,                                                                 \
+      binary,                                                                 \
+      NEW(CIExprBinary, binary_kind, ref__CIExpr(lhs), ref__CIExpr(rhs)));
 
 CIExpr *
 resolve_eq_expr__CIParser(CIParser *self,
@@ -1734,65 +1742,101 @@ resolve_expr__CIParser(CIParser *self, CIExpr *expr, bool is_partial)
               resolve_expr__CIParser(self, expr->binary.left, is_partial);
             CIExpr *rhs =
               resolve_expr__CIParser(self, expr->binary.right, is_partial);
+            CIExpr *res = NULL;
 
             switch (expr->binary.kind) {
                 case CI_EXPR_BINARY_KIND_ADD:
-                    return resolve_add_expr__CIParser(
-                      self, lhs, rhs, is_partial);
+                    res =
+                      resolve_add_expr__CIParser(self, lhs, rhs, is_partial);
+
+                    break;
                 case CI_EXPR_BINARY_KIND_SUB:
-                    return resolve_sub_expr__CIParser(
-                      self, lhs, rhs, is_partial);
+                    res =
+                      resolve_sub_expr__CIParser(self, lhs, rhs, is_partial);
+
+                    break;
                 case CI_EXPR_BINARY_KIND_MUL:
-                    return resolve_mul_expr__CIParser(
-                      self, lhs, rhs, is_partial);
+                    res =
+                      resolve_mul_expr__CIParser(self, lhs, rhs, is_partial);
+
+                    break;
                 case CI_EXPR_BINARY_KIND_DIV:
-                    return resolve_div_expr__CIParser(
-                      self, lhs, rhs, is_partial);
+                    res =
+                      resolve_div_expr__CIParser(self, lhs, rhs, is_partial);
+
+                    break;
                 case CI_EXPR_BINARY_KIND_MOD:
-                    return resolve_mod_expr__CIParser(
-                      self, lhs, rhs, is_partial);
+                    res =
+                      resolve_mod_expr__CIParser(self, lhs, rhs, is_partial);
+
+                    break;
                 case CI_EXPR_BINARY_KIND_BIT_AND:
-                    return resolve_bit_and_expr__CIParser(
+                    res = resolve_bit_and_expr__CIParser(
                       self, lhs, rhs, is_partial);
+
+                    break;
                 case CI_EXPR_BINARY_KIND_BIT_OR:
-                    return resolve_bit_or_expr__CIParser(
-                      self, lhs, rhs, is_partial);
+                    res =
+                      resolve_bit_or_expr__CIParser(self, lhs, rhs, is_partial);
+
+                    break;
                 case CI_EXPR_BINARY_KIND_BIT_XOR:
-                    return resolve_bit_xor_expr__CIParser(
+                    res = resolve_bit_xor_expr__CIParser(
                       self, lhs, rhs, is_partial);
+
+                    break;
                 case CI_EXPR_BINARY_KIND_BIT_LSHIFT:
-                    return resolve_bit_lshift_expr__CIParser(
+                    res = resolve_bit_lshift_expr__CIParser(
                       self, lhs, rhs, is_partial);
+
+                    break;
                 case CI_EXPR_BINARY_KIND_BIT_RSHIFT:
-                    return resolve_bit_rshift_expr__CIParser(
+                    res = resolve_bit_rshift_expr__CIParser(
                       self, lhs, rhs, is_partial);
+
+                    break;
                 case CI_EXPR_BINARY_KIND_AND:
-                    return resolve_logical_and_expr__CIParser(
+                    res = resolve_logical_and_expr__CIParser(
                       self, lhs, rhs, is_partial);
+
+                    break;
                 case CI_EXPR_BINARY_KIND_OR:
-                    return resolve_logical_or_expr__CIParser(
+                    res = resolve_logical_or_expr__CIParser(
                       self, lhs, rhs, is_partial);
+
+                    break;
                 case CI_EXPR_BINARY_KIND_EQ:
-                    return resolve_eq_expr__CIParser(
-                      self, lhs, rhs, is_partial);
+                    res = resolve_eq_expr__CIParser(self, lhs, rhs, is_partial);
+
+                    break;
                 case CI_EXPR_BINARY_KIND_NE:
-                    return resolve_ne_expr__CIParser(
-                      self, lhs, rhs, is_partial);
+                    res = resolve_ne_expr__CIParser(self, lhs, rhs, is_partial);
+
+                    break;
                 case CI_EXPR_BINARY_KIND_LESS:
-                    return resolve_lt_expr__CIParser(
-                      self, lhs, rhs, is_partial);
+                    res = resolve_lt_expr__CIParser(self, lhs, rhs, is_partial);
+
+                    break;
                 case CI_EXPR_BINARY_KIND_LESS_EQ:
-                    return resolve_le_expr__CIParser(
-                      self, lhs, rhs, is_partial);
+                    res = resolve_le_expr__CIParser(self, lhs, rhs, is_partial);
+
+                    break;
                 case CI_EXPR_BINARY_KIND_GREATER:
-                    return resolve_gt_expr__CIParser(
-                      self, lhs, rhs, is_partial);
+                    res = resolve_gt_expr__CIParser(self, lhs, rhs, is_partial);
+
+                    break;
                 case CI_EXPR_BINARY_KIND_GREATER_EQ:
-                    return resolve_ge_expr__CIParser(
-                      self, lhs, rhs, is_partial);
+                    res = resolve_ge_expr__CIParser(self, lhs, rhs, is_partial);
+
+                    break;
                 default:
                     UNREACHABLE("unknown binary kind");
             }
+
+            FREE(CIExpr, lhs);
+            FREE(CIExpr, rhs);
+
+            return res;
         }
         case CI_EXPR_KIND_GROUPING:
             return NEW_VARIANT(
@@ -1867,14 +1911,18 @@ check_if_resolved_expr_is_true__CIParser(CIParser *self, CIExpr *expr)
     }
 }
 
-#define PREPROCESSOR_PARSE_EXPR(n)                            \
-    CIExpr *n = parse_expr__CIParser(self);                   \
-                                                              \
-    if (!has_reach_end__CITokensIters(&self->tokens_iters)) { \
-        FAILED("expected only one expression");               \
-    } else {                                                  \
-        pop_iter__CITokensIters(&self->tokens_iters);         \
-        init_next_token__CIParser(self, false);               \
+#define PREPROCESSOR_PARSE_EXPR(n)                                          \
+    CIExpr *n = parse_expr__CIParser(self);                                 \
+                                                                            \
+    /* NOTE: The EOPC token is used to signify the end of a preprocessor    \
+    condition.                                                              \
+                                                                          \ \
+    See: include/core/cc/ci/token.h */                                      \
+    if (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_EOPC) {     \
+        FAILED("expected only one expression");                             \
+    } else {                                                                \
+        pop_iter__CITokensIters(&self->tokens_iters);                       \
+        init_next_token__CIParser(self, false);                             \
     }
 
 #define SELECT_IF_CONDITIONAL_PREPROCESSOR(k)                                \
@@ -1885,7 +1933,7 @@ check_if_resolved_expr_is_true__CIParser(CIParser *self, CIExpr *expr)
         add_iter__CITokensIters(                                             \
           &self->tokens_iters,                                               \
           NEW(CITokensIter, preprocessor->preprocessor_##k.cond));           \
-        init_next_token__CIParser(self, false);                              \
+        init_next_token__CIParser(self, true);                               \
                                                                              \
         PREPROCESSOR_PARSE_EXPR(cond);                                       \
                                                                              \
@@ -2022,6 +2070,9 @@ next_token__CIParser(CIParser *self)
             switch (self->tokens_iters.current_token->kind) {
                 case CI_TOKEN_KIND_EOF:
                     return;
+                case CI_TOKEN_KIND_EOPC:
+                    pop_iter__CITokensIters(&self->tokens_iters);
+                    continue;
                 default:
                     break;
             }
@@ -2032,15 +2083,28 @@ next_token__CIParser(CIParser *self)
         if (top->iter.count == 0) {
             init_next_token__CIParser(self, true);
         } else {
-            self->tokens_iters.previous_token =
-              self->tokens_iters.current_token;
-            self->tokens_iters.current_token = next__VecIter(&top->iter);
+            CIToken *next_token = next__VecIter(&top->iter);
 
-            // If the `current_token` is `NULL`, that means we have reached the
+            // If the `next_token` is `NULL`, that means we have reached the
             // end of the current iter (top). So we pop the current iter from
             // the stack and call `next_token__CITokensIters` again.
-            if (!self->tokens_iters.current_token) {
-                pop_iter__CITokensIters(&self->tokens_iters);
+            if (next_token) {
+                self->tokens_iters.previous_token =
+                  self->tokens_iters.current_token;
+                self->tokens_iters.current_token = next_token;
+            } else {
+                if (self->tokens_iters.iters->len > 1) {
+                    pop_iter__CITokensIters(&self->tokens_iters);
+                } else {
+                    // NOTE: We assign the last token of the first push
+                    // iterator, and this token should normally be EOF.
+                    self->tokens_iters.previous_token =
+                      self->tokens_iters.current_token;
+                    self->tokens_iters.current_token =
+                      last__Vec(top->iter.vec); // Should be EOF.
+
+                    break;
+                }
 
                 continue;
             }
@@ -2076,8 +2140,7 @@ init_next_token__CIParser(CIParser *self, bool advance)
 
         CITokensIter *top = peek__Stack(self->tokens_iters.iters);
 
-        if (self->tokens_iters.current_token &&
-            self->tokens_iters.current_token->kind == CI_TOKEN_KIND_EOF) {
+        if (has_reach_end__CITokensIters(&self->tokens_iters)) {
             return;
         }
 
