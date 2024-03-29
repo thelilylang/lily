@@ -219,6 +219,7 @@ reverse__Vec(Vec *self);
 /**
  *
  * @brief Get item from Vec (no assert).
+ * @return void*?
  */
 inline void *
 safe_get__Vec(const Vec *self, Usize index)
