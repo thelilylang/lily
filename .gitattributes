@@ -1,1 +1,4 @@
 lib/local/** linguist-vendored
+*.lily linguist-language=Lily linguist-detectable
+*.ci linguist-language=CImproved linguist-detectable
+*.hci linguist-language=CImproved linguist-detectable
