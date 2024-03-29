@@ -1911,13 +1911,18 @@ check_if_resolved_expr_is_true__CIParser(CIParser *self, CIExpr *expr)
     }
 }
 
-#define PREPROCESSOR_PARSE_EXPR(n)                            \
-    CIExpr *n = parse_expr__CIParser(self);                   \
-                                                              \
-    if (!has_reach_end__CITokensIters(&self->tokens_iters)) { \
-        FAILED("expected only one expression");               \
-    } else {                                                  \
-        init_next_token__CIParser(self, false);               \
+#define PREPROCESSOR_PARSE_EXPR(n)                                          \
+    CIExpr *n = parse_expr__CIParser(self);                                 \
+                                                                            \
+    /* NOTE: The EOPC token is used to signify the end of a preprocessor    \
+    condition.                                                              \
+                                                                          \ \
+    See: include/core/cc/ci/token.h */                                      \
+    if (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_EOPC) {     \
+        FAILED("expected only one expression");                             \
+    } else {                                                                \
+        pop_iter__CITokensIters(&self->tokens_iters);                       \
+        init_next_token__CIParser(self, false);                             \
     }
 
 #define SELECT_IF_CONDITIONAL_PREPROCESSOR(k)                                \
@@ -2065,6 +2070,9 @@ next_token__CIParser(CIParser *self)
             switch (self->tokens_iters.current_token->kind) {
                 case CI_TOKEN_KIND_EOF:
                     return;
+                case CI_TOKEN_KIND_EOPC:
+                    pop_iter__CITokensIters(&self->tokens_iters);
+                    continue;
                 default:
                     break;
             }
@@ -2085,7 +2093,18 @@ next_token__CIParser(CIParser *self)
                   self->tokens_iters.current_token;
                 self->tokens_iters.current_token = next_token;
             } else {
-                pop_iter__CITokensIters(&self->tokens_iters);
+                if (self->tokens_iters.iters->len > 1) {
+                    pop_iter__CITokensIters(&self->tokens_iters);
+                } else {
+                    // NOTE: We assign the last token of the first push
+                    // iterator, and this token should normally be EOF.
+                    self->tokens_iters.previous_token =
+                      self->tokens_iters.current_token;
+                    self->tokens_iters.current_token =
+                      last__Vec(top->iter.vec); // Should be EOF.
+
+                    break;
+                }
 
                 continue;
             }
@@ -2121,8 +2140,7 @@ init_next_token__CIParser(CIParser *self, bool advance)
 
         CITokensIter *top = peek__Stack(self->tokens_iters.iters);
 
-        if (self->tokens_iters.current_token &&
-            self->tokens_iters.current_token->kind == CI_TOKEN_KIND_EOF) {
+        if (has_reach_end__CITokensIters(&self->tokens_iters)) {
             return;
         }
 

@@ -162,6 +162,14 @@ is_bin__CIScanner(const CIScanner *self);
 static inline bool
 is_num__CIScanner(const CIScanner *self);
 
+/// @brief Add EOPC token to passed scanner context.
+static void
+add_eopc_token__CIScanner(CIScanner *self, const CIScannerContext *ctx);
+
+/// @brief Add EOF token to passed scanner context.
+static void
+add_eof_token__CIScanner(CIScanner *self, const CIScannerContext *ctx);
+
 /// @brief Push token to tokens.
 static inline void
 push_token__CIScanner(CIScanner *self,
@@ -1155,6 +1163,32 @@ is_num__CIScanner(const CIScanner *self)
            self->base.source.cursor.current == 'e' ||
            self->base.source.cursor.current == 'E' ||
            self->base.source.cursor.current == '_';
+}
+
+#define ADD_K_TOKEN(k)                                         \
+    ASSERT(ctx->tokens);                                       \
+                                                               \
+    start_token__CIScanner(self,                               \
+                           self->base.source.cursor.line,      \
+                           self->base.source.cursor.column,    \
+                           self->base.source.cursor.position); \
+    end_token__CIScanner(self,                                 \
+                         self->base.source.cursor.line,        \
+                         self->base.source.cursor.column,      \
+                         self->base.source.cursor.position);   \
+    push__Vec(ctx->tokens,                                     \
+              NEW(CIToken, k, clone__Location(&self->base.location)));
+
+void
+add_eopc_token__CIScanner(CIScanner *self, const CIScannerContext *ctx)
+{
+    ADD_K_TOKEN(CI_TOKEN_KIND_EOPC);
+}
+
+void
+add_eof_token__CIScanner(CIScanner *self, const CIScannerContext *ctx)
+{
+    ADD_K_TOKEN(CI_TOKEN_KIND_EOF);
 }
 
 void
@@ -2651,6 +2685,8 @@ scan_preprocessor_content__CIScanner(CIScanner *self,
         return NULL;
     }
 
+    add_eopc_token__CIScanner(self, &ctx);
+
     return tokens;
 }
 
@@ -3891,18 +3927,7 @@ run__CIScanner(CIScanner *self, bool dump_scanner)
         }
     }
 
-    start_token__CIScanner(self,
-                           self->base.source.cursor.line,
-                           self->base.source.cursor.column,
-                           self->base.source.cursor.position);
-    end_token__CIScanner(self,
-                         self->base.source.cursor.line,
-                         self->base.source.cursor.column,
-                         self->base.source.cursor.position);
-    push_token__CIScanner(
-      self,
-      &ctx,
-      NEW(CIToken, CI_TOKEN_KIND_EOF, clone__Location(&self->base.location)));
+    add_eof_token__CIScanner(self, &ctx);
 
 #ifndef CI_DEBUG_SCANNER
     if (dump_scanner) {

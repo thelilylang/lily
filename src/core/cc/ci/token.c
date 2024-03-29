@@ -1062,6 +1062,8 @@ to_string__CIToken(CIToken *self)
             return from__String("...");
         case CI_TOKEN_KIND_EOF:
             return from__String("EOF");
+        case CI_TOKEN_KIND_EOPC:
+            return from__String("EOPC");
         case CI_TOKEN_KIND_EQ:
             return from__String("=");
         case CI_TOKEN_KIND_EQ_EQ:
@@ -1472,6 +1474,8 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_DOT_DOT_DOT";
         case CI_TOKEN_KIND_EOF:
             return "CI_TOKEN_KIND_EOF";
+        case CI_TOKEN_KIND_EOPC:
+            return "CI_TOKEN_KIND_EOPC";
         case CI_TOKEN_KIND_EQ:
             return "CI_TOKEN_KIND_EQ";
         case CI_TOKEN_KIND_EQ_EQ:
@@ -2311,8 +2315,10 @@ has_reach_end__CITokensIters(CITokensIters *self)
 {
     CITokensIter *iter = peek__Stack(self->iters);
 
-    return iter->iter.count >= iter->iter.vec->len - 1 ||
-           self->current_token->kind == CI_TOKEN_KIND_EOF;
+    return (iter->iter.count >= iter->iter.vec->len - 1 ||
+            (self->current_token &&
+             self->current_token->kind == CI_TOKEN_KIND_EOF)) &&
+           self->iters->len == 1;
 }
 
 DESTRUCTOR(CITokensIters, const CITokensIters *self)
