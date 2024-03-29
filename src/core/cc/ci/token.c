@@ -2311,7 +2311,8 @@ has_reach_end__CITokensIters(CITokensIters *self)
 {
     CITokensIter *iter = peek__Stack(self->iters);
 
-    return iter->iter.count >= iter->iter.vec->len - 1;
+    return iter->iter.count >= iter->iter.vec->len - 1 ||
+           self->current_token->kind == CI_TOKEN_KIND_EOF;
 }
 
 DESTRUCTOR(CITokensIters, const CITokensIters *self)
