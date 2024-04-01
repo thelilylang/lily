@@ -48,6 +48,9 @@ struct CIParserContext
 
 static inline CONSTRUCTOR(struct CIParserContext, CIParserContext);
 
+static inline void
+add_macro__CIParser(CIParser *self, CIParserMacroCall *macro_call);
+
 static void
 add_item_to_wait_for_visit_list__CIParser(CIParser *self,
                                           enum CIDeclKind kind,
@@ -548,6 +551,14 @@ CONSTRUCTOR(struct CIParserContext, CIParserContext)
 }
 
 void
+add_macro__CIParser(CIParser *self, CIParserMacroCall *macro_call)
+{
+    ASSERT(macro_call);
+
+    push__Stack(self->macros_call, macro_call);
+}
+
+void
 add_item_to_wait_for_visit_list__CIParser(CIParser *self,
                                           enum CIDeclKind kind,
                                           String *name,
@@ -588,9 +599,9 @@ DESTRUCTOR(CIParserWaitForVisit, CIParserWaitForVisit *self)
     lily_free(self);
 }
 
-CONSTRUCTOR(CIParserMacro *, CIParserMacro, Vec *params)
+CONSTRUCTOR(CIParserMacroCall *, CIParserMacroCall, Vec *params)
 {
-    CIParserMacro *self = lily_malloc(sizeof(CIParserMacro));
+    CIParserMacroCall *self = lily_malloc(sizeof(CIParserMacroCall));
 
     self->params = params;
 
@@ -613,7 +624,8 @@ CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner)
                        .count_error = &file->count_error,
                        .count_warning = &file->count_warning,
                        .tokens_iters = tokens_iters,
-                       .macros = NEW(Stack, CI_PARSER_MACROS_MAX_SIZE),
+                       .macros_call =
+                         NEW(Stack, CI_PARSER_MACROS_CALL_MAX_SIZE),
                        .wait_visit_list = NEW(HashMap) };
 }
 
@@ -2032,13 +2044,31 @@ jump_in_token_block__CIParser(CIParser *self)
               self->file,
               NEW(CIResultDefine,
                   &self->tokens_iters.current_token->preprocessor_define));
-            add_iter__CITokensIters(
-              &self->tokens_iters,
+            add_macro__CIParser(
+              self,
               NEW(
-                CITokensIter,
-                self->tokens_iters.current_token->preprocessor_define.tokens));
+                CIParserMacroCall,
+                self->tokens_iters.current_token->preprocessor_define.params));
 
             break;
+        case CI_TOKEN_KIND_MACRO_PARAM: {
+            ASSERT(!empty__Stack(self->macros_call));
+
+            CIParserMacroCall *macro_top = peek__Stack(self->macros_call);
+            Usize macro_param_id =
+              self->tokens_iters.current_token->macro_param;
+
+            ASSERT(macro_param_id < macro_top->params->len);
+
+            add_iter__CITokensIters(
+              &self->tokens_iters,
+              NEW(CITokensIter, get__Vec(macro_top->params, macro_param_id)));
+            init_next_token__CIParser(self, true);
+
+            break;
+        }
+        case CI_TOKEN_KIND_PAREN_CALL:
+            TODO("jump in define call");
         case CI_TOKEN_KIND_PREPROCESSOR_IF:
         case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
         case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF: {
@@ -2192,7 +2222,8 @@ peek_token__CIParser(CIParser *self, Usize n)
             switch (current_token->kind) {
                 case CI_TOKEN_KIND_MACRO_PARAM:
                     push__Vec(iters_vec, current_iter);
-                    current_iter = NEW(CITokensIter, peek__Stack(self->macros));
+                    current_iter =
+                      NEW(CITokensIter, peek__Stack(self->macros_call));
 
                     continue;
                 case CI_TOKEN_KIND_IDENTIFIER:
@@ -2246,6 +2277,9 @@ expect__CIParser(CIParser *self, enum CITokenKind kind, bool emit_error)
     }
 
     if (emit_error) {
+        printf("%s\n",
+               to_string__Debug__CIToken(self->tokens_iters.current_token));
+        abort();
         FAILED("expected: ...");
     }
 
@@ -3579,6 +3613,8 @@ parse_primary_expr__CIParser(CIParser *self)
         }
         case CI_TOKEN_KIND_LBRACE:
             return parse_struct_call__CIParser(self);
+        case CI_TOKEN_KIND_HASHTAG:
+            TODO("done Stringification");
         case CI_TOKEN_KIND_KEYWORD_SIZEOF: {
             CIExpr *sizeof_expr = parse_expr__CIParser(self);
 
@@ -3870,6 +3906,8 @@ parse_expr__CIParser(CIParser *self)
         case CI_TOKEN_KIND_DOT:
         case CI_TOKEN_KIND_ARROW:
             return parse_binary_expr__CIParser(self, expr);
+        case CI_TOKEN_KIND_HASHTAG_HASHTAG:
+            TODO("done <id>##<id>");
         default:
             return expr;
     }
@@ -4969,8 +5007,8 @@ DESTRUCTOR(CIParser, const CIParser *self)
     }
 
     FREE(CITokensIters, &self->tokens_iters);
-    FREE_STACK_ITEMS(self->macros, CIParserMacro);
-    FREE(Stack, self->macros);
+    FREE_STACK_ITEMS(self->macros_call, CIParserMacroCall);
+    FREE(Stack, self->macros_call);
     FREE_HASHMAP_VALUES(self->wait_visit_list, CIParserWaitForVisit);
     FREE(HashMap, self->wait_visit_list);
 }

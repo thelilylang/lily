@@ -300,7 +300,7 @@ extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, switch, CIStmtSwitch switch_);
 extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, while, CIStmtWhile while_);
 
 // <core/cc/ci/parser.h>
-extern inline DESTRUCTOR(CIParserMacro, CIParserMacro *self);
+extern inline DESTRUCTOR(CIParserMacroCall, CIParserMacroCall *self);
 
 // <core/cc/ci/result.h>
 extern inline DESTRUCTOR(CIResultDefine, CIResultDefine *self);

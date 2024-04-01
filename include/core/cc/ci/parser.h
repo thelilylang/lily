@@ -53,27 +53,28 @@ CONSTRUCTOR(CIParserWaitForVisit *,
  */
 DESTRUCTOR(CIParserWaitForVisit, CIParserWaitForVisit *self);
 
-typedef struct CIParserMacro
+typedef struct CIParserMacroCall
 {
+    // Params of macro call
     Vec *params; // Vec<Vec<CIToken* (&)>*>* (&)
-} CIParserMacro;
+} CIParserMacroCall;
 
 /**
  *
  * @brief Construct CIParserMacro type.
  */
-CONSTRUCTOR(CIParserMacro *, CIParserMacro, Vec *params);
+CONSTRUCTOR(CIParserMacroCall *, CIParserMacroCall, Vec *params);
 
 /**
  *
  * @brief Free CIParserMacro type.
  */
-inline DESTRUCTOR(CIParserMacro, CIParserMacro *self)
+inline DESTRUCTOR(CIParserMacroCall, CIParserMacroCall *self)
 {
     lily_free(self);
 }
 
-#define CI_PARSER_MACROS_MAX_SIZE CI_TOKENS_ITERS_MAX_SIZE
+#define CI_PARSER_MACROS_CALL_MAX_SIZE CI_TOKENS_ITERS_MAX_SIZE
 
 typedef struct CIParser
 {
@@ -82,7 +83,7 @@ typedef struct CIParser
     Usize *count_error;       // Usize* (&)
     Usize *count_warning;     // Usize* (&)
     CITokensIters tokens_iters;
-    Stack *macros;            // Vec<CIParserMacro*>*
+    Stack *macros_call;       // Vec<CIParserMacro*>*
     HashMap *wait_visit_list; // HashMap<CIParserWaitForVisit*>*
 } CIParser;
 
