@@ -1070,6 +1070,8 @@ to_string__CIToken(CIToken *self)
             return from__String("==");
         case CI_TOKEN_KIND_HASHTAG:
             return from__String("#");
+        case CI_TOKEN_KIND_HASHTAG_HASHTAG:
+            return from__String("##");
         case CI_TOKEN_KIND_HAT:
             return from__String("^");
         case CI_TOKEN_KIND_HAT_EQ:
@@ -1482,6 +1484,8 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_EQ_EQ";
         case CI_TOKEN_KIND_HASHTAG:
             return "CI_TOKEN_KIND_HASHTAG";
+        case CI_TOKEN_KIND_HASHTAG_HASHTAG:
+            return "CI_TOKEN_KIND_HASHTAG_HASHTAG";
         case CI_TOKEN_KIND_HAT:
             return "CI_TOKEN_KIND_HAT";
         case CI_TOKEN_KIND_HAT_EQ:

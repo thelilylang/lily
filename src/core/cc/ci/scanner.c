@@ -1225,6 +1225,7 @@ next_char_by_token__CIScanner(CIScanner *self, const CIToken *token)
         case CI_TOKEN_KIND_HAT_EQ:
         case CI_TOKEN_KIND_WAVE_EQ:
         case CI_TOKEN_KIND_BAR_EQ:
+        case CI_TOKEN_KIND_HASHTAG_HASHTAG:
             return next_char__CIScanner(self);
         case CI_TOKEN_KIND_LSHIFT_LSHIFT_EQ:
         case CI_TOKEN_KIND_RSHIFT_RSHIFT_EQ:
@@ -3728,6 +3729,12 @@ get_token__CIScanner(CIScanner *self,
             }
 
         scan_hashtag:
+            if (c1 == (char *)'#') {
+                return NEW(CIToken,
+                           CI_TOKEN_KIND_HASHTAG_HASHTAG,
+                           clone__Location(&self->base.location));
+            }
+
             return NEW(CIToken,
                        CI_TOKEN_KIND_HASHTAG,
                        clone__Location(&self->base.location));
