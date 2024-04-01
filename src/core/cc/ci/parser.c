@@ -2277,9 +2277,6 @@ expect__CIParser(CIParser *self, enum CITokenKind kind, bool emit_error)
     }
 
     if (emit_error) {
-        printf("%s\n",
-               to_string__Debug__CIToken(self->tokens_iters.current_token));
-        abort();
         FAILED("expected: ...");
     }
 
