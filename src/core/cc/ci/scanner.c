@@ -276,14 +276,20 @@ scan_character__CIScanner(CIScanner *self);
 static String *
 scan_string__CIScanner(CIScanner *self);
 
-/// @brief Scan octal constant literal.
+/// @brief Scan binary constant literal.
+/// @example 0b111, 0b101
+static CIToken *
+scan_bin__CIScanner(CIScanner *self);
+
+/// @brief Scan hexadecimal constant literal.
+/// @example 0xff, 0x33
 static CIToken *
 scan_hex__CIScanner(CIScanner *self);
 
-/// @brief Scan octal or binary constant literal.
-/// @example 00101, 00334
+/// @brief Scan octal constant literal.
+/// @example 00122, 00334
 static CIToken *
-scan_octal_or_binary__CIScanner(CIScanner *self);
+scan_oct__CIScanner(CIScanner *self);
 
 /// @brief Scan number (decimal and float).
 static CIToken *
@@ -2362,6 +2368,22 @@ scan_string__CIScanner(CIScanner *self)
 }
 
 CIToken *
+scan_bin__CIScanner(CIScanner *self)
+{
+    String *res = NEW(String);
+
+    scan_and_append_chars__CIScanner(self, res, &is_bin__CIScanner);
+    previous_char__CIScanner(self);
+
+    return NEW_VARIANT(CIToken,
+                       literal_constant_bin,
+                       clone__Location(&self->base.location),
+                       NEW(CITokenLiteralConstantInt,
+                           CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_NONE,
+                           res));
+}
+
+CIToken *
 scan_hex__CIScanner(CIScanner *self)
 {
     String *res = NEW(String);
@@ -2378,28 +2400,15 @@ scan_hex__CIScanner(CIScanner *self)
 }
 
 CIToken *
-scan_octal_or_binary__CIScanner(CIScanner *self)
+scan_oct__CIScanner(CIScanner *self)
 {
     String *res = NEW(String);
 
-    scan_and_append_chars__CIScanner(self, res, &is_bin__CIScanner);
-
-    if (is_oct__CIScanner(self)) {
-        scan_and_append_chars__CIScanner(self, res, &is_oct__CIScanner);
-        previous_char__CIScanner(self);
-
-        return NEW_VARIANT(CIToken,
-                           literal_constant_octal,
-                           clone__Location(&self->base.location),
-                           NEW(CITokenLiteralConstantInt,
-                               CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_NONE,
-                               res));
-    }
-
+    scan_and_append_chars__CIScanner(self, res, &is_oct__CIScanner);
     previous_char__CIScanner(self);
 
     return NEW_VARIANT(CIToken,
-                       literal_constant_bin,
+                       literal_constant_octal,
                        clone__Location(&self->base.location),
                        NEW(CITokenLiteralConstantInt,
                            CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_NONE,
@@ -3311,13 +3320,15 @@ get_num__CIScanner(CIScanner *self)
         case '0': {
             char *c1 = peek_char__CIScanner(self, 1);
 
-            if (c1 == (char *)'x') {
+            if (c1 == (char *)'b') {
+                jump__CIScanner(self, 2);
+                res = scan_bin__CIScanner(self);
+            } else if (c1 == (char *)'x') {
                 jump__CIScanner(self, 2);
                 res = scan_hex__CIScanner(self);
             } else if (c1 == (char *)'0') {
                 jump__CIScanner(self, 2);
-                // REWORK: That...
-                res = scan_octal_or_binary__CIScanner(self);
+                res = scan_oct__CIScanner(self);
             } else {
                 res = scan_num__CIScanner(self);
             }
