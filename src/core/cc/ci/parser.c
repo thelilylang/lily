@@ -222,6 +222,78 @@ resolve_ge_expr__CIParser(CIParser *self,
                           CIExpr *rhs,
                           bool is_partial);
 
+/// @brief Resolve: ++rhs
+/// @param is_partial This makes it possible to have expressions that are not
+/// resolvable at compile time.
+static CIExpr *
+resolve_pre_increment_expr__CIParser(CIParser *self,
+                                     CIExpr *rhs,
+                                     bool is_partial);
+
+/// @brief Resolve: --rhs
+/// @param is_partial This makes it possible to have expressions that are not
+/// resolvable at compile time.
+static CIExpr *
+resolve_pre_decrement_expr__CIParser(CIParser *self,
+                                     CIExpr *rhs,
+                                     bool is_partial);
+
+/// @brief Resolve: rhs++
+/// @param is_partial This makes it possible to have expressions that are not
+/// resolvable at compile time.
+static CIExpr *
+resolve_post_increment_expr__CIParser(CIParser *self,
+                                      CIExpr *rhs,
+                                      bool is_partial);
+
+/// @brief Resolve: rhs--
+/// @param is_partial This makes it possible to have expressions that are not
+/// resolvable at compile time.
+static CIExpr *
+resolve_post_decrement_expr__CIParser(CIParser *self,
+                                      CIExpr *rhs,
+                                      bool is_partial);
+
+/// @brief Resolve: +rhs
+/// @param is_partial This makes it possible to have expressions that are not
+/// resolvable at compile time.
+static CIExpr *
+resolve_positive_expr__CIParser(CIParser *self, CIExpr *rhs, bool is_partial);
+
+/// @brief Resolve: -rhs
+/// @param is_partial This makes it possible to have expressions that are not
+/// resolvable at compile time.
+static CIExpr *
+resolve_negative_expr__CIParser(CIParser *self, CIExpr *rhs, bool is_partial);
+
+/// @brief Resolve: ~rhs
+/// @param is_partial This makes it possible to have expressions that are not
+/// resolvable at compile time.
+static CIExpr *
+resolve_bit_not_expr__CIParser(CIParser *self, CIExpr *rhs, bool is_partial);
+
+/// @brief Resolve: !rhs
+/// @param is_partial This makes it possible to have expressions that are not
+/// resolvable at compile time.
+static CIExpr *
+resolve_not_expr__CIParser(CIParser *self, CIExpr *rhs, bool is_partial);
+
+/// @brief Resolve: *rhs
+/// @param is_partial This makes it possible to have expressions that are not
+/// resolvable at compile time.
+static CIExpr *
+resolve_dereference__CIParser(CIParser *self, CIExpr *rhs, bool is_partial);
+
+/// @brief Resolve: &rhs
+/// @param is_partial This makes it possible to have expressions that are not
+/// resolvable at compile time.
+static CIExpr *
+resolve_ref__CIParser(CIParser *self, CIExpr *rhs, bool is_partial);
+
+/// @brief Resolve unary expresssion
+static CIExpr *
+resolve_unary_expr__CIParser(CIParser *self, CIExpr *expr, bool is_partial);
+
 /// @brief Resolve (can be partially) expression at compile time.
 /// @param is_partial This makes it possible to have expressions that are not
 /// resolvable at compile time.
@@ -1719,6 +1791,182 @@ resolve_ge_expr__CIParser(CIParser *self,
 }
 
 CIExpr *
+resolve_pre_increment_expr__CIParser(CIParser *self,
+                                     CIExpr *rhs,
+                                     bool is_partial)
+{
+    TODO("resolve ++rhs");
+}
+
+CIExpr *
+resolve_pre_decrement_expr__CIParser(CIParser *self,
+                                     CIExpr *rhs,
+                                     bool is_partial)
+{
+    TODO("resolve --rhs");
+}
+
+CIExpr *
+resolve_post_increment_expr__CIParser(CIParser *self,
+                                      CIExpr *rhs,
+                                      bool is_partial)
+{
+    TODO("resolve rhs++");
+}
+
+CIExpr *
+resolve_post_decrement_expr__CIParser(CIParser *self,
+                                      CIExpr *rhs,
+                                      bool is_partial)
+{
+    TODO("resolve rhs--");
+}
+
+CIExpr *
+resolve_positive_expr__CIParser(CIParser *self, CIExpr *rhs, bool is_partial)
+{
+    TODO("resolve +rhs");
+}
+
+CIExpr *
+resolve_negative_expr__CIParser(CIParser *self, CIExpr *rhs, bool is_partial)
+{
+    TODO("resolve -rhs");
+}
+
+CIExpr *
+resolve_bit_not_expr__CIParser(CIParser *self, CIExpr *rhs, bool is_partial)
+{
+    TODO("resolve ~rhs");
+}
+
+CIExpr *
+resolve_not_expr__CIParser(CIParser *self, CIExpr *rhs, bool is_partial)
+{
+    ASSERT(rhs);
+
+    switch (rhs->kind) {
+        case CI_EXPR_KIND_LITERAL:
+            switch (rhs->literal.kind) {
+                case CI_EXPR_LITERAL_KIND_BOOL:
+                    return NEW_VARIANT(
+                      CIExpr,
+                      literal,
+                      NEW_VARIANT(CIExprLiteral, bool, !rhs->literal.bool_));
+                case CI_EXPR_LITERAL_KIND_CHAR:
+                    return NEW_VARIANT(
+                      CIExpr,
+                      literal,
+                      NEW_VARIANT(CIExprLiteral, char, !rhs->literal.char_));
+                case CI_EXPR_LITERAL_KIND_FLOAT:
+                    return NEW_VARIANT(
+                      CIExpr,
+                      literal,
+                      NEW_VARIANT(CIExprLiteral, float, !rhs->literal.float_));
+                case CI_EXPR_LITERAL_KIND_SIGNED_INT:
+                    return NEW_VARIANT(CIExpr,
+                                       literal,
+                                       NEW_VARIANT(CIExprLiteral,
+                                                   signed_int,
+                                                   !rhs->literal.signed_int));
+                case CI_EXPR_LITERAL_KIND_STRING:
+                    goto default_expr_case;
+                case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:
+                    return NEW_VARIANT(CIExpr,
+                                       literal,
+                                       NEW_VARIANT(CIExprLiteral,
+                                                   unsigned_int,
+                                                   !rhs->literal.unsigned_int));
+                default:
+                    UNREACHABLE(
+                      "this kind of literal is not expected with `!`");
+            }
+        default:
+        default_expr_case:
+            if (!is_partial) {
+                FAILED("this expression are not resolvable at compile-time");
+            }
+    }
+
+    return NEW_VARIANT(
+      CIExpr,
+      unary,
+      NEW(CIExprUnary, CI_EXPR_UNARY_KIND_NOT, ref__CIExpr(rhs)));
+}
+
+CIExpr *
+resolve_dereference__CIParser(CIParser *self, CIExpr *rhs, bool is_partial)
+{
+    // The referencing operator doesn't seem to be resolvable at the moment.
+    return NEW_VARIANT(
+      CIExpr,
+      unary,
+      NEW(CIExprUnary, CI_EXPR_UNARY_KIND_DEREFERENCE, ref__CIExpr(rhs)));
+}
+
+CIExpr *
+resolve_ref__CIParser(CIParser *self, CIExpr *rhs, bool is_partial)
+{
+    TODO("resolve &rhs");
+}
+
+CIExpr *
+resolve_unary_expr__CIParser(CIParser *self, CIExpr *expr, bool is_partial)
+{
+    CIExpr *rhs = resolve_expr__CIParser(self, expr->unary.expr, is_partial);
+    CIExpr *res = NULL;
+
+    switch (expr->unary.kind) {
+        case CI_EXPR_UNARY_KIND_PRE_INCREMENT:
+            res = resolve_pre_increment_expr__CIParser(self, rhs, is_partial);
+
+            break;
+        case CI_EXPR_UNARY_KIND_PRE_DECREMENT:
+            res = resolve_pre_decrement_expr__CIParser(self, rhs, is_partial);
+
+            break;
+        case CI_EXPR_UNARY_KIND_POST_INCREMENT:
+            res = resolve_post_increment_expr__CIParser(self, rhs, is_partial);
+
+            break;
+        case CI_EXPR_UNARY_KIND_POST_DECREMENT:
+            res = resolve_post_decrement_expr__CIParser(self, rhs, is_partial);
+
+            break;
+        case CI_EXPR_UNARY_KIND_POSITIVE:
+            res = resolve_positive_expr__CIParser(self, rhs, is_partial);
+
+            break;
+        case CI_EXPR_UNARY_KIND_NEGATIVE:
+            res = resolve_negative_expr__CIParser(self, rhs, is_partial);
+
+            break;
+        case CI_EXPR_UNARY_KIND_BIT_NOT:
+            res = resolve_bit_not_expr__CIParser(self, rhs, is_partial);
+
+            break;
+        case CI_EXPR_UNARY_KIND_NOT:
+            res = resolve_not_expr__CIParser(self, rhs, is_partial);
+
+            break;
+        case CI_EXPR_UNARY_KIND_DEREFERENCE:
+            res = resolve_dereference__CIParser(self, rhs, is_partial);
+
+            break;
+        case CI_EXPR_UNARY_KIND_REF:
+            res = resolve_ref__CIParser(self, rhs, is_partial);
+
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+
+    FREE(CIExpr, rhs);
+
+    return res;
+}
+
+CIExpr *
 resolve_expr__CIParser(CIParser *self, CIExpr *expr, bool is_partial)
 {
     ASSERT(expr);
@@ -1851,10 +2099,7 @@ resolve_expr__CIParser(CIParser *self, CIExpr *expr, bool is_partial)
             return res;
         }
         case CI_EXPR_KIND_GROUPING:
-            return NEW_VARIANT(
-              CIExpr,
-              grouping,
-              resolve_expr__CIParser(self, expr->grouping, is_partial));
+            return resolve_expr__CIParser(self, expr->grouping, is_partial);
         case CI_EXPR_KIND_IDENTIFIER:
             TODO("resolve identifier");
         case CI_EXPR_KIND_LITERAL:
@@ -1866,7 +2111,7 @@ resolve_expr__CIParser(CIParser *self, CIExpr *expr, bool is_partial)
         case CI_EXPR_KIND_TERNARY:
             TODO("resolve ternary");
         case CI_EXPR_KIND_UNARY:
-            TODO("resolve unary");
+            return resolve_unary_expr__CIParser(self, expr, is_partial);
         default:
             UNREACHABLE("unknown variant");
     }
@@ -3446,25 +3691,25 @@ parse_literal_expr__CIParser(CIParser *self)
 
             switch (self->tokens_iters.previous_token->kind) {
                 case CI_TOKEN_KIND_LITERAL_CONSTANT_INT:
-                    int_s =
-                      self->tokens_iters.previous_token->literal_constant_int;
+                    int_s = self->tokens_iters.previous_token
+                              ->literal_constant_int.value;
 
                     break;
                 case CI_TOKEN_KIND_LITERAL_CONSTANT_OCTAL:
-                    int_s =
-                      self->tokens_iters.previous_token->literal_constant_octal;
+                    int_s = self->tokens_iters.previous_token
+                              ->literal_constant_octal.value;
                     base = 8;
 
                     break;
                 case CI_TOKEN_KIND_LITERAL_CONSTANT_HEX:
-                    int_s =
-                      self->tokens_iters.previous_token->literal_constant_hex;
+                    int_s = self->tokens_iters.previous_token
+                              ->literal_constant_hex.value;
                     base = 16;
 
                     break;
                 case CI_TOKEN_KIND_LITERAL_CONSTANT_BIN:
-                    int_s =
-                      self->tokens_iters.previous_token->literal_constant_bin;
+                    int_s = self->tokens_iters.previous_token
+                              ->literal_constant_bin.value;
                     base = 2;
 
                     break;
@@ -3493,10 +3738,11 @@ parse_literal_expr__CIParser(CIParser *self)
             return NEW_VARIANT(
               CIExpr,
               literal,
-              NEW_VARIANT(CIExprLiteral,
-                          float,
-                          atof__Float64(self->tokens_iters.previous_token
-                                          ->literal_constant_float->buffer)));
+              NEW_VARIANT(
+                CIExprLiteral,
+                float,
+                atof__Float64(self->tokens_iters.previous_token
+                                ->literal_constant_float.value->buffer)));
         case CI_TOKEN_KIND_LITERAL_CONSTANT_CHARACTER:
             return NEW_VARIANT(
               CIExpr,

@@ -231,6 +231,127 @@ enum CITokenKind
     CI_TOKEN_KIND_MAX
 };
 
+enum CITokenLiteralConstantIntSuffix
+{
+    CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_L,
+    CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_LL,
+    CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_LU,
+    CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_LLU,
+    CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_U,
+    CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_NONE
+};
+
+typedef struct CITokenLiteralConstantInt
+{
+    enum CITokenLiteralConstantIntSuffix suffix;
+    String *value;
+} CITokenLiteralConstantInt;
+
+/**
+ *
+ * @brief Construct CITokenLiteralConstantInt type.
+ */
+inline CONSTRUCTOR(CITokenLiteralConstantInt,
+                   CITokenLiteralConstantInt,
+                   enum CITokenLiteralConstantIntSuffix suffix,
+                   String *value)
+{
+    return (CITokenLiteralConstantInt){ .suffix = suffix, .value = value };
+}
+
+/**
+ *
+ * @brief Convert CITokenLiteralConstantIntSuffix in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               CITokenLiteralConstantIntSuffix,
+               enum CITokenLiteralConstantIntSuffix self);
+#endif
+
+/**
+ *
+ * @brief Convert CITokenLiteralConstantInt in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CITokenLiteralConstantInt,
+               const CITokenLiteralConstantInt *self);
+#endif
+
+/**
+ *
+ * @brief Free CITokenLiteralConstantInt type.
+ */
+inline DESTRUCTOR(CITokenLiteralConstantInt,
+                  const CITokenLiteralConstantInt *self)
+{
+    FREE(String, self->value);
+}
+
+enum CITokenLiteralConstantFloatSuffix
+{
+    CI_TOKEN_LITERAL_CONSTANT_FLOAT_SUFFIX_F,
+    CI_TOKEN_LITERAL_CONSTANT_FLOAT_SUFFIX_L,
+    CI_TOKEN_LITERAL_CONSTANT_FLOAT_SUFFIX_NONE
+};
+
+typedef struct CITokenLiteralConstantFloat
+{
+    enum CITokenLiteralConstantFloatSuffix suffix;
+    String *value;
+} CITokenLiteralConstantFloat;
+
+/**
+ *
+ * @brief Construct CITokenLiteralConstantFloat type.
+ */
+inline CONSTRUCTOR(CITokenLiteralConstantFloat,
+                   CITokenLiteralConstantFloat,
+                   enum CITokenLiteralConstantFloatSuffix suffix,
+                   String *value)
+{
+    return (CITokenLiteralConstantFloat){ .suffix = suffix, .value = value };
+}
+
+/**
+ *
+ * @brief Convert CITokenLiteralConstantFloatSuffix in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               CITokenLiteralConstantFloatSuffix,
+               enum CITokenLiteralConstantFloatSuffix self);
+#endif
+
+/**
+ *
+ * @brief Convert CITokenLiteralConstantFloat in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CITokenLiteralConstantFloat,
+               const CITokenLiteralConstantFloat *self);
+#endif
+
+/**
+ *
+ * @brief Free CITokenLiteralConstantFloat type.
+ */
+inline DESTRUCTOR(CITokenLiteralConstantFloat,
+                  const CITokenLiteralConstantFloat *self)
+{
+    FREE(String, self->value);
+}
+
 typedef struct CITokenPreprocessorDefine
 {
     String *name;
@@ -716,11 +837,11 @@ typedef struct CIToken
         String *preprocessor_undef;
         String *preprocessor_warning;
         String *identifier;
-        String *literal_constant_int;
-        String *literal_constant_float;
-        String *literal_constant_octal;
-        String *literal_constant_hex;
-        String *literal_constant_bin;
+        CITokenLiteralConstantInt literal_constant_int;
+        CITokenLiteralConstantFloat literal_constant_float;
+        CITokenLiteralConstantInt literal_constant_octal;
+        CITokenLiteralConstantInt literal_constant_hex;
+        CITokenLiteralConstantInt literal_constant_bin;
         char literal_constant_character;
         String *literal_constant_string;
         String *macro_defined;
@@ -786,7 +907,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     CIToken,
                     literal_constant_int,
                     Location location,
-                    String *literal_constant_int);
+                    CITokenLiteralConstantInt literal_constant_int);
 
 /**
  *
@@ -796,7 +917,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     CIToken,
                     literal_constant_float,
                     Location location,
-                    String *literal_constant_float);
+                    CITokenLiteralConstantFloat literal_constant_float);
 
 /**
  *
@@ -806,7 +927,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     CIToken,
                     literal_constant_octal,
                     Location location,
-                    String *literal_constant_octal);
+                    CITokenLiteralConstantInt literal_constant_octal);
 
 /**
  *
@@ -816,7 +937,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     CIToken,
                     literal_constant_hex,
                     Location location,
-                    String *literal_constant_hex);
+                    CITokenLiteralConstantInt literal_constant_hex);
 
 /**
  *
@@ -826,7 +947,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     CIToken,
                     literal_constant_bin,
                     Location location,
-                    String *literal_constant_bin);
+                    CITokenLiteralConstantInt literal_constant_bin);
 
 /**
  *
