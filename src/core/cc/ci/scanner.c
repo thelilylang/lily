@@ -276,14 +276,20 @@ scan_character__CIScanner(CIScanner *self);
 static String *
 scan_string__CIScanner(CIScanner *self);
 
-/// @brief Scan octal constant literal.
+/// @brief Scan binary constant literal.
+/// @example 0b111, 0b101
+static CIToken *
+scan_bin__CIScanner(CIScanner *self);
+
+/// @brief Scan hexadecimal constant literal.
+/// @example 0xff, 0x33
 static CIToken *
 scan_hex__CIScanner(CIScanner *self);
 
-/// @brief Scan octal or binary constant literal.
-/// @example 00101, 00334
+/// @brief Scan octal constant literal.
+/// @example 00122, 00334
 static CIToken *
-scan_octal_or_binary__CIScanner(CIScanner *self);
+scan_oct__CIScanner(CIScanner *self);
 
 /// @brief Scan number (decimal and float).
 static CIToken *
@@ -2362,6 +2368,22 @@ scan_string__CIScanner(CIScanner *self)
 }
 
 CIToken *
+scan_bin__CIScanner(CIScanner *self)
+{
+    String *res = NEW(String);
+
+    scan_and_append_chars__CIScanner(self, res, &is_bin__CIScanner);
+    previous_char__CIScanner(self);
+
+    return NEW_VARIANT(CIToken,
+                       literal_constant_bin,
+                       clone__Location(&self->base.location),
+                       NEW(CITokenLiteralConstantInt,
+                           CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_NONE,
+                           res));
+}
+
+CIToken *
 scan_hex__CIScanner(CIScanner *self)
 {
     String *res = NEW(String);
@@ -2372,32 +2394,25 @@ scan_hex__CIScanner(CIScanner *self)
     return NEW_VARIANT(CIToken,
                        literal_constant_hex,
                        clone__Location(&self->base.location),
-                       res);
+                       NEW(CITokenLiteralConstantInt,
+                           CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_NONE,
+                           res));
 }
 
 CIToken *
-scan_octal_or_binary__CIScanner(CIScanner *self)
+scan_oct__CIScanner(CIScanner *self)
 {
     String *res = NEW(String);
 
-    scan_and_append_chars__CIScanner(self, res, &is_bin__CIScanner);
-
-    if (is_oct__CIScanner(self)) {
-        scan_and_append_chars__CIScanner(self, res, &is_oct__CIScanner);
-        previous_char__CIScanner(self);
-
-        return NEW_VARIANT(CIToken,
-                           literal_constant_octal,
-                           clone__Location(&self->base.location),
-                           res);
-    }
-
+    scan_and_append_chars__CIScanner(self, res, &is_oct__CIScanner);
     previous_char__CIScanner(self);
 
     return NEW_VARIANT(CIToken,
-                       literal_constant_bin,
+                       literal_constant_octal,
                        clone__Location(&self->base.location),
-                       res);
+                       NEW(CITokenLiteralConstantInt,
+                           CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_NONE,
+                           res));
 }
 
 CIToken *
@@ -2511,13 +2526,17 @@ scan_num__CIScanner(CIScanner *self)
         return NEW_VARIANT(CIToken,
                            literal_constant_float,
                            clone__Location(&self->base.location),
-                           res);
+                           NEW(CITokenLiteralConstantFloat,
+                               CI_TOKEN_LITERAL_CONSTANT_FLOAT_SUFFIX_NONE,
+                               res));
     }
 
     return NEW_VARIANT(CIToken,
                        literal_constant_int,
                        clone__Location(&self->base.location),
-                       res);
+                       NEW(CITokenLiteralConstantInt,
+                           CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_NONE,
+                           res));
 }
 
 #define BACKSLASH_DIAGNOSTIC()                               \
@@ -3172,7 +3191,7 @@ scan_line_preprocessor__CIScanner(CIScanner *self)
             switch (token->kind) {
                 case CI_TOKEN_KIND_LITERAL_CONSTANT_INT: {
                     Optional *op = atoi_safe__Uint64(
-                      token->literal_constant_int->buffer, 10);
+                      token->literal_constant_int.value->buffer, 10);
 
                     if (is_some__Optional(op)) {
                         lineno = (Usize)(Uptr)(Usize *)op->some;
@@ -3294,25 +3313,214 @@ scan_warning_preprocessor__CIScanner(CIScanner *self)
 CIToken *
 get_num__CIScanner(CIScanner *self)
 {
+    CIToken *res = NULL; // CIToken*?
+
     switch (self->base.source.cursor.current) {
-        // 00, 0x
+        // 0b, 00, 0x
         case '0': {
             char *c1 = peek_char__CIScanner(self, 1);
 
-            if (c1 == (char *)'x') {
+            if (c1 == (char *)'b') {
                 jump__CIScanner(self, 2);
-                return scan_hex__CIScanner(self);
+                res = scan_bin__CIScanner(self);
+            } else if (c1 == (char *)'x') {
+                jump__CIScanner(self, 2);
+                res = scan_hex__CIScanner(self);
             } else if (c1 == (char *)'0') {
                 jump__CIScanner(self, 2);
-                return scan_octal_or_binary__CIScanner(self);
+                res = scan_oct__CIScanner(self);
             } else {
-                return scan_num__CIScanner(self);
+                res = scan_num__CIScanner(self);
             }
+
+            break;
         }
         // 1-9
         default:
-            return scan_num__CIScanner(self);
+            res = scan_num__CIScanner(self);
     }
+
+    if (res) {
+        // Scan suffix
+        // Integer literal suffix:
+        // https://en.cppreference.com/w/cpp/language/integer_literal
+        // Floating point literal suffix:
+        // https://en.cppreference.com/w/c/language/floating_constant
+        char *c1 = peek_char__CIScanner(self, 1);
+        char *c2 = peek_char__CIScanner(self, 2);
+        char *c3 = peek_char__CIScanner(self, 3);
+        bool is_int = res->kind == CI_TOKEN_KIND_LITERAL_CONSTANT_INT ||
+                      res->kind == CI_TOKEN_KIND_LITERAL_CONSTANT_BIN ||
+                      res->kind == CI_TOKEN_KIND_LITERAL_CONSTANT_HEX ||
+                      res->kind == CI_TOKEN_KIND_LITERAL_CONSTANT_OCTAL;
+
+#define SUFFIX_U (1 << 0)
+#define SUFFIX_L (1 << 1)
+#define SUFFIX_L2 (1 << 2)
+#define SUFFIX_F (1 << 3)
+#define SUFFIX_D (1 << 4)
+#define SUFFIXES_ARRAY_LENGTH 5
+
+        const int suffixes_arr[SUFFIXES_ARRAY_LENGTH] = {
+            SUFFIX_U, SUFFIX_L, SUFFIX_L2, SUFFIX_F, SUFFIX_D
+        };
+
+#define ADD_SUFFIX(s) suffixes |= s;
+
+#define UPDATE_FLOAT_SUFFIX(new_suffix)                      \
+    switch (res->kind) {                                     \
+        case CI_TOKEN_KIND_LITERAL_CONSTANT_FLOAT:           \
+            res->literal_constant_float.suffix = new_suffix; \
+            break;                                           \
+        default:                                             \
+            break;                                           \
+    }
+
+#define UPDATE_INT_SUFFIX(new_suffix)                        \
+    switch (res->kind) {                                     \
+        case CI_TOKEN_KIND_LITERAL_CONSTANT_INT:             \
+            res->literal_constant_int.suffix = new_suffix;   \
+            break;                                           \
+        case CI_TOKEN_KIND_LITERAL_CONSTANT_BIN:             \
+            res->literal_constant_bin.suffix = new_suffix;   \
+            break;                                           \
+        case CI_TOKEN_KIND_LITERAL_CONSTANT_HEX:             \
+            res->literal_constant_hex.suffix = new_suffix;   \
+            break;                                           \
+        case CI_TOKEN_KIND_LITERAL_CONSTANT_OCTAL:           \
+            res->literal_constant_octal.suffix = new_suffix; \
+            break;                                           \
+        default:                                             \
+            break;                                           \
+    }
+
+#define CHECK_SUFFIX()                                                    \
+    if (suffixes) {                                                       \
+        if (suffixes & (SUFFIX_D | SUFFIX_F) && is_int) {                 \
+            FAILED("these suffixes are not expected for integer");        \
+        } else if (suffixes & (SUFFIX_U | SUFFIX_L2) && !is_int) {        \
+            FAILED("these suffixes are not expected for floating point"); \
+        }                                                                 \
+    }
+
+        int suffixes = 0;
+
+        switch ((char)(Uptr)c1) {
+            case 'e':
+            case 'E':
+                // For case like 0xffe3, 0b111e2 or 001234e5, ...
+                TODO("exponent");
+            case 'U':
+            case 'u':
+                ADD_SUFFIX(SUFFIX_U);
+
+                if (c2 == (char *)'l') {
+                    ADD_SUFFIX(SUFFIX_L);
+
+                    if (c3 == (char *)'L' || c3 == (char *)'l') {
+                        ADD_SUFFIX(SUFFIX_L2);
+                        CHECK_SUFFIX();
+                        UPDATE_INT_SUFFIX(
+                          CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_LLU);
+
+                        break;
+                    }
+
+                    CHECK_SUFFIX();
+                    UPDATE_INT_SUFFIX(CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_LU);
+
+                    break;
+                }
+
+                CHECK_SUFFIX();
+                UPDATE_INT_SUFFIX(CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_U);
+
+                break;
+            case 'L':
+            case 'l':
+                ADD_SUFFIX(SUFFIX_L);
+
+                if (c2 == (char *)'U' || c2 == (char *)'u') {
+                    ADD_SUFFIX(SUFFIX_U);
+                    CHECK_SUFFIX();
+                    UPDATE_INT_SUFFIX(CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_LU);
+
+                    break;
+                } else if (c2 == (char *)'l') {
+                    ADD_SUFFIX(SUFFIX_L2);
+
+                    if (c3 == (char *)'U' || c3 == (char *)'u') {
+                        ADD_SUFFIX(SUFFIX_U);
+                        CHECK_SUFFIX();
+                        UPDATE_INT_SUFFIX(
+                          CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_LLU);
+
+                        break;
+                    }
+
+                    CHECK_SUFFIX();
+                    UPDATE_INT_SUFFIX(CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_LL);
+
+                    break;
+                }
+
+                CHECK_SUFFIX();
+
+                if (is_int) {
+                    UPDATE_INT_SUFFIX(CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_L);
+                } else {
+                    UPDATE_FLOAT_SUFFIX(
+                      CI_TOKEN_LITERAL_CONSTANT_FLOAT_SUFFIX_L);
+                }
+
+                break;
+            case 'f':
+            case 'F':
+                ADD_SUFFIX(SUFFIX_F);
+                CHECK_SUFFIX();
+                UPDATE_FLOAT_SUFFIX(CI_TOKEN_LITERAL_CONSTANT_FLOAT_SUFFIX_F);
+
+                break;
+            // Only for GCC.
+            // TODO: Finish to scan decimal suffixes
+            // (https://en.cppreference.com/w/c/language/floating_constant).
+            case 'd':
+            case 'D':
+                ADD_SUFFIX(SUFFIX_D);
+
+                if (c2 == (char *)'F' || c2 == (char *)'f') {
+                    ADD_SUFFIX(SUFFIX_F);
+
+                    TODO("df");
+                } else if (c2 == (char *)'D' || c2 == (char *)'d') {
+                    ADD_SUFFIX(SUFFIX_D);
+
+                    TODO("dd");
+                } else if (c2 == (char *)'L' || c2 == (char *)'l') {
+                    ADD_SUFFIX(SUFFIX_L);
+
+                    TODO("dl");
+                }
+
+                TODO("d");
+            default:
+                break;
+        }
+
+        Usize flag_count = 0;
+
+        // Count the number of flags.
+        for (int s = suffixes, i = 0; s > 0 && i < SUFFIXES_ARRAY_LENGTH;
+             ++i, s &= ~suffixes_arr[i]) {
+            ++flag_count;
+        }
+
+        jump__CIScanner(self, flag_count);
+
+        return res;
+    }
+
+    return NULL;
 }
 
 void
@@ -3860,10 +4068,13 @@ get_token__CIScanner(CIScanner *self,
                 !(self->base.source.cursor.current >= '0' &&
                   self->base.source.cursor.current <= '9')) {
                 previous_char__CIScanner(self);
-                return NEW_VARIANT(CIToken,
-                                   literal_constant_int,
-                                   clone__Location(&self->base.location),
-                                   from__String("0"));
+                return NEW_VARIANT(
+                  CIToken,
+                  literal_constant_int,
+                  clone__Location(&self->base.location),
+                  NEW(CITokenLiteralConstantInt,
+                      CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_NONE,
+                      from__String("0")));
             }
 
             return get_num__CIScanner(self);

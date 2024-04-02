@@ -367,6 +367,22 @@ extern inline bool
 is_in_prepro_else__CIScannerContext(const CIScannerContext *self);
 
 // <core/cc/ci/token.h>
+extern inline CONSTRUCTOR(CITokenLiteralConstantInt,
+                          CITokenLiteralConstantInt,
+                          enum CITokenLiteralConstantIntSuffix suffix,
+                          String *literal_constant_int);
+
+extern inline DESTRUCTOR(CITokenLiteralConstantInt,
+                         const CITokenLiteralConstantInt *self);
+
+extern inline CONSTRUCTOR(CITokenLiteralConstantFloat,
+                          CITokenLiteralConstantFloat,
+                          enum CITokenLiteralConstantFloatSuffix suffix,
+                          String *literal_constant_float);
+
+extern inline DESTRUCTOR(CITokenLiteralConstantFloat,
+                         const CITokenLiteralConstantFloat *self);
+
 extern inline CONSTRUCTOR(CITokenPreprocessorDefine,
                           CITokenPreprocessorDefine,
                           String *name,

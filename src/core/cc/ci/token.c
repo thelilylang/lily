@@ -122,6 +122,77 @@ static VARIANT_DESTRUCTOR(CIToken, preprocessor_undef, CIToken *self);
 // Free CIToken type (CI_TOKEN_KIND_PREPROCESSOR_WARNING).
 static VARIANT_DESTRUCTOR(CIToken, preprocessor_warning, CIToken *self);
 
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               CITokenLiteralConstantIntSuffix,
+               enum CITokenLiteralConstantIntSuffix self)
+{
+    switch (self) {
+        case CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_L:
+            return "CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_L";
+        case CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_LL:
+            return "CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_LL";
+        case CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_LU:
+            return "CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_LU";
+        case CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_LLU:
+            return "CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_LLU";
+        case CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_U:
+            return "CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_U";
+        case CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_NONE:
+            return "CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_NONE";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CITokenLiteralConstantInt,
+               const CITokenLiteralConstantInt *self)
+{
+    return format__String(
+      "CITokenLiteralConstantInt{{ suffix = {s}, value = {S} }",
+      to_string__Debug__CITokenLiteralConstantIntSuffix(self->suffix),
+      self->value);
+}
+#endif
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               CITokenLiteralConstantFloatSuffix,
+               enum CITokenLiteralConstantFloatSuffix self)
+{
+    switch (self) {
+        case CI_TOKEN_LITERAL_CONSTANT_FLOAT_SUFFIX_F:
+            return "CI_TOKEN_LITERAL_CONSTANT_FLOAT_SUFFIX_F";
+        case CI_TOKEN_LITERAL_CONSTANT_FLOAT_SUFFIX_L:
+            return "CI_TOKEN_LITERAL_CONSTANT_FLOAT_SUFFIX_L";
+        case CI_TOKEN_LITERAL_CONSTANT_FLOAT_SUFFIX_NONE:
+            return "CI_TOKEN_LITERAL_CONSTANT_FLOAT_SUFFIX_NONE";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CITokenLiteralConstantFloat,
+               const CITokenLiteralConstantFloat *self)
+{
+    return format__String(
+      "CITokenLiteralConstantFloat{{ suffix = {s}, literal_constant_float = "
+      "{S} }",
+      to_string__Debug__CITokenLiteralConstantFloatSuffix(self->suffix),
+      self->value);
+}
+#endif
+
 String *
 to_string__CITokenPreprocessorDefine(const CITokenPreprocessorDefine *self)
 {
@@ -655,7 +726,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     CIToken,
                     literal_constant_int,
                     Location location,
-                    String *literal_constant_int)
+                    CITokenLiteralConstantInt literal_constant_int)
 {
     CIToken *self = lily_malloc(sizeof(CIToken));
 
@@ -670,7 +741,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     CIToken,
                     literal_constant_float,
                     Location location,
-                    String *literal_constant_float)
+                    CITokenLiteralConstantFloat literal_constant_float)
 {
     CIToken *self = lily_malloc(sizeof(CIToken));
 
@@ -685,7 +756,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     CIToken,
                     literal_constant_octal,
                     Location location,
-                    String *literal_constant_octal)
+                    CITokenLiteralConstantInt literal_constant_octal)
 {
     CIToken *self = lily_malloc(sizeof(CIToken));
 
@@ -700,7 +771,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     CIToken,
                     literal_constant_hex,
                     Location location,
-                    String *literal_constant_hex)
+                    CITokenLiteralConstantInt literal_constant_hex)
 {
     CIToken *self = lily_malloc(sizeof(CIToken));
 
@@ -715,7 +786,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     CIToken,
                     literal_constant_bin,
                     Location location,
-                    String *literal_constant_bin)
+                    CITokenLiteralConstantInt literal_constant_bin)
 {
     CIToken *self = lily_malloc(sizeof(CIToken));
 
@@ -1272,19 +1343,19 @@ to_string__CIToken(CIToken *self)
             return from__String("<<=");
         case CI_TOKEN_KIND_LITERAL_CONSTANT_INT:
             return format__String("LITERAL_CONSTANT(INT({S}))",
-                                  self->literal_constant_int);
+                                  self->literal_constant_int.value);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_FLOAT:
             return format__String("LITERAL_CONSTANT(FLOAT({S}))",
-                                  self->literal_constant_float);
+                                  self->literal_constant_float.value);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_OCTAL:
             return format__String("LITERAL_CONSTANT(OCTAL({S}))",
-                                  self->literal_constant_octal);
+                                  self->literal_constant_octal.value);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_HEX:
             return format__String("LITERAL_CONSTANT(HEX({S}))",
-                                  self->literal_constant_hex);
+                                  self->literal_constant_hex.value);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_BIN:
             return format__String("LITERAL_CONSTANT(BIN({S}))",
-                                  self->literal_constant_bin);
+                                  self->literal_constant_bin.value);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_CHARACTER:
             return format__String("LITERAL_CONSTANT(CHARACTER({c}))",
                                   self->literal_constant_character);
@@ -1821,34 +1892,44 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
               self->identifier);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_INT:
             return format("CIToken{{ kind = {s}, location = {sa}, "
-                          "literal_constant_int = {S} }",
+                          "literal_constant_int = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
-                          self->literal_constant_int);
+                          CALL_DEBUG_IMPL(to_string,
+                                          CITokenLiteralConstantInt,
+                                          &self->literal_constant_int));
         case CI_TOKEN_KIND_LITERAL_CONSTANT_FLOAT:
             return format("CIToken{{ kind = {s}, location = {sa}, "
-                          "literal_constant_float = {S} }",
+                          "literal_constant_float = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
-                          self->literal_constant_float);
+                          CALL_DEBUG_IMPL(to_string,
+                                          CITokenLiteralConstantFloat,
+                                          &self->literal_constant_float));
         case CI_TOKEN_KIND_LITERAL_CONSTANT_OCTAL:
             return format("CIToken{{ kind = {s}, location = {sa}, "
                           "literal_constant_octal = {S} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
-                          self->literal_constant_octal);
+                          CALL_DEBUG_IMPL(to_string,
+                                          CITokenLiteralConstantInt,
+                                          &self->literal_constant_octal));
         case CI_TOKEN_KIND_LITERAL_CONSTANT_HEX:
             return format("CIToken{{ kind = {s}, location = {sa}, "
                           "literal_constant_hex = {S} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
-                          self->literal_constant_hex);
+                          CALL_DEBUG_IMPL(to_string,
+                                          CITokenLiteralConstantInt,
+                                          &self->literal_constant_hex));
         case CI_TOKEN_KIND_LITERAL_CONSTANT_BIN:
             return format("CIToken{{ kind = {s}, location = {sa}, "
                           "literal_constant_bin = {S} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
-                          self->literal_constant_bin);
+                          CALL_DEBUG_IMPL(to_string,
+                                          CITokenLiteralConstantInt,
+                                          &self->literal_constant_bin));
         case CI_TOKEN_KIND_LITERAL_CONSTANT_CHARACTER:
             return format("CIToken{{ kind = {s}, location = {sa}, "
                           "literal_constant_character = {c} }",
@@ -2028,31 +2109,31 @@ VARIANT_DESTRUCTOR(CIToken, identifier, CIToken *self)
 
 VARIANT_DESTRUCTOR(CIToken, literal_constant_int, CIToken *self)
 {
-    FREE(String, self->literal_constant_int);
+    FREE(CITokenLiteralConstantInt, &self->literal_constant_int);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(CIToken, literal_constant_float, CIToken *self)
 {
-    FREE(String, self->literal_constant_float);
+    FREE(CITokenLiteralConstantFloat, &self->literal_constant_float);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(CIToken, literal_constant_octal, CIToken *self)
 {
-    FREE(String, self->literal_constant_octal);
+    FREE(CITokenLiteralConstantInt, &self->literal_constant_octal);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(CIToken, literal_constant_hex, CIToken *self)
 {
-    FREE(String, self->literal_constant_hex);
+    FREE(CITokenLiteralConstantInt, &self->literal_constant_hex);
     lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(CIToken, literal_constant_bin, CIToken *self)
 {
-    FREE(String, self->literal_constant_bin);
+    FREE(CITokenLiteralConstantInt, &self->literal_constant_bin);
     lily_free(self);
 }
 
