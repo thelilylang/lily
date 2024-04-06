@@ -40,7 +40,7 @@ get_extension__File(const char *path);
 /**
  *
  * @brief Get filename (without extension) of the path.
- * @return String*?
+ * @return String*
  * @example a/b/c/file.txt => file
  */
 String *

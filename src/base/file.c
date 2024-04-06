@@ -80,7 +80,7 @@ get_filename__File(const char *path)
     if (path_filename) {
         ++path_filename;
     } else {
-        return NULL;
+        path_filename = path;
     }
 
     String *filename = NEW(String);
