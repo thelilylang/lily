@@ -55,7 +55,7 @@ main(int argc, char **argv)
     enum CIStandard standard;
 
     {
-        // standard: c89 | c95 | c99 | c11 | c17 | c23
+        // standard: k&r | c89 | c95 | c99 | c11 | c17 | c23
         Int32 standard_value_id = GET_KEY_ON_DEFAULT_MAPPING__YAML(
           &yaml_load_res, FIRST_DOCUMENT, "standard");
 
@@ -73,7 +73,9 @@ main(int argc, char **argv)
                 char *standard_value =
                   GET_NODE_SCALAR_VALUE__YAML(standard_value_node);
 
-                if (!strcmp(standard_value, "c89")) {
+                if (!strcmp(standard_value, "k&r")) {
+                    standard = CI_STANDARD_KR;
+                } else if (!strcmp(standard_value, "c89")) {
                     standard = CI_STANDARD_89;
                 } else if (!strcmp(standard_value, "c95")) {
                     standard = CI_STANDARD_95;
@@ -92,7 +94,8 @@ main(int argc, char **argv)
                 break;
             }
             default:
-                FAILED("expected: standard: c89 | c95 | c99 | c11 | c17 | c23");
+                FAILED("expected: standard: k&r | c89 | c95 | c99 | c11 | c17 "
+                       "| c23");
         }
     }
 
