@@ -425,7 +425,7 @@ parse__CIConfig()
                "directory");
     }
 
-    free(cwd);
+    lily_free(cwd);
 
     YAMLLoadRes yaml_load_res = load__YAML(path_ci_config->buffer);
     enum CIStandard standard = parse_standard__CIConfig(&yaml_load_res);
