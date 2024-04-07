@@ -107,14 +107,13 @@ parse_standard__CIConfig(YAMLLoadRes *yaml_load_res)
 CICompiler
 parse_compiler__CIConfig(YAMLLoadRes *yaml_load_res)
 {
-    CICompiler compiler;
-
     // compiler:
-    //   gcc: <path> | clang: <path>
+    //   name: clang | gcc
+    //   path: <path_of_command>
     Int32 compiler_value_id = GET_KEY_ON_DEFAULT_MAPPING__YAML(
       yaml_load_res, FIRST_DOCUMENT, "compiler");
     enum CICompilerKind compiler_kind;
-    const char *path;
+    const char *path = NULL;
 
     if (compiler_value_id == -1) {
         FAILED("expected compiler key");
@@ -122,51 +121,46 @@ parse_compiler__CIConfig(YAMLLoadRes *yaml_load_res)
 
     YAMLNode *compiler_value_node =
       get_node_from_id__YAML(yaml_load_res, FIRST_DOCUMENT, compiler_value_id);
-    char *compiler_kind_value;
 
     ASSERT(compiler_value_node);
 
     switch (GET_NODE_TYPE__YAML(compiler_value_node)) {
-        case YAML_SCALAR_NODE: {
-            compiler_kind_value =
-              GET_NODE_SCALAR_VALUE__YAML(compiler_value_node);
+        case YAML_MAPPING_NODE: {
+            const char *expected_mapping_keys[] = { "name", "path" };
 
-            if (!strcmp(compiler_kind_value, "gcc")) {
-                compiler_kind = CI_COMPILER_KIND_GCC;
-            } else if (!strcmp(compiler_kind_value, "clang")) {
-                compiler_kind = CI_COMPILER_KIND_CLANG;
-            } else {
-                FAILED("unknown compiler");
-            }
+            ITER_ON_MAPPING_NODE_WITH_EXPECTED_KEYS__YAML(
+              yaml_load_res,
+              FIRST_DOCUMENT,
+              compiler_value_node,
+              compiler_pair,
+              expected_mapping_keys,
+              {
+                  if (!strcmp(compiler_pair_key, "name")) {
+                      if (!strcmp(compiler_pair_value, "clang")) {
+                          compiler_kind = CI_COMPILER_KIND_CLANG;
+                      } else if (!strcmp(compiler_pair_value, "gcc")) {
+                          compiler_kind = CI_COMPILER_KIND_GCC;
+                      } else {
+                          UNREACHABLE("unknown compiler");
+                      }
+                  } else if (!strcmp(compiler_pair_key, "path")) {
+                      ASSERT(!path);
+
+                      path = compiler_pair_key;
+                  } else {
+                      UNREACHABLE("this situation is impossible");
+                  }
+              });
+
+            break;
         }
         default:
             FAILED("expected compiler:\n"
-                   "  clang: <path>, gcc: <path>");
+                   "  name: clang | gcc\n"
+                   "  path: <path_of_command>");
     }
 
-    Int32 path_value_id = GET_KEY_ON_DEFAULT_MAPPING__YAML(
-      yaml_load_res, FIRST_DOCUMENT, compiler_kind_value);
-
-    if (path_value_id == -1) {
-        path = compiler_kind_value;
-    } else {
-        YAMLNode *path_value_node =
-          get_node_from_id__YAML(yaml_load_res, FIRST_DOCUMENT, path_value_id);
-
-        ASSERT(path_value_node);
-
-        switch (GET_NODE_TYPE__YAML(path_value_node)) {
-            case YAML_SCALAR_NODE: {
-                path = GET_NODE_SCALAR_VALUE__YAML(path_value_node);
-            }
-            default:
-                FAILED("expected clang: <path>, gcc: <path>");
-        }
-    }
-
-    compiler = NEW(CICompiler, compiler_kind, path);
-
-    return compiler;
+    return NEW(CICompiler, compiler_kind, path);
 }
 
 void
@@ -229,7 +223,7 @@ parse_libraries__CIConfig(YAMLLoadRes *yaml_load_res)
     //   ...
 
     Int32 libraries_value_id = GET_KEY_ON_DEFAULT_MAPPING__YAML(
-      yaml_load_res, FIRST_DOCUMENT, "include_dirs");
+      yaml_load_res, FIRST_DOCUMENT, "libraries");
 
     if (libraries_value_id != -1) {
         YAMLNode *libraries_value_node = get_node_from_id__YAML(
@@ -238,84 +232,57 @@ parse_libraries__CIConfig(YAMLLoadRes *yaml_load_res)
         ASSERT(libraries_value_node);
 
         switch (GET_NODE_TYPE__YAML(libraries_value_node)) {
-            case YAML_SEQUENCE_NODE:
-                ITER_ON_SEQUENCE_NODE__YAML(
+            case YAML_MAPPING_NODE: {
+                ITER_ON_MAPPING_NODE__YAML(
                   yaml_load_res,
                   FIRST_DOCUMENT,
                   libraries_value_node,
                   library,
                   {
-                      // Get library value
-                      // libraries:
-                      //   - <name>:
-                      //     ...
-                      //   - <name2>:
-                      //     ...
-                      //   ...
-                      const char *name = library_value;
-                      Int32 library_value_id = GET_KEY_ON_DEFAULT_MAPPING__YAML(
-                        yaml_load_res, FIRST_DOCUMENT, name);
-
-                      ASSERT(library_value_id != -1);
-
-                      YAMLNode *library_value_node = get_node_from_id__YAML(
-                        yaml_load_res, FIRST_DOCUMENT, library_value_id);
-
-                      ASSERT(library_value_node);
-
-                      // paths:
-                      //   - <path1>
-                      //   - <path2>
-                      //   ...
+                      const char *name = library_key;
                       Vec *paths = NULL; // Vec<char* (&)>*
 
                       switch (GET_NODE_TYPE__YAML(library_value_node)) {
                           case YAML_MAPPING_NODE: {
                               const char *expected_mapping_keys[] = { "paths" };
 
-                              ITER_ON_MAPPING_NODE__YAML(
+							  // paths:
+							  //   ...
+                              ITER_ON_MAPPING_NODE_WITH_EXPECTED_KEYS__YAML(
                                 yaml_load_res,
                                 FIRST_DOCUMENT,
                                 library_value_node,
-                                library_pair,
+                                library_mapping,
+                                expected_mapping_keys,
                                 {
-                                    // Check if the key matches with an expected
-                                    // key
-                                    bool is_match = false;
-
-                                    for (Usize i = 0;
-                                         i < LEN(expected_mapping_keys,
-                                                 *expected_mapping_keys);
-                                         ++i) {
-                                        if (!strcmp(library_pair_key,
-                                                    expected_mapping_keys[i])) {
-                                            is_match = true;
-                                            break;
-                                        }
-                                    }
-
-                                    if (!is_match) {
-                                        FAILED("this key doesn't match with "
-                                               "expected keys\n"
-                                               "expected: paths");
-                                    }
-
-                                    // Parse paths sequence.
-                                    // e.g.:
-                                    //   - <path1>
-                                    //   - <path2>
-                                    //   ...
-                                    if (!strcmp(library_pair_key, "paths")) {
+                                    if (!strcmp(library_mapping_key, "paths")) {
                                         ASSERT(!paths);
 
                                         paths = NEW(Vec);
 
-                                        ITER_ON_SEQUENCE_NODE__YAML(
-                                          yaml_load_res,
-                                          FIRST_DOCUMENT,
-                                          library_pair_value_node,
-                                          path,
-                                          { push__Vec(paths, path_value); });
+										// paths:
+										//   - <path1>
+										//   - <path2>
+										//   ...
+                                        switch (GET_NODE_TYPE__YAML(
+                                          library_mapping_value_node)) {
+                                            case YAML_SEQUENCE_NODE:
+                                                ITER_ON_SEQUENCE_NODE__YAML(
+                                                  yaml_load_res,
+                                                  FIRST_DOCUMENT,
+                                                  library_mapping_value_node,
+                                                  path,
+                                                  {
+                                                      push__Vec(paths,
+                                                                path_value);
+                                                  });
+
+                                                break;
+                                            default:
+                                                goto error;
+                                        }
+                                    } else {
+                                        UNREACHABLE("this key is not expected");
                                     }
                                 });
 
@@ -329,6 +296,7 @@ parse_libraries__CIConfig(YAMLLoadRes *yaml_load_res)
                   });
 
                 break;
+            }
             default:
             error:
                 FAILED("expected sequence node:\n"
@@ -400,6 +368,9 @@ parse__CIConfig()
 
     Vec *libraries = parse_libraries__CIConfig(&yaml_load_res);
     Vec *bins = parse_bins__CIConfig(&yaml_load_res);
+
+    FREE(String, path_ci_config);
+    FREE(YAMLLoadRes, &yaml_load_res);
 
     return NEW(CIConfig,
                standard,

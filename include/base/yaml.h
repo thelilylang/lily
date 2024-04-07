@@ -38,6 +38,10 @@
 #define GET_NODE_TYPE__YAML(node) node->type
 #define GET_NODE_SCALAR_VALUE__YAML(node) (char *)node->data.scalar.value
 
+// - data1
+// - data2
+// - data3
+// ...
 #define ITER_ON_SEQUENCE_NODE__YAML(load, document, node, item, body) \
     for (yaml_node_item_t *item = node->data.sequence.items.start;    \
          item < node->data.sequence.items.top;                        \
@@ -53,6 +57,11 @@
         body;                                                         \
     }
 
+// ...:
+//   <key1>: <data1>
+//   <key2>: <data2>
+//   <key3>: <data3>
+//   ...
 #define ITER_ON_MAPPING_NODE__YAML(load, document, node, pair, body) \
     for (yaml_node_pair_t *pair = node->data.mapping.pairs.start;    \
          pair < node->data.mapping.pairs.top;                        \
@@ -67,9 +76,31 @@
                                                                      \
         [[maybe_unused]] char *pair##_key =                          \
           GET_NODE_SCALAR_VALUE__YAML(pair##_key_node);              \
+        [[maybe_unused]] char *pair##_value =                        \
+          GET_NODE_SCALAR_VALUE__YAML(pair##_value_node);            \
                                                                      \
         body;                                                        \
     }
+
+#define ITER_ON_MAPPING_NODE_WITH_EXPECTED_KEYS__YAML(                   \
+  load, document, node, pair, expected_keys, body)                       \
+    ITER_ON_MAPPING_NODE__YAML(load, document, node, pair, {             \
+        /* Check if the key matches with an expected key. */             \
+        bool is_match = false;                                           \
+                                                                         \
+        for (Usize i = 0; i < LEN(expected_keys, *expected_keys); ++i) { \
+            if (!strcmp(pair##_key, expected_keys[i])) {                 \
+                is_match = true;                                         \
+                break;                                                   \
+            }                                                            \
+        }                                                                \
+                                                                         \
+        if (!is_match) {                                                 \
+            FAILED("this key doesn't match with expected keys");         \
+        }                                                                \
+                                                                         \
+        body;                                                            \
+    });
 
 typedef yaml_char_t YAMLChar;
 typedef yaml_document_t YAMLDocument;

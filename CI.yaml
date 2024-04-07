@@ -5,38 +5,39 @@ standard: c23
 
 # clang: <bin_path> | gcc: <bin_path>
 compiler:
-  clang: /usr/bin/clang
+  name: clang
+  path: /usr/bin/clang
 
 include_dirs:
   - include
   - lib
 
 libraries:
-  - lily_base:
+  lily_base:
     paths:
       - src/base
       - src/base/cli
       - src/base/hash
       - src/base/memory
-  - lily_cli:
+  lily_cli:
     paths:
       - src/cli/lily
-  - lilyc_cli:
+  lilyc_cli:
     paths:
       - src/cli/lilyc
-  - lily_command:
+  lily_command:
     paths:
       - src/command/lily
-  - lilyc_command:
+  lilyc_command:
     paths:
       - src/command/lilyc
-  - lily_core_cc_diagnostic:
+  lily_core_cc_diagnostic:
     paths:
       - src/core/cc/diagnostic
-  - lily_core_cpp_diagnostic:
+  lily_core_cpp_diagnostic:
     paths:
       - src/core/cpp/diagnostic
-  - lily_core_lily_analysis:
+  lily_core_lily_analysis:
     paths:
       - src/core/lily/analysis
       - src/core/lily/analysis/checked
@@ -45,66 +46,66 @@ libraries:
       - src/core/lily/analysis/checked/expr
       - src/core/lily/analysis/checked/pattern
       - src/core/lily/analysis/checked/stmt
-  - lily_core_lily_interpreter_package:
+  lily_core_lily_interpreter_package:
     paths:
       - src/core/lily/interpreter/package
-  - lily_core_lily_interpreter_vm:
+  lily_core_lily_interpreter_vm:
     paths:
       - src/core/lily/interpreter/vm
       - src/core/lily/interpreter/vm/runtime
-  - lily_core_lily_compiler_ar:
+  lily_core_lily_compiler_ar:
     paths:
       - src/core/lily/compiler/ar
-  - lily_core_lily_compiler_driver:
+  lily_core_lily_compiler_driver:
     paths:
       - src/core/lily/compiler/driver
-  - lily_core_lily_compiler_ir:
+  lily_core_lily_compiler_ir:
     paths:
       - src/core/lily/compiler/ir
-  - lily_core_lily_compiler_ir_cc:
+  lily_core_lily_compiler_ir_cc:
     paths:
       - src/core/lily/compiler/ir/cc
       - src/core/lily/compiler/ir/cc/builder
       - src/core/lily/compiler/ir/cc/builder/function
       - src/core/lily/compiler/ir/cc/generator
-  - lily_core_lily_compiler_ir_cpp:
+  lily_core_lily_compiler_ir_cpp:
     paths:
       - src/core/lily/compiler/ir/cpp
       - src/core/lily/compiler/ir/cpp/builder
       - src/core/lily/compiler/ir/cpp/builder/class
       - src/core/lily/compiler/ir/cpp/builder/function
       - src/core/lily/compiler/ir/cpp/generator
-  - lily_core_lily_compiler_ir_llvm:
+  lily_core_lily_compiler_ir_llvm:
     paths:
       - src/core/lily/compiler/ir/llvm
-  - lily_core_lily_compiler_linker:
+  lily_core_lily_compiler_linker:
     paths:
       - src/core/lily/compiler/linker
-  - lily_core_lily_compiler_output:
+  lily_core_lily_compiler_output:
     paths:
       - src/core/lily/compiler/output
-  - lily_core_lily_compiler_package:
+  lily_core_lily_compiler_package:
     paths:
       - src/core/lily/compiler/package
-  - lily_core_lily_diagnostic:
+  lily_core_lily_diagnostic:
     paths:
       - src/core/lily/diagnostic
-  - lily_core_lily_functions:
+  lily_core_lily_functions:
     paths:
       - src/core/lily/functions
-  - lily_core_lily_mir:
+  lily_core_lily_mir:
     paths:
       - src/core/lily/mir
       - src/core/lily/mir/generator
       - src/core/lily/mir/generator/expr
       - src/core/lily/mir/generator/stmt
-  - lily_core_lily_package:
+  lily_core_lily_package:
     paths:
       - src/core/lily/package
       - src/core/lily/package/compiler
       - src/core/lily/package/interpreter
       - src/core/lily/package/jit
-  - lily_core_lily_parser:
+  lily_core_lily_parser:
     paths:
       - src/core/lily/parser
       - src/core/lily/parser/ast
@@ -113,40 +114,40 @@ libraries:
       - src/core/lily/parser/ast/expr
       - src/core/lily/parser/ast/pattern
       - src/core/lily/parser/ast/stmt
-  - lily_core_lily_precompiler:
+  lily_core_lily_precompiler:
     paths:
       - src/core/lily/precompiler
-  - lily_core_lily_preparser:
+  lily_core_lily_preparser:
     paths:
       - src/core/lily/preparser
       - src/core/lily/preparser/preprocess
-  - lily_core_lily_scanner:
+  lily_core_lily_scanner:
     paths:
       - src/core/lily/scanner
-  - lily_core_lily_shared:
+  lily_core_lily_shared:
     paths:
       - src/core/lily/shared
-  - lily_core_shared:
+  lily_core_shared:
     paths:
       - src/core/shared
       - src/core/shared/target
-  - lily_builtin:
+  lily_builtin:
     paths:
       - lib/builtin
-  - lily_sys:
+  lily_sys:
     paths:
       - lib/sys
-  - lily_core_cc_ci_diagnostic:
+  lily_core_cc_ci_diagnostic:
     paths:
       - src/core/cc/ci/diagnostic
-  - lily_core_cc_ci:
+  lily_core_cc_ci:
     paths:
       - src/core/cc/ci
 
 bins:
-  - lily:
+  lily:
     path: src/bin/lily/main.c
-  - lilyc:
+  lilyc:
     path: src/bin/lilyc/main.c
-  - ci:
+  ci:
     path: src/bin/ci/main.c
