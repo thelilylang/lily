@@ -184,6 +184,10 @@ next_char_by_token__CIScanner(CIScanner *self, const CIToken *token);
 static enum CITokenKind
 get_attribute__CIScanner(const String *id);
 
+/// @brief Get standard predefined macro from id.
+static enum CITokenKind
+get_standard_predefined_macro__CIScanner(const String *id);
+
 /// @brief Get preprocessor from id.
 static enum CITokenKind
 get_preprocessor__CIScanner(const String *id);
@@ -302,6 +306,42 @@ skip_space_and_backslash__CIScanner(CIScanner *self);
 /// @brief Skip backslash.
 static void
 skip_backslash__CIScanner(CIScanner *self);
+
+/// @brief Scan macro name of #ifdef, #ifndef, #elifdef, #elifndef, #define or
+/// #undef preprocessor.
+/// @example
+///
+/// #ifdef <macro_name>
+/// ...
+/// #endif
+///
+/// #ifndef <macro_name>
+/// ...
+/// #endif
+///
+/// #elifdef <macro_name>
+/// ...
+/// #endif
+///
+/// #elifndef <macro_name>
+/// ...
+/// #endif
+///
+/// #define <macro_name>(...) ...
+///
+/// #undef <macro_name>
+///
+/// @note If there is an error, we give the macro name an arbitrary value.
+/// @param ctx_parent const CIScannerContext*?
+/// @param preprocessor_ctx CI_TOKEN_KIND_PREPROCESSOR_IFDEF (same value for
+/// #ifndef, #elifdef or #elifndef preprocessor case) |
+/// CI_TOKEN_KIND_PREPROCESSOR_DEFINE | CI_TOKEN_KIND_PREPROCESSOR_UNDEF
+/// @return String*
+static String *
+scan_macro_name__CIScanner(CIScanner *self,
+                           const CIScannerContext *ctx,
+                           const CIScannerContext *ctx_parent,
+                           enum CITokenKind preprocessor_ctx);
 
 /// @brief Scan defined preprcoessor params.
 /// @return Vec<String*>*
@@ -455,12 +495,16 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                     .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_EOF] = { .since = CI_STANDARD_NONE,
                             .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_EOPC] = { .since = CI_STANDARD_NONE,
+                             .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_EQ] = { .since = CI_STANDARD_NONE,
                            .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_EQ_EQ] = { .since = CI_STANDARD_NONE,
                               .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_HASHTAG] = { .since = CI_STANDARD_NONE,
                                 .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_HASHTAG_HASHTAG] = { .since = CI_STANDARD_NONE,
+                                        .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_HAT] = { .since = CI_STANDARD_NONE,
                             .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_HAT_EQ] = { .since = CI_STANDARD_NONE,
@@ -640,6 +684,10 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                          .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD__DECIMAL128] = { .since = CI_STANDARD_23,
                                             .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD__DECIMAL32] = { .since = CI_STANDARD_23,
+                                           .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD__DECIMAL64] = { .since = CI_STANDARD_23,
+                                           .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD__GENERIC] = { .since = CI_STANDARD_11,
                                          .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD__IMAGINARY] = { .since = CI_STANDARD_99,
@@ -678,12 +726,18 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                                    .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_LITERAL_CONSTANT_STRING] = { .since = CI_STANDARD_NONE,
                                                 .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_MACRO_DEFINED] = { .since = CI_STANDARD_NONE,
+                                      .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_MACRO_PARAM] = { .since = CI_STANDARD_NONE,
+                                    .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_MINUS] = { .since = CI_STANDARD_NONE,
                               .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_MINUS_EQ] = { .since = CI_STANDARD_NONE,
                                  .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_MINUS_MINUS] = { .since = CI_STANDARD_NONE,
                                     .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_PAREN_CALL] = { .since = CI_STANDARD_NONE,
+                                   .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_PERCENTAGE] = { .since = CI_STANDARD_NONE,
                                    .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_PERCENTAGE_EQ] = { .since = CI_STANDARD_NONE,
@@ -746,6 +800,36 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                               .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_SLASH_EQ] = { .since = CI_STANDARD_NONE,
                                  .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO] = { .since = CI_STANDARD_NONE,
+                                                  .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__] = { .since =
+                                                             CI_STANDARD_NONE,
+                                                           .until =
+                                                             CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__] = { .since =
+                                                             CI_STANDARD_NONE,
+                                                           .until =
+                                                             CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__] = { .since =
+                                                             CI_STANDARD_NONE,
+                                                           .until =
+                                                             CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC__] = { .since =
+                                                             CI_STANDARD_NONE,
+                                                           .until =
+                                                             CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_VERSION__] = { .since =
+                                                                     CI_STANDARD_NONE,
+                                                                   .until =
+                                                                     CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_HOSTED__] = { .since =
+                                                                    CI_STANDARD_NONE,
+                                                                  .until =
+                                                                    CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__] = { .since =
+                                                             CI_STANDARD_NONE,
+                                                           .until =
+                                                             CI_STANDARD_NONE },
     [CI_TOKEN_KIND_STAR] = { .since = CI_STANDARD_NONE,
                              .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_STAR_EQ] = { .since = CI_STANDARD_NONE,
@@ -899,6 +983,31 @@ static const enum CITokenKind ci_attribute_ids[CI_N_ATTRIBUTE] = {
     CI_TOKEN_KIND_ATTRIBUTE_NODISCARD,    CI_TOKEN_KIND_ATTRIBUTE_NORETURN,
     CI_TOKEN_KIND_ATTRIBUTE_REPRODUCIBLE, CI_TOKEN_KIND_ATTRIBUTE_UNSEQUENCED,
 };
+
+// NOTE: This table must be sorted in ascending order.
+static const SizedStr
+  ci_standard_predefined_macros[CI_N_STANDARD_PREDEFINED_MACRO] = {
+      SIZED_STR_FROM_RAW("__DATE__"),
+      SIZED_STR_FROM_RAW("__FILE__"),
+      SIZED_STR_FROM_RAW("__LINE__"),
+      SIZED_STR_FROM_RAW("__STDC__"),
+      SIZED_STR_FROM_RAW("__STDC_HOSTED__"),
+      SIZED_STR_FROM_RAW("__STDC_VERSION__"),
+      SIZED_STR_FROM_RAW("__TIME__"),
+  };
+
+// NOTE: This array must have the same order as the
+// ci_standard_predefined_macros array.
+static const enum CITokenKind
+  ci_standard_predefined_macro_ids[CI_N_STANDARD_PREDEFINED_MACRO] = {
+      CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__,
+      CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__,
+      CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__,
+      CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC__,
+      CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_HOSTED__,
+      CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_VERSION__,
+      CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__,
+  };
 
 // NOTE: This table must be sorted in ascending order.
 static const SizedStr ci_preprocessors[CI_N_PREPROCESSOR] = {
@@ -1255,6 +1364,22 @@ get_attribute__CIScanner(const String *id)
 }
 
 enum CITokenKind
+get_standard_predefined_macro__CIScanner(const String *id)
+{
+    Int32 res =
+      get_keyword__Scanner(id,
+                           ci_standard_predefined_macros,
+                           (const Int32 *)ci_standard_predefined_macro_ids,
+                           CI_N_STANDARD_PREDEFINED_MACRO);
+
+    if (res == -1) {
+        return CI_TOKEN_KIND_IDENTIFIER;
+    }
+
+    return (enum CITokenKind)res;
+}
+
+enum CITokenKind
 get_preprocessor__CIScanner(const String *id)
 {
     Int32 res = get_keyword__Scanner(id,
@@ -1387,9 +1512,9 @@ can_run_keyword_part4__CIScanner(enum CITokenKind part3)
 // serious bug.
 //
 // Potential fix: To fix the bug, you'd probably have to use the
-// get_multi_part_keyword__CIScanner function, just after checking the standard
-// in the get_keyword_part*__CIScanner functions, if the keyword is not
-// available in this standard.
+// `scan_multi_part_keyword__CIScanner` function, just after checking the
+// standard in the `get_keyword_part*__CIScanner` functions, if the keyword is
+// not available in this standard.
 
 struct CITokenKindWithID
 get_keyword_part1__CIScanner(CIScanner *self,
@@ -1847,6 +1972,7 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, const CIScannerContext *ctx)
 
         switch (current->kind) {
             case CI_TOKEN_KIND_IDENTIFIER:
+                // Check whether identifier is macro parameter.
                 if (is_in_macro__CIScannerContext(ctx) && ctx->macro) {
                     // Determine whether the `current->id` does not correspond
                     // to a macro parameter.
@@ -1862,9 +1988,9 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, const CIScannerContext *ctx)
                             goto exit_identifier_case;
                         }
                     }
+                }
 
-                    goto create_token_identifier;
-                } else if (is_in_prepro_cond__CIScannerContext(ctx)) {
+                if (is_in_prepro_cond__CIScannerContext(ctx)) {
                     // e.g. #if defined(...)
                     if (!strcmp(current->id->buffer, "defined")) {
                         String *defined_identifier = NULL;
@@ -1914,13 +2040,31 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, const CIScannerContext *ctx)
 
                         goto exit_identifier_case;
                     }
-
-                    goto create_token_identifier;
-                } else {
-                create_token_identifier:
-                    current_token = NEW_VARIANT(
-                      CIToken, identifier, current->location, current->id);
                 }
+
+                // Check if it's a standard predefined macro
+                // https://gcc.gnu.org/onlinedocs/cpp/Standard-Predefined-Macros.html
+                {
+                    enum CITokenKind standard_predefined_macro =
+                      get_standard_predefined_macro__CIScanner(current->id);
+
+                    switch (standard_predefined_macro) {
+                        case CI_TOKEN_KIND_IDENTIFIER:
+                            break;
+                        // Standard predefined macro case
+                        default:
+                            current_token = NEW(CIToken,
+                                                standard_predefined_macro,
+                                                current->location);
+
+                            FREE(String, current->id);
+
+                            goto exit_identifier_case;
+                    }
+                }
+
+                current_token = NEW_VARIANT(
+                  CIToken, identifier, current->location, current->id);
 
             exit_identifier_case:
 
@@ -2586,6 +2730,72 @@ skip_backslash__CIScanner(CIScanner *self)
     }
 }
 
+#undef BACKSLASH_DIAGNOSTIC
+
+String *
+scan_macro_name__CIScanner(CIScanner *self,
+                           const CIScannerContext *ctx,
+                           const CIScannerContext *ctx_parent,
+                           enum CITokenKind preprocessor_ctx)
+{
+    ASSERT(preprocessor_ctx == CI_TOKEN_KIND_PREPROCESSOR_IFDEF ||
+           preprocessor_ctx == CI_TOKEN_KIND_PREPROCESSOR_DEFINE ||
+           preprocessor_ctx == CI_TOKEN_KIND_PREPROCESSOR_UNDEF);
+
+    skip_space_and_backslash__CIScanner(self);
+
+    String *name = NULL;
+    CIToken *token = get_token__CIScanner(self, ctx, ctx_parent);
+
+    if (token) {
+        switch (token->kind) {
+            case CI_TOKEN_KIND_IDENTIFIER:
+                name = token->identifier;
+                next_char__CIScanner(self);
+                lily_free(token);
+
+                break;
+            case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__:
+            case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__:
+            case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__:
+            case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC__:
+            case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_HOSTED__:
+            case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_VERSION__:
+            case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__:
+                if (self->is_builtin ||
+                    preprocessor_ctx == CI_TOKEN_KIND_PREPROCESSOR_IFDEF) {
+                    name = from__String(
+                      (char *)ci_standard_predefined_macros
+                        [token->kind -
+                         (CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO + 1)]
+                          .buffer);
+                    next_char__CIScanner(self);
+                    lily_free(token);
+                } else {
+                    FREE(CIToken, token);
+
+                    name = from__String("__error__");
+
+                    FAILED("not expected to undef or re-define standard "
+                           "predefined macro, outside of builtin file");
+                }
+
+                break;
+            default:
+                FREE(CIToken, token);
+
+                goto expected_identifier;
+        }
+    } else {
+    expected_identifier:
+        name = from__String("__error__");
+
+        FAILED("expected identifier");
+    }
+
+    return name;
+}
+
 Vec *
 scan_define_preprocessor_params__CIScanner(CIScanner *self)
 {
@@ -2720,11 +2930,12 @@ scan_define_preprocessor__CIScanner(CIScanner *self)
     skip_space_and_backslash__CIScanner(self);
 
     // Get macro name
-    if (is_start_ident__CIScanner(self)) {
-        name = scan_identifier__CIScanner(self);
-        next_char__CIScanner(self);
-    } else {
-        FAILED("expected name");
+    {
+        const CIScannerContext ctx =
+          NEW(CIScannerContext, CI_SCANNER_CONTEXT_LOCATION_NONE, NULL);
+
+        name = scan_macro_name__CIScanner(
+          self, &ctx, NULL, CI_TOKEN_KIND_PREPROCESSOR_DEFINE);
     }
 
     Vec *params = NULL; // Vec<String*>*?
@@ -2912,30 +3123,11 @@ scan_elifdef_preprocessor__CIScanner(CIScanner *self,
       clone__Location(&self->base.location);                                  \
     String *preprocessor_ifdef_identifier = NULL;                             \
                                                                               \
-    skip_space_and_backslash__CIScanner(self);                                \
-                                                                              \
     {                                                                         \
         CIScannerContext ctx =                                                \
           NEW_VARIANT(CIScannerContext, preprocessor_if, NULL);               \
-        CIToken *token = get_token__CIScanner(self, &ctx, ctx_parent);        \
-                                                                              \
-        if (token) {                                                          \
-            switch (token->kind) {                                            \
-                case CI_TOKEN_KIND_IDENTIFIER:                                \
-                    preprocessor_ifdef_identifier = token->identifier;        \
-                    next_char__CIScanner(self);                               \
-                    lily_free(token);                                         \
-                                                                              \
-                    break;                                                    \
-                default:                                                      \
-                    FREE(CIToken, token);                                     \
-                                                                              \
-                    goto expected_identifier;                                 \
-            }                                                                 \
-        } else {                                                              \
-        expected_identifier:                                                  \
-            FAILED("expected identifier");                                    \
-        }                                                                     \
+        preprocessor_ifdef_identifier = scan_macro_name__CIScanner(           \
+          self, &ctx, ctx_parent, CI_TOKEN_KIND_PREPROCESSOR_IFDEF);          \
     }                                                                         \
                                                                               \
     SCAN_IF_PREPROCESSOR_CONTENT(cond,                                        \
@@ -3265,32 +3457,12 @@ scan_undef_preprocessor__CIScanner(CIScanner *self)
       clone__Location(&self->base.location);
     String *preprocessor_undef_identifier = NULL;
 
-    skip_space_and_backslash__CIScanner(self);
-
     {
         CIScannerContext ctx =
           NEW(CIScannerContext, CI_SCANNER_CONTEXT_LOCATION_NONE, NULL);
-        CIToken *token = get_token__CIScanner(self, &ctx, NULL);
 
-        if (token) {
-            switch (token->kind) {
-                case CI_TOKEN_KIND_IDENTIFIER:
-                    preprocessor_undef_identifier = token->identifier;
-
-                    next_char__CIScanner(self);
-                    lily_free(token);
-
-                    break;
-                default:
-                    // Advance
-                    next_char_by_token__CIScanner(self, token);
-                    next_char__CIScanner(self);
-
-                    FREE(CIToken, token);
-
-                    FAILED("expected identifier");
-            }
-        }
+        preprocessor_undef_identifier = scan_macro_name__CIScanner(
+          self, &ctx, NULL, CI_TOKEN_KIND_PREPROCESSOR_UNDEF);
     }
 
     return NEW_VARIANT(CIToken,
@@ -3516,6 +3688,17 @@ get_num__CIScanner(CIScanner *self)
         }
 
         jump__CIScanner(self, flag_count);
+
+#undef SUFFIX_U
+#undef SUFFIX_L
+#undef SUFFIX_L2
+#undef SUFFIX_F
+#undef SUFFIX_D
+#undef SUFFIXES_ARRAY_LENGTH
+#undef ADD_SUFFIX
+#undef UPDATE_FLOAT_SUFFIX
+#undef UPDATE_INT_SUFFIX
+#undef CHECK_SUFFIX
 
         return res;
     }

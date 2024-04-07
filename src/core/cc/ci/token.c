@@ -1439,6 +1439,20 @@ to_string__CIToken(CIToken *self)
             return from__String("/");
         case CI_TOKEN_KIND_SLASH_EQ:
             return from__String("/=");
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__:
+            return from__String("__DATE__");
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__:
+            return from__String("__FILE__");
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__:
+            return from__String("__LINE__");
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC__:
+            return from__String("__STDC__");
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_VERSION__:
+            return from__String("__STDC_VERSION__");
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_HOSTED__:
+            return from__String("__STDC_HOSTED__");
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__:
+            return from__String("__TIME__");
         case CI_TOKEN_KIND_STAR:
             return from__String("*");
         case CI_TOKEN_KIND_STAR_EQ:
@@ -1841,6 +1855,20 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_SLASH";
         case CI_TOKEN_KIND_SLASH_EQ:
             return "CI_TOKEN_KIND_SLASH_EQ";
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__:
+            return "CI_TOKEN_KIND_PREDEFINED_MACRO___DATE__";
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__:
+            return "CI_TOKEN_KIND_PREDEFINED_MACRO___FILE__";
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__:
+            return "CI_TOKEN_KIND_PREDEFINED_MACRO___LINE__";
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC__:
+            return "CI_TOKEN_KIND_PREDEFINED_MACRO___STDC__";
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_VERSION__:
+            return "CI_TOKEN_KIND_PREDEFINED_MACRO___STDC_VERSION__";
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_HOSTED__:
+            return "CI_TOKEN_KIND_PREDEFINED_MACRO___STDC_HOSTED__";
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__:
+            return "CI_TOKEN_KIND_PREDEFINED_MACRO___TIME__";
         case CI_TOKEN_KIND_STAR:
             return "CI_TOKEN_KIND_STAR";
         case CI_TOKEN_KIND_STAR_EQ:
