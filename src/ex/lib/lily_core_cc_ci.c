@@ -26,6 +26,7 @@
 #define LILY_EX_LIB_LILY_CORE_CC_CI_C
 
 #include <core/cc/ci/ast.h>
+#include <core/cc/ci/config.h>
 #include <core/cc/ci/parser.h>
 #include <core/cc/ci/result.h>
 #include <core/cc/ci/scanner.h>
@@ -299,6 +300,24 @@ extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, switch, CIStmtSwitch switch_);
 
 extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, while, CIStmtWhile while_);
 
+// <core/cc/ci/config.h>
+extern inline CONSTRUCTOR(CICompiler,
+                          CICompiler,
+                          enum CICompilerKind kind,
+                          const char *path);
+
+extern inline DESTRUCTOR(CILibrary, CILibrary *self);
+
+extern inline DESTRUCTOR(CIBin, CIBin *self);
+
+extern inline CONSTRUCTOR(CIConfig,
+                          CIConfig,
+                          enum CIStandard standard,
+                          CICompiler compiler,
+                          const Vec *include_dirs,
+                          Vec *libraries,
+                          Vec *bins);
+
 // <core/cc/ci/parser.h>
 extern inline DESTRUCTOR(CIParserMacroCall, CIParserMacroCall *self);
 
@@ -327,6 +346,9 @@ extern inline CONSTRUCTOR(CIScanner,
                           Source source,
                           Usize *count_error,
                           enum CIStandard standard);
+
+extern inline void
+set_builtin__CIScanner(CIScanner *self);
 
 extern inline VARIANT_CONSTRUCTOR(CIScannerContext,
                                   CIScannerContext,
