@@ -209,13 +209,13 @@ parse_libraries__CIConfig(YAMLLoadRes *yaml_load_res)
     Vec *libraries = NEW(Vec);
 
     // libraries:
-    //   - <lib_name>:
+    //   <lib_name>:
     //     paths:
     //       - <path_1>
     //       - <path_2>
     //       - <path_3>
     //       - ...
-    //   - <lib_name>:
+    //   <lib_name>:
     //     paths:
     //       - <path_1>
     //       - <path_2>
@@ -233,6 +233,9 @@ parse_libraries__CIConfig(YAMLLoadRes *yaml_load_res)
 
         switch (GET_NODE_TYPE__YAML(libraries_value_node)) {
             case YAML_MAPPING_NODE: {
+                //   <lib_name>:
+                //     ...
+                //   ...
                 ITER_ON_MAPPING_NODE__YAML(
                   yaml_load_res,
                   FIRST_DOCUMENT,
@@ -246,8 +249,8 @@ parse_libraries__CIConfig(YAMLLoadRes *yaml_load_res)
                           case YAML_MAPPING_NODE: {
                               const char *expected_mapping_keys[] = { "paths" };
 
-							  // paths:
-							  //   ...
+                              // paths:
+                              //   ...
                               ITER_ON_MAPPING_NODE_WITH_EXPECTED_KEYS__YAML(
                                 yaml_load_res,
                                 FIRST_DOCUMENT,
@@ -260,10 +263,10 @@ parse_libraries__CIConfig(YAMLLoadRes *yaml_load_res)
 
                                         paths = NEW(Vec);
 
-										// paths:
-										//   - <path1>
-										//   - <path2>
-										//   ...
+                                        // paths:
+                                        //   - <path1>
+                                        //   - <path2>
+                                        //   ...
                                         switch (GET_NODE_TYPE__YAML(
                                           library_mapping_value_node)) {
                                             case YAML_SEQUENCE_NODE:
@@ -299,15 +302,15 @@ parse_libraries__CIConfig(YAMLLoadRes *yaml_load_res)
             }
             default:
             error:
-                FAILED("expected sequence node:\n"
+                FAILED("expected mapping node:\n"
                        "libraries:\n"
-                       "  - <lib_name>:\n"
+                       "  <lib_name>:\n"
                        "    paths:\n"
                        "      - <path_1>\n"
                        "      - <path_2>\n"
                        "      - <path_3>\n"
                        "      - ...\n"
-                       "  - <lib_name>:\n"
+                       "  <lib_name>:\n"
                        "    paths:\n"
                        "      - <path_1>\n"
                        "      - <path_2>\n"
@@ -323,6 +326,70 @@ Vec *
 parse_bins__CIConfig(YAMLLoadRes *yaml_load_res)
 {
     Vec *bins = NEW(Vec);
+
+    // bins:
+    //   <bin_name>:
+    //     path: <file_path>
+
+    Int32 bins_value_id =
+      GET_KEY_ON_DEFAULT_MAPPING__YAML(yaml_load_res, FIRST_DOCUMENT, "bins");
+
+    if (bins_value_id != -1) {
+        YAMLNode *bins_value_node =
+          get_node_from_id__YAML(yaml_load_res, FIRST_DOCUMENT, bins_value_id);
+
+        ASSERT(bins_value_node);
+
+        switch (GET_NODE_TYPE__YAML(bins_value_node)) {
+            case YAML_MAPPING_NODE:
+                //   <bin_name>:
+                //     ...
+                //   ...
+                ITER_ON_MAPPING_NODE__YAML(
+                  yaml_load_res, FIRST_DOCUMENT, bins_value_node, bin, {
+                      const char *name = bin_key;
+                      char *path = NULL;
+
+                      switch (GET_NODE_TYPE__YAML(bin_value_node)) {
+                          case YAML_MAPPING_NODE: {
+                              // path: <file_path>
+                              const char *expected_mapping_keys[] = { "path" };
+
+                              ITER_ON_MAPPING_NODE_WITH_EXPECTED_KEYS__YAML(
+                                yaml_load_res,
+                                FIRST_DOCUMENT,
+                                bin_value_node,
+                                bin_mapping,
+                                expected_mapping_keys,
+                                {
+                                    if (!strcmp(bin_mapping_key, "path")) {
+                                        ASSERT(!path);
+
+                                        path = bin_mapping_value;
+                                    } else {
+                                        UNREACHABLE("this key is not expected");
+                                    }
+                                });
+
+                              break;
+                          }
+                          default:
+                              goto error;
+                      }
+
+                      push__Vec(bins, NEW(CIBin, name, path));
+                  });
+
+                break;
+            default:
+            error:
+                FAILED("expected mapping node:\n"
+                       "bins:\n"
+                       "  <bin_name>:\n"
+                       "    path: <file_path>\n"
+                       "  ...");
+        }
+    }
 
     return bins;
 }
