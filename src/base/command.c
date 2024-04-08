@@ -24,6 +24,7 @@
 
 #define _GNU_SOURCE
 
+#include <base/assert.h>
 #include <base/command.h>
 #include <base/macros.h>
 #include <base/new.h>
@@ -44,25 +45,32 @@ String *
 save__Command(const char *cmd)
 {
 #ifdef LILY_WINDOWS_OS
-    FILE *f = _popen(cmd, "r");
+    FILE *file = _popen(cmd, "r");
 #else
-    FILE *f = popen(cmd, "r");
+    FILE *file = popen(cmd, "r");
 #endif
 
-    if (!f) {
+    if (!file) {
         FAILED("cannot run command");
     }
 
     String *output = NEW(String);
+#define TEMP_BUFFER_LEN 1024
+    char temp_buffer[TEMP_BUFFER_LEN];
+    Usize temp_buffer_bytes = 0;
 
-    for (char c = fgetc(f); c; c = fgetc(f)) {
-        push__String(output, c);
+    while ((temp_buffer_bytes =
+              fread(temp_buffer, 1, TEMP_BUFFER_LEN - 1, file)) > 0) {
+        temp_buffer[temp_buffer_bytes] = '\0';
+        push_str__String(output, temp_buffer);
     }
 
+    ASSERT(feof(file));
+
 #ifdef LILY_WINDOWS_OS
-    _pclose(f);
+    _pclose(file);
 #else
-    pclose(f);
+    pclose(file);
 #endif
 
     return output;
