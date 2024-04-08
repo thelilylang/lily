@@ -2805,8 +2805,6 @@ scan_define_preprocessor_params__CIScanner(CIScanner *self)
     next_char__CIScanner(self); // skip `(`
 
     while (self->base.source.cursor.current != ')') {
-        skip_space_and_backslash__CIScanner(self);
-
         CIToken *param = get_token__CIScanner(self, &ctx, NULL);
 
         if (param) {
@@ -2936,6 +2934,8 @@ scan_define_preprocessor__CIScanner(CIScanner *self)
 
         name = scan_macro_name__CIScanner(
           self, &ctx, NULL, CI_TOKEN_KIND_PREPROCESSOR_DEFINE);
+
+        previous_char__CIScanner(self);
     }
 
     Vec *params = NULL; // Vec<String*>*?
@@ -2943,6 +2943,8 @@ scan_define_preprocessor__CIScanner(CIScanner *self)
     switch (self->base.source.cursor.current) {
         case '(':
             params = scan_define_preprocessor_params__CIScanner(self);
+
+            break;
         default:
             break;
     }
@@ -3683,7 +3685,7 @@ get_num__CIScanner(CIScanner *self)
 
         // Count the number of flags.
         for (int s = suffixes, i = 0; s > 0 && i < SUFFIXES_ARRAY_LENGTH;
-             ++i, s &= ~suffixes_arr[i]) {
+             s &= ~suffixes_arr[i++]) {
             ++flag_count;
         }
 
