@@ -52,6 +52,8 @@ main(int argc, char **argv)
 
     CIResult result = NEW(CIResult);
 
+    load_builtin__CIResult(&result, &config);
+
     for (Usize i = 1; i < argc; ++i) {
         add_and_run__CIResult(&result, strdup(argv[i]), config.standard);
     }

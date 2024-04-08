@@ -30,6 +30,7 @@
 #include <base/ordered_hash_map.h>
 
 #include <core/cc/ci/ast.h>
+#include <core/cc/ci/builtin.h>
 #include <core/cc/ci/features.h>
 #include <core/cc/ci/parser.h>
 #include <core/cc/ci/scanner.h>
@@ -381,6 +382,7 @@ DESTRUCTOR(CIResultFile, CIResultFile *self);
 
 typedef struct CIResult
 {
+    CIResultFile *builtin;
     OrderedHashMap *headers; // OrderedHashMap<CIResultFile*>*
     OrderedHashMap *sources; // OrderedHashMap<CIResultFile*>*
 } CIResult;
@@ -392,6 +394,7 @@ typedef struct CIResult
 inline CONSTRUCTOR(CIResult, CIResult)
 {
     return (CIResult){
+        .builtin = NULL,
         .headers = NEW(OrderedHashMap),
         .sources = NEW(OrderedHashMap),
     };
@@ -450,6 +453,13 @@ has_source__CIResult(const CIResult *self, const String *filename_result)
 {
     return get__OrderedHashMap(self->sources, filename_result->buffer);
 }
+
+/**
+ *
+ * @brief Load builtin file.
+ */
+void
+load_builtin__CIResult(CIResult *self, const CIConfig *config);
 
 /**
  *

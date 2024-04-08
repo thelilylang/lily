@@ -271,6 +271,19 @@ add_variable__CIResultFile(const CIResultFile *self,
 
 #define GET_DECL_FROM_ID__CI_RESULT_FILE(vec, id) return get__Vec(vec, id);
 
+const CIResultFile *
+get_from_file_id__CIResult(const CIResult *self, const CIFileID *file_id)
+{
+    switch (file_id->kind) {
+        case CI_FILE_ID_KIND_HEADER:
+            return get_from_id__OrderedHashMap(self->headers, file_id->id);
+        case CI_FILE_ID_KIND_SOURCE:
+            return get_from_id__OrderedHashMap(self->sources, file_id->id);
+        default:
+            UNREACHABLE("expected header or source file");
+    }
+}
+
 CIDecl *
 get_enum_from_id__CIResultFile(const CIResultFile *self,
                                const CIEnumID *enum_id)
@@ -533,6 +546,29 @@ add_source__CIResult(const CIResult *self,
                      File file_input)
 {
     ADD_FILE__CI_RESULT(CI_FILE_ID_KIND_SOURCE);
+}
+
+void
+load_builtin__CIResult(CIResult *self, const CIConfig *config)
+{
+    String *builtin_content = generate_builtin__CIBuiltin(config);
+    File builtin_file = { .name = strdup("**<builtin.hci>**"),
+                          .content = builtin_content->buffer,
+                          .len = builtin_content->len };
+    CIResultFile *builtin = NEW(CIResultFile,
+                                self,
+                                0,
+                                CI_FILE_ID_KIND_HEADER,
+                                config->standard,
+                                from__String("**<builtin.h>**"),
+                                builtin_file);
+
+    set_builtin__CIScanner(&builtin->scanner);
+    run__CIResultFile(builtin);
+
+    self->builtin = builtin;
+
+    lily_free(builtin_content);
 }
 
 bool
