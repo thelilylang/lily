@@ -38,10 +38,10 @@ generate_builtin__CIBuiltin(const CIConfig *config)
 
     switch (config->compiler.kind) {
         case CI_COMPILER_KIND_CLANG:
-            builtin_h = save__Command("gcc -dM -E - < /dev/null");
+            builtin_h = save__Command("clang -dM -E - < /dev/null");
             break;
         case CI_COMPILER_KIND_GCC:
-            builtin_h = save__Command("clang -dM -E - < /dev/null");
+            builtin_h = save__Command("gcc -dM -E - < /dev/null");
             break;
         default:
             UNREACHABLE("unknown compiler");
