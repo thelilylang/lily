@@ -195,13 +195,13 @@ read_file__File(const char *path)
 
     __stat__(path, &st);
 
-    Usize size = st.st_size + 2;
+    Usize size = st.st_size + 1;
     char *content = lily_malloc(size);
 
     memset(content, 0, size);
     fread(content, size, 1, file);
 
-    content[size - 1] = '\n';
+    ASSERT(feof(file));
 
     fclose(file);
 
