@@ -70,10 +70,7 @@ CONSTRUCTOR(CILibrary *, CILibrary, const char *name, Vec *paths);
  *
  * @brief Free CILibrary type.
  */
-inline DESTRUCTOR(CILibrary, CILibrary *self)
-{
-    lily_free(self);
-}
+DESTRUCTOR(CILibrary, CILibrary *self);
 
 typedef struct CIBin
 {

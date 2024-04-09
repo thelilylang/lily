@@ -1936,7 +1936,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                                           &self->literal_constant_float));
         case CI_TOKEN_KIND_LITERAL_CONSTANT_OCTAL:
             return format("CIToken{{ kind = {s}, location = {sa}, "
-                          "literal_constant_octal = {S} }",
+                          "literal_constant_octal = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           CALL_DEBUG_IMPL(to_string,
@@ -1944,7 +1944,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                                           &self->literal_constant_octal));
         case CI_TOKEN_KIND_LITERAL_CONSTANT_HEX:
             return format("CIToken{{ kind = {s}, location = {sa}, "
-                          "literal_constant_hex = {S} }",
+                          "literal_constant_hex = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           CALL_DEBUG_IMPL(to_string,
@@ -1952,7 +1952,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                                           &self->literal_constant_hex));
         case CI_TOKEN_KIND_LITERAL_CONSTANT_BIN:
             return format("CIToken{{ kind = {s}, location = {sa}, "
-                          "literal_constant_bin = {S} }",
+                          "literal_constant_bin = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           CALL_DEBUG_IMPL(to_string,

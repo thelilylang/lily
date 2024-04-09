@@ -61,5 +61,7 @@ main(int argc, char **argv)
     run__CIGenerator(&result);
 
     FREE(CIResult, &result);
+    FREE(CIConfig, &config);
+
     destroy__CIInclude();
 }

@@ -404,6 +404,12 @@ CONSTRUCTOR(CILibrary *, CILibrary, const char *name, Vec *paths)
     return self;
 }
 
+DESTRUCTOR(CILibrary, CILibrary *self)
+{
+    FREE(Vec, self->paths);
+    lily_free(self);
+}
+
 CONSTRUCTOR(CIBin *, CIBin, const char *name, const char *path)
 {
     CIBin *self = lily_malloc(sizeof(CIBin));

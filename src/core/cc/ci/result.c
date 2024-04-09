@@ -627,6 +627,7 @@ add_and_run__CIResult(const CIResult *self,
 
 DESTRUCTOR(CIResult, const CIResult *self)
 {
+    FREE(CIResultFile, self->builtin);
     FREE_ORD_HASHMAP_VALUES(self->headers, CIResultFile);
     FREE(OrderedHashMap, self->headers);
     FREE_ORD_HASHMAP_VALUES(self->sources, CIResultFile);
