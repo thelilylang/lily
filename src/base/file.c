@@ -101,7 +101,7 @@ get_filename_with_extension__File(const char *path)
     if (path_filename) {
         ++path_filename;
     } else {
-        return NULL;
+        path_filename = path;
     }
 
     String *filename = NEW(String);
@@ -119,8 +119,10 @@ get_dir__File(const char *path)
     // Extract the directory (path)
     const char *path_dir = strrchr(path, DIR_SEPARATOR);
 
-    if (!path_dir) {
-        return NULL;
+    if (path_dir) {
+        ++path_dir;
+    } else {
+        path_dir = path;
     }
 
     String *dir = NEW(String);
