@@ -1691,7 +1691,13 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, const CIScannerContext *ctx)
                           CIToken, macro_param, last_token->location, i);
 
                         FREE(CIToken, last_token);
+
+                        break;
                     }
+                }
+
+                if (!res) {
+                    goto assign_res;
                 }
             } else if (is_in_prepro_cond__CIScannerContext(ctx)) {
                 // e.g. #if defined(...)
@@ -1739,8 +1745,11 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, const CIScannerContext *ctx)
                                       defined_identifier);
 
                     FREE(CIToken, last_token);
+                } else {
+                    goto assign_res;
                 }
             } else {
+            assign_res:
                 res = last_token;
             }
 
@@ -2477,6 +2486,8 @@ scan_define_preprocessor_params__CIScanner(CIScanner *self)
             default:
                 FAILED("expected `,` or `)`");
         }
+
+        skip_space_and_backslash__CIScanner(self);
     }
 
     next_char__CIScanner(self); // skip `)`
@@ -2661,9 +2672,11 @@ scan_elif_preprocessor__CIScanner(CIScanner *self,
                                                                             \
         skip_space__CIScanner(self);                                        \
                                                                             \
-        old_position = self->base.source.cursor.position;                   \
-        current_token =                                                     \
-          get_token__CIScanner(self, &ctx, ctx_parent ? ctx_parent : &ctx); \
+        if (!HAS_REACH_END(self)) {                                         \
+            old_position = self->base.source.cursor.position;               \
+            current_token = get_token__CIScanner(                           \
+              self, &ctx, ctx_parent ? ctx_parent : &ctx);                  \
+        }                                                                   \
     }                                                                       \
                                                                             \
     if (!current_token) {                                                   \
