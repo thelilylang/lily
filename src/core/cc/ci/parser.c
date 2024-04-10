@@ -2202,8 +2202,11 @@ check_if_resolved_expr_is_true__CIParser(CIParser *self, CIExpr *expr)
           &self->tokens_iters,                                               \
           NEW(CITokensIter, preprocessor->preprocessor_##k.content));        \
                                                                              \
-        if (check_if_resolved_expr_is_true__CIParser(self, resolved_cond)) { \
+        if (content_is_add) {                                                \
             init_next_token__CIParser(self, false);                          \
+        }                                                                    \
+                                                                             \
+        if (check_if_resolved_expr_is_true__CIParser(self, resolved_cond)) { \
             FREE(CIExpr, resolved_cond);                                     \
                                                                              \
             return self->tokens_iters.current_token;                         \
@@ -3995,6 +3998,14 @@ parse_primary_expr__CIParser(CIParser *self)
             return NEW_VARIANT(
               CIExpr, literal, NEW_VARIANT(CIExprLiteral, bool, false));
         }
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__:
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__:
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__:
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC__:
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_VERSION__:
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_HOSTED__:
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__:
+            TODO("predefined macro");
         default:
             FAILED("unexpected token");
     }
