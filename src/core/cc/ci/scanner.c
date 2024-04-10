@@ -1696,10 +1696,12 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, const CIScannerContext *ctx)
                     }
                 }
 
-                if (!res) {
-                    goto assign_res;
+                if (res) {
+                    goto exit;
                 }
-            } else if (is_in_prepro_cond__CIScannerContext(ctx)) {
+            }
+
+            if (is_in_prepro_cond__CIScannerContext(ctx)) {
                 // e.g. #if defined(...)
                 if (!strcmp(last_token->identifier->buffer, "defined")) {
                     String *defined_identifier = NULL;
@@ -1745,14 +1747,35 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, const CIScannerContext *ctx)
                                       defined_identifier);
 
                     FREE(CIToken, last_token);
-                } else {
-                    goto assign_res;
+
+                    goto exit;
                 }
-            } else {
-            assign_res:
-                res = last_token;
             }
 
+            // Check if it's a standard predefined macro
+            // https://gcc.gnu.org/onlinedocs/cpp/Standard-Predefined-Macros.html
+            {
+                enum CITokenKind standard_predefined_macro =
+                  get_standard_predefined_macro__CIScanner(
+                    last_token->identifier);
+
+                switch (standard_predefined_macro) {
+                    case CI_TOKEN_KIND_IDENTIFIER:
+                        break;
+                    // Standard predefined macro case
+                    default:
+                        res = NEW(CIToken,
+                                  standard_predefined_macro,
+                                  last_token->location);
+
+                        FREE(CIToken, last_token);
+
+                        goto exit;
+                }
+            }
+
+            res = last_token;
+        exit:
             break;
         default:
             res = last_token;
@@ -3343,7 +3366,7 @@ get_num__CIScanner(CIScanner *self)
             ++flag_count;
         }
 
-        jump__CIScanner(self, flag_count);
+        jump__CIScanner(self, flag_count > 0 ? flag_count - 1 : 0);
 
 #undef SUFFIX_U
 #undef SUFFIX_L
