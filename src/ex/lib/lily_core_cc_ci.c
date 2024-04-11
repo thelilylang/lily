@@ -322,7 +322,8 @@ extern inline CONSTRUCTOR(CIConfig,
 extern inline DESTRUCTOR(CIParserMacroCall, CIParserMacroCall *self);
 
 // <core/cc/ci/result.h>
-extern inline DESTRUCTOR(CIResultDefine, CIResultDefine *self);
+extern inline CIResultDefine *
+ref__CIResultDefine(CIResultDefine *self);
 
 extern inline void
 increment_repeat_count__CIResultInclude(CIResultInclude *self);

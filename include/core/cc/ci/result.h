@@ -47,6 +47,7 @@ typedef struct CIResultDefine
 {
     const CITokenPreprocessorDefine
       *define; // const CITokenPreprocessorDefine* (&)
+    Usize ref_count;
 } CIResultDefine;
 
 /**
@@ -59,12 +60,22 @@ CONSTRUCTOR(CIResultDefine *,
 
 /**
  *
+ * @brief Pass to ref a pointer of `CIResultDefine` and increment
+ * the `ref_count`.
+ * @return CIResultDefine* (&)
+ */
+inline CIResultDefine *
+ref__CIResultDefine(CIResultDefine *self)
+{
+    ++self->ref_count;
+    return self;
+}
+
+/**
+ *
  * @brief Free CIResultDefine type.
  */
-inline DESTRUCTOR(CIResultDefine, CIResultDefine *self)
-{
-    lily_free(self);
-}
+DESTRUCTOR(CIResultDefine, CIResultDefine *self);
 
 enum CIResultIncludeKind
 {
@@ -134,6 +145,9 @@ typedef struct CIResultFile
 /**
  *
  * @brief Construct CIResultFile type.
+ * @param builtin If the builtin parameter is NULL, this means that the
+ * CIResultFile type is a builtin.
+ * @param builtin CIResultFile*? (&)
  */
 CONSTRUCTOR(CIResultFile *,
             CIResultFile,
@@ -142,7 +156,8 @@ CONSTRUCTOR(CIResultFile *,
             bool kind,
             enum CIStandard standard,
             String *filename_result,
-            File file_input);
+            File file_input,
+            const CIResultFile *builtin);
 
 /**
  *
@@ -183,6 +198,14 @@ get_define__CIResultFile(const CIResultFile *self, String *name);
 
 /**
  *
+ * @brief Search define from str.
+ * @return const CIResultDefine*?
+ */
+const CIResultDefine *
+get_define_from_str__CIResultFile(const CIResultFile *self, char *name);
+
+/**
+ *
  * @brief Undef define.
  * @example #undef <name>
  */
@@ -191,7 +214,15 @@ undef_define__CIResultFile(const CIResultFile *self, String *name);
 
 /**
  *
- * @brief Add include preprocessor to `includes` map.
+ * @brief Include builtin to file.
+ */
+void
+include_builtin__CIResultFile(const CIResultFile *self,
+                              const CIResultFile *builtin);
+
+/**
+ *
+ * @brief Add include preprocessor to `includes` map and apply it.
  */
 void
 add_include__CIResultFile(const CIResultFile *self);
