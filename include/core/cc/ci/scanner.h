@@ -37,6 +37,10 @@ typedef struct CIScanner
     Vec *tokens; // Vec<CIToken*>*
     Scanner base;
     enum CIStandard standard;
+    /// A field indicating whether or not the file being scanned is builtin.
+    /// This makes it possible to define standard macros such as `__STDC__`,
+    /// `__STDC_HOSTED__`, `__STDC_VERSION__`, without error.
+    bool is_builtin;
 } CIScanner;
 
 /**
@@ -51,7 +55,18 @@ inline CONSTRUCTOR(CIScanner,
 {
     return (CIScanner){ .tokens = NEW(Vec),
                         .base = NEW(Scanner, source, count_error),
-                        .standard = standard };
+                        .standard = standard,
+                        .is_builtin = false };
+}
+
+/**
+ *
+ * @brief Set the `is_builtin` field to true.
+ */
+inline void
+set_builtin__CIScanner(CIScanner *self)
+{
+    self->is_builtin = true;
 }
 
 /**

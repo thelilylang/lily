@@ -22,46 +22,19 @@
  * SOFTWARE.
  */
 
-#include <base/assert.h>
-#include <base/dir.h>
-#include <base/yaml.h>
+#ifndef LILY_CORE_CC_CI_BUILTIN_H
+#define LILY_CORE_CC_CI_BUILTIN_H
+
+#include <base/string.h>
 
 #include <core/cc/ci/config.h>
-#include <core/cc/ci/generator.h>
-#include <core/cc/ci/include.h>
-#include <core/cc/ci/parser.h>
-#include <core/cc/ci/result.h>
-#include <core/cc/ci/scanner.h>
 
-#include <stdio.h>
+/**
+ *
+ * @brief Generate builtin file.
+ * @link https://github.com/cpredef/predef
+ */
+String *
+generate_builtin__CIBuiltin(const CIConfig *config);
 
-#define CI_CONFIG "CI.yaml"
-
-int
-main(int argc, char **argv)
-{
-    // TODO: implement a real CLI, like in bin/lily/main.c, bin/lilyc/main.c
-
-    CIConfig config = parse__CIConfig();
-
-    // TODO: Get the files from YAML config
-    if (argc < 2) {
-        printf("ci [ci_files...]\n");
-        exit(1);
-    }
-
-    CIResult result = NEW(CIResult);
-
-    load_builtin__CIResult(&result, &config);
-
-    for (Usize i = 1; i < argc; ++i) {
-        add_and_run__CIResult(&result, strdup(argv[i]), config.standard);
-    }
-
-    run__CIGenerator(&result);
-
-    FREE(CIResult, &result);
-    FREE(CIConfig, &config);
-
-    destroy__CIInclude();
-}
+#endif // LILY_CORE_CC_CI_BUILTIN_H

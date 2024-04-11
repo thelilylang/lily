@@ -80,7 +80,7 @@ get_filename__File(const char *path)
     if (path_filename) {
         ++path_filename;
     } else {
-        return NULL;
+        path_filename = path;
     }
 
     String *filename = NEW(String);
@@ -101,7 +101,7 @@ get_filename_with_extension__File(const char *path)
     if (path_filename) {
         ++path_filename;
     } else {
-        return NULL;
+        path_filename = path;
     }
 
     String *filename = NEW(String);
@@ -119,8 +119,10 @@ get_dir__File(const char *path)
     // Extract the directory (path)
     const char *path_dir = strrchr(path, DIR_SEPARATOR);
 
-    if (!path_dir) {
-        return NULL;
+    if (path_dir) {
+        ++path_dir;
+    } else {
+        path_dir = path;
     }
 
     String *dir = NEW(String);
@@ -195,13 +197,13 @@ read_file__File(const char *path)
 
     __stat__(path, &st);
 
-    Usize size = st.st_size + 2;
+    Usize size = st.st_size + 1;
     char *content = lily_malloc(size);
 
     memset(content, 0, size);
     fread(content, size, 1, file);
 
-    content[size - 1] = '\n';
+    ASSERT(feof(file));
 
     fclose(file);
 

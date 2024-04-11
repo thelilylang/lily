@@ -22,46 +22,30 @@
  * SOFTWARE.
  */
 
-#include <base/assert.h>
-#include <base/dir.h>
-#include <base/yaml.h>
+#include <base/alloc.h>
+#include <base/command.h>
+#include <base/format.h>
+#include <base/new.h>
 
-#include <core/cc/ci/config.h>
-#include <core/cc/ci/generator.h>
-#include <core/cc/ci/include.h>
-#include <core/cc/ci/parser.h>
-#include <core/cc/ci/result.h>
-#include <core/cc/ci/scanner.h>
+#include <core/cc/ci/builtin.h>
 
 #include <stdio.h>
 
-#define CI_CONFIG "CI.yaml"
-
-int
-main(int argc, char **argv)
+String *
+generate_builtin__CIBuiltin(const CIConfig *config)
 {
-    // TODO: implement a real CLI, like in bin/lily/main.c, bin/lilyc/main.c
+    String *builtin_h = NULL;
 
-    CIConfig config = parse__CIConfig();
-
-    // TODO: Get the files from YAML config
-    if (argc < 2) {
-        printf("ci [ci_files...]\n");
-        exit(1);
+    switch (config->compiler.kind) {
+        case CI_COMPILER_KIND_CLANG:
+            builtin_h = save__Command("clang -dM -E - < /dev/null");
+            break;
+        case CI_COMPILER_KIND_GCC:
+            builtin_h = save__Command("gcc -dM -E - < /dev/null");
+            break;
+        default:
+            UNREACHABLE("unknown compiler");
     }
 
-    CIResult result = NEW(CIResult);
-
-    load_builtin__CIResult(&result, &config);
-
-    for (Usize i = 1; i < argc; ++i) {
-        add_and_run__CIResult(&result, strdup(argv[i]), config.standard);
-    }
-
-    run__CIGenerator(&result);
-
-    FREE(CIResult, &result);
-    FREE(CIConfig, &config);
-
-    destroy__CIInclude();
+    return builtin_h;
 }

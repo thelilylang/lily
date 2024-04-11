@@ -38,8 +38,19 @@ CONSTRUCTOR(CIResultDefine *,
     CIResultDefine *self = lily_malloc(sizeof(CIResultDefine));
 
     self->define = define;
+    self->ref_count = 0;
 
     return self;
+}
+
+DESTRUCTOR(CIResultDefine, CIResultDefine *self)
+{
+    if (self->ref_count > 0) {
+        --self->ref_count;
+        return;
+    }
+
+    lily_free(self);
 }
 
 CONSTRUCTOR(CIResultInclude *,
@@ -63,7 +74,8 @@ CONSTRUCTOR(CIResultFile *,
             bool kind,
             enum CIStandard standard,
             String *filename_result,
-            File file_input)
+            File file_input,
+            const CIResultFile *builtin)
 {
     CIResultFile *self = lily_malloc(sizeof(CIResultFile));
 
@@ -89,6 +101,10 @@ CONSTRUCTOR(CIResultFile *,
           &self->count_error,
           standard);
     self->parser = NEW(CIParser, self, &self->scanner);
+
+    if (builtin) {
+        include_builtin__CIResultFile(self, builtin);
+    }
 
     return self;
 }
@@ -120,15 +136,42 @@ get_define__CIResultFile(const CIResultFile *self, String *name)
     return get__HashMap(self->defines, name->buffer);
 }
 
+const CIResultDefine *
+get_define_from_str__CIResultFile(const CIResultFile *self, char *name)
+{
+    return get__HashMap(self->defines, name);
+}
+
 bool
 undef_define__CIResultFile(const CIResultFile *self, String *name)
 {
     CIResultDefine *is_exist = remove__HashMap(self->defines, name->buffer);
-    bool res = is_exist;
 
-    FREE(CIResultDefine, is_exist);
+    if (is_exist) {
+        FREE(CIResultDefine, is_exist);
 
-    return res;
+        return true;
+    }
+
+    return false;
+}
+
+void
+include_builtin__CIResultFile(const CIResultFile *self,
+                              const CIResultFile *builtin)
+{
+    HashMapIter iter = NEW(HashMapIter, builtin->defines);
+    CIResultDefine *def = NULL;
+
+    while ((def = next__HashMapIter(&iter))) {
+        insert__HashMap(
+          self->defines, def->define->name->buffer, ref__CIResultDefine(def));
+    }
+}
+
+void
+add_include__CIResultFile(const CIResultFile *self)
+{
 }
 
 const CIDecl *
@@ -270,6 +313,19 @@ add_variable__CIResultFile(const CIResultFile *self,
 }
 
 #define GET_DECL_FROM_ID__CI_RESULT_FILE(vec, id) return get__Vec(vec, id);
+
+const CIResultFile *
+get_from_file_id__CIResult(const CIResult *self, const CIFileID *file_id)
+{
+    switch (file_id->kind) {
+        case CI_FILE_ID_KIND_HEADER:
+            return get_from_id__OrderedHashMap(self->headers, file_id->id);
+        case CI_FILE_ID_KIND_SOURCE:
+            return get_from_id__OrderedHashMap(self->sources, file_id->id);
+        default:
+            UNREACHABLE("expected header or source file");
+    }
+}
 
 CIDecl *
 get_enum_from_id__CIResultFile(const CIResultFile *self,
@@ -508,7 +564,8 @@ search_enum_from_id__CIResult(const CIResult *self, const CIEnumID *enum_id)
                                     kind,                         \
                                     standard,                     \
                                     filename_result,              \
-                                    file_input);                  \
+                                    file_input,                   \
+                                    self->builtin);               \
                                                                   \
     if (insert__OrderedHashMap(                                   \
           self->headers, filename_result->buffer, result_file)) { \
@@ -533,6 +590,30 @@ add_source__CIResult(const CIResult *self,
                      File file_input)
 {
     ADD_FILE__CI_RESULT(CI_FILE_ID_KIND_SOURCE);
+}
+
+void
+load_builtin__CIResult(CIResult *self, const CIConfig *config)
+{
+    String *builtin_content = generate_builtin__CIBuiltin(config);
+    File builtin_file = { .name = strdup("**<builtin.hci>**"),
+                          .content = builtin_content->buffer,
+                          .len = builtin_content->len };
+    CIResultFile *builtin = NEW(CIResultFile,
+                                self,
+                                0,
+                                CI_FILE_ID_KIND_HEADER,
+                                config->standard,
+                                from__String("**<builtin.h>**"),
+                                builtin_file,
+                                NULL);
+
+    set_builtin__CIScanner(&builtin->scanner);
+    run__CIResultFile(builtin);
+
+    self->builtin = builtin;
+
+    lily_free(builtin_content);
 }
 
 bool
@@ -591,6 +672,7 @@ add_and_run__CIResult(const CIResult *self,
 
 DESTRUCTOR(CIResult, const CIResult *self)
 {
+    FREE(CIResultFile, self->builtin);
     FREE_ORD_HASHMAP_VALUES(self->headers, CIResultFile);
     FREE(OrderedHashMap, self->headers);
     FREE_ORD_HASHMAP_VALUES(self->sources, CIResultFile);

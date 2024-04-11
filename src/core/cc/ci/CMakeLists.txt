@@ -13,6 +13,8 @@ target_include_directories(lily_core_cc_ci_diagnostic PRIVATE ${LILY_INCLUDE})
 
 set(CI_SRC
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/ast.c
+    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/builtin.c
+    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/config.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/file.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/generator.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/include.c

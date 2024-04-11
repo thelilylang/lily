@@ -34,14 +34,39 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
-struct CITokenKindWithID
+enum CIKeywordMultiPart
 {
-    String *id; // String*
-    Location location;
-    bool is_merged;
-    enum CITokenKind kind;
+    CI_KEYWORD_MULTI_PART_CHAR = 1 << 0,
+    CI_KEYWORD_MULTI_PART_DOUBLE = 1 << 1,
+    CI_KEYWORD_MULTI_PART_FLOAT = 1 << 2,
+    CI_KEYWORD_MULTI_PART_INT = 1 << 3,
+    CI_KEYWORD_MULTI_PART_LONG = 1 << 4,
+    CI_KEYWORD_MULTI_PART_LONG_LONG = 1 << 5,
+    CI_KEYWORD_MULTI_PART_SHORT = 1 << 6,
+    CI_KEYWORD_MULTI_PART_SIGNED = 1 << 7,
+    CI_KEYWORD_MULTI_PART_UNSIGNED = 1 << 8,
+    CI_KEYWORD_MULTI_PART__COMPLEX = 1 << 9,
+    CI_KEYWORD_MULTI_PART__IMAGINARY = 1 << 10,
 };
+
+/// @brief Check if the token kind is multi part keyword.
+static bool
+is_multi_part_keyword_from_token_kind__CIKeywordMultiPart(
+  enum CITokenKind kind);
+
+static enum CIKeywordMultiPart
+convert_token_kind_to_multi_part_keyword__CIKeywordMultiPart(
+  enum CITokenKind kind);
+
+/// @brief Add flag to multi part keyword.
+static void
+add_flag__CIKeywordMultiPart(Uint32 *flags, enum CIKeywordMultiPart flag);
+
+/// @brief Convert multi part keyword to token kind.
+static enum CITokenKind
+convert_multi_part_keyword_to_token_kind__CIKeywordMultiPart(Uint32 flags);
 
 /// @brief Move next one character.
 /// @see `include/core/shared/scanner.h`
@@ -73,11 +98,6 @@ skip_space__CIScanner(CIScanner *self);
 /// @see `include/core/shared/scanner.h`
 static inline void
 skip_space_except_new_line__CIScanner(CIScanner *self);
-
-/// @brief Skip a blank space. If the current character is not an empty space,
-/// we won't do anything.
-static void
-skip_one_blank_space__CIScanner(CIScanner *self);
 
 /// @brief Next char n times.
 /// @see `include/core/shared/scanner.h`
@@ -184,6 +204,10 @@ next_char_by_token__CIScanner(CIScanner *self, const CIToken *token);
 static enum CITokenKind
 get_attribute__CIScanner(const String *id);
 
+/// @brief Get standard predefined macro from id.
+static enum CITokenKind
+get_standard_predefined_macro__CIScanner(const String *id);
+
 /// @brief Get preprocessor from id.
 static enum CITokenKind
 get_preprocessor__CIScanner(const String *id);
@@ -191,46 +215,6 @@ get_preprocessor__CIScanner(const String *id);
 /// @brief Get single keyword from id.
 static enum CITokenKind
 get_single_keyword__CIScanner(const String *id);
-
-/// @example long => long int, long int => long int, signed long => long int
-static enum CITokenKind
-standarize_keyword__CIScanner(enum CITokenKind kind);
-
-/// @brief Check whether we can execute the keyword part 1.
-static inline bool can_run_keyword_part1__CIScanner(enum CITokenKind);
-
-/// @brief Check whether we can execute the keyword part 2.
-static inline bool
-can_run_keyword_part2__CIScanner(enum CITokenKind part1);
-
-/// @brief Check whether we can execute the keyword part 3.
-static inline bool
-can_run_keyword_part3__CIScanner(enum CITokenKind part2);
-
-/// @brief Check whether we can execute the keyword part 4.
-static inline bool
-can_run_keyword_part4__CIScanner(enum CITokenKind part3);
-
-/// @brief Get keyword in on part.
-/// @example int, long, ...
-static struct CITokenKindWithID
-get_keyword_part1__CIScanner(CIScanner *self,
-                             [[maybe_unused]] struct CITokenKindWithID *);
-
-/// @brief Get keyword in two parts.
-/// @example long long, signed short, ...
-static struct CITokenKindWithID
-get_keyword_part2__CIScanner(CIScanner *self, struct CITokenKindWithID *part1);
-
-/// @brief Get keyword in three parts.
-/// @example unsigned long long, long long int, ...
-static struct CITokenKindWithID
-get_keyword_part3__CIScanner(CIScanner *self, struct CITokenKindWithID *part2);
-
-/// @brief Get keyword in four parts.
-/// @example unsigned long long int, ...
-static struct CITokenKindWithID
-get_keyword_part4__CIScanner(CIScanner *self, struct CITokenKindWithID *part3);
 
 /// @brief Scan multi-part keyword.
 /// @example long int, long long, unsigned long long, ...
@@ -262,6 +246,11 @@ get_character__CIScanner(CIScanner *self, char previous);
 /// @brief Scan identifier.
 static String *
 scan_identifier__CIScanner(CIScanner *self);
+
+/// @brief Check if identifier is standard defined macro.
+static inline bool
+identifier_is_standard_predefined_macro__CIScanner(CIScanner *self,
+                                                   const String *name);
 
 /// @brief Scan identifier with peek_char function (without use
 /// next_char__CIScanner).
@@ -302,6 +291,42 @@ skip_space_and_backslash__CIScanner(CIScanner *self);
 /// @brief Skip backslash.
 static void
 skip_backslash__CIScanner(CIScanner *self);
+
+/// @brief Scan macro name of #ifdef, #ifndef, #elifdef, #elifndef, #define or
+/// #undef preprocessor.
+/// @example
+///
+/// #ifdef <macro_name>
+/// ...
+/// #endif
+///
+/// #ifndef <macro_name>
+/// ...
+/// #endif
+///
+/// #elifdef <macro_name>
+/// ...
+/// #endif
+///
+/// #elifndef <macro_name>
+/// ...
+/// #endif
+///
+/// #define <macro_name>(...) ...
+///
+/// #undef <macro_name>
+///
+/// @note If there is an error, we give the macro name an arbitrary value.
+/// @param ctx_parent const CIScannerContext*?
+/// @param preprocessor_ctx CI_TOKEN_KIND_PREPROCESSOR_IFDEF (same value for
+/// #ifndef, #elifdef or #elifndef preprocessor case) |
+/// CI_TOKEN_KIND_PREPROCESSOR_DEFINE | CI_TOKEN_KIND_PREPROCESSOR_UNDEF
+/// @return String*
+static String *
+scan_macro_name__CIScanner(CIScanner *self,
+                           const CIScannerContext *ctx,
+                           const CIScannerContext *ctx_parent,
+                           enum CITokenKind preprocessor_ctx);
 
 /// @brief Scan defined preprcoessor params.
 /// @return Vec<String*>*
@@ -455,12 +480,16 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                     .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_EOF] = { .since = CI_STANDARD_NONE,
                             .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_EOPC] = { .since = CI_STANDARD_NONE,
+                             .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_EQ] = { .since = CI_STANDARD_NONE,
                            .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_EQ_EQ] = { .since = CI_STANDARD_NONE,
                               .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_HASHTAG] = { .since = CI_STANDARD_NONE,
                                 .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_HASHTAG_HASHTAG] = { .since = CI_STANDARD_NONE,
+                                        .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_HAT] = { .since = CI_STANDARD_NONE,
                             .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_HAT_EQ] = { .since = CI_STANDARD_NONE,
@@ -640,6 +669,10 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                          .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD__DECIMAL128] = { .since = CI_STANDARD_23,
                                             .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD__DECIMAL32] = { .since = CI_STANDARD_23,
+                                           .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD__DECIMAL64] = { .since = CI_STANDARD_23,
+                                           .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD__GENERIC] = { .since = CI_STANDARD_11,
                                          .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD__IMAGINARY] = { .since = CI_STANDARD_99,
@@ -678,12 +711,18 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                                    .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_LITERAL_CONSTANT_STRING] = { .since = CI_STANDARD_NONE,
                                                 .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_MACRO_DEFINED] = { .since = CI_STANDARD_NONE,
+                                      .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_MACRO_PARAM] = { .since = CI_STANDARD_NONE,
+                                    .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_MINUS] = { .since = CI_STANDARD_NONE,
                               .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_MINUS_EQ] = { .since = CI_STANDARD_NONE,
                                  .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_MINUS_MINUS] = { .since = CI_STANDARD_NONE,
                                     .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_PAREN_CALL] = { .since = CI_STANDARD_NONE,
+                                   .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_PERCENTAGE] = { .since = CI_STANDARD_NONE,
                                    .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_PERCENTAGE_EQ] = { .since = CI_STANDARD_NONE,
@@ -746,6 +785,36 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                               .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_SLASH_EQ] = { .since = CI_STANDARD_NONE,
                                  .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO] = { .since = CI_STANDARD_NONE,
+                                                  .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__] = { .since =
+                                                             CI_STANDARD_NONE,
+                                                           .until =
+                                                             CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__] = { .since =
+                                                             CI_STANDARD_NONE,
+                                                           .until =
+                                                             CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__] = { .since =
+                                                             CI_STANDARD_NONE,
+                                                           .until =
+                                                             CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC__] = { .since =
+                                                             CI_STANDARD_NONE,
+                                                           .until =
+                                                             CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_VERSION__] = { .since =
+                                                                     CI_STANDARD_NONE,
+                                                                   .until =
+                                                                     CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_HOSTED__] = { .since =
+                                                                    CI_STANDARD_NONE,
+                                                                  .until =
+                                                                    CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__] = { .since =
+                                                             CI_STANDARD_NONE,
+                                                           .until =
+                                                             CI_STANDARD_NONE },
     [CI_TOKEN_KIND_STAR] = { .since = CI_STANDARD_NONE,
                              .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_STAR_EQ] = { .since = CI_STANDARD_NONE,
@@ -901,6 +970,31 @@ static const enum CITokenKind ci_attribute_ids[CI_N_ATTRIBUTE] = {
 };
 
 // NOTE: This table must be sorted in ascending order.
+static const SizedStr
+  ci_standard_predefined_macros[CI_N_STANDARD_PREDEFINED_MACRO] = {
+      SIZED_STR_FROM_RAW("__DATE__"),
+      SIZED_STR_FROM_RAW("__FILE__"),
+      SIZED_STR_FROM_RAW("__LINE__"),
+      SIZED_STR_FROM_RAW("__STDC__"),
+      SIZED_STR_FROM_RAW("__STDC_HOSTED__"),
+      SIZED_STR_FROM_RAW("__STDC_VERSION__"),
+      SIZED_STR_FROM_RAW("__TIME__"),
+  };
+
+// NOTE: This array must have the same order as the
+// ci_standard_predefined_macros array.
+static const enum CITokenKind
+  ci_standard_predefined_macro_ids[CI_N_STANDARD_PREDEFINED_MACRO] = {
+      CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__,
+      CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__,
+      CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__,
+      CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC__,
+      CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_HOSTED__,
+      CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_VERSION__,
+      CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__,
+  };
+
+// NOTE: This table must be sorted in ascending order.
 static const SizedStr ci_preprocessors[CI_N_PREPROCESSOR] = {
     SIZED_STR_FROM_RAW("define"),  SIZED_STR_FROM_RAW("elif"),
     SIZED_STR_FROM_RAW("elifdef"), SIZED_STR_FROM_RAW("elifndef"),
@@ -1000,6 +1094,164 @@ static const enum CITokenKind ci_preprocessor_ids[CI_N_PREPROCESSOR] = {
         block;                             \
     }
 
+bool
+is_multi_part_keyword_from_token_kind__CIKeywordMultiPart(enum CITokenKind kind)
+{
+    switch (kind) {
+        case CI_TOKEN_KIND_KEYWORD_CHAR:
+        case CI_TOKEN_KIND_KEYWORD_DOUBLE:
+        case CI_TOKEN_KIND_KEYWORD_FLOAT:
+        case CI_TOKEN_KIND_KEYWORD_INT:
+        case CI_TOKEN_KIND_KEYWORD_LONG:
+        case CI_TOKEN_KIND_KEYWORD_LONG_LONG:
+        case CI_TOKEN_KIND_KEYWORD_SHORT:
+        case CI_TOKEN_KIND_KEYWORD_SIGNED:
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED:
+        case CI_TOKEN_KIND_KEYWORD__COMPLEX:
+        case CI_TOKEN_KIND_KEYWORD__IMAGINARY:
+            return true;
+        default:
+            return false;
+    }
+}
+
+enum CIKeywordMultiPart
+convert_token_kind_to_multi_part_keyword__CIKeywordMultiPart(
+  enum CITokenKind kind)
+{
+    switch (kind) {
+        case CI_TOKEN_KIND_KEYWORD_CHAR:
+            return CI_KEYWORD_MULTI_PART_CHAR;
+        case CI_TOKEN_KIND_KEYWORD_DOUBLE:
+            return CI_KEYWORD_MULTI_PART_DOUBLE;
+        case CI_TOKEN_KIND_KEYWORD_FLOAT:
+            return CI_KEYWORD_MULTI_PART_FLOAT;
+        case CI_TOKEN_KIND_KEYWORD_INT:
+            return CI_KEYWORD_MULTI_PART_INT;
+        case CI_TOKEN_KIND_KEYWORD_LONG:
+            return CI_KEYWORD_MULTI_PART_LONG;
+        case CI_TOKEN_KIND_KEYWORD_LONG_LONG:
+            return CI_KEYWORD_MULTI_PART_LONG_LONG;
+        case CI_TOKEN_KIND_KEYWORD_SHORT:
+            return CI_KEYWORD_MULTI_PART_SHORT;
+        case CI_TOKEN_KIND_KEYWORD_SIGNED:
+            return CI_KEYWORD_MULTI_PART_SIGNED;
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED:
+            return CI_KEYWORD_MULTI_PART_UNSIGNED;
+        case CI_TOKEN_KIND_KEYWORD__COMPLEX:
+            return CI_KEYWORD_MULTI_PART__COMPLEX;
+        case CI_TOKEN_KIND_KEYWORD__IMAGINARY:
+            return CI_KEYWORD_MULTI_PART__IMAGINARY;
+        default:
+            UNREACHABLE("cannot convert to multi part keyword");
+    }
+}
+
+void
+add_flag__CIKeywordMultiPart(Uint32 *flags, enum CIKeywordMultiPart flag)
+{
+    Uint32 old_flags = *flags;
+
+    *flags |= flag;
+
+    if (old_flags == *flags) {
+        // Set `long long` flag if `long` flag is already set.
+        if (flag == CI_KEYWORD_MULTI_PART_LONG) {
+            *flags &= ~CI_KEYWORD_MULTI_PART_LONG;
+            *flags |= CI_KEYWORD_MULTI_PART_LONG_LONG;
+        } else {
+            FAILED("flag already set");
+        }
+    }
+}
+
+enum CITokenKind
+convert_multi_part_keyword_to_token_kind__CIKeywordMultiPart(Uint32 flags)
+{
+    switch (flags) {
+        case CI_KEYWORD_MULTI_PART_CHAR:
+            return CI_TOKEN_KIND_KEYWORD_CHAR;
+        case CI_KEYWORD_MULTI_PART_DOUBLE:
+            return CI_TOKEN_KIND_KEYWORD_DOUBLE;
+        case CI_KEYWORD_MULTI_PART_DOUBLE | CI_KEYWORD_MULTI_PART__COMPLEX:
+            return CI_TOKEN_KIND_KEYWORD_DOUBLE__COMPLEX;
+        case CI_KEYWORD_MULTI_PART_DOUBLE | CI_KEYWORD_MULTI_PART__IMAGINARY:
+            return CI_TOKEN_KIND_KEYWORD_DOUBLE__IMAGINARY;
+        case CI_KEYWORD_MULTI_PART_FLOAT:
+            return CI_TOKEN_KIND_KEYWORD_FLOAT;
+        case CI_KEYWORD_MULTI_PART_FLOAT | CI_KEYWORD_MULTI_PART__COMPLEX:
+            return CI_TOKEN_KIND_KEYWORD_FLOAT__COMPLEX;
+        case CI_KEYWORD_MULTI_PART_FLOAT | CI_KEYWORD_MULTI_PART__IMAGINARY:
+            return CI_TOKEN_KIND_KEYWORD_FLOAT__IMAGINARY;
+        case CI_KEYWORD_MULTI_PART_INT:
+            return CI_TOKEN_KIND_KEYWORD_INT;
+        case CI_KEYWORD_MULTI_PART_LONG:
+            return CI_TOKEN_KIND_KEYWORD_LONG;
+        case CI_KEYWORD_MULTI_PART_LONG | CI_KEYWORD_MULTI_PART_DOUBLE:
+            return CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE;
+        case CI_KEYWORD_MULTI_PART_LONG | CI_KEYWORD_MULTI_PART_DOUBLE |
+          CI_KEYWORD_MULTI_PART__COMPLEX:
+            return CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__COMPLEX;
+        case CI_KEYWORD_MULTI_PART_LONG | CI_KEYWORD_MULTI_PART_DOUBLE |
+          CI_KEYWORD_MULTI_PART__IMAGINARY:
+            return CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__IMAGINARY;
+        case CI_KEYWORD_MULTI_PART_LONG | CI_KEYWORD_MULTI_PART_INT:
+            return CI_TOKEN_KIND_KEYWORD_LONG_INT;
+        case CI_KEYWORD_MULTI_PART_LONG_LONG:
+            return CI_TOKEN_KIND_KEYWORD_LONG_LONG;
+        case CI_KEYWORD_MULTI_PART_LONG_LONG | CI_KEYWORD_MULTI_PART_INT:
+            return CI_TOKEN_KIND_KEYWORD_LONG_LONG_INT;
+        case CI_KEYWORD_MULTI_PART_SHORT:
+            return CI_TOKEN_KIND_KEYWORD_SHORT;
+        case CI_KEYWORD_MULTI_PART_SHORT | CI_KEYWORD_MULTI_PART_INT:
+            return CI_TOKEN_KIND_KEYWORD_SHORT_INT;
+        case CI_KEYWORD_MULTI_PART_SIGNED:
+            return CI_TOKEN_KIND_KEYWORD_SIGNED;
+        case CI_KEYWORD_MULTI_PART_SIGNED | CI_KEYWORD_MULTI_PART_CHAR:
+            return CI_TOKEN_KIND_KEYWORD_SIGNED_CHAR;
+        case CI_KEYWORD_MULTI_PART_SIGNED | CI_KEYWORD_MULTI_PART_INT:
+            return CI_TOKEN_KIND_KEYWORD_SIGNED_INT;
+        case CI_KEYWORD_MULTI_PART_SIGNED | CI_KEYWORD_MULTI_PART_LONG:
+            return CI_TOKEN_KIND_KEYWORD_SIGNED_LONG;
+        case CI_KEYWORD_MULTI_PART_SIGNED | CI_KEYWORD_MULTI_PART_LONG |
+          CI_KEYWORD_MULTI_PART_INT:
+            return CI_TOKEN_KIND_KEYWORD_SIGNED_LONG_INT;
+        case CI_KEYWORD_MULTI_PART_SIGNED | CI_KEYWORD_MULTI_PART_LONG_LONG:
+            return CI_TOKEN_KIND_KEYWORD_SIGNED_LONG_LONG;
+        case CI_KEYWORD_MULTI_PART_SIGNED | CI_KEYWORD_MULTI_PART_LONG_LONG |
+          CI_KEYWORD_MULTI_PART_INT:
+            return CI_TOKEN_KIND_KEYWORD_SIGNED_LONG_LONG_INT;
+        case CI_KEYWORD_MULTI_PART_SIGNED | CI_KEYWORD_MULTI_PART_SHORT:
+            return CI_TOKEN_KIND_KEYWORD_SIGNED_SHORT;
+        case CI_KEYWORD_MULTI_PART_SIGNED | CI_KEYWORD_MULTI_PART_SHORT |
+          CI_KEYWORD_MULTI_PART_INT:
+            return CI_TOKEN_KIND_KEYWORD_SIGNED_SHORT_INT;
+        case CI_KEYWORD_MULTI_PART_UNSIGNED:
+            return CI_TOKEN_KIND_KEYWORD_UNSIGNED;
+        case CI_KEYWORD_MULTI_PART_UNSIGNED | CI_KEYWORD_MULTI_PART_CHAR:
+            return CI_TOKEN_KIND_KEYWORD_UNSIGNED_CHAR;
+        case CI_KEYWORD_MULTI_PART_UNSIGNED | CI_KEYWORD_MULTI_PART_INT:
+            return CI_TOKEN_KIND_KEYWORD_UNSIGNED_INT;
+        case CI_KEYWORD_MULTI_PART_UNSIGNED | CI_KEYWORD_MULTI_PART_LONG:
+            return CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG;
+        case CI_KEYWORD_MULTI_PART_UNSIGNED | CI_KEYWORD_MULTI_PART_LONG |
+          CI_KEYWORD_MULTI_PART_INT:
+            return CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_INT;
+        case CI_KEYWORD_MULTI_PART_UNSIGNED | CI_KEYWORD_MULTI_PART_LONG_LONG:
+            return CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG;
+        case CI_KEYWORD_MULTI_PART_UNSIGNED | CI_KEYWORD_MULTI_PART_LONG_LONG |
+          CI_KEYWORD_MULTI_PART_INT:
+            return CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG_INT;
+        case CI_KEYWORD_MULTI_PART_UNSIGNED | CI_KEYWORD_MULTI_PART_SHORT:
+            return CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT;
+        case CI_KEYWORD_MULTI_PART_UNSIGNED | CI_KEYWORD_MULTI_PART_SHORT |
+          CI_KEYWORD_MULTI_PART_INT:
+            return CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT_INT;
+        default:
+            FAILED("bad combinaison of flags");
+    }
+}
+
 void
 next_char__CIScanner(CIScanner *self)
 {
@@ -1035,14 +1287,6 @@ void
 skip_space_except_new_line__CIScanner(CIScanner *self)
 {
     return skip_space_except_new_line__Scanner(&self->base);
-}
-
-void
-skip_one_blank_space__CIScanner(CIScanner *self)
-{
-    if (self->base.source.cursor.current == ' ') {
-        next_char__CIScanner(self);
-    }
 }
 
 void
@@ -1255,6 +1499,22 @@ get_attribute__CIScanner(const String *id)
 }
 
 enum CITokenKind
+get_standard_predefined_macro__CIScanner(const String *id)
+{
+    Int32 res =
+      get_keyword__Scanner(id,
+                           ci_standard_predefined_macros,
+                           (const Int32 *)ci_standard_predefined_macro_ids,
+                           CI_N_STANDARD_PREDEFINED_MACRO);
+
+    if (res == -1) {
+        return CI_TOKEN_KIND_IDENTIFIER;
+    }
+
+    return (enum CITokenKind)res;
+}
+
+enum CITokenKind
 get_preprocessor__CIScanner(const String *id)
 {
     Int32 res = get_keyword__Scanner(id,
@@ -1316,470 +1576,6 @@ standarize_keyword__CIScanner(enum CITokenKind kind)
     }
 }
 
-bool can_run_keyword_part1__CIScanner(enum CITokenKind)
-{
-    return true;
-}
-
-bool
-can_run_keyword_part2__CIScanner(enum CITokenKind part1)
-{
-    switch (part1) {
-        case CI_TOKEN_KIND_KEYWORD_DOUBLE:
-        case CI_TOKEN_KIND_KEYWORD_ELSE:
-        case CI_TOKEN_KIND_KEYWORD_FLOAT:
-        case CI_TOKEN_KIND_KEYWORD_SIGNED:
-        case CI_TOKEN_KIND_KEYWORD_UNSIGNED:
-        case CI_TOKEN_KIND_KEYWORD_LONG:
-            return true;
-        default:
-            return false;
-    }
-}
-
-bool
-can_run_keyword_part3__CIScanner(enum CITokenKind part2)
-{
-    switch (part2) {
-        case CI_TOKEN_KIND_KEYWORD_SIGNED_SHORT:
-        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT:
-        case CI_TOKEN_KIND_KEYWORD_SIGNED_LONG:
-        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG:
-        case CI_TOKEN_KIND_KEYWORD_LONG_LONG:
-        case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE:
-            return true;
-        default:
-            return false;
-    }
-}
-
-bool
-can_run_keyword_part4__CIScanner(enum CITokenKind part3)
-{
-    switch (part3) {
-        case CI_TOKEN_KIND_KEYWORD_SIGNED_LONG_LONG:
-        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG:
-            return true;
-        default:
-            return false;
-    }
-}
-
-// TODO: For get_keyword_part*__CIScanner functions, perhaps optimize and make
-// the function less redundant.
-
-// FIXME: e.g. signed long long int
-// input: signed long long int
-// standard=c89
-//
-// expected:
-// long int
-// long int
-//
-// obtained:
-// long int
-// long int
-// int
-//
-// Bug: There's a problem with merging types, for example when the standard is
-// C89, because the `signed long long int` keyword (type) is not available in
-// this standard (since C99). On the other hand, I don't think this is such a
-// serious bug.
-//
-// Potential fix: To fix the bug, you'd probably have to use the
-// get_multi_part_keyword__CIScanner function, just after checking the standard
-// in the get_keyword_part*__CIScanner functions, if the keyword is not
-// available in this standard.
-
-struct CITokenKindWithID
-get_keyword_part1__CIScanner(CIScanner *self,
-                             [[maybe_unused]] struct CITokenKindWithID *)
-{
-    ASSERT(is_start_ident__CIScanner(self));
-
-    String *id = scan_identifier__CIScanner(self);
-    enum CITokenKind kind = get_single_keyword__CIScanner(id);
-
-    end_token__CIScanner(self,
-                         self->base.source.cursor.line,
-                         self->base.source.cursor.column,
-                         self->base.source.cursor.position);
-
-    struct CITokenKindWithID res =
-      (struct CITokenKindWithID){ .id = id,
-                                  .is_merged = false,
-                                  .location =
-                                    clone__Location(&self->base.location),
-                                  .kind = kind };
-    const CIFeature *feature = &tokens_feature[res.kind];
-
-    CHECK_STANDARD_SINCE(feature->since,
-                         { res.kind = CI_TOKEN_KIND_IDENTIFIER; });
-
-    return res;
-}
-
-struct CITokenKindWithID
-get_keyword_part2__CIScanner(CIScanner *self, struct CITokenKindWithID *part1)
-{
-    ASSERT(is_start_ident__CIScanner(self));
-
-    start_token__CIScanner(self,
-                           self->base.source.cursor.line,
-                           self->base.source.cursor.column,
-                           self->base.source.cursor.position);
-
-    String *id = scan_identifier__CIScanner(self);
-    enum CITokenKind unmerged_kind = get_single_keyword__CIScanner(id);
-
-    end_token__CIScanner(self,
-                         self->base.source.cursor.line,
-                         self->base.source.cursor.column,
-                         self->base.source.cursor.position);
-
-    switch (unmerged_kind) {
-        case CI_TOKEN_KIND_IDENTIFIER:
-            return (struct CITokenKindWithID){ .kind = unmerged_kind,
-                                               .is_merged = false,
-                                               .location = clone__Location(
-                                                 &self->base.location),
-                                               .id = id };
-        default: {
-            enum CITokenKind merged_kind;
-
-            switch (part1->kind) {
-                case CI_TOKEN_KIND_KEYWORD_DOUBLE:
-                    switch (unmerged_kind) {
-                        case CI_TOKEN_KIND_KEYWORD__COMPLEX:
-                            merged_kind = CI_TOKEN_KIND_KEYWORD_DOUBLE__COMPLEX;
-                            break;
-                        case CI_TOKEN_KIND_KEYWORD__IMAGINARY:
-                            merged_kind =
-                              CI_TOKEN_KIND_KEYWORD_DOUBLE__IMAGINARY;
-                            break;
-                        default:
-                            FAILED("error, expected _Complex or _Imaginary "
-                                   "after double");
-                    }
-
-                    break;
-                case CI_TOKEN_KIND_KEYWORD_ELSE:
-                    switch (unmerged_kind) {
-                        case CI_TOKEN_KIND_KEYWORD_IF:
-                            merged_kind = CI_TOKEN_KIND_KEYWORD_ELSE_IF;
-                            break;
-                        default:
-                            return (struct CITokenKindWithID){
-                                .kind = unmerged_kind,
-                                .is_merged = false,
-                                .location =
-                                  clone__Location(&self->base.location),
-                                .id = id
-                            };
-                    }
-
-                    break;
-                case CI_TOKEN_KIND_KEYWORD_FLOAT:
-                    switch (unmerged_kind) {
-                        case CI_TOKEN_KIND_KEYWORD__COMPLEX:
-                            merged_kind = CI_TOKEN_KIND_KEYWORD_FLOAT__COMPLEX;
-                            break;
-                        case CI_TOKEN_KIND_KEYWORD__IMAGINARY:
-                            merged_kind =
-                              CI_TOKEN_KIND_KEYWORD_FLOAT__IMAGINARY;
-                            break;
-                        default:
-                            FAILED("error, expected _Complex or _Imaginary "
-                                   "after float");
-                    }
-
-                    break;
-                case CI_TOKEN_KIND_KEYWORD_LONG:
-                    switch (unmerged_kind) {
-                        case CI_TOKEN_KIND_KEYWORD_DOUBLE:
-                            merged_kind = CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE;
-                            break;
-                        case CI_TOKEN_KIND_KEYWORD_INT:
-                            merged_kind = CI_TOKEN_KIND_KEYWORD_LONG_INT;
-                            break;
-                        case CI_TOKEN_KIND_KEYWORD_LONG:
-                            merged_kind = CI_TOKEN_KIND_KEYWORD_LONG_LONG;
-                            break;
-                        default:
-                            FAILED("error, expected int or long after long");
-                    }
-
-                    break;
-                case CI_TOKEN_KIND_KEYWORD_SIGNED:
-                    switch (unmerged_kind) {
-                        case CI_TOKEN_KIND_KEYWORD_CHAR:
-                            merged_kind = CI_TOKEN_KIND_KEYWORD_SIGNED_CHAR;
-                            break;
-                        case CI_TOKEN_KIND_KEYWORD_SHORT:
-                            merged_kind = CI_TOKEN_KIND_KEYWORD_SIGNED_SHORT;
-                            break;
-                        case CI_TOKEN_KIND_KEYWORD_INT:
-                            merged_kind = CI_TOKEN_KIND_KEYWORD_SIGNED_INT;
-                            break;
-                        case CI_TOKEN_KIND_KEYWORD_LONG:
-                            merged_kind = CI_TOKEN_KIND_KEYWORD_SIGNED_LONG;
-                            break;
-                        default:
-                            FAILED(
-                              "error, expected char, short, int after signed");
-                    }
-
-                    break;
-                case CI_TOKEN_KIND_KEYWORD_UNSIGNED:
-                    switch (unmerged_kind) {
-                        case CI_TOKEN_KIND_KEYWORD_CHAR:
-                            merged_kind = CI_TOKEN_KIND_KEYWORD_UNSIGNED_CHAR;
-                            break;
-                        case CI_TOKEN_KIND_KEYWORD_SHORT:
-                            merged_kind = CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT;
-                            break;
-                        case CI_TOKEN_KIND_KEYWORD_INT:
-                            merged_kind = CI_TOKEN_KIND_KEYWORD_UNSIGNED_INT;
-                            break;
-                        case CI_TOKEN_KIND_KEYWORD_LONG:
-                            merged_kind = CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG;
-                            break;
-                        default:
-                            FAILED("error, expected char, short, int or long "
-                                   "after unsigned");
-                    }
-
-                    break;
-                default:
-                    UNREACHABLE("this situation is impossible");
-            }
-
-            struct CITokenKindWithID res = (struct CITokenKindWithID){
-                .kind = merged_kind,
-                .is_merged = false,
-                .location = clone__Location(&self->base.location),
-                .id = id
-            };
-            const CIFeature *feature = &tokens_feature[res.kind];
-
-            CHECK_STANDARD_SINCE(feature->since, { res.kind = unmerged_kind; })
-            else
-            {
-                part1->is_merged = true;
-            }
-
-            return res;
-        }
-    }
-}
-
-struct CITokenKindWithID
-get_keyword_part3__CIScanner(CIScanner *self, struct CITokenKindWithID *part2)
-{
-    ASSERT(is_start_ident__CIScanner(self));
-
-    start_token__CIScanner(self,
-                           self->base.source.cursor.line,
-                           self->base.source.cursor.column,
-                           self->base.source.cursor.position);
-
-    String *id = scan_identifier__CIScanner(self);
-    enum CITokenKind unmerged_kind = get_single_keyword__CIScanner(id);
-
-    end_token__CIScanner(self,
-                         self->base.source.cursor.line,
-                         self->base.source.cursor.column,
-                         self->base.source.cursor.position);
-
-    switch (unmerged_kind) {
-        case CI_TOKEN_KIND_IDENTIFIER:
-            return (struct CITokenKindWithID){ .kind = unmerged_kind,
-                                               .is_merged = false,
-                                               .location = clone__Location(
-                                                 &self->base.location),
-                                               .id = id };
-        default: {
-            enum CITokenKind merged_kind;
-
-            switch (part2->kind) {
-                case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE:
-                    switch (unmerged_kind) {
-                        case CI_TOKEN_KIND_KEYWORD__COMPLEX:
-                            merged_kind =
-                              CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__COMPLEX;
-                            break;
-                        case CI_TOKEN_KIND_KEYWORD__IMAGINARY:
-                            merged_kind =
-                              CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__IMAGINARY;
-                            break;
-                        default:
-                            FAILED("error, expected _Complex or _Imaginary "
-                                   "after long double");
-                    }
-
-                    break;
-                case CI_TOKEN_KIND_KEYWORD_SIGNED_SHORT:
-                    switch (unmerged_kind) {
-                        case CI_TOKEN_KIND_KEYWORD_INT:
-                            merged_kind =
-                              CI_TOKEN_KIND_KEYWORD_SIGNED_SHORT_INT;
-                            break;
-                        default:
-                            FAILED("expected int, after signed short");
-                    }
-
-                    break;
-                case CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT:
-                    switch (unmerged_kind) {
-                        case CI_TOKEN_KIND_KEYWORD_INT:
-                            merged_kind =
-                              CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT_INT;
-                            break;
-                        default:
-                            FAILED("expected int, after unsigned short");
-                    }
-
-                    break;
-                case CI_TOKEN_KIND_KEYWORD_SIGNED_LONG:
-                    switch (unmerged_kind) {
-                        case CI_TOKEN_KIND_KEYWORD_INT:
-                            merged_kind = CI_TOKEN_KIND_KEYWORD_SIGNED_LONG_INT;
-                            break;
-                        case CI_TOKEN_KIND_KEYWORD_LONG:
-                            merged_kind =
-                              CI_TOKEN_KIND_KEYWORD_SIGNED_LONG_LONG;
-                            break;
-                        default:
-                            UNREACHABLE(
-                              "expected int or long, after signed long");
-                    }
-
-                    break;
-                case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG:
-                    switch (unmerged_kind) {
-                        case CI_TOKEN_KIND_KEYWORD_INT:
-                            merged_kind =
-                              CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_INT;
-                            break;
-                        case CI_TOKEN_KIND_KEYWORD_LONG:
-                            merged_kind =
-                              CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG;
-                            break;
-                        default:
-                            UNREACHABLE(
-                              "expected int or long, after unsigned long");
-                    }
-
-                    break;
-                case CI_TOKEN_KIND_KEYWORD_LONG_LONG:
-                    switch (unmerged_kind) {
-                        case CI_TOKEN_KIND_KEYWORD_INT:
-                            merged_kind = CI_TOKEN_KIND_KEYWORD_LONG_LONG_INT;
-                            break;
-                        default:
-                            UNREACHABLE("expected int, after long long");
-                    }
-
-                    break;
-                default:
-                    UNREACHABLE("this situation is impossible");
-            }
-
-            struct CITokenKindWithID res = (struct CITokenKindWithID){
-                .kind = merged_kind,
-                .is_merged = false,
-                .location = clone__Location(&self->base.location),
-                .id = id
-            };
-
-            const CIFeature *feature = &tokens_feature[res.kind];
-
-            CHECK_STANDARD_SINCE(feature->since, { res.kind = unmerged_kind; })
-            else
-            {
-                part2->is_merged = true;
-            }
-
-            return res;
-        }
-    }
-}
-
-struct CITokenKindWithID
-get_keyword_part4__CIScanner(CIScanner *self, struct CITokenKindWithID *part3)
-{
-    ASSERT(is_start_ident__CIScanner(self));
-
-    start_token__CIScanner(self,
-                           self->base.source.cursor.line,
-                           self->base.source.cursor.column,
-                           self->base.source.cursor.position);
-
-    String *id = scan_identifier__CIScanner(self);
-    enum CITokenKind unmerged_kind = get_single_keyword__CIScanner(id);
-
-    end_token__CIScanner(self,
-                         self->base.source.cursor.line,
-                         self->base.source.cursor.column,
-                         self->base.source.cursor.position);
-
-    switch (unmerged_kind) {
-        case CI_TOKEN_KIND_IDENTIFIER:
-            return (struct CITokenKindWithID){ .kind = unmerged_kind,
-                                               .is_merged = false,
-                                               .location = clone__Location(
-                                                 &self->base.location),
-                                               .id = id };
-        default: {
-            enum CITokenKind merged_kind;
-
-            switch (part3->kind) {
-                case CI_TOKEN_KIND_KEYWORD_SIGNED_LONG_LONG:
-                    switch (unmerged_kind) {
-                        case CI_TOKEN_KIND_KEYWORD_INT:
-                            merged_kind =
-                              CI_TOKEN_KIND_KEYWORD_SIGNED_LONG_LONG_INT;
-                            break;
-                        default:
-                            FAILED("expected int, after signed short");
-                    }
-
-                    break;
-                case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG:
-                    switch (unmerged_kind) {
-                        case CI_TOKEN_KIND_KEYWORD_INT:
-                            merged_kind =
-                              CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG_INT;
-                            break;
-                        default:
-                            FAILED("expected int, after unsigned short");
-                    }
-
-                    break;
-                default:
-                    UNREACHABLE("this situation is impossible");
-            }
-
-            struct CITokenKindWithID res = (struct CITokenKindWithID){
-                .kind = merged_kind,
-                .is_merged = false,
-                .location = clone__Location(&self->base.location),
-                .id = id
-            };
-
-            const CIFeature *feature = &tokens_feature[res.kind];
-
-            CHECK_STANDARD_SINCE(feature->since, { res.kind = unmerged_kind; })
-            else
-            {
-                part3->is_merged = true;
-            }
-
-            return res;
-        }
-    }
-}
-
 CIToken *
 scan_multi_part_keyword__CIScanner(CIScanner *self, const CIScannerContext *ctx)
 {
@@ -1796,152 +1592,267 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, const CIScannerContext *ctx)
     check_standard__CIScanner(self, token);
 
 #define MAX_KEYWORD_PART 4
-    struct CITokenKindWithID (*const get_keyword_part[MAX_KEYWORD_PART])(
-      CIScanner *, struct CITokenKindWithID *) = {
-        &get_keyword_part1__CIScanner,
-        &get_keyword_part2__CIScanner,
-        &get_keyword_part3__CIScanner,
-        &get_keyword_part4__CIScanner,
-    };
-    bool (*const can_run_keyword_part[MAX_KEYWORD_PART])(
-      enum CITokenKind) = { &can_run_keyword_part1__CIScanner,
-                            &can_run_keyword_part2__CIScanner,
-                            &can_run_keyword_part3__CIScanner,
-                            &can_run_keyword_part4__CIScanner };
-    struct CITokenKindWithID token_kind_with_id_s[MAX_KEYWORD_PART] = { 0 };
-    Usize part = 0;
-
-    // Parse the different parts of keyword.
-    for (;
-         part < MAX_KEYWORD_PART && is_start_ident__CIScanner(self) &&
-         can_run_keyword_part[part](
-           part == 0 ? CI_TOKEN_KIND_MAX : token_kind_with_id_s[part - 1].kind);
-         ++part,
-         next_char__CIScanner(self),
-         skip_one_blank_space__CIScanner(self)) {
-        const struct CITokenKindWithID token_kind_with_id =
-          get_keyword_part[part](
-            self, part == 0 ? NULL : &token_kind_with_id_s[part - 1]);
-
-        token_kind_with_id_s[part] = token_kind_with_id;
+#define PUSH_TOKEN_FROM_FLAGS(flags)                                        \
+    {                                                                       \
+        if (flags != 0) {                                                   \
+            CIToken *t = NEW(                                               \
+              CIToken,                                                      \
+              convert_multi_part_keyword_to_token_kind__CIKeywordMultiPart( \
+                flags),                                                     \
+              clone__Location(&self->base.location));                       \
+            DEFAULT_LAST_SET_AND_CHECK(t);                                  \
+            push_token__CIScanner(self, ctx, t);                            \
+        }                                                                   \
     }
 
-    previous_char__CIScanner(self);
-
+    Uint32 flags = 0;
     CIToken *last_token = NULL;
 
-    // Check whether the current token is merged or not. If it is merged, it
-    // moves on to the next token, otherwise create the token from the token's
-    // kind and push the token onto the tokens vector if it's not the last one.
-    // Finally, if it is the last token, it reserves it so that it can be
-    // returned.
-    for (Usize i = 0; i < part; ++i) {
-        struct CITokenKindWithID *current = &token_kind_with_id_s[i];
+    for (Usize i = 0; i < MAX_KEYWORD_PART && is_start_ident__CIScanner(self);
+         ++i,
+               next_char__CIScanner(self),
+               skip_space_except_new_line__CIScanner(self)) {
+        start_token__CIScanner(self,
+                               self->base.source.cursor.line,
+                               self->base.source.cursor.column,
+                               self->base.source.cursor.position);
 
-        if (current->is_merged) {
-            FREE(String, current->id);
-            continue;
+        String *id = scan_identifier__CIScanner(self);
+        enum CITokenKind current_kind = get_single_keyword__CIScanner(id);
+
+        end_token__CIScanner(self,
+                             self->base.source.cursor.line,
+                             self->base.source.cursor.column,
+                             self->base.source.cursor.position);
+
+        CHECK_STANDARD_SINCE(tokens_feature[current_kind].since, {
+            PUSH_TOKEN_FROM_FLAGS(flags)
+
+            last_token = NEW_VARIANT(
+              CIToken, identifier, clone__Location(&self->base.location), id);
+
+            break;
+        })
+        else
+        {
+            if (is_multi_part_keyword_from_token_kind__CIKeywordMultiPart(
+                  current_kind)) {
+                FREE(String, id);
+
+                add_flag__CIKeywordMultiPart(
+                  &flags,
+                  convert_token_kind_to_multi_part_keyword__CIKeywordMultiPart(
+                    current_kind));
+            } else {
+                PUSH_TOKEN_FROM_FLAGS(flags);
+
+                switch (current_kind) {
+                    case CI_TOKEN_KIND_IDENTIFIER:
+                        last_token =
+                          NEW_VARIANT(CIToken,
+                                      identifier,
+                                      clone__Location(&self->base.location),
+                                      id);
+
+                        break;
+                    default:
+                        FREE(String, id);
+
+                        last_token = NEW(CIToken,
+                                         current_kind,
+                                         clone__Location(&self->base.location));
+                }
+
+                break;
+            }
         }
+    }
 
-        CIToken *current_token = NULL;
+    if (!last_token) {
+        last_token = NEW(
+          CIToken,
+          convert_multi_part_keyword_to_token_kind__CIKeywordMultiPart(flags),
+          clone__Location(&self->base.location));
+        previous_char__CIScanner(self);
+    }
 
-        switch (current->kind) {
-            case CI_TOKEN_KIND_IDENTIFIER:
-                if (is_in_macro__CIScannerContext(ctx) && ctx->macro) {
-                    // Determine whether the `current->id` does not correspond
-                    // to a macro parameter.
-                    for (Usize i = 0; i < ctx->macro->len; ++i) {
-                        String *param = get__Vec(ctx->macro, i);
+    CIToken *res = NULL;
 
-                        if (!strcmp(param->buffer, current->id->buffer)) {
-                            current_token = NEW_VARIANT(
-                              CIToken, macro_param, current->location, i);
+    switch (last_token->kind) {
+        case CI_TOKEN_KIND_IDENTIFIER:
+            if (is_in_macro__CIScannerContext(ctx) && ctx->macro) {
+                // Determine whether the `last_token->identifier` does not
+                // correspond to a macro parameter.
+                for (Usize i = 0; i < ctx->macro->len; ++i) {
+                    String *param = get__Vec(ctx->macro, i);
 
-                            FREE(String, current->id);
+                    if (!strcmp(param->buffer,
+                                last_token->identifier->buffer)) {
+                        res = NEW_VARIANT(
+                          CIToken, macro_param, last_token->location, i);
 
-                            goto exit_identifier_case;
-                        }
+                        FREE(CIToken, last_token);
+
+                        break;
+                    }
+                }
+
+                if (res) {
+                    goto exit;
+                }
+            }
+
+            if (is_in_prepro_cond__CIScannerContext(ctx)) {
+                // e.g. #if defined(...)
+                if (!strcmp(last_token->identifier->buffer, "defined")) {
+                    String *defined_identifier = NULL;
+                    bool has_open_paren = false;
+
+                    next_char__CIScanner(
+                      self); // skip last character of identifier
+                    skip_space_and_backslash__CIScanner(self);
+
+                    switch (self->base.source.cursor.current) {
+                        case '(':
+                            has_open_paren = true;
+
+                            next_char__CIScanner(self);
+                            skip_space_and_backslash__CIScanner(self);
+
+                            break;
+                        default:
+                            break;
                     }
 
-                    goto create_token_identifier;
-                } else if (is_in_prepro_cond__CIScannerContext(ctx)) {
-                    // e.g. #if defined(...)
-                    if (!strcmp(current->id->buffer, "defined")) {
-                        String *defined_identifier = NULL;
-                        bool has_open_paren = false;
+                    if (is_ident__CIScanner(self)) {
+                        defined_identifier = scan_identifier__CIScanner(self);
+                        next_char__CIScanner(self);
+                    }
 
-                        next_char__CIScanner(
-                          self); // skip last character of identifier
+                    if (has_open_paren) {
                         skip_space_and_backslash__CIScanner(self);
 
                         switch (self->base.source.cursor.current) {
-                            case '(':
-                                has_open_paren = true;
-
-                                next_char__CIScanner(self);
-                                skip_space_and_backslash__CIScanner(self);
-
+                            case ')':
                                 break;
                             default:
-                                break;
+                                FAILED("expected `)`");
                         }
-
-                        if (is_ident__CIScanner(self)) {
-                            defined_identifier =
-                              scan_identifier__CIScanner(self);
-                            next_char__CIScanner(self);
-                        }
-
-                        if (has_open_paren) {
-                            skip_space_and_backslash__CIScanner(self);
-
-                            switch (self->base.source.cursor.current) {
-                                case ')':
-                                    break;
-                                default:
-                                    FAILED("expected `)`");
-                            }
-                        } else {
-                            previous_char__CIScanner(self);
-                        }
-
-                        current_token = NEW_VARIANT(CIToken,
-                                                    macro_defined,
-                                                    current->location,
-                                                    defined_identifier);
-
-                        FREE(String, current->id);
-
-                        goto exit_identifier_case;
+                    } else {
+                        previous_char__CIScanner(self);
                     }
 
-                    goto create_token_identifier;
-                } else {
-                create_token_identifier:
-                    current_token = NEW_VARIANT(
-                      CIToken, identifier, current->location, current->id);
+                    res = NEW_VARIANT(CIToken,
+                                      macro_defined,
+                                      last_token->location,
+                                      defined_identifier);
+
+                    FREE(CIToken, last_token);
+
+                    goto exit;
                 }
+            }
 
-            exit_identifier_case:
+            // Check if it's a standard predefined macro
+            // https://gcc.gnu.org/onlinedocs/cpp/Standard-Predefined-Macros.html
+            {
+                enum CITokenKind standard_predefined_macro =
+                  get_standard_predefined_macro__CIScanner(
+                    last_token->identifier);
 
-                break;
-            default:
-                FREE(String, current->id);
-                current_token =
-                  NEW(CIToken,
-                      standarize_keyword__CIScanner(current->kind),
-                      current->location);
-        }
+                switch (standard_predefined_macro) {
+                    case CI_TOKEN_KIND_IDENTIFIER:
+                        break;
+                    // Standard predefined macro case
+                    case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__: {
+#define DATE_LEN 100
 
-        if (i + 1 == part) {
-            last_token = current_token;
-        } else {
-            DEFAULT_LAST_SET_AND_CHECK(current_token);
-            push_token__CIScanner(self, ctx, current_token);
-        }
+                        // TODO: Improve this part of code.
+                        time_t current_time;
+                        struct tm *time_info;
+                        char date_s[DATE_LEN];
+
+                        memset(date_s, 0, DATE_LEN);
+                        time(&current_time);
+
+                        time_info = localtime(&current_time);
+
+                        strftime(date_s, sizeof(date_s), "%Y-%m-%d", time_info);
+
+                        res = NEW_VARIANT(CIToken,
+                                          standard_predefined_macro___date__,
+                                          last_token->location,
+                                          from__String(date_s));
+
+                        goto free_last_token;
+
+#undef DATE_LEN
+                    }
+                    case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__:
+                        res = NEW_VARIANT(
+                          CIToken,
+                          standard_predefined_macro___file__,
+                          last_token->location,
+                          from__String(self->base.source.file->name));
+
+                        goto free_last_token;
+                    case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__:
+                        res = NEW_VARIANT(CIToken,
+                                          standard_predefined_macro___line__,
+                                          last_token->location,
+                                          self->base.source.cursor.line);
+
+                        goto free_last_token;
+                    case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__: {
+#define TIME_LEN 100
+
+                        // TODO: Improve this part of code.
+                        time_t current_time;
+                        struct tm *time_info;
+                        char time_s[TIME_LEN];
+
+                        memset(time_s, 0, TIME_LEN);
+                        time(&current_time);
+
+                        time_info = localtime(&current_time);
+
+                        strftime(time_s, sizeof(time_s), "%H:%M:%S", time_info);
+
+                        res = NEW_VARIANT(CIToken,
+                                          standard_predefined_macro___time__,
+                                          last_token->location,
+                                          from__String(time_s));
+
+                        goto free_last_token;
+
+#undef TIME_LEN
+                    }
+                    default:
+                        res = NEW(CIToken,
+                                  standard_predefined_macro,
+                                  last_token->location);
+
+                        FREE(CIToken, last_token);
+
+                        goto exit;
+                }
+            }
+
+            res = last_token;
+        exit:
+            break;
+        free_last_token:
+            FREE(CIToken, last_token);
+            break;
+        default:
+            res = last_token;
+            res->kind = standarize_keyword__CIScanner(res->kind);
     }
 
-    return last_token;
+#undef MAX_KEYWORD_PART
+#undef PUSH_TOKEN_FROM_FLAGS
+
+    return res;
 }
 
 CIToken *
@@ -2208,6 +2119,14 @@ scan_identifier__CIScanner(CIScanner *self)
     previous_char__CIScanner(self);
 
     return id;
+}
+
+bool
+identifier_is_standard_predefined_macro__CIScanner(CIScanner *self,
+                                                   const String *name)
+{
+    return get_standard_predefined_macro__CIScanner(name) !=
+           CI_TOKEN_KIND_IDENTIFIER;
 }
 
 String *
@@ -2586,6 +2505,39 @@ skip_backslash__CIScanner(CIScanner *self)
     }
 }
 
+#undef BACKSLASH_DIAGNOSTIC
+
+String *
+scan_macro_name__CIScanner(CIScanner *self,
+                           const CIScannerContext *ctx,
+                           const CIScannerContext *ctx_parent,
+                           enum CITokenKind preprocessor_ctx)
+{
+    ASSERT(preprocessor_ctx == CI_TOKEN_KIND_PREPROCESSOR_IFDEF ||
+           preprocessor_ctx == CI_TOKEN_KIND_PREPROCESSOR_DEFINE ||
+           preprocessor_ctx == CI_TOKEN_KIND_PREPROCESSOR_UNDEF);
+
+    skip_space_and_backslash__CIScanner(self);
+
+    if (!is_ident__CIScanner(self)) {
+        FAILED("expected identifier");
+    }
+
+    String *name = scan_identifier__CIScanner(self);
+
+    if (identifier_is_standard_predefined_macro__CIScanner(self, name)) {
+        if (!(self->is_builtin ||
+              preprocessor_ctx == CI_TOKEN_KIND_PREPROCESSOR_IFDEF)) {
+            FAILED("not expected to undef or re-define standard predefined "
+                   "macro, outside of builtin file");
+        }
+    }
+
+    next_char__CIScanner(self);
+
+    return name;
+}
+
 Vec *
 scan_define_preprocessor_params__CIScanner(CIScanner *self)
 {
@@ -2595,8 +2547,6 @@ scan_define_preprocessor_params__CIScanner(CIScanner *self)
     next_char__CIScanner(self); // skip `(`
 
     while (self->base.source.cursor.current != ')') {
-        skip_space_and_backslash__CIScanner(self);
-
         CIToken *param = get_token__CIScanner(self, &ctx, NULL);
 
         if (param) {
@@ -2626,6 +2576,8 @@ scan_define_preprocessor_params__CIScanner(CIScanner *self)
             default:
                 FAILED("expected `,` or `)`");
         }
+
+        skip_space_and_backslash__CIScanner(self);
     }
 
     next_char__CIScanner(self); // skip `)`
@@ -2705,7 +2657,9 @@ scan_preprocessor_content__CIScanner(CIScanner *self,
         return NULL;
     }
 
-    add_eopc_token__CIScanner(self, &ctx);
+    if (ctx_location == CI_SCANNER_CONTEXT_LOCATION_PREPROCESSOR_COND) {
+        add_eopc_token__CIScanner(self, &ctx);
+    }
 
     return tokens;
 }
@@ -2720,11 +2674,12 @@ scan_define_preprocessor__CIScanner(CIScanner *self)
     skip_space_and_backslash__CIScanner(self);
 
     // Get macro name
-    if (is_start_ident__CIScanner(self)) {
-        name = scan_identifier__CIScanner(self);
-        next_char__CIScanner(self);
-    } else {
-        FAILED("expected name");
+    {
+        const CIScannerContext ctx =
+          NEW(CIScannerContext, CI_SCANNER_CONTEXT_LOCATION_NONE, NULL);
+
+        name = scan_macro_name__CIScanner(
+          self, &ctx, NULL, CI_TOKEN_KIND_PREPROCESSOR_DEFINE);
     }
 
     Vec *params = NULL; // Vec<String*>*?
@@ -2732,6 +2687,8 @@ scan_define_preprocessor__CIScanner(CIScanner *self)
     switch (self->base.source.cursor.current) {
         case '(':
             params = scan_define_preprocessor_params__CIScanner(self);
+
+            break;
         default:
             break;
     }
@@ -2807,9 +2764,11 @@ scan_elif_preprocessor__CIScanner(CIScanner *self,
                                                                             \
         skip_space__CIScanner(self);                                        \
                                                                             \
-        old_position = self->base.source.cursor.position;                   \
-        current_token =                                                     \
-          get_token__CIScanner(self, &ctx, ctx_parent ? ctx_parent : &ctx); \
+        if (!HAS_REACH_END(self)) {                                         \
+            old_position = self->base.source.cursor.position;               \
+            current_token = get_token__CIScanner(                           \
+              self, &ctx, ctx_parent ? ctx_parent : &ctx);                  \
+        }                                                                   \
     }                                                                       \
                                                                             \
     if (!current_token) {                                                   \
@@ -2912,30 +2871,11 @@ scan_elifdef_preprocessor__CIScanner(CIScanner *self,
       clone__Location(&self->base.location);                                  \
     String *preprocessor_ifdef_identifier = NULL;                             \
                                                                               \
-    skip_space_and_backslash__CIScanner(self);                                \
-                                                                              \
     {                                                                         \
         CIScannerContext ctx =                                                \
           NEW_VARIANT(CIScannerContext, preprocessor_if, NULL);               \
-        CIToken *token = get_token__CIScanner(self, &ctx, ctx_parent);        \
-                                                                              \
-        if (token) {                                                          \
-            switch (token->kind) {                                            \
-                case CI_TOKEN_KIND_IDENTIFIER:                                \
-                    preprocessor_ifdef_identifier = token->identifier;        \
-                    next_char__CIScanner(self);                               \
-                    lily_free(token);                                         \
-                                                                              \
-                    break;                                                    \
-                default:                                                      \
-                    FREE(CIToken, token);                                     \
-                                                                              \
-                    goto expected_identifier;                                 \
-            }                                                                 \
-        } else {                                                              \
-        expected_identifier:                                                  \
-            FAILED("expected identifier");                                    \
-        }                                                                     \
+        preprocessor_ifdef_identifier = scan_macro_name__CIScanner(           \
+          self, &ctx, ctx_parent, CI_TOKEN_KIND_PREPROCESSOR_IFDEF);          \
     }                                                                         \
                                                                               \
     SCAN_IF_PREPROCESSOR_CONTENT(cond,                                        \
@@ -3265,32 +3205,12 @@ scan_undef_preprocessor__CIScanner(CIScanner *self)
       clone__Location(&self->base.location);
     String *preprocessor_undef_identifier = NULL;
 
-    skip_space_and_backslash__CIScanner(self);
-
     {
         CIScannerContext ctx =
           NEW(CIScannerContext, CI_SCANNER_CONTEXT_LOCATION_NONE, NULL);
-        CIToken *token = get_token__CIScanner(self, &ctx, NULL);
 
-        if (token) {
-            switch (token->kind) {
-                case CI_TOKEN_KIND_IDENTIFIER:
-                    preprocessor_undef_identifier = token->identifier;
-
-                    next_char__CIScanner(self);
-                    lily_free(token);
-
-                    break;
-                default:
-                    // Advance
-                    next_char_by_token__CIScanner(self, token);
-                    next_char__CIScanner(self);
-
-                    FREE(CIToken, token);
-
-                    FAILED("expected identifier");
-            }
-        }
+        preprocessor_undef_identifier = scan_macro_name__CIScanner(
+          self, &ctx, NULL, CI_TOKEN_KIND_PREPROCESSOR_UNDEF);
     }
 
     return NEW_VARIANT(CIToken,
@@ -3511,11 +3431,22 @@ get_num__CIScanner(CIScanner *self)
 
         // Count the number of flags.
         for (int s = suffixes, i = 0; s > 0 && i < SUFFIXES_ARRAY_LENGTH;
-             ++i, s &= ~suffixes_arr[i]) {
+             s &= ~suffixes_arr[i++]) {
             ++flag_count;
         }
 
-        jump__CIScanner(self, flag_count);
+        jump__CIScanner(self, flag_count > 0 ? flag_count - 1 : 0);
+
+#undef SUFFIX_U
+#undef SUFFIX_L
+#undef SUFFIX_L2
+#undef SUFFIX_F
+#undef SUFFIX_D
+#undef SUFFIXES_ARRAY_LENGTH
+#undef ADD_SUFFIX
+#undef UPDATE_FLOAT_SUFFIX
+#undef UPDATE_INT_SUFFIX
+#undef CHECK_SUFFIX
 
         return res;
     }

@@ -2130,7 +2130,13 @@ next_conditional_preprocessor__CIParser(CIParser *self)
       (self->tokens_iters.previous_token = self->tokens_iters.current_token) &&
       (self->tokens_iters.current_token = next__VecIter(&tokens_iter->iter))) {
         if (is_conditional_preprocessor__CITokenKind(
-              self->tokens_iters.current_token->kind)) {
+              self->tokens_iters.current_token->kind) &&
+            self->tokens_iters.current_token->kind !=
+              CI_TOKEN_KIND_PREPROCESSOR_IF &&
+            self->tokens_iters.current_token->kind !=
+              CI_TOKEN_KIND_PREPROCESSOR_IFDEF &&
+            self->tokens_iters.current_token->kind !=
+              CI_TOKEN_KIND_PREPROCESSOR_IFNDEF) {
             return self->tokens_iters.current_token;
         }
     }
@@ -2202,8 +2208,11 @@ check_if_resolved_expr_is_true__CIParser(CIParser *self, CIExpr *expr)
           &self->tokens_iters,                                               \
           NEW(CITokensIter, preprocessor->preprocessor_##k.content));        \
                                                                              \
-        if (check_if_resolved_expr_is_true__CIParser(self, resolved_cond)) { \
+        if (content_is_add) {                                                \
             init_next_token__CIParser(self, false);                          \
+        }                                                                    \
+                                                                             \
+        if (check_if_resolved_expr_is_true__CIParser(self, resolved_cond)) { \
             FREE(CIExpr, resolved_cond);                                     \
                                                                              \
             return self->tokens_iters.current_token;                         \
@@ -2289,11 +2298,6 @@ jump_in_token_block__CIParser(CIParser *self)
               self->file,
               NEW(CIResultDefine,
                   &self->tokens_iters.current_token->preprocessor_define));
-            add_macro__CIParser(
-              self,
-              NEW(
-                CIParserMacroCall,
-                self->tokens_iters.current_token->preprocessor_define.params));
 
             break;
         case CI_TOKEN_KIND_MACRO_PARAM: {
@@ -2314,6 +2318,43 @@ jump_in_token_block__CIParser(CIParser *self)
         }
         case CI_TOKEN_KIND_PAREN_CALL:
             TODO("jump in define call");
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC__:
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_VERSION__:
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_HOSTED__: {
+            char *standard_predefined_macro_s[CI_TOKEN_KIND_MAX] = {
+                [CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC__] = "__STDC__",
+                [CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_VERSION__] =
+                  "__STDC_VERSION__",
+                [CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_HOSTED__] =
+                  "__STDC_HOSTED__",
+            };
+
+            const CIResultDefine *def = get_define_from_str__CIResultFile(
+              self->file,
+              standard_predefined_macro_s[self->tokens_iters.current_token
+                                            ->kind]);
+
+            if (def) {
+                add_iter__CITokensIters(&self->tokens_iters,
+                                        NEW(CITokensIter, def->define->tokens));
+                init_next_token__CIParser(self, true);
+                pop_iter__CITokensIters(&self->tokens_iters);
+
+                break;
+            }
+
+            UNREACHABLE("standard predefined macro cannot be undefined");
+        }
+        case CI_TOKEN_KIND_IDENTIFIER: {
+            const CIResultDefine *def = get_define__CIResultFile(
+              self->file, self->tokens_iters.current_token->identifier);
+
+            if (def) {
+                TODO("jump in macro call");
+            }
+
+            break;
+        }
         case CI_TOKEN_KIND_PREPROCESSOR_IF:
         case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
         case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF: {
@@ -2370,6 +2411,9 @@ next_token__CIParser(CIParser *self)
             } else {
                 if (self->tokens_iters.iters->len > 1) {
                     pop_iter__CITokensIters(&self->tokens_iters);
+                    init_next_token__CIParser(self, false);
+
+                    continue;
                 } else {
                     // NOTE: We assign the last token of the first push
                     // iterator, and this token should normally be EOF.
@@ -2380,8 +2424,6 @@ next_token__CIParser(CIParser *self)
 
                     break;
                 }
-
-                continue;
             }
         }
 
@@ -3995,6 +4037,40 @@ parse_primary_expr__CIParser(CIParser *self)
             return NEW_VARIANT(
               CIExpr, literal, NEW_VARIANT(CIExprLiteral, bool, false));
         }
+        // NOTE: Standard predefined macro cannot be redefined outside of
+        // builtin file.
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__:
+            return NEW_VARIANT(
+              CIExpr,
+              literal,
+              NEW_VARIANT(CIExprLiteral,
+                          string,
+                          self->tokens_iters.previous_token
+                            ->standard_predefined_macro___date__));
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__:
+            return NEW_VARIANT(
+              CIExpr,
+              literal,
+              NEW_VARIANT(CIExprLiteral,
+                          string,
+                          self->tokens_iters.previous_token
+                            ->standard_predefined_macro___file__));
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__:
+            return NEW_VARIANT(
+              CIExpr,
+              literal,
+              NEW_VARIANT(CIExprLiteral,
+                          unsigned_int,
+                          self->tokens_iters.previous_token
+                            ->standard_predefined_macro___line__));
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__:
+            return NEW_VARIANT(
+              CIExpr,
+              literal,
+              NEW_VARIANT(CIExprLiteral,
+                          string,
+                          self->tokens_iters.previous_token
+                            ->standard_predefined_macro___time__));
         default:
             FAILED("unexpected token");
     }

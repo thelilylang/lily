@@ -43,6 +43,8 @@ typedef struct CIResultFile CIResultFile;
 
 #define CI_N_ATTRIBUTE 8
 
+#define CI_N_STANDARD_PREDEFINED_MACRO 7
+
 #define CI_N_PREPROCESSOR 16
 
 // NOTE#1: Used only in the scanner
@@ -210,8 +212,8 @@ enum CITokenKind
     CI_TOKEN_KIND_PREPROCESSOR_INCLUDE,
     CI_TOKEN_KIND_PREPROCESSOR_LINE,
     CI_TOKEN_KIND_PREPROCESSOR_PRAGMA,
-    CI_TOKEN_KIND_PREPROCESSOR_UNDEF,   // NOTE: #2
-    CI_TOKEN_KIND_PREPROCESSOR_WARNING, // NOTE: #2
+    CI_TOKEN_KIND_PREPROCESSOR_UNDEF,
+    CI_TOKEN_KIND_PREPROCESSOR_WARNING,
     CI_TOKEN_KIND_RBRACE,
     CI_TOKEN_KIND_RHOOK,
     CI_TOKEN_KIND_RPAREN,
@@ -222,6 +224,18 @@ enum CITokenKind
     CI_TOKEN_KIND_SEMICOLON,
     CI_TOKEN_KIND_SLASH,
     CI_TOKEN_KIND_SLASH_EQ,
+    // Standard predefined macros:
+    // Link: https://gcc.gnu.org/onlinedocs/cpp/Standard-Predefined-Macros.html
+    // NOTE: We don't include `__ASSEMBLER__`, `__OBJC__` and `__cplusplus`
+    // predefined macro, because as we only deal with C.
+    CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO, // NOTE: #1
+    CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__,
+    CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__,
+    CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__,
+    CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC__,
+    CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_VERSION__,
+    CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_HOSTED__,
+    CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__,
     CI_TOKEN_KIND_STAR,
     CI_TOKEN_KIND_STAR_EQ,
     CI_TOKEN_KIND_WAVE,
@@ -848,6 +862,10 @@ typedef struct CIToken
         // The `macro_param` corresponds to the position index in the macro
         // (#define) params vector (preprocessor_define.params).
         Usize macro_param;
+        String *standard_predefined_macro___date__;
+        String *standard_predefined_macro___file__;
+        Usize standard_predefined_macro___line__;
+        String *standard_predefined_macro___time__;
     };
 } CIToken;
 
@@ -1111,6 +1129,16 @@ VARIANT_CONSTRUCTOR(CIToken *,
 
 /**
  *
+ * @brief Construct CIToken type (CI_TOKEN_KIND_PREPROCESSOR_UNDEF).
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    preprocessor_undef,
+                    Location location,
+                    String *preprocessor_undef);
+
+/**
+ *
  * @brief Construct CIToken type (CI_TOKEN_KIND_PREPROCESSOR_WARNING).
  */
 VARIANT_CONSTRUCTOR(CIToken *,
@@ -1121,13 +1149,47 @@ VARIANT_CONSTRUCTOR(CIToken *,
 
 /**
  *
- * @brief Construct CIToken type (CI_TOKEN_KIND_PREPROCESSOR_UNDEF).
+ * @brief Construct CIToken type
+ * (CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__).
  */
 VARIANT_CONSTRUCTOR(CIToken *,
                     CIToken,
-                    preprocessor_undef,
+                    standard_predefined_macro___date__,
                     Location location,
-                    String *preprocessor_undef);
+                    String *standard_predefined_macro___date__);
+
+/**
+ *
+ * @brief Construct CIToken type
+ * (CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__).
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    standard_predefined_macro___file__,
+                    Location location,
+                    String *standard_predefined_macro___file__);
+
+/**
+ *
+ * @brief Construct CIToken type
+ * (CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__).
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    standard_predefined_macro___line__,
+                    Location location,
+                    Usize standard_predefined_macro___line__);
+
+/**
+ *
+ * @brief Construct CIToken type
+ * (CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__).
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    standard_predefined_macro___time__,
+                    Location location,
+                    String *standard_predefined_macro___time__);
 
 /**
  *

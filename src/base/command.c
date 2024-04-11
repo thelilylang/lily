@@ -22,46 +22,56 @@
  * SOFTWARE.
  */
 
-#include <base/assert.h>
-#include <base/dir.h>
-#include <base/yaml.h>
+#define _GNU_SOURCE
 
-#include <core/cc/ci/config.h>
-#include <core/cc/ci/generator.h>
-#include <core/cc/ci/include.h>
-#include <core/cc/ci/parser.h>
-#include <core/cc/ci/result.h>
-#include <core/cc/ci/scanner.h>
+#include <base/assert.h>
+#include <base/command.h>
+#include <base/macros.h>
+#include <base/new.h>
+#include <base/platform.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 
-#define CI_CONFIG "CI.yaml"
-
-int
-main(int argc, char **argv)
+void
+run__Command(const char *cmd)
 {
-    // TODO: implement a real CLI, like in bin/lily/main.c, bin/lilyc/main.c
+    if (system(cmd) != 0) {
+        FAILED("failed to execute command");
+    }
+}
 
-    CIConfig config = parse__CIConfig();
+String *
+save__Command(const char *cmd)
+{
+#ifdef LILY_WINDOWS_OS
+    FILE *file = _popen(cmd, "r");
+#else
+    FILE *file = popen(cmd, "r");
+#endif
 
-    // TODO: Get the files from YAML config
-    if (argc < 2) {
-        printf("ci [ci_files...]\n");
-        exit(1);
+    if (!file) {
+        FAILED("cannot run command");
     }
 
-    CIResult result = NEW(CIResult);
+    String *output = NEW(String);
+#define TEMP_BUFFER_LEN 1024
+    char temp_buffer[TEMP_BUFFER_LEN];
+    Usize temp_buffer_bytes = 0;
 
-    load_builtin__CIResult(&result, &config);
-
-    for (Usize i = 1; i < argc; ++i) {
-        add_and_run__CIResult(&result, strdup(argv[i]), config.standard);
+    while ((temp_buffer_bytes =
+              fread(temp_buffer, 1, TEMP_BUFFER_LEN - 1, file)) > 0) {
+        temp_buffer[temp_buffer_bytes] = '\0';
+        push_str__String(output, temp_buffer);
     }
 
-    run__CIGenerator(&result);
+    ASSERT(feof(file));
 
-    FREE(CIResult, &result);
-    FREE(CIConfig, &config);
+#ifdef LILY_WINDOWS_OS
+    _pclose(file);
+#else
+    pclose(file);
+#endif
 
-    destroy__CIInclude();
+    return output;
 }

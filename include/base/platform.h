@@ -36,6 +36,10 @@
 #define PLATFORM_32
 #endif
 
+#ifdef __unix__
+#define LILY_UNIX_OS
+#endif
+
 #if defined(__linux__)
 #define OS_NAME "linux"
 #define LILY_LINUX_OS
