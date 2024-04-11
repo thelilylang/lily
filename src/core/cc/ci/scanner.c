@@ -2657,7 +2657,9 @@ scan_preprocessor_content__CIScanner(CIScanner *self,
         return NULL;
     }
 
-    add_eopc_token__CIScanner(self, &ctx);
+    if (ctx_location == CI_SCANNER_CONTEXT_LOCATION_PREPROCESSOR_COND) {
+        add_eopc_token__CIScanner(self, &ctx);
+    }
 
     return tokens;
 }
