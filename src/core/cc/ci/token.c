@@ -122,6 +122,26 @@ static VARIANT_DESTRUCTOR(CIToken, preprocessor_undef, CIToken *self);
 // Free CIToken type (CI_TOKEN_KIND_PREPROCESSOR_WARNING).
 static VARIANT_DESTRUCTOR(CIToken, preprocessor_warning, CIToken *self);
 
+// Free CIToken type (CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__).
+static VARIANT_DESTRUCTOR(CIToken,
+                          standard_predefined_macro___date__,
+                          CIToken *self);
+
+// Free CIToken type (CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__).
+static VARIANT_DESTRUCTOR(CIToken,
+                          standard_predefined_macro___file__,
+                          CIToken *self);
+
+// Free CIToken type (CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__).
+static inline VARIANT_DESTRUCTOR(CIToken,
+                                 standard_predefined_macro___line__,
+                                 CIToken *self);
+
+// Free CIToken type (CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__).
+static VARIANT_DESTRUCTOR(CIToken,
+                          standard_predefined_macro___time__,
+                          CIToken *self);
+
 #ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string,
@@ -1067,6 +1087,70 @@ VARIANT_CONSTRUCTOR(CIToken *,
     return self;
 }
 
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    standard_predefined_macro___date__,
+                    Location location,
+                    String *standard_predefined_macro___date__)
+{
+    CIToken *self = lily_malloc(sizeof(CIToken));
+
+    self->kind = CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__;
+    self->location = location;
+    self->standard_predefined_macro___date__ =
+      standard_predefined_macro___date__;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    standard_predefined_macro___file__,
+                    Location location,
+                    String *standard_predefined_macro___file__)
+{
+    CIToken *self = lily_malloc(sizeof(CIToken));
+
+    self->kind = CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__;
+    self->location = location;
+    self->standard_predefined_macro___file__ =
+      standard_predefined_macro___file__;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    standard_predefined_macro___line__,
+                    Location location,
+                    Usize standard_predefined_macro___line__)
+{
+    CIToken *self = lily_malloc(sizeof(CIToken));
+
+    self->kind = CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__;
+    self->location = location;
+    self->standard_predefined_macro___line__ =
+      standard_predefined_macro___line__;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    standard_predefined_macro___time__,
+                    Location location,
+                    String *standard_predefined_macro___time__)
+{
+    CIToken *self = lily_malloc(sizeof(CIToken));
+
+    self->kind = CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__;
+    self->location = location;
+    self->standard_predefined_macro___time__ =
+      standard_predefined_macro___time__;
+
+    return self;
+}
+
 String *
 to_string__CIToken(CIToken *self)
 {
@@ -1440,11 +1524,14 @@ to_string__CIToken(CIToken *self)
         case CI_TOKEN_KIND_SLASH_EQ:
             return from__String("/=");
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__:
-            return from__String("__DATE__");
+            return format__String("__DATE__ {S}",
+                                  self->standard_predefined_macro___date__);
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__:
-            return from__String("__FILE__");
+            return format__String("__FILE__ {S}",
+                                  self->standard_predefined_macro___file__);
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__:
-            return from__String("__LINE__");
+            return format__String("__LINE__ {zu}",
+                                  self->standard_predefined_macro___line__);
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC__:
             return from__String("__STDC__");
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_VERSION__:
@@ -1452,7 +1539,8 @@ to_string__CIToken(CIToken *self)
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_HOSTED__:
             return from__String("__STDC_HOSTED__");
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__:
-            return from__String("__TIME__");
+            return format__String("__TIME__ {S}",
+                                  self->standard_predefined_macro___time__);
         case CI_TOKEN_KIND_STAR:
             return from__String("*");
         case CI_TOKEN_KIND_STAR_EQ:
@@ -1984,7 +2072,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
               self->macro_param);
         case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:
             return format("CIToken{{ kind = {s}, location = {sa}, "
-                          "preprocessor_include = {Sr} }",
+                          "preprocessor_define = {Sr} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           CALL_DEBUG_IMPL(to_string,
@@ -2088,6 +2176,30 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->preprocessor_warning);
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__:
+            return format("CIToken{{ kind = {s}, location = {sa}, "
+                          "standard_predefined_macro___date__ = {S} }",
+                          CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
+                          CALL_DEBUG_IMPL(to_string, Location, &self->location),
+                          self->standard_predefined_macro___date__);
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__:
+            return format("CIToken{{ kind = {s}, location = {sa}, "
+                          "standard_predefined_macro___file__ = {s} }",
+                          CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
+                          CALL_DEBUG_IMPL(to_string, Location, &self->location),
+                          self->standard_predefined_macro___file__);
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__:
+            return format("CIToken{{ kind = {s}, location = {sa}, "
+                          "standard_predefined_macro___line__ = {zu} }",
+                          CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
+                          CALL_DEBUG_IMPL(to_string, Location, &self->location),
+                          self->standard_predefined_macro___line__);
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__:
+            return format("CIToken{{ kind = {s}, location = {sa}, "
+                          "standard_predefined_macro___time__ = {S} }",
+                          CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
+                          CALL_DEBUG_IMPL(to_string, Location, &self->location),
+                          self->standard_predefined_macro___time__);
         default:
             return format(
               "CIToken{{ kind = {s}, location = {sa} }",
@@ -2271,6 +2383,29 @@ VARIANT_DESTRUCTOR(CIToken, preprocessor_warning, CIToken *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(CIToken, standard_predefined_macro___date__, CIToken *self)
+{
+    FREE(String, self->standard_predefined_macro___date__);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIToken, standard_predefined_macro___file__, CIToken *self)
+{
+    FREE(String, self->standard_predefined_macro___file__);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIToken, standard_predefined_macro___line__, CIToken *self)
+{
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIToken, standard_predefined_macro___time__, CIToken *self)
+{
+    FREE(String, self->standard_predefined_macro___time__);
+    lily_free(self);
+}
+
 DESTRUCTOR(CIToken, CIToken *self)
 {
     switch (self->kind) {
@@ -2354,6 +2489,18 @@ DESTRUCTOR(CIToken, CIToken *self)
             break;
         case CI_TOKEN_KIND_PREPROCESSOR_WARNING:
             FREE_VARIANT(CIToken, preprocessor_warning, self);
+            break;
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__:
+            FREE_VARIANT(CIToken, standard_predefined_macro___date__, self);
+            break;
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__:
+            FREE_VARIANT(CIToken, standard_predefined_macro___file__, self);
+            break;
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__:
+            FREE_VARIANT(CIToken, standard_predefined_macro___line__, self);
+            break;
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__:
+            FREE_VARIANT(CIToken, standard_predefined_macro___time__, self);
             break;
         default:
             lily_free(self);

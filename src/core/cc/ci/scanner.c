@@ -34,6 +34,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 enum CIKeywordMultiPart
 {
@@ -1763,6 +1764,69 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, const CIScannerContext *ctx)
                     case CI_TOKEN_KIND_IDENTIFIER:
                         break;
                     // Standard predefined macro case
+                    case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__: {
+#define DATE_LEN 100
+
+                        // TODO: Improve this part of code.
+                        time_t current_time;
+                        struct tm *time_info;
+                        char date_s[DATE_LEN];
+
+                        memset(date_s, 0, DATE_LEN);
+                        time(&current_time);
+
+                        time_info = localtime(&current_time);
+
+                        strftime(date_s, sizeof(date_s), "%Y-%m-%d", time_info);
+
+                        res = NEW_VARIANT(CIToken,
+                                          standard_predefined_macro___date__,
+                                          last_token->location,
+                                          from__String(date_s));
+
+                        goto free_last_token;
+
+#undef DATE_LEN
+                    }
+                    case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__:
+                        res = NEW_VARIANT(
+                          CIToken,
+                          standard_predefined_macro___file__,
+                          last_token->location,
+                          from__String(self->base.source.file->name));
+
+                        goto free_last_token;
+                    case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__:
+                        res = NEW_VARIANT(CIToken,
+                                          standard_predefined_macro___line__,
+                                          last_token->location,
+                                          self->base.source.cursor.line);
+
+                        goto free_last_token;
+                    case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__: {
+#define TIME_LEN 100
+
+                        // TODO: Improve this part of code.
+                        time_t current_time;
+                        struct tm *time_info;
+                        char time_s[TIME_LEN];
+
+                        memset(time_s, 0, TIME_LEN);
+                        time(&current_time);
+
+                        time_info = localtime(&current_time);
+
+                        strftime(time_s, sizeof(time_s), "%H:%M:%S", time_info);
+
+                        res = NEW_VARIANT(CIToken,
+                                          standard_predefined_macro___time__,
+                                          last_token->location,
+                                          from__String(time_s));
+
+                        goto free_last_token;
+
+#undef TIME_LEN
+                    }
                     default:
                         res = NEW(CIToken,
                                   standard_predefined_macro,
@@ -1776,6 +1840,9 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, const CIScannerContext *ctx)
 
             res = last_token;
         exit:
+            break;
+        free_last_token:
+            FREE(CIToken, last_token);
             break;
         default:
             res = last_token;

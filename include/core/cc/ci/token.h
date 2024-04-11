@@ -862,6 +862,10 @@ typedef struct CIToken
         // The `macro_param` corresponds to the position index in the macro
         // (#define) params vector (preprocessor_define.params).
         Usize macro_param;
+        String *standard_predefined_macro___date__;
+        String *standard_predefined_macro___file__;
+        Usize standard_predefined_macro___line__;
+        String *standard_predefined_macro___time__;
     };
 } CIToken;
 
@@ -1125,6 +1129,16 @@ VARIANT_CONSTRUCTOR(CIToken *,
 
 /**
  *
+ * @brief Construct CIToken type (CI_TOKEN_KIND_PREPROCESSOR_UNDEF).
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    preprocessor_undef,
+                    Location location,
+                    String *preprocessor_undef);
+
+/**
+ *
  * @brief Construct CIToken type (CI_TOKEN_KIND_PREPROCESSOR_WARNING).
  */
 VARIANT_CONSTRUCTOR(CIToken *,
@@ -1135,13 +1149,47 @@ VARIANT_CONSTRUCTOR(CIToken *,
 
 /**
  *
- * @brief Construct CIToken type (CI_TOKEN_KIND_PREPROCESSOR_UNDEF).
+ * @brief Construct CIToken type
+ * (CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__).
  */
 VARIANT_CONSTRUCTOR(CIToken *,
                     CIToken,
-                    preprocessor_undef,
+                    standard_predefined_macro___date__,
                     Location location,
-                    String *preprocessor_undef);
+                    String *standard_predefined_macro___date__);
+
+/**
+ *
+ * @brief Construct CIToken type
+ * (CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__).
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    standard_predefined_macro___file__,
+                    Location location,
+                    String *standard_predefined_macro___file__);
+
+/**
+ *
+ * @brief Construct CIToken type
+ * (CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__).
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    standard_predefined_macro___line__,
+                    Location location,
+                    Usize standard_predefined_macro___line__);
+
+/**
+ *
+ * @brief Construct CIToken type
+ * (CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__).
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    standard_predefined_macro___time__,
+                    Location location,
+                    String *standard_predefined_macro___time__);
 
 /**
  *
