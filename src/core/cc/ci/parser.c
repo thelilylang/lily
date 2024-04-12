@@ -4662,6 +4662,8 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
             return parse_stmt__CIParser(self, in_loop, in_switch);
         }
         case CI_TOKEN_KIND_SEMICOLON:
+            next_token__CIParser(self);
+
             return NULL;
         default:
         default_case: {
