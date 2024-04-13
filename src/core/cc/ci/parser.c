@@ -4440,6 +4440,8 @@ parse_if_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
 
     switch (self->tokens_iters.current_token->kind) {
         case CI_TOKEN_KIND_KEYWORD_ELSE:
+            next_token__CIParser(self);
+
             if (expect__CIParser(self, CI_TOKEN_KIND_LBRACE, false)) {
                 else_ = parse_function_body__CIParser(self, in_loop, in_switch);
             } else {
