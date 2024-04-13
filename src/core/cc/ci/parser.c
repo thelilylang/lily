@@ -3418,29 +3418,36 @@ parse_data_type__CIParser(CIParser *self)
             FAILED("expected data type");
     }
 
+loop:
     switch (self->tokens_iters.current_token->kind) {
-        case CI_TOKEN_KIND_STAR:
-            next_token__CIParser(self);
-
-            res = NEW_VARIANT(CIDataType, ptr, res);
-
-            break;
         case CI_TOKEN_KIND_LPAREN:
             TODO("function data type");
         default:
-            return res;
+            if (self->tokens_iters.current_token->kind == CI_TOKEN_KIND_STAR ||
+                self->tokens_iters.current_token->kind ==
+                  CI_TOKEN_KIND_KEYWORD_CONST) {
+                while (true) {
+                    switch (self->tokens_iters.current_token->kind) {
+                        case CI_TOKEN_KIND_STAR:
+                            res = NEW_VARIANT(CIDataType, ptr, res);
+
+                            break;
+                        case CI_TOKEN_KIND_KEYWORD_CONST:
+                            res = NEW_VARIANT(CIDataType, post_const, res);
+
+                            break;
+                        default:
+                            goto exit;
+                    }
+
+                    next_token__CIParser(self);
+                }
+
+                goto loop;
+            }
     }
 
-    switch (self->tokens_iters.current_token->kind) {
-        case CI_TOKEN_KIND_KEYWORD_CONST:
-            next_token__CIParser(self);
-
-            res = NEW_VARIANT(CIDataType, post_const, res);
-
-            break;
-        default:
-            return res;
-    }
+exit:
 
     return res;
 }
