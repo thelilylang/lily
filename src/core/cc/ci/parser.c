@@ -4492,11 +4492,16 @@ parse_while_stmt__CIParser(CIParser *self, bool in_switch)
             body = parse_function_body__CIParser(self, true, in_switch);
 
             break;
-        case CI_TOKEN_KIND_SEMICOLON:
-            next_token__CIParser(self);
-            break;
-        default:
-            FAILED("expected `{` or `;`");
+        default: {
+            CIDeclFunctionItem *item =
+              parse_function_body_item__CIParser(self, true, in_switch);
+
+            if (item) {
+                body = NEW(Vec);
+
+                push__Vec(body, item);
+            }
+        }
     }
 
     return NEW_VARIANT(
