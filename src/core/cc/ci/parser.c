@@ -337,8 +337,14 @@ peek_token__CIParser(CIParser *self, Usize n);
 static bool
 expect__CIParser(CIParser *self, enum CITokenKind kind, bool emit_error);
 
+/// @brief Check if the current token has the same type as the current element
+/// in the type list.
+static bool
+expect_many__CIParser(CIParser *self, Usize n, ...);
+
 /// @brief Check if the current token has the same kind than an element in the
-/// list of kind.
+/// list of kind (only one element needs to match for this function not to emit
+/// an error).
 static void
 expect_with_list__CIParser(CIParser *self, Usize n, ...);
 
@@ -2570,6 +2576,26 @@ expect__CIParser(CIParser *self, enum CITokenKind kind, bool emit_error)
     return false;
 }
 
+bool
+expect_many__CIParser(CIParser *self, Usize n, ...)
+{
+    ASSERT(n > 0);
+
+    va_list vl;
+
+    va_start(vl);
+
+    while (n--) {
+        if (!expect__CIParser(self, va_arg(vl, enum CITokenKind), true)) {
+            return false;
+        }
+    }
+
+    va_end(vl);
+
+    return true;
+}
+
 void
 expect_with_list__CIParser(CIParser *self, Usize n, ...)
 {
@@ -2579,14 +2605,15 @@ expect_with_list__CIParser(CIParser *self, Usize n, ...)
 
     va_start(vl);
 
-    while (n-- && !expect__CIParser(self, va_arg(vl, enum CITokenKind), false))
-        ;
+    while (n--) {
+        if (expect__CIParser(self, va_arg(vl, enum CITokenKind), false)) {
+            return;
+        }
+    }
 
     va_end(vl);
 
-    if (n == 0) {
-        FAILED("expected ...");
-    }
+    FAILED("expected ...");
 }
 
 bool
@@ -4262,7 +4289,8 @@ parse_do_while_stmt__CIParser(CIParser *self, bool in_switch)
         }
     }
 
-    expect__CIParser(self, CI_TOKEN_KIND_KEYWORD_WHILE, true);
+    expect_many__CIParser(
+      self, 2, CI_TOKEN_KIND_KEYWORD_WHILE, CI_TOKEN_KIND_LPAREN);
 
     CIExpr *cond = parse_expr__CIParser(self);
 
@@ -4270,7 +4298,7 @@ parse_do_while_stmt__CIParser(CIParser *self, bool in_switch)
         return NULL;
     }
 
-    expect_with_list__CIParser(
+    expect_many__CIParser(
       self, 2, CI_TOKEN_KIND_RPAREN, CI_TOKEN_KIND_SEMICOLON);
 
     return NEW_VARIANT(
@@ -4316,12 +4344,7 @@ parse_for_stmt__CIParser(CIParser *self, bool in_switch)
               parse_function_body_item__CIParser(self, false, false);
 
             if (init_clause) {
-                // check if we have `;` after expression
-                if (is_for_init_clause__CIDeclFunctionItem(init_clause)) {
-                    if (init_clause->kind == CI_DECL_FUNCTION_ITEM_KIND_EXPR) {
-                        expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
-                    }
-                } else {
+                if (!is_for_init_clause__CIDeclFunctionItem(init_clause)) {
                     FAILED("expected valid for init-clause");
                 }
             }
@@ -4694,8 +4717,12 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
 
             DISABLE_IN_LABEL();
 
-            return NEW_VARIANT(
-              CIDeclFunctionItem, expr, parse_expr__CIParser(self));
+            CIDeclFunctionItem *item =
+              NEW_VARIANT(CIDeclFunctionItem, expr, parse_expr__CIParser(self));
+
+            expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
+
+            return item;
         }
     }
 }
