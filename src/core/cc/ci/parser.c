@@ -4311,30 +4311,29 @@ parse_for_stmt__CIParser(CIParser *self, bool in_switch)
         case CI_TOKEN_KIND_SEMICOLON:
             next_token__CIParser(self);
             break;
-        default: {
-            CIDecl *decl = parse_decl__CIParser(self, true); // => variable
-
-            if (!decl) {
-                FAILED("expected variable declaration");
-            }
-
-            init_clause = NEW_VARIANT(CIDeclFunctionItem, decl, decl);
-
-            break;
-        }
-    }
-
-    switch (self->tokens_iters.current_token->kind) {
-        case CI_TOKEN_KIND_SEMICOLON:
-            next_token__CIParser(self);
-            break;
         default:
-            expr1 = parse_expr__CIParser(self);
+            init_clause =
+              parse_function_body_item__CIParser(self, false, false);
 
-            if (!expr1) {
-                FAILED("expected condition in for loop");
+            if (init_clause) {
+                // check if we have `;` after expression
+                if (is_for_init_clause__CIDeclFunctionItem(init_clause)) {
+                    if (init_clause->kind == CI_DECL_FUNCTION_ITEM_KIND_EXPR) {
+                        expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
+                    }
+                } else {
+                    FAILED("expected valid for init-clause");
+                }
             }
     }
+
+    expr1 = parse_expr__CIParser(self);
+
+    if (!expr1) {
+        FAILED("expected condition in for loop");
+    }
+
+    expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
 
     switch (self->tokens_iters.current_token->kind) {
         case CI_TOKEN_KIND_RPAREN:

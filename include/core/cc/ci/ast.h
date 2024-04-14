@@ -2658,6 +2658,13 @@ VARIANT_CONSTRUCTOR(CIDeclFunctionItem *,
 
 /**
  *
+ * @brief Check if `CIDeclFunctionItem` is a `for` statement init-clause.
+ */
+bool
+is_for_init_clause__CIDeclFunctionItem(const CIDeclFunctionItem *self);
+
+/**
+ *
  * @brief Convert CIDeclFunctionItem in String.
  * @note This function is only used to debug.
  */

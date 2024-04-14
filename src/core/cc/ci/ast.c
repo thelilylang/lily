@@ -3784,6 +3784,40 @@ VARIANT_CONSTRUCTOR(CIDeclFunctionItem *, CIDeclFunctionItem, stmt, CIStmt stmt)
     return self;
 }
 
+bool
+is_for_init_clause__CIDeclFunctionItem(const CIDeclFunctionItem *self)
+{
+    ASSERT(self);
+
+    switch (self->kind) {
+        case CI_DECL_FUNCTION_ITEM_KIND_EXPR:
+            if (self->expr->kind == CI_EXPR_KIND_BINARY) {
+                switch (self->expr->binary.kind) {
+                    case CI_EXPR_BINARY_KIND_ASSIGN:
+                    case CI_EXPR_BINARY_KIND_ASSIGN_ADD:
+                    case CI_EXPR_BINARY_KIND_ASSIGN_SUB:
+                    case CI_EXPR_BINARY_KIND_ASSIGN_MUL:
+                    case CI_EXPR_BINARY_KIND_ASSIGN_DIV:
+                    case CI_EXPR_BINARY_KIND_ASSIGN_MOD:
+                    case CI_EXPR_BINARY_KIND_ASSIGN_BIT_AND:
+                    case CI_EXPR_BINARY_KIND_ASSIGN_BIT_OR:
+                    case CI_EXPR_BINARY_KIND_ASSIGN_XOR:
+                    case CI_EXPR_BINARY_KIND_ASSIGN_BIT_LSHIFT:
+                    case CI_EXPR_BINARY_KIND_ASSIGN_BIT_RSHIFT:
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+
+            return false;
+        case CI_DECL_FUNCTION_ITEM_KIND_DECL:
+            return self->decl->kind == CI_DECL_KIND_VARIABLE;
+        default:
+            return false;
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclFunctionItem, const CIDeclFunctionItem *self)
