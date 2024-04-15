@@ -3985,6 +3985,18 @@ get_token__CIScanner(CIScanner *self,
                        CI_TOKEN_KIND_STAR,
                        clone__Location(&self->base.location));
 
+        // %, %=
+        case '%':
+            if (c1 == (char *)'%') {
+                return NEW(CIToken,
+                           CI_TOKEN_KIND_PERCENTAGE,
+                           clone__Location(&self->base.location));
+            }
+
+            return NEW(CIToken,
+                       CI_TOKEN_KIND_PERCENTAGE_EQ,
+                       clone__Location(&self->base.location));
+
         case IS_ZERO:
             if (c1 == (char *)'x' || c1 == (char *)'0' || c1 == (char *)'.' ||
                 !(c1 >= (char *)'0' && c1 <= (char *)'9')) {
