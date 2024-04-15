@@ -1557,6 +1557,41 @@ IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self);
  */
 DESTRUCTOR(CIDecl, CIDecl *self);
 
+// <array>[<access>]
+typedef struct CIExprArrayAccess
+{
+    CIExpr *array;
+    CIExpr *access;
+} CIExprArrayAccess;
+
+/**
+ *
+ * @brief Construct CIExprArrayAccess type.
+ */
+inline CONSTRUCTOR(CIExprArrayAccess,
+                   CIExprArrayAccess,
+                   CIExpr *array,
+                   CIExpr *access)
+{
+    return (CIExprArrayAccess){ .array = array, .access = access };
+}
+
+/**
+ *
+ * @brief Convert CIExprArrayAccess in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIExprArrayAccess, const CIExprArrayAccess *self);
+#endif
+
+/**
+ *
+ * @brief Free CIExprArrayAccess type.
+ */
+DESTRUCTOR(CIExprArrayAccess, const CIExprArrayAccess *self);
+
 enum CIExprBinaryKind
 {
     CI_EXPR_BINARY_KIND_ASSIGN,            // =
@@ -1996,6 +2031,7 @@ DESTRUCTOR(CIExprStructCall, const CIExprStructCall *self);
 enum CIExprKind
 {
     CI_EXPR_KIND_ALIGNOF,
+    CI_EXPR_KIND_ARRAY_ACCESS,
     CI_EXPR_KIND_BINARY,
     CI_EXPR_KIND_CAST,
     CI_EXPR_KIND_DATA_TYPE,
@@ -2026,6 +2062,7 @@ struct CIExpr
     union
     {
         CIExpr *alignof_;
+        CIExprArrayAccess array_access;
         CIExprBinary binary;
         CIExprCast cast;
         CIDataType *data_type;
@@ -2045,6 +2082,15 @@ struct CIExpr
  * @brief Construct CIExpr type (CI_EXPR_KIND_ALIGNOF).
  */
 VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, alignof, CIExpr *alignof_);
+
+/**
+ *
+ * @brief Construct CIExpr type (CI_EXPR_KIND_ARRAY_ACCESS).
+ */
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    array_access,
+                    CIExprArrayAccess array_access);
 
 /**
  *

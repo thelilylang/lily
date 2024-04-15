@@ -870,6 +870,13 @@ generate_function_expr__CIGenerator(const CIExpr *expr)
             write_str__CIGenerator(")");
 
             break;
+        case CI_EXPR_KIND_ARRAY_ACCESS:
+            generate_function_expr__CIGenerator(expr->array_access.array);
+            write_str__CIGenerator("[");
+            generate_function_expr__CIGenerator(expr->array_access.access);
+            write_str__CIGenerator("]");
+
+            break;
         case CI_EXPR_KIND_BINARY:
             generate_function_binary_expr__CIGenerator(&expr->binary);
 

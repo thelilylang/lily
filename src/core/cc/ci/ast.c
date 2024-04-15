@@ -108,6 +108,9 @@ static VARIANT_DESTRUCTOR(CIDecl, variable, CIDecl *self);
 /// @brief Free CIExpr type (CI_EXPR_KIND_ALIGNOF).
 static VARIANT_DESTRUCTOR(CIExpr, alignof, CIExpr *self);
 
+/// @brief Free CIExpr type (CI_EXPR_KIND_ARRAY_ACCESS).
+static VARIANT_DESTRUCTOR(CIExpr, array_access, CIExpr *self);
+
 /// @brief Free CIExpr type (CI_EXPR_KIND_BINARY).
 static VARIANT_DESTRUCTOR(CIExpr, binary, CIExpr *self);
 
@@ -2309,6 +2312,22 @@ DESTRUCTOR(CIDecl, CIDecl *self)
 }
 
 #ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIExprArrayAccess, const CIExprArrayAccess *self)
+{
+    return format__String("CIExprArrayAccess{{ array = {Sr}, access = {Sr} }",
+                          to_string__Debug__CIExpr(self->array),
+                          to_string__Debug__CIExpr(self->access));
+}
+#endif
+
+DESTRUCTOR(CIExprArrayAccess, const CIExprArrayAccess *self)
+{
+    FREE(CIExpr, self->array);
+    FREE(CIExpr, self->access);
+}
+
+#ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string, CIExprBinaryKind, enum CIExprBinaryKind self)
 {
@@ -2779,6 +2798,8 @@ IMPL_FOR_DEBUG(to_string, CIExprKind, enum CIExprKind self)
     switch (self) {
         case CI_EXPR_KIND_ALIGNOF:
             return "CI_EXPR_KIND_ALIGNOF";
+        case CI_EXPR_KIND_ARRAY_ACCESS:
+            return "CI_EXPR_KIND_ARRAY_ACCESS";
         case CI_EXPR_KIND_BINARY:
             return "CI_EXPR_KIND_BINARY";
         case CI_EXPR_KIND_CAST:
@@ -2814,6 +2835,20 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, alignof, CIExpr *alignof_)
     self->kind = CI_EXPR_KIND_ALIGNOF;
     self->ref_count = 0;
     self->alignof_ = alignof_;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    array_access,
+                    CIExprArrayAccess array_access)
+{
+    CIExpr *self = lily_malloc(sizeof(CIExpr));
+
+    self->kind = CI_EXPR_KIND_ARRAY_ACCESS;
+    self->ref_count = 0;
+    self->array_access = array_access;
 
     return self;
 }
@@ -2948,6 +2983,8 @@ get_data_type__CIExpr(const CIExpr *self)
     switch (self->kind) {
         case CI_EXPR_KIND_ALIGNOF:
             TODO("alignof: implement size_t");
+        case CI_EXPR_KIND_ARRAY_ACCESS:
+            TODO("array access");
         case CI_EXPR_KIND_BINARY:
             switch (self->binary.kind) {
                 case CI_EXPR_BINARY_KIND_ASSIGN:
@@ -3112,6 +3149,11 @@ IMPL_FOR_DEBUG(to_string, CIExpr, const CIExpr *self)
             return format__String("CIExpr{{ kind = {s}, alignof_ = {Sr} }",
                                   to_string__Debug__CIExprKind(self->kind),
                                   to_string__Debug__CIExpr(self->alignof_));
+        case CI_EXPR_KIND_ARRAY_ACCESS:
+            return format__String(
+              "CIExpr{{ kind = {s}, array_access = {Sr} }",
+              to_string__Debug__CIExprKind(self->kind),
+              to_string__Debug__CIExprArrayAccess(&self->array_access));
         case CI_EXPR_KIND_BINARY:
             return format__String(
               "CIExpr{{ kind = {s}, binary = {Sr} }",
@@ -3180,6 +3222,7 @@ to_precedence__CIExpr(const CIExpr *self)
         case CI_EXPR_KIND_SIZEOF:
         case CI_EXPR_KIND_ALIGNOF:
             return EXPR_PRECEDENCE_LEVEL_2;
+        case CI_EXPR_KIND_ARRAY_ACCESS:
         case CI_EXPR_KIND_FUNCTION_CALL:
             return EXPR_PRECEDENCE_LEVEL_1;
         case CI_EXPR_KIND_TERNARY:
@@ -3192,6 +3235,12 @@ to_precedence__CIExpr(const CIExpr *self)
 VARIANT_DESTRUCTOR(CIExpr, alignof, CIExpr *self)
 {
     FREE(CIExpr, self->alignof_);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIExpr, array_access, CIExpr *self)
+{
+    FREE(CIExprArrayAccess, &self->array_access);
     lily_free(self);
 }
 
@@ -3269,6 +3318,9 @@ DESTRUCTOR(CIExpr, CIExpr *self)
     switch (self->kind) {
         case CI_EXPR_KIND_ALIGNOF:
             FREE_VARIANT(CIExpr, alignof, self);
+            break;
+        case CI_EXPR_KIND_ARRAY_ACCESS:
+            FREE_VARIANT(CIExpr, array_access, self);
             break;
         case CI_EXPR_KIND_BINARY:
             FREE_VARIANT(CIExpr, binary, self);
