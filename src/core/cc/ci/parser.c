@@ -4268,7 +4268,7 @@ loop:
         case CI_TOKEN_KIND_ARROW:
             expr = parse_binary_expr__CIParser(self, expr);
 
-			goto loop;
+            goto loop;
         case CI_TOKEN_KIND_HASHTAG_HASHTAG:
             TODO("done <id>##<id>");
         // Parse array access
