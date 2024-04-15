@@ -1980,6 +1980,8 @@ resolve_expr__CIParser(CIParser *self, CIExpr *expr, bool is_partial)
     switch (expr->kind) {
         case CI_EXPR_KIND_ALIGNOF:
             TODO("resolve alignof");
+        case CI_EXPR_KIND_ARRAY_ACCESS:
+            TODO("array access");
         case CI_EXPR_KIND_BINARY: {
             switch (expr->binary.kind) {
                 case CI_EXPR_BINARY_KIND_ASSIGN:
@@ -2948,6 +2950,13 @@ visit_function_expr__CIParser(CIParser *self,
         case CI_EXPR_KIND_ALIGNOF:
             visit_function_expr__CIParser(
               self, expr->alignof_, called_generic_params);
+
+            break;
+        case CI_EXPR_KIND_ARRAY_ACCESS:
+            visit_function_expr__CIParser(
+              self, expr->array_access.array, called_generic_params);
+            visit_function_expr__CIParser(
+              self, expr->array_access.access, called_generic_params);
 
             break;
         case CI_EXPR_KIND_BINARY:
@@ -3962,8 +3971,6 @@ parse_primary_expr__CIParser(CIParser *self)
                       self, identifier, generic_params);
                 case CI_TOKEN_KIND_LBRACE:
                     TODO("parse struct call");
-                case CI_TOKEN_KIND_LHOOK:
-                    TODO("parse indexed array");
                 default:
                     return NEW_VARIANT(CIExpr, identifier, identifier);
             }
@@ -4225,8 +4232,9 @@ parse_expr__CIParser(CIParser *self)
         return NULL;
     }
 
-    // Parse binary expression
+loop:
     switch (self->tokens_iters.current_token->kind) {
+        // Parse binary expression
         case CI_TOKEN_KIND_EQ:
         case CI_TOKEN_KIND_PLUS_EQ:
         case CI_TOKEN_KIND_MINUS_EQ:
@@ -4258,9 +4266,24 @@ parse_expr__CIParser(CIParser *self)
         case CI_TOKEN_KIND_RSHIFT_EQ:
         case CI_TOKEN_KIND_DOT:
         case CI_TOKEN_KIND_ARROW:
-            return parse_binary_expr__CIParser(self, expr);
+            expr = parse_binary_expr__CIParser(self, expr);
+
+			goto loop;
         case CI_TOKEN_KIND_HASHTAG_HASHTAG:
             TODO("done <id>##<id>");
+        // Parse array access
+        case CI_TOKEN_KIND_LHOOK: {
+            next_token__CIParser(self);
+
+            CIExpr *access = parse_expr__CIParser(self);
+
+            expect__CIParser(self, CI_TOKEN_KIND_RHOOK, true);
+
+            expr = NEW_VARIANT(
+              CIExpr, array_access, NEW(CIExprArrayAccess, expr, access));
+
+            goto loop;
+        }
         default:
             return expr;
     }

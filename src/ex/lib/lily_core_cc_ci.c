@@ -181,6 +181,11 @@ ref__CIDecl(CIDecl *self);
 extern inline String *
 get_typedef_name__CIDecl(const CIDecl *self);
 
+extern inline CONSTRUCTOR(CIExprArrayAccess,
+                          CIExprArrayAccess,
+                          CIExpr *array,
+                          CIExpr *access);
+
 extern inline CONSTRUCTOR(CIExprBinary,
                           CIExprBinary,
                           enum CIExprBinaryKind kind,
