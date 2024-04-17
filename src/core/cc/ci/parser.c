@@ -405,6 +405,10 @@ generate_union_gen__CIParser(CIParser *self,
                              String *union_name,
                              CIGenericParams *called_generic_params);
 
+/// @brief Parse post data type, like pointer, ...
+static CIDataType *
+parse_post_data_type__CIParser(CIParser *self, CIDataType *data_type);
+
 /// @brief Parse data type.
 static CIDataType *
 parse_data_type__CIParser(CIParser *self);
@@ -524,6 +528,14 @@ parse_variable__CIParser(CIParser *self,
                          bool is_prototype,
                          bool is_local);
 
+/// @brief Parse list of variable declaration.
+static CIDecl *
+parse_variable_list__CIParser(CIParser *self,
+                              CIDecl *current_var,
+                              int storage_class_flag,
+                              CIDataType *data_type,
+                              bool in_function_body);
+
 /// @brief Resolve `#embed` preprocessor.
 static void
 resolve_preprocessor_embed__CIParser(CIParser *self,
@@ -611,7 +623,11 @@ static struct CIParserContext ctx;
 // statetement).
 static bool in_label = false;
 
-static CIScope *current_scope = NULL;
+// Represent the `scope` of the current block being analyzed.
+static CIScope *current_scope = NULL; // CIScope*?
+
+// Represent the `body` of the current block being analyzed.
+static Vec *current_body = NULL; // Vec<CIDeclFunctionItem*>*?
 
 #define ENABLE_IN_LABEL() in_label = true;
 #define DISABLE_IN_LABEL() \
@@ -3136,6 +3152,43 @@ generate_union_gen__CIParser(CIParser *self,
 }
 
 CIDataType *
+parse_post_data_type__CIParser(CIParser *self, CIDataType *data_type)
+{
+loop:
+    switch (self->tokens_iters.current_token->kind) {
+        case CI_TOKEN_KIND_LPAREN:
+            TODO("function data type");
+        default:
+            if (self->tokens_iters.current_token->kind == CI_TOKEN_KIND_STAR ||
+                self->tokens_iters.current_token->kind ==
+                  CI_TOKEN_KIND_KEYWORD_CONST) {
+                while (true) {
+                    switch (self->tokens_iters.current_token->kind) {
+                        case CI_TOKEN_KIND_STAR:
+                            data_type = NEW_VARIANT(CIDataType, ptr, data_type);
+
+                            break;
+                        case CI_TOKEN_KIND_KEYWORD_CONST:
+                            data_type =
+                              NEW_VARIANT(CIDataType, post_const, data_type);
+
+                            break;
+                        default:
+                            goto exit;
+                    }
+
+                    next_token__CIParser(self);
+                }
+
+                goto loop;
+            }
+    }
+
+exit:
+    return data_type;
+}
+
+CIDataType *
 parse_data_type__CIParser(CIParser *self)
 {
     CIDataType *res = NULL;
@@ -3437,38 +3490,7 @@ parse_data_type__CIParser(CIParser *self)
             FAILED("expected data type");
     }
 
-loop:
-    switch (self->tokens_iters.current_token->kind) {
-        case CI_TOKEN_KIND_LPAREN:
-            TODO("function data type");
-        default:
-            if (self->tokens_iters.current_token->kind == CI_TOKEN_KIND_STAR ||
-                self->tokens_iters.current_token->kind ==
-                  CI_TOKEN_KIND_KEYWORD_CONST) {
-                while (true) {
-                    switch (self->tokens_iters.current_token->kind) {
-                        case CI_TOKEN_KIND_STAR:
-                            res = NEW_VARIANT(CIDataType, ptr, res);
-
-                            break;
-                        case CI_TOKEN_KIND_KEYWORD_CONST:
-                            res = NEW_VARIANT(CIDataType, post_const, res);
-
-                            break;
-                        default:
-                            goto exit;
-                    }
-
-                    next_token__CIParser(self);
-                }
-
-                goto loop;
-            }
-    }
-
-exit:
-
-    return res;
+    return parse_post_data_type__CIParser(self, res);
 }
 
 Vec *
@@ -4720,12 +4742,13 @@ parse_function_body__CIParser(CIParser *self, bool in_loop, bool in_switch)
 {
     ASSERT(current_scope);
 
+    // Save parent values.
     CIScope *parent_scope = current_scope;
+    Vec *parent_body = current_body;
 
     current_scope =
       add_scope__CIResultFile(self->file, current_scope->scope_id, true);
-
-    Vec *body = NEW(Vec); // Vec<CIDelcFunctionItem*>*
+    current_body = NEW(Vec);
 
     while (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RBRACE &&
            self->tokens_iters.current_token->kind != CI_TOKEN_KIND_EOF) {
@@ -4733,17 +4756,21 @@ parse_function_body__CIParser(CIParser *self, bool in_loop, bool in_switch)
           parse_function_body_item__CIParser(self, in_loop, in_switch);
 
         if (item) {
-            push__Vec(body, item);
+            push__Vec(current_body, item);
         }
     }
 
+    Vec *res_body = current_body;
+
+    // Restore parent values as current.
     current_scope = parent_scope;
+    current_body = parent_body;
 
     DISABLE_IN_LABEL();
 
     expect__CIParser(self, CI_TOKEN_KIND_RBRACE, true);
 
-    return body;
+    return res_body;
 }
 
 CIDecl *
@@ -4917,7 +4944,9 @@ parse_variable__CIParser(CIParser *self,
         FAILED("Don't accept variable declaration in label");
     }
 
-    next_token__CIParser(self); // skip `=` or `;`
+    if (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_COMMA) {
+        next_token__CIParser(self); // skip `=` or `;`
+    }
 
     if (is_prototype) {
         return NEW_VARIANT(
@@ -4934,6 +4963,8 @@ parse_variable__CIParser(CIParser *self,
         case CI_TOKEN_KIND_SEMICOLON:
             next_token__CIParser(self);
             break;
+        case CI_TOKEN_KIND_COMMA:
+            break;
         default:
             FAILED("expected `;`");
     }
@@ -4943,6 +4974,74 @@ parse_variable__CIParser(CIParser *self,
                        storage_class_flag,
                        false,
                        NEW(CIDeclVariable, data_type, name, expr, is_local));
+}
+
+CIDecl *
+parse_variable_list__CIParser(CIParser *self,
+                              CIDecl *current_var,
+                              int storage_class_flag,
+                              CIDataType *data_type,
+                              bool in_function_body)
+{
+    // Parse list of variable.
+    // first_variable, <var2>, <var3>;
+    while (self->tokens_iters.current_token->kind == CI_TOKEN_KIND_COMMA &&
+           self->tokens_iters.previous_token->kind != CI_TOKEN_KIND_SEMICOLON) {
+        if (current_var) {
+            add_decl_to_scope__CIParser(self, &current_var, in_function_body);
+
+            // Push to the current body of the function the current
+            // variable.
+            if (in_function_body) {
+                ASSERT(current_body);
+
+                push__Vec(current_body,
+                          NEW_VARIANT(CIDeclFunctionItem, decl, current_var));
+            }
+        }
+
+        next_token__CIParser(self); // skip `,`
+
+        CIDataType *cloned_data_type =
+          parse_post_data_type__CIParser(self, clone__CIDataType(data_type));
+        String *name = NULL;
+
+        switch (self->tokens_iters.current_token->kind) {
+            case CI_TOKEN_KIND_IDENTIFIER:
+                name = self->tokens_iters.current_token->identifier;
+                next_token__CIParser(self);
+
+                break;
+            default:
+                FAILED("expected identifier");
+        }
+
+        switch (self->tokens_iters.current_token->kind) {
+            case CI_TOKEN_KIND_EQ:
+                current_var = parse_variable__CIParser(self,
+                                                       storage_class_flag,
+                                                       cloned_data_type,
+                                                       name,
+                                                       false,
+                                                       in_function_body);
+
+                break;
+            case CI_TOKEN_KIND_COMMA:
+            case CI_TOKEN_KIND_SEMICOLON:
+                current_var = parse_variable__CIParser(self,
+                                                       storage_class_flag,
+                                                       cloned_data_type,
+                                                       name,
+                                                       true,
+                                                       in_function_body);
+
+                break;
+            default:
+                FAILED("expected `=`, `*` or `;`");
+        }
+    }
+
+    return current_var;
 }
 
 void
@@ -5119,6 +5218,7 @@ parse_decl__CIParser(CIParser *self, bool in_function_body)
             }
 
             switch (self->tokens_iters.current_token->kind) {
+                // Parse first variable
                 case CI_TOKEN_KIND_EQ:
                     if (generic_params) {
                         goto no_generic_params_expected;
@@ -5132,6 +5232,7 @@ parse_decl__CIParser(CIParser *self, bool in_function_body)
                                                    in_function_body);
 
                     break;
+                case CI_TOKEN_KIND_COMMA:
                 case CI_TOKEN_KIND_SEMICOLON:
                     if (generic_params) {
                     no_generic_params_expected: {
@@ -5165,6 +5266,9 @@ parse_decl__CIParser(CIParser *self, bool in_function_body)
 
                     return NULL;
             }
+
+            res = parse_variable_list__CIParser(
+              self, res, storage_class_flag, data_type, in_function_body);
 
             break;
         }
