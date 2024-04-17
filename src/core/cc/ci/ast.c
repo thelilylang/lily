@@ -1499,6 +1499,7 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunction, const CIDeclFunction *self)
     String *res =
       format__String("CIDeclFunction{{ name = {S}, return_data_type = {Sr}, "
                      "generic_params = {Sr}, params =",
+                     self->name,
                      to_string__Debug__CIDataType(self->return_data_type),
                      self->generic_params
                        ? to_string__Debug__CIGenericParams(self->generic_params)
