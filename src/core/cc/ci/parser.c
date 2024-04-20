@@ -2510,10 +2510,14 @@ peek_token__CIParser(CIParser *self, Usize n)
 {
     CIToken *current_token = self->tokens_iters.current_token;
     Vec *iters_vec = NEW(Vec);  // Vec<CITokensIter*>*
-    Vec *macros_vec = NEW(Vec); // Vec<CIParserMacro*>*
+    Vec *macros_vec = NEW(Vec); // Vec<CIParserMacroCall*>*
 
     for (Usize i = self->tokens_iters.iters->len; i--;) {
         push__Vec(iters_vec, visit__Stack(self->tokens_iters.iters, i));
+    }
+
+    for (Usize i = self->macros_call->len; i--;) {
+        push__Vec(macros_vec, visit__Stack(self->macros_call, i));
     }
 
     CITokensIter *current_iter =
@@ -2535,11 +2539,46 @@ peek_token__CIParser(CIParser *self, Usize n)
                       NEW(CITokensIter, peek__Stack(self->macros_call));
 
                     continue;
-                case CI_TOKEN_KIND_IDENTIFIER:
-                    TODO("macro");
+                case CI_TOKEN_KIND_IDENTIFIER: {
+                    const CIResultDefine *define = get_define__CIResultFile(
+                      self->file, current_token->identifier);
+
+                    if (define) {
+#define NEXT_WITH_PEEK()                                                     \
+    ({                                                                       \
+        CIToken *_tk =                                                       \
+          safe_get__Vec(current_iter->iter.vec, ++current_iter->peek.count); \
+        _tk;                                                                 \
+    })
+
+                        switch (NEXT_WITH_PEEK()->kind) {
+							// Parse macro
+							// <id>(<params>)
+                            case CI_TOKEN_KIND_LPAREN:
+                                TODO("parse macro with peek token");
+                            default:
+                                break;
+                        }
+
+                        push__Vec(iters_vec, current_iter);
+                        push__Vec(
+                          macros_vec,
+                          NEW(CIParserMacroCall, define->define->params));
+
+                        current_iter =
+                          NEW(CITokensIter, define->define->tokens);
+
+#undef NEXT_WITH_PEEK
+                    } else {
+                        goto default_case;
+                    }
+
+                    break;
+                }
                 case CI_TOKEN_KIND_PAREN_CALL:
                     TODO("paren call");
                 default:
+                default_case:
                     ++current_iter->peek.count;
                     ++i;
             }
