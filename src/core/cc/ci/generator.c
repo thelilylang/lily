@@ -565,7 +565,10 @@ generate_function_params__CIGenerator(const Vec *params)
             const CIDeclFunctionParam *param = get__Vec(params, i);
 
             generate_data_type__CIGenerator(param->data_type);
-            write_String__CIGenerator(format__String(" {S}", param->name));
+
+            if (param->name) {
+                write_String__CIGenerator(format__String(" {S}", param->name));
+            }
 
             if (i + 1 != params->len) {
                 write_str__CIGenerator(", ");
@@ -1280,7 +1283,7 @@ generate_variable_decl__CIGenerator(const CIDeclVariable *variable)
 void
 generate_decl__CIGenerator(const CIDecl *decl)
 {
-    if (!has_generic__CIDecl(decl)) {
+    if (!has_generic__CIDecl(decl) && !decl->is_prototype) {
         generate_storage_class__CIGenerator(&decl->storage_class_flag);
 
         switch (decl->kind) {
