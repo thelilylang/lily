@@ -76,7 +76,7 @@ static VARIANT_DESTRUCTOR(CIDataType, ptr, CIDataType *self);
 static VARIANT_DESTRUCTOR(CIDataType, struct, CIDataType *self);
 
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_TYPEDEF).
-static inline VARIANT_DESTRUCTOR(CIDataType, typedef, CIDataType *self);
+static VARIANT_DESTRUCTOR(CIDataType, typedef, CIDataType *self);
 
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_UNION).
 static VARIANT_DESTRUCTOR(CIDataType, union, CIDataType *self);
@@ -95,6 +95,12 @@ static VARIANT_DESTRUCTOR(CIDecl, struct, CIDecl *self);
 
 /// @brief Free CIDecl type (CI_DECL_KIND_STRUCT_GEN).
 static VARIANT_DESTRUCTOR(CIDecl, struct_gen, CIDecl *self);
+
+/// @brief Free CIDecl type (CI_DECL_KIND_TYPEDEF).
+static VARIANT_DESTRUCTOR(CIDecl, typedef, CIDecl *self);
+
+/// @brief Free CIDecl type (CI_DECL_KIND_TYPEDEF_GEN).
+static VARIANT_DESTRUCTOR(CIDecl, typedef_gen, CIDecl *self);
 
 /// @brief Free CIDecl type (CI_DECL_KIND_UNION).
 static VARIANT_DESTRUCTOR(CIDecl, union, CIDecl *self);
@@ -206,6 +212,16 @@ CONSTRUCTOR(CIStructID *, CIStructID, CIFileID file_id, Usize id)
     return self;
 }
 
+CONSTRUCTOR(CITypedefID *, CITypedefID, CIFileID file_id, Usize id)
+{
+    CITypedefID *self = lily_malloc(sizeof(CITypedefID));
+
+    self->file_id = file_id;
+    self->id = id;
+
+    return self;
+}
+
 CONSTRUCTOR(CIFunctionID *, CIFunctionID, CIFileID file_id, Usize id)
 {
     CIFunctionID *self = lily_malloc(sizeof(CIFunctionID));
@@ -251,6 +267,7 @@ CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, Usize id, bool is_block)
     self->enums = NEW(HashMap);
     self->functions = NEW(HashMap);
     self->structs = NEW(HashMap);
+    self->typedefs = NEW(HashMap);
     self->unions = NEW(HashMap);
     self->variables = NEW(HashMap);
 
@@ -270,6 +287,9 @@ DESTRUCTOR(CIScope, CIScope *self)
     FREE_HASHMAP_VALUES(self->structs, CIStructID);
     FREE(HashMap, self->structs);
 
+    FREE_HASHMAP_VALUES(self->typedefs, CITypedefID);
+    FREE(HashMap, self->typedefs);
+
     FREE_HASHMAP_VALUES(self->unions, CIUnionID);
     FREE(HashMap, self->unions);
 
@@ -287,6 +307,23 @@ CONSTRUCTOR(CIGenericParams *, CIGenericParams, Vec *params)
     self->params = params;
 
     return self;
+}
+
+bool
+eq__CIGenericParams(const CIGenericParams *self, const CIGenericParams *other)
+{
+    if (self->params->len != other->params->len) {
+        return false;
+    }
+
+    for (Usize i = 0; i < self->params->len; ++i) {
+        if (!eq__CIDataType(get__Vec(self->params, i),
+                            get__Vec(other->params, i))) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 CIGenericParams *
@@ -514,6 +551,24 @@ DESTRUCTOR(CIDataTypeStruct, const CIDataTypeStruct *self)
 
 #ifdef ENV_DEBUG
 String *
+IMPL_FOR_DEBUG(to_string, CIDataTypeTypedef, const CIDataTypeTypedef *self)
+{
+    return format__String(
+      "CIDataTypeTypedef{{ name = {S}, generic_params = {Sr} }",
+      self->name,
+      to_string__Debug__CIGenericParams(self->generic_params));
+}
+#endif
+
+DESTRUCTOR(CIDataTypeTypedef, const CIDataTypeTypedef *self)
+{
+    if (self->generic_params) {
+        FREE(CIGenericParams, self->generic_params);
+    }
+}
+
+#ifdef ENV_DEBUG
+String *
 IMPL_FOR_DEBUG(to_string, CIDataTypeUnion, const CIDataTypeUnion *self)
 {
     String *res = format__String(
@@ -653,7 +708,10 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, struct, CIDataTypeStruct struct_)
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, typedef, String *typedef_)
+VARIANT_CONSTRUCTOR(CIDataType *,
+                    CIDataType,
+                    typedef,
+                    CIDataTypeTypedef typedef_)
 {
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
@@ -767,7 +825,14 @@ clone__CIDataType(const CIDataType *self)
                   fields));
         }
         case CI_DATA_TYPE_KIND_TYPEDEF:
-            return NEW_VARIANT(CIDataType, typedef, self->typedef_);
+            return NEW_VARIANT(
+              CIDataType,
+              typedef,
+              NEW(CIDataTypeTypedef,
+                  self->typedef_.name,
+                  self->typedef_.generic_params
+                    ? clone__CIGenericParams(self->typedef_.generic_params)
+                    : NULL));
         case CI_DATA_TYPE_KIND_UNION: {
             Vec *fields = NULL;
 
@@ -862,8 +927,7 @@ serialize__CIDataType(const CIDataType *self, String *buffer)
 
             break;
         case CI_DATA_TYPE_KIND_TYPEDEF:
-            SERIALIZE_FMT_PUSH_TO_BUFFER(
-              "{zu}", SERIALIZE_NAME(self->typedef_, self->typedef_->len));
+            SERIALIZE_TYPE_WITH_GENERIC_PARAMS(self->typedef_);
 
             break;
         case CI_DATA_TYPE_KIND_UNION:
@@ -899,6 +963,10 @@ serialize__CIDataType(const CIDataType *self, String *buffer)
         default:
             UNREACHABLE("unknown variant");
     }
+
+#undef SERIALIZE_NAME
+#undef SERIALIZE_TYPE_WITH_GENERIC_PARAMS
+#undef SERIALIZE_FMT_PUSH_TO_BUFFER
 }
 
 void
@@ -949,7 +1017,10 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
         case CI_DATA_TYPE_KIND_STRUCT:
             TODO("eq__CIDataType: struct data type");
         case CI_DATA_TYPE_KIND_TYPEDEF:
-            return !strcmp(self->typedef_->buffer, other->typedef_->buffer);
+            return !strcmp(self->typedef_.name->buffer,
+                           other->typedef_.name->buffer) &&
+                   eq__CIGenericParams(self->typedef_.generic_params,
+                                       other->typedef_.generic_params);
         case CI_DATA_TYPE_KIND_UNION:
             TODO("eq__CIDataType: union data type");
         case CI_DATA_TYPE_KIND_BOOL:
@@ -1139,6 +1210,7 @@ VARIANT_DESTRUCTOR(CIDataType, struct, CIDataType *self)
 
 VARIANT_DESTRUCTOR(CIDataType, typedef, CIDataType *self)
 {
+    FREE(CIDataTypeTypedef, &self->typedef_);
     lily_free(self);
 }
 
@@ -1332,6 +1404,8 @@ IMPL_FOR_DEBUG(to_string, CIDeclKind, enum CIDeclKind self)
             return "CI_DECL_KIND_FUNCTION";
         case CI_DECL_KIND_STRUCT:
             return "CI_DECL_KIND_STRUCT";
+        case CI_DECL_KIND_TYPEDEF:
+            return "CI_DECL_KIND_TYPEDEF";
         case CI_DECL_KIND_UNION:
             return "CI_DECL_KIND_UNION";
         case CI_DECL_KIND_VARIABLE:
@@ -1340,6 +1414,8 @@ IMPL_FOR_DEBUG(to_string, CIDeclKind, enum CIDeclKind self)
             return "CI_DECL_KIND_FUNCTION_GEN";
         case CI_DECL_KIND_STRUCT_GEN:
             return "CI_DECL_KIND_STRUCT_GEN";
+        case CI_DECL_KIND_TYPEDEF_GEN:
+            return "CI_DECL_KIND_TYPEDEF_GEN";
         case CI_DECL_KIND_UNION_GEN:
             return "CI_DECL_KIND_UNION_GEN";
         default:
@@ -1713,6 +1789,70 @@ DESTRUCTOR(CIDeclStructGen, const CIDeclStructGen *self)
 }
 
 String *
+serialize_name__CIDeclTypedef(const CIDeclTypedef *self,
+                              const CIGenericParams *called_generic_params)
+{
+    ASSERT(called_generic_params);
+
+    String *res = format__String("{S}__", self->name);
+
+    serialize_vec__CIDataType(called_generic_params->params, res);
+
+    return res;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclTypedef, const CIDeclTypedef *self)
+{
+    return format__String(
+      "CIDeclTypedef{{ name = {S}, generic_params = {Sr}, data_type = {Sr} }",
+      self->name,
+      self->generic_params
+        ? to_string__Debug__CIGenericParams(self->generic_params)
+        : from__String("NULL"),
+      to_string__Debug__CIDataType(self->data_type));
+}
+#endif
+
+DESTRUCTOR(CIDeclTypedef, const CIDeclTypedef *self)
+{
+    if (self->generic_params) {
+        FREE(CIGenericParams, self->generic_params);
+    }
+
+    FREE(CIDataType, self->data_type);
+}
+
+bool
+has_generic__CIDeclTypedefGen(const CIDeclTypedefGen *self)
+{
+    return is_generic_params_contains_generic__CIDecl(
+      self->called_generic_params);
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclTypedefGen, const CIDeclTypedefGen *self)
+{
+    return format__String(
+      "CIDeclTypedefGen{{ typedef_ = {Sr}, name = {S}, called_generic_params = "
+      "{Sr}, data_type = {Sr} }",
+      to_string__Debug__CIDeclTypedef(self->typedef_),
+      self->name,
+      to_string__Debug__CIGenericParams(self->called_generic_params),
+      to_string__Debug__CIDataType(self->data_type));
+}
+#endif
+
+DESTRUCTOR(CIDeclTypedefGen, const CIDeclTypedefGen *self)
+{
+    FREE(String, self->name);
+    FREE(CIGenericParams, self->called_generic_params);
+    FREE(CIDataType, self->data_type);
+}
+
+String *
 serialize_name__CIDeclUnion(const CIDeclUnion *self,
                             const CIGenericParams *called_generic_params)
 {
@@ -1838,7 +1978,6 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     enum,
                     int storage_class_flag,
                     bool is_prototype,
-                    String *typedef_name,
                     CIDeclEnum enum_)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
@@ -1847,7 +1986,6 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = is_prototype;
     self->ref_count = 0;
-    self->typedef_name = typedef_name;
     self->enum_ = enum_;
 
     return self;
@@ -1866,7 +2004,6 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = is_prototype;
     self->ref_count = 0;
-    self->typedef_name = NULL;
     self->function = function;
 
     return self;
@@ -1887,7 +2024,6 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->storage_class_flag = function->storage_class_flag;
     self->is_prototype = false;
     self->ref_count = 0;
-    self->typedef_name = NULL;
     self->function_gen =
       NEW(CIDeclFunctionGen, f, name, called_generic_params, return_data_type);
 
@@ -1899,7 +2035,6 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     struct,
                     int storage_class_flag,
                     bool is_prototype,
-                    String *typedef_name,
                     CIDeclStruct struct_)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
@@ -1908,7 +2043,6 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = is_prototype;
     self->ref_count = 0;
-    self->typedef_name = typedef_name;
     self->struct_ = struct_;
 
     return self;
@@ -1929,10 +2063,42 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->storage_class_flag = struct_->storage_class_flag;
     self->is_prototype = false;
     self->ref_count = 0;
-    self->typedef_name =
-      serialize_typedef_name__CIDecl(struct_, called_generic_params);
     self->struct_gen =
       NEW(CIDeclStructGen, s, name, called_generic_params, fields);
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIDecl *, CIDecl, typedef, CIDeclTypedef typedef_)
+{
+    CIDecl *self = lily_malloc(sizeof(CIDecl));
+
+    self->kind = CI_DECL_KIND_TYPEDEF;
+    self->storage_class_flag = CI_STORAGE_CLASS_TYPEDEF;
+    self->is_prototype = true;
+    self->ref_count = 0;
+    self->typedef_ = typedef_;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIDecl *,
+                    CIDecl,
+                    typedef_gen,
+                    CIDecl *typedef_,
+                    CIGenericParams *called_generic_params,
+                    String *name,
+                    CIDataType *data_type)
+{
+    CIDecl *self = lily_malloc(sizeof(CIDecl));
+    const CIDeclTypedef *t = &typedef_->typedef_;
+
+    self->kind = CI_DECL_KIND_TYPEDEF_GEN;
+    self->storage_class_flag = typedef_->storage_class_flag;
+    self->is_prototype = true;
+    self->ref_count = 0;
+    self->typedef_gen =
+      NEW(CIDeclTypedefGen, t, name, called_generic_params, data_type);
 
     return self;
 }
@@ -1942,7 +2108,6 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     union,
                     int storage_class_flag,
                     bool is_prototype,
-                    String *typedef_name,
                     CIDeclUnion union_)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
@@ -1951,7 +2116,6 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = is_prototype;
     self->ref_count = 0;
-    self->typedef_name = typedef_name;
     self->union_ = union_;
 
     return self;
@@ -1972,8 +2136,6 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->storage_class_flag = union_->storage_class_flag;
     self->is_prototype = false;
     self->ref_count = 0;
-    self->typedef_name =
-      serialize_typedef_name__CIDecl(union_, called_generic_params);
     self->union_gen =
       NEW(CIDeclUnionGen, u, name, called_generic_params, fields);
 
@@ -1993,7 +2155,6 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = is_prototype;
     self->ref_count = 0;
-    self->typedef_name = NULL;
     self->variable = variable;
 
     return self;
@@ -2044,23 +2205,6 @@ get_generic_params__CIDecl(const CIDecl *self)
 }
 
 String *
-serialize_typedef_name__CIDecl(const CIDecl *self,
-                               const CIGenericParams *called_generic_params)
-{
-    ASSERT(called_generic_params);
-
-    if (self->typedef_name) {
-        String *res = format__String("{S}__", self->typedef_name);
-
-        serialize_vec__CIDataType(called_generic_params->params, res);
-
-        return res;
-    }
-
-    return NULL;
-}
-
-String *
 get_name__CIDecl(const CIDecl *self)
 {
     switch (self->kind) {
@@ -2074,6 +2218,10 @@ get_name__CIDecl(const CIDecl *self)
             return self->struct_.name;
         case CI_DECL_KIND_STRUCT_GEN:
             return self->struct_gen.name;
+        case CI_DECL_KIND_TYPEDEF:
+            return self->typedef_.name;
+        case CI_DECL_KIND_TYPEDEF_GEN:
+            return self->typedef_gen.name;
         case CI_DECL_KIND_UNION:
             return self->union_.name;
         case CI_DECL_KIND_UNION_GEN:
@@ -2100,6 +2248,10 @@ has_generic__CIDecl(const CIDecl *self)
             return self->struct_.generic_params;
         case CI_DECL_KIND_STRUCT_GEN:
             return has_generic__CIDeclStructGen(&self->struct_gen);
+        case CI_DECL_KIND_TYPEDEF:
+            return self->typedef_.generic_params;
+        case CI_DECL_KIND_TYPEDEF_GEN:
+            return has_generic__CIDeclTypedefGen(&self->typedef_gen);
         case CI_DECL_KIND_UNION:
             return self->union_.generic_params;
         case CI_DECL_KIND_UNION_GEN:
@@ -2122,6 +2274,8 @@ get_expected_data_type__CIDecl(const CIDecl *self)
             TODO("get data type from function gen");
         case CI_DECL_KIND_STRUCT:
         case CI_DECL_KIND_STRUCT_GEN:
+        case CI_DECL_KIND_TYPEDEF:
+        case CI_DECL_KIND_TYPEDEF_GEN:
         case CI_DECL_KIND_UNION:
         case CI_DECL_KIND_UNION_GEN:
             return NULL;
@@ -2140,16 +2294,15 @@ IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)
         case CI_DECL_KIND_ENUM:
             return format__String(
               "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
-              "{b}, typedef_name = {s}, enum_ = {Sr} }",
+              "{b}, enum_ = {Sr} }",
               to_string__Debug__CIDeclKind(self->kind),
               to_string__Debug__CIStorageClass(self->storage_class_flag),
               self->is_prototype,
-              self->typedef_name ? self->typedef_name->buffer : "NULL",
               to_string__Debug__CIDeclEnum(&self->enum_));
         case CI_DECL_KIND_FUNCTION:
             return format__String(
               "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
-              "{b}, typedef_name = NULL, function = {Sr} "
+              "{b}, function = {Sr} "
               "}",
               to_string__Debug__CIDeclKind(self->kind),
               to_string__Debug__CIStorageClass(self->storage_class_flag),
@@ -2158,7 +2311,7 @@ IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)
         case CI_DECL_KIND_FUNCTION_GEN:
             return format__String(
               "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
-              "{b}, typedef_name = NULL, function_gen = {Sr} "
+              "{b}, function_gen = {Sr} "
               "}",
               to_string__Debug__CIDeclKind(self->kind),
               to_string__Debug__CIStorageClass(self->storage_class_flag),
@@ -2167,27 +2320,43 @@ IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)
         case CI_DECL_KIND_STRUCT:
             return format__String(
               "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
-              "{b}, typedef_name = {s}, struct_ = {Sr} "
+              "{b}, struct_ = {Sr} "
               "}",
               to_string__Debug__CIDeclKind(self->kind),
               to_string__Debug__CIStorageClass(self->storage_class_flag),
               self->is_prototype,
-              self->typedef_name ? self->typedef_name->buffer : "NULL",
               to_string__Debug__CIDeclStruct(&self->struct_));
         case CI_DECL_KIND_STRUCT_GEN:
             return format__String(
               "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
-              "{b}, typedef_name = {s}, struct_gen = {Sr} "
+              "{b}, struct_gen = {Sr} "
               "}",
               to_string__Debug__CIDeclKind(self->kind),
               to_string__Debug__CIStorageClass(self->storage_class_flag),
               self->is_prototype,
-              self->typedef_name ? self->typedef_name->buffer : "NULL",
               to_string__Debug__CIDeclStructGen(&self->struct_gen));
+        case CI_DECL_KIND_TYPEDEF:
+            return format__String(
+              "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
+              "{b}, typedef_ = {Sr} "
+              "}",
+              to_string__Debug__CIDeclKind(self->kind),
+              to_string__Debug__CIStorageClass(self->storage_class_flag),
+              self->is_prototype,
+              to_string__Debug__CIDeclTypedef(&self->typedef_));
+        case CI_DECL_KIND_TYPEDEF_GEN:
+            return format__String(
+              "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
+              "{b}, typedef_gen = {Sr} "
+              "}",
+              to_string__Debug__CIDeclKind(self->kind),
+              to_string__Debug__CIStorageClass(self->storage_class_flag),
+              self->is_prototype,
+              to_string__Debug__CIDeclTypedefGen(&self->typedef_gen));
         case CI_DECL_KIND_VARIABLE:
             return format__String(
               "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
-              "{b}, typedef_name = NULL, variable = {Sr} "
+              "{b}, variable = {Sr} "
               "}",
               to_string__Debug__CIDeclKind(self->kind),
               to_string__Debug__CIStorageClass(self->storage_class_flag),
@@ -2196,22 +2365,20 @@ IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)
         case CI_DECL_KIND_UNION:
             return format__String(
               "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
-              "{b}, typedef_name = {s}, union_ = {Sr} "
+              "{b}, union_ = {Sr} "
               "}",
               to_string__Debug__CIDeclKind(self->kind),
               to_string__Debug__CIStorageClass(self->storage_class_flag),
               self->is_prototype,
-              self->typedef_name ? self->typedef_name->buffer : "NULL",
               to_string__Debug__CIDeclUnion(&self->union_));
         case CI_DECL_KIND_UNION_GEN:
             return format__String(
               "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
-              "{b}, typedef_name = {s}, union_gen = {Sr} "
+              "{b}, union_gen = {Sr} "
               "}",
               to_string__Debug__CIDeclKind(self->kind),
               to_string__Debug__CIStorageClass(self->storage_class_flag),
               self->is_prototype,
-              self->typedef_name ? self->typedef_name->buffer : "NULL",
               to_string__Debug__CIDeclUnionGen(&self->union_gen));
         default:
             UNREACHABLE("unknown variant");
@@ -2245,11 +2412,19 @@ VARIANT_DESTRUCTOR(CIDecl, struct, CIDecl *self)
 
 VARIANT_DESTRUCTOR(CIDecl, struct_gen, CIDecl *self)
 {
-    if (self->typedef_name) {
-        FREE(String, self->typedef_name);
-    }
-
     FREE(CIDeclStructGen, &self->struct_gen);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIDecl, typedef, CIDecl *self)
+{
+    FREE(CIDeclTypedef, &self->typedef_);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIDecl, typedef_gen, CIDecl *self)
+{
+    FREE(CIDeclTypedefGen, &self->typedef_gen);
     lily_free(self);
 }
 
@@ -2261,10 +2436,6 @@ VARIANT_DESTRUCTOR(CIDecl, union, CIDecl *self)
 
 VARIANT_DESTRUCTOR(CIDecl, union_gen, CIDecl *self)
 {
-    if (self->typedef_name) {
-        FREE(String, self->typedef_name);
-    }
-
     FREE(CIDeclUnionGen, &self->union_gen);
     lily_free(self);
 }
@@ -2297,6 +2468,12 @@ DESTRUCTOR(CIDecl, CIDecl *self)
             break;
         case CI_DECL_KIND_STRUCT_GEN:
             FREE_VARIANT(CIDecl, struct_gen, self);
+            break;
+        case CI_DECL_KIND_TYPEDEF:
+            FREE_VARIANT(CIDecl, typedef, self);
+            break;
+        case CI_DECL_KIND_TYPEDEF_GEN:
+            FREE_VARIANT(CIDecl, typedef_gen, self);
             break;
         case CI_DECL_KIND_UNION:
             FREE_VARIANT(CIDecl, union, self);

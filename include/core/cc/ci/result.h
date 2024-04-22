@@ -134,6 +134,7 @@ typedef struct CIResultFile
     Vec *enums;          // Vec<CIDecl*>*
     Vec *functions;      // Vec<CIDecl*>*
     Vec *structs;        // Vec<CIDecl*>*
+    Vec *typedefs;       // Vec<CIDecl*>*
     Vec *unions;         // Vec<CIDecl*>*
     Vec *variables;      // Vec<CIDecl*>*
     Usize count_error;
@@ -257,6 +258,16 @@ add_struct__CIResultFile(const CIResultFile *self, CIDecl *struct_);
 
 /**
  *
+ * @brief Add typedef declaration to typedefs field. If the typedef name is
+ * already defined, the declaration pointer is returned, otherwise NULL is
+ * returned.
+ * @return const CIDecl*?
+ */
+const CIDecl *
+add_typedef__CIResultFile(const CIResultFile *self, CIDecl *typedef_);
+
+/**
+ *
  * @brief Add union declaration to unions field. If the union name is already
  * defined, the declaration pointer is returned, otherwise NULL is returned.
  * @return const CIDecl*?
@@ -310,6 +321,14 @@ get_struct_from_id__CIResultFile(const CIResultFile *self,
 
 /**
  *
+ * @brief Get typedef declaration from id.
+ */
+CIDecl *
+get_typedef_from_id__CIResultFile(const CIResultFile *self,
+                                  const CITypedefID *typedef_id);
+
+/**
+ *
  * @brief Get union declaration from id.
  */
 CIDecl *
@@ -360,29 +379,6 @@ CIDecl *
 search_variable__CIResultFile(const CIResultFile *self,
                               const CIScope *scope,
                               const String *name);
-
-/**
- *
- * @brief Search typedef enum declaration in enums map.
- */
-CIDecl *
-search_typedef_enum__CIResultFile(const CIResultFile *self, const String *name);
-
-/**
- *
- * @brief Search typedef struct declaration in structs map.
- */
-CIDecl *
-search_typedef_struct__CIResultFile(const CIResultFile *self,
-                                    const String *name);
-
-/**
- *
- * @brief Search typedef union declaration in unions map.
- */
-CIDecl *
-search_typedef_union__CIResultFile(const CIResultFile *self,
-                                   const String *name);
 
 /**
  *

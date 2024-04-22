@@ -47,6 +47,8 @@ extern inline DESTRUCTOR(CIFunctionID, CIFunctionID *self);
 
 extern inline DESTRUCTOR(CIStructID, CIStructID *self);
 
+extern inline DESTRUCTOR(CITypedefID, CITypedefID *self);
+
 extern inline DESTRUCTOR(CIUnionID, CIUnionID *self);
 
 extern inline DESTRUCTOR(CIVariableID, CIVariableID *self);
@@ -61,6 +63,9 @@ add_function__CIScope(const CIScope *self,
 
 extern inline const CIStructID *
 add_struct__CIScope(const CIScope *self, const String *name, CIFileID file_id);
+
+extern inline const CITypedefID *
+add_typedef__CIScope(const CIScope *self, const String *name, CIFileID file_id);
 
 extern inline const CIUnionID *
 add_union__CIScope(const CIScope *self, const String *name, CIFileID file_id);
@@ -79,6 +84,9 @@ search_function__CIScope(const CIScope *self, const String *name);
 
 extern inline const CIStructID *
 search_struct__CIScope(const CIScope *self, const String *name);
+
+extern inline const CITypedefID *
+search_typedef__CIScope(const CIScope *self, const String *name);
 
 extern inline const CIUnionID *
 search_union__CIScope(const CIScope *self, const String *name);
@@ -113,6 +121,11 @@ extern inline CONSTRUCTOR(CIDataTypeStruct,
                           String *name,
                           CIGenericParams *generic_params,
                           Vec *fields);
+
+extern inline CONSTRUCTOR(CIDataTypeTypedef,
+                          CIDataTypeTypedef,
+                          String *name,
+                          CIGenericParams *generic_params);
 
 extern inline CONSTRUCTOR(CIDataTypeUnion,
                           CIDataTypeUnion,
@@ -155,6 +168,19 @@ extern inline CONSTRUCTOR(CIDeclStructGen,
                           CIGenericParams *called_generic_params,
                           Vec *fields);
 
+extern inline CONSTRUCTOR(CIDeclTypedef,
+                          CIDeclTypedef,
+                          String *name,
+                          CIGenericParams *generic_params,
+                          CIDataType *data_type);
+
+extern inline CONSTRUCTOR(CIDeclTypedefGen,
+                          CIDeclTypedefGen,
+                          const CIDeclTypedef *typedef_,
+                          String *name,
+                          CIGenericParams *called_generic_params,
+                          CIDataType *data_type);
+
 extern inline CONSTRUCTOR(CIDeclUnion,
                           CIDeclUnion,
                           String *name,
@@ -177,9 +203,6 @@ extern inline CONSTRUCTOR(CIDeclVariable,
 
 extern inline CIDecl *
 ref__CIDecl(CIDecl *self);
-
-extern inline String *
-get_typedef_name__CIDecl(const CIDecl *self);
 
 extern inline CONSTRUCTOR(CIExprArrayAccess,
                           CIExprArrayAccess,

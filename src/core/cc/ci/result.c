@@ -91,6 +91,7 @@ CONSTRUCTOR(CIResultFile *,
     self->enums = NEW(Vec);
     self->functions = NEW(Vec);
     self->structs = NEW(Vec);
+    self->typedefs = NEW(Vec);
     self->unions = NEW(Vec);
     self->variables = NEW(Vec);
     self->count_error = 0;
@@ -174,114 +175,90 @@ add_include__CIResultFile(const CIResultFile *self)
 {
 }
 
+#define CHECK_FOR_SYMBOL_REDEFINITION_DECL(name, search) \
+    {                                                    \
+        CIDecl *is_exist = search(self, name);           \
+                                                         \
+        if (is_exist) {                                  \
+            return is_exist;                             \
+        }                                                \
+    }
+
+#define CHECK_FOR_SYMBOL_REDEFINITION_VAR(name, scope)                       \
+    {                                                                        \
+        CIDecl *is_exist = search_variable__CIResultFile(self, scope, name); \
+                                                                             \
+        if (is_exist) {                                                      \
+            return is_exist;                                                 \
+        }                                                                    \
+    }
+
+#define CHECK_FOR_SYMBOL_REDEFINITION(name, scope)                           \
+    CHECK_FOR_SYMBOL_REDEFINITION_DECL(name, search_enum__CIResultFile);     \
+    CHECK_FOR_SYMBOL_REDEFINITION_DECL(name, search_function__CIResultFile); \
+    CHECK_FOR_SYMBOL_REDEFINITION_DECL(name, search_struct__CIResultFile);   \
+    CHECK_FOR_SYMBOL_REDEFINITION_DECL(name, search_typedef__CIResultFile);  \
+    CHECK_FOR_SYMBOL_REDEFINITION_DECL(name, search_union__CIResultFile);    \
+    CHECK_FOR_SYMBOL_REDEFINITION_VAR(name, scope);
+
+#define ADD_X_DECL(X, scope, add_scope, v)      \
+    const String *name = get_name__CIDecl(X);   \
+                                                \
+    CHECK_FOR_SYMBOL_REDEFINITION(name, scope); \
+                                                \
+    ASSERT(!add_scope);                         \
+    push__Vec(v, X);                            \
+                                                \
+    return NULL;
+
 const CIDecl *
 add_enum__CIResultFile(const CIResultFile *self, CIDecl *enum_)
 {
-    const String *enum_name = get_name__CIDecl(enum_);
-    const CIDecl *is_struct_exist =
-      search_struct__CIResultFile(self, enum_name);
-
-    if (is_struct_exist) {
-        return is_struct_exist;
-    }
-
-    const CIDecl *is_union_exist = search_union__CIResultFile(self, enum_name);
-
-    if (is_union_exist) {
-        return is_union_exist;
-    }
-
-    const CIEnumID *is_enum_exist = add_enum__CIScope(
-      self->scope_base, enum_name, NEW(CIFileID, self->id, self->kind));
-
-    if (!is_enum_exist) {
-        push__Vec(self->enums, enum_);
-
-        return NULL;
-    }
-
-    return enum_;
+    ADD_X_DECL(enum_,
+               self->scope_base,
+               add_enum__CIScope(
+                 self->scope_base, name, NEW(CIFileID, self->id, self->kind)),
+               self->enums);
 }
 
 const CIDecl *
 add_function__CIResultFile(const CIResultFile *self, CIDecl *function)
 {
-    const String *function_name = get_name__CIDecl(function);
-    const CIDecl *is_variable_exist =
-      search_variable__CIResultFile(self, self->scope_base, function_name);
-
-    if (is_variable_exist) {
-        return is_variable_exist;
-    }
-
-    const CIFunctionID *is_function_exist = add_function__CIScope(
-      self->scope_base, function_name, NEW(CIFileID, self->id, self->kind));
-
-    if (!is_function_exist) {
-        push__Vec(self->functions, function);
-
-        return NULL;
-    }
-
-    return function;
+    ADD_X_DECL(function,
+               self->scope_base,
+               add_function__CIScope(
+                 self->scope_base, name, NEW(CIFileID, self->id, self->kind)),
+               self->functions);
 }
 
 const CIDecl *
 add_struct__CIResultFile(const CIResultFile *self, CIDecl *struct_)
 {
-    const String *struct_name = get_name__CIDecl(struct_);
-    const CIDecl *is_enum_exist = search_enum__CIResultFile(self, struct_name);
+    ADD_X_DECL(struct_,
+               self->scope_base,
+               add_struct__CIScope(
+                 self->scope_base, name, NEW(CIFileID, self->id, self->kind)),
+               self->structs);
+}
 
-    if (is_enum_exist) {
-        return is_enum_exist;
-    }
-
-    const CIDecl *is_union_exist =
-      search_union__CIResultFile(self, struct_name);
-
-    if (is_union_exist) {
-        return is_union_exist;
-    }
-
-    const CIStructID *is_struct_exist = add_struct__CIScope(
-      self->scope_base, struct_name, NEW(CIFileID, self->id, self->kind));
-
-    if (!is_struct_exist) {
-        push__Vec(self->structs, struct_);
-
-        return NULL;
-    }
-
-    return struct_;
+const CIDecl *
+add_typedef__CIResultFile(const CIResultFile *self, CIDecl *typedef_)
+{
+    ADD_X_DECL(typedef_,
+               self->scope_base,
+               add_typedef__CIScope(
+                 self->scope_base, name, NEW(CIFileID, self->id, self->kind)),
+               self->typedefs);
 }
 
 const CIDecl *
 add_union__CIResultFile(const CIResultFile *self, CIDecl *union_)
 {
-    const String *union_name = get_name__CIDecl(union_);
-    const CIDecl *is_struct_exist =
-      search_struct__CIResultFile(self, union_name);
-
-    if (is_struct_exist) {
-        return is_struct_exist;
-    }
-
-    const CIDecl *is_enum_exist = search_enum__CIResultFile(self, union_name);
-
-    if (is_enum_exist) {
-        return is_enum_exist;
-    }
-
-    const CIUnionID *is_union_exist = add_union__CIScope(
-      self->scope_base, union_name, NEW(CIFileID, self->id, self->kind));
-
-    if (!is_union_exist) {
-        push__Vec(self->unions, union_);
-
-        return NULL;
-    }
-
-    return union_;
+    ADD_X_DECL(union_,
+               self->scope_base,
+               add_union__CIScope(
+                 self->scope_base, name, NEW(CIFileID, self->id, self->kind)),
+               self->unions);
 }
 
 const CIDecl *
@@ -289,27 +266,12 @@ add_variable__CIResultFile(const CIResultFile *self,
                            const CIScope *scope,
                            CIDecl *variable)
 {
-    const String *variable_name = get_name__CIDecl(variable);
-    const CIDecl *is_function_exist =
-      search_function__CIResultFile(self, variable_name);
-
-    if (is_function_exist) {
-        return is_function_exist;
-    }
-
-    const CIVariableID *is_variable_exist =
-      add_variable__CIScope(scope,
-                            variable_name,
-                            *scope->scope_id,
-                            NEW(CIFileID, self->id, self->kind));
-
-    if (!is_variable_exist) {
-        push__Vec(self->variables, variable);
-
-        return NULL;
-    }
-
-    return variable;
+    ADD_X_DECL(
+      variable,
+      scope,
+      add_variable__CIScope(
+        scope, name, *scope->scope_id, NEW(CIFileID, self->id, self->kind)),
+      self->variables);
 }
 
 #define GET_DECL_FROM_ID__CI_RESULT_FILE(vec, id) return get__Vec(vec, id);
@@ -346,6 +308,13 @@ get_struct_from_id__CIResultFile(const CIResultFile *self,
                                  const CIStructID *struct_id)
 {
     GET_DECL_FROM_ID__CI_RESULT_FILE(self->structs, struct_id->id);
+}
+
+CIDecl *
+get_typedef_from_id__CIResultFile(const CIResultFile *self,
+                                  const CITypedefID *typedef_id)
+{
+    GET_DECL_FROM_ID__CI_RESULT_FILE(self->typedefs, typedef_id->id);
 }
 
 CIDecl *
@@ -430,44 +399,11 @@ search_variable__CIResultFile(const CIResultFile *self,
     return NULL;
 }
 
-#define SEARCH_TYPEDEF(search)                                       \
-    CIDecl *res = search(self, name);                                \
-                                                                     \
-    if (res && res->storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) { \
-        return res;                                                  \
-    }                                                                \
-                                                                     \
-    return NULL;
-
-CIDecl *
-search_typedef_enum__CIResultFile(const CIResultFile *self, const String *name)
-{
-    SEARCH_TYPEDEF(search_enum__CIResultFile);
-}
-
-CIDecl *
-search_typedef_struct__CIResultFile(const CIResultFile *self,
-                                    const String *name)
-{
-    SEARCH_TYPEDEF(search_struct__CIResultFile);
-}
-
-CIDecl *
-search_typedef_union__CIResultFile(const CIResultFile *self, const String *name)
-{
-    SEARCH_TYPEDEF(search_union__CIResultFile);
-}
-
 CIDecl *
 search_typedef__CIResultFile(const CIResultFile *self, const String *name)
 {
-    CIDecl *res = search_data_type__CIResultFile(self, name);
-
-    if (res && res->storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
-        return res;
-    }
-
-    return NULL;
+    SEARCH_DECL__CI_RESULT_FILE(
+      CITypedefID, search_typedef__CIScope, get_typedef_from_id__CIResultFile);
 }
 
 CIDecl *
@@ -494,6 +430,14 @@ search_data_type__CIResultFile(const CIResultFile *self, const String *name)
 
         if (union_) {
             return union_;
+        }
+    }
+
+    {
+        CIDecl *typedef_ = search_typedef__CIResultFile(self, name);
+
+        if (typedef_) {
+            return typedef_;
         }
     }
 
@@ -524,6 +468,8 @@ DESTRUCTOR(CIResultFile, CIResultFile *self)
     FREE(Vec, self->functions);
     FREE_BUFFER_ITEMS(self->structs->buffer, self->structs->len, CIDecl);
     FREE(Vec, self->structs);
+    FREE_BUFFER_ITEMS(self->typedefs->buffer, self->typedefs->len, CIDecl);
+    FREE(Vec, self->typedefs);
     FREE_BUFFER_ITEMS(self->unions->buffer, self->unions->len, CIDecl);
     FREE(Vec, self->unions);
     FREE_BUFFER_ITEMS(self->variables->buffer, self->variables->len, CIDecl);

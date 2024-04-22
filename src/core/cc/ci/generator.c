@@ -146,6 +146,12 @@ static void
 generate_struct_gen_decl__CIGenerator(const CIDeclStructGen *struct_gen);
 
 static void
+generate_typedef_decl__CIGenerator(const CIDeclTypedef *typedef_);
+
+static void
+generate_typedef_gen_decl__CIGenerator(const CIDeclTypedefGen *typedef_gen);
+
+static void
 generate_union_decl__CIGenerator(const CIDeclUnion *union_);
 
 static void
@@ -460,7 +466,18 @@ generate_data_type__CIGenerator(CIDataType *data_type)
 
             break;
         case CI_DATA_TYPE_KIND_TYPEDEF:
-            write_str__CIGenerator(data_type->typedef_->buffer);
+            write_str__CIGenerator(subs_data_type->typedef_.name->buffer);
+
+            if (subs_data_type->typedef_.generic_params) {
+                write_str__CIGenerator("__");
+
+                String *serialize_buffer = NEW(String);
+
+                serialize_vec__CIDataType(
+                  subs_data_type->typedef_.generic_params->params,
+                  serialize_buffer);
+                write_String__CIGenerator(serialize_buffer);
+            }
 
             break;
         case CI_DATA_TYPE_KIND_UNSIGNED_INT:
@@ -1208,6 +1225,25 @@ generate_struct_gen_decl__CIGenerator(const CIDeclStructGen *struct_gen)
 }
 
 void
+generate_typedef_decl__CIGenerator(const CIDeclTypedef *typedef_)
+{
+    write_str__CIGenerator("typedef ");
+    generate_data_type__CIGenerator(typedef_->data_type);
+    write_String__CIGenerator(format__String(" {S}", typedef_->name));
+}
+
+void
+generate_typedef_gen_decl__CIGenerator(const CIDeclTypedefGen *typedef_gen)
+{
+    SET_CURRENT_GENERIC_PARAMS(typedef_gen->typedef_->generic_params,
+                               typedef_gen->called_generic_params);
+    write_str__CIGenerator("typedef ");
+    generate_data_type__CIGenerator(typedef_gen->typedef_->data_type);
+    write_String__CIGenerator(format__String(" {S}", typedef_gen->name));
+    RESET_CURRENT_GENERIC_PARAMS();
+}
+
+void
 generate_union_decl__CIGenerator(const CIDeclUnion *union_)
 {
     write_String__CIGenerator(format__String("union {S} {{\n", union_->name));
@@ -1279,14 +1315,7 @@ generate_decl__CIGenerator(const CIDecl *decl)
                 UNREACHABLE("unknown variant");
         }
 
-        if (decl->storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
-            ASSERT(decl->typedef_name);
-
-            write_String__CIGenerator(
-              format__String("{S};\n", get_typedef_name__CIDecl(decl)));
-        } else {
-            write_str__CIGenerator(";\n");
-        }
+        write_str__CIGenerator(";\n");
     }
 }
 
@@ -1294,12 +1323,18 @@ void
 generate_decls__CIGenerator(const CIResultFile *file_result)
 {
 #define DECL_VECS_LEN 5
+#define ENUMS_IDX 0
+#define STRUCTS_IDX 1
+#define UNIONS_IDX 2
 #define VARIABLES_IDX 3
-    const Vec *decl_vecs[DECL_VECS_LEN] = { file_result->enums,
-                                            file_result->structs,
-                                            file_result->unions,
-                                            file_result->variables,
-                                            file_result->functions };
+#define FUNCTIONS_IDX 4
+    const Vec *decl_vecs[DECL_VECS_LEN] = {
+        [ENUMS_IDX] = file_result->enums,
+        [STRUCTS_IDX] = file_result->structs,
+        [UNIONS_IDX] = file_result->unions,
+        [VARIABLES_IDX] = file_result->variables,
+        [FUNCTIONS_IDX] = file_result->functions
+    };
 
     for (Usize i = 0; i < DECL_VECS_LEN; ++i) {
         VecIter iter_decls = NEW(VecIter, decl_vecs[i]);
@@ -1322,6 +1357,14 @@ generate_decls__CIGenerator(const CIResultFile *file_result)
                 GENERATE_DECL(true);
         }
     }
+
+#undef DECL_VECS_LEN
+#undef ENUMS_IDX
+#undef STRUCTS_IDX
+#undef UNIONS_IDX
+#undef VARIABLES_IDX
+#undef FUNCTIONS_IDX
+#undef GENERATE_DECL
 }
 
 void
@@ -1378,10 +1421,6 @@ void
 generate_decl_prototype__CIGenerator(const CIDecl *decl)
 {
     if (!has_generic__CIDecl(decl)) {
-        if (decl->storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
-            write_str__CIGenerator("typedef ");
-        }
-
         switch (decl->kind) {
             case CI_DECL_KIND_ENUM:
                 generate_enum_prototype__CIGenerator(&decl->enum_);
@@ -1404,6 +1443,14 @@ generate_decl_prototype__CIGenerator(const CIDecl *decl)
                 generate_struct_gen_prototype__CIGenerator(&decl->struct_gen);
 
                 break;
+            case CI_DECL_KIND_TYPEDEF:
+                generate_typedef_decl__CIGenerator(&decl->typedef_);
+
+                break;
+            case CI_DECL_KIND_TYPEDEF_GEN:
+                generate_typedef_gen_decl__CIGenerator(&decl->typedef_gen);
+
+                break;
             case CI_DECL_KIND_UNION:
                 generate_union_prototype__CIGenerator(&decl->union_);
 
@@ -1416,11 +1463,6 @@ generate_decl_prototype__CIGenerator(const CIDecl *decl)
                 UNREACHABLE("this situation is impossible");
         }
 
-        if (decl->storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
-            write_String__CIGenerator(
-              format__String(" {S}", decl->typedef_name));
-        }
-
         write_str__CIGenerator(";\n");
     }
 }
@@ -1428,10 +1470,11 @@ generate_decl_prototype__CIGenerator(const CIDecl *decl)
 void
 generate_decls_prototype__CIGenerator(const CIResultFile *file_result)
 {
-#define DECL_PROTOTYPE_VECS_LEN 4
+#define DECL_PROTOTYPE_VECS_LEN 5
     Vec *decl_vecs[DECL_PROTOTYPE_VECS_LEN] = { file_result->enums,
                                                 file_result->structs,
                                                 file_result->unions,
+                                                file_result->typedefs,
                                                 file_result->functions };
 
     for (Usize i = 0; i < DECL_PROTOTYPE_VECS_LEN; ++i) {
@@ -1444,6 +1487,8 @@ generate_decls_prototype__CIGenerator(const CIResultFile *file_result)
     }
 
     write_str__CIGenerator("\n");
+
+#undef DECL_PROTOTYPE_VECS_LEN
 }
 
 void
