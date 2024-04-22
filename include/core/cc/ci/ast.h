@@ -139,6 +139,27 @@ inline DESTRUCTOR(CIStructID, CIStructID *self)
     lily_free(self);
 }
 
+typedef struct CITypedefID
+{
+    CIFileID file_id;
+    Usize id;
+} CITypedefID;
+
+/**
+ *
+ * @brief Construct CITypedefID type.
+ */
+CONSTRUCTOR(CITypedefID *, CITypedefID, CIFileID file_id, Usize id);
+
+/**
+ *
+ * @brief Free CITypedefID type.
+ */
+inline DESTRUCTOR(CITypedefID, CITypedefID *self)
+{
+    lily_free(self);
+}
+
 typedef struct CIUnionID
 {
     CIFileID file_id;
@@ -194,6 +215,7 @@ typedef struct CIScope
     HashMap *enums;     // HashMap<CIEnumID*>*
     HashMap *functions; // HashMap<CIFunctionID*>*
     HashMap *structs;   // HashMap<CIStructID*>*
+    HashMap *typedefs;  // HashMap<CITypedefID*>*
     HashMap *unions;    // HashMap<CIUnionID*>*
     HashMap *variables; // HashMap<CIVariableID*>*
 } CIScope;
@@ -242,6 +264,17 @@ inline const CIStructID *
 add_struct__CIScope(const CIScope *self, const String *name, CIFileID file_id)
 {
     ADD_IN_SCOPE(CIStructID, self->structs);
+}
+
+/**
+ *
+ * @brief Add typedef to the scope.
+ * @return CITypedefID*? (&)
+ */
+inline const CITypedefID *
+add_typedef__CIScope(const CIScope *self, const String *name, CIFileID file_id)
+{
+    ADD_IN_SCOPE(CITypedefID, self->typedefs);
 }
 
 /**
@@ -306,6 +339,17 @@ search_struct__CIScope(const CIScope *self, const String *name)
 
 /**
  *
+ * @brief Search typedef to the scope.
+ * @return CITypedefID*? (&)
+ */
+inline const CITypedefID *
+search_typedef__CIScope(const CIScope *self, const String *name)
+{
+    SEARCH_IN_SCOPE(self->typedefs);
+}
+
+/**
+ *
  * @brief Search union to the scope.
  * @return CIUnionID*? (&)
  */
@@ -355,6 +399,13 @@ ref__CIGenericParams(CIGenericParams *self)
     ++self->ref_count;
     return self;
 }
+
+/**
+ *
+ * @brief Check if the both generic params are equal.
+ */
+bool
+eq__CIGenericParams(const CIGenericParams *self, const CIGenericParams *other);
 
 /**
  *
@@ -582,6 +633,41 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeStruct, const CIDataTypeStruct *self);
  */
 DESTRUCTOR(CIDataTypeStruct, const CIDataTypeStruct *self);
 
+typedef struct CIDataTypeTypedef
+{
+    String *name;                    // String* (&)
+    CIGenericParams *generic_params; // CIGenericParams*?
+} CIDataTypeTypedef;
+
+/**
+ *
+ * @brief Construct CIDataTypeTypedef type.
+ */
+inline CONSTRUCTOR(CIDataTypeTypedef,
+                   CIDataTypeTypedef,
+                   String *name,
+                   CIGenericParams *generic_params)
+{
+    return (CIDataTypeTypedef){ .name = name,
+                                .generic_params = generic_params };
+}
+
+/**
+ *
+ * @brief Convert CIDataTypeTypedef in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDataTypeTypedef, const CIDataTypeTypedef *self);
+#endif
+
+/**
+ *
+ * @brief Free CIDataTypeTypedef type.
+ */
+DESTRUCTOR(CIDataTypeTypedef, const CIDataTypeTypedef *self);
+
 typedef struct CIDataTypeUnion
 {
     String *name;                    // String*? (&)
@@ -635,7 +721,7 @@ typedef struct CIDataType
         struct CIDataType *post_const;
         struct CIDataType *ptr;
         CIDataTypeStruct struct_;
-        String *typedef_; // String* (&)
+        CIDataTypeTypedef typedef_;
         CIDataTypeUnion union_;
     };
 } CIDataType;
@@ -704,7 +790,10 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, struct, CIDataTypeStruct struct_);
  *
  * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_TYPEDEF).
  */
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, typedef, String *typedef_);
+VARIANT_CONSTRUCTOR(CIDataType *,
+                    CIDataType,
+                    typedef,
+                    CIDataTypeTypedef typedef_);
 
 /**
  *
@@ -824,11 +913,13 @@ enum CIDeclKind
     CI_DECL_KIND_ENUM = 1 << 0,
     CI_DECL_KIND_FUNCTION = 1 << 1,
     CI_DECL_KIND_STRUCT = 1 << 2,
-    CI_DECL_KIND_UNION = 1 << 3,
-    CI_DECL_KIND_VARIABLE = 1 << 4,
-#define CI_DECL_KIND_GEN (1 << 5)
+    CI_DECL_KIND_TYPEDEF = 1 << 3,
+    CI_DECL_KIND_UNION = 1 << 4,
+    CI_DECL_KIND_VARIABLE = 1 << 5,
+#define CI_DECL_KIND_GEN (1 << 6)
     CI_DECL_KIND_FUNCTION_GEN = CI_DECL_KIND_FUNCTION | CI_DECL_KIND_GEN,
     CI_DECL_KIND_STRUCT_GEN = CI_DECL_KIND_STRUCT | CI_DECL_KIND_GEN,
+    CI_DECL_KIND_TYPEDEF_GEN = CI_DECL_KIND_TYPEDEF | CI_DECL_KIND_GEN,
     CI_DECL_KIND_UNION_GEN = CI_DECL_KIND_UNION | CI_DECL_KIND_GEN,
 };
 
@@ -1211,6 +1302,100 @@ IMPL_FOR_DEBUG(to_string, CIDeclStructGen, const CIDeclStructGen *self);
  */
 DESTRUCTOR(CIDeclStructGen, const CIDeclStructGen *self);
 
+typedef struct CIDeclTypedef
+{
+    String *name;                    // String* (&)
+    CIGenericParams *generic_params; // CIGenericParams*?
+    CIDataType *data_type;
+} CIDeclTypedef;
+
+/**
+ *
+ * @brief Construct CIDeclTypedef type.
+ */
+inline CONSTRUCTOR(CIDeclTypedef,
+                   CIDeclTypedef,
+                   String *name,
+                   CIGenericParams *generic_params,
+                   CIDataType *data_type)
+{
+    return (CIDeclTypedef){ .name = name,
+                            .generic_params = generic_params,
+                            .data_type = data_type };
+}
+
+/**
+ *
+ * @brief Serialize typedef name.
+ */
+String *
+serialize_name__CIDeclTypedef(const CIDeclTypedef *self,
+                              const CIGenericParams *called_generic_params);
+
+/**
+ *
+ * @brief Convert CIDeclTypedef in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclTypedef, const CIDeclTypedef *self);
+#endif
+
+/**
+ *
+ * @brief Free CIDeclTypedef type.
+ */
+DESTRUCTOR(CIDeclTypedef, const CIDeclTypedef *self);
+
+typedef struct CIDeclTypedefGen
+{
+    const CIDeclTypedef *typedef_; // const CIDeclTypedef* (&)
+    String *name;
+    CIGenericParams *called_generic_params; // CIGenericParams*
+    CIDataType *data_type;
+} CIDeclTypedefGen;
+
+/**
+ *
+ * @brief Construct CIDeclTypedefGen type.
+ */
+inline CONSTRUCTOR(CIDeclTypedefGen,
+                   CIDeclTypedefGen,
+                   const CIDeclTypedef *typedef_,
+                   String *name,
+                   CIGenericParams *called_generic_params,
+                   CIDataType *data_type)
+{
+    return (CIDeclTypedefGen){ .typedef_ = typedef_,
+                               .name = name,
+                               .called_generic_params = called_generic_params,
+                               .data_type = data_type };
+}
+
+/**
+ *
+ * @brief Check if the gen typedef has generic.
+ */
+bool
+has_generic__CIDeclTypedefGen(const CIDeclTypedefGen *self);
+
+/**
+ *
+ * @brief Convert CIDeclTypedefGen in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclTypedefGen, const CIDeclTypedefGen *self);
+#endif
+
+/**
+ *
+ * @brief Free CIDeclTypedefGen type.
+ */
+DESTRUCTOR(CIDeclTypedefGen, const CIDeclTypedefGen *self);
+
 typedef struct CIDeclUnion
 {
     String *name;                    // String* (&)
@@ -1258,7 +1443,6 @@ IMPL_FOR_DEBUG(to_string, CIDeclUnion, const CIDeclUnion *self);
 DESTRUCTOR(CIDeclUnion, const CIDeclUnion *self);
 
 typedef struct CIDeclUnionGen
-
 {
     const CIDeclUnion *union_; // const CIDeclFunction* (&)
     String *name;
@@ -1352,15 +1536,18 @@ typedef struct CIDecl
     int storage_class_flag;
     bool is_prototype;
     Usize ref_count;
-    String
-      *typedef_name; // String*? (&) | String*? (only for gen(s) declaration)
     union
     {
+        // typedef <dt> <typedef_name>;
+        // NOTE: alias don't include struct, enum and union data type.
+        CIDataType *alias;
         CIDeclEnum enum_;
         CIDeclFunction function;
         CIDeclFunctionGen function_gen;
         CIDeclStruct struct_;
         CIDeclStructGen struct_gen;
+        CIDeclTypedef typedef_;
+        CIDeclTypedefGen typedef_gen;
         CIDeclVariable variable;
         CIDeclUnion union_;
         CIDeclUnionGen union_gen;
@@ -1376,7 +1563,6 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     enum,
                     int storage_class_flag,
                     bool is_prototype,
-                    String *typedef_name,
                     CIDeclEnum enum_);
 
 /**
@@ -1412,7 +1598,6 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     struct,
                     int storage_class_flag,
                     bool is_prototype,
-                    String *typedef_name,
                     CIDeclStruct struct_);
 
 /**
@@ -1430,6 +1615,24 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 
 /**
  *
+ * @brief Construct CIDecl type (CI_DECL_KIND_TYPEDEF).
+ */
+VARIANT_CONSTRUCTOR(CIDecl *, CIDecl, typedef, CIDeclTypedef typedef_);
+
+/**
+ *
+ * @brief Construct CIDecl type (CI_DECL_KIND_TYPEDEF_GEN).
+ */
+VARIANT_CONSTRUCTOR(CIDecl *,
+                    CIDecl,
+                    typedef_gen,
+                    CIDecl *typedef_,
+                    CIGenericParams *called_generic_params,
+                    String *name,
+                    CIDataType *data_type);
+
+/**
+ *
  * @brief Construct CIDecl type (CI_DECL_KIND_UNION).
  */
 VARIANT_CONSTRUCTOR(CIDecl *,
@@ -1437,7 +1640,6 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     union,
                     int storage_class_flag,
                     bool is_prototype,
-                    String *typedef_name,
                     CIDeclUnion union_);
 
 /**
@@ -1496,26 +1698,6 @@ ref__CIDecl(CIDecl *self)
 {
     ++self->ref_count;
     return self;
-}
-
-/**
- *
- * @brief Serialize typedef name.
- * @return String*?
- */
-String *
-serialize_typedef_name__CIDecl(const CIDecl *self,
-                               const CIGenericParams *called_generic_params);
-
-/**
- *
- * @brief Get typedef name from declaration.
- * @return String*? (&)
- */
-inline String *
-get_typedef_name__CIDecl(const CIDecl *self)
-{
-    return self->typedef_name;
 }
 
 /**
