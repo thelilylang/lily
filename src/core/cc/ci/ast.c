@@ -2871,8 +2871,8 @@ DESTRUCTOR(CIExprCast, const CIExprCast *self)
 String *
 IMPL_FOR_DEBUG(to_string, CIExprFunctionCall, const CIExprFunctionCall *self)
 {
-    String *res =
-      format__String("CIExprFunctionCall {{ identifier = {S}, params =");
+    String *res = format__String(
+      "CIExprFunctionCall{{ identifier = {S}, params =", self->identifier);
 
     DEBUG_VEC_STRING(self->params, res, CIExpr);
 
