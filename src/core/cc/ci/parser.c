@@ -542,7 +542,7 @@ parse_variable__CIParser(CIParser *self,
                          int storage_class_flag,
                          CIDataType *data_type,
                          String *name,
-                         bool is_prototype,
+                         bool no_expr,
                          bool is_local);
 
 /// @brief Parse list of variable declaration.
@@ -5066,7 +5066,7 @@ parse_variable__CIParser(CIParser *self,
                          int storage_class_flag,
                          CIDataType *data_type,
                          String *name,
-                         bool is_prototype,
+                         bool no_expr,
                          bool is_local)
 {
     if (in_label) {
@@ -5077,12 +5077,12 @@ parse_variable__CIParser(CIParser *self,
         next_token__CIParser(self); // skip `=` or `;`
     }
 
-    if (is_prototype) {
+    if (no_expr) {
         return NEW_VARIANT(
           CIDecl,
           variable,
           storage_class_flag,
-          true,
+          false,
           NEW(CIDeclVariable, data_type, name, NULL, is_local));
     }
 
