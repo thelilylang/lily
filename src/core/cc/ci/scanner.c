@@ -3689,6 +3689,10 @@ get_token__CIScanner(CIScanner *self,
                 return NEW(CIToken,
                            CI_TOKEN_KIND_MINUS_EQ,
                            clone__Location(&self->base.location));
+            } else if (c1 == (char *)'-') {
+                return NEW(CIToken,
+                           CI_TOKEN_KIND_MINUS_MINUS,
+                           clone__Location(&self->base.location));
             }
 
             return NEW(CIToken,
