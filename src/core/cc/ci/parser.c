@@ -2964,6 +2964,13 @@ visit_struct_or_union__CIParser(CIParser *self,
                     }
 
                     break;
+                case CI_DATA_TYPE_KIND_TYPEDEF:
+                    generate_typedef_gen__CIParser(
+                      self,
+                      subs_data_type->typedef_.name,
+                      subs_data_type->typedef_.generic_params);
+
+                    break;
                 default:
                     break;
             }
@@ -3502,13 +3509,11 @@ parse_data_type__CIParser(CIParser *self)
                                 FAILED("struct name is already defined");
                             }
 
-                            if (struct_decl->struct_.fields) {
+                            if (struct_decl->struct_.fields &&
+                                !struct_decl->struct_.name) {
                                 res->struct_.fields =
                                   clone_fields__CIDeclStructField(
                                     struct_decl->struct_.fields);
-                            }
-
-                            if (!struct_decl->struct_.name) {
                                 FREE(CIDecl, struct_decl);
                             }
 
@@ -3530,13 +3535,11 @@ parse_data_type__CIParser(CIParser *self)
                                 FAILED("union name is already defined");
                             }
 
-                            if (union_decl->union_.fields) {
+                            if (union_decl->union_.fields &&
+                                !union_decl->union_.name) {
                                 res->union_.fields =
                                   clone_fields__CIDeclStructField(
                                     union_decl->union_.fields);
-                            }
-
-                            if (!union_decl->union_.name) {
                                 FREE(CIDecl, union_decl);
                             }
 
@@ -3552,10 +3555,12 @@ parse_data_type__CIParser(CIParser *self)
                         case CI_TOKEN_KIND_KEYWORD_STRUCT:
                             generate_struct_gen__CIParser(
                               self, name, generic_params);
+
                             break;
                         case CI_TOKEN_KIND_KEYWORD_UNION:
                             generate_union_gen__CIParser(
                               self, name, generic_params);
+
                             break;
                         default:
                             UNREACHABLE("this situation is impossible");
