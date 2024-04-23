@@ -35,8 +35,6 @@
 
 #include <stdio.h>
 
-#define CI_CONFIG "CI.yaml"
-
 int
 main(int argc, char **argv)
 {
