@@ -30,28 +30,52 @@
 
 typedef struct CIResultFile CIResultFile;
 
-typedef struct CIParserWaitForVisit
+typedef struct CIParserVisitWaitingListItem
 {
-    enum CIDeclKind kind;
     String *name;             // String* (&)
-    Vec *generic_params_list; // Vec<CIGenericParams* (&)>*
-} CIParserWaitForVisit;
+    Vec *generic_params_list; // Vec<CIGenericParams* (&)>*?
+} CIParserVisitWaitingListItem;
 
 /**
  *
- * @brief Construct CIParserWaitForVisit type.
+ * @brief Construct CIParserVisitWaitingListItem type.
  */
-CONSTRUCTOR(CIParserWaitForVisit *,
-            CIParserWaitForVisit,
-            enum CIDeclKind kind,
+CONSTRUCTOR(CIParserVisitWaitingListItem *,
+            CIParserVisitWaitingListItem,
             String *name,
-            CIGenericParams *generic_params);
+            Vec *generic_params_list);
 
 /**
  *
- * @brief Free CIParserWaitForVisit type.
+ * @brief Free CIParserVisitWaitingListItem type.
  */
-DESTRUCTOR(CIParserWaitForVisit, CIParserWaitForVisit *self);
+DESTRUCTOR(CIParserVisitWaitingListItem, CIParserVisitWaitingListItem *self);
+
+typedef struct CIParserVisitWaitingList
+{
+    HashMap *functions; // HashMap<CIParserVisitWaitingListItem*>*
+    HashMap *typedefs;  // HashMap<CIParserVisitWaitingListItem*>*
+    HashMap *unions;    // HashMap<CIParserVisitWaitingListItem*>*
+    HashMap *structs;   // HashMap<CIParserVisitWaitingListItem*>*
+} CIParserVisitWaitingList;
+
+/**
+ *
+ * @brief Construct CIParserVisitWaitingList type.
+ */
+inline CONSTRUCTOR(CIParserVisitWaitingList, CIParserVisitWaitingList)
+{
+    return (CIParserVisitWaitingList){ .functions = NEW(HashMap),
+                                       .typedefs = NEW(HashMap),
+                                       .unions = NEW(HashMap),
+                                       .structs = NEW(HashMap) };
+}
+
+/**
+ *
+ * @brief Free CIParserVisitWaitingList type.
+ */
+DESTRUCTOR(CIParserVisitWaitingList, const CIParserVisitWaitingList *self);
 
 typedef struct CIParserMacroCall
 {
@@ -83,8 +107,8 @@ typedef struct CIParser
     Usize *count_error;       // Usize* (&)
     Usize *count_warning;     // Usize* (&)
     CITokensIters tokens_iters;
-    Stack *macros_call;       // Vec<CIParserMacro*>*
-    HashMap *wait_visit_list; // HashMap<CIParserWaitForVisit*>*
+    Stack *macros_call; // Vec<CIParserMacro*>*
+    CIParserVisitWaitingList visit_waiting_list;
 } CIParser;
 
 /**

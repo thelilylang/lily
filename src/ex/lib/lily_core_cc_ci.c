@@ -347,6 +347,8 @@ extern inline CONSTRUCTOR(CIConfig,
                           Vec *bins);
 
 // <core/cc/ci/parser.h>
+extern inline CONSTRUCTOR(CIParserVisitWaitingList, CIParserVisitWaitingList);
+
 extern inline DESTRUCTOR(CIParserMacroCall, CIParserMacroCall *self);
 
 // <core/cc/ci/result.h>

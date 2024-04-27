@@ -51,11 +51,43 @@ static inline CONSTRUCTOR(struct CIParserContext, CIParserContext);
 static inline void
 add_macro__CIParser(CIParser *self, CIParserMacroCall *macro_call);
 
+static inline void
+init_function_to_visit_waiting_list__CIParser(CIParser *self, String *name);
+
+static inline void
+init_typedef_to_visit_waiting_list__CIParser(CIParser *self, String *name);
+
+static inline void
+init_union_to_visit_waiting_list__CIParser(CIParser *self, String *name);
+
+static inline void
+init_struct_to_visit_waiting_list__CIParser(CIParser *self, String *name);
+
 static void
-add_item_to_wait_for_visit_list__CIParser(CIParser *self,
-                                          enum CIDeclKind kind,
+add_function_to_visit_waiting_list__CIParser(CIParser *self,
+                                             String *name,
+                                             CIGenericParams *generic_params);
+
+static void
+add_typedef_to_visit_waiting_list__CIParser(CIParser *self,
+                                            String *name,
+                                            CIGenericParams *generic_params);
+
+static void
+add_union_to_visit_waiting_list__CIParser(CIParser *self,
                                           String *name,
                                           CIGenericParams *generic_params);
+
+static void
+add_struct_to_visit_waiting_list__CIParser(CIParser *self,
+                                           String *name,
+                                           CIGenericParams *generic_params);
+
+static void
+add_item_to_visit_waiting_list__CIParser(CIParser *self,
+                                         enum CIDeclKind kind,
+                                         String *name,
+                                         CIGenericParams *generic_params);
 
 static String *
 generate_name_error__CIParser();
@@ -667,45 +699,152 @@ add_macro__CIParser(CIParser *self, CIParserMacroCall *macro_call)
     push__Stack(self->macros_call, macro_call);
 }
 
+#define INIT_X_TO_WAIT_TO_VISIT(hm) \
+    insert__HashMap(                \
+      hm, name->buffer, NEW(CIParserVisitWaitingListItem, name, NULL));
+
 void
-add_item_to_wait_for_visit_list__CIParser(CIParser *self,
-                                          enum CIDeclKind kind,
+init_function_to_visit_waiting_list__CIParser(CIParser *self, String *name)
+{
+    INIT_X_TO_WAIT_TO_VISIT(self->visit_waiting_list.functions);
+}
+
+void
+init_typedef_to_visit_waiting_list__CIParser(CIParser *self, String *name)
+{
+    INIT_X_TO_WAIT_TO_VISIT(self->visit_waiting_list.typedefs);
+}
+
+void
+init_union_to_visit_waiting_list__CIParser(CIParser *self, String *name)
+{
+    INIT_X_TO_WAIT_TO_VISIT(self->visit_waiting_list.unions);
+}
+
+void
+init_struct_to_visit_waiting_list__CIParser(CIParser *self, String *name)
+{
+    INIT_X_TO_WAIT_TO_VISIT(self->visit_waiting_list.unions);
+}
+
+#define ADD_X_TO_VISIT_WAITING_LIST(hm)                                      \
+    CIParserVisitWaitingListItem *item = get__HashMap(hm, name->buffer);     \
+                                                                             \
+    /* NOTE: Normally, it should already have been created, before the first \
+    signature can be sent to the visit queue. */                             \
+    ASSERT(item);                                                            \
+                                                                             \
+    if (item->generic_params_list) {                                         \
+        for (Usize i = 0; i < item->generic_params_list->len; ++i) {         \
+            if (eq__CIGenericParams(get__Vec(item->generic_params_list, i),  \
+                                    generic_params)) {                       \
+                return;                                                      \
+            }                                                                \
+        }                                                                    \
+    } else {                                                                 \
+        item->generic_params_list = NEW(Vec);                                \
+    }                                                                        \
+                                                                             \
+    push__Vec(item->generic_params_list, generic_params);
+
+void
+add_function_to_visit_waiting_list__CIParser(CIParser *self,
+                                             String *name,
+                                             CIGenericParams *generic_params)
+{
+    ADD_X_TO_VISIT_WAITING_LIST(self->visit_waiting_list.functions);
+}
+
+void
+add_typedef_to_visit_waiting_list__CIParser(CIParser *self,
+                                            String *name,
+                                            CIGenericParams *generic_params)
+{
+    ADD_X_TO_VISIT_WAITING_LIST(self->visit_waiting_list.typedefs);
+}
+
+void
+add_union_to_visit_waiting_list__CIParser(CIParser *self,
                                           String *name,
                                           CIGenericParams *generic_params)
 {
-    CIParserWaitForVisit *inserted_item =
-      get__HashMap(self->wait_visit_list, name->buffer);
+    ADD_X_TO_VISIT_WAITING_LIST(self->visit_waiting_list.unions);
+}
 
-    if (inserted_item) {
-        ASSERT(inserted_item->kind == kind);
+void
+add_struct_to_visit_waiting_list__CIParser(CIParser *self,
+                                           String *name,
+                                           CIGenericParams *generic_params)
+{
+    ADD_X_TO_VISIT_WAITING_LIST(self->visit_waiting_list.structs);
+}
 
-        push__Vec(inserted_item->generic_params_list, generic_params);
-    } else {
-        insert__HashMap(self->wait_visit_list,
-                        name->buffer,
-                        NEW(CIParserWaitForVisit, kind, name, generic_params));
+void
+add_item_to_visit_waiting_list__CIParser(CIParser *self,
+                                         enum CIDeclKind kind,
+                                         String *name,
+                                         CIGenericParams *generic_params)
+{
+    switch (kind) {
+        case CI_DECL_KIND_FUNCTION:
+            add_function_to_visit_waiting_list__CIParser(
+              self, name, generic_params);
+
+            break;
+        case CI_DECL_KIND_TYPEDEF:
+            add_typedef_to_visit_waiting_list__CIParser(
+              self, name, generic_params);
+
+            break;
+        case CI_DECL_KIND_UNION:
+            add_union_to_visit_waiting_list__CIParser(
+              self, name, generic_params);
+
+            break;
+        case CI_DECL_KIND_STRUCT:
+            add_struct_to_visit_waiting_list__CIParser(
+              self, name, generic_params);
+
+            break;
+        default:
+            UNREACHABLE("this kind of variant is not expected to add to visit "
+                        "waiting lists");
     }
 }
 
-CONSTRUCTOR(CIParserWaitForVisit *,
-            CIParserWaitForVisit,
-            enum CIDeclKind kind,
+CONSTRUCTOR(CIParserVisitWaitingListItem *,
+            CIParserVisitWaitingListItem,
             String *name,
-            CIGenericParams *generic_params)
+            Vec *generic_params_list)
 {
-    CIParserWaitForVisit *self = lily_malloc(sizeof(CIParserWaitForVisit));
+    CIParserVisitWaitingListItem *self =
+      lily_malloc(sizeof(CIParserVisitWaitingListItem));
 
-    self->kind = kind;
     self->name = name;
-    self->generic_params_list = init__Vec(1, generic_params);
+    self->generic_params_list = generic_params_list;
 
     return self;
 }
 
-DESTRUCTOR(CIParserWaitForVisit, CIParserWaitForVisit *self)
+DESTRUCTOR(CIParserVisitWaitingListItem, CIParserVisitWaitingListItem *self)
 {
-    FREE(Vec, self->generic_params_list);
+    if (self->generic_params_list) {
+        FREE(Vec, self->generic_params_list);
+    }
+
     lily_free(self);
+}
+
+DESTRUCTOR(CIParserVisitWaitingList, const CIParserVisitWaitingList *self)
+{
+    FREE_HASHMAP_VALUES(self->functions, CIParserVisitWaitingListItem);
+    FREE(HashMap, self->functions);
+    FREE_HASHMAP_VALUES(self->typedefs, CIParserVisitWaitingListItem);
+    FREE(HashMap, self->typedefs);
+    FREE_HASHMAP_VALUES(self->unions, CIParserVisitWaitingListItem);
+    FREE(HashMap, self->unions);
+    FREE_HASHMAP_VALUES(self->structs, CIParserVisitWaitingListItem);
+    FREE(HashMap, self->structs);
 }
 
 CONSTRUCTOR(CIParserMacroCall *, CIParserMacroCall, Vec *params)
@@ -735,7 +874,7 @@ CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner)
                        .tokens_iters = tokens_iters,
                        .macros_call =
                          NEW(Stack, CI_PARSER_MACROS_CALL_MAX_SIZE),
-                       .wait_visit_list = NEW(HashMap) };
+                       .visit_waiting_list = NEW(CIParserVisitWaitingList) };
 }
 
 String *
@@ -3159,7 +3298,7 @@ generate_type_gen__CIParser(CIParser *self,
     if (called_generic_params &&
         !is_generic_params_contains_generic__CIDecl(called_generic_params)) {
         if (decl->is_prototype) {
-            add_item_to_wait_for_visit_list__CIParser(
+            add_item_to_visit_waiting_list__CIParser(
               self, decl->kind, get_name__CIDecl(decl), called_generic_params);
         } else {
             String *serialized_called_decl_name = NULL;
@@ -3792,7 +3931,7 @@ parse_function_call__CIParser(CIParser *self,
     if (generic_params &&
         !is_generic_params_contains_generic__CIDecl(generic_params)) {
         if (function_decl->is_prototype) {
-            add_item_to_wait_for_visit_list__CIParser(
+            add_item_to_visit_waiting_list__CIParser(
               self,
               function_decl->kind,
               function_decl->function.name,
@@ -4989,8 +5128,6 @@ parse_struct_fields__CIParser(CIParser *self)
                     name = self->tokens_iters.previous_token->identifier;
                 }
 
-                expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
-
                 break;
             default:
                 if (expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, true)) {
@@ -4998,9 +5135,9 @@ parse_struct_fields__CIParser(CIParser *self)
                 } else {
                     name = generate_name_error__CIParser();
                 }
-
-                expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
         }
+
+        expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
 
         // TODO: parse bits set
 
@@ -5630,6 +5767,5 @@ DESTRUCTOR(CIParser, const CIParser *self)
     FREE(CITokensIters, &self->tokens_iters);
     FREE_STACK_ITEMS(self->macros_call, CIParserMacroCall);
     FREE(Stack, self->macros_call);
-    FREE_HASHMAP_VALUES(self->wait_visit_list, CIParserWaitForVisit);
-    FREE(HashMap, self->wait_visit_list);
+    FREE(CIParserVisitWaitingList, &self->visit_waiting_list);
 }
