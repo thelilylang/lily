@@ -434,9 +434,8 @@ static void
 expect_with_list__CIParser(CIParser *self, Usize n, ...);
 
 /// @brief Advance to n token(s).
-// TODO: Perhaps implement it.
-// static void
-// jump__CIParser(CIParser *self, Usize n);
+static void
+jump__CIParser(CIParser *self, Usize n);
 
 /// @brief Check if the current token can be a data type.
 static bool
@@ -535,8 +534,20 @@ parse_function_params__CIParser(CIParser *self);
 
 /// @brief Parse generic params.
 /// @return Vec<CIDataType*>*
+/// @param is_call Check whether this is a generic params call.
+/// @example
+///
+/// struct Vec[@T] { // => generic params, so `is_call` is false
+/// 	@T *buffer;
+/// 	Usize len;
+/// 	Usize capacity;
+/// };
+///
+/// // ...
+///
+/// Vec.[@T] // => generic params call, so `is_call` is true
 static CIGenericParams *
-parse_generic_params__CIParser(CIParser *self);
+parse_generic_params__CIParser(CIParser *self, bool is_call);
 
 /// @brief Parser function call.
 static CIExpr *
@@ -3004,6 +3015,14 @@ expect_with_list__CIParser(CIParser *self, Usize n, ...)
     FAILED("expected ...");
 }
 
+void
+jump__CIParser(CIParser *self, Usize n)
+{
+    while (n--) {
+        next_token__CIParser(self);
+    }
+}
+
 bool
 is_data_type__CIParser(CIParser *self)
 {
@@ -3709,16 +3728,8 @@ parse_data_type__CIParser(CIParser *self)
     switch (self->tokens_iters.previous_token->kind) {
         case CI_TOKEN_KIND_IDENTIFIER: {
             String *name = self->tokens_iters.previous_token->identifier;
-            CIGenericParams *generic_params = NULL;
-
-            switch (self->tokens_iters.current_token->kind) {
-                case CI_TOKEN_KIND_LSHIFT:
-                    generic_params = parse_generic_params__CIParser(self);
-
-                    break;
-                default:
-                    break;
-            }
+            CIGenericParams *generic_params =
+              parse_generic_params__CIParser(self, true);
 
             res = NEW_VARIANT(CIDataType,
                               typedef,
@@ -3841,7 +3852,6 @@ parse_data_type__CIParser(CIParser *self)
             enum CITokenKind previous_token_kind =
               self->tokens_iters.previous_token->kind;
             String *name = NULL; // String* (&)
-            CIGenericParams *generic_params = NULL;
 
             // struct <name><generic_params, ...> ...;
             // struct <name><generic_params, ...> { ... } ...;
@@ -3857,14 +3867,19 @@ parse_data_type__CIParser(CIParser *self)
                     break;
             }
 
+            bool generic_params_is_call = false;
+
             switch (self->tokens_iters.current_token->kind) {
-                case CI_TOKEN_KIND_LSHIFT:
-                    generic_params = parse_generic_params__CIParser(self);
+                case CI_TOKEN_KIND_DOT:
+                    generic_params_is_call = true;
 
                     break;
                 default:
                     break;
             }
+
+            CIGenericParams *generic_params = parse_generic_params__CIParser(
+              self, generic_params_is_call); // CIGenericParams*?
 
             switch (previous_token_kind) {
                 case CI_TOKEN_KIND_KEYWORD_STRUCT:
@@ -3888,6 +3903,10 @@ parse_data_type__CIParser(CIParser *self)
             switch (self->tokens_iters.current_token->kind) {
                 case CI_TOKEN_KIND_LBRACE:
                 case CI_TOKEN_KIND_SEMICOLON:
+                    if (generic_params_is_call) {
+                        FAILED("`.` is not expected before generic params");
+                    }
+
                     switch (previous_token_kind) {
                         case CI_TOKEN_KIND_KEYWORD_STRUCT: {
                             CIDecl *struct_decl = parse_struct__CIParser(
@@ -4117,13 +4136,40 @@ parse_function_params__CIParser(CIParser *self)
 }
 
 CIGenericParams *
-parse_generic_params__CIParser(CIParser *self)
+parse_generic_params__CIParser(CIParser *self, bool is_call)
 {
-    next_token__CIParser(self); // skip `<`
+    if (is_call) {
+        switch (self->tokens_iters.current_token->kind) {
+            case CI_TOKEN_KIND_DOT: {
+                CIToken *peeked = peek_token__CIParser(self, 1);
+
+                switch (peeked->kind) {
+                    case CI_TOKEN_KIND_LHOOK:
+                        jump__CIParser(self, 2);
+                        break;
+                    default:
+                        return NULL;
+                }
+
+                break;
+            }
+            default:
+                return NULL;
+        }
+    } else {
+        switch (self->tokens_iters.current_token->kind) {
+            case CI_TOKEN_KIND_LHOOK:
+                next_token__CIParser(self);
+
+                break;
+            default:
+                return NULL;
+        }
+    }
 
     Vec *params = NEW(Vec); // Vec<CIDataType*>*
 
-    while (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RSHIFT &&
+    while (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RHOOK &&
            self->tokens_iters.current_token->kind != CI_TOKEN_KIND_EOF) {
         CIDataType *data_type = parse_data_type__CIParser(self);
 
@@ -4131,7 +4177,7 @@ parse_generic_params__CIParser(CIParser *self)
             push__Vec(params, data_type);
         }
 
-        if (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RSHIFT) {
+        if (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RHOOK) {
             expect__CIParser(self, CI_TOKEN_KIND_COMMA, true);
         }
     }
@@ -4141,14 +4187,14 @@ parse_generic_params__CIParser(CIParser *self)
     }
 
     switch (self->tokens_iters.current_token->kind) {
-        case CI_TOKEN_KIND_RSHIFT:
+        case CI_TOKEN_KIND_RHOOK:
             next_token__CIParser(self);
 
             break;
         case CI_TOKEN_KIND_EOF:
             FAILED("unexpected EOF");
         default:
-            UNREACHABLE("expected `>` or `EOF`");
+            UNREACHABLE("expected `]` or `EOF`");
     }
 
     return params ? NEW(CIGenericParams, params) : NULL;
@@ -4393,16 +4439,8 @@ parse_primary_expr__CIParser(CIParser *self)
         }
         case CI_TOKEN_KIND_IDENTIFIER: {
             String *identifier = self->tokens_iters.previous_token->identifier;
-            CIGenericParams *generic_params = NULL; // CIGenericParams*?
-
-            switch (self->tokens_iters.current_token->kind) {
-                case CI_TOKEN_KIND_LSHIFT:
-                    generic_params = parse_generic_params__CIParser(self);
-
-                    break;
-                default:
-                    break;
-            }
+            CIGenericParams *generic_params =
+              parse_generic_params__CIParser(self, true); // CIGenericParams*?
 
             switch (self->tokens_iters.current_token->kind) {
                 case CI_TOKEN_KIND_LPAREN:
@@ -5408,7 +5446,6 @@ parse_typedef__CIParser(CIParser *self, CIDataType *data_type)
     }
 
     String *typedef_name = NULL;
-    CIGenericParams *generic_params = NULL;
 
     switch (self->tokens_iters.current_token->kind) {
         case CI_TOKEN_KIND_IDENTIFIER:
@@ -5422,14 +5459,8 @@ parse_typedef__CIParser(CIParser *self, CIDataType *data_type)
 
     init_typedef_to_visit_waiting_list__CIParser(self, typedef_name);
 
-    switch (self->tokens_iters.current_token->kind) {
-        case CI_TOKEN_KIND_LSHIFT:
-            generic_params = parse_generic_params__CIParser(self);
-
-            break;
-        default:
-            break;
-    }
+    CIGenericParams *generic_params =
+      parse_generic_params__CIParser(self, false);
 
     expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
 
@@ -5737,22 +5768,11 @@ parse_decl__CIParser(CIParser *self, bool in_function_body)
     switch (self->tokens_iters.current_token->kind) {
         case CI_TOKEN_KIND_IDENTIFIER: {
             String *name = self->tokens_iters.current_token->identifier;
-            CIGenericParams *generic_params = NULL; // CIGenericParams*?
 
             next_token__CIParser(self);
 
-            switch (self->tokens_iters.current_token->kind) {
-                case CI_TOKEN_KIND_LSHIFT:
-                    generic_params = parse_generic_params__CIParser(self);
-
-                    break;
-                default:
-                    break;
-            }
-
-            if (storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
-                TODO("parse typedef");
-            }
+            CIGenericParams *generic_params =
+              parse_generic_params__CIParser(self, false); // CIGenericParams*?
 
             switch (self->tokens_iters.current_token->kind) {
                 // Parse first variable

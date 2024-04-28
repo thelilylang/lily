@@ -51,8 +51,9 @@ skip_space_except_new_line__Scanner(Scanner *self)
 void
 jump__Scanner(Scanner *self, Usize n)
 {
-    for (Usize i = 0; i < n; ++i)
+    while (n--) {
         next_char__Scanner(self);
+    }
 }
 
 void
