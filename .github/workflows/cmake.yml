@@ -19,7 +19,7 @@ jobs:
     - name: Build
       run: ./scripts/ci/x86_64-ubuntu-release.sh
   x86_64-macos-debug:
-    runs-on: macos-latest
+    runs-on: macos-13
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
@@ -28,7 +28,7 @@ jobs:
     - name: Build & Test
       run: ./scripts/ci/x86_64-macos-debug.sh
   x86_64-macos-release:
-    runs-on: macos-latest
+    runs-on: macos-13
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
