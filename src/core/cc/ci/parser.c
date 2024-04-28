@@ -370,6 +370,21 @@ resolve_unary_expr__CIParser(CIParser *self, CIExpr *expr, bool is_partial);
 static CIExpr *
 resolve_expr__CIParser(CIParser *self, CIExpr *expr, bool is_partial);
 
+static void
+resolve_function_visit_waiting_list__CIParser(CIParser *self);
+
+static void
+resolve_typedef_visit_waiting_list__CIParser(CIParser *self);
+
+static void
+resolve_union_visit_waiting_list__CIParser(CIParser *self);
+
+static void
+resolve_struct_visit_waiting_list__CIParser(CIParser *self);
+
+static void
+resolve_visit_waiting_list__CIParser(CIParser *self);
+
 /// @brief Move to next conditional preprocessor.
 static CIToken *
 next_conditional_preprocessor__CIParser(CIParser *self);
@@ -2406,6 +2421,55 @@ resolve_expr__CIParser(CIParser *self, CIExpr *expr, bool is_partial)
         default:
             UNREACHABLE("unknown variant");
     }
+}
+
+#define RESOLVE_VISIT_WAITING_LIST(hm, gen)                                    \
+    HashMapIter iter = NEW(HashMapIter, hm);                                   \
+    CIParserVisitWaitingListItem *item = NULL;                                 \
+                                                                               \
+    while ((item = next__HashMapIter(&iter))) {                                \
+        if (item->generic_params_list) {                                       \
+            for (Usize i = 0; i < item->generic_params_list->len; ++i) {       \
+                gen(self, item->name, get__Vec(item->generic_params_list, i)); \
+            }                                                                  \
+        }                                                                      \
+    }
+
+void
+resolve_function_visit_waiting_list__CIParser(CIParser *self)
+{
+    RESOLVE_VISIT_WAITING_LIST(self->visit_waiting_list.functions,
+                               generate_function_gen__CIParser);
+}
+
+void
+resolve_typedef_visit_waiting_list__CIParser(CIParser *self)
+{
+    RESOLVE_VISIT_WAITING_LIST(self->visit_waiting_list.typedefs,
+                               generate_typedef_gen__CIParser);
+}
+
+void
+resolve_union_visit_waiting_list__CIParser(CIParser *self)
+{
+    RESOLVE_VISIT_WAITING_LIST(self->visit_waiting_list.unions,
+                               generate_union_gen__CIParser);
+}
+
+void
+resolve_struct_visit_waiting_list__CIParser(CIParser *self)
+{
+    RESOLVE_VISIT_WAITING_LIST(self->visit_waiting_list.structs,
+                               generate_struct_gen__CIParser);
+}
+
+void
+resolve_visit_waiting_list__CIParser(CIParser *self)
+{
+    resolve_function_visit_waiting_list__CIParser(self);
+    resolve_typedef_visit_waiting_list__CIParser(self);
+    resolve_union_visit_waiting_list__CIParser(self);
+    resolve_struct_visit_waiting_list__CIParser(self);
 }
 
 CIToken *
@@ -5904,7 +5968,7 @@ run__CIParser(CIParser *self)
         parse_decl__CIParser(self, false);
     }
 
-    // TODO: Resolve all items in `wait_visit_list`
+    resolve_visit_waiting_list__CIParser(self);
 
 #ifdef ENV_DEBUG
     // TODO: Print debug
