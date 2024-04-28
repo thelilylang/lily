@@ -89,6 +89,44 @@ add_item_to_visit_waiting_list__CIParser(CIParser *self,
                                          String *name,
                                          CIGenericParams *generic_params);
 
+/// @return CIParserVisitWaitingListItem*? (&)
+static inline CIParserVisitWaitingListItem *
+get_function_from_visit_waiting_list__CIParser(const CIParser *self,
+                                               const String *name);
+
+/// @return CIParserVisitWaitingListItem*? (&)
+static inline CIParserVisitWaitingListItem *
+get_typedef_from_visit_waiting_list__CIParser(const CIParser *self,
+                                              const String *name);
+
+/// @return CIParserVisitWaitingListItem*? (&)
+static inline CIParserVisitWaitingListItem *
+get_union_from_visit_waiting_list__CIParser(const CIParser *self,
+                                            const String *name);
+
+/// @return CIParserVisitWaitingListItem*? (&)
+static inline CIParserVisitWaitingListItem *
+get_struct_from_visit_waiting_list__CIParser(const CIParser *self,
+                                             const String *name);
+
+/// @brief Checks if the corresponding function name is recursive.
+/// @note The corresponding function must exist.
+static inline bool
+is_recursive_function__CIParser(const CIParser *self, const String *name);
+
+static inline bool
+is_recursive_typedef__CIParser(const CIParser *self, const String *name);
+
+/// @brief Checks if the corresponding union name is recursive.
+/// @note The corresponding union must exist.
+static inline bool
+is_recursive_union__CIParser(const CIParser *self, const String *name);
+
+/// @brief Checks if the corresponding struct name is recursive.
+/// @note The corresponding struct must exist.
+static inline bool
+is_recursive_struct__CIParser(const CIParser *self, const String *name);
+
 static String *
 generate_name_error__CIParser();
 
@@ -432,6 +470,7 @@ static void
 generate_type_gen__CIParser(CIParser *self,
                             String *name,
                             CIGenericParams *called_generic_params,
+                            bool(const CIParser *, const String *),
                             CIDecl *(*search_decl)(const CIResultFile *,
                                                    const String *));
 
@@ -732,7 +771,7 @@ init_union_to_visit_waiting_list__CIParser(CIParser *self, String *name)
 void
 init_struct_to_visit_waiting_list__CIParser(CIParser *self, String *name)
 {
-    INIT_X_TO_WAIT_TO_VISIT(self->visit_waiting_list.unions);
+    INIT_X_TO_WAIT_TO_VISIT(self->visit_waiting_list.structs);
 }
 
 #define ADD_X_TO_VISIT_WAITING_LIST(hm)                                      \
@@ -818,6 +857,65 @@ add_item_to_visit_waiting_list__CIParser(CIParser *self,
             UNREACHABLE("this kind of variant is not expected to add to visit "
                         "waiting lists");
     }
+}
+
+CIParserVisitWaitingListItem *
+get_function_from_visit_waiting_list__CIParser(const CIParser *self,
+                                               const String *name)
+{
+    return get__HashMap(self->visit_waiting_list.functions, name->buffer);
+}
+
+CIParserVisitWaitingListItem *
+get_typedef_from_visit_waiting_list__CIParser(const CIParser *self,
+                                              const String *name)
+{
+    return get__HashMap(self->visit_waiting_list.typedefs, name->buffer);
+}
+
+CIParserVisitWaitingListItem *
+get_union_from_visit_waiting_list__CIParser(const CIParser *self,
+                                            const String *name)
+{
+    return get__HashMap(self->visit_waiting_list.unions, name->buffer);
+}
+
+CIParserVisitWaitingListItem *
+get_struct_from_visit_waiting_list__CIParser(const CIParser *self,
+                                             const String *name)
+{
+    return get__HashMap(self->visit_waiting_list.structs, name->buffer);
+}
+
+bool
+is_recursive_function__CIParser(const CIParser *self, const String *name)
+{
+    ASSERT(!search_function__CIResultFile(self->file, name));
+
+    return get_function_from_visit_waiting_list__CIParser(self, name);
+}
+
+bool
+is_recursive_typedef__CIParser(const CIParser *self, const String *name)
+{
+    // NOTE: A typedef cannot be recursive.
+    return false;
+}
+
+bool
+is_recursive_union__CIParser(const CIParser *self, const String *name)
+{
+    ASSERT(!search_union__CIResultFile(self->file, name));
+
+    return get_union_from_visit_waiting_list__CIParser(self, name);
+}
+
+bool
+is_recursive_struct__CIParser(const CIParser *self, const String *name)
+{
+    ASSERT(!search_struct__CIResultFile(self->file, name));
+
+    return get_struct_from_visit_waiting_list__CIParser(self, name);
 }
 
 CONSTRUCTOR(CIParserVisitWaitingListItem *,
@@ -3294,12 +3392,18 @@ void
 generate_type_gen__CIParser(CIParser *self,
                             String *name,
                             CIGenericParams *called_generic_params,
+                            bool (*is_recursive)(const CIParser *,
+                                                 const String *),
                             CIDecl *(*search_decl)(const CIResultFile *,
                                                    const String *))
 {
     CIDecl *decl = search_decl(self->file, name);
 
     if (!decl) {
+        if (is_recursive(self, name)) {
+            return;
+        }
+
         FAILED("struct, typedef or union not found");
     }
 
@@ -3389,6 +3493,7 @@ generate_struct_gen__CIParser(CIParser *self,
     generate_type_gen__CIParser(self,
                                 struct_name_ref,
                                 called_generic_params,
+                                &is_recursive_struct__CIParser,
                                 &search_struct__CIResultFile);
 }
 
@@ -3397,8 +3502,11 @@ generate_union_gen__CIParser(CIParser *self,
                              String *union_name_ref,
                              CIGenericParams *called_generic_params)
 {
-    generate_type_gen__CIParser(
-      self, union_name_ref, called_generic_params, &search_union__CIResultFile);
+    generate_type_gen__CIParser(self,
+                                union_name_ref,
+                                called_generic_params,
+                                &is_recursive_union__CIParser,
+                                &search_union__CIResultFile);
 }
 
 void
@@ -3409,6 +3517,7 @@ generate_typedef_gen__CIParser(CIParser *self,
     generate_type_gen__CIParser(self,
                                 typedef_name_ref,
                                 called_generic_params,
+                                &is_recursive_typedef__CIParser,
                                 &search_typedef__CIResultFile);
 }
 
