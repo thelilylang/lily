@@ -9,19 +9,19 @@ jobs:
   x86_64-ubuntu-debug:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Build & Test
       run: ./scripts/ci/x86_64-ubuntu-debug.sh
   x86_64-ubuntu-release:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Build
       run: ./scripts/ci/x86_64-ubuntu-release.sh
   x86_64-macos-debug:
     runs-on: macos-13
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: actions/setup-python@v4
       with:
         python-version: '3.10'
@@ -30,7 +30,7 @@ jobs:
   x86_64-macos-release:
     runs-on: macos-13
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: actions/setup-python@v4
       with:
         python-version: '3.10'
