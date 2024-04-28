@@ -465,9 +465,16 @@ visit_function__CIParser(CIParser *self,
                          const CIDecl *function_decl,
                          CIGenericParams *called_generic_params);
 
+/// @brief Generaste function gen.
+static void
+generate_function_gen__CIParser(CIParser *self,
+                                String *function_name,
+                                CIGenericParams *called_generic_params);
+
 /// @brief Generate struct, union or typedef gen.
 static void
 generate_type_gen__CIParser(CIParser *self,
+                            enum CIDeclKind kind,
                             String *name,
                             CIGenericParams *called_generic_params,
                             bool(const CIParser *, const String *),
@@ -3389,7 +3396,67 @@ visit_function__CIParser(CIParser *self,
 }
 
 void
+generate_function_gen__CIParser(CIParser *self,
+                                String *function_name,
+                                CIGenericParams *called_generic_params)
+{
+    const CIDecl *function_decl =
+      search_function__CIResultFile(self->file, function_name);
+
+    if (!function_decl) {
+        if (is_recursive_function__CIParser(self, function_name)) {
+            TODO("function is recursive");
+        }
+
+        FAILED("unknown function, impossible to call unknown function");
+    }
+
+    // Generate gen function declaration
+    if (called_generic_params &&
+        !is_generic_params_contains_generic__CIDecl(called_generic_params)) {
+        if (function_decl->is_prototype) {
+            add_item_to_visit_waiting_list__CIParser(
+              self,
+              function_decl->kind,
+              function_decl->function.name,
+              called_generic_params);
+        } else {
+            String *serialized_called_function_name =
+              serialize_name__CIDeclFunction(&function_decl->function,
+                                             called_generic_params);
+            const CIDecl *function_gen = search_function__CIResultFile(
+              self->file, serialized_called_function_name);
+
+            if (!function_gen) {
+                CIDataType *subs_return_data_type =
+                  substitute_data_type__CIParser(
+                    function_decl->function.return_data_type,
+                    function_decl->function.generic_params,
+                    called_generic_params);
+
+                visit_function__CIParser(
+                  self, function_decl, called_generic_params);
+
+                CIDecl *function_gen_decl =
+                  NEW_VARIANT(CIDecl,
+                              function_gen,
+                              (CIDecl *)function_decl,
+                              ref__CIGenericParams(called_generic_params),
+                              serialized_called_function_name,
+                              subs_return_data_type ? subs_return_data_type
+                                                    : ref__CIDataType(
+                                                        function_decl->function
+                                                          .return_data_type) /* Return a ref data type, when the substituted data type is NULL, to avoid an optional data type in the `return_data_type` field. */);
+
+                add_decl_to_scope__CIParser(self, &function_gen_decl, false);
+            }
+        }
+    }
+}
+
+void
 generate_type_gen__CIParser(CIParser *self,
+                            enum CIDeclKind kind,
                             String *name,
                             CIGenericParams *called_generic_params,
                             bool (*is_recursive)(const CIParser *,
@@ -3401,11 +3468,18 @@ generate_type_gen__CIParser(CIParser *self,
 
     if (!decl) {
         if (is_recursive(self, name)) {
+            if (called_generic_params) {
+                add_item_to_visit_waiting_list__CIParser(
+                  self, kind, name, called_generic_params);
+            }
+
             return;
         }
 
         FAILED("struct, typedef or union not found");
     }
+
+    ASSERT(kind == decl->kind);
 
     if (called_generic_params &&
         !is_generic_params_contains_generic__CIDecl(called_generic_params)) {
@@ -3491,6 +3565,7 @@ generate_struct_gen__CIParser(CIParser *self,
                               CIGenericParams *called_generic_params)
 {
     generate_type_gen__CIParser(self,
+                                CI_DECL_KIND_STRUCT,
                                 struct_name_ref,
                                 called_generic_params,
                                 &is_recursive_struct__CIParser,
@@ -3503,6 +3578,7 @@ generate_union_gen__CIParser(CIParser *self,
                              CIGenericParams *called_generic_params)
 {
     generate_type_gen__CIParser(self,
+                                CI_DECL_KIND_UNION,
                                 union_name_ref,
                                 called_generic_params,
                                 &is_recursive_union__CIParser,
@@ -3515,6 +3591,7 @@ generate_typedef_gen__CIParser(CIParser *self,
                                CIGenericParams *called_generic_params)
 {
     generate_type_gen__CIParser(self,
+                                CI_DECL_KIND_TYPEDEF,
                                 typedef_name_ref,
                                 called_generic_params,
                                 &is_recursive_typedef__CIParser,
@@ -4018,13 +4095,6 @@ parse_function_call__CIParser(CIParser *self,
                               String *identifier,
                               CIGenericParams *generic_params)
 {
-    const CIDecl *function_decl =
-      search_function__CIResultFile(self->file, identifier);
-
-    if (!function_decl) {
-        FAILED("unknown function, impossible to call unknown function");
-    }
-
     next_token__CIParser(self); // skip `(`
 
     Vec *params = NEW(Vec); // Vec<CIExpr*>*
@@ -4043,49 +4113,7 @@ parse_function_call__CIParser(CIParser *self,
     }
 
     expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
-
-    // Generate gen function declaration
-    if (generic_params &&
-        !is_generic_params_contains_generic__CIDecl(generic_params)) {
-        if (function_decl->is_prototype) {
-            add_item_to_visit_waiting_list__CIParser(
-              self,
-              function_decl->kind,
-              function_decl->function.name,
-              generic_params);
-        } else {
-            String *serialized_called_function_name =
-              serialize_name__CIDeclFunction(&function_decl->function,
-                                             generic_params);
-            const CIDecl *function_gen = search_function__CIResultFile(
-              self->file, serialized_called_function_name);
-
-            if (!function_gen) {
-                CIDataType *subs_return_data_type =
-                  substitute_data_type__CIParser(
-                    function_decl->function.return_data_type,
-                    function_decl->function.generic_params,
-                    generic_params);
-
-                visit_function__CIParser(self, function_decl, generic_params);
-
-                CIDecl *function_gen_decl =
-                  NEW_VARIANT(CIDecl,
-                              function_gen,
-                              (CIDecl *)function_decl,
-                              ref__CIGenericParams(generic_params),
-                              serialized_called_function_name,
-                              subs_return_data_type ? subs_return_data_type
-                                                    : ref__CIDataType(
-                                                        function_decl->function
-                                                          .return_data_type) /* Return a ref data type, when the substituted data type is NULL, to avoid an optional data type in the `return_data_type` field. */);
-
-                add_decl_to_scope__CIParser(self, &function_gen_decl, false);
-            }
-
-            identifier = serialized_called_function_name;
-        }
-    }
+    generate_function_gen__CIParser(self, identifier, generic_params);
 
     return NEW_VARIANT(
       CIExpr,
@@ -5291,7 +5319,9 @@ parse_struct__CIParser(CIParser *self,
                        String *name,
                        CIGenericParams *generic_params)
 {
-    init_struct_to_visit_waiting_list__CIParser(self, name);
+    if (name) {
+        init_struct_to_visit_waiting_list__CIParser(self, name);
+    }
 
     Vec *fields = parse_struct_or_union_fields__CIParser(self);
 
@@ -5351,7 +5381,9 @@ parse_union__CIParser(CIParser *self,
                       String *name,
                       CIGenericParams *generic_params)
 {
-    init_union_to_visit_waiting_list__CIParser(self, name);
+    if (name) {
+        init_union_to_visit_waiting_list__CIParser(self, name);
+    }
 
     Vec *fields = parse_struct_or_union_fields__CIParser(self);
 

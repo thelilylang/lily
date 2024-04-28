@@ -2133,6 +2133,15 @@ inline CONSTRUCTOR(CIExprFunctionCall,
 
 /**
  *
+ * @brief Serialize function call identifier..
+ */
+String *
+serialize_name__CIExprFunctionCall(
+  const CIExprFunctionCall *self,
+  const CIGenericParams *called_generic_params);
+
+/**
+ *
  * @brief Convert CIExprFunctionCall in String.
  * @note This function is only used to debug.
  */
