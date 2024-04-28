@@ -183,6 +183,15 @@ static VARIANT_DESTRUCTOR(CIDeclFunctionItem, expr, CIDeclFunctionItem *self);
 /// @brief Free CIDeclFunctionItem type (CI_DECL_FUNCTION_ITEM_KIND_STMT).
 static VARIANT_DESTRUCTOR(CIDeclFunctionItem, stmt, CIDeclFunctionItem *self);
 
+#define CI_SERIALIZE_NAME(name)                                    \
+    ASSERT(called_generic_params);                                 \
+                                                                   \
+    String *res = format__String("{S}__", name);                   \
+                                                                   \
+    serialize_vec__CIDataType(called_generic_params->params, res); \
+                                                                   \
+    return res;
+
 CONSTRUCTOR(CIScopeID *, CIScopeID, Usize id)
 {
     CIScopeID *self = lily_malloc(sizeof(CIScopeID));
@@ -1559,13 +1568,7 @@ String *
 serialize_name__CIDeclFunction(const CIDeclFunction *self,
                                const CIGenericParams *called_generic_params)
 {
-    ASSERT(called_generic_params);
-
-    String *res = format__String("{S}__", self->name);
-
-    serialize_vec__CIDataType(called_generic_params->params, res);
-
-    return res;
+    CI_SERIALIZE_NAME(self->name);
 }
 
 #ifdef ENV_DEBUG
@@ -1702,13 +1705,7 @@ String *
 serialize_name__CIDeclStruct(const CIDeclStruct *self,
                              const CIGenericParams *called_generic_params)
 {
-    ASSERT(called_generic_params);
-
-    String *res = format__String("{S}__", self->name);
-
-    serialize_vec__CIDataType(called_generic_params->params, res);
-
-    return res;
+    CI_SERIALIZE_NAME(self->name);
 }
 
 #ifdef ENV_DEBUG
@@ -1792,13 +1789,7 @@ String *
 serialize_name__CIDeclTypedef(const CIDeclTypedef *self,
                               const CIGenericParams *called_generic_params)
 {
-    ASSERT(called_generic_params);
-
-    String *res = format__String("{S}__", self->name);
-
-    serialize_vec__CIDataType(called_generic_params->params, res);
-
-    return res;
+    CI_SERIALIZE_NAME(self->name);
 }
 
 #ifdef ENV_DEBUG
@@ -1856,13 +1847,7 @@ String *
 serialize_name__CIDeclUnion(const CIDeclUnion *self,
                             const CIGenericParams *called_generic_params)
 {
-    ASSERT(called_generic_params);
-
-    String *res = format__String("{S}__", self->name);
-
-    serialize_vec__CIDataType(called_generic_params->params, res);
-
-    return res;
+    CI_SERIALIZE_NAME(self->name);
 }
 
 #ifdef ENV_DEBUG
@@ -2865,6 +2850,13 @@ DESTRUCTOR(CIExprCast, const CIExprCast *self)
 {
     FREE(CIDataType, self->data_type);
     FREE(CIExpr, self->expr);
+}
+
+String *
+serialize_name__CIExprFunctionCall(const CIExprFunctionCall *self,
+                                   const CIGenericParams *called_generic_params)
+{
+    CI_SERIALIZE_NAME(self->identifier);
 }
 
 #ifdef ENV_DEBUG

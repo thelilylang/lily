@@ -193,22 +193,31 @@ add_include__CIResultFile(const CIResultFile *self)
         }                                                                    \
     }
 
-#define CHECK_FOR_SYMBOL_REDEFINITION(name, scope)                           \
-    CHECK_FOR_SYMBOL_REDEFINITION_DECL(name, search_enum__CIResultFile);     \
-    CHECK_FOR_SYMBOL_REDEFINITION_DECL(name, search_function__CIResultFile); \
-    CHECK_FOR_SYMBOL_REDEFINITION_DECL(name, search_struct__CIResultFile);   \
-    CHECK_FOR_SYMBOL_REDEFINITION_DECL(name, search_typedef__CIResultFile);  \
-    CHECK_FOR_SYMBOL_REDEFINITION_DECL(name, search_union__CIResultFile);    \
+#define CHECK_FOR_SYMBOL_REDEFINITION(name, scope, decl)                       \
+    if (!(decl->kind & CI_DECL_KIND_TYPEDEF)) {                                \
+        CHECK_FOR_SYMBOL_REDEFINITION_DECL(name, search_enum__CIResultFile);   \
+        CHECK_FOR_SYMBOL_REDEFINITION_DECL(name, search_struct__CIResultFile); \
+        CHECK_FOR_SYMBOL_REDEFINITION_DECL(name, search_union__CIResultFile);  \
+    }                                                                          \
+                                                                               \
+    if (!(decl->kind & CI_DECL_KIND_ENUM ||                                    \
+          decl->kind & CI_DECL_KIND_STRUCT ||                                  \
+          decl->kind & CI_DECL_KIND_UNION)) {                                  \
+        CHECK_FOR_SYMBOL_REDEFINITION_DECL(name,                               \
+                                           search_typedef__CIResultFile);      \
+    }                                                                          \
+                                                                               \
+    CHECK_FOR_SYMBOL_REDEFINITION_DECL(name, search_function__CIResultFile);   \
     CHECK_FOR_SYMBOL_REDEFINITION_VAR(name, scope);
 
-#define ADD_X_DECL(X, scope, add_scope, v)      \
-    const String *name = get_name__CIDecl(X);   \
-                                                \
-    CHECK_FOR_SYMBOL_REDEFINITION(name, scope); \
-                                                \
-    ASSERT(!add_scope);                         \
-    push__Vec(v, X);                            \
-                                                \
+#define ADD_X_DECL(X, scope, add_scope, v)         \
+    const String *name = get_name__CIDecl(X);      \
+                                                   \
+    CHECK_FOR_SYMBOL_REDEFINITION(name, scope, X); \
+                                                   \
+    ASSERT(!add_scope);                            \
+    push__Vec(v, X);                               \
+                                                   \
     return NULL;
 
 const CIDecl *

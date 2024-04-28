@@ -866,8 +866,19 @@ void
 generate_function_call_expr__CIGenerator(
   const CIExprFunctionCall *function_call)
 {
-    write_String__CIGenerator(
-      format__String("{S}(", function_call->identifier));
+    if (function_call->generic_params) {
+        String *serialized_identifier =
+          format__String("{S}__", function_call->identifier);
+
+        serialize_vec__CIDataType(function_call->generic_params->params,
+                                  serialized_identifier);
+
+        write_String__CIGenerator(serialized_identifier);
+    } else {
+        write_str__CIGenerator(function_call->identifier->buffer);
+    }
+
+    write_str__CIGenerator("(");
 
     for (Usize i = 0; i < function_call->params->len; ++i) {
         generate_function_expr__CIGenerator(get__Vec(function_call->params, i));
