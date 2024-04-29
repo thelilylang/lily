@@ -437,8 +437,12 @@ expect_with_list__CIParser(CIParser *self, Usize n, ...);
 static void
 jump__CIParser(CIParser *self, Usize n);
 
-/// @brief Check if the current token can be a data type.
+/// @brief Check if the passed token is a data type.
 static bool
+token_is_data_type__CIParser(CIParser *self, const CIToken *token);
+
+/// @brief Check if the current token can be a data type.
+static inline bool
 is_data_type__CIParser(CIParser *self);
 
 /// @return the generated fields.
@@ -3024,12 +3028,11 @@ jump__CIParser(CIParser *self, Usize n)
 }
 
 bool
-is_data_type__CIParser(CIParser *self)
+token_is_data_type__CIParser(CIParser *self, const CIToken *token)
 {
-    switch (self->tokens_iters.current_token->kind) {
+    switch (token->kind) {
         case CI_TOKEN_KIND_IDENTIFIER:
-            return search_typedef__CIResultFile(
-              self->file, self->tokens_iters.current_token->identifier);
+            return search_typedef__CIResultFile(self->file, token->identifier);
         case CI_TOKEN_KIND_AT: // TODO: check if the next token is an identifier
                                // (not needed for the moment)
         case CI_TOKEN_KIND_KEYWORD_BOOL:
@@ -3064,6 +3067,12 @@ is_data_type__CIParser(CIParser *self)
         default:
             return false;
     }
+}
+
+bool
+is_data_type__CIParser(CIParser *self)
+{
+    return token_is_data_type__CIParser(self, self->tokens_iters.current_token);
 }
 
 CIDataType *
@@ -4138,6 +4147,8 @@ parse_function_params__CIParser(CIParser *self)
 CIGenericParams *
 parse_generic_params__CIParser(CIParser *self, bool is_call)
 {
+    Usize is_data_type_jump = 0;
+
     if (is_call) {
         switch (self->tokens_iters.current_token->kind) {
             case CI_TOKEN_KIND_DOT: {
@@ -4145,11 +4156,12 @@ parse_generic_params__CIParser(CIParser *self, bool is_call)
 
                 switch (peeked->kind) {
                     case CI_TOKEN_KIND_LHOOK:
-                        jump__CIParser(self, 2);
                         break;
                     default:
                         return NULL;
                 }
+
+                is_data_type_jump = 2;
 
                 break;
             }
@@ -4159,11 +4171,21 @@ parse_generic_params__CIParser(CIParser *self, bool is_call)
     } else {
         switch (self->tokens_iters.current_token->kind) {
             case CI_TOKEN_KIND_LHOOK:
-                next_token__CIParser(self);
+                is_data_type_jump = 1;
 
                 break;
             default:
                 return NULL;
+        }
+    }
+
+    {
+        CIToken *peeked = peek_token__CIParser(self, is_data_type_jump);
+
+        if (token_is_data_type__CIParser(self, peeked)) {
+            jump__CIParser(self, is_data_type_jump);
+        } else {
+            return NULL;
         }
     }
 
