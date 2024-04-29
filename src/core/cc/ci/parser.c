@@ -4924,13 +4924,14 @@ parse_for_stmt__CIParser(CIParser *self, bool in_switch)
             }
     }
 
-    expr1 = parse_expr__CIParser(self);
-
-    if (!expr1) {
-        FAILED("expected condition in for loop");
+    switch (self->tokens_iters.current_token->kind) {
+        case CI_TOKEN_KIND_SEMICOLON:
+            next_token__CIParser(self);
+            break;
+        default:
+            expr1 = parse_expr__CIParser(self);
+            expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
     }
-
-    expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
 
     switch (self->tokens_iters.current_token->kind) {
         case CI_TOKEN_KIND_RPAREN:
