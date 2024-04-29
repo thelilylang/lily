@@ -4393,6 +4393,10 @@ parse_primary_expr__CIParser(CIParser *self)
         data_type_as_expression = NULL;
 
         return NEW_VARIANT(CIExpr, data_type, data_type);
+    } else if (is_data_type__CIParser(self)) {
+        CIDataType *data_type = parse_data_type__CIParser(self);
+
+        return NEW_VARIANT(CIExpr, data_type, data_type);
     }
 
     next_token__CIParser(self);
@@ -4449,7 +4453,24 @@ parse_primary_expr__CIParser(CIParser *self)
         case CI_TOKEN_KIND_HASHTAG:
             TODO("done Stringification");
         case CI_TOKEN_KIND_KEYWORD_SIZEOF: {
+            bool has_open_paren = false;
+
+            switch (self->tokens_iters.current_token->kind) {
+                case CI_TOKEN_KIND_LPAREN:
+                    has_open_paren = true;
+
+                    next_token__CIParser(self);
+
+                    break;
+                default:
+                    break;
+            }
+
             CIExpr *sizeof_expr = parse_expr__CIParser(self);
+
+            if (has_open_paren) {
+                expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
+            }
 
             if (sizeof_expr) {
                 res = NEW_VARIANT(CIExpr, sizeof, sizeof_expr);
