@@ -45,27 +45,29 @@
 #include <unistd.h>
 #endif
 
+#define FILE_EXTENSION_SEPARATOR '.'
+
 char *
 get_extension__File(const char *path)
 {
-    // TODO: Probably refactor this function
-    bool extension_started = false;
+    // app.lily
+    //    ^
+    // ./a/b/c/app.ci
+    //            ^
+    const char *path_filename = strrchr(path, FILE_EXTENSION_SEPARATOR);
     Usize size = 1;
     char *extension = lily_malloc(1);
-    Usize len = strlen(path);
 
-    for (Usize i = 0; i < len; i++) {
-        if (path[i] == '.' && path[i + 1 < len ? i + 1 : i] != '.' &&
-            path[i + 1 < len ? i + 1 : i] != '/' &&
-            path[i + 1 < len ? i + 1 : i] != '\\') {
-            extension_started = true;
-        }
+    extension[0] = '\0';
 
-        if (extension_started) {
-            extension = lily_realloc(extension, size + 1);
-            extension[size - 1] = path[i];
-            extension[size++] = '\0';
-        }
+    if (!path_filename) {
+        return extension;
+    }
+
+    while (*path_filename) {
+        extension = lily_realloc(extension, size + 1);
+        extension[size - 1] = *(path_filename++);
+        extension[size++] = '\0';
     }
 
     return extension;
@@ -85,7 +87,7 @@ get_filename__File(const char *path)
 
     String *filename = NEW(String);
 
-    while (*path_filename != '.') {
+    while (*path_filename != FILE_EXTENSION_SEPARATOR) {
         push__String(filename, *(path_filename++));
     }
 
@@ -266,20 +268,14 @@ exists__File(const char *path)
 String *
 exists_rec__File(const char *path, const char *filename)
 {
-#ifdef LILY_WINDOWS_OS
-    Usize count_folder = count_c__Str(path, '\\');
-#else
-    Usize count_folder = count_c__Str(path, '/');
-#endif
+    Usize count_folder = count_c__Str(path, DIR_SEPARATOR);
 
     for (Usize i = 0; i < count_folder; ++i) {
-#ifdef LILY_WINDOWS_OS
-        String *path_s = format__String(
-          "{s}\\{Sr}\\{s}", path, repeat__String("..\\", i), filename);
-#else
-        String *path_s = format__String(
-          "{s}/{Sr}/{s}", path, repeat__String("../", i), filename);
-#endif
+        String *path_s =
+          format__String("{s}" DIR_SEPARATOR_S "{Sr}" DIR_SEPARATOR_S "{s}",
+                         path,
+                         repeat__String(".." DIR_SEPARATOR_S, i),
+                         filename);
 
         if (exists__File(path_s->buffer)) {
             return path_s;
