@@ -33,4 +33,10 @@
 #define DIR_SEPARATOR '/'
 #endif
 
+#ifdef LILY_WINDOWS_OS
+#define DIR_SEPARATOR_S "\\"
+#else
+#define DIR_SEPARATOR_S "/"
+#endif
+
 #endif // LILY_BASE_DIR_SEPARATOR_H
