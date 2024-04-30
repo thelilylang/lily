@@ -3048,6 +3048,7 @@ token_is_data_type__CIParser(CIParser *self, const CIToken *token)
         case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE:
         case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__COMPLEX:
         case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__IMAGINARY:
+        case CI_TOKEN_KIND_KEYWORD_LONG_INT:
         case CI_TOKEN_KIND_KEYWORD_INT:
         case CI_TOKEN_KIND_KEYWORD_SHORT_INT:
         case CI_TOKEN_KIND_KEYWORD_SIGNED_CHAR:
@@ -3842,6 +3843,10 @@ parse_data_type__CIParser(CIParser *self)
             break;
         case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__IMAGINARY:
             res = NEW(CIDataType, CI_DATA_TYPE_KIND_LONG_DOUBLE__IMAGINARY);
+
+            break;
+        case CI_TOKEN_KIND_KEYWORD_LONG_INT:
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_LONG_INT);
 
             break;
         case CI_TOKEN_KIND_KEYWORD_INT:
