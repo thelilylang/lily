@@ -1600,6 +1600,7 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, const CIScannerContext *ctx)
               convert_multi_part_keyword_to_token_kind__CIKeywordMultiPart( \
                 flags),                                                     \
               clone__Location(&self->base.location));                       \
+            t->kind = standarize_keyword__CIScanner(t->kind);               \
             DEFAULT_LAST_SET_AND_CHECK(t);                                  \
             push_token__CIScanner(self, ctx, t);                            \
         }                                                                   \
