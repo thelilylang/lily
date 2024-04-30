@@ -76,6 +76,9 @@ static void
 generate_function_params__CIGenerator(const Vec *params);
 
 static void
+generate_function_array_expr__CIGenerator(const CIExprArray *array);
+
+static void
 generate_function_binary_expr__CIGenerator(const CIExprBinary *binary);
 
 static void
@@ -580,6 +583,19 @@ generate_function_params__CIGenerator(const Vec *params)
 }
 
 void
+generate_function_array_expr__CIGenerator(const CIExprArray *array)
+{
+    write_str__CIGenerator("{");
+
+    for (Usize i = 0; i < array->array->len; ++i) {
+        generate_function_expr__CIGenerator(get__Vec(array->array, i));
+        write_str__CIGenerator(",");
+    }
+
+    write_str__CIGenerator("}");
+}
+
+void
 generate_function_binary_expr__CIGenerator(const CIExprBinary *binary)
 {
     generate_function_expr__CIGenerator(binary->left);
@@ -899,6 +915,10 @@ generate_function_expr__CIGenerator(const CIExpr *expr)
             write_str__CIGenerator("alignof(");
             generate_function_expr__CIGenerator(expr->alignof_);
             write_str__CIGenerator(")");
+
+            break;
+        case CI_EXPR_KIND_ARRAY:
+            generate_function_array_expr__CIGenerator(&expr->array);
 
             break;
         case CI_EXPR_KIND_ARRAY_ACCESS:
