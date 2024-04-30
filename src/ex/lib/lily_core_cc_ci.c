@@ -204,6 +204,8 @@ extern inline CONSTRUCTOR(CIDeclVariable,
 extern inline CIDecl *
 ref__CIDecl(CIDecl *self);
 
+extern inline CONSTRUCTOR(CIExprArray, CIExprArray, Vec *array);
+
 extern inline CONSTRUCTOR(CIExprArrayAccess,
                           CIExprArrayAccess,
                           CIExpr *array,

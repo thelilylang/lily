@@ -114,6 +114,9 @@ static VARIANT_DESTRUCTOR(CIDecl, variable, CIDecl *self);
 /// @brief Free CIExpr type (CI_EXPR_KIND_ALIGNOF).
 static VARIANT_DESTRUCTOR(CIExpr, alignof, CIExpr *self);
 
+/// @brief Free CIExpr type (CI_EXPR_KIND_ARRAY).
+static VARIANT_DESTRUCTOR(CIExpr, array, CIExpr *self);
+
 /// @brief Free CIExpr type (CI_EXPR_KIND_ARRAY_ACCESS).
 static VARIANT_DESTRUCTOR(CIExpr, array_access, CIExpr *self);
 
@@ -2476,6 +2479,26 @@ DESTRUCTOR(CIDecl, CIDecl *self)
 
 #ifdef ENV_DEBUG
 String *
+IMPL_FOR_DEBUG(to_string, CIExprArray, const CIExprArray *self)
+{
+    String *res = from__String("CIExprArray{ array =");
+
+    DEBUG_VEC_STRING(self->array, res, CIExpr);
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CIExprArray, const CIExprArray *self)
+{
+    FREE_BUFFER_ITEMS(self->array->buffer, self->array->len, CIExpr);
+    FREE(Vec, self->array);
+}
+
+#ifdef ENV_DEBUG
+String *
 IMPL_FOR_DEBUG(to_string, CIExprArrayAccess, const CIExprArrayAccess *self)
 {
     return format__String("CIExprArrayAccess{{ array = {Sr}, access = {Sr} }",
@@ -3009,6 +3032,17 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, alignof, CIExpr *alignof_)
     return self;
 }
 
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, array, CIExprArray array)
+{
+    CIExpr *self = lily_malloc(sizeof(CIExpr));
+
+    self->kind = CI_EXPR_KIND_ARRAY;
+    self->ref_count = 0;
+    self->array = array;
+
+    return self;
+}
+
 VARIANT_CONSTRUCTOR(CIExpr *,
                     CIExpr,
                     array_access,
@@ -3153,6 +3187,8 @@ get_data_type__CIExpr(const CIExpr *self)
     switch (self->kind) {
         case CI_EXPR_KIND_ALIGNOF:
             TODO("alignof: implement size_t");
+        case CI_EXPR_KIND_ARRAY:
+            TODO("array");
         case CI_EXPR_KIND_ARRAY_ACCESS:
             TODO("array access");
         case CI_EXPR_KIND_BINARY:
@@ -3319,6 +3355,10 @@ IMPL_FOR_DEBUG(to_string, CIExpr, const CIExpr *self)
             return format__String("CIExpr{{ kind = {s}, alignof_ = {Sr} }",
                                   to_string__Debug__CIExprKind(self->kind),
                                   to_string__Debug__CIExpr(self->alignof_));
+        case CI_EXPR_KIND_ARRAY:
+            return format__String("CIExpr{{ kind = {s}, array = {Sr} }",
+                                  to_string__Debug__CIExprKind(self->kind),
+                                  to_string__Debug__CIExprArray(&self->array));
         case CI_EXPR_KIND_ARRAY_ACCESS:
             return format__String(
               "CIExpr{{ kind = {s}, array_access = {Sr} }",
@@ -3408,6 +3448,12 @@ VARIANT_DESTRUCTOR(CIExpr, alignof, CIExpr *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(CIExpr, array, CIExpr *self)
+{
+    FREE(CIExprArray, &self->array);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(CIExpr, array_access, CIExpr *self)
 {
     FREE(CIExprArrayAccess, &self->array_access);
@@ -3488,6 +3534,9 @@ DESTRUCTOR(CIExpr, CIExpr *self)
     switch (self->kind) {
         case CI_EXPR_KIND_ALIGNOF:
             FREE_VARIANT(CIExpr, alignof, self);
+            break;
+        case CI_EXPR_KIND_ARRAY:
+            FREE_VARIANT(CIExpr, array, self);
             break;
         case CI_EXPR_KIND_ARRAY_ACCESS:
             FREE_VARIANT(CIExpr, array_access, self);

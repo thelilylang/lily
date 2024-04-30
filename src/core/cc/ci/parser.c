@@ -573,6 +573,9 @@ static CIExpr *
 parse_struct_call__CIParser(CIParser *self);
 
 static CIExpr *
+parse_array__CIParser(CIParser *self);
+
+static CIExpr *
 parse_binary_expr__CIParser(CIParser *self, CIExpr *expr);
 
 /// @example x++, x[0], ...
@@ -761,6 +764,8 @@ static CIScope *current_scope = NULL; // CIScope*?
 
 // Represent the `body` of the current block being analyzed.
 static Vec *current_body = NULL; // Vec<CIDeclFunctionItem*>*?
+
+static bool in_var_initialization = false;
 
 #define ENABLE_IN_LABEL() in_label = true;
 #define DISABLE_IN_LABEL() \
@@ -4355,6 +4360,8 @@ parse_struct_call__CIParser(CIParser *self)
 {
     Vec *fields = NEW(Vec);
 
+    next_token__CIParser(self); // skip `{`
+
     while (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RBRACE &&
            self->tokens_iters.current_token->kind != CI_TOKEN_KIND_EOF) {
         Vec *path = NEW(Vec);
@@ -4387,6 +4394,31 @@ parse_struct_call__CIParser(CIParser *self)
     expect__CIParser(self, CI_TOKEN_KIND_RBRACE, true);
 
     return NEW_VARIANT(CIExpr, struct_call, NEW(CIExprStructCall, fields));
+}
+
+CIExpr *
+parse_array__CIParser(CIParser *self)
+{
+    next_token__CIParser(self); // skip `{`
+
+    Vec *array = NEW(Vec);
+
+    while (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RBRACE &&
+           self->tokens_iters.current_token->kind != CI_TOKEN_KIND_EOF) {
+        CIExpr *expr = parse_expr__CIParser(self);
+
+        if (expr) {
+            push__Vec(array, expr);
+        }
+
+        if (self->tokens_iters.current_token->kind != CI_TOKEN_KIND_RBRACE) {
+            expect__CIParser(self, CI_TOKEN_KIND_COMMA, true);
+        }
+    }
+
+    expect__CIParser(self, CI_TOKEN_KIND_RBRACE, true);
+
+    return NEW_VARIANT(CIExpr, array, NEW(CIExprArray, array));
 }
 
 CIExpr *
@@ -4451,10 +4483,6 @@ parse_primary_expr__CIParser(CIParser *self)
 
             break;
         }
-        case CI_TOKEN_KIND_LBRACE:
-            res = parse_struct_call__CIParser(self);
-
-            break;
         case CI_TOKEN_KIND_HASHTAG:
             TODO("done Stringification");
         case CI_TOKEN_KIND_KEYWORD_SIZEOF: {
@@ -4816,6 +4844,27 @@ loop:
 CIExpr *
 parse_expr__CIParser(CIParser *self)
 {
+    switch (self->tokens_iters.current_token->kind) {
+        case CI_TOKEN_KIND_LBRACE: {
+            if (!in_var_initialization) {
+                FAILED("cannot declare array, struct call or union call "
+                       "outside of variable initialization");
+            }
+
+            CIToken *peeked = peek_token__CIParser(self, 1);
+
+            if (peeked && peeked->kind == CI_TOKEN_KIND_DOT) {
+                return parse_struct_call__CIParser(self);
+            } else {
+                return parse_array__CIParser(self);
+            }
+
+            break;
+        }
+        default:
+            break;
+    }
+
     CIExpr *expr = parse_primary_expr__CIParser(self);
 
     if (!expr) {
@@ -5563,7 +5612,11 @@ parse_variable__CIParser(CIParser *self,
           NEW(CIDeclVariable, data_type, name, NULL, is_local));
     }
 
+    in_var_initialization = true;
+
     CIExpr *expr = parse_expr__CIParser(self);
+
+    in_var_initialization = false;
 
     switch (self->tokens_iters.current_token->kind) {
         case CI_TOKEN_KIND_SEMICOLON:
