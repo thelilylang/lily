@@ -5202,11 +5202,19 @@ parse_switch_stmt__CIParser(CIParser *self, bool in_loop)
         case CI_TOKEN_KIND_LBRACE:
             next_token__CIParser(self);
 
-            body = parse_function_body__CIParser(self, false, true);
+            body = parse_function_body__CIParser(self, in_loop, true);
 
             break;
-        default:
-            FAILED("expected `{`");
+        default: {
+            CIDeclFunctionItem *item =
+              parse_function_body_item__CIParser(self, in_loop, true);
+
+            if (item) {
+                body = init__Vec(1, item);
+            } else {
+                body = NEW(Vec);
+            }
+        }
     }
 
     return NEW_VARIANT(
