@@ -765,7 +765,17 @@ static CIScope *current_scope = NULL; // CIScope*?
 // Represent the `body` of the current block being analyzed.
 static Vec *current_body = NULL; // Vec<CIDeclFunctionItem*>*?
 
-static bool in_var_initialization = false;
+// Allow initialization.
+//
+// e.g.
+//
+// Array: { 3, 2, 1, ... }
+//
+// Struct call: { .a = 1, .b = 2, ... } or { 1, 2, ... }
+static bool allow_initialization = false;
+
+#define ENABLE_ALLOW_INITIALIZATION() allow_initialization = true;
+#define DISABLE_ALLOW_INITIALIZATION() allow_initialization = false;
 
 #define ENABLE_IN_LABEL() in_label = true;
 #define DISABLE_IN_LABEL() \
@@ -4846,7 +4856,7 @@ parse_expr__CIParser(CIParser *self)
 {
     switch (self->tokens_iters.current_token->kind) {
         case CI_TOKEN_KIND_LBRACE: {
-            if (!in_var_initialization) {
+            if (!allow_initialization) {
                 FAILED("cannot declare array, struct call or union call "
                        "outside of variable initialization");
             }
@@ -5303,7 +5313,11 @@ parse_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
         case CI_TOKEN_KIND_KEYWORD_IF:
             return parse_if_stmt__CIParser(self, in_loop, in_switch);
         case CI_TOKEN_KIND_KEYWORD_RETURN: {
+            ENABLE_ALLOW_INITIALIZATION();
+
             CIExpr *expr = parse_expr__CIParser(self);
+
+            DISABLE_ALLOW_INITIALIZATION();
 
             if (expr) {
                 expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
@@ -5620,11 +5634,11 @@ parse_variable__CIParser(CIParser *self,
           NEW(CIDeclVariable, data_type, name, NULL, is_local));
     }
 
-    in_var_initialization = true;
+    ENABLE_ALLOW_INITIALIZATION();
 
     CIExpr *expr = parse_expr__CIParser(self);
 
-    in_var_initialization = false;
+    DISABLE_ALLOW_INITIALIZATION();
 
     switch (self->tokens_iters.current_token->kind) {
         case CI_TOKEN_KIND_SEMICOLON:
