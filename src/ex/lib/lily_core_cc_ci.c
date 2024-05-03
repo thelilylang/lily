@@ -161,6 +161,10 @@ extern inline CONSTRUCTOR(CIDeclStruct,
                           CIGenericParams *generic_params,
                           Vec *fields);
 
+extern inline bool
+eq_generic_params__CIDeclStruct(const CIDeclStruct *self,
+                                const CIDeclStruct *other);
+
 extern inline CONSTRUCTOR(CIDeclStructGen,
                           CIDeclStructGen,
                           const CIDeclStruct *struct_,
@@ -186,6 +190,10 @@ extern inline CONSTRUCTOR(CIDeclUnion,
                           String *name,
                           CIGenericParams *generic_params,
                           Vec *fields);
+
+extern inline bool
+eq_generic_params__CIDeclUnion(const CIDeclUnion *self,
+                               const CIDeclUnion *other);
 
 extern inline CONSTRUCTOR(CIDeclUnionGen,
                           CIDeclUnionGen,

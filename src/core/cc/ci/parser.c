@@ -637,12 +637,22 @@ parse_fields__CIParser(CIParser *self);
 static Vec *
 parse_struct_or_union_fields__CIParser(CIParser *self);
 
+/// @brief Add struct or union to scope.
+/// @return If this function returns false, this means that the struct or union
+/// declaration passed is not added to the scope.
+static bool
+add_struct_or_union__CIParser(CIParser *self, CIDecl *decl);
+
 /// @brief Parse struct declaration.
 static CIDecl *
 parse_struct__CIParser(CIParser *self,
                        int storage_class_flag,
                        String *name,
                        CIGenericParams *generic_params);
+
+/// @brief Add struct to scope.
+static inline bool
+add_struct__CIParser(CIParser *self, CIDecl *struct_decl);
 
 /// @brief Parse typedef declaration.
 static CIDecl *
@@ -654,6 +664,10 @@ parse_union__CIParser(CIParser *self,
                       int storage_class_flag,
                       String *name,
                       CIGenericParams *generic_params);
+
+/// @brief Add union to scope.
+static inline bool
+add_union__CIParser(CIParser *self, CIDecl *union_decl);
 
 /// @brief Parse variable declaration.
 static CIDecl *
@@ -718,10 +732,12 @@ static CIDecl *
 parse_decl__CIParser(CIParser *self, bool in_function_body);
 
 /// @brief Add declaration to scope.
-static void
+/// @return If the function fails to add a declaration, it returns false.
+static const CIDecl *
 add_decl_to_scope__CIParser(CIParser *self,
                             CIDecl **decl_ref,
-                            bool in_function_body);
+                            bool in_function_body,
+                            bool must_free);
 
 /// @brief Parse storage class specifier.
 /// @return true if the token is a storage class specifier, false otherwise.
@@ -3556,7 +3572,8 @@ generate_function_gen__CIParser(CIParser *self,
                                                         function_decl->function
                                                           .return_data_type) /* Return a ref data type, when the substituted data type is NULL, to avoid an optional data type in the `return_data_type` field. */);
 
-                add_decl_to_scope__CIParser(self, &function_gen_decl, false);
+                add_decl_to_scope__CIParser(
+                  self, &function_gen_decl, false, true);
             }
         }
     }
@@ -3659,7 +3676,7 @@ generate_type_gen__CIParser(CIParser *self,
                         UNREACHABLE("this kind of variant is not expected");
                 }
 
-                add_decl_to_scope__CIParser(self, &decl_gen, false);
+                add_decl_to_scope__CIParser(self, &decl_gen, false, true);
             } else {
                 FREE(String, serialized_called_decl_name);
             }
@@ -3946,12 +3963,8 @@ parse_data_type__CIParser(CIParser *self)
                                 ? ref__CIGenericParams(generic_params)
                                 : NULL);
 
-                            if (struct_decl->struct_.name &&
-                                add_struct__CIResultFile(self->file,
-                                                         struct_decl)) {
-                                FREE(CIDecl, struct_decl);
-
-                                FAILED("struct name is already defined");
+                            if (!add_struct__CIParser(self, struct_decl)) {
+                                break;
                             }
 
                             if (struct_decl->struct_.fields &&
@@ -3973,11 +3986,8 @@ parse_data_type__CIParser(CIParser *self)
                                 ? ref__CIGenericParams(generic_params)
                                 : NULL);
 
-                            if (union_decl->union_.name &&
-                                add_union__CIResultFile(self->file,
-                                                        union_decl)) {
-                                FREE(CIDecl, union_decl);
-                                FAILED("union name is already defined");
+                            if (!add_union__CIParser(self, union_decl)) {
+                                break;
                             }
 
                             if (union_decl->union_.fields &&
@@ -4049,6 +4059,9 @@ parse_data_type__CIParser(CIParser *self)
 
             break;
         default:
+            printf(
+              "%s\n",
+              to_string__CIToken(self->tokens_iters.previous_token)->buffer);
             FAILED("expected data type");
     }
 
@@ -5535,6 +5548,58 @@ parse_struct_or_union_fields__CIParser(CIParser *self)
     return parse_fields__CIParser(self);
 }
 
+bool
+add_struct_or_union__CIParser(CIParser *self, CIDecl *decl)
+{
+    String *name = get_name__CIDecl(decl);
+
+    if (name) {
+        CIDecl *already_defined =
+          (CIDecl *)add_decl_to_scope__CIParser(self, &decl, false, false);
+
+        if (already_defined) {
+            if (already_defined->is_prototype) {
+                // Verify if the `decl` is a prototype.
+                if (decl->is_prototype) {
+                    // Verify if the prototypes match.
+                    if (!match_prototype__CIDecl(decl, already_defined)) {
+                        FAILED("unmatch redefinition of prototype");
+                    }
+
+                    FREE(CIDecl, decl);
+
+                    return false;
+                }
+
+                already_defined->is_prototype = true;
+
+                switch (already_defined->kind) {
+                    case CI_DECL_KIND_STRUCT:
+                        already_defined->struct_.fields = decl->struct_.fields;
+
+                        break;
+                    case CI_DECL_KIND_UNION:
+                        already_defined->union_.fields = decl->union_.fields;
+
+                        break;
+                    default:
+                        UNREACHABLE("expected struct or union");
+                }
+
+                free_as_prototype__CIDecl(decl);
+
+                return false;
+            } else {
+                FREE(CIDecl, decl);
+
+                FAILED("struct or union name is already defined");
+            }
+        }
+    }
+
+    return true;
+}
+
 CIDecl *
 parse_struct__CIParser(CIParser *self,
                        int storage_class_flag,
@@ -5552,6 +5617,12 @@ parse_struct__CIParser(CIParser *self,
                        storage_class_flag,
                        fields ? false : true,
                        NEW(CIDeclStruct, name, generic_params, fields));
+}
+
+bool
+add_struct__CIParser(CIParser *self, CIDecl *struct_decl)
+{
+    return add_struct_or_union__CIParser(self, struct_decl);
 }
 
 CIDecl *
@@ -5607,6 +5678,12 @@ parse_union__CIParser(CIParser *self,
                        storage_class_flag,
                        fields ? false : true,
                        NEW(CIDeclUnion, name, generic_params, fields));
+}
+
+bool
+add_union__CIParser(CIParser *self, CIDecl *union_decl)
+{
+    return add_struct_or_union__CIParser(self, union_decl);
 }
 
 CIDecl *
@@ -5669,7 +5746,8 @@ parse_variable_list__CIParser(CIParser *self,
     while (self->tokens_iters.current_token->kind == CI_TOKEN_KIND_COMMA &&
            self->tokens_iters.previous_token->kind != CI_TOKEN_KIND_SEMICOLON) {
         if (current_var) {
-            add_decl_to_scope__CIParser(self, &current_var, in_function_body);
+            add_decl_to_scope__CIParser(
+              self, &current_var, in_function_body, true);
 
             // Push to the current body of the function the current
             // variable.
@@ -5963,24 +6041,26 @@ parse_decl__CIParser(CIParser *self, bool in_function_body)
 
 exit:
     if (res) {
-        add_decl_to_scope__CIParser(self, &res, in_function_body);
+        add_decl_to_scope__CIParser(self, &res, in_function_body, true);
     }
 
     return res;
 }
 
-void
+const CIDecl *
 add_decl_to_scope__CIParser(CIParser *self,
                             CIDecl **decl_ref,
-                            bool in_function_body)
+                            bool in_function_body,
+                            bool must_free)
 {
     CIDecl *decl = *decl_ref;
+    CIDecl *res = NULL;
 
     ASSERT(decl);
 
     switch (decl->kind) {
         case CI_DECL_KIND_ENUM:
-            if (add_enum__CIResultFile(self->file, decl)) {
+            if ((res = (CIDecl *)add_enum__CIResultFile(self->file, decl))) {
                 FAILED("enum is already defined");
 
                 goto free;
@@ -5989,7 +6069,8 @@ add_decl_to_scope__CIParser(CIParser *self,
             goto exit;
         case CI_DECL_KIND_FUNCTION:
         case CI_DECL_KIND_FUNCTION_GEN:
-            if (add_function__CIResultFile(self->file, decl)) {
+            if ((res =
+                   (CIDecl *)add_function__CIResultFile(self->file, decl))) {
                 FAILED("function is already defined");
 
                 goto free;
@@ -5998,7 +6079,7 @@ add_decl_to_scope__CIParser(CIParser *self,
             goto exit;
         case CI_DECL_KIND_STRUCT:
         case CI_DECL_KIND_STRUCT_GEN:
-            if (add_struct__CIResultFile(self->file, decl)) {
+            if ((res = (CIDecl *)add_struct__CIResultFile(self->file, decl))) {
                 FAILED("struct is already defined");
 
                 goto free;
@@ -6007,7 +6088,7 @@ add_decl_to_scope__CIParser(CIParser *self,
             goto exit;
         case CI_DECL_KIND_TYPEDEF:
         case CI_DECL_KIND_TYPEDEF_GEN:
-            if (add_typedef__CIResultFile(self->file, decl)) {
+            if ((res = (CIDecl *)add_typedef__CIResultFile(self->file, decl))) {
                 FAILED("typedef is already defined");
 
                 goto free;
@@ -6016,7 +6097,7 @@ add_decl_to_scope__CIParser(CIParser *self,
             goto exit;
         case CI_DECL_KIND_UNION:
         case CI_DECL_KIND_UNION_GEN:
-            if (add_union__CIResultFile(self->file, decl)) {
+            if ((res = (CIDecl *)add_union__CIResultFile(self->file, decl))) {
                 FAILED("union is already defined");
 
                 goto free;
@@ -6024,10 +6105,10 @@ add_decl_to_scope__CIParser(CIParser *self,
 
             goto exit;
         case CI_DECL_KIND_VARIABLE:
-            if (add_variable__CIResultFile(self->file,
-                                           current_scope,
-                                           in_function_body ? ref__CIDecl(decl)
-                                                            : decl)) {
+            if ((res = (CIDecl *)add_variable__CIResultFile(
+                   self->file,
+                   current_scope,
+                   in_function_body ? ref__CIDecl(decl) : decl))) {
                 FAILED("variable is already defined");
 
                 goto free;
@@ -6039,11 +6120,15 @@ add_decl_to_scope__CIParser(CIParser *self,
     }
 
 exit:
-    return;
+    return res;
 
 free:
-    FREE(CIDecl, decl);
-    *decl_ref = NULL;
+    if (must_free) {
+        FREE(CIDecl, decl);
+        *decl_ref = NULL;
+    }
+
+    return res;
 }
 
 bool
