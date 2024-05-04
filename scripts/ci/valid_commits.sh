@@ -11,8 +11,8 @@ if [ $COMMITS_LEN -gt 0 ]
 then
 	printf "%s\n" "$COMMITS" | while read -r commit
 	do
-		echo "${commit:0:72} ... OK"
 		./scripts/check_commit_msg.sh "$commit"
+		echo "${commit:0:72} ... OK"
 	done
 
 	echo "success: all commits seem well formatted."
