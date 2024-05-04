@@ -47,5 +47,15 @@ generate_builtin__CIBuiltin(const CIConfig *config)
             UNREACHABLE("unknown compiler");
     }
 
+    // Add _XOPEN_SOURCE macro.
+    switch (config->standard) {
+        case CI_STANDARD_99:
+            push_str__String(builtin_h, "#define _XOPEN_SOURCE 600\n");
+
+            break;
+        default:
+            push_str__String(builtin_h, "#define _XOPEN_SOURCE 500\n");
+    }
+
     return builtin_h;
 }
