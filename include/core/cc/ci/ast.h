@@ -409,9 +409,19 @@ ref__CIGenericParams(CIGenericParams *self)
 bool
 eq__CIGenericParams(const CIGenericParams *self, const CIGenericParams *other);
 
-// Checks if the two generic params are equal (also if they are both NULL).
-#define CI_EQ_OP_GENERIC_PARAMS(self, other) \
-    (self && other && eq__CIGenericParams(self, other)) || (!self && !other)
+/**
+ *
+ * @brief Check if the both generic params are equal.
+ * @param self CIGenericParams*? (&)
+ * @param other CIGenericParams*? (&)
+ */
+inline bool
+eq_op__CIGenericParams(const CIGenericParams *self,
+                       const CIGenericParams *other)
+{
+    return (self && other && eq__CIGenericParams(self, other)) ||
+           (!self && !other);
+}
 
 /**
  *
@@ -870,6 +880,14 @@ get_ptr__CIDataType(const CIDataType *self);
 
 /**
  *
+ * @brief Get generic params from data type.
+ * @return const CIGenericParams*? (&)
+ */
+const CIGenericParams *
+get_generic_params__CIDataType(const CIDataType *self);
+
+/**
+ *
  * @brief Convert CIDataType in String.
  * @note This function is only used to debug.
  */
@@ -1244,7 +1262,7 @@ inline bool
 eq_generic_params__CIDeclStruct(const CIDeclStruct *self,
                                 const CIDeclStruct *other)
 {
-    return CI_EQ_OP_GENERIC_PARAMS(self->generic_params, other->generic_params);
+    return eq_op__CIGenericParams(self->generic_params, other->generic_params);
 }
 
 /**
@@ -1458,7 +1476,7 @@ inline bool
 eq_generic_params__CIDeclUnion(const CIDeclUnion *self,
                                const CIDeclUnion *other)
 {
-    return CI_EQ_OP_GENERIC_PARAMS(self->generic_params, other->generic_params);
+    return eq_op__CIGenericParams(self->generic_params, other->generic_params);
 }
 
 /**
@@ -1786,6 +1804,13 @@ get_expected_data_type__CIDecl(const CIDecl *self);
  */
 bool
 match_prototype__CIDecl(const CIDecl *self, const CIDecl *other);
+
+inline bool
+is_typedef__CIDecl(CIDecl *self)
+{
+    return self->kind == CI_DECL_KIND_TYPEDEF ||
+           self->kind == CI_DECL_KIND_TYPEDEF_GEN;
+}
 
 /**
  *

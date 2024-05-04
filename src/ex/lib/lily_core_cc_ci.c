@@ -97,6 +97,10 @@ search_variable__CIScope(const CIScope *self, const String *name);
 extern inline CIGenericParams *
 ref__CIGenericParams(CIGenericParams *self);
 
+extern bool
+eq_op__CIGenericParams(const CIGenericParams *self,
+                       const CIGenericParams *other);
+
 extern inline VARIANT_CONSTRUCTOR(CIDataTypeArray,
                                   CIDataTypeArray,
                                   sized,
@@ -211,6 +215,9 @@ extern inline CONSTRUCTOR(CIDeclVariable,
 
 extern inline CIDecl *
 ref__CIDecl(CIDecl *self);
+
+extern inline bool
+is_typedef__CIDecl(CIDecl *self);
 
 extern inline CONSTRUCTOR(CIExprArray, CIExprArray, Vec *array);
 
