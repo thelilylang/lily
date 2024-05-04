@@ -403,9 +403,25 @@ ref__CIGenericParams(CIGenericParams *self)
 /**
  *
  * @brief Check if the both generic params are equal.
+ * @param self CIGenericParams* (&)
+ * @param other CIGenericParams* (&)
  */
 bool
 eq__CIGenericParams(const CIGenericParams *self, const CIGenericParams *other);
+
+/**
+ *
+ * @brief Check if the both generic params are equal.
+ * @param self CIGenericParams*? (&)
+ * @param other CIGenericParams*? (&)
+ */
+inline bool
+eq_op__CIGenericParams(const CIGenericParams *self,
+                       const CIGenericParams *other)
+{
+    return (self && other && eq__CIGenericParams(self, other)) ||
+           (!self && !other);
+}
 
 /**
  *
@@ -864,6 +880,14 @@ get_ptr__CIDataType(const CIDataType *self);
 
 /**
  *
+ * @brief Get generic params from data type.
+ * @return const CIGenericParams*? (&)
+ */
+const CIGenericParams *
+get_generic_params__CIDataType(const CIDataType *self);
+
+/**
+ *
  * @brief Convert CIDataType in String.
  * @note This function is only used to debug.
  */
@@ -1232,6 +1256,25 @@ inline CONSTRUCTOR(CIDeclStruct,
 
 /**
  *
+ * @brief Check if the both generic params are equal.
+ */
+inline bool
+eq_generic_params__CIDeclStruct(const CIDeclStruct *self,
+                                const CIDeclStruct *other)
+{
+    return eq_op__CIGenericParams(self->generic_params, other->generic_params);
+}
+
+/**
+ *
+ * @brief Verify if the both structs prototypes are equal.
+ */
+bool
+match_prototype__CIDeclStruct(const CIDeclStruct *self,
+                              const CIDeclStruct *other);
+
+/**
+ *
  * @brief Serialize struct name.
  */
 String *
@@ -1247,6 +1290,13 @@ serialize_name__CIDeclStruct(const CIDeclStruct *self,
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclStruct, const CIDeclStruct *self);
 #endif
+
+/**
+ *
+ * @brief Free CIDeclStruct type in prototype case.
+ */
+void
+free_as_prototype__CIDeclStruct(const CIDeclStruct *self);
 
 /**
  *
@@ -1420,6 +1470,24 @@ inline CONSTRUCTOR(CIDeclUnion,
 
 /**
  *
+ * @brief Check if the both generic params are equal.
+ */
+inline bool
+eq_generic_params__CIDeclUnion(const CIDeclUnion *self,
+                               const CIDeclUnion *other)
+{
+    return eq_op__CIGenericParams(self->generic_params, other->generic_params);
+}
+
+/**
+ *
+ * @brief Verify if the both unions prototypes are equal.
+ */
+bool
+match_prototype__CIDeclUnion(const CIDeclUnion *self, const CIDeclUnion *other);
+
+/**
+ *
  * @brief Serialize union name.
  */
 String *
@@ -1435,6 +1503,13 @@ serialize_name__CIDeclUnion(const CIDeclUnion *self,
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclUnion, const CIDeclUnion *self);
 #endif
+
+/**
+ *
+ * @brief Free CIDeclUnion type in prototype case.
+ */
+void
+free_as_prototype__CIDeclUnion(const CIDeclUnion *self);
 
 /**
  *
@@ -1725,6 +1800,20 @@ get_expected_data_type__CIDecl(const CIDecl *self);
 
 /**
  *
+ * @brief Verify if the both struct prototypes are equal.
+ */
+bool
+match_prototype__CIDecl(const CIDecl *self, const CIDecl *other);
+
+inline bool
+is_typedef__CIDecl(CIDecl *self)
+{
+    return self->kind == CI_DECL_KIND_TYPEDEF ||
+           self->kind == CI_DECL_KIND_TYPEDEF_GEN;
+}
+
+/**
+ *
  * @brief Convert CIDecl in String.
  * @note This function is only used to debug.
  */
@@ -1732,6 +1821,13 @@ get_expected_data_type__CIDecl(const CIDecl *self);
 String *
 IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self);
 #endif
+
+/**
+ *
+ * @brief Free CIDecl type in prototype case.
+ */
+void
+free_as_prototype__CIDecl(CIDecl *self);
 
 /**
  *
