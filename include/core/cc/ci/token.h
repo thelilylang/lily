@@ -36,6 +36,7 @@
 #include <core/shared/location.h>
 
 typedef struct CIResultFile CIResultFile;
+struct CIToken;
 
 // NOTE: Does not take multi-part keywords into account.
 // e.g. unsigned int, unsigned long long int, ...
@@ -46,6 +47,90 @@ typedef struct CIResultFile CIResultFile;
 #define CI_N_STANDARD_PREDEFINED_MACRO 7
 
 #define CI_N_PREPROCESSOR 16
+
+typedef struct CITokens
+{
+    struct CIToken *first; // CIToken*?
+    struct CIToken *last;  // CIToken*? (&)
+} CITokens;
+
+/**
+ *
+ * @brief Construct CITokens type.
+ */
+inline CONSTRUCTOR(CITokens, CITokens)
+{
+    return (CITokens){ .first = NULL, .last = NULL };
+}
+
+/**
+ *
+ * @brief Add a token to the CITokens type.
+ */
+void
+add__CITokens(CITokens *self, struct CIToken *token);
+
+/**
+ *
+ * @brief Insert `token` after the match of `match` token.
+ * @return true if the `token`, is inserted otherwise return false.
+ */
+bool
+insert_after_match__CITokens(CITokens *self,
+                             struct CIToken *match,
+                             struct CIToken *token);
+
+/**
+ *
+ * @brief Remove the matched token (if exists).
+ * @return CIToken*?
+ */
+struct CIToken *
+remove_when_match__CITokens(CITokens *self, struct CIToken *match);
+
+/**
+ *
+ * @brief Check if CITokens type is empty.
+ */
+inline bool
+is_empty__CITokens(const CITokens *self)
+{
+    return !self->first && !self->last;
+}
+
+/**
+ *
+ * @brief Convert CITokens in String (without Location).
+ * @note This function is only used to show the token in the parser.
+ */
+String *
+to_string__CITokens(const CITokens *self);
+
+/**
+ *
+ * @brief Convert CIToken in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CITokens, const CITokens *self);
+#endif
+
+/**
+ *
+ * @brief Print debug CIToken struct.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+void
+IMPL_FOR_DEBUG(debug, CITokens, const CITokens *self);
+#endif
+
+/**
+ *
+ * @brief Free CITokens type.
+ */
+DESTRUCTOR(CITokens, const CITokens *self);
 
 // NOTE#1: Used only in the scanner
 enum CITokenKind
@@ -75,8 +160,8 @@ enum CITokenKind
     CI_TOKEN_KIND_COMMENT_DOC,
     CI_TOKEN_KIND_DOT,
     CI_TOKEN_KIND_DOT_DOT_DOT,
-    CI_TOKEN_KIND_EOF,  // End Of File
-    CI_TOKEN_KIND_EOPC, // End Of Preprocessor Condition
+    CI_TOKEN_KIND_EOF, // End Of File
+    CI_TOKEN_KIND_EOT, // End Of Token (only a transition token)
     CI_TOKEN_KIND_EQ,
     CI_TOKEN_KIND_EQ_EQ,
     CI_TOKEN_KIND_HASHTAG,
@@ -192,7 +277,6 @@ enum CITokenKind
     CI_TOKEN_KIND_MINUS,
     CI_TOKEN_KIND_MINUS_EQ,
     CI_TOKEN_KIND_MINUS_MINUS,
-    CI_TOKEN_KIND_PAREN_CALL, // <id>(...)
     CI_TOKEN_KIND_PERCENTAGE,
     CI_TOKEN_KIND_PERCENTAGE_EQ,
     CI_TOKEN_KIND_PLUS,
@@ -244,6 +328,54 @@ enum CITokenKind
     // NOTE: Never add an enumeration variant after this variant.
     CI_TOKEN_KIND_MAX
 };
+
+enum CITokenEotContext
+{
+    CI_TOKEN_EOT_CONTEXT_MACRO_PARAM,
+    CI_TOKEN_EOT_CONTEXT_MACRO_CALL,
+    CI_TOKEN_EOT_CONTEXT_OTHER
+};
+
+typedef struct CITokenEot
+{
+    enum CITokenEotContext ctx;
+    union
+    {
+        // This represents the token to restore after reaching the EOT token in
+        // the context of a macro parameter
+        // (CI_TOKEN_EOT_CONTEXT_KIND_MACRO_PARAM).
+        struct CIToken *macro_param; // struct CIToken*? (&)
+    };
+} CITokenEot;
+
+/**
+ *
+ * @brief Convert CITokenEotContext in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, CITokenEotContext, enum CITokenEotContext self);
+#endif
+
+/**
+ *
+ * @brief Construct CITokenEot type.
+ */
+inline CONSTRUCTOR(CITokenEot, CITokenEot, enum CITokenEotContext ctx)
+{
+    return (CITokenEot){ .ctx = ctx };
+}
+
+/**
+ *
+ * @brief Convert CITokenEot in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CITokenEot, const CITokenEot *self);
+#endif
 
 enum CITokenLiteralConstantIntSuffix
 {
@@ -370,7 +502,7 @@ typedef struct CITokenPreprocessorDefine
 {
     String *name;
     Vec *params; // Vec<String*>*?
-    Vec *tokens; // Vec<CIToken*>*?
+    CITokens tokens;
 } CITokenPreprocessorDefine;
 
 /**
@@ -381,7 +513,7 @@ inline CONSTRUCTOR(CITokenPreprocessorDefine,
                    CITokenPreprocessorDefine,
                    String *name,
                    Vec *params,
-                   Vec *tokens)
+                   CITokens tokens)
 {
     return (CITokenPreprocessorDefine){ .name = name,
                                         .params = params,
@@ -416,6 +548,7 @@ DESTRUCTOR(CITokenPreprocessorDefine, const CITokenPreprocessorDefine *self);
 typedef struct CITokenPreprocessorEmbed
 {
     String *value;
+    CITokens content;
 } CITokenPreprocessorEmbed;
 
 /**
@@ -424,9 +557,10 @@ typedef struct CITokenPreprocessorEmbed
  */
 inline CONSTRUCTOR(CITokenPreprocessorEmbed,
                    CITokenPreprocessorEmbed,
-                   String *value)
+                   String *value,
+                   CITokens content)
 {
-    return (CITokenPreprocessorEmbed){ .value = value };
+    return (CITokenPreprocessorEmbed){ .value = value, .content = content };
 }
 
 /**
@@ -499,8 +633,8 @@ DESTRUCTOR(CITokenPreprocessorLine, const CITokenPreprocessorLine *self);
 
 typedef struct CITokenPreprocessorIf
 {
-    Vec *cond;    // Vec<CIToken*>*
-    Vec *content; // Vec<CIToken*>*?
+    CITokens cond;
+    CITokens content;
 } CITokenPreprocessorIf;
 
 /**
@@ -509,8 +643,8 @@ typedef struct CITokenPreprocessorIf
  */
 inline CONSTRUCTOR(CITokenPreprocessorIf,
                    CITokenPreprocessorIf,
-                   Vec *cond,
-                   Vec *content)
+                   CITokens cond,
+                   CITokens content)
 {
     return (CITokenPreprocessorIf){ .cond = cond, .content = content };
 }
@@ -548,8 +682,8 @@ typedef CITokenPreprocessorIf CITokenPreprocessorElif;
  */
 inline CONSTRUCTOR(CITokenPreprocessorElif,
                    CITokenPreprocessorElif,
-                   Vec *cond,
-                   Vec *content)
+                   CITokens cond,
+                   CITokens content)
 {
     return (CITokenPreprocessorElif){ .cond = cond, .content = content };
 }
@@ -577,12 +711,15 @@ IMPL_FOR_DEBUG(to_string,
  *
  * @brief Free CITokenPreprocessorElif type.
  */
-DESTRUCTOR(CITokenPreprocessorElif, const CITokenPreprocessorElif *self);
+inline DESTRUCTOR(CITokenPreprocessorElif, const CITokenPreprocessorElif *self)
+{
+    FREE(CITokenPreprocessorIf, self);
+}
 
 typedef struct CITokenPreprocessorIfdef
 {
     String *identifier;
-    Vec *content; // Vec<CIToken*>*?
+    CITokens content;
 } CITokenPreprocessorIfdef;
 
 /**
@@ -592,7 +729,7 @@ typedef struct CITokenPreprocessorIfdef
 inline CONSTRUCTOR(CITokenPreprocessorIfdef,
                    CITokenPreprocessorIfdef,
                    String *identifier,
-                   Vec *content)
+                   CITokens content)
 {
     return (CITokenPreprocessorIfdef){ .identifier = identifier,
                                        .content = content };
@@ -632,7 +769,7 @@ typedef CITokenPreprocessorIfdef CITokenPreprocessorIfndef;
 inline CONSTRUCTOR(CITokenPreprocessorIfndef,
                    CITokenPreprocessorIfndef,
                    String *identifier,
-                   Vec *content)
+                   CITokens content)
 {
     return NEW(CITokenPreprocessorIfdef, identifier, content);
 }
@@ -671,7 +808,7 @@ typedef CITokenPreprocessorIfdef CITokenPreprocessorElifdef;
 inline CONSTRUCTOR(CITokenPreprocessorElifdef,
                    CITokenPreprocessorElifdef,
                    String *identifier,
-                   Vec *content)
+                   CITokens content)
 {
     return NEW(CITokenPreprocessorIfdef, identifier, content);
 }
@@ -710,7 +847,7 @@ typedef CITokenPreprocessorIfdef CITokenPreprocessorElifndef;
 inline CONSTRUCTOR(CITokenPreprocessorElifndef,
                    CITokenPreprocessorElifndef,
                    String *identifier,
-                   Vec *content)
+                   CITokens content)
 {
     return NEW(CITokenPreprocessorIfdef, identifier, content);
 }
@@ -743,7 +880,7 @@ DESTRUCTOR(CITokenPreprocessorElifndef,
 
 typedef struct CITokenPreprocessorElse
 {
-    Vec *content; // Vec<CIToken*>*?
+    CITokens content;
 } CITokenPreprocessorElse;
 
 /**
@@ -752,7 +889,7 @@ typedef struct CITokenPreprocessorElse
  */
 inline CONSTRUCTOR(CITokenPreprocessorElse,
                    CITokenPreprocessorElse,
-                   Vec *content)
+                   CITokens content)
 {
     return (CITokenPreprocessorElse){ .content = content };
 }
@@ -785,6 +922,7 @@ DESTRUCTOR(CITokenPreprocessorElse, const CITokenPreprocessorElse *self);
 typedef struct CITokenPreprocessorInclude
 {
     String *value;
+    CITokens content;
 } CITokenPreprocessorInclude;
 
 /**
@@ -793,9 +931,10 @@ typedef struct CITokenPreprocessorInclude
  */
 inline CONSTRUCTOR(CITokenPreprocessorInclude,
                    CITokenPreprocessorInclude,
-                   String *value)
+                   String *value,
+                   CITokens content)
 {
-    return (CITokenPreprocessorInclude){ .value = value };
+    return (CITokenPreprocessorInclude){ .value = value, .content = content };
 }
 
 /**
@@ -821,21 +960,19 @@ IMPL_FOR_DEBUG(to_string,
  *
  * @brief Free CITokenPreprocessorInclude type.
  */
-inline DESTRUCTOR(CITokenPreprocessorInclude,
-                  const CITokenPreprocessorInclude *self)
-{
-    FREE(String, self->value);
-}
+DESTRUCTOR(CITokenPreprocessorInclude, const CITokenPreprocessorInclude *self);
 
 typedef struct CIToken
 {
     enum CITokenKind kind;
     Location location;
+    struct CIToken *next; // struct CIToken*? (&)
     union
     {
         String *attribute_deprecated; // String*?
         String *attribute_nodiscard;  // String*?
         String *comment_doc;
+        CITokenEot eot;
         CITokenPreprocessorDefine preprocessor_define;
         CITokenPreprocessorElif preprocessor_elif;
         CITokenPreprocessorElifdef preprocessor_elifdef;
@@ -906,6 +1043,16 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     comment_doc,
                     Location location,
                     String *comment_doc);
+
+/**
+ *
+ * @brief Construct CIToken type (CI_TOKEN_KIND_EOT).
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    eot,
+                    Location location,
+                    enum CITokenEotContext eot);
 
 /**
  *
@@ -1248,81 +1395,5 @@ IMPL_FOR_DEBUG(debug, CIToken, const CIToken *self);
  * @brief Free CIToken type.
  */
 DESTRUCTOR(CIToken, CIToken *self);
-
-#define CI_TOKENS_ITERS_MAX_SIZE 512
-
-typedef struct CITokensIter
-{
-    VecIter iter;
-    struct
-    {
-        Usize count;
-        bool in_use;
-    } peek;
-} CITokensIter;
-
-/**
- *
- * @brief Construct CITokensIter type.
- */
-CONSTRUCTOR(CITokensIter *, CITokensIter, const Vec *vec);
-
-/**
- *
- * @brief Free CITokensIter type.
- */
-inline DESTRUCTOR(CITokensIter, CITokensIter *self)
-{
-    lily_free(self);
-}
-
-typedef struct CITokensIters
-{
-    Stack *iters; // Stack<CITokensIter*>*
-    // NOTE: The `current_iter` is supposed to be NULL at then end of the
-    // process (parsing).
-    CIToken *current_token;  // CIToken*? (&)
-    CIToken *previous_token; // CIToken*? (&)
-} CITokensIters;
-
-/**
- *
- * @brief Construct CITokensIters type.
- */
-inline CONSTRUCTOR(CITokensIters, CITokensIters)
-{
-    return (CITokensIters){ .iters = NEW(Stack, CI_TOKENS_ITERS_MAX_SIZE),
-                            .current_token = NULL,
-                            .previous_token = NULL };
-}
-
-/**
- *
- * @brief Add new iter from iters.
- * @return If the return value is true, this means that the iterator has been
- * added, otherwise it means that no iterator has been added.
- */
-bool
-add_iter__CITokensIters(const CITokensIters *self, CITokensIter *tokens_iter);
-
-/**
- *
- * @brief Pop iter from iters.
- */
-void
-pop_iter__CITokensIters(CITokensIters *self);
-
-/**
- *
- * @brief Check if the current iter has reach end.
- */
-bool
-has_reach_end__CITokensIters(CITokensIters *self);
-
-/**
- *
- * @brief Free CITokensIters type.
- */
-DESTRUCTOR(CITokensIters, const CITokensIters *self);
 
 #endif // LILY_CORE_CC_CI_TOKEN_H

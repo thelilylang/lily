@@ -366,7 +366,7 @@ extern inline CONSTRUCTOR(CIConfig,
 // <core/cc/ci/parser.h>
 extern inline CONSTRUCTOR(CIParserVisitWaitingList, CIParserVisitWaitingList);
 
-extern inline DESTRUCTOR(CIParserMacroCall, CIParserMacroCall *self);
+extern inline CONSTRUCTOR(CIParserMacroCallParams, CIParserMacroCallParams);
 
 // <core/cc/ci/result.h>
 extern inline CIResultDefine *
@@ -398,31 +398,33 @@ extern inline CONSTRUCTOR(CIScanner,
 extern inline void
 set_builtin__CIScanner(CIScanner *self);
 
+extern inline DESTRUCTOR(CIScanner, const CIScanner *self);
+
 extern inline VARIANT_CONSTRUCTOR(CIScannerContext,
                                   CIScannerContext,
                                   macro,
-                                  Vec *macro,
-                                  Vec *tokens);
+                                  CITokens *tokens,
+                                  Vec *macro);
 
 extern inline VARIANT_CONSTRUCTOR(CIScannerContext,
                                   CIScannerContext,
                                   preprocessor_cond,
-                                  Vec *tokens);
+                                  CITokens *tokens);
 
 extern inline VARIANT_CONSTRUCTOR(CIScannerContext,
                                   CIScannerContext,
                                   preprocessor_if,
-                                  Vec *tokens);
+                                  CITokens *tokens);
 
 extern inline VARIANT_CONSTRUCTOR(CIScannerContext,
                                   CIScannerContext,
                                   preprocessor_else,
-                                  Vec *tokens);
+                                  CITokens *tokens);
 
 extern inline CONSTRUCTOR(CIScannerContext,
                           CIScannerContext,
                           enum CIScannerContextLocation ctx_location,
-                          Vec *tokens);
+                          CITokens *tokens);
 
 extern inline bool
 is_in_macro__CIScannerContext(const CIScannerContext *self);
@@ -437,6 +439,13 @@ extern inline bool
 is_in_prepro_else__CIScannerContext(const CIScannerContext *self);
 
 // <core/cc/ci/token.h>
+extern inline CONSTRUCTOR(CITokens, CITokens);
+
+extern inline bool
+is_empty__CITokens(const CITokens *self);
+
+extern inline CONSTRUCTOR(CITokenEot, CITokenEot, enum CITokenEotContext ctx);
+
 extern inline CONSTRUCTOR(CITokenLiteralConstantInt,
                           CITokenLiteralConstantInt,
                           enum CITokenLiteralConstantIntSuffix suffix,
@@ -457,11 +466,12 @@ extern inline CONSTRUCTOR(CITokenPreprocessorDefine,
                           CITokenPreprocessorDefine,
                           String *name,
                           Vec *params,
-                          Vec *tokens);
+                          CITokens tokens);
 
 extern inline CONSTRUCTOR(CITokenPreprocessorEmbed,
                           CITokenPreprocessorEmbed,
-                          String *value);
+                          String *value,
+                          CITokens content);
 
 extern inline CONSTRUCTOR(CITokenPreprocessorLine,
                           CITokenPreprocessorLine,
@@ -470,47 +480,47 @@ extern inline CONSTRUCTOR(CITokenPreprocessorLine,
 
 extern inline CONSTRUCTOR(CITokenPreprocessorIf,
                           CITokenPreprocessorIf,
-                          Vec *cond,
-                          Vec *content);
+                          CITokens cond,
+                          CITokens content);
 
 extern inline CONSTRUCTOR(CITokenPreprocessorElif,
                           CITokenPreprocessorElif,
-                          Vec *cond,
-                          Vec *content);
+                          CITokens cond,
+                          CITokens content);
+
+extern inline DESTRUCTOR(CITokenPreprocessorElif,
+                         const CITokenPreprocessorElif *self);
 
 extern inline CONSTRUCTOR(CITokenPreprocessorIfdef,
                           CITokenPreprocessorIfdef,
                           String *identifier,
-                          Vec *content);
+                          CITokens content);
 
 extern inline CONSTRUCTOR(CITokenPreprocessorIfndef,
                           CITokenPreprocessorIfndef,
                           String *identifier,
-                          Vec *content);
+                          CITokens content);
 
 extern inline CONSTRUCTOR(CITokenPreprocessorElifdef,
                           CITokenPreprocessorElifdef,
                           String *identifier,
-                          Vec *content);
+                          CITokens content);
 
 extern inline CONSTRUCTOR(CITokenPreprocessorElifndef,
                           CITokenPreprocessorElifndef,
                           String *identifier,
-                          Vec *content);
+                          CITokens content);
 
 extern inline CONSTRUCTOR(CITokenPreprocessorElse,
                           CITokenPreprocessorElse,
-                          Vec *content);
+                          CITokens content);
 
 extern inline CONSTRUCTOR(CITokenPreprocessorInclude,
                           CITokenPreprocessorInclude,
-                          String *value);
+                          String *value,
+                          CITokens content);
 
 extern inline DESTRUCTOR(CITokenPreprocessorInclude,
                          const CITokenPreprocessorInclude *self);
-
-extern inline DESTRUCTOR(CITokensIter, CITokensIter *self);
-
-extern inline CONSTRUCTOR(CITokensIters, CITokensIters);
 
 #endif // LILY_EX_LIB_LILY_CORE_CC_CI_C

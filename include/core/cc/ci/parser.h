@@ -77,37 +77,101 @@ inline CONSTRUCTOR(CIParserVisitWaitingList, CIParserVisitWaitingList)
  */
 DESTRUCTOR(CIParserVisitWaitingList, const CIParserVisitWaitingList *self);
 
+typedef struct CIParserMacroCallParam
+{
+    // content.first: CIToken* (&)
+    // content.first...content.last: CIToken* (&)
+    // content.last: CIToken*
+    CITokens content;
+    struct CIParserMacroCallParam *next; // CIParserMacroCallParam*?
+} CIParserMacroCallParam;
+
+/**
+ *
+ * @brief Construct CIParserMacroCallParam type.
+ */
+CONSTRUCTOR(CIParserMacroCallParam *, CIParserMacroCallParam, CITokens content);
+
+/**
+ *
+ * @brief Free CIParserMacroCallParam type.
+ */
+DESTRUCTOR(CIParserMacroCallParam, CIParserMacroCallParam *self);
+
+typedef struct CIParserMacroCallParams
+{
+    CIParserMacroCallParam *first;
+    CIParserMacroCallParam *last; // CIParserMacroCallParam* (&)
+    Usize len;
+} CIParserMacroCallParams;
+
+/**
+ *
+ * @brief Construct CIParserMacroCallParams type.
+ */
+inline CONSTRUCTOR(CIParserMacroCallParams, CIParserMacroCallParams)
+{
+    return (CIParserMacroCallParams){ .first = NULL, .last = NULL, .len = 0 };
+}
+
+/**
+ *
+ * @brief Add a param to params.
+ */
+void
+add__CIParserMacroCallParams(CIParserMacroCallParams *self,
+                             CIParserMacroCallParam *param);
+
+/**
+ *
+ * @brief Get macro call param according the index.
+ */
+CIParserMacroCallParam *
+get__CIParserMacroCallParams(const CIParserMacroCallParams *self, Usize index);
+
+/**
+ *
+ * @brief Free CIParserMacroCallParams type.
+ */
+DESTRUCTOR(CIParserMacroCallParams, const CIParserMacroCallParams *self);
+
 typedef struct CIParserMacroCall
 {
     // Params of macro call
-    Vec *params; // Vec<Vec<CIToken* (&)>*>* (&)
+    CIParserMacroCallParams params;
+    bool is_empty;
 } CIParserMacroCall;
 
 /**
  *
- * @brief Construct CIParserMacro type.
+ * @brief Construct CIParserMacroCall type (is_empty=false).
  */
-CONSTRUCTOR(CIParserMacroCall *, CIParserMacroCall, Vec *params);
+CONSTRUCTOR(CIParserMacroCall *, CIParserMacroCall);
 
 /**
  *
- * @brief Free CIParserMacro type.
+ * @brief Construct CIParserMacroCall type (is_empty=true).
  */
-inline DESTRUCTOR(CIParserMacroCall, CIParserMacroCall *self)
-{
-    lily_free(self);
-}
+VARIANT_CONSTRUCTOR(CIParserMacroCall *, CIParserMacroCall, is_empty);
 
-#define CI_PARSER_MACROS_CALL_MAX_SIZE CI_TOKENS_ITERS_MAX_SIZE
+/**
+ *
+ * @brief Free CIParserMacroCall type.
+ */
+DESTRUCTOR(CIParserMacroCall, CIParserMacroCall *self);
+
+#define CI_PARSER_MACROS_CALL_MAX_SIZE 512
 
 typedef struct CIParser
 {
     CIResultFile *file;       // CIResultFile* (&)
-    const CIScanner *scanner; // CIScanner* (&)
+    const CIScanner *scanner; // const CIScanner* (&)
     Usize *count_error;       // Usize* (&)
     Usize *count_warning;     // Usize* (&)
-    CITokensIters tokens_iters;
-    Stack *macros_call; // Vec<CIParserMacro*>*
+    const CITokens *tokens;   // const CITokens* (&)
+    CIToken *current_token;   // CIToken* (&)
+    CIToken *previous_token;  // CIToken* (&)
+    Stack *macros_call;       // Stack<CIParserMacroCall*>*
     CIParserVisitWaitingList visit_waiting_list;
 } CIParser;
 
@@ -116,6 +180,13 @@ typedef struct CIParser
  * @brief Construct CIParser type.
  */
 CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner);
+
+/**
+ *
+ * @brief Construct CIParser type from tokens.
+ */
+CIParser
+from_tokens__CIParser(CIResultFile *file, const CITokens *content);
 
 /**
  *
@@ -149,6 +220,13 @@ CIDataType *
 substitute_data_type__CIParser(CIDataType *data_type,
                                CIGenericParams *generic_params,
                                CIGenericParams *called_generic_params);
+
+/**
+ *
+ * @brief Free CIParser type (from tokens case).
+ */
+void
+free_from_tokens_case__CIParser(const CIParser *self);
 
 /**
  *
