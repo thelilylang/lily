@@ -33,6 +33,7 @@
 #include <base/cli/value.h>
 #include <base/env.h>
 #include <base/hash_map.h>
+#include <base/linked_list.h>
 #include <base/memory/api.h>
 #include <base/memory/arena.h>
 #include <base/memory/page.h>
@@ -65,6 +66,9 @@ extern inline Usize
 index__HashMap(HashMap *self, char *key);
 
 extern inline CONSTRUCTOR(HashMapIter, HashMapIter, HashMap *hash_map);
+
+// <base/linked_list.h>
+extern inline DESTRUCTOR(LinkedListNode, LinkedListNode *self);
 
 // <base/optional.h>
 extern inline bool
