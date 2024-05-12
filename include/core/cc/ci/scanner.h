@@ -34,7 +34,7 @@
 
 typedef struct CIScanner
 {
-    Vec *tokens; // Vec<CIToken*>*
+    CITokens tokens;
     Scanner base;
     enum CIStandard standard;
     /// A field indicating whether or not the file being scanned is builtin.
@@ -53,7 +53,7 @@ inline CONSTRUCTOR(CIScanner,
                    Usize *count_error,
                    enum CIStandard standard)
 {
-    return (CIScanner){ .tokens = NEW(Vec),
+    return (CIScanner){ .tokens = NEW(CITokens),
                         .base = NEW(Scanner, source, count_error),
                         .standard = standard,
                         .is_builtin = false };
@@ -80,7 +80,10 @@ run__CIScanner(CIScanner *self, bool dump_scanner);
  *
  * @brief Free CIScanner type.
  */
-DESTRUCTOR(CIScanner, const CIScanner *self);
+inline DESTRUCTOR(CIScanner, const CIScanner *self)
+{
+    FREE(CITokens, &self->tokens);
+}
 
 enum CIScannerContextLocation
 {
@@ -99,7 +102,7 @@ enum CIScannerContextLocation
 typedef struct CIScannerContext
 {
     enum CIScannerContextLocation ctx_location;
-    Vec *tokens; // Vec<CIToken*>*? (&)
+    CITokens *tokens; // CITokens*? (&)
     union
     {
         // Macro parameters
@@ -115,7 +118,7 @@ typedef struct CIScannerContext
 inline VARIANT_CONSTRUCTOR(CIScannerContext,
                            CIScannerContext,
                            macro,
-                           Vec *tokens,
+                           CITokens *tokens,
                            Vec *macro)
 {
     return (CIScannerContext){ .ctx_location =
@@ -132,7 +135,7 @@ inline VARIANT_CONSTRUCTOR(CIScannerContext,
 inline VARIANT_CONSTRUCTOR(CIScannerContext,
                            CIScannerContext,
                            preprocessor_cond,
-                           Vec *tokens)
+                           CITokens *tokens)
 {
     return (CIScannerContext){ .ctx_location =
                                  CI_SCANNER_CONTEXT_LOCATION_PREPROCESSOR_COND,
@@ -147,7 +150,7 @@ inline VARIANT_CONSTRUCTOR(CIScannerContext,
 inline VARIANT_CONSTRUCTOR(CIScannerContext,
                            CIScannerContext,
                            preprocessor_if,
-                           Vec *tokens)
+                           CITokens *tokens)
 {
     return (CIScannerContext){ .ctx_location =
                                  CI_SCANNER_CONTEXT_LOCATION_PREPROCESSOR_IF,
@@ -162,7 +165,7 @@ inline VARIANT_CONSTRUCTOR(CIScannerContext,
 inline VARIANT_CONSTRUCTOR(CIScannerContext,
                            CIScannerContext,
                            preprocessor_else,
-                           Vec *tokens)
+                           CITokens *tokens)
 {
     return (CIScannerContext){ .ctx_location =
                                  CI_SCANNER_CONTEXT_LOCATION_PREPROCESSOR_ELSE,
@@ -176,7 +179,7 @@ inline VARIANT_CONSTRUCTOR(CIScannerContext,
 inline CONSTRUCTOR(CIScannerContext,
                    CIScannerContext,
                    enum CIScannerContextLocation ctx_location,
-                   Vec *tokens)
+                   CITokens *tokens)
 {
     return (CIScannerContext){ .ctx_location = ctx_location, .tokens = tokens };
 }
