@@ -47,6 +47,34 @@ generate_builtin__CIBuiltin(const CIConfig *config)
             UNREACHABLE("unknown compiler");
     }
 
+    // Add macro:
+    // __STRICT_ANSI__
+    // _ISOC99_SOURCE
+    // _ISOC11_SOURCE
+    // _ISOC2X_SOURCE
+    switch (config->standard) {
+        case CI_STANDARD_KR:
+        case CI_STANDARD_89:
+        case CI_STANDARD_95:
+            push_str__String(builtin_h, "#define __STRICT_ANSI__");
+
+            break;
+        case CI_STANDARD_99:
+            push_str__String(builtin_h, "#define _ISOC99_SOURCE");
+
+            break;
+        case CI_STANDARD_11:
+            push_str__String(builtin_h, "#define _ISOC11_SOURCE");
+
+            break;
+        case CI_STANDARD_23:
+            push_str__String(builtin_h, "#define _ISOC2X_SOURCE");
+
+            break;
+        default:
+            break;
+    }
+
     // Add _XOPEN_SOURCE macro.
     switch (config->standard) {
         case CI_STANDARD_99:
