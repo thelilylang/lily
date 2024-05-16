@@ -24,9 +24,10 @@
 
 #include <base/assert.h>
 #include <base/dir.h>
+#include <base/dir_separator.h>
 #include <base/file.h>
+#include <base/format.h>
 #include <base/new.h>
-#include <base/yaml.h>
 
 #include <core/cc/ci/config.h>
 #include <core/cc/ci/include.h>
@@ -40,18 +41,21 @@ static enum CIStandard
 parse_standard__CIConfig(YAMLLoadRes *yaml_load_res);
 
 static CICompiler
-parse_compiler__CIConfig(YAMLLoadRes *yaml_load_res);
+parse_compiler__CIConfig(YAMLLoadRes *yaml_load_res,
+                         const char *absolute_config_dir);
 
 static void
 parse_include_dirs__CIConfig(YAMLLoadRes *yaml_load_res);
 
 /// @return Vec<CILibrary*>*
 static Vec *
-parse_libraries__CIConfig(YAMLLoadRes *yaml_load_res);
+parse_libraries__CIConfig(YAMLLoadRes *yaml_load_res,
+                          const char *absolute_config_dir);
 
 /// @return Vec<CIBin*>*
 static Vec *
-parse_bins__CIConfig(YAMLLoadRes *yaml_load_res);
+parse_bins__CIConfig(YAMLLoadRes *yaml_load_res,
+                     const char *absolute_config_dir);
 
 enum CIStandard
 parse_standard__CIConfig(YAMLLoadRes *yaml_load_res)
@@ -105,7 +109,8 @@ parse_standard__CIConfig(YAMLLoadRes *yaml_load_res)
 }
 
 CICompiler
-parse_compiler__CIConfig(YAMLLoadRes *yaml_load_res)
+parse_compiler__CIConfig(YAMLLoadRes *yaml_load_res,
+                         const char *absolute_config_dir)
 {
     // compiler:
     //   name: clang | gcc
@@ -160,7 +165,12 @@ parse_compiler__CIConfig(YAMLLoadRes *yaml_load_res)
                    "  path: <path_of_command>");
     }
 
-    return NEW(CICompiler, compiler_kind, path);
+    return NEW(CICompiler,
+               compiler_kind,
+               path[0] == '/' // Check if the path is absolute
+                 ? from__String((char *)path)
+                 : format__String(
+                     "{s}" DIR_SEPARATOR_S "{s}", absolute_config_dir, path));
 }
 
 void
@@ -204,7 +214,8 @@ parse_include_dirs__CIConfig(YAMLLoadRes *yaml_load_res)
 }
 
 Vec *
-parse_libraries__CIConfig(YAMLLoadRes *yaml_load_res)
+parse_libraries__CIConfig(YAMLLoadRes *yaml_load_res,
+                          const char *absolute_config_dir)
 {
     Vec *libraries = NEW(Vec);
 
@@ -243,7 +254,7 @@ parse_libraries__CIConfig(YAMLLoadRes *yaml_load_res)
                   library,
                   {
                       const char *name = library_key;
-                      Vec *paths = NULL; // Vec<char* (&)>*
+                      Vec *paths = NULL; // Vec<String*>*
 
                       switch (GET_NODE_TYPE__YAML(library_value_node)) {
                           case YAML_MAPPING_NODE: {
@@ -276,8 +287,13 @@ parse_libraries__CIConfig(YAMLLoadRes *yaml_load_res)
                                                   library_mapping_value_node,
                                                   path,
                                                   {
-                                                      push__Vec(paths,
-                                                                path_value);
+                                                      push__Vec(
+                                                        paths,
+                                                        format__String(
+                                                          "{s}" DIR_SEPARATOR_S
+                                                          "{s}",
+                                                          absolute_config_dir,
+                                                          path_value));
                                                   });
 
                                                 break;
@@ -323,7 +339,8 @@ parse_libraries__CIConfig(YAMLLoadRes *yaml_load_res)
 }
 
 Vec *
-parse_bins__CIConfig(YAMLLoadRes *yaml_load_res)
+parse_bins__CIConfig(YAMLLoadRes *yaml_load_res,
+                     const char *absolute_config_dir)
 {
     Vec *bins = NEW(Vec);
 
@@ -348,7 +365,7 @@ parse_bins__CIConfig(YAMLLoadRes *yaml_load_res)
                 ITER_ON_MAPPING_NODE__YAML(
                   yaml_load_res, FIRST_DOCUMENT, bins_value_node, bin, {
                       const char *name = bin_key;
-                      char *path = NULL;
+                      String *path = NULL;
 
                       switch (GET_NODE_TYPE__YAML(bin_value_node)) {
                           case YAML_MAPPING_NODE: {
@@ -365,7 +382,10 @@ parse_bins__CIConfig(YAMLLoadRes *yaml_load_res)
                                     if (!strcmp(bin_mapping_key, "path")) {
                                         ASSERT(!path);
 
-                                        path = bin_mapping_value;
+                                        path = format__String(
+                                          "{s}" DIR_SEPARATOR_S "{s}",
+                                          absolute_config_dir,
+                                          bin_mapping_value);
                                     } else {
                                         UNREACHABLE("this key is not expected");
                                     }
@@ -406,11 +426,12 @@ CONSTRUCTOR(CILibrary *, CILibrary, const char *name, Vec *paths)
 
 DESTRUCTOR(CILibrary, CILibrary *self)
 {
+    FREE_BUFFER_ITEMS(self->paths->buffer, self->paths->len, String);
     FREE(Vec, self->paths);
     lily_free(self);
 }
 
-CONSTRUCTOR(CIBin *, CIBin, const char *name, const char *path)
+CONSTRUCTOR(CIBin *, CIBin, const char *name, String *path)
 {
     CIBin *self = lily_malloc(sizeof(CIBin));
 
@@ -420,32 +441,40 @@ CONSTRUCTOR(CIBin *, CIBin, const char *name, const char *path)
     return self;
 }
 
-CIConfig
-parse__CIConfig()
+DESTRUCTOR(CIBin, CIBin *self)
 {
-    char *cwd = get_cwd__Dir();
-    String *path_ci_config = exists_rec__File(cwd, CI_CONFIG); // <path>/CI.yaml
+    FREE(String, self->path);
+    lily_free(self);
+}
+
+CIConfig
+parse__CIConfig(const char *config_dir)
+{
+    char *absolute_config_dir = format("{sa}/{s}", get_cwd__Dir(), config_dir);
+    String *path_ci_config =
+      exists_rec__File(absolute_config_dir, CI_CONFIG); // <path>/CI.yaml
 
     if (!path_ci_config) {
         FAILED("could not find CI.yaml in current working directory or parent "
                "directory");
     }
 
-    lily_free(cwd);
-
     YAMLLoadRes yaml_load_res = load__YAML(path_ci_config->buffer);
     enum CIStandard standard = parse_standard__CIConfig(&yaml_load_res);
-    CICompiler compiler = parse_compiler__CIConfig(&yaml_load_res);
+    CICompiler compiler =
+      parse_compiler__CIConfig(&yaml_load_res, absolute_config_dir);
 
     parse_include_dirs__CIConfig(&yaml_load_res);
 
-    Vec *libraries = parse_libraries__CIConfig(&yaml_load_res);
-    Vec *bins = parse_bins__CIConfig(&yaml_load_res);
+    Vec *libraries =
+      parse_libraries__CIConfig(&yaml_load_res, absolute_config_dir);
+    Vec *bins = parse_bins__CIConfig(&yaml_load_res, absolute_config_dir);
 
     FREE(String, path_ci_config);
-    FREE(YAMLLoadRes, &yaml_load_res);
+    lily_free(absolute_config_dir);
 
     return NEW(CIConfig,
+               yaml_load_res,
                standard,
                compiler,
                get_include_dirs__CIInclude(),
@@ -455,6 +484,8 @@ parse__CIConfig()
 
 DESTRUCTOR(CIConfig, const CIConfig *self)
 {
+    FREE(YAMLLoadRes, &self->yaml_load_res);
+    FREE(CICompiler, &self->compiler);
     FREE_BUFFER_ITEMS(self->libraries->buffer, self->libraries->len, CILibrary);
     FREE(Vec, self->libraries);
 

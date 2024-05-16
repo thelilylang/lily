@@ -26,7 +26,10 @@
 #define LILY_CORE_CC_CI_CONFIG_H
 
 #include <base/alloc.h>
+#include <base/new.h>
+#include <base/string.h>
 #include <base/vec.h>
+#include <base/yaml.h>
 
 #include <core/cc/ci/features.h>
 
@@ -39,7 +42,7 @@ enum CICompilerKind
 typedef struct CICompiler
 {
     enum CICompilerKind kind;
-    const char *path;
+    String *path;
 } CICompiler;
 
 /**
@@ -49,15 +52,24 @@ typedef struct CICompiler
 inline CONSTRUCTOR(CICompiler,
                    CICompiler,
                    enum CICompilerKind kind,
-                   const char *path)
+                   String *path)
 {
     return (CICompiler){ .kind = kind, .path = path };
+}
+
+/**
+ *
+ * @brief Free CICompiler type.
+ */
+inline DESTRUCTOR(CICompiler, const CICompiler *self)
+{
+    FREE(String, self->path);
 }
 
 typedef struct CILibrary
 {
     const char *name; // const char* (&)
-    Vec *paths;       // Vec<char* (&)>*
+    Vec *paths;       // Vec<String*>*
 } CILibrary;
 
 /**
@@ -75,26 +87,24 @@ DESTRUCTOR(CILibrary, CILibrary *self);
 typedef struct CIBin
 {
     const char *name; // const char* (&)
-    const char *path; // const char* (&)
+    String *path;
 } CIBin;
 
 /**
  *
  * @brief Construct CIBin type.
  */
-CONSTRUCTOR(CIBin *, CIBin, const char *name, const char *path);
+CONSTRUCTOR(CIBin *, CIBin, const char *name, String *path);
 
 /**
  *
  * @brief Free CIBin type.
  */
-inline DESTRUCTOR(CIBin, CIBin *self)
-{
-    lily_free(self);
-}
+DESTRUCTOR(CIBin, CIBin *self);
 
 typedef struct CIConfig
 {
+    YAMLLoadRes yaml_load_res;
     enum CIStandard standard;
     CICompiler compiler;
     const Vec *include_dirs; // Vec<char* (&)>* (&)
@@ -108,13 +118,15 @@ typedef struct CIConfig
  */
 inline CONSTRUCTOR(CIConfig,
                    CIConfig,
+                   YAMLLoadRes yaml_load_res,
                    enum CIStandard standard,
                    CICompiler compiler,
                    const Vec *include_dirs,
                    Vec *libraries,
                    Vec *bins)
 {
-    return (CIConfig){ .standard = standard,
+    return (CIConfig){ .yaml_load_res = yaml_load_res,
+                       .standard = standard,
                        .compiler = compiler,
                        .include_dirs = include_dirs,
                        .libraries = libraries,
@@ -126,7 +138,7 @@ inline CONSTRUCTOR(CIConfig,
  * @brief Parse CI configuration.
  */
 CIConfig
-parse__CIConfig();
+parse__CIConfig(const char *config_dir);
 
 /**
  *

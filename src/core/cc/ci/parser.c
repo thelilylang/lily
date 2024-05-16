@@ -438,6 +438,9 @@ next_token_must_continue_to_iter__CIParser(CIParser *self, CIToken *next_token);
 static inline void
 init__CIParser(CIParser *self);
 
+static inline void
+set_current_scope__CIParser(CIParser *self);
+
 /// @brief Peek token at position + n.
 static CIToken *
 peek_token__CIParser(CIParser *self, Usize n);
@@ -1163,12 +1166,11 @@ CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner)
     }
 
     ctx = NEW(CIParserContext);
-    current_scope = file->scope_base;
 
     return (CIParser){ .file = file,
                        .scanner = scanner,
-                       .count_error = &file->count_error,
-                       .count_warning = &file->count_warning,
+                       .count_error = &file->file_analysis->count_error,
+                       .count_warning = &file->file_analysis->count_warning,
                        .tokens = &scanner->tokens,
                        .current_token = scanner->tokens.first,
                        .previous_token = scanner->tokens.first,
@@ -1182,8 +1184,8 @@ from_tokens__CIParser(CIResultFile *file, const CITokens *content)
 {
     return (CIParser){ .file = file,
                        .scanner = NULL,
-                       .count_error = &file->count_error,
-                       .count_warning = &file->count_warning,
+                       .count_error = &file->file_analysis->count_error,
+                       .count_warning = &file->file_analysis->count_warning,
                        .tokens = content,
                        .current_token = NULL,
                        .previous_token = NULL,
@@ -2767,7 +2769,7 @@ select_conditional_preprocessor__CIParser(CIParser *self, CIToken *next_token)
                                                                             \
         next_token = next_token->preprocessor_##k.content.first;            \
                                                                             \
-        if (is_def || reverse) {                                            \
+        if ((is_def && !reverse) || (!is_def && reverse)) {                 \
             return next_token;                                              \
         }                                                                   \
                                                                             \
@@ -2993,7 +2995,9 @@ jump_in_token_block__CIParser(CIParser *self, CIToken *next_token)
         case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:
             add_define__CIResultFile(
               self->file,
-              NEW(CIResultDefine, &next_token->preprocessor_define));
+              NEW(CIResultDefine,
+                  &next_token->preprocessor_define,
+                  NEW(CIFileID, self->file->entity.id, self->file->kind)));
 
             break;
         case CI_TOKEN_KIND_MACRO_PARAM: {
@@ -3029,6 +3033,8 @@ jump_in_token_block__CIParser(CIParser *self, CIToken *next_token)
               self->file, standard_predefined_macro_s[next_token->kind]);
 
             if (def) {
+                add_macro__CIParser(self, NEW(CIParserMacroCall));
+
                 def->define->tokens.last->next = next_token->next;
 
                 return def->define->tokens.first;
@@ -3059,6 +3065,12 @@ void
 init__CIParser(CIParser *self)
 {
     return next_token__CIParser(self);
+}
+
+void
+set_current_scope__CIParser(CIParser *self)
+{
+    current_scope = self->file->scope_base;
 }
 
 bool
@@ -6046,11 +6058,15 @@ resolve_preprocessor_include__CIParser(CIParser *self,
                  preprocessor_include_token->preprocessor_include.value);
 
         if (exists__File(full_include_path)) {
-            if (!add_and_run__CIResult(self->file->result,
-                                       full_include_path,
-                                       self->file->scanner.standard)) {
-                lily_free(full_include_path);
-            }
+            CIResultFile *header =
+              add_and_run_header__CIResult(self->file->entity.result,
+                                           self->file,
+                                           full_include_path,
+                                           self->file->scanner.standard);
+
+            include_content__CIResultFile(self->file, header);
+
+            lily_free(full_include_path);
 
             goto exit;
         } else {
@@ -6382,6 +6398,8 @@ parse_storage_class_specifiers__CIParser(CIParser *self,
 void
 run__CIParser(CIParser *self)
 {
+    // Set the current scope.
+    set_current_scope__CIParser(self);
     // Initialize the parser.
     init__CIParser(self);
 
