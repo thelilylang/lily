@@ -56,19 +56,19 @@ generate_builtin__CIBuiltin(const CIConfig *config)
         case CI_STANDARD_KR:
         case CI_STANDARD_89:
         case CI_STANDARD_95:
-            push_str__String(builtin_h, "#define __STRICT_ANSI__");
+            push_str__String(builtin_h, "#define __STRICT_ANSI__\n");
 
             break;
         case CI_STANDARD_99:
-            push_str__String(builtin_h, "#define _ISOC99_SOURCE");
+            push_str__String(builtin_h, "#define _ISOC99_SOURCE\n");
 
             break;
         case CI_STANDARD_11:
-            push_str__String(builtin_h, "#define _ISOC11_SOURCE");
+            push_str__String(builtin_h, "#define _ISOC11_SOURCE\n");
 
             break;
         case CI_STANDARD_23:
-            push_str__String(builtin_h, "#define _ISOC2X_SOURCE");
+            push_str__String(builtin_h, "#define _ISOC2X_SOURCE\n");
 
             break;
         default:
