@@ -2498,6 +2498,24 @@ resolve_expr__CIParser(CIParser *self, CIExpr *expr, bool is_partial)
 
             CIExpr *lhs =
               resolve_expr__CIParser(self, expr->binary.left, is_partial);
+
+            switch (expr->binary.kind) {
+                case CI_EXPR_BINARY_KIND_AND:
+                    if (!check_if_resolved_expr_is_true__CIParser(self, lhs)) {
+                        return lhs;
+                    }
+
+                    break;
+                case CI_EXPR_BINARY_KIND_OR:
+                    if (check_if_resolved_expr_is_true__CIParser(self, lhs)) {
+                        return lhs;
+                    }
+
+                    break;
+                default:
+                    break;
+            }
+
             CIExpr *rhs =
               resolve_expr__CIParser(self, expr->binary.right, is_partial);
             CIExpr *res = NULL;
