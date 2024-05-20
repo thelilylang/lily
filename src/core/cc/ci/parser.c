@@ -3046,6 +3046,60 @@ jump_in_token_block__CIParser(CIParser *self, CIToken *next_token)
         }
         case CI_TOKEN_KIND_IDENTIFIER:
             return jump_in_macro_call__CIParser(self, next_token);
+        case CI_TOKEN_KIND_HASHTAG_HASHTAG: {
+            CIToken *pre_id = self->current_token;
+
+            switch (pre_id->kind) {
+                case CI_TOKEN_KIND_IDENTIFIER:
+                    break;
+                default:
+                    FAILED("expected identifier");
+            }
+
+            next_token = next_token->next;
+
+            ASSERT(next_token);
+
+        loop:
+            switch (next_token->kind) {
+                case CI_TOKEN_KIND_IDENTIFIER: {
+                    CIToken *post_id = next_token;
+                    String *merged_id = format__String(
+                      "{S}{S}", pre_id->identifier, post_id->identifier);
+                    Location merged_location =
+                      NEW(Location,
+                          next_token->location.filename,
+                          next_token->location.start_line,
+                          post_id->location.end_line,
+                          next_token->location.start_column,
+                          post_id->location.end_column,
+                          next_token->location.start_position,
+                          post_id->location.end_position);
+                    CIToken *merged_token = NEW_VARIANT(
+                      CIToken, identifier, merged_location, merged_id);
+                    CIToken *eot = NEW_VARIANT(
+                      CIToken,
+                      eot,
+                      default__Location(next_token->location.filename),
+                      CI_TOKEN_EOT_CONTEXT_MERGED_ID);
+
+                    merged_token->next = eot;
+                    // NOTE: We save the merged token pointer in EOT,
+                    // because we need to free it after use.
+                    eot->eot.merged_token = merged_token;
+                    eot->next = next_token;
+
+                    return merged_token;
+                }
+                case CI_TOKEN_KIND_MACRO_PARAM:
+                    next_token =
+                      jump_in_token_block__CIParser(self, next_token);
+
+                    goto loop;
+                default:
+                    FAILED("expected `pre_id`##`post_id`");
+            }
+        }
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC__:
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_VERSION__:
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_HOSTED__: {
@@ -3106,13 +3160,16 @@ next_token_must_continue_to_iter__CIParser(CIParser *self, CIToken *next_token)
 {
     switch (next_token->kind) {
         case CI_TOKEN_KIND_EOT:
+        case CI_TOKEN_KIND_HASHTAG_HASHTAG:
         case CI_TOKEN_KIND_MACRO_PARAM:
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC__:
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_VERSION__:
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_HOSTED__:
             return true;
         case CI_TOKEN_KIND_IDENTIFIER:
-            return get_define__CIResultFile(self->file, next_token->identifier);
+            return get_define__CIResultFile(self->file,
+                                            next_token->identifier) ||
+                   next_token->next->kind == CI_TOKEN_KIND_HASHTAG_HASHTAG;
         default:
             if (is_preprocessor__CITokenKind(next_token->kind)) {
                 return true;
@@ -3150,11 +3207,23 @@ loop:
                     case CI_TOKEN_EOT_CONTEXT_MACRO_PARAM:
                         // NOTE: Restore the saved token in EOT.
                         if (next_token->eot.macro_param) {
-                            next_token = next_token->eot.macro_param;
+                            next_token = next_token->eot.macro_param->next;
                             next_token->eot.macro_param = NULL;
                         }
 
                         break;
+                    case CI_TOKEN_EOT_CONTEXT_MERGED_ID: {
+                        CIToken *eot = next_token;
+
+                        next_token = next_token->next;
+
+                        ASSERT(eot->eot.merged_token);
+
+                        FREE(CIToken, eot->eot.merged_token);
+                        FREE(CIToken, eot);
+
+                        break;
+                    }
                     case CI_TOKEN_EOT_CONTEXT_OTHER:
                         break;
                     default:
@@ -3195,6 +3264,8 @@ check: {
         if (original_token != next_token &&
             next_token->kind != CI_TOKEN_KIND_EOF) {
             goto check;
+        } else if (next_token->next->kind == CI_TOKEN_KIND_HASHTAG_HASHTAG) {
+            set_current_token__CIParser(self, next_token);
         }
 
         goto loop;
@@ -5086,8 +5157,6 @@ loop:
               NEW(CIExprUnary, CI_EXPR_UNARY_KIND_POST_DECREMENT, expr));
 
             goto loop;
-        case CI_TOKEN_KIND_HASHTAG_HASHTAG:
-            TODO("done <id>##<id>");
         // Parse array access
         case CI_TOKEN_KIND_LHOOK: {
             next_token__CIParser(self);

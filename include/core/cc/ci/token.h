@@ -334,6 +334,7 @@ enum CITokenEotContext
     CI_TOKEN_EOT_CONTEXT_INCLUDE,
     CI_TOKEN_EOT_CONTEXT_MACRO_PARAM,
     CI_TOKEN_EOT_CONTEXT_MACRO_CALL,
+    CI_TOKEN_EOT_CONTEXT_MERGED_ID,
     CI_TOKEN_EOT_CONTEXT_OTHER
 };
 
@@ -342,6 +343,8 @@ typedef struct CITokenEot
     enum CITokenEotContext ctx;
     union
     {
+        // Result of: `id`##`id2`
+        struct CIToken *merged_token; // struct CIToken*
         // This represents the token to restore after reaching the EOT token in
         // the context of a macro parameter
         // (CI_TOKEN_EOT_CONTEXT_KIND_MACRO_PARAM).
