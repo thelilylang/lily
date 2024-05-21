@@ -2981,7 +2981,7 @@ jump_in_macro_call__CIParser(CIParser *self, CIToken *next_token)
         if (peeked) {
             switch (peeked->kind) {
                 case CI_TOKEN_KIND_LPAREN:
-                    NEXT(next_token);
+                    NEXT(next_token); // skip maco identifier
                     parse_macro_call_params__CIParser(self, &next_token);
 
                     break;
@@ -2993,6 +2993,8 @@ jump_in_macro_call__CIParser(CIParser *self, CIToken *next_token)
         }
 
         ASSERT(define->define->tokens.last->kind == CI_TOKEN_KIND_EOT);
+        ASSERT(define->define->tokens.last->eot.ctx ==
+               CI_TOKEN_EOT_CONTEXT_MACRO_CALL);
 
         // NOTE: We add the next token after the macro call,
         // but it's okay to add it like that, because it's
@@ -3091,6 +3093,8 @@ jump_in_token_block__CIParser(CIParser *self, CIToken *next_token)
 
                     return merged_token;
                 }
+                case CI_TOKEN_KIND_LITERAL_CONSTANT_INT:
+                    TODO("merge digit");
                 case CI_TOKEN_KIND_MACRO_PARAM:
                     next_token =
                       jump_in_token_block__CIParser(self, next_token);
