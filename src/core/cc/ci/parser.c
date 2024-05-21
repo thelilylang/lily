@@ -2736,18 +2736,18 @@ check_if_resolved_expr_is_true__CIParser(CIParser *self, CIExpr *expr)
 CIToken *
 select_conditional_preprocessor__CIParser(CIParser *self, CIToken *next_token)
 {
-#define PREPROCESSOR_PARSE_EXPR(n)                          \
-    CIParser expr_parser =                                  \
-      from_tokens__CIParser(self->file, preprocessor_cond); \
-                                                            \
-    init__CIParser(&expr_parser);                           \
-                                                            \
-    CIExpr *n = parse_expr__CIParser(&expr_parser);         \
-                                                            \
-    if (!HAS_REACH_EOF(expr_parser.current_token)) {        \
-        FAILED("expected only one expression");             \
-    }                                                       \
-                                                            \
+#define PREPROCESSOR_PARSE_EXPR(n)                                        \
+    CIParser expr_parser =                                                \
+      from_tokens__CIParser(self->file, preprocessor_cond);               \
+                                                                          \
+    init__CIParser(&expr_parser);                                         \
+                                                                          \
+    CIExpr *n = parse_expr__CIParser(&expr_parser);                       \
+                                                                          \
+    if (!HAS_REACH_EOF(expr_parser.current_token)) {                      \
+        FAILED("expected only one expression");                           \
+    }                                                                     \
+                                                                          \
     free_from_tokens_case__CIParser(&expr_parser);
 
 #define SELECT_IF_CONDITIONAL_PREPROCESSOR(k)                                \
@@ -3124,6 +3124,11 @@ loop:
                 return set_current_token__CIParser(self, next_token);
             case CI_TOKEN_KIND_EOT:
                 switch (next_token->eot.ctx) {
+                    case CI_TOKEN_EOT_CONTEXT_INCLUDE:
+                        // Restore EOF.
+                        next_token->kind = CI_TOKEN_KIND_EOF;
+
+                        break;
                     case CI_TOKEN_EOT_CONTEXT_MACRO_CALL: {
                         CIParserMacroCall *macro_call =
                           pop__Stack(self->macros_call);
@@ -6082,7 +6087,23 @@ resolve_preprocessor_include__CIParser(CIParser *self,
                                            full_include_path,
                                            self->file->scanner.standard);
 
-            include_content__CIResultFile(self->file, header);
+            // NOTE: The next token is the first token in the header, and the
+            // token following the last token in the header is the current next
+            // token (token after the preprocessor include).
+            //
+            // Before:
+            //
+            // ... -> INCLUDE
+            //
+            // After:
+            //
+            // ... -> INCLUDE -> HEADER_FIRST -> ... -> HEADER_LAST (EOT (old
+            // EOF)) -> INCLUDE
+            header->scanner.tokens.last->kind = CI_TOKEN_KIND_EOT;
+            header->scanner.tokens.last->eot.ctx = CI_TOKEN_EOT_CONTEXT_INCLUDE;
+            header->scanner.tokens.last->next =
+              preprocessor_include_token->next;
+            preprocessor_include_token->next = header->scanner.tokens.first;
 
             lily_free(full_include_path);
 

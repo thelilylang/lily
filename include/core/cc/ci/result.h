@@ -713,6 +713,19 @@ load_builtin__CIResult(CIResult *self, const CIConfig *config);
 
 /**
  *
+ * @brief Scan file.
+ * @param path char* (&)
+ */
+CIResultFile *
+scan_file__CIResult(const CIResult *self,
+                    CIResultFile *owner,
+                    CIResultFile *file_parent,
+                    char *path,
+                    enum CIStandard standard,
+                    Usize id);
+
+/**
+ *
  * @brief Run (Scan & Parse) file.
  * @param path char* (&)
  */

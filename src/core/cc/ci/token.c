@@ -337,6 +337,8 @@ char *
 IMPL_FOR_DEBUG(to_string, CITokenEotContext, enum CITokenEotContext self)
 {
     switch (self) {
+		case CI_TOKEN_EOT_CONTEXT_INCLUDE:
+			return "CI_TOKEN_EOT_CONTEXT_INCLUDE";
         case CI_TOKEN_EOT_CONTEXT_MACRO_PARAM:
             return "CI_TOKEN_EOT_CONTEXT_MACRO_PARAM";
         case CI_TOKEN_EOT_CONTEXT_MACRO_CALL:

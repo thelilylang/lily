@@ -910,12 +910,12 @@ load_builtin__CIResult(CIResult *self, const CIConfig *config)
 }
 
 CIResultFile *
-run_file__CIResult(const CIResult *self,
-                   CIResultFile *owner,
-                   CIResultFile *file_parent,
-                   char *path,
-                   enum CIStandard standard,
-                   Usize id)
+scan_file__CIResult(const CIResult *self,
+                    CIResultFile *owner,
+                    CIResultFile *file_parent,
+                    char *path,
+                    enum CIStandard standard,
+                    Usize id)
 {
     char *extension = get_extension__File(path);
     String *filename_result = get_filename__File(path);
@@ -947,7 +947,6 @@ run_file__CIResult(const CIResult *self,
                                     self,
                                     CI_RESULT_ENTITY_KIND_FILE,
                                     filename_result);
-
     (void)NEW(CIResultFileAnalysis, result_file);
 
     if (kind == CI_FILE_ID_KIND_SOURCE) {
@@ -958,13 +957,29 @@ run_file__CIResult(const CIResult *self,
           self->headers, result_file->file_input.name, result_file);
     }
 
-    if (file_parent) {
-        include_content__CIResultFile(result_file, file_parent);
-    }
-
-    run__CIResultFile(result_file);
+    run__CIScanner(&result_file->scanner, false);
 
     lily_free(extension);
+
+    return result_file;
+}
+
+CIResultFile *
+run_file__CIResult(const CIResult *self,
+                   CIResultFile *owner,
+                   CIResultFile *file_parent,
+                   char *path,
+                   enum CIStandard standard,
+                   Usize id)
+{
+    CIResultFile *result_file =
+      scan_file__CIResult(self, owner, file_parent, path, standard, id);
+
+    run__CIParser(&result_file->file_analysis->parser);
+
+    // if (file_parent) {
+    //     include_content__CIResultFile(result_file, file_parent);
+    // }
 
     return result_file;
 }
@@ -1039,14 +1054,8 @@ add_and_run_header__CIResult(const CIResult *self,
 
     CIResultFile *header = get__OrderedHashMap(self->headers, path);
 
-    if (header) {
-        destroy_file_analysis__CIResultFile(header);
-        (void)NEW(CIResultFileAnalysis, header);
-
-        include_content__CIResultFile(header, file_parent);
-        run__CIParser(&header->file_analysis->parser);
-    } else {
-        header = run_file__CIResult(
+    if (!header) {
+        header = scan_file__CIResult(
           self, NULL, file_parent, path, standard, self->headers->len);
     }
 
