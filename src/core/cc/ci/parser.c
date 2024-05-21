@@ -2624,8 +2624,18 @@ resolve_expr__CIParser(CIParser *self, CIExpr *expr, bool is_partial)
             TODO("resolve sizeof");
         case CI_EXPR_KIND_STRUCT_CALL:
             TODO("resolve struct");
-        case CI_EXPR_KIND_TERNARY:
-            TODO("resolve ternary");
+        case CI_EXPR_KIND_TERNARY: {
+            CIExpr *resolved_cond =
+              resolve_expr__CIParser(self, expr->ternary.cond, is_partial);
+
+            if (check_if_resolved_expr_is_true__CIParser(self, resolved_cond)) {
+                return resolve_expr__CIParser(
+                  self, expr->ternary.if_, is_partial);
+            }
+
+            return resolve_expr__CIParser(
+              self, expr->ternary.else_, is_partial);
+        }
         case CI_EXPR_KIND_UNARY:
             return resolve_unary_expr__CIParser(self, expr, is_partial);
         default:
@@ -2736,18 +2746,18 @@ check_if_resolved_expr_is_true__CIParser(CIParser *self, CIExpr *expr)
 CIToken *
 select_conditional_preprocessor__CIParser(CIParser *self, CIToken *next_token)
 {
-#define PREPROCESSOR_PARSE_EXPR(n)                                        \
-    CIParser expr_parser =                                                \
-      from_tokens__CIParser(self->file, preprocessor_cond);               \
-                                                                          \
-    init__CIParser(&expr_parser);                                         \
-                                                                          \
-    CIExpr *n = parse_expr__CIParser(&expr_parser);                       \
-                                                                          \
-    if (!HAS_REACH_EOF(expr_parser.current_token)) {                      \
-        FAILED("expected only one expression");                           \
-    }                                                                     \
-                                                                          \
+#define PREPROCESSOR_PARSE_EXPR(n)                          \
+    CIParser expr_parser =                                  \
+      from_tokens__CIParser(self->file, preprocessor_cond); \
+                                                            \
+    init__CIParser(&expr_parser);                           \
+                                                            \
+    CIExpr *n = parse_expr__CIParser(&expr_parser);         \
+                                                            \
+    if (!HAS_REACH_EOF(expr_parser.current_token)) {        \
+        FAILED("expected only one expression");             \
+    }                                                       \
+                                                            \
     free_from_tokens_case__CIParser(&expr_parser);
 
 #define SELECT_IF_CONDITIONAL_PREPROCESSOR(k)                                \
@@ -5165,6 +5175,27 @@ loop:
             expr = parse_binary_expr__CIParser(self, expr);
 
             goto loop;
+        case CI_TOKEN_KIND_INTERROGATION:
+            next_token__CIParser(self); // skip `?`
+
+            CIExpr *expr_if = parse_expr__CIParser(self);
+
+            if (!expr_if) {
+                return expr;
+            }
+
+            expect__CIParser(self, CI_TOKEN_KIND_COLON, true);
+
+            CIExpr *expr_else = parse_expr__CIParser(self);
+
+            if (!expr_else) {
+                FREE(CIExpr, expr_if);
+
+                return expr;
+            }
+
+            return NEW_VARIANT(
+              CIExpr, ternary, NEW(CIExprTernary, expr, expr_if, expr_else));
         default:
             return parse_post_expr__CIParser(self, expr);
     }
