@@ -3,7 +3,7 @@
 BASH_CONFIG="$HOME/.bashrc"
 ZSH_CONFIG="$HOME/.zshrc"
 FISH_CONFIG="$HOME/.config/config.fish"
-LATEST_VERSION="0.0.2"
+LATEST_VERSION="0.1.0"
 LOCAL_BIN_DIR="./bin"
 CURRENT_SHELL=""
 BASH_EXISTS=false
