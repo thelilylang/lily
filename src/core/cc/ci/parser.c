@@ -3207,7 +3207,7 @@ loop:
                     case CI_TOKEN_EOT_CONTEXT_MACRO_PARAM:
                         // NOTE: Restore the saved token in EOT.
                         if (next_token->eot.macro_param) {
-                            next_token = next_token->eot.macro_param->next;
+                            next_token = next_token->eot.macro_param;
                             next_token->eot.macro_param = NULL;
                         }
 
