@@ -2556,6 +2556,8 @@ scan_define_preprocessor_params__CIScanner(CIScanner *self)
                     lily_free(param);
 
                     goto skip_comma;
+                case CI_TOKEN_KIND_DOT_DOT_DOT:
+                    TODO("impl variadic param");
                 default:
                     FAILED("expected identifier");
             }
