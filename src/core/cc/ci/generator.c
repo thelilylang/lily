@@ -1315,8 +1315,6 @@ void
 generate_decl__CIGenerator(const CIDecl *decl)
 {
     if (!has_generic__CIDecl(decl) && !decl->is_prototype) {
-        generate_storage_class__CIGenerator(&decl->storage_class_flag);
-
         switch (decl->kind) {
             case CI_DECL_KIND_ENUM:
                 generate_enum_decl__CIGenerator(&decl->enum_);
@@ -1455,6 +1453,8 @@ void
 generate_decl_prototype__CIGenerator(const CIDecl *decl)
 {
     if (!has_generic__CIDecl(decl)) {
+        generate_storage_class__CIGenerator(&decl->storage_class_flag);
+
         switch (decl->kind) {
             case CI_DECL_KIND_ENUM:
                 generate_enum_prototype__CIGenerator(&decl->enum_);
