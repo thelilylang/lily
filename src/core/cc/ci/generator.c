@@ -230,17 +230,17 @@ substitute_data_type__CIGenerator(CIDataType *data_type)
 void
 run__CIGenerator(const CIResult *result)
 {
-    OrderedHashMapIter iter_headers = NEW(OrderedHashMapIter, result->headers);
-    OrderedHashMapIter iter_sources = NEW(OrderedHashMapIter, result->sources);
-    CIResultFile *current_header = NULL;
-    CIResultFile *current_source = NULL;
+    OrderedHashMapIter iter_libs = NEW(OrderedHashMapIter, result->libs);
+    OrderedHashMapIter iter_bins = NEW(OrderedHashMapIter, result->bins);
+    CIResultLib *current_lib = NULL;
+    CIResultBin *current_bin = NULL;
 
-    while ((current_header = next__OrderedHashMapIter(&iter_headers))) {
-        run_file__CIGenerator(current_header);
+    while ((current_lib = next__OrderedHashMapIter(&iter_libs))) {
+        run_file__CIGenerator(current_lib->file);
     }
 
-    while ((current_source = next__OrderedHashMapIter(&iter_sources))) {
-        run_file__CIGenerator(current_source);
+    while ((current_bin = next__OrderedHashMapIter(&iter_bins))) {
+        run_file__CIGenerator(current_bin->file);
     }
 }
 
@@ -1363,11 +1363,11 @@ generate_decls__CIGenerator(const CIResultFile *file_result)
 #define VARIABLES_IDX 3
 #define FUNCTIONS_IDX 4
     const Vec *decl_vecs[DECL_VECS_LEN] = {
-        [ENUMS_IDX] = file_result->enums,
-        [STRUCTS_IDX] = file_result->structs,
-        [UNIONS_IDX] = file_result->unions,
-        [VARIABLES_IDX] = file_result->variables,
-        [FUNCTIONS_IDX] = file_result->functions
+        [ENUMS_IDX] = file_result->entity.enums,
+        [STRUCTS_IDX] = file_result->entity.structs,
+        [UNIONS_IDX] = file_result->entity.unions,
+        [VARIABLES_IDX] = file_result->entity.variables,
+        [FUNCTIONS_IDX] = file_result->entity.functions
     };
 
     for (Usize i = 0; i < DECL_VECS_LEN; ++i) {
@@ -1505,11 +1505,11 @@ void
 generate_decls_prototype__CIGenerator(const CIResultFile *file_result)
 {
 #define DECL_PROTOTYPE_VECS_LEN 5
-    Vec *decl_vecs[DECL_PROTOTYPE_VECS_LEN] = { file_result->enums,
-                                                file_result->structs,
-                                                file_result->unions,
-                                                file_result->typedefs,
-                                                file_result->functions };
+    Vec *decl_vecs[DECL_PROTOTYPE_VECS_LEN] = { file_result->entity.enums,
+                                                file_result->entity.structs,
+                                                file_result->entity.unions,
+                                                file_result->entity.typedefs,
+                                                file_result->entity.functions };
 
     for (Usize i = 0; i < DECL_PROTOTYPE_VECS_LEN; ++i) {
         VecIter iter_decls = NEW(VecIter, decl_vecs[i]);
@@ -1533,8 +1533,8 @@ run_file__CIGenerator(const CIResultFile *file_result)
     const char *output_dir = "out.ci";
     String *dir_result = format__String(
       "{s}/{Sr}", output_dir, get_dir__File(file_result->file_input.name));
-    String *path_result =
-      format__String("{S}/{S}", dir_result, file_result->filename_result);
+    String *path_result = format__String(
+      "{S}/{S}", dir_result, file_result->entity.filename_result);
 
     generate_decls_prototype__CIGenerator(file_result);
     generate_decls__CIGenerator(file_result);

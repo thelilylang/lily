@@ -40,22 +40,15 @@ main(int argc, char **argv)
 {
     // TODO: implement a real CLI, like in bin/lily/main.c, bin/lilyc/main.c
 
-    CIConfig config = parse__CIConfig();
-
-    // TODO: Get the files from YAML config
     if (argc < 2) {
-        printf("ci [ci_files...]\n");
+        printf("ci [config_dir]\n");
         exit(1);
     }
 
+    CIConfig config = parse__CIConfig(argv[1]);
     CIResult result = NEW(CIResult);
 
-    load_builtin__CIResult(&result, &config);
-
-    for (Usize i = 1; i < argc; ++i) {
-        add_and_run__CIResult(&result, strdup(argv[i]), config.standard);
-    }
-
+    build__CIResult(&result, &config);
     run__CIGenerator(&result);
 
     FREE(CIResult, &result);

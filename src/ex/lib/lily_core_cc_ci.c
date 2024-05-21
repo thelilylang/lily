@@ -41,6 +41,9 @@ extern inline DESTRUCTOR(CIScopeID, CIScopeID *self);
 
 extern inline CONSTRUCTOR(CIFileID, CIFileID, Usize id, Uint8 kind);
 
+extern inline bool
+eq__CIFileID(const CIFileID *self, const CIFileID *other);
+
 extern inline DESTRUCTOR(CIEnumID, CIEnumID *self);
 
 extern inline DESTRUCTOR(CIFunctionID, CIFunctionID *self);
@@ -349,14 +352,15 @@ extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, while, CIStmtWhile while_);
 extern inline CONSTRUCTOR(CICompiler,
                           CICompiler,
                           enum CICompilerKind kind,
-                          const char *path);
+                          String *path);
+
+extern inline DESTRUCTOR(CICompiler, const CICompiler *self);
 
 extern inline DESTRUCTOR(CILibrary, CILibrary *self);
 
-extern inline DESTRUCTOR(CIBin, CIBin *self);
-
 extern inline CONSTRUCTOR(CIConfig,
                           CIConfig,
+                          YAMLLoadRes yaml_load_res,
                           enum CIStandard standard,
                           CICompiler compiler,
                           const Vec *include_dirs,
@@ -379,6 +383,13 @@ extern inline DESTRUCTOR(CIResultInclude, CIResultInclude *self);
 
 extern inline Usize
 get_next_scope_id__CIResultFile(const CIResultFile *self);
+
+extern inline CONSTRUCTOR(CIResultEntity,
+                          CIResultEntity,
+                          Usize id,
+                          const CIResult *result,
+                          enum CIResultEntityKind kind,
+                          String *filename_result);
 
 extern inline CONSTRUCTOR(CIResult, CIResult);
 

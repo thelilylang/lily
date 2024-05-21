@@ -76,6 +76,16 @@ inline CONSTRUCTOR(CIFileID, CIFileID, Usize id, Uint8 kind)
     return (CIFileID){ .id = id, .kind = kind };
 }
 
+/**
+ *
+ * @brief Check if the both CIFileID are equal.
+ */
+inline bool
+eq__CIFileID(const CIFileID *self, const CIFileID *other)
+{
+    return self->id == other->id && self->kind == other->kind;
+}
+
 typedef struct CIEnumID
 {
     CIFileID file_id;

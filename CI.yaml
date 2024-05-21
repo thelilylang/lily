@@ -16,9 +16,6 @@ libraries:
   lily_base:
     paths:
       - src/base
-      - src/base/cli
-      - src/base/hash
-      - src/base/memory
   lily_cli:
     paths:
       - src/cli/lily
@@ -40,19 +37,12 @@ libraries:
   lily_core_lily_analysis:
     paths:
       - src/core/lily/analysis
-      - src/core/lily/analysis/checked
-      - src/core/lily/analysis/checked/body
-      - src/core/lily/analysis/checked/decl
-      - src/core/lily/analysis/checked/expr
-      - src/core/lily/analysis/checked/pattern
-      - src/core/lily/analysis/checked/stmt
   lily_core_lily_interpreter_package:
     paths:
       - src/core/lily/interpreter/package
   lily_core_lily_interpreter_vm:
     paths:
       - src/core/lily/interpreter/vm
-      - src/core/lily/interpreter/vm/runtime
   lily_core_lily_compiler_ar:
     paths:
       - src/core/lily/compiler/ar
@@ -65,16 +55,9 @@ libraries:
   lily_core_lily_compiler_ir_cc:
     paths:
       - src/core/lily/compiler/ir/cc
-      - src/core/lily/compiler/ir/cc/builder
-      - src/core/lily/compiler/ir/cc/builder/function
-      - src/core/lily/compiler/ir/cc/generator
   lily_core_lily_compiler_ir_cpp:
     paths:
       - src/core/lily/compiler/ir/cpp
-      - src/core/lily/compiler/ir/cpp/builder
-      - src/core/lily/compiler/ir/cpp/builder/class
-      - src/core/lily/compiler/ir/cpp/builder/function
-      - src/core/lily/compiler/ir/cpp/generator
   lily_core_lily_compiler_ir_llvm:
     paths:
       - src/core/lily/compiler/ir/llvm
@@ -96,31 +79,18 @@ libraries:
   lily_core_lily_mir:
     paths:
       - src/core/lily/mir
-      - src/core/lily/mir/generator
-      - src/core/lily/mir/generator/expr
-      - src/core/lily/mir/generator/stmt
   lily_core_lily_package:
     paths:
       - src/core/lily/package
-      - src/core/lily/package/compiler
-      - src/core/lily/package/interpreter
-      - src/core/lily/package/jit
   lily_core_lily_parser:
     paths:
       - src/core/lily/parser
-      - src/core/lily/parser/ast
-      - src/core/lily/parser/ast/body
-      - src/core/lily/parser/ast/decl
-      - src/core/lily/parser/ast/expr
-      - src/core/lily/parser/ast/pattern
-      - src/core/lily/parser/ast/stmt
   lily_core_lily_precompiler:
     paths:
       - src/core/lily/precompiler
   lily_core_lily_preparser:
     paths:
       - src/core/lily/preparser
-      - src/core/lily/preparser/preprocess
   lily_core_lily_scanner:
     paths:
       - src/core/lily/scanner
@@ -130,7 +100,6 @@ libraries:
   lily_core_shared:
     paths:
       - src/core/shared
-      - src/core/shared/target
   lily_builtin:
     paths:
       - lib/builtin

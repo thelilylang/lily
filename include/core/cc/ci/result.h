@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+typedef struct CIResultFileAnalysis CIResultFileAnalysis;
 typedef struct CIResultFile CIResultFile;
 typedef struct CIResult CIResult;
 
@@ -47,6 +48,7 @@ typedef struct CIResultDefine
 {
     const CITokenPreprocessorDefine
       *define; // const CITokenPreprocessorDefine* (&)
+    CIFileID file_id;
     Usize ref_count;
 } CIResultDefine;
 
@@ -56,7 +58,8 @@ typedef struct CIResultDefine
  */
 CONSTRUCTOR(CIResultDefine *,
             CIResultDefine,
-            const CITokenPreprocessorDefine *define);
+            const CITokenPreprocessorDefine *define,
+            CIFileID file_id);
 
 /**
  *
@@ -119,29 +122,100 @@ inline DESTRUCTOR(CIResultInclude, CIResultInclude *self)
     lily_free(self);
 }
 
+enum CIResultEntityKind
+{
+    CI_RESULT_ENTITY_KIND_BIN,
+    CI_RESULT_ENTITY_KIND_FILE,
+    CI_RESULT_ENTITY_KIND_LIB,
+};
+
+typedef struct CIResultEntity
+{
+    Usize id;
+    const CIResult *result;  // const CIResult* (&)
+    Vec *enums;              // Vec<CIDecl*>*
+    Vec *functions;          // Vec<CIDecl*>*
+    Vec *structs;            // Vec<CIDecl*>*
+    Vec *typedefs;           // Vec<CIDecl*>*
+    Vec *unions;             // Vec<CIDecl*>*
+    Vec *variables;          // Vec<CIDecl*>*
+    String *filename_result; // String*?
+    enum CIResultEntityKind kind;
+} CIResultEntity;
+
+/**
+ *
+ * @brief Construct CIResultEntity type.
+ */
+inline CONSTRUCTOR(CIResultEntity,
+                   CIResultEntity,
+                   Usize id,
+                   const CIResult *result,
+                   enum CIResultEntityKind kind,
+                   String *filename_result)
+{
+    return (CIResultEntity){ .id = id,
+                             .result = result,
+                             .enums = NEW(Vec),
+                             .functions = NEW(Vec),
+                             .structs = NEW(Vec),
+                             .typedefs = NEW(Vec),
+                             .unions = NEW(Vec),
+                             .variables = NEW(Vec),
+                             .filename_result = filename_result,
+                             .kind = kind };
+}
+
+/**
+ *
+ * @brief Reset `CIResultEntity` type.
+ * @example empties all vectors such as: enums, functions, ...
+ */
+void
+reset__CIResultEntity(CIResultEntity *self);
+
+/**
+ *
+ * @brief Free CIResultEntity type.
+ */
+DESTRUCTOR(CIResultEntity, const CIResultEntity *self);
+
 // This structure represents the organization of an *.hci or *.ci file.
 typedef struct CIResultFile
 {
-    const CIResult *result; // const CIResult* (&)
-    Usize id;
-    bool kind : 1;
-    String *filename_result;
     File file_input;
-    HashMap *defines;    // HashMap<CIResultDefine*>*
-    HashMap *includes;   // HashMap<CIResultInclude*>*
-    CIScope *scope_base; // CIScope* (&)
-    Vec *scopes;         // Vec<CIScope*>*
-    Vec *enums;          // Vec<CIDecl*>*
-    Vec *functions;      // Vec<CIDecl*>*
-    Vec *structs;        // Vec<CIDecl*>*
-    Vec *typedefs;       // Vec<CIDecl*>*
-    Vec *unions;         // Vec<CIDecl*>*
-    Vec *variables;      // Vec<CIDecl*>*
+    bool kind : 1;
+    CIResultFileAnalysis *file_analysis; // CIResultFileAnalysis*?
+    CIScope *scope_base;                 // CIScope*? (&)
+    CIResultFile *owner;                 // CIResultFile*? (&)
+    CIResultEntity entity;
+    CIScanner scanner;
+} CIResultFile;
+
+// This structure represents the file being analysis.
+typedef struct CIResultFileAnalysis
+{
+    CIResultEntity *entity; // CIResultEntity* (&)
+    CIScope *scope_base;    // CIScope* (&)
+    Vec *scopes;            // Vec<CIScope*>*
+    HashMap *defines;       // HashMap<CIResultDefine*>*
+    HashMap *includes;      // HashMap<CIResultInclude*>*
     Usize count_error;
     Usize count_warning;
-    CIScanner scanner;
     CIParser parser;
-} CIResultFile;
+} CIResultFileAnalysis;
+
+/**
+ *
+ * @brief Construct CIResultFileAnalysis type.
+ */
+CONSTRUCTOR(CIResultFileAnalysis *, CIResultFileAnalysis, CIResultFile *file);
+
+/**
+ *
+ * @brief Construct CIResultFileANalysis type.
+ */
+DESTRUCTOR(CIResultFileAnalysis, CIResultFileAnalysis *self);
 
 /**
  *
@@ -152,13 +226,30 @@ typedef struct CIResultFile
  */
 CONSTRUCTOR(CIResultFile *,
             CIResultFile,
-            const CIResult *result,
-            Usize id,
-            bool kind,
-            enum CIStandard standard,
-            String *filename_result,
             File file_input,
-            const CIResultFile *builtin);
+            bool kind,
+            CIResultFile *owner,
+            enum CIStandard standard,
+            Usize id,
+            const CIResult *result,
+            enum CIResultEntityKind entity_kind,
+            String *filename_result);
+
+/**
+ *
+ * @brief Set `file_analysis` field.
+ */
+void
+set_file_analysis__CIResultFile(CIResultFile *self,
+                                CIResultFileAnalysis *file_analysis);
+
+/**
+ *
+ * @brief Unset & Destroy `file_analysis` field and associated assignment such
+ * as `self->scanner.base.count_error`.
+ */
+void
+destroy_file_analysis__CIResultFile(CIResultFile *self);
 
 /**
  *
@@ -167,7 +258,7 @@ CONSTRUCTOR(CIResultFile *,
 inline Usize
 get_next_scope_id__CIResultFile(const CIResultFile *self)
 {
-    return self->scopes->len;
+    return self->file_analysis->scopes->len;
 }
 
 /**
@@ -403,15 +494,131 @@ run__CIResultFile(CIResultFile *self);
 
 /**
  *
+ * @brief Add `enums` vector to `self` file.
+ */
+void
+add_enums__CIResultFile(const CIResultFile *self, const CIResultFile *other);
+
+/**
+ *
+ * @brief Add `functions` vector to `self` file.
+ */
+void
+add_functions__CIResultFile(const CIResultFile *self,
+                            const CIResultFile *other);
+
+/**
+ *
+ * @brief Add `structs` vector to `self` file.
+ */
+void
+add_structs__CIResultFile(const CIResultFile *self, const CIResultFile *other);
+
+/**
+ *
+ * @brief Add `typedefs` vector to `self` file.
+ */
+void
+add_typedefs__CIResultFile(const CIResultFile *self, const CIResultFile *other);
+
+/**
+ *
+ * @brief Add `unions` vector to `self` file.
+ */
+void
+add_unions__CIResultFile(const CIResultFile *self, const CIResultFile *other);
+
+/**
+ *
+ * @brief Add `variables` vector to `self` file.
+ */
+void
+add_variables__CIResultFile(const CIResultFile *self,
+                            const CIResultFile *other);
+
+/**
+ *
+ * @brief Merge `other` file to `self` file.
+ */
+void
+merge_content__CIResultFile(const CIResultFile *self, CIResultFile *other);
+
+/**
+ *
+ * @brief Merge `other` file to `self` file.
+ */
+void
+include_content__CIResultFile(const CIResultFile *self, CIResultFile *other);
+
+/**
+ *
  * @brief Free CIResultFile type.
  */
 DESTRUCTOR(CIResultFile, CIResultFile *self);
 
+typedef struct CIResultLib
+{
+    const char *name;        // const char* (&)
+    OrderedHashMap *sources; // OrderedHashMap<CIResultFile*>*
+    CIResultFile *file;
+} CIResultLib;
+
+/**
+ *
+ * @brief Construct CIResultLib type.
+ */
+CONSTRUCTOR(CIResultLib *,
+            CIResultLib,
+            const char *name,
+            Usize id,
+            const CIResult *result,
+            enum CIStandard standard);
+
+/**
+ *
+ * @brief Build library.
+ */
+void
+build__CIResultLib(const CIResultLib *self);
+
+/**
+ *
+ * @brief Free CIResultLib type.
+ */
+DESTRUCTOR(CIResultLib, CIResultLib *self);
+
+typedef struct CIResultBin
+{
+    const char *name;   // const char* (&)
+    CIResultFile *file; // CIResultFile*?
+} CIResultBin;
+
+/**
+ *
+ * @brief Construct CIResultBin type.
+ */
+CONSTRUCTOR(CIResultBin *, CIResultBin, const char *name);
+
+/**
+ *
+ * @brief Set `file` field.
+ */
+void
+set_file__CIResultBin(CIResultBin *self, CIResultFile *file);
+
+/**
+ *
+ * @brief Free CIResultBin type.
+ */
+DESTRUCTOR(CIResultBin, CIResultBin *self);
+
 typedef struct CIResult
 {
-    CIResultFile *builtin;
+    CIResultFile *builtin;   // CIResultFile* (&)
     OrderedHashMap *headers; // OrderedHashMap<CIResultFile*>*
-    OrderedHashMap *sources; // OrderedHashMap<CIResultFile*>*
+    OrderedHashMap *sources; // OrderedHashMap<CIResultFile* (&)>*
+    OrderedHashMap *bins;    // OrderedHashMap<CIResultBin*>*
+    OrderedHashMap *libs;    // OrderedHashMap<CIResultLib*>*
 } CIResult;
 
 /**
@@ -424,6 +631,8 @@ inline CONSTRUCTOR(CIResult, CIResult)
         .builtin = NULL,
         .headers = NEW(OrderedHashMap),
         .sources = NEW(OrderedHashMap),
+        .bins = NEW(OrderedHashMap),
+        .libs = NEW(OrderedHashMap),
     };
 }
 
@@ -453,13 +662,17 @@ add_header__CIResult(const CIResult *self,
 
 /**
  *
- * @brief Add a source to sources OrderedHashMap.
+ * @brief Add a bin to bins OrderedHashMap.
  */
-CIResultFile *
-add_source__CIResult(const CIResult *self,
-                     enum CIStandard standard,
-                     String *filename_result,
-                     File file_input);
+CIResultBin *
+add_bin__CIResult(const CIResult *self, char *name);
+
+/**
+ *
+ * @brief Add a lib to libs OrderedHashMap.
+ */
+CIResultLib *
+add_lib__CIResult(const CIResult *self, char *name, enum CIStandard standard);
 
 /**
  *
@@ -473,12 +686,22 @@ has_header__CIResult(const CIResult *self, const String *filename_result)
 
 /**
  *
- * @brief Check if the source is already in the sources OrderedHashMap.
+ * @brief Check if the bin is already in the bins OrderedHashMap.
  */
 inline bool
-has_source__CIResult(const CIResult *self, const String *filename_result)
+has_bin__CIResult(const CIResult *self, char *bin_name)
 {
-    return get__OrderedHashMap(self->sources, filename_result->buffer);
+    return get__OrderedHashMap(self->bins, bin_name);
+}
+
+/**
+ *
+ * @brief Check if the lib is already in the libs OrderedHashMap.
+ */
+inline bool
+has_lib__CIResult(const CIResult *self, char *lib_name)
+{
+    return get__OrderedHashMap(self->libs, lib_name);
 }
 
 /**
@@ -490,15 +713,51 @@ load_builtin__CIResult(CIResult *self, const CIConfig *config);
 
 /**
  *
- * @brief Add & Run from the passed path.
- * @param path char*
- * @return If true, the file has been successfully added and ran; otherwise, it
- * returns false.
+ * @brief Run (Scan & Parse) file.
+ * @param path char* (&)
  */
-bool
-add_and_run__CIResult(const CIResult *self,
-                      char *path,
-                      enum CIStandard standard);
+CIResultFile *
+run_file__CIResult(const CIResult *self,
+                   CIResultFile *owner,
+                   CIResultFile *file_parent,
+                   char *path,
+                   enum CIStandard standard,
+                   Usize id);
+
+/**
+ *
+ * @brief Add & Run from the passed library.
+ */
+void
+add_and_run_lib__CIResult(const CIResult *self,
+                          const CIConfig *config,
+                          const CILibrary *lib);
+
+/**
+ *
+ * @brief Add & Run from the passed binary.
+ */
+void
+add_and_run_bin__CIResult(const CIResult *self,
+                          const CIConfig *config,
+                          const CIBin *bin);
+
+/**
+ *
+ * @brief Add & Run from the passed header.
+ */
+CIResultFile *
+add_and_run_header__CIResult(const CIResult *self,
+                             CIResultFile *file_parent,
+                             char *path,
+                             enum CIStandard standard);
+
+/**
+ *
+ * @brief Build result (all libraries and binaries).
+ */
+void
+build__CIResult(CIResult *self, const CIConfig *config);
 
 /**
  *

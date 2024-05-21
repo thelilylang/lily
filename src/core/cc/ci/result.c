@@ -24,6 +24,7 @@
 
 #include <base/alloc.h>
 #include <base/assert.h>
+#include <base/dir.h>
 #include <base/macros.h>
 
 #include <core/cc/ci/result.h>
@@ -31,14 +32,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/// @param path char* (&)
+static void
+add_and_run_lib_file__CIResult(const CIResult *self,
+                               CIResultLib *lib,
+                               char *path,
+                               enum CIStandard standard);
+
 CONSTRUCTOR(CIResultDefine *,
             CIResultDefine,
-            const CITokenPreprocessorDefine *define)
+            const CITokenPreprocessorDefine *define,
+            CIFileID file_id)
 {
     CIResultDefine *self = lily_malloc(sizeof(CIResultDefine));
 
     self->define = define;
     self->ref_count = 0;
+    self->file_id = file_id;
 
     return self;
 }
@@ -67,47 +77,132 @@ CONSTRUCTOR(CIResultInclude *,
     return self;
 }
 
-CONSTRUCTOR(CIResultFile *,
-            CIResultFile,
-            const CIResult *result,
-            Usize id,
-            bool kind,
-            enum CIStandard standard,
-            String *filename_result,
-            File file_input,
-            const CIResultFile *builtin)
+void
+reset__CIResultEntity(CIResultEntity *self)
 {
-    CIResultFile *self = lily_malloc(sizeof(CIResultFile));
+#define FREE_ENTITY_VECS()                                                    \
+    FREE_BUFFER_ITEMS(self->enums->buffer, self->enums->len, CIDecl);         \
+    FREE(Vec, self->enums);                                                   \
+    FREE_BUFFER_ITEMS(self->functions->buffer, self->functions->len, CIDecl); \
+    FREE(Vec, self->functions);                                               \
+    FREE_BUFFER_ITEMS(self->structs->buffer, self->structs->len, CIDecl);     \
+    FREE(Vec, self->structs);                                                 \
+    FREE_BUFFER_ITEMS(self->typedefs->buffer, self->typedefs->len, CIDecl);   \
+    FREE(Vec, self->typedefs);                                                \
+    FREE_BUFFER_ITEMS(self->unions->buffer, self->unions->len, CIDecl);       \
+    FREE(Vec, self->unions);                                                  \
+    FREE_BUFFER_ITEMS(self->variables->buffer, self->variables->len, CIDecl); \
+    FREE(Vec, self->variables);
 
-    self->result = result;
-    self->id = id;
-    self->kind = kind;
-    self->filename_result = filename_result;
-    self->file_input = file_input;
-    self->defines = NEW(HashMap);
-    self->includes = NEW(HashMap);
-    self->scope_base = NEW(CIScope, NULL, 0, false);
-    self->scopes = init__Vec(1, self->scope_base);
+    FREE_ENTITY_VECS();
+
     self->enums = NEW(Vec);
     self->functions = NEW(Vec);
     self->structs = NEW(Vec);
     self->typedefs = NEW(Vec);
     self->unions = NEW(Vec);
     self->variables = NEW(Vec);
+}
+
+DESTRUCTOR(CIResultEntity, const CIResultEntity *self)
+{
+    FREE_ENTITY_VECS();
+
+    if (self->filename_result) {
+        FREE(String, self->filename_result);
+    }
+
+#undef FREE_ENTITY_VECS
+}
+
+CONSTRUCTOR(CIResultFileAnalysis *, CIResultFileAnalysis, CIResultFile *file)
+{
+    CIResultFileAnalysis *self = lily_malloc(sizeof(CIResultFileAnalysis));
+
+    self->entity = &file->entity;
+    self->scope_base = NEW(CIScope, NULL, 0, false);
+    self->scopes = init__Vec(1, self->scope_base);
+    self->defines = NEW(HashMap);
+    self->includes = NEW(HashMap);
     self->count_error = 0;
     self->count_warning = 0;
+
+    set_file_analysis__CIResultFile(file, self);
+
+    // If builtin is NULL, we are analyzing builtin.
+    if (file->entity.result->builtin) {
+        include_builtin__CIResultFile(file, file->entity.result->builtin);
+    }
+
+    self->parser = NEW(CIParser, file, &file->scanner);
+
+    return self;
+}
+
+DESTRUCTOR(CIResultFileAnalysis, CIResultFileAnalysis *self)
+{
+    FREE_BUFFER_ITEMS(self->scopes->buffer, self->scopes->len, CIScope);
+    FREE(Vec, self->scopes);
+    FREE_HASHMAP_VALUES(self->defines, CIResultDefine);
+    FREE(HashMap, self->defines);
+    FREE_HASHMAP_VALUES(self->includes, CIResultInclude);
+    FREE(HashMap, self->includes);
+    FREE(CIParser, &self->parser);
+    lily_free(self);
+}
+
+CONSTRUCTOR(CIResultFile *,
+            CIResultFile,
+            File file_input,
+            bool kind,
+            CIResultFile *owner,
+            enum CIStandard standard,
+            Usize id,
+            const CIResult *result,
+            enum CIResultEntityKind entity_kind,
+            String *filename_result)
+{
+    CIResultFile *self = lily_malloc(sizeof(CIResultFile));
+
+    self->file_input = file_input;
+    self->kind = kind;
+    self->file_analysis = NULL;
+    self->scope_base = NULL;
+    self->owner = owner;
+    self->entity =
+      NEW(CIResultEntity, id, result, entity_kind, filename_result);
     self->scanner =
       NEW(CIScanner,
           NEW(Source, NEW(Cursor, self->file_input.content), &self->file_input),
-          &self->count_error,
+          NULL,
           standard);
-    self->parser = NEW(CIParser, self, &self->scanner);
-
-    if (builtin) {
-        include_builtin__CIResultFile(self, builtin);
-    }
 
     return self;
+}
+
+void
+set_file_analysis__CIResultFile(CIResultFile *self,
+                                CIResultFileAnalysis *file_analysis)
+{
+    ASSERT(!self->file_analysis);
+
+    self->file_analysis = file_analysis;
+    self->scope_base = self->file_analysis->scope_base;
+    self->scanner.base.count_error = &self->file_analysis->count_error;
+}
+
+void
+destroy_file_analysis__CIResultFile(CIResultFile *self)
+{
+    ASSERT(self->file_analysis);
+
+    FREE(CIResultFileAnalysis, self->file_analysis);
+
+    self->file_analysis = NULL;
+    self->scope_base = NULL;
+    self->scanner.base.count_error = NULL;
+
+    reset__CIResultEntity(&self->entity);
 }
 
 CIScope *
@@ -118,7 +213,7 @@ add_scope__CIResultFile(const CIResultFile *self,
     CIScope *scope =
       NEW(CIScope, parent, get_next_scope_id__CIResultFile(self), is_block);
 
-    push__Vec(self->scopes, scope);
+    push__Vec(self->file_analysis->scopes, scope);
 
     return scope;
 }
@@ -127,26 +222,28 @@ const CIResultDefine *
 add_define__CIResultFile(const CIResultFile *self,
                          CIResultDefine *result_define)
 {
-    return insert__HashMap(
-      self->defines, result_define->define->name->buffer, result_define);
+    return insert__HashMap(self->file_analysis->defines,
+                           result_define->define->name->buffer,
+                           result_define);
 }
 
 const CIResultDefine *
 get_define__CIResultFile(const CIResultFile *self, String *name)
 {
-    return get__HashMap(self->defines, name->buffer);
+    return get__HashMap(self->file_analysis->defines, name->buffer);
 }
 
 const CIResultDefine *
 get_define_from_str__CIResultFile(const CIResultFile *self, char *name)
 {
-    return get__HashMap(self->defines, name);
+    return get__HashMap(self->file_analysis->defines, name);
 }
 
 bool
 undef_define__CIResultFile(const CIResultFile *self, String *name)
 {
-    CIResultDefine *is_exist = remove__HashMap(self->defines, name->buffer);
+    CIResultDefine *is_exist =
+      remove__HashMap(self->file_analysis->defines, name->buffer);
 
     if (is_exist) {
         FREE(CIResultDefine, is_exist);
@@ -161,12 +258,13 @@ void
 include_builtin__CIResultFile(const CIResultFile *self,
                               const CIResultFile *builtin)
 {
-    HashMapIter iter = NEW(HashMapIter, builtin->defines);
+    HashMapIter iter = NEW(HashMapIter, builtin->file_analysis->defines);
     CIResultDefine *def = NULL;
 
     while ((def = next__HashMapIter(&iter))) {
-        insert__HashMap(
-          self->defines, def->define->name->buffer, ref__CIResultDefine(def));
+        insert__HashMap(self->file_analysis->defines,
+                        def->define->name->buffer,
+                        ref__CIResultDefine(def));
     }
 }
 
@@ -210,64 +308,82 @@ add_include__CIResultFile(const CIResultFile *self)
     CHECK_FOR_SYMBOL_REDEFINITION_DECL(name, search_function__CIResultFile);   \
     CHECK_FOR_SYMBOL_REDEFINITION_VAR(name, scope);
 
-#define ADD_X_DECL(X, scope, add_scope, v)         \
-    const String *name = get_name__CIDecl(X);      \
-                                                   \
-    CHECK_FOR_SYMBOL_REDEFINITION(name, scope, X); \
-                                                   \
-    ASSERT(!add_scope);                            \
-    push__Vec(v, X);                               \
-                                                   \
-    return NULL;
+#define ADD_X_DECL(X, scope, add_scope, v, add_to_owner)                   \
+    const String *name = get_name__CIDecl(X);                              \
+                                                                           \
+    CHECK_FOR_SYMBOL_REDEFINITION(name, scope, X);                         \
+                                                                           \
+    ASSERT(!add_scope);                                                    \
+    push__Vec(v, X);                                                       \
+                                                                           \
+    return self->owner &&                                                  \
+               (X->kind != CI_DECL_KIND_VARIABLE || !X->variable.is_local) \
+             ? add_to_owner                                                \
+             : NULL;
 
 const CIDecl *
 add_enum__CIResultFile(const CIResultFile *self, CIDecl *enum_)
 {
     ADD_X_DECL(enum_,
-               self->scope_base,
+               self->file_analysis->scope_base,
                add_enum__CIScope(
-                 self->scope_base, name, NEW(CIFileID, self->id, self->kind)),
-               self->enums);
+                 self->file_analysis->scope_base,
+                 name,
+                 NEW(CIFileID, self->file_analysis->entity->id, self->kind)),
+               self->file_analysis->entity->enums,
+               add_enum__CIResultFile(self->owner, ref__CIDecl(enum_)));
 }
 
 const CIDecl *
 add_function__CIResultFile(const CIResultFile *self, CIDecl *function)
 {
     ADD_X_DECL(function,
-               self->scope_base,
+               self->file_analysis->scope_base,
                add_function__CIScope(
-                 self->scope_base, name, NEW(CIFileID, self->id, self->kind)),
-               self->functions);
+                 self->file_analysis->scope_base,
+                 name,
+                 NEW(CIFileID, self->file_analysis->entity->id, self->kind)),
+               self->file_analysis->entity->functions,
+               add_function__CIResultFile(self->owner, ref__CIDecl(function)));
 }
 
 const CIDecl *
 add_struct__CIResultFile(const CIResultFile *self, CIDecl *struct_)
 {
     ADD_X_DECL(struct_,
-               self->scope_base,
+               self->file_analysis->scope_base,
                add_struct__CIScope(
-                 self->scope_base, name, NEW(CIFileID, self->id, self->kind)),
-               self->structs);
+                 self->file_analysis->scope_base,
+                 name,
+                 NEW(CIFileID, self->file_analysis->entity->id, self->kind)),
+               self->file_analysis->entity->structs,
+               add_struct__CIResultFile(self->owner, ref__CIDecl(struct_)));
 }
 
 const CIDecl *
 add_typedef__CIResultFile(const CIResultFile *self, CIDecl *typedef_)
 {
     ADD_X_DECL(typedef_,
-               self->scope_base,
+               self->file_analysis->scope_base,
                add_typedef__CIScope(
-                 self->scope_base, name, NEW(CIFileID, self->id, self->kind)),
-               self->typedefs);
+                 self->file_analysis->scope_base,
+                 name,
+                 NEW(CIFileID, self->file_analysis->entity->id, self->kind)),
+               self->file_analysis->entity->typedefs,
+               add_typedef__CIResultFile(self->owner, ref__CIDecl(typedef_)));
 }
 
 const CIDecl *
 add_union__CIResultFile(const CIResultFile *self, CIDecl *union_)
 {
     ADD_X_DECL(union_,
-               self->scope_base,
+               self->file_analysis->scope_base,
                add_union__CIScope(
-                 self->scope_base, name, NEW(CIFileID, self->id, self->kind)),
-               self->unions);
+                 self->file_analysis->scope_base,
+                 name,
+                 NEW(CIFileID, self->file_analysis->entity->id, self->kind)),
+               self->file_analysis->entity->unions,
+               add_union__CIResultFile(self->owner, ref__CIDecl(union_)));
 }
 
 const CIDecl *
@@ -275,12 +391,16 @@ add_variable__CIResultFile(const CIResultFile *self,
                            const CIScope *scope,
                            CIDecl *variable)
 {
-    ADD_X_DECL(
-      variable,
-      scope,
-      add_variable__CIScope(
-        scope, name, *scope->scope_id, NEW(CIFileID, self->id, self->kind)),
-      self->variables);
+    ADD_X_DECL(variable,
+               scope,
+               add_variable__CIScope(
+                 scope,
+                 name,
+                 *scope->scope_id,
+                 NEW(CIFileID, self->file_analysis->entity->id, self->kind)),
+               self->file_analysis->entity->variables,
+               add_variable__CIResultFile(
+                 self->owner, self->owner->scope_base, ref__CIDecl(variable)));
 }
 
 #define GET_DECL_FROM_ID__CI_RESULT_FILE(vec, id) return get__Vec(vec, id);
@@ -302,58 +422,64 @@ CIDecl *
 get_enum_from_id__CIResultFile(const CIResultFile *self,
                                const CIEnumID *enum_id)
 {
-    GET_DECL_FROM_ID__CI_RESULT_FILE(self->enums, enum_id->id);
+    GET_DECL_FROM_ID__CI_RESULT_FILE(self->file_analysis->entity->enums,
+                                     enum_id->id);
 }
 
 CIDecl *
 get_function_from_id__CIResultFile(const CIResultFile *self,
                                    const CIFunctionID *function_id)
 {
-    GET_DECL_FROM_ID__CI_RESULT_FILE(self->functions, function_id->id);
+    GET_DECL_FROM_ID__CI_RESULT_FILE(self->file_analysis->entity->functions,
+                                     function_id->id);
 }
 
 CIDecl *
 get_struct_from_id__CIResultFile(const CIResultFile *self,
                                  const CIStructID *struct_id)
 {
-    GET_DECL_FROM_ID__CI_RESULT_FILE(self->structs, struct_id->id);
+    GET_DECL_FROM_ID__CI_RESULT_FILE(self->file_analysis->entity->structs,
+                                     struct_id->id);
 }
 
 CIDecl *
 get_typedef_from_id__CIResultFile(const CIResultFile *self,
                                   const CITypedefID *typedef_id)
 {
-    GET_DECL_FROM_ID__CI_RESULT_FILE(self->typedefs, typedef_id->id);
+    GET_DECL_FROM_ID__CI_RESULT_FILE(self->file_analysis->entity->typedefs,
+                                     typedef_id->id);
 }
 
 CIDecl *
 get_union_from_id__CIResultFile(const CIResultFile *self,
                                 const CIUnionID *union_id)
 {
-    GET_DECL_FROM_ID__CI_RESULT_FILE(self->unions, union_id->id);
+    GET_DECL_FROM_ID__CI_RESULT_FILE(self->file_analysis->entity->unions,
+                                     union_id->id);
 }
 
 CIDecl *
 get_variable_from_id__CIResultFile(const CIResultFile *self,
                                    const CIVariableID *variable_id)
 {
-    GET_DECL_FROM_ID__CI_RESULT_FILE(self->variables, variable_id->id);
+    GET_DECL_FROM_ID__CI_RESULT_FILE(self->file_analysis->entity->variables,
+                                     variable_id->id);
 }
 
-#define SEARCH_DECL__CI_RESULT_FILE(ty, search_f, get_from_id_f) \
-    const ty *id = search_f(self->scope_base, name);             \
-                                                                 \
-    if (!id) {                                                   \
-        return NULL;                                             \
-    }                                                            \
-                                                                 \
+#define SEARCH_DECL__CI_RESULT_FILE(ty, search_f, get_from_id_f)    \
+    const ty *id = search_f(self->file_analysis->scope_base, name); \
+                                                                    \
+    if (!id) {                                                      \
+        return NULL;                                                \
+    }                                                               \
+                                                                    \
     return get_from_id_f(self, id);
 
 CIScope *
 get_scope_from_id__CIResultFile(const CIResultFile *self,
                                 const CIScopeID *scope_id)
 {
-    return get__Vec(self->scopes, scope_id->id);
+    return get__Vec(self->file_analysis->scopes, scope_id->id);
 }
 
 CIDecl *
@@ -457,34 +583,221 @@ void
 run__CIResultFile(CIResultFile *self)
 {
     run__CIScanner(&self->scanner, false);
-    run__CIParser(&self->parser);
+    run__CIParser(&self->file_analysis->parser);
+}
+
+#define ADD_Xs_DECL(add_f, t, v, scope_base_hm, cond, ...)    \
+    HashMapIter enums_iter = NEW(HashMapIter, scope_base_hm); \
+    t *current = NULL;                                        \
+                                                              \
+    while ((current = next__HashMapIter(&enums_iter))) {      \
+        if (current->file_id.id == self->entity.id            \
+              ? current->file_id.kind != self->kind           \
+              : true) {                                       \
+            CIDecl *decl = get__Vec(v, current->id);          \
+                                                              \
+            if (cond) {                                       \
+                add_f(__VA_ARGS__);                           \
+            }                                                 \
+        }                                                     \
+    }
+
+void
+add_enums__CIResultFile(const CIResultFile *self, const CIResultFile *other)
+{
+    ADD_Xs_DECL(add_enum__CIResultFile,
+                CIEnumID,
+                other->entity.enums,
+                other->scope_base->enums,
+                true,
+                self,
+                ref__CIDecl(decl));
+}
+
+void
+add_functions__CIResultFile(const CIResultFile *self, const CIResultFile *other)
+{
+    ADD_Xs_DECL(add_function__CIResultFile,
+                CIFunctionID,
+                other->entity.functions,
+                other->scope_base->functions,
+                true,
+                self,
+                ref__CIDecl(decl));
+}
+
+void
+add_structs__CIResultFile(const CIResultFile *self, const CIResultFile *other)
+{
+    ADD_Xs_DECL(add_struct__CIResultFile,
+                CIStructID,
+                other->entity.structs,
+                other->scope_base->structs,
+                true,
+                self,
+                ref__CIDecl(decl));
+}
+
+void
+add_typedefs__CIResultFile(const CIResultFile *self, const CIResultFile *other)
+{
+    ADD_Xs_DECL(add_typedef__CIResultFile,
+                CITypedefID,
+                other->entity.typedefs,
+                other->scope_base->typedefs,
+                true,
+                self,
+                ref__CIDecl(decl));
+}
+
+void
+add_unions__CIResultFile(const CIResultFile *self, const CIResultFile *other)
+{
+    ADD_Xs_DECL(add_union__CIResultFile,
+                CIUnionID,
+                other->entity.unions,
+                other->scope_base->unions,
+                true,
+                self,
+                ref__CIDecl(decl));
+}
+
+void
+add_variables__CIResultFile(const CIResultFile *self, const CIResultFile *other)
+{
+    // Only include global variable.
+    ADD_Xs_DECL(add_variable__CIResultFile,
+                CIVariableID,
+                other->entity.variables,
+                other->scope_base->variables,
+                !decl->variable.is_local,
+                self,
+                self->scope_base,
+                ref__CIDecl(decl));
+}
+
+void
+merge_content__CIResultFile(const CIResultFile *self, CIResultFile *other)
+{
+    add_enums__CIResultFile(self, other);
+    add_functions__CIResultFile(self, other);
+    add_structs__CIResultFile(self, other);
+    add_unions__CIResultFile(self, other);
+    add_variables__CIResultFile(self, other);
+}
+
+void
+include_content__CIResultFile(const CIResultFile *self, CIResultFile *other)
+{
+#define HEADER_FILE_BUILTIN_ID 0
+    HashMapIter defines_iter = NEW(HashMapIter, other->file_analysis->defines);
+    CIResultDefine *current_define = NULL;
+
+    while ((current_define = next__HashMapIter(&defines_iter))) {
+        if ((current_define->file_id.id == HEADER_FILE_BUILTIN_ID
+               ? current_define->file_id.kind != CI_FILE_ID_KIND_HEADER
+               : true) /* Don't include builtin file content */
+            && (current_define->file_id.id == self->entity.id
+                  ? current_define->file_id.kind != self->kind
+                  : true) &&
+            add_define__CIResultFile(self,
+                                     ref__CIResultDefine(current_define))) {
+            FAILED("duplicate #define name");
+        }
+    }
+
+    merge_content__CIResultFile(self, other);
 }
 
 DESTRUCTOR(CIResultFile, CIResultFile *self)
 {
-    FREE(String, self->filename_result);
-    lily_free(self->file_input.content);
-    lily_free(self->file_input.name);
-    FREE_HASHMAP_VALUES(self->defines, CIResultDefine);
-    FREE(HashMap, self->defines);
-    FREE_HASHMAP_VALUES(self->includes, CIResultInclude);
-    FREE(HashMap, self->includes);
-    FREE_BUFFER_ITEMS(self->scopes->buffer, self->scopes->len, CIScope);
-    FREE(Vec, self->scopes);
-    FREE_BUFFER_ITEMS(self->enums->buffer, self->enums->len, CIDecl);
-    FREE(Vec, self->enums);
-    FREE_BUFFER_ITEMS(self->functions->buffer, self->functions->len, CIDecl);
-    FREE(Vec, self->functions);
-    FREE_BUFFER_ITEMS(self->structs->buffer, self->structs->len, CIDecl);
-    FREE(Vec, self->structs);
-    FREE_BUFFER_ITEMS(self->typedefs->buffer, self->typedefs->len, CIDecl);
-    FREE(Vec, self->typedefs);
-    FREE_BUFFER_ITEMS(self->unions->buffer, self->unions->len, CIDecl);
-    FREE(Vec, self->unions);
-    FREE_BUFFER_ITEMS(self->variables->buffer, self->variables->len, CIDecl);
-    FREE(Vec, self->variables);
+    if (self->file_input.content) {
+        lily_free(self->file_input.content);
+    }
+
+    if (self->file_input.name) {
+        lily_free(self->file_input.name);
+    }
+
     FREE(CIScanner, &self->scanner);
-    FREE(CIParser, &self->parser);
+    FREE(CIResultEntity, &self->entity);
+
+    if (self->file_analysis) {
+        FREE(CIResultFileAnalysis, self->file_analysis);
+    }
+
+    lily_free(self);
+}
+
+CONSTRUCTOR(CIResultLib *,
+            CIResultLib,
+            const char *name,
+            Usize id,
+            const CIResult *result,
+            enum CIStandard standard)
+{
+    CIResultLib *self = lily_malloc(sizeof(CIResultLib));
+
+    self->name = name;
+    self->sources = NEW(OrderedHashMap);
+    self->file =
+      NEW(CIResultFile,
+          (File){ .name = NULL, .content = NULL, .len = 0 } /* No input file */,
+          CI_FILE_ID_KIND_SOURCE,
+          NULL,
+          standard,
+          id,
+          result,
+          CI_RESULT_ENTITY_KIND_LIB,
+          format__String("lib{s}.c", self->name));
+
+    return self;
+}
+
+void
+build__CIResultLib(const CIResultLib *self)
+{
+    OrderedHashMapIter iter = NEW(OrderedHashMapIter, self->sources);
+    CIResultFile *current_lib_file = NULL;
+
+    // Build library file
+    while ((current_lib_file = next__OrderedHashMapIter(&iter))) {
+        merge_content__CIResultFile(self->file, current_lib_file);
+    }
+}
+
+DESTRUCTOR(CIResultLib, CIResultLib *self)
+{
+    FREE_ORD_HASHMAP_VALUES(self->sources, CIResultFile);
+    FREE(OrderedHashMap, self->sources);
+    FREE(CIResultFile, self->file);
+    lily_free(self);
+}
+
+CONSTRUCTOR(CIResultBin *, CIResultBin, const char *name)
+{
+    CIResultBin *self = lily_malloc(sizeof(CIResultBin));
+
+    self->name = name;
+    self->file = NULL;
+
+    return self;
+}
+
+void
+set_file__CIResultBin(CIResultBin *self, CIResultFile *file)
+{
+    ASSERT(!self->file);
+
+    self->file = file;
+}
+
+DESTRUCTOR(CIResultBin, CIResultBin *self)
+{
+    if (self->file) {
+        FREE(CIResultFile, self->file);
+    }
+
     lily_free(self);
 }
 
@@ -512,21 +825,13 @@ search_enum_from_id__CIResult(const CIResult *self, const CIEnumID *enum_id)
     return get_enum_from_id__CIResultFile(file, enum_id);
 }
 
-#define ADD_FILE__CI_RESULT(kind)                                 \
-    CIResultFile *result_file = NEW(CIResultFile,                 \
-                                    self,                         \
-                                    self->headers->len,           \
-                                    kind,                         \
-                                    standard,                     \
-                                    filename_result,              \
-                                    file_input,                   \
-                                    self->builtin);               \
-                                                                  \
-    if (insert__OrderedHashMap(                                   \
-          self->headers, filename_result->buffer, result_file)) { \
-        FAILED("duplicate input file");                           \
-    }                                                             \
-                                                                  \
+#define ADD_FILE__CI_RESULT(kind, hm, s)                                       \
+    CIResultFile *result_file = NEW(CIResultFile, file_input, kind, standard); \
+                                                                               \
+    if (insert__OrderedHashMap(hm, filename_result->buffer, result_file)) {    \
+        FAILED("duplicate input "s);                                           \
+    }                                                                          \
+                                                                               \
     return result_file;
 
 CIResultFile *
@@ -535,16 +840,46 @@ add_header__CIResult(const CIResult *self,
                      String *filename_result,
                      File file_input)
 {
-    ADD_FILE__CI_RESULT(CI_FILE_ID_KIND_HEADER);
+    CIResultFile *result_file = NEW(CIResultFile,
+                                    file_input,
+                                    CI_FILE_ID_KIND_HEADER,
+                                    NULL,
+                                    standard,
+                                    self->headers->len,
+                                    self,
+                                    CI_RESULT_ENTITY_KIND_FILE,
+                                    filename_result);
+
+    if (insert__OrderedHashMap(
+          self->headers, filename_result->buffer, result_file)) {
+        FAILED("duplicate input header");
+    }
+
+    return result_file;
 }
 
-CIResultFile *
-add_source__CIResult(const CIResult *self,
-                     enum CIStandard standard,
-                     String *filename_result,
-                     File file_input)
+CIResultBin *
+add_bin__CIResult(const CIResult *self, char *name)
 {
-    ADD_FILE__CI_RESULT(CI_FILE_ID_KIND_SOURCE);
+    CIResultBin *bin = NEW(CIResultBin, name);
+
+    if (insert__OrderedHashMap(self->bins, name, bin)) {
+        FAILED("duplicate input binary");
+    }
+
+    return bin;
+}
+
+CIResultLib *
+add_lib__CIResult(const CIResult *self, char *name, enum CIStandard standard)
+{
+    CIResultLib *lib = NEW(CIResultLib, name, self->libs->len, self, standard);
+
+    if (insert__OrderedHashMap(self->libs, name, lib)) {
+        FAILED("duplicate input library");
+    }
+
+    return lib;
 }
 
 void
@@ -555,14 +890,17 @@ load_builtin__CIResult(CIResult *self, const CIConfig *config)
                           .content = builtin_content->buffer,
                           .len = builtin_content->len };
     CIResultFile *builtin = NEW(CIResultFile,
-                                self,
-                                0,
-                                CI_FILE_ID_KIND_HEADER,
-                                config->standard,
-                                from__String("**<builtin.h>**"),
                                 builtin_file,
+                                CI_FILE_ID_KIND_HEADER,
+                                NULL,
+                                config->standard,
+                                HEADER_FILE_BUILTIN_ID,
+                                self,
+                                CI_RESULT_ENTITY_KIND_FILE,
                                 NULL);
+    (void)NEW(CIResultFileAnalysis, builtin);
 
+    insert__OrderedHashMap(self->headers, builtin_file.name, builtin);
     set_builtin__CIScanner(&builtin->scanner);
     run__CIResultFile(builtin);
 
@@ -571,65 +909,171 @@ load_builtin__CIResult(CIResult *self, const CIConfig *config)
     lily_free(builtin_content);
 }
 
-bool
-add_and_run__CIResult(const CIResult *self,
-                      char *path,
-                      enum CIStandard standard)
+CIResultFile *
+run_file__CIResult(const CIResult *self,
+                   CIResultFile *owner,
+                   CIResultFile *file_parent,
+                   char *path,
+                   enum CIStandard standard,
+                   Usize id)
 {
     char *extension = get_extension__File(path);
     String *filename_result = get_filename__File(path);
-    bool is_header = false;
+    bool kind;
 
     if (!strcmp(extension, ".ci") || !strcmp(extension, ".c")) {
         push_str__String(filename_result, ".c");
+        kind = CI_FILE_ID_KIND_SOURCE;
     } else if (!strcmp(extension, ".hci") || !strcmp(extension, ".h")) {
         push_str__String(filename_result, ".h");
-        is_header = true;
+        kind = CI_FILE_ID_KIND_HEADER;
     } else {
         lily_free(extension);
         FREE(String, filename_result);
 
         FAILED("unknown extension, expected `.ci`, `.c`, `.hci` or `.h`");
 
-        return false;
-    }
-
-    const bool has_header =
-      is_header ? has_header__CIResult(self, filename_result) : false;
-    const bool has_source =
-      !is_header ? has_source__CIResult(self, filename_result) : false;
-
-    if (has_header || has_source) {
-        lily_free(extension);
-        FREE(String, filename_result);
-
-        return false;
+        return NULL;
     }
 
     char *file_content = read_file__File(path);
-    File file_input = NEW(File, path, file_content);
-    CIResultFile *result_file = NULL;
+    File file_input = NEW(File, strdup(path), file_content);
+    CIResultFile *result_file = NEW(CIResultFile,
+                                    file_input,
+                                    kind,
+                                    owner,
+                                    standard,
+                                    id,
+                                    self,
+                                    CI_RESULT_ENTITY_KIND_FILE,
+                                    filename_result);
 
-    if (is_header) {
-        result_file =
-          add_header__CIResult(self, standard, filename_result, file_input);
+    (void)NEW(CIResultFileAnalysis, result_file);
+
+    if (kind == CI_FILE_ID_KIND_SOURCE) {
+        insert__OrderedHashMap(
+          self->sources, result_file->file_input.name, result_file);
     } else {
-        result_file =
-          add_source__CIResult(self, standard, filename_result, file_input);
+        insert__OrderedHashMap(
+          self->headers, result_file->file_input.name, result_file);
+    }
+
+    if (file_parent) {
+        include_content__CIResultFile(result_file, file_parent);
     }
 
     run__CIResultFile(result_file);
 
     lily_free(extension);
 
-    return true;
+    return result_file;
+}
+
+void
+add_and_run_lib_file__CIResult(const CIResult *self,
+                               CIResultLib *lib,
+                               char *path,
+                               enum CIStandard standard)
+{
+    CIResultFile *lib_file = run_file__CIResult(
+      self, lib->file, NULL, path, standard, self->sources->len);
+
+    ASSERT(lib_file->entity.filename_result);
+
+    insert__OrderedHashMap(lib->sources, path, lib_file);
+}
+
+void
+add_and_run_lib__CIResult(const CIResult *self,
+                          const CIConfig *config,
+                          const CILibrary *lib)
+{
+    CIResultLib *result_lib =
+      add_lib__CIResult(self, (char *)lib->name, config->standard);
+
+    // Run (Scan & Parse) all source files of the library.
+    for (Usize i = 0; i < lib->paths->len; ++i) {
+        char *path = CAST(String *, get__Vec(lib->paths, i))->buffer;
+
+        if (is__Dir(path)) {
+            Vec *dir_paths = get_files_rec__Dir(path);
+
+            for (Usize j = 0; j < dir_paths->len; ++j) {
+                add_and_run_lib_file__CIResult(
+                  self, result_lib, get__Vec(dir_paths, j), config->standard);
+            }
+
+            FREE_BUFFER_ITEMS(dir_paths->buffer, dir_paths->len, String);
+            FREE(Vec, dir_paths);
+        } else {
+            add_and_run_lib_file__CIResult(
+              self, result_lib, path, config->standard);
+        }
+    }
+
+    build__CIResultLib(result_lib);
+}
+
+void
+add_and_run_bin__CIResult(const CIResult *self,
+                          const CIConfig *config,
+                          const CIBin *bin)
+{
+    CIResultBin *result_bin = add_bin__CIResult(self, (char *)bin->name);
+    char *path = bin->path->buffer;
+    CIResultFile *bin_file = run_file__CIResult(
+      self, NULL, NULL, path, config->standard, self->sources->len);
+
+    ASSERT(bin_file->entity.filename_result);
+
+    set_file__CIResultBin(result_bin, bin_file);
+}
+
+CIResultFile *
+add_and_run_header__CIResult(const CIResult *self,
+                             CIResultFile *file_parent,
+                             char *path,
+                             enum CIStandard standard)
+{
+    ASSERT(file_parent);
+
+    CIResultFile *header = get__OrderedHashMap(self->headers, path);
+
+    if (header) {
+        destroy_file_analysis__CIResultFile(header);
+        (void)NEW(CIResultFileAnalysis, header);
+
+        include_content__CIResultFile(header, file_parent);
+        run__CIParser(&header->file_analysis->parser);
+    } else {
+        header = run_file__CIResult(
+          self, NULL, file_parent, path, standard, self->headers->len);
+    }
+
+    return header;
+}
+
+void
+build__CIResult(CIResult *self, const CIConfig *config)
+{
+    load_builtin__CIResult(self, config);
+
+    for (Usize i = 0; i < config->libraries->len; ++i) {
+        add_and_run_lib__CIResult(self, config, get__Vec(config->libraries, i));
+    }
+
+    for (Usize i = 0; i < config->bins->len; ++i) {
+        add_and_run_bin__CIResult(self, config, get__Vec(config->bins, i));
+    }
 }
 
 DESTRUCTOR(CIResult, const CIResult *self)
 {
-    FREE(CIResultFile, self->builtin);
     FREE_ORD_HASHMAP_VALUES(self->headers, CIResultFile);
     FREE(OrderedHashMap, self->headers);
-    FREE_ORD_HASHMAP_VALUES(self->sources, CIResultFile);
     FREE(OrderedHashMap, self->sources);
+    FREE_ORD_HASHMAP_VALUES(self->bins, CIResultBin);
+    FREE(OrderedHashMap, self->bins);
+    FREE_ORD_HASHMAP_VALUES(self->libs, CIResultLib);
+    FREE(OrderedHashMap, self->libs);
 }
