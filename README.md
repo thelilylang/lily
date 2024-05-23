@@ -44,7 +44,7 @@ Work in progress...
 |---------|------------------------------------------------------------------|--------------|
 | v0.0.0  | First release.                                                   | 2023-09-21   |
 | v0.1.0  | Implement CI. (And gradually convert the codebase from C to CI.) | 2024-05-21   |
-| v0.2.0  | Continue implement CI.                                           | 2024-06-21   |
+| v0.2.0  | Continue to implement CI.                                        | 2024-06-21   |
 | v0.3.0  | Add some basic features                                          | 2024-08-21   |
 | v0.4.0  | Implement OOP                                                    | 2024-10-21   |
 | v0.5.0  | Begin to write Std library + Core library                        | 2024-12-21   |
