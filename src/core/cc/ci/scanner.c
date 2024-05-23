@@ -1682,25 +1682,21 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
             if (is_in_macro__CIScannerContext(ctx) && ctx->macro) {
                 // Determine whether the `last_token->identifier` does not
                 // correspond to a macro parameter.
-                if (ctx->macro) {
-                    for (Usize i = 0; i < ctx->macro->len; ++i) {
-                        CITokenPreprocessorDefineParam *param =
-                          get__Vec(ctx->macro, i);
+                for (Usize i = 0; i < ctx->macro->len; ++i) {
+                    CITokenPreprocessorDefineParam *param =
+                      get__Vec(ctx->macro, i);
 
-                        if (!param->is_variadic) {
-                            ASSERT(param->name);
+                    if (!param->is_variadic) {
+                        ASSERT(param->name);
 
-                            if (!strcmp(param->name->buffer,
-                                        last_token->identifier->buffer)) {
-                                res = NEW_VARIANT(CIToken,
-                                                  macro_param,
-                                                  last_token->location,
-                                                  i);
+                        if (!strcmp(param->name->buffer,
+                                    last_token->identifier->buffer)) {
+                            res = NEW_VARIANT(
+                              CIToken, macro_param, last_token->location, i);
 
-                                FREE(CIToken, last_token);
+                            FREE(CIToken, last_token);
 
-                                break;
-                            }
+                            break;
                         }
                     }
                 }
