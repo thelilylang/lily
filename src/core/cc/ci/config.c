@@ -151,7 +151,7 @@ parse_compiler__CIConfig(YAMLLoadRes *yaml_load_res,
                   } else if (!strcmp(compiler_pair_key, "path")) {
                       ASSERT(!path);
 
-                      path = compiler_pair_key;
+                      path = compiler_pair_value;
                   } else {
                       UNREACHABLE("this situation is impossible");
                   }
