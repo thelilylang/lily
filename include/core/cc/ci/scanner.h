@@ -106,7 +106,7 @@ typedef struct CIScannerContext
     union
     {
         // Macro parameters
-        Vec *macro; // Vec<String*>* (&)
+        Vec *macro; // Vec<CITokenPreprocessorDefineParam*>*? (&)
     };
 } CIScannerContext;
 

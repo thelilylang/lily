@@ -329,7 +329,7 @@ scan_macro_name__CIScanner(CIScanner *self,
                            enum CITokenKind preprocessor_ctx);
 
 /// @brief Scan defined preprcoessor params.
-/// @return Vec<String*>*
+/// @return Vec<CITokenPreprocessorDefineParam*>*
 static Vec *
 scan_define_preprocessor_params__CIScanner(CIScanner *self);
 
@@ -1474,6 +1474,7 @@ next_char_by_token__CIScanner(CIScanner *self, const CIToken *token)
         case CI_TOKEN_KIND_BAR_EQ:
         case CI_TOKEN_KIND_HASHTAG_HASHTAG:
             return next_char__CIScanner(self);
+        case CI_TOKEN_KIND_DOT_DOT_DOT:
         case CI_TOKEN_KIND_LSHIFT_LSHIFT_EQ:
         case CI_TOKEN_KIND_RSHIFT_RSHIFT_EQ:
             return jump__CIScanner(self, 2);
@@ -1681,17 +1682,26 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
             if (is_in_macro__CIScannerContext(ctx) && ctx->macro) {
                 // Determine whether the `last_token->identifier` does not
                 // correspond to a macro parameter.
-                for (Usize i = 0; i < ctx->macro->len; ++i) {
-                    String *param = get__Vec(ctx->macro, i);
+                if (ctx->macro) {
+                    for (Usize i = 0; i < ctx->macro->len; ++i) {
+                        CITokenPreprocessorDefineParam *param =
+                          get__Vec(ctx->macro, i);
 
-                    if (!strcmp(param->buffer,
-                                last_token->identifier->buffer)) {
-                        res = NEW_VARIANT(
-                          CIToken, macro_param, last_token->location, i);
+                        if (!param->is_variadic) {
+                            ASSERT(param->name);
 
-                        FREE(CIToken, last_token);
+                            if (!strcmp(param->name->buffer,
+                                        last_token->identifier->buffer)) {
+                                res = NEW_VARIANT(CIToken,
+                                                  macro_param,
+                                                  last_token->location,
+                                                  i);
 
-                        break;
+                                FREE(CIToken, last_token);
+
+                                break;
+                            }
+                        }
                     }
                 }
 
@@ -2546,35 +2556,60 @@ scan_define_preprocessor_params__CIScanner(CIScanner *self)
 
     while (self->base.source.cursor.current != ')') {
         CIToken *param = get_token__CIScanner(self, &ctx, NULL);
+        bool expected_close_paren = false;
 
         if (param) {
             switch (param->kind) {
                 case CI_TOKEN_KIND_IDENTIFIER:
-                    push__Vec(params, param->identifier);
+                    push__Vec(params,
+                              NEW_VARIANT(CITokenPreprocessorDefineParam,
+                                          normal,
+                                          param->identifier));
                     next_char__CIScanner(self);
 
                     lily_free(param);
 
                     goto skip_comma;
                 case CI_TOKEN_KIND_DOT_DOT_DOT:
-                    TODO("impl variadic param");
+                    push__Vec(
+                      params,
+                      NEW_VARIANT(CITokenPreprocessorDefineParam, variadic));
+
+                    jump__CIScanner(self, 3);
+                    FREE(CIToken, param);
+
+                    expected_close_paren = true;
+
+                    goto skip_comma;
                 default:
                     FAILED("expected identifier");
             }
 
             next_char_by_token__CIScanner(self, param);
+
             FREE(CIToken, param);
         }
 
     skip_comma:
+        skip_space_and_backslash__CIScanner(self);
+
         switch (self->base.source.cursor.current) {
             case ')':
                 break;
             case ',':
+                if (expected_close_paren) {
+                    FAILED(
+                      "the last parametter is `...`, so `,` is not expected");
+                }
+
                 next_char__CIScanner(self);
                 break;
             default:
-                FAILED("expected `,` or `)`");
+                if (expected_close_paren) {
+                    FAILED("expected `)`");
+                } else {
+                    FAILED("expected `,` or `)`");
+                }
         }
 
         skip_space_and_backslash__CIScanner(self);
@@ -2686,7 +2721,7 @@ scan_define_preprocessor__CIScanner(CIScanner *self)
           self, &ctx, NULL, CI_TOKEN_KIND_PREPROCESSOR_DEFINE);
     }
 
-    Vec *params = NULL; // Vec<String*>*?
+    Vec *params = NULL; // Vec<CITokenpreprocessorDefineParam*>*?
 
     switch (self->base.source.cursor.current) {
         case '(':

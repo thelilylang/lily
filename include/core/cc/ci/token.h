@@ -502,10 +502,60 @@ inline DESTRUCTOR(CITokenLiteralConstantFloat,
     FREE(String, self->value);
 }
 
+typedef struct CITokenPreprocessorDefineParam
+{
+    String *name; // String*?
+    bool is_variadic;
+} CITokenPreprocessorDefineParam;
+
+/**
+ *
+ * @brief Construct CITokenPreprocessorDefineParam type (is_variadic=true).
+ */
+VARIANT_CONSTRUCTOR(CITokenPreprocessorDefineParam *,
+                    CITokenPreprocessorDefineParam,
+                    variadic);
+
+/**
+ *
+ * @brief Construct CITokenPreprocessorDefineParam type (is_variadic=false).
+ */
+VARIANT_CONSTRUCTOR(CITokenPreprocessorDefineParam *,
+                    CITokenPreprocessorDefineParam,
+                    normal,
+                    String *name);
+
+/**
+ *
+ * @brief Convert to string CITokenPreprocessorDefineParam type.
+ */
+String *
+to_string__CITokenPreprocessorDefineParam(
+  const CITokenPreprocessorDefineParam *self);
+
+/**
+ *
+ * @brief Convert CITokenPreprocessorDefineParam in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CITokenPreprocessorDefineParam,
+               const CITokenPreprocessorDefineParam *self);
+#endif
+
+/**
+ *
+ * @brief Free Free CITokenPreprocessorDefineParam type.
+ */
+DESTRUCTOR(CITokenPreprocessorDefineParam,
+           CITokenPreprocessorDefineParam *self);
+
 typedef struct CITokenPreprocessorDefine
 {
     String *name;
-    Vec *params; // Vec<String*>*?
+    Vec *params; // Vec<CITokenPreprocessorDefineParam*>*?
     CITokens tokens;
 } CITokenPreprocessorDefine;
 
