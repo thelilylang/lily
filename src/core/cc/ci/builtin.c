@@ -29,23 +29,24 @@
 
 #include <core/cc/ci/builtin.h>
 
-#include <stdio.h>
+// https://gcc.gnu.org/onlinedocs/gcc/Standards.html
+static const char *std[CI_STANDARD_23 + 1] = {
+    [CI_STANDARD_NONE] = "",
+    [CI_STANDARD_KR] = "c89", // NOTE: Not real K&R support of GCC, Clang
+    [CI_STANDARD_89] = "c89", [CI_STANDARD_95] = "iso9899:199409",
+    [CI_STANDARD_99] = "c99", [CI_STANDARD_11] = "c11",
+    [CI_STANDARD_17] = "c17", [CI_STANDARD_23] = "c2x",
+};
 
 String *
 generate_builtin__CIBuiltin(const CIConfig *config)
 {
-    String *builtin_h = NULL;
+    char *command = format("{S} -dM -E -std={s} - < /dev/null",
+                           config->compiler.path,
+                           std[config->standard]);
+    String *builtin_h = save__Command(command);
 
-    switch (config->compiler.kind) {
-        case CI_COMPILER_KIND_CLANG:
-            builtin_h = save__Command("clang -dM -E - < /dev/null");
-            break;
-        case CI_COMPILER_KIND_GCC:
-            builtin_h = save__Command("gcc -dM -E - < /dev/null");
-            break;
-        default:
-            UNREACHABLE("unknown compiler");
-    }
+    lily_free(command);
 
     // Add macro:
     // __STRICT_ANSI__
