@@ -3538,27 +3538,33 @@ check_standard__CIScanner(CIScanner *self, CIToken *token)
             case CI_STANDARD_KR:
                 UNREACHABLE("since: no error with K&R standard");
             case CI_STANDARD_89:
-                note = from__String("this feature is only available up to C89");
+                note =
+                  from__String("this feature is no longer available in C89");
 
                 break;
             case CI_STANDARD_95:
-                note = from__String("this feature is only available up to C95");
+                note =
+                  from__String("this feature is no longer available in C95");
 
                 break;
             case CI_STANDARD_99:
-                note = from__String("this feature is only available up to C99");
+                note =
+                  from__String("this feature is no longer available in C99");
 
                 break;
             case CI_STANDARD_11:
-                note = from__String("this feature is only available up to C11");
+                note =
+                  from__String("this feature is no longer available in C11");
 
                 break;
             case CI_STANDARD_17:
-                note = from__String("this feature is only available up to C17");
+                note =
+                  from__String("this feature is no longer available in C17");
 
                 break;
             case CI_STANDARD_23:
-                note = from__String("this feature is only available up to C23");
+                note =
+                  from__String("this feature is no longer available in C23");
 
                 break;
             default:
