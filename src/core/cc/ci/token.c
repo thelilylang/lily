@@ -435,6 +435,68 @@ IMPL_FOR_DEBUG(to_string,
 }
 #endif
 
+VARIANT_CONSTRUCTOR(CITokenPreprocessorDefineParam *,
+                    CITokenPreprocessorDefineParam,
+                    variadic)
+{
+    CITokenPreprocessorDefineParam *self =
+      lily_malloc(sizeof(CITokenPreprocessorDefineParam));
+
+    self->name = NULL;
+    self->is_variadic = true;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CITokenPreprocessorDefineParam *,
+                    CITokenPreprocessorDefineParam,
+                    normal,
+                    String *name)
+{
+    CITokenPreprocessorDefineParam *self =
+      lily_malloc(sizeof(CITokenPreprocessorDefineParam));
+
+    self->name = name;
+    self->is_variadic = false;
+
+    return self;
+}
+
+String *
+to_string__CITokenPreprocessorDefineParam(
+  const CITokenPreprocessorDefineParam *self)
+{
+    if (self->is_variadic) {
+        return from__String("...");
+    } else {
+        ASSERT(self->name);
+
+        return clone__String(self->name);
+    }
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CITokenPreprocessorDefineParam,
+               const CITokenPreprocessorDefineParam *self)
+{
+    return format__String(
+      "CITokenPreprocessorDefineParam{{ name = {s}, is_variadic = {b} }",
+      self->name ? self->name->buffer : "NULL",
+      self->is_variadic);
+}
+#endif
+
+DESTRUCTOR(CITokenPreprocessorDefineParam, CITokenPreprocessorDefineParam *self)
+{
+    if (self->name) {
+        FREE(String, self->name);
+    }
+
+    lily_free(self);
+}
+
 String *
 to_string__CITokenPreprocessorDefine(const CITokenPreprocessorDefine *self)
 {
@@ -444,7 +506,15 @@ to_string__CITokenPreprocessorDefine(const CITokenPreprocessorDefine *self)
         push_str__String(res, "(");
 
         for (Usize i = 0; i < self->params->len; ++i) {
-            append__String(res, get__Vec(self->params, i));
+            CITokenPreprocessorDefineParam *param = get__Vec(self->params, i);
+
+            if (param->is_variadic) {
+                push_str__String(res, "...");
+            } else {
+                ASSERT(param->name);
+
+                append__String(res, param->name);
+            }
 
             if (i + 1 != self->params->len) {
                 push_str__String(res, ", ");
@@ -492,17 +562,7 @@ IMPL_FOR_DEBUG(to_string,
       "CITokenPreprocessorDefine{{ name = {S}, params =", self->name);
 
     if (self->params) {
-        push_str__String(res, " {");
-
-        for (Usize i = 0; i < self->params->len; ++i) {
-            append__String(res, get__Vec(self->params, i));
-
-            if (i + 1 != self->params->len) {
-                push_str__String(res, ", ");
-            }
-        }
-
-        push_str__String(res, " }");
+        DEBUG_VEC_STRING(self->params, res, CITokenPreprocessorDefineParam);
     } else {
         push_str__String(res, " NULL");
     }
@@ -522,7 +582,9 @@ DESTRUCTOR(CITokenPreprocessorDefine, const CITokenPreprocessorDefine *self)
     FREE(String, self->name);
 
     if (self->params) {
-        FREE_BUFFER_ITEMS(self->params->buffer, self->params->len, String);
+        FREE_BUFFER_ITEMS(self->params->buffer,
+                          self->params->len,
+                          CITokenPreprocessorDefineParam);
         FREE(Vec, self->params);
     }
 
