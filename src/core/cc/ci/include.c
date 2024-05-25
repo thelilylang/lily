@@ -23,6 +23,8 @@
  */
 
 #include <base/assert.h>
+#include <base/command.h>
+#include <base/format.h>
 #include <base/new.h>
 
 #include <core/cc/ci/include.h>
@@ -30,30 +32,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if defined(LILY_LINUX_OS) || defined(LILY_APPLE_OS) || defined(LILY_BSD_OS)
-static const char *default_include_dirs[] = { ".", "/usr/include" };
-static Usize default_include_dirs_len = 2;
-#elifdef LILY_WINDOWS_OS
-static const char *default_include_dirs[] = { "." };
-static Usize default_include_dirs_len = 1;
-#else
-#error "this OS is not yet supported"
-#endif
-
-static Vec *include_dirs = NULL; // Vec<char* (&)>*?
+static Vec *include_dirs = NULL; // Vec<String*>*?
 
 void
-init_include_dirs__CIInclude()
+init_include_dirs__CIInclude(const String *compiler_path)
 {
-    include_dirs = NEW(Vec);
+    ASSERT(compiler_path);
 
-    for (Usize i = 0; i < default_include_dirs_len; ++i) {
-        push__Vec(include_dirs, (char *)default_include_dirs[i]);
+    char *command =
+      format("echo | {S} -E -Wp,-v - 2>&1 | grep \"^ \" | sed 's/^ *//'",
+             compiler_path);
+    String *include_dirs_s = save__Command(command);
+    Vec *split_include_dirs_s = split__String(include_dirs_s, '\n');
+
+    include_dirs = init__Vec(1, from__String("."));
+
+    lily_free(command);
+
+    for (Usize i = 0; i < split_include_dirs_s->len; ++i) {
+        push__Vec(include_dirs, get__Vec(split_include_dirs_s, i));
     }
+
+    FREE(String, include_dirs_s);
+    FREE(Vec, split_include_dirs_s);
 }
 
 void
-add_include_dir__CIInclude(char *include_dir)
+add_include_dir__CIInclude(String *include_dir)
 {
     ASSERT(include_dirs);
 
@@ -69,5 +74,6 @@ get_include_dirs__CIInclude()
 void
 destroy__CIInclude()
 {
+    FREE_BUFFER_ITEMS(include_dirs->buffer, include_dirs->len, String);
     FREE(Vec, include_dirs);
 }

@@ -6177,10 +6177,10 @@ resolve_preprocessor_include__CIParser(CIParser *self,
     const Vec *include_dirs = get_include_dirs__CIInclude();
 
     for (Usize i = 0; i < include_dirs->len; ++i) {
-        const char *include_dir = get__Vec(include_dirs, i);
+        const String *include_dir = get__Vec(include_dirs, i);
         // include_dir + '/' + preprocessor_include.value
         char *full_include_path =
-          format("{s}/{S}",
+          format("{S}/{S}",
                  include_dir,
                  preprocessor_include_token->preprocessor_include.value);
 
