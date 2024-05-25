@@ -45,7 +45,8 @@ parse_compiler__CIConfig(YAMLLoadRes *yaml_load_res,
                          const char *absolute_config_dir);
 
 static void
-parse_include_dirs__CIConfig(YAMLLoadRes *yaml_load_res);
+parse_include_dirs__CIConfig(const String *compiler_path,
+                             YAMLLoadRes *yaml_load_res);
 
 /// @return Vec<CILibrary*>*
 static Vec *
@@ -174,7 +175,8 @@ parse_compiler__CIConfig(YAMLLoadRes *yaml_load_res,
 }
 
 void
-parse_include_dirs__CIConfig(YAMLLoadRes *yaml_load_res)
+parse_include_dirs__CIConfig(const String *compiler_path,
+                             YAMLLoadRes *yaml_load_res)
 {
     // include_dirs:
     //   - dir
@@ -182,7 +184,7 @@ parse_include_dirs__CIConfig(YAMLLoadRes *yaml_load_res)
     //   ...
 
     // Initialize include directories workspace
-    init_include_dirs__CIInclude();
+    init_include_dirs__CIInclude(compiler_path);
 
     Int32 include_dirs_value_id = GET_KEY_ON_DEFAULT_MAPPING__YAML(
       yaml_load_res, FIRST_DOCUMENT, "include_dirs");
@@ -200,7 +202,10 @@ parse_include_dirs__CIConfig(YAMLLoadRes *yaml_load_res)
                   FIRST_DOCUMENT,
                   include_dirs_value_node,
                   include_dir,
-                  { add_include_dir__CIInclude(include_dir_value); });
+                  {
+                      add_include_dir__CIInclude(
+                        from__String(include_dir_value));
+                  });
 
                 break;
             default:
@@ -464,7 +469,7 @@ parse__CIConfig(const char *config_dir)
     CICompiler compiler =
       parse_compiler__CIConfig(&yaml_load_res, absolute_config_dir);
 
-    parse_include_dirs__CIConfig(&yaml_load_res);
+    parse_include_dirs__CIConfig(compiler.path, &yaml_load_res);
 
     Vec *libraries =
       parse_libraries__CIConfig(&yaml_load_res, absolute_config_dir);

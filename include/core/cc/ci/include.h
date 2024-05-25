@@ -28,19 +28,21 @@
 #include <base/platform.h>
 #include <base/vec.h>
 
+#include <core/cc/ci/config.h>
+
 /**
  *
  * @brief Initialize include directories vector.
  */
 void
-init_include_dirs__CIInclude();
+init_include_dirs__CIInclude(const String *compiler_path);
 
 /**
  *
  * @brief Add include directory to `include_dirs` vector.
  */
 void
-add_include_dir__CIInclude(char *include_dir);
+add_include_dir__CIInclude(String *include_dir);
 
 /**
  *
