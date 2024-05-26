@@ -92,39 +92,3 @@ peek_char__Scanner(const Scanner *self, const Usize n)
 
     return NULL;
 }
-
-Int32
-get_keyword__Scanner(const String *id,
-                     const SizedStr keywords[],
-                     const Int32 keyword_ids[],
-                     const Usize keywords_len)
-{
-    Usize pointer = 0;
-    char first_id_letter = get__String(id, 0);
-    const SizedStr *current_pointer = &keywords[pointer];
-    char first_current_pointer_letter = current_pointer->buffer[0];
-
-    // Try matching the first_id_letter with the first_current_pointer_letter.
-    while (first_id_letter > first_current_pointer_letter &&
-           pointer + 1 < keywords_len) {
-        current_pointer = &keywords[++pointer];
-        first_current_pointer_letter = current_pointer->buffer[0];
-    }
-
-    while (first_id_letter == first_current_pointer_letter) {
-        if (!strcmp(current_pointer->buffer, id->buffer)) {
-            return keyword_ids[pointer];
-        } else {
-            if (pointer + 1 < keywords_len) {
-                current_pointer = &keywords[++pointer];
-                first_current_pointer_letter = current_pointer->buffer[0];
-
-                continue;
-            }
-
-            return -1;
-        }
-    }
-
-    return -1;
-}

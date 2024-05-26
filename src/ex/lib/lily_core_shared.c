@@ -146,6 +146,12 @@ extern inline bool
 is_space_with_peeked_char__Scanner([[maybe_unused]] const Scanner *,
                                    const char *c);
 
+extern inline Int32
+get_keyword__Scanner(const String *id,
+                     const SizedStr keywords[],
+                     const Int32 keyword_ids[],
+                     const Usize keywords_len);
+
 // <core/shared/source.h>
 extern inline CONSTRUCTOR(Source, Source, Cursor cursor, const File *file);
 
