@@ -46,9 +46,9 @@ main(int argc, char **argv)
     }
 
     CIConfig config = parse__CIConfig(argv[1]);
-    CIResult result = NEW(CIResult);
+    CIResult result = NEW(CIResult, &config);
 
-    build__CIResult(&result, &config);
+    build__CIResult(&result);
     run__CIGenerator(&result);
 
     FREE(CIResult, &result);

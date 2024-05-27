@@ -77,3 +77,26 @@ get__CIExtensionsHasFeature(const String *feature)
 
     return res;
 }
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               CIExtensionsHasFeature,
+               enum CIExtensionsHasFeature self)
+{
+    switch (self) {
+        case CI_EXTENSIONS_HAS_FEATURE_C_ALIGNAS:
+        case CI_EXTENSIONS_HAS_FEATURE_C_ALIGNOF:
+        case CI_EXTENSIONS_HAS_FEATURE_C_ATOMIC:
+        case CI_EXTENSIONS_HAS_FEATURE_C_GENERIC_SELECTIONS:
+        case CI_EXTENSIONS_HAS_FEATURE_C_GENERIC_SELECTION_WITH_CONTROLLING_TYPE:
+        case CI_EXTENSIONS_HAS_FEATURE_C_STATIC_ASSERT:
+        case CI_EXTENSIONS_HAS_FEATURE_C_THREAD_LOCAL:
+        case CI_EXTENSIONS_HAS_FEATURE_ADDRESS_SANITIZER:
+        case CI_EXTENSIONS_HAS_FEATURE_MODULES:
+            return (char *)features[self].buffer;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif

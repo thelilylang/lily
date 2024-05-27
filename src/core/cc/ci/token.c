@@ -1372,6 +1372,22 @@ VARIANT_CONSTRUCTOR(CIToken *,
 
 VARIANT_CONSTRUCTOR(CIToken *,
                     CIToken,
+                    builtin_macro_has_feature,
+                    Location location,
+                    enum CIExtensionsHasFeature has_feature)
+{
+    CIToken *self = lily_malloc(sizeof(CIToken));
+
+    self->kind = CI_TOKEN_KIND_BUILTIN_MACRO___HAS_FEATURE;
+    self->location = location;
+    self->next = NULL;
+    self->has_feature = has_feature;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
                     standard_predefined_macro___date__,
                     Location location,
                     String *standard_predefined_macro___date__)
@@ -1810,6 +1826,8 @@ to_string__CIToken(CIToken *self)
             return from__String("/");
         case CI_TOKEN_KIND_SLASH_EQ:
             return from__String("/=");
+        case CI_TOKEN_KIND_BUILTIN_MACRO___HAS_FEATURE:
+            return format__String("__has_feature({d})", self->has_feature);
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__:
             return format__String("__DATE__ {S}",
                                   self->standard_predefined_macro___date__);
@@ -1836,6 +1854,8 @@ to_string__CIToken(CIToken *self)
             return from__String("~");
         case CI_TOKEN_KIND_WAVE_EQ:
             return from__String("~=");
+        case CI_TOKEN_KIND_BUILTIN_MACRO:
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO:
         case CI_TOKEN_KIND_MAX:
             UNREACHABLE("this token is not used");
         default:
@@ -2230,6 +2250,8 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_SLASH";
         case CI_TOKEN_KIND_SLASH_EQ:
             return "CI_TOKEN_KIND_SLASH_EQ";
+        case CI_TOKEN_KIND_BUILTIN_MACRO___HAS_FEATURE:
+            return "CI_TOKEN_KIND_BUILTIN_MACRO___HAS_FEATURE";
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__:
             return "CI_TOKEN_KIND_PREDEFINED_MACRO___DATE__";
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__:
@@ -2252,6 +2274,8 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_WAVE";
         case CI_TOKEN_KIND_WAVE_EQ:
             return "CI_TOKEN_KIND_WAVE_EQ";
+        case CI_TOKEN_KIND_BUILTIN_MACRO:
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO:
         case CI_TOKEN_KIND_MAX:
             UNREACHABLE("this token is not used");
         default:
@@ -2468,6 +2492,13 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->preprocessor_warning);
+        case CI_TOKEN_KIND_BUILTIN_MACRO___HAS_FEATURE:
+            return format(
+              "CIToken{{ kind = {s}, location = {sa}, has_feature = {s} }",
+              CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
+              CALL_DEBUG_IMPL(to_string, Location, &self->location),
+              CALL_DEBUG_IMPL(
+                to_string, CIExtensionsHasFeature, self->has_feature));
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__:
             return format("CIToken{{ kind = {s}, location = {sa}, "
                           "standard_predefined_macro___date__ = {S} }",
@@ -2695,6 +2726,11 @@ VARIANT_DESTRUCTOR(CIToken, standard_predefined_macro___line__, CIToken *self)
 VARIANT_DESTRUCTOR(CIToken, standard_predefined_macro___time__, CIToken *self)
 {
     FREE(String, self->standard_predefined_macro___time__);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIToken, has_feature, CIToken *self)
+{
     lily_free(self);
 }
 

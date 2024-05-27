@@ -229,7 +229,7 @@ CONSTRUCTOR(CIResultFile *,
             File file_input,
             bool kind,
             CIResultFile *owner,
-            enum CIStandard standard,
+            const CIConfig *config,
             Usize id,
             const CIResult *result,
             enum CIResultEntityKind entity_kind,
@@ -572,7 +572,7 @@ CONSTRUCTOR(CIResultLib *,
             const char *name,
             Usize id,
             const CIResult *result,
-            enum CIStandard standard);
+            const CIConfig *config);
 
 /**
  *
@@ -615,6 +615,7 @@ DESTRUCTOR(CIResultBin, CIResultBin *self);
 typedef struct CIResult
 {
     CIResultFile *builtin;   // CIResultFile* (&)
+    const CIConfig *config;  // const CIConfig* (&)
     OrderedHashMap *headers; // OrderedHashMap<CIResultFile*>*
     OrderedHashMap *sources; // OrderedHashMap<CIResultFile* (&)>*
     OrderedHashMap *bins;    // OrderedHashMap<CIResultBin*>*
@@ -625,10 +626,11 @@ typedef struct CIResult
  *
  * @brief Construct CIResult type.
  */
-inline CONSTRUCTOR(CIResult, CIResult)
+inline CONSTRUCTOR(CIResult, CIResult, const CIConfig *config)
 {
     return (CIResult){
         .builtin = NULL,
+        .config = config,
         .headers = NEW(OrderedHashMap),
         .sources = NEW(OrderedHashMap),
         .bins = NEW(OrderedHashMap),
@@ -656,7 +658,6 @@ get_enum_from_id__CIResult(const CIResult *self, const CIEnumID *enum_id);
  */
 CIResultFile *
 add_header__CIResult(const CIResult *self,
-                     enum CIStandard standard,
                      String *filename_result,
                      File file_input);
 
@@ -672,7 +673,7 @@ add_bin__CIResult(const CIResult *self, char *name);
  * @brief Add a lib to libs OrderedHashMap.
  */
 CIResultLib *
-add_lib__CIResult(const CIResult *self, char *name, enum CIStandard standard);
+add_lib__CIResult(const CIResult *self, char *name);
 
 /**
  *
@@ -709,7 +710,7 @@ has_lib__CIResult(const CIResult *self, char *lib_name)
  * @brief Load builtin file.
  */
 void
-load_builtin__CIResult(CIResult *self, const CIConfig *config);
+load_builtin__CIResult(CIResult *self);
 
 /**
  *
@@ -721,7 +722,6 @@ scan_file__CIResult(const CIResult *self,
                     CIResultFile *owner,
                     CIResultFile *file_parent,
                     char *path,
-                    enum CIStandard standard,
                     Usize id);
 
 /**
@@ -734,7 +734,6 @@ run_file__CIResult(const CIResult *self,
                    CIResultFile *owner,
                    CIResultFile *file_parent,
                    char *path,
-                   enum CIStandard standard,
                    Usize id);
 
 /**
@@ -742,18 +741,14 @@ run_file__CIResult(const CIResult *self,
  * @brief Add & Run from the passed library.
  */
 void
-add_and_run_lib__CIResult(const CIResult *self,
-                          const CIConfig *config,
-                          const CILibrary *lib);
+add_and_run_lib__CIResult(const CIResult *self, const CILibrary *lib);
 
 /**
  *
  * @brief Add & Run from the passed binary.
  */
 void
-add_and_run_bin__CIResult(const CIResult *self,
-                          const CIConfig *config,
-                          const CIBin *bin);
+add_and_run_bin__CIResult(const CIResult *self, const CIBin *bin);
 
 /**
  *
@@ -763,14 +758,14 @@ CIResultFile *
 add_and_run_header__CIResult(const CIResult *self,
                              CIResultFile *file_parent,
                              char *path,
-                             enum CIStandard standard);
+                             const CIConfig *config);
 
 /**
  *
  * @brief Build result (all libraries and binaries).
  */
 void
-build__CIResult(CIResult *self, const CIConfig *config);
+build__CIResult(CIResult *self);
 
 /**
  *

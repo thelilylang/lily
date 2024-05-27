@@ -57,4 +57,16 @@ is_valid__CIExtensionsHasFeature(const String *feature);
 enum CIExtensionsHasFeature
 get__CIExtensionsHasFeature(const String *feature);
 
+/**
+ *
+ * @brief Convert CIExtensionsHasFeature in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               CIExtensionsHasFeature,
+               enum CIExtensionsHasFeature self);
+#endif
+
 #endif // LILY_CORE_CC_CI_EXTENSIONS___HAS_FEATURE_H
