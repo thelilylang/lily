@@ -32,6 +32,7 @@
 #include <base/string.h>
 #include <base/vec.h>
 
+#include <core/cc/ci/extensions/__has_feature.h>
 #include <core/cc/ci/features.h>
 #include <core/shared/location.h>
 
@@ -45,6 +46,8 @@ struct CIToken;
 #define CI_N_ATTRIBUTE 8
 
 #define CI_N_STANDARD_PREDEFINED_MACRO 7
+
+#define CI_N_BUILTIN_MACRO 1
 
 #define CI_N_PREPROCESSOR 16
 
@@ -308,6 +311,10 @@ enum CITokenKind
     CI_TOKEN_KIND_SEMICOLON,
     CI_TOKEN_KIND_SLASH,
     CI_TOKEN_KIND_SLASH_EQ,
+    // Builtin macros:
+    // https://clang.llvm.org/docs/LanguageExtensions.html#builtin-macros
+    CI_TOKEN_KIND_BUILTIN_MACRO, // NOTE: #1
+    CI_TOKEN_KIND_BUILTIN_MACRO___HAS_FEATURE,
     // Standard predefined macros:
     // Link: https://gcc.gnu.org/onlinedocs/cpp/Standard-Predefined-Macros.html
     // NOTE: We don't include `__ASSEMBLER__`, `__OBJC__` and `__cplusplus`
@@ -1057,6 +1064,7 @@ typedef struct CIToken
         String *standard_predefined_macro___file__;
         Usize standard_predefined_macro___line__;
         String *standard_predefined_macro___time__;
+        enum CIExtensionsHasFeature has_feature;
     };
 } CIToken;
 
@@ -1347,6 +1355,16 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     preprocessor_warning,
                     Location location,
                     String *preprocessor_warning);
+
+/**
+ *
+ * @brief Construct CIToken type (CI_TOKEN_KIND_BUILTIN_MACRO___HAS_FEATURE).
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    builtin_macro_has_feature,
+                    Location location,
+                    enum CIExtensionsHasFeature has_feature);
 
 /**
  *

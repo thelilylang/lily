@@ -4983,6 +4983,40 @@ parse_primary_expr__CIParser(CIParser *self)
 
             break;
         }
+        case CI_TOKEN_KIND_BUILTIN_MACRO___HAS_FEATURE: {
+            bool has_feature = false;
+
+            switch (self->previous_token->has_feature) {
+                case CI_EXTENSIONS_HAS_FEATURE_C_ALIGNAS:
+                case CI_EXTENSIONS_HAS_FEATURE_C_ALIGNOF:
+                case CI_EXTENSIONS_HAS_FEATURE_C_ATOMIC:
+                case CI_EXTENSIONS_HAS_FEATURE_C_GENERIC_SELECTIONS:
+                case CI_EXTENSIONS_HAS_FEATURE_C_GENERIC_SELECTION_WITH_CONTROLLING_TYPE:
+                case CI_EXTENSIONS_HAS_FEATURE_C_STATIC_ASSERT:
+                case CI_EXTENSIONS_HAS_FEATURE_C_THREAD_LOCAL:
+                    if (self->scanner->config->standard == CI_STANDARD_11) {
+                        has_feature = true;
+                    }
+
+                    break;
+                case CI_EXTENSIONS_HAS_FEATURE_ADDRESS_SANITIZER:
+                    if (self->scanner->config->compiler.kind ==
+                        CI_COMPILER_KIND_CLANG) {
+                        has_feature = true;
+                    }
+
+                    break;
+                case CI_EXTENSIONS_HAS_FEATURE_MODULES:
+                    break;
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+
+            res = NEW_VARIANT(
+              CIExpr, literal, NEW_VARIANT(CIExprLiteral, bool, has_feature));
+
+            break;
+        }
         // NOTE: Standard predefined macro cannot be redefined outside of
         // builtin file.
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__:
@@ -6189,7 +6223,7 @@ resolve_preprocessor_include__CIParser(CIParser *self,
               add_and_run_header__CIResult(self->file->entity.result,
                                            self->file,
                                            full_include_path,
-                                           self->file->scanner.standard);
+                                           self->file->scanner.config);
 
             // NOTE: The next token is the first token in the header, and the
             // token following the last token in the header is the current next

@@ -29,6 +29,7 @@
 
 #include <core/shared/cursor.h>
 #include <core/shared/location.h>
+#include <core/shared/search.h>
 #include <core/shared/source.h>
 
 #include <ctype.h>
@@ -154,10 +155,13 @@ peek_char__Scanner(const Scanner *self, const Usize n);
  * @return If the return value is -1, this means that the function has not found
  * a keyword, or that this is an identifier.
  */
-Int32
+inline Int32
 get_keyword__Scanner(const String *id,
                      const SizedStr keywords[],
                      const Int32 keyword_ids[],
-                     const Usize keywords_len);
+                     const Usize keywords_len)
+{
+    return get_id__Search(id, keywords, keyword_ids, keywords_len);
+}
 
 #endif // LILY_CORE_SHARED_SCANNER_H

@@ -22,37 +22,24 @@
  * SOFTWARE.
  */
 
-#include <base/assert.h>
-#include <base/dir.h>
-#include <base/yaml.h>
+#ifndef LILY_CORE_SHARED_SEARCH_H
+#define LILY_CORE_SHARED_SEARCH_H
 
-#include <core/cc/ci/config.h>
-#include <core/cc/ci/generator.h>
-#include <core/cc/ci/include.h>
-#include <core/cc/ci/parser.h>
-#include <core/cc/ci/result.h>
-#include <core/cc/ci/scanner.h>
+#include <base/sized_str.h>
+#include <base/string.h>
+#include <base/types.h>
 
-#include <stdio.h>
+/**
+ *
+ * @brief Generic function to search id from available ids.
+ * @param ids Expect an array sorted in ascending order.
+ * @return If the return value is -1, this means that the function has not found
+ * the id.
+ */
+Int32
+get_id__Search(const String *id,
+               const SizedStr ids_s[],
+               const Int32 ids[],
+               const Usize ids_s_len);
 
-int
-main(int argc, char **argv)
-{
-    // TODO: implement a real CLI, like in bin/lily/main.c, bin/lilyc/main.c
-
-    if (argc < 2) {
-        printf("ci [config_dir]\n");
-        exit(1);
-    }
-
-    CIConfig config = parse__CIConfig(argv[1]);
-    CIResult result = NEW(CIResult, &config);
-
-    build__CIResult(&result);
-    run__CIGenerator(&result);
-
-    FREE(CIResult, &result);
-    FREE(CIConfig, &config);
-
-    destroy__CIInclude();
-}
+#endif // LILY_CORE_SHARED_SEARCH_H

@@ -205,6 +205,10 @@ next_char_by_token__CIScanner(CIScanner *self, const CIToken *token);
 static enum CITokenKind
 get_attribute__CIScanner(const String *id);
 
+/// @brief Get builtin macro from id.
+static enum CITokenKind
+get_builtin_macro__CIScanner(const String *id);
+
 /// @brief Get standard predefined macro from id.
 static enum CITokenKind
 get_standard_predefined_macro__CIScanner(const String *id);
@@ -783,6 +787,10 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                               .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_SLASH_EQ] = { .since = CI_STANDARD_NONE,
                                  .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_BUILTIN_MACRO] = { .since = CI_STANDARD_NONE,
+                                      .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_BUILTIN_MACRO___HAS_FEATURE] = { .since = CI_STANDARD_NONE,
+                                                    .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO] = { .since = CI_STANDARD_NONE,
                                                   .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__] = { .since =
@@ -968,6 +976,17 @@ static const enum CITokenKind ci_attribute_ids[CI_N_ATTRIBUTE] = {
 };
 
 // NOTE: This table must be sorted in ascending order.
+static const SizedStr ci_builtin_macros[CI_N_BUILTIN_MACRO] = {
+    SIZED_STR_FROM_RAW("__has_feature"),
+};
+
+// NOTE: This array must have the same order as the
+// ci_builtin_macros array.
+static const enum CITokenKind ci_builtin_macro_ids[CI_N_BUILTIN_MACRO] = {
+    CI_TOKEN_KIND_BUILTIN_MACRO___HAS_FEATURE
+};
+
+// NOTE: This table must be sorted in ascending order.
 static const SizedStr
   ci_standard_predefined_macros[CI_N_STANDARD_PREDEFINED_MACRO] = {
       SIZED_STR_FROM_RAW("__DATE__"),
@@ -1083,12 +1102,12 @@ static const enum CITokenKind ci_preprocessor_ids[CI_N_PREPROCESSOR] = {
     case '_'
 
 #define CHECK_STANDARD_SINCE(since, block) \
-    if (self->standard < since) {          \
+    if (self->config->standard < since) {  \
         block;                             \
     }
 
 #define CHECK_STANDARD_UNTIL(until, block) \
-    if (self->standard >= until) {         \
+    if (self->config->standard >= until) { \
         block;                             \
     }
 
@@ -1497,6 +1516,21 @@ get_attribute__CIScanner(const String *id)
 }
 
 enum CITokenKind
+get_builtin_macro__CIScanner(const String *id)
+{
+    Int32 res = get_keyword__Scanner(id,
+                                     ci_builtin_macros,
+                                     (const Int32 *)ci_builtin_macro_ids,
+                                     CI_N_BUILTIN_MACRO);
+
+    if (res == -1) {
+        return CI_TOKEN_KIND_IDENTIFIER;
+    }
+
+    return (enum CITokenKind)res;
+}
+
+enum CITokenKind
 get_standard_predefined_macro__CIScanner(const String *id)
 {
     Int32 res =
@@ -1765,8 +1799,6 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
                     last_token->identifier);
 
                 switch (standard_predefined_macro) {
-                    case CI_TOKEN_KIND_IDENTIFIER:
-                        break;
                     // Standard predefined macro case
                     case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__: {
 #define DATE_LEN 100
@@ -1832,13 +1864,74 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
 #undef TIME_LEN
                     }
                     default:
-                        res = NEW(CIToken,
-                                  standard_predefined_macro,
-                                  last_token->location);
+                        break;
+                }
+            }
 
-                        FREE(CIToken, last_token);
+            // Check if it's a builtin macro
+            // https://clang.llvm.org/docs/LanguageExtensions.html#builtin-macros
+            {
+                enum CITokenKind builtin_macro =
+                  get_builtin_macro__CIScanner(last_token->identifier);
 
-                        goto exit;
+                switch (builtin_macro) {
+                    case CI_TOKEN_KIND_BUILTIN_MACRO___HAS_FEATURE:
+                        if (self->config->compiler.kind ==
+                            CI_COMPILER_KIND_CLANG) {
+                            next_char__CIScanner(self); // __has_feature(x)
+                                                        //             ^
+                            skip_space_and_backslash__CIScanner(self);
+
+                            switch (self->base.source.cursor.current) {
+                                case '(':
+                                    next_char__CIScanner(self);
+                                    break;
+                                default:
+                                    FAILED("expected `(`");
+                            }
+
+                            enum CIExtensionsHasFeature feature = -1;
+
+                            skip_space_and_backslash__CIScanner(self);
+
+                            if (is_ident__CIScanner(self)) {
+                                String *id = scan_identifier__CIScanner(self);
+
+                                if (is_valid__CIExtensionsHasFeature(id)) {
+                                    feature = get__CIExtensionsHasFeature(id);
+                                } else {
+                                    FAILED(
+                                      "the feature of called in __has_feature "
+                                      "is not valid");
+                                }
+
+                                next_char__CIScanner(self); // __has_feature(x)
+                                                            //               ^
+                                skip_space_and_backslash__CIScanner(self);
+
+                                switch (self->base.source.cursor.current) {
+                                    case ')':
+                                        break;
+                                    default:
+                                        FAILED("expected `)`");
+                                }
+
+                                FREE(String, id);
+                            } else {
+                                FAILED("expected identifier");
+                            }
+
+                            res = NEW_VARIANT(CIToken,
+                                              builtin_macro_has_feature,
+                                              last_token->location,
+                                              feature);
+
+                            goto free_last_token;
+                        }
+
+                        break;
+                    default:
+                        break;
                 }
             }
 

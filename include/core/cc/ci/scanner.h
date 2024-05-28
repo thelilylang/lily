@@ -28,6 +28,7 @@
 #include <base/types.h>
 #include <base/vec.h>
 
+#include <core/cc/ci/config.h>
 #include <core/cc/ci/features.h>
 #include <core/cc/ci/token.h>
 #include <core/shared/scanner.h>
@@ -36,7 +37,7 @@ typedef struct CIScanner
 {
     CITokens tokens;
     Scanner base;
-    enum CIStandard standard;
+    const CIConfig *config; // const CIConfig* (&)
     /// A field indicating whether or not the file being scanned is builtin.
     /// This makes it possible to define standard macros such as `__STDC__`,
     /// `__STDC_HOSTED__`, `__STDC_VERSION__`, without error.
@@ -51,11 +52,11 @@ inline CONSTRUCTOR(CIScanner,
                    CIScanner,
                    Source source,
                    Usize *count_error,
-                   enum CIStandard standard)
+                   const CIConfig *config)
 {
     return (CIScanner){ .tokens = NEW(CITokens),
                         .base = NEW(Scanner, source, count_error),
-                        .standard = standard,
+                        .config = config,
                         .is_builtin = false };
 }
 

@@ -391,7 +391,7 @@ extern inline CONSTRUCTOR(CIResultEntity,
                           enum CIResultEntityKind kind,
                           String *filename_result);
 
-extern inline CONSTRUCTOR(CIResult, CIResult);
+extern inline CONSTRUCTOR(CIResult, CIResult, const CIConfig *config);
 
 extern inline bool
 has_header__CIResult(const CIResult *self, const String *filename_result);
@@ -404,7 +404,7 @@ extern inline CONSTRUCTOR(CIScanner,
                           CIScanner,
                           Source source,
                           Usize *count_error,
-                          enum CIStandard standard);
+                          const CIConfig *config);
 
 extern inline void
 set_builtin__CIScanner(CIScanner *self);

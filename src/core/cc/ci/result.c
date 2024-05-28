@@ -36,8 +36,7 @@
 static void
 add_and_run_lib_file__CIResult(const CIResult *self,
                                CIResultLib *lib,
-                               char *path,
-                               enum CIStandard standard);
+                               char *path);
 
 CONSTRUCTOR(CIResultDefine *,
             CIResultDefine,
@@ -156,7 +155,7 @@ CONSTRUCTOR(CIResultFile *,
             File file_input,
             bool kind,
             CIResultFile *owner,
-            enum CIStandard standard,
+            const CIConfig *config,
             Usize id,
             const CIResult *result,
             enum CIResultEntityKind entity_kind,
@@ -175,7 +174,7 @@ CONSTRUCTOR(CIResultFile *,
       NEW(CIScanner,
           NEW(Source, NEW(Cursor, self->file_input.content), &self->file_input),
           NULL,
-          standard);
+          config);
 
     return self;
 }
@@ -734,7 +733,7 @@ CONSTRUCTOR(CIResultLib *,
             const char *name,
             Usize id,
             const CIResult *result,
-            enum CIStandard standard)
+            const CIConfig *config)
 {
     CIResultLib *self = lily_malloc(sizeof(CIResultLib));
 
@@ -745,7 +744,7 @@ CONSTRUCTOR(CIResultLib *,
           (File){ .name = NULL, .content = NULL, .len = 0 } /* No input file */,
           CI_FILE_ID_KIND_SOURCE,
           NULL,
-          standard,
+          config,
           id,
           result,
           CI_RESULT_ENTITY_KIND_LIB,
@@ -836,7 +835,6 @@ search_enum_from_id__CIResult(const CIResult *self, const CIEnumID *enum_id)
 
 CIResultFile *
 add_header__CIResult(const CIResult *self,
-                     enum CIStandard standard,
                      String *filename_result,
                      File file_input)
 {
@@ -844,7 +842,7 @@ add_header__CIResult(const CIResult *self,
                                     file_input,
                                     CI_FILE_ID_KIND_HEADER,
                                     NULL,
-                                    standard,
+                                    self->config,
                                     self->headers->len,
                                     self,
                                     CI_RESULT_ENTITY_KIND_FILE,
@@ -871,9 +869,10 @@ add_bin__CIResult(const CIResult *self, char *name)
 }
 
 CIResultLib *
-add_lib__CIResult(const CIResult *self, char *name, enum CIStandard standard)
+add_lib__CIResult(const CIResult *self, char *name)
 {
-    CIResultLib *lib = NEW(CIResultLib, name, self->libs->len, self, standard);
+    CIResultLib *lib =
+      NEW(CIResultLib, name, self->libs->len, self, self->config);
 
     if (insert__OrderedHashMap(self->libs, name, lib)) {
         FAILED("duplicate input library");
@@ -883,9 +882,9 @@ add_lib__CIResult(const CIResult *self, char *name, enum CIStandard standard)
 }
 
 void
-load_builtin__CIResult(CIResult *self, const CIConfig *config)
+load_builtin__CIResult(CIResult *self)
 {
-    String *builtin_content = generate_builtin__CIBuiltin(config);
+    String *builtin_content = generate_builtin__CIBuiltin(self->config);
     File builtin_file = { .name = strdup("**<builtin.hci>**"),
                           .content = builtin_content->buffer,
                           .len = builtin_content->len };
@@ -893,7 +892,7 @@ load_builtin__CIResult(CIResult *self, const CIConfig *config)
                                 builtin_file,
                                 CI_FILE_ID_KIND_HEADER,
                                 NULL,
-                                config->standard,
+                                self->config,
                                 HEADER_FILE_BUILTIN_ID,
                                 self,
                                 CI_RESULT_ENTITY_KIND_FILE,
@@ -914,7 +913,6 @@ scan_file__CIResult(const CIResult *self,
                     CIResultFile *owner,
                     CIResultFile *file_parent,
                     char *path,
-                    enum CIStandard standard,
                     Usize id)
 {
     char *extension = get_extension__File(path);
@@ -942,7 +940,7 @@ scan_file__CIResult(const CIResult *self,
                                     file_input,
                                     kind,
                                     owner,
-                                    standard,
+                                    self->config,
                                     id,
                                     self,
                                     CI_RESULT_ENTITY_KIND_FILE,
@@ -969,11 +967,10 @@ run_file__CIResult(const CIResult *self,
                    CIResultFile *owner,
                    CIResultFile *file_parent,
                    char *path,
-                   enum CIStandard standard,
                    Usize id)
 {
     CIResultFile *result_file =
-      scan_file__CIResult(self, owner, file_parent, path, standard, id);
+      scan_file__CIResult(self, owner, file_parent, path, id);
 
     run__CIParser(&result_file->file_analysis->parser);
 
@@ -987,11 +984,10 @@ run_file__CIResult(const CIResult *self,
 void
 add_and_run_lib_file__CIResult(const CIResult *self,
                                CIResultLib *lib,
-                               char *path,
-                               enum CIStandard standard)
+                               char *path)
 {
-    CIResultFile *lib_file = run_file__CIResult(
-      self, lib->file, NULL, path, standard, self->sources->len);
+    CIResultFile *lib_file =
+      run_file__CIResult(self, lib->file, NULL, path, self->sources->len);
 
     ASSERT(lib_file->entity.filename_result);
 
@@ -999,12 +995,9 @@ add_and_run_lib_file__CIResult(const CIResult *self,
 }
 
 void
-add_and_run_lib__CIResult(const CIResult *self,
-                          const CIConfig *config,
-                          const CILibrary *lib)
+add_and_run_lib__CIResult(const CIResult *self, const CILibrary *lib)
 {
-    CIResultLib *result_lib =
-      add_lib__CIResult(self, (char *)lib->name, config->standard);
+    CIResultLib *result_lib = add_lib__CIResult(self, (char *)lib->name);
 
     // Run (Scan & Parse) all source files of the library.
     for (Usize i = 0; i < lib->paths->len; ++i) {
@@ -1015,14 +1008,13 @@ add_and_run_lib__CIResult(const CIResult *self,
 
             for (Usize j = 0; j < dir_paths->len; ++j) {
                 add_and_run_lib_file__CIResult(
-                  self, result_lib, get__Vec(dir_paths, j), config->standard);
+                  self, result_lib, get__Vec(dir_paths, j));
             }
 
             FREE_BUFFER_ITEMS(dir_paths->buffer, dir_paths->len, String);
             FREE(Vec, dir_paths);
         } else {
-            add_and_run_lib_file__CIResult(
-              self, result_lib, path, config->standard);
+            add_and_run_lib_file__CIResult(self, result_lib, path);
         }
     }
 
@@ -1030,14 +1022,12 @@ add_and_run_lib__CIResult(const CIResult *self,
 }
 
 void
-add_and_run_bin__CIResult(const CIResult *self,
-                          const CIConfig *config,
-                          const CIBin *bin)
+add_and_run_bin__CIResult(const CIResult *self, const CIBin *bin)
 {
     CIResultBin *result_bin = add_bin__CIResult(self, (char *)bin->name);
     char *path = bin->path->buffer;
-    CIResultFile *bin_file = run_file__CIResult(
-      self, NULL, NULL, path, config->standard, self->sources->len);
+    CIResultFile *bin_file =
+      run_file__CIResult(self, NULL, NULL, path, self->sources->len);
 
     ASSERT(bin_file->entity.filename_result);
 
@@ -1048,7 +1038,7 @@ CIResultFile *
 add_and_run_header__CIResult(const CIResult *self,
                              CIResultFile *file_parent,
                              char *path,
-                             enum CIStandard standard)
+                             const CIConfig *config)
 {
     ASSERT(file_parent);
 
@@ -1056,23 +1046,23 @@ add_and_run_header__CIResult(const CIResult *self,
 
     if (!header) {
         header = scan_file__CIResult(
-          self, NULL, file_parent, path, standard, self->headers->len);
+          self, NULL, file_parent, path, self->headers->len);
     }
 
     return header;
 }
 
 void
-build__CIResult(CIResult *self, const CIConfig *config)
+build__CIResult(CIResult *self)
 {
-    load_builtin__CIResult(self, config);
+    load_builtin__CIResult(self);
 
-    for (Usize i = 0; i < config->libraries->len; ++i) {
-        add_and_run_lib__CIResult(self, config, get__Vec(config->libraries, i));
+    for (Usize i = 0; i < self->config->libraries->len; ++i) {
+        add_and_run_lib__CIResult(self, get__Vec(self->config->libraries, i));
     }
 
-    for (Usize i = 0; i < config->bins->len; ++i) {
-        add_and_run_bin__CIResult(self, config, get__Vec(config->bins, i));
+    for (Usize i = 0; i < self->config->bins->len; ++i) {
+        add_and_run_bin__CIResult(self, get__Vec(self->config->bins, i));
     }
 }
 

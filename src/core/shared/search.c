@@ -22,37 +22,42 @@
  * SOFTWARE.
  */
 
-#include <base/assert.h>
-#include <base/dir.h>
-#include <base/yaml.h>
+#include <string.h>
 
-#include <core/cc/ci/config.h>
-#include <core/cc/ci/generator.h>
-#include <core/cc/ci/include.h>
-#include <core/cc/ci/parser.h>
-#include <core/cc/ci/result.h>
-#include <core/cc/ci/scanner.h>
+#include <core/shared/search.h>
 
-#include <stdio.h>
-
-int
-main(int argc, char **argv)
+Int32
+get_id__Search(const String *id,
+               const SizedStr ids_s[],
+               const Int32 ids[],
+               const Usize ids_s_len)
 {
-    // TODO: implement a real CLI, like in bin/lily/main.c, bin/lilyc/main.c
+    Usize pointer = 0;
+    char first_id_letter = get__String(id, 0);
+    const SizedStr *current_pointer = &ids_s[pointer];
+    char first_current_pointer_letter = current_pointer->buffer[0];
 
-    if (argc < 2) {
-        printf("ci [config_dir]\n");
-        exit(1);
+    // Try matching the first_id_letter with the first_current_pointer_letter.
+    while (first_id_letter > first_current_pointer_letter &&
+           pointer + 1 < ids_s_len) {
+        current_pointer = &ids_s[++pointer];
+        first_current_pointer_letter = current_pointer->buffer[0];
     }
 
-    CIConfig config = parse__CIConfig(argv[1]);
-    CIResult result = NEW(CIResult, &config);
+    while (first_id_letter == first_current_pointer_letter) {
+        if (!strcmp(current_pointer->buffer, id->buffer)) {
+            return ids[pointer];
+        } else {
+            if (pointer + 1 < ids_s_len) {
+                current_pointer = &ids_s[++pointer];
+                first_current_pointer_letter = current_pointer->buffer[0];
 
-    build__CIResult(&result);
-    run__CIGenerator(&result);
+                continue;
+            }
 
-    FREE(CIResult, &result);
-    FREE(CIConfig, &config);
+            return -1;
+        }
+    }
 
-    destroy__CIInclude();
+    return -1;
 }
