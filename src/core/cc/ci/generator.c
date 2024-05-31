@@ -961,6 +961,10 @@ generate_function_expr__CIGenerator(const CIExpr *expr)
             generate_function_literal_expr__CIGenerator(&expr->literal);
 
             break;
+        case CI_EXPR_KIND_NULLPTR:
+            write_str__CIGenerator("nullptr");
+
+            break;
         case CI_EXPR_KIND_SIZEOF:
             write_str__CIGenerator("sizeof(");
             generate_function_expr__CIGenerator(expr->sizeof_);

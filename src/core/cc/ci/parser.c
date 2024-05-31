@@ -2620,6 +2620,8 @@ resolve_expr__CIParser(CIParser *self, CIExpr *expr, bool is_partial)
             TODO("resolve identifier");
         case CI_EXPR_KIND_LITERAL:
             return ref__CIExpr(expr);
+        case CI_EXPR_KIND_NULLPTR:
+            return ref__CIExpr(expr);
         case CI_EXPR_KIND_SIZEOF:
             TODO("resolve sizeof");
         case CI_EXPR_KIND_STRUCT_CALL:
@@ -4983,6 +4985,8 @@ parse_primary_expr__CIParser(CIParser *self)
 
             break;
         }
+        case CI_TOKEN_KIND_KEYWORD_NULLPTR:
+            return NEW(CIExpr, CI_EXPR_KIND_NULLPTR);
         case CI_TOKEN_KIND_BUILTIN_MACRO___HAS_FEATURE: {
             bool has_feature = false;
 

@@ -3108,6 +3108,8 @@ IMPL_FOR_DEBUG(to_string, CIExprKind, enum CIExprKind self)
             return "CI_EXPR_KIND_IDENTIFIER";
         case CI_EXPR_KIND_LITERAL:
             return "CI_EXPR_KIND_LITERAL";
+        case CI_EXPR_KIND_NULLPTR:
+            return "CI_EXPR_KIND_NULLPTR";
         case CI_EXPR_KIND_SIZEOF:
             return "CI_EXPR_KIND_SIZEOF";
         case CI_EXPR_KIND_STRUCT_CALL:
@@ -3121,6 +3123,16 @@ IMPL_FOR_DEBUG(to_string, CIExprKind, enum CIExprKind self)
     }
 }
 #endif
+
+CONSTRUCTOR(CIExpr *, CIExpr, enum CIExprKind kind)
+{
+    CIExpr *self = lily_malloc(sizeof(CIExpr));
+
+    self->kind = kind;
+    self->ref_count = 0;
+
+    return self;
+}
 
 VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, alignof, CIExpr *alignof_)
 {
@@ -3374,6 +3386,10 @@ get_data_type__CIExpr(const CIExpr *self)
                 default:
                     UNREACHABLE("unknown variant");
             }
+        case CI_EXPR_KIND_NULLPTR:
+            // void*
+            return NEW_VARIANT(
+              CIDataType, ptr, NEW(CIDataType, CI_DATA_TYPE_KIND_VOID));
         case CI_EXPR_KIND_SIZEOF:
             TODO("sizeof: implement size_t");
         case CI_EXPR_KIND_STRUCT_CALL:
@@ -3497,6 +3513,9 @@ IMPL_FOR_DEBUG(to_string, CIExpr, const CIExpr *self)
               "CIExpr{{ kind = {s}, literal = {Sr} }",
               to_string__Debug__CIExprKind(self->kind),
               to_string__Debug__CIExprLiteral(&self->literal));
+        case CI_EXPR_KIND_NULLPTR:
+            return format__String("CIExpr{{ kind = {s} }",
+                                  to_string__Debug__CIExprKind(self->kind));
         case CI_EXPR_KIND_SIZEOF:
             return format__String("CIExpr{{ kind = {s}, sizeof_ = {Sr} }",
                                   to_string__Debug__CIExprKind(self->kind),
@@ -3662,6 +3681,9 @@ DESTRUCTOR(CIExpr, CIExpr *self)
             break;
         case CI_EXPR_KIND_LITERAL:
             FREE_VARIANT(CIExpr, literal, self);
+            break;
+        case CI_EXPR_KIND_NULLPTR:
+            lily_free(self);
             break;
         case CI_EXPR_KIND_SIZEOF:
             FREE_VARIANT(CIExpr, sizeof, self);
