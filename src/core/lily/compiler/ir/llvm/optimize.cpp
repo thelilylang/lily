@@ -47,6 +47,7 @@ LilyLLVMOptimize(const LilyIrLlvm *self,
                  char **error_msg,
                  const char *filename)
 {
+    // About PassManager: https://llvm.org/docs/NewPassManager.html
     LLVMDIBuilderFinalize(self->di_builder);
 
     auto &module = *unwrap(self->module);
