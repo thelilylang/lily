@@ -197,6 +197,13 @@ run__CIParser(CIParser *self);
 
 /**
  *
+ * @brief Parse data type.
+ */
+CIDataType *
+parse_data_type__CIParser(CIParser *self);
+
+/**
+ *
  * @brief Parse expression.
  * @return CIExpr*?
  */

@@ -22,37 +22,20 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_CC_CI_BUILTIN_H
-#define LILY_CORE_CC_CI_BUILTIN_H
+#ifndef LILY_CORE_CC_CI_STD_TYPES_H
+#define LILY_CORE_CC_CI_STD_TYPES_H
 
-#include <base/string.h>
-
-#include <core/cc/ci/config.h>
-
-typedef struct CIResultFile CIResultFile;
+#include <core/cc/ci/result.h>
 
 /**
  *
- * @brief Generate builtin file.
- * @link https://github.com/cpredef/predef
- */
-String *
-generate__CIBuiltin(const CIConfig *config);
-
-/**
+ * @brief Load standard type from defined macro in builtin file.
  *
- * @brief Set builtin file.
- */
-void
-set__CIBuiltin(CIResultFile *builtin_file);
-
-/**
+ * @example
  *
- * @brief Get builtin file ref from static storage.
- * @note In some situations, we need to get builtin file, by that way.
- * @return CIResultFile* (&)
+ * #define __SIZE_TYPE__ long unsigned int
  */
-CIResultFile *
-get_ref__CIBuiltin();
+CIDataType *
+load_std_type__StdTypes(char *define);
 
-#endif // LILY_CORE_CC_CI_BUILTIN_H
+#endif // LILY_CORE_CC_CI_STD_TYPES_H

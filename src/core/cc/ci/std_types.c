@@ -22,37 +22,27 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_CC_CI_BUILTIN_H
-#define LILY_CORE_CC_CI_BUILTIN_H
+#include <base/assert.h>
+#include <base/hash_map.h>
 
-#include <base/string.h>
+#include <core/cc/ci/parser.h>
+#include <core/cc/ci/std_types.h>
 
-#include <core/cc/ci/config.h>
+CIDataType *
+load_std_type__StdTypes(char *define_name)
+{
+    CIResultFile *builtin = get_ref__CIBuiltin();
+    const CIResultDefine *define =
+      get_define_from_str__CIResultFile(builtin, define_name);
 
-typedef struct CIResultFile CIResultFile;
+    ASSERT(define);
+    ASSERT(is_empty__CITokens(&define->define->tokens));
 
-/**
- *
- * @brief Generate builtin file.
- * @link https://github.com/cpredef/predef
- */
-String *
-generate__CIBuiltin(const CIConfig *config);
+    CIParser data_type_parser =
+      from_tokens__CIParser((CIResultFile *)builtin, &define->define->tokens);
+    CIDataType *data_type = parse_data_type__CIParser(&data_type_parser);
 
-/**
- *
- * @brief Set builtin file.
- */
-void
-set__CIBuiltin(CIResultFile *builtin_file);
+    free_from_tokens_case__CIParser(&data_type_parser);
 
-/**
- *
- * @brief Get builtin file ref from static storage.
- * @note In some situations, we need to get builtin file, by that way.
- * @return CIResultFile* (&)
- */
-CIResultFile *
-get_ref__CIBuiltin();
-
-#endif // LILY_CORE_CC_CI_BUILTIN_H
+    return data_type;
+}

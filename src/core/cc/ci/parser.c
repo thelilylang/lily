@@ -553,10 +553,6 @@ generate_typedef_gen__CIParser(CIParser *self,
 static CIDataType *
 parse_post_data_type__CIParser(CIParser *self, CIDataType *data_type);
 
-/// @brief Parse data type.
-static CIDataType *
-parse_data_type__CIParser(CIParser *self);
-
 /// @brief Parse enum variants.
 /// @return Vec<CIDeclEnumVariant*>*
 static Vec *
