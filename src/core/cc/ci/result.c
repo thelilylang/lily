@@ -884,7 +884,7 @@ add_lib__CIResult(const CIResult *self, char *name)
 void
 load_builtin__CIResult(CIResult *self)
 {
-    String *builtin_content = generate_builtin__CIBuiltin(self->config);
+    String *builtin_content = generate__CIBuiltin(self->config);
     File builtin_file = { .name = strdup("**<builtin.hci>**"),
                           .content = builtin_content->buffer,
                           .len = builtin_content->len };
@@ -901,6 +901,7 @@ load_builtin__CIResult(CIResult *self)
 
     insert__OrderedHashMap(self->headers, builtin_file.name, builtin);
     set_builtin__CIScanner(&builtin->scanner);
+    set__CIBuiltin(builtin);
     run__CIResultFile(builtin);
 
     self->builtin = builtin;

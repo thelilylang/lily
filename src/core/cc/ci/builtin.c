@@ -23,11 +23,13 @@
  */
 
 #include <base/alloc.h>
+#include <base/assert.h>
 #include <base/command.h>
 #include <base/format.h>
 #include <base/new.h>
 
 #include <core/cc/ci/builtin.h>
+#include <core/cc/ci/result.h>
 
 // https://gcc.gnu.org/onlinedocs/gcc/Standards.html
 static const char *std[CI_STANDARD_23 + 1] = {
@@ -38,8 +40,10 @@ static const char *std[CI_STANDARD_23 + 1] = {
     [CI_STANDARD_17] = "c17", [CI_STANDARD_23] = "c2x",
 };
 
+static CIResultFile *builtin_file_ref = NULL; // CIResultFile* (&)
+
 String *
-generate_builtin__CIBuiltin(const CIConfig *config)
+generate__CIBuiltin(const CIConfig *config)
 {
     char *command = format("{S} -dM -E -std={s} - < /dev/null",
                            config->compiler.path,
@@ -87,4 +91,18 @@ generate_builtin__CIBuiltin(const CIConfig *config)
     }
 
     return builtin_h;
+}
+
+void
+set__CIBuiltin(CIResultFile *builtin_file)
+{
+    builtin_file_ref = builtin_file;
+}
+
+CIResultFile *
+get_ref__CIBuiltin()
+{
+    ASSERT(builtin_file_ref);
+
+    return builtin_file_ref;
 }

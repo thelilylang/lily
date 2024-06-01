@@ -32,6 +32,7 @@ set(CI_SRC
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/parser.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/result.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/scanner.c
+    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/std_types.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/token.c)
 
 add_library(lily_core_cc_ci STATIC ${CI_SRC})
