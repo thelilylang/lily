@@ -2367,6 +2367,7 @@ enum CIExprKind
     CI_EXPR_KIND_GROUPING,
     CI_EXPR_KIND_IDENTIFIER,
     CI_EXPR_KIND_LITERAL,
+    CI_EXPR_KIND_NULLPTR,
     CI_EXPR_KIND_SIZEOF,
     CI_EXPR_KIND_STRUCT_CALL,
     CI_EXPR_KIND_TERNARY,
@@ -2405,6 +2406,12 @@ struct CIExpr
         CIExprUnary unary;
     };
 };
+
+/**
+ *
+ * @brief Construct CIExpr type.
+ */
+CONSTRUCTOR(CIExpr *, CIExpr, enum CIExprKind kind);
 
 /**
  *
