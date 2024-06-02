@@ -412,11 +412,6 @@ scan_warning_preprocessor__CIScanner(CIScanner *self);
 static CIToken *
 get_num__CIScanner(CIScanner *self);
 
-/// @brief Check that the token is available in accordance with the standard.
-/// @note This function can modify the token type.
-static void
-check_standard__CIScanner(CIScanner *self, CIToken *token);
-
 /// @brief Get token from characters.
 /// @param in_macro If `in_macro` is true, the scanner checks whether the
 /// paren, brace or bracket are closed.
@@ -1101,15 +1096,11 @@ static const enum CITokenKind ci_preprocessor_ids[CI_N_PREPROCESSOR] = {
     case 'Z':       \
     case '_'
 
-#define CHECK_STANDARD_SINCE(since, block) \
-    if (self->config->standard < since) {  \
-        block;                             \
-    }
-
-#define CHECK_STANDARD_UNTIL(until, block) \
-    if (self->config->standard >= until) { \
-        block;                             \
-    }
+const CIFeature *
+get_tokens_feature__CIScanner()
+{
+    return tokens_feature;
+}
 
 bool
 is_multi_part_keyword_from_token_kind__CIKeywordMultiPart(enum CITokenKind kind)
@@ -1614,14 +1605,13 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
 // This macro allows you to make the final configuration of the
 // token location and checks whether the token is available in the
 // standard configured by the user.
-#define DEFAULT_LAST_SET_AND_CHECK(token)                      \
-    next_char_by_token__CIScanner(self, token);                \
-    end_token__CIScanner(self,                                 \
-                         self->base.source.cursor.line,        \
-                         self->base.source.cursor.column,      \
-                         self->base.source.cursor.position);   \
-    set_all__Location(&token->location, &self->base.location); \
-    check_standard__CIScanner(self, token);
+#define DEFAULT_LAST_SET_AND_CHECK(token)                    \
+    next_char_by_token__CIScanner(self, token);              \
+    end_token__CIScanner(self,                               \
+                         self->base.source.cursor.line,      \
+                         self->base.source.cursor.column,    \
+                         self->base.source.cursor.position); \
+    set_all__Location(&token->location, &self->base.location);
 
 #define MAX_KEYWORD_PART 4
 #define PUSH_TOKEN_FROM_FLAGS(flags)                                        \
@@ -1658,14 +1648,15 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
                              self->base.source.cursor.column,
                              self->base.source.cursor.position);
 
-        CHECK_STANDARD_SINCE(tokens_feature[current_kind].since, {
-            PUSH_TOKEN_FROM_FLAGS(flags)
+        CHECK_STANDARD_SINCE(
+          self->config->standard, tokens_feature[current_kind].since, {
+              PUSH_TOKEN_FROM_FLAGS(flags)
 
-            last_token = NEW_VARIANT(
-              CIToken, identifier, clone__Location(&self->base.location), id);
+              last_token = NEW_VARIANT(
+                CIToken, identifier, clone__Location(&self->base.location), id);
 
-            break;
-        })
+              break;
+          })
         else
         {
             if (is_multi_part_keyword_from_token_kind__CIKeywordMultiPart(
@@ -2925,7 +2916,6 @@ scan_elif_preprocessor__CIScanner(CIScanner *self, CIScannerContext *ctx_parent)
                                      self->base.source.cursor.column,               \
                                      self->base.source.cursor.position);            \
                 set_all__Location(&ret->location, &self->base.location);            \
-                check_standard__CIScanner(self, ret);                               \
                 push_token__CIScanner(self, ctx_parent, ret);                       \
                                                                                     \
                 /* Returns the last token scanned instead of the #elif              \
@@ -3596,114 +3586,6 @@ get_num__CIScanner(CIScanner *self)
     }
 
     return NULL;
-}
-
-void
-check_standard__CIScanner(CIScanner *self, CIToken *token)
-{
-    ASSERT(token->kind < CI_TOKEN_KIND_MAX);
-
-    Location location_error = clone__Location(&token->location);
-    const CIFeature *feature = &tokens_feature[token->kind];
-
-    CHECK_STANDARD_SINCE(feature->since, {
-        enum CIErrorKind error_kind;
-
-        switch (feature->since) {
-            case CI_STANDARD_NONE:
-                return;
-            case CI_STANDARD_KR:
-                UNREACHABLE("since: no error with K&R standard");
-            case CI_STANDARD_89:
-                error_kind = CI_ERROR_KIND_REQUIRED_C89_OR_LATER;
-
-                break;
-            case CI_STANDARD_95:
-                error_kind = CI_ERROR_KIND_REQUIRED_C95_OR_LATER;
-
-                break;
-            case CI_STANDARD_99:
-                error_kind = CI_ERROR_KIND_REQUIRED_C99_OR_LATER;
-
-                break;
-            case CI_STANDARD_11:
-                error_kind = CI_ERROR_KIND_REQUIRED_C11_OR_LATER;
-
-                break;
-            case CI_STANDARD_17:
-                error_kind = CI_ERROR_KIND_REQUIRED_C17_OR_LATER;
-
-                break;
-            case CI_STANDARD_23:
-                error_kind = CI_ERROR_KIND_REQUIRED_C23_OR_LATER;
-
-                break;
-            default:
-                UNREACHABLE("unknown standard");
-        }
-
-        emit__Diagnostic(NEW_VARIANT(Diagnostic,
-                                     simple_ci_error,
-                                     self->base.source.file,
-                                     &location_error,
-                                     NEW(CIError, error_kind),
-                                     NULL,
-                                     NULL,
-                                     NULL),
-                         self->base.count_error);
-    });
-
-    CHECK_STANDARD_UNTIL(feature->until, {
-        String *note = NULL;
-
-        switch (feature->until) {
-            case CI_STANDARD_NONE:
-                return;
-            case CI_STANDARD_KR:
-                UNREACHABLE("since: no error with K&R standard");
-            case CI_STANDARD_89:
-                note =
-                  from__String("this feature is no longer available in C89");
-
-                break;
-            case CI_STANDARD_95:
-                note =
-                  from__String("this feature is no longer available in C95");
-
-                break;
-            case CI_STANDARD_99:
-                note =
-                  from__String("this feature is no longer available in C99");
-
-                break;
-            case CI_STANDARD_11:
-                note =
-                  from__String("this feature is no longer available in C11");
-
-                break;
-            case CI_STANDARD_17:
-                note =
-                  from__String("this feature is no longer available in C17");
-
-                break;
-            case CI_STANDARD_23:
-                note =
-                  from__String("this feature is no longer available in C23");
-
-                break;
-            default:
-                UNREACHABLE("unknown standard");
-        }
-
-        emit_note__Diagnostic(NEW_VARIANT(Diagnostic,
-                                          simple_ci_note,
-                                          self->base.source.file,
-                                          &location_error,
-                                          note,
-                                          NULL,
-                                          NULL,
-                                          NULL));
-    });
 }
 
 CIToken *

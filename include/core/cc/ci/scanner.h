@@ -79,6 +79,24 @@ run__CIScanner(CIScanner *self, bool dump_scanner);
 
 /**
  *
+ * @brief Get `tokens_feature` reference.
+ * @return const CIFeature* (&)
+ */
+const CIFeature *
+get_tokens_feature__CIScanner();
+
+#define CHECK_STANDARD_SINCE(standard, since, block) \
+    if (standard < since) {                          \
+        block;                                       \
+    }
+
+#define CHECK_STANDARD_UNTIL(standard, until, block) \
+    if (standard >= until) {                         \
+        block;                                       \
+    }
+
+/**
+ *
  * @brief Free CIScanner type.
  */
 inline DESTRUCTOR(CIScanner, const CIScanner *self)
