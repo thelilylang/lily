@@ -428,6 +428,11 @@ jump_in_token_block__CIParser(CIParser *self, CIToken *next_token);
 static void
 set_current_token__CIParser(CIParser *self, CIToken *next_token);
 
+/// @brief Check that the token is available in accordance with the standard.
+/// @note This function can modify the token type.
+static void
+check_standard__CIParser(CIParser *self, CIToken *token);
+
 /// @brief Advance to one token on the current iterator.
 static void
 next_token__CIParser(CIParser *self);
@@ -835,6 +840,8 @@ static bool resolve_visit_waiting_list = false;
 #define ENABLE_RESOLVE_VISIT_WAITING_LIST() resolve_visit_waiting_list = true;
 #define DISABLE_RESOLVE_VISIT_WAITING_LIST() resolve_visit_waiting_list = false;
 
+static const CIFeature *tokens_feature = NULL; // CIFeature* (&)
+
 #define HAS_REACH_EOF(token) (token->kind == CI_TOKEN_KIND_EOF)
 #define HAS_REACH_EOT(token) (token->kind == CI_TOKEN_KIND_EOT)
 
@@ -1159,6 +1166,10 @@ CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner)
 {
     if (!names_error) {
         names_error = NEW(Vec);
+    }
+
+    if (!tokens_feature) {
+        tokens_feature = get_tokens_feature__CIScanner();
     }
 
     ctx = NEW(CIParserContext);
@@ -2704,6 +2715,8 @@ next_conditional_preprocessor__CIParser(CIParser *self, CIToken **next_token)
         *next_token = (*next_token)->next;
         current = *next_token;
 
+        check_standard__CIParser(self, current);
+
         if (is_conditional_preprocessor__CITokenKind(current->kind) &&
             current->kind != CI_TOKEN_KIND_PREPROCESSOR_IF &&
             current->kind != CI_TOKEN_KIND_PREPROCESSOR_IFDEF &&
@@ -3148,6 +3161,10 @@ set_current_token__CIParser(CIParser *self, CIToken *next_token)
 void
 init__CIParser(CIParser *self)
 {
+    ASSERT(self->tokens->first);
+
+    check_standard__CIParser(self, self->tokens->first);
+
     return next_token__CIParser(self);
 }
 
@@ -3182,12 +3199,127 @@ next_token_must_continue_to_iter__CIParser(CIParser *self, CIToken *next_token)
 }
 
 void
+check_standard__CIParser(CIParser *self, CIToken *token)
+{
+    ASSERT(token->kind < CI_TOKEN_KIND_MAX);
+
+    Location location_error = clone__Location(&token->location);
+    const CIFeature *feature = &tokens_feature[token->kind];
+
+    CHECK_STANDARD_SINCE(
+      self->file->entity.result->config->standard, feature->since, {
+          enum CIErrorKind error_kind;
+
+          switch (feature->since) {
+              case CI_STANDARD_NONE:
+                  return;
+              case CI_STANDARD_KR:
+                  UNREACHABLE("since: no error with K&R standard");
+              case CI_STANDARD_89:
+                  error_kind = CI_ERROR_KIND_REQUIRED_C89_OR_LATER;
+
+                  break;
+              case CI_STANDARD_95:
+                  error_kind = CI_ERROR_KIND_REQUIRED_C95_OR_LATER;
+
+                  break;
+              case CI_STANDARD_99:
+                  error_kind = CI_ERROR_KIND_REQUIRED_C99_OR_LATER;
+
+                  break;
+              case CI_STANDARD_11:
+                  error_kind = CI_ERROR_KIND_REQUIRED_C11_OR_LATER;
+
+                  break;
+              case CI_STANDARD_17:
+                  error_kind = CI_ERROR_KIND_REQUIRED_C17_OR_LATER;
+
+                  break;
+              case CI_STANDARD_23:
+                  error_kind = CI_ERROR_KIND_REQUIRED_C23_OR_LATER;
+
+                  break;
+              default:
+                  UNREACHABLE("unknown standard");
+          }
+
+          emit__Diagnostic(NEW_VARIANT(Diagnostic,
+                                       simple_ci_error,
+                                       &self->file->file_input,
+                                       &location_error,
+                                       NEW(CIError, error_kind),
+                                       NULL,
+                                       NULL,
+                                       NULL),
+                           self->count_error);
+      });
+
+    CHECK_STANDARD_UNTIL(
+      self->file->entity.result->config->standard, feature->until, {
+          String *note = NULL;
+
+          switch (feature->until) {
+              case CI_STANDARD_NONE:
+                  return;
+              case CI_STANDARD_KR:
+                  UNREACHABLE("since: no error with K&R standard");
+              case CI_STANDARD_89:
+                  note =
+                    from__String("this feature is no longer available in C89");
+
+                  break;
+              case CI_STANDARD_95:
+                  note =
+                    from__String("this feature is no longer available in C95");
+
+                  break;
+              case CI_STANDARD_99:
+                  note =
+                    from__String("this feature is no longer available in C99");
+
+                  break;
+              case CI_STANDARD_11:
+                  note =
+                    from__String("this feature is no longer available in C11");
+
+                  break;
+              case CI_STANDARD_17:
+                  note =
+                    from__String("this feature is no longer available in C17");
+
+                  break;
+              case CI_STANDARD_23:
+                  note =
+                    from__String("this feature is no longer available in C23");
+
+                  break;
+              default:
+                  UNREACHABLE("unknown standard");
+          }
+
+          emit_note__Diagnostic(NEW_VARIANT(Diagnostic,
+                                            simple_ci_note,
+                                            &self->file->file_input,
+                                            &location_error,
+                                            note,
+                                            NULL,
+                                            NULL,
+                                            NULL));
+      });
+
+#undef CHECK_STANDARD_SINCE
+#undef CHECK_STANDARD_UNTIL
+}
+
+void
 next_token__CIParser(CIParser *self)
 {
     CIToken *next_token = self->current_token;
 
 loop:
     if (next_token) {
+        check_standard__CIParser(self, next_token);
+
         switch (next_token->kind) {
             case CI_TOKEN_KIND_EOF:
                 return set_current_token__CIParser(self, next_token);
@@ -3265,6 +3397,8 @@ check: {
     if (next_token_must_continue_to_iter__CIParser(self, next_token)) {
         if (original_token != next_token &&
             next_token->kind != CI_TOKEN_KIND_EOF) {
+            check_standard__CIParser(self, next_token);
+
             goto check;
         } else if (next_token->next->kind == CI_TOKEN_KIND_HASHTAG_HASHTAG) {
             set_current_token__CIParser(self, next_token);
@@ -4994,13 +5128,14 @@ parse_primary_expr__CIParser(CIParser *self)
                 case CI_EXTENSIONS_HAS_FEATURE_C_GENERIC_SELECTION_WITH_CONTROLLING_TYPE:
                 case CI_EXTENSIONS_HAS_FEATURE_C_STATIC_ASSERT:
                 case CI_EXTENSIONS_HAS_FEATURE_C_THREAD_LOCAL:
-                    if (self->scanner->config->standard == CI_STANDARD_11) {
+                    if (self->file->entity.result->config->standard ==
+                        CI_STANDARD_11) {
                         has_feature = true;
                     }
 
                     break;
                 case CI_EXTENSIONS_HAS_FEATURE_ADDRESS_SANITIZER:
-                    if (self->scanner->config->compiler.kind ==
+                    if (self->file->entity.result->config->compiler.kind ==
                         CI_COMPILER_KIND_CLANG) {
                         has_feature = true;
                     }
@@ -6223,7 +6358,7 @@ resolve_preprocessor_include__CIParser(CIParser *self,
               add_and_run_header__CIResult(self->file->entity.result,
                                            self->file,
                                            full_include_path,
-                                           self->file->scanner.config);
+                                           self->file->entity.result->config);
 
             // NOTE: The next token is the first token in the header, and the
             // token following the last token in the header is the current next
