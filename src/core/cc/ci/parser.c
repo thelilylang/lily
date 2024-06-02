@@ -3519,6 +3519,7 @@ token_is_data_type__CIParser(CIParser *self, const CIToken *token)
         case CI_TOKEN_KIND_KEYWORD_SHORT_INT:
         case CI_TOKEN_KIND_KEYWORD_SIGNED_CHAR:
         case CI_TOKEN_KIND_KEYWORD_STRUCT:
+        case CI_TOKEN_KIND_KEYWORD_TYPEOF:
         case CI_TOKEN_KIND_KEYWORD_UNION:
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_CHAR:
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_INT:
@@ -4484,6 +4485,17 @@ parse_data_type__CIParser(CIParser *self)
                             UNREACHABLE("this situation is impossible");
                     }
             }
+
+            break;
+        }
+        case CI_TOKEN_KIND_KEYWORD_TYPEOF: {
+            expect__CIParser(self, CI_TOKEN_KIND_LPAREN, true);
+
+            CIExpr *expr = parse_expr__CIParser(self);
+
+            expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
+
+            TODO("resolve typeof expression");
 
             break;
         }
