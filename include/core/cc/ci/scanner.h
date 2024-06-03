@@ -38,10 +38,10 @@ typedef struct CIScanner
     CITokens tokens;
     Scanner base;
     const CIConfig *config; // const CIConfig* (&)
-    /// A field indicating whether or not the file being scanned is builtin.
+    /// A field indicating whether or not the file being scanned is predefined.
     /// This makes it possible to define standard macros such as `__STDC__`,
     /// `__STDC_HOSTED__`, `__STDC_VERSION__`, without error.
-    bool is_builtin;
+    bool is_predefined;
 } CIScanner;
 
 /**
@@ -57,17 +57,17 @@ inline CONSTRUCTOR(CIScanner,
     return (CIScanner){ .tokens = NEW(CITokens),
                         .base = NEW(Scanner, source, count_error),
                         .config = config,
-                        .is_builtin = false };
+                        .is_predefined = false };
 }
 
 /**
  *
- * @brief Set the `is_builtin` field to true.
+ * @brief Set the `is_predefined` field to true.
  */
 inline void
-set_builtin__CIScanner(CIScanner *self)
+set_predefined__CIScanner(CIScanner *self)
 {
-    self->is_builtin = true;
+    self->is_predefined = true;
 }
 
 /**

@@ -22,27 +22,37 @@
  * SOFTWARE.
  */
 
-#include <base/assert.h>
-#include <base/hash_map.h>
+#ifndef LILY_CORE_CC_CI_PREDEFINED_H
+#define LILY_CORE_CC_CI_PREDEFINED_H
 
-#include <core/cc/ci/parser.h>
-#include <core/cc/ci/std_types.h>
+#include <base/string.h>
 
-CIDataType *
-load_std_type__StdTypes(char *define_name)
-{
-    CIResultFile *builtin = get_ref__CIPreDefined();
-    const CIResultDefine *define =
-      get_define_from_str__CIResultFile(builtin, define_name);
+#include <core/cc/ci/config.h>
 
-    ASSERT(define);
-    ASSERT(is_empty__CITokens(&define->define->tokens));
+typedef struct CIResultFile CIResultFile;
 
-    CIParser data_type_parser =
-      from_tokens__CIParser((CIResultFile *)builtin, &define->define->tokens);
-    CIDataType *data_type = parse_data_type__CIParser(&data_type_parser);
+/**
+ *
+ * @brief Generate pre-defined file.
+ * @link https://github.com/cpredef/predef
+ */
+String *
+generate__CIPreDefined(const CIConfig *config);
 
-    free_from_tokens_case__CIParser(&data_type_parser);
+/**
+ *
+ * @brief Set pre-defined file.
+ */
+void
+set__CIPreDefined(CIResultFile *predefined_file);
 
-    return data_type;
-}
+/**
+ *
+ * @brief Get pre-defined file ref from static storage.
+ * @note In some situations, we need to get builtin file, by that way.
+ * @return CIResultFile* (&)
+ */
+CIResultFile *
+get_ref__CIPreDefined();
+
+#endif // LILY_CORE_CC_CI_PREDEFINED_H

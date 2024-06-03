@@ -30,9 +30,9 @@
 #include <base/ordered_hash_map.h>
 
 #include <core/cc/ci/ast.h>
-#include <core/cc/ci/builtin.h>
 #include <core/cc/ci/features.h>
 #include <core/cc/ci/parser.h>
+#include <core/cc/ci/predefined.h>
 #include <core/cc/ci/scanner.h>
 #include <core/cc/ci/token.h>
 #include <core/shared/file.h>
@@ -220,9 +220,9 @@ DESTRUCTOR(CIResultFileAnalysis, CIResultFileAnalysis *self);
 /**
  *
  * @brief Construct CIResultFile type.
- * @param builtin If the builtin parameter is NULL, this means that the
- * CIResultFile type is a builtin.
- * @param builtin CIResultFile*? (&)
+ * @param predefined If the predefined parameter is NULL, this means that the
+ * CIResultFile type is a pre-defined.
+ * @param predefined CIResultFile*? (&)
  */
 CONSTRUCTOR(CIResultFile *,
             CIResultFile,
@@ -306,11 +306,11 @@ undef_define__CIResultFile(const CIResultFile *self, String *name);
 
 /**
  *
- * @brief Include builtin to file.
+ * @brief Include predefined to file.
  */
 void
-include_builtin__CIResultFile(const CIResultFile *self,
-                              const CIResultFile *builtin);
+include_predefined__CIResultFile(const CIResultFile *self,
+                                 const CIResultFile *predefined);
 
 /**
  *
@@ -614,12 +614,12 @@ DESTRUCTOR(CIResultBin, CIResultBin *self);
 
 typedef struct CIResult
 {
-    CIResultFile *builtin;   // CIResultFile* (&)
-    const CIConfig *config;  // const CIConfig* (&)
-    OrderedHashMap *headers; // OrderedHashMap<CIResultFile*>*
-    OrderedHashMap *sources; // OrderedHashMap<CIResultFile* (&)>*
-    OrderedHashMap *bins;    // OrderedHashMap<CIResultBin*>*
-    OrderedHashMap *libs;    // OrderedHashMap<CIResultLib*>*
+    CIResultFile *predefined; // CIResultFile* (&)
+    const CIConfig *config;   // const CIConfig* (&)
+    OrderedHashMap *headers;  // OrderedHashMap<CIResultFile*>*
+    OrderedHashMap *sources;  // OrderedHashMap<CIResultFile* (&)>*
+    OrderedHashMap *bins;     // OrderedHashMap<CIResultBin*>*
+    OrderedHashMap *libs;     // OrderedHashMap<CIResultLib*>*
 } CIResult;
 
 /**
@@ -629,7 +629,7 @@ typedef struct CIResult
 inline CONSTRUCTOR(CIResult, CIResult, const CIConfig *config)
 {
     return (CIResult){
-        .builtin = NULL,
+        .predefined = NULL,
         .config = config,
         .headers = NEW(OrderedHashMap),
         .sources = NEW(OrderedHashMap),
@@ -707,10 +707,10 @@ has_lib__CIResult(const CIResult *self, char *lib_name)
 
 /**
  *
- * @brief Load builtin file.
+ * @brief Load pre-defined file.
  */
 void
-load_builtin__CIResult(CIResult *self);
+load_predefined__CIResult(CIResult *self);
 
 /**
  *

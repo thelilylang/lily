@@ -128,9 +128,9 @@ CONSTRUCTOR(CIResultFileAnalysis *, CIResultFileAnalysis, CIResultFile *file)
 
     set_file_analysis__CIResultFile(file, self);
 
-    // If builtin is NULL, we are analyzing builtin.
-    if (file->entity.result->builtin) {
-        include_builtin__CIResultFile(file, file->entity.result->builtin);
+    // If predefined is NULL, we are analyzing predefined.
+    if (file->entity.result->predefined) {
+        include_predefined__CIResultFile(file, file->entity.result->predefined);
     }
 
     self->parser = NEW(CIParser, file, &file->scanner);
@@ -254,10 +254,10 @@ undef_define__CIResultFile(const CIResultFile *self, String *name)
 }
 
 void
-include_builtin__CIResultFile(const CIResultFile *self,
-                              const CIResultFile *builtin)
+include_predefined__CIResultFile(const CIResultFile *self,
+                                 const CIResultFile *predefined)
 {
-    HashMapIter iter = NEW(HashMapIter, builtin->file_analysis->defines);
+    HashMapIter iter = NEW(HashMapIter, predefined->file_analysis->defines);
     CIResultDefine *def = NULL;
 
     while ((def = next__HashMapIter(&iter))) {
@@ -695,7 +695,7 @@ include_content__CIResultFile(const CIResultFile *self, CIResultFile *other)
     while ((current_define = next__HashMapIter(&defines_iter))) {
         if ((current_define->file_id.id == HEADER_FILE_BUILTIN_ID
                ? current_define->file_id.kind != CI_FILE_ID_KIND_HEADER
-               : true) /* Don't include builtin file content */
+               : true) /* Don't include predefined file content */
             && (current_define->file_id.id == self->entity.id
                   ? current_define->file_id.kind != self->kind
                   : true) &&
@@ -882,31 +882,31 @@ add_lib__CIResult(const CIResult *self, char *name)
 }
 
 void
-load_builtin__CIResult(CIResult *self)
+load_predefined__CIResult(CIResult *self)
 {
-    String *builtin_content = generate__CIBuiltin(self->config);
-    File builtin_file = { .name = strdup("**<builtin.hci>**"),
-                          .content = builtin_content->buffer,
-                          .len = builtin_content->len };
-    CIResultFile *builtin = NEW(CIResultFile,
-                                builtin_file,
-                                CI_FILE_ID_KIND_HEADER,
-                                NULL,
-                                self->config,
-                                HEADER_FILE_BUILTIN_ID,
-                                self,
-                                CI_RESULT_ENTITY_KIND_FILE,
-                                NULL);
-    (void)NEW(CIResultFileAnalysis, builtin);
+    String *predefined_content = generate__CIPreDefined(self->config);
+    File predefined_file = { .name = strdup("**<predefined.hci>**"),
+                             .content = predefined_content->buffer,
+                             .len = predefined_content->len };
+    CIResultFile *predefined = NEW(CIResultFile,
+                                   predefined_file,
+                                   CI_FILE_ID_KIND_HEADER,
+                                   NULL,
+                                   self->config,
+                                   HEADER_FILE_BUILTIN_ID,
+                                   self,
+                                   CI_RESULT_ENTITY_KIND_FILE,
+                                   NULL);
+    (void)NEW(CIResultFileAnalysis, predefined);
 
-    insert__OrderedHashMap(self->headers, builtin_file.name, builtin);
-    set_builtin__CIScanner(&builtin->scanner);
-    set__CIBuiltin(builtin);
-    run__CIResultFile(builtin);
+    insert__OrderedHashMap(self->headers, predefined_file.name, predefined);
+    set_predefined__CIScanner(&predefined->scanner);
+    set__CIPreDefined(predefined);
+    run__CIResultFile(predefined);
 
-    self->builtin = builtin;
+    self->predefined = predefined;
 
-    lily_free(builtin_content);
+    lily_free(predefined_content);
 }
 
 CIResultFile *
@@ -1056,7 +1056,7 @@ add_and_run_header__CIResult(const CIResult *self,
 void
 build__CIResult(CIResult *self)
 {
-    load_builtin__CIResult(self);
+    load_predefined__CIResult(self);
 
     for (Usize i = 0; i < self->config->libraries->len; ++i) {
         add_and_run_lib__CIResult(self, get__Vec(self->config->libraries, i));

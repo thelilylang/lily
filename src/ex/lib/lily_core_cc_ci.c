@@ -407,7 +407,7 @@ extern inline CONSTRUCTOR(CIScanner,
                           const CIConfig *config);
 
 extern inline void
-set_builtin__CIScanner(CIScanner *self);
+set_predefined__CIScanner(CIScanner *self);
 
 extern inline DESTRUCTOR(CIScanner, const CIScanner *self);
 
