@@ -24,7 +24,7 @@
 
 #include <base/sized_str.h>
 
-CONSTRUCTOR(SizedStr, SizedStr, const char *buffer, const Usize len)
+CONSTRUCTOR(SizedStr, SizedStr, const char *buffer, Usize len)
 {
     return (SizedStr){ .buffer = buffer, .len = len };
 }

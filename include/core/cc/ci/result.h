@@ -30,6 +30,7 @@
 #include <base/ordered_hash_map.h>
 
 #include <core/cc/ci/ast.h>
+#include <core/cc/ci/builtin.h>
 #include <core/cc/ci/features.h>
 #include <core/cc/ci/parser.h>
 #include <core/cc/ci/predefined.h>
@@ -616,6 +617,7 @@ typedef struct CIResult
 {
     CIResultFile *predefined; // CIResultFile* (&)
     const CIConfig *config;   // const CIConfig* (&)
+    const CIBuiltin *builtin; // const CIBuiltin* (&)
     OrderedHashMap *headers;  // OrderedHashMap<CIResultFile*>*
     OrderedHashMap *sources;  // OrderedHashMap<CIResultFile* (&)>*
     OrderedHashMap *bins;     // OrderedHashMap<CIResultBin*>*
@@ -626,11 +628,15 @@ typedef struct CIResult
  *
  * @brief Construct CIResult type.
  */
-inline CONSTRUCTOR(CIResult, CIResult, const CIConfig *config)
+inline CONSTRUCTOR(CIResult,
+                   CIResult,
+                   const CIConfig *config,
+                   const CIBuiltin *builtin)
 {
     return (CIResult){
         .predefined = NULL,
         .config = config,
+        .builtin = builtin,
         .headers = NEW(OrderedHashMap),
         .sources = NEW(OrderedHashMap),
         .bins = NEW(OrderedHashMap),

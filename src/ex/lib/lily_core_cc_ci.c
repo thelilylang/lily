@@ -391,7 +391,10 @@ extern inline CONSTRUCTOR(CIResultEntity,
                           enum CIResultEntityKind kind,
                           String *filename_result);
 
-extern inline CONSTRUCTOR(CIResult, CIResult, const CIConfig *config);
+extern inline CONSTRUCTOR(CIResult,
+                          CIResult,
+                          const CIConfig *config,
+                          const CIBuiltin *builtin);
 
 extern inline bool
 has_header__CIResult(const CIResult *self, const String *filename_result);
