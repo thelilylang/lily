@@ -104,6 +104,7 @@ then
 	cp $LOCAL_BIN_DIR/liblily_sys.dylib $INSTALL_LATEST_LIB_DIR_PATH
 	cp $LOCAL_BIN_DIR/liblily_builtin.dylib $INSTALL_LATEST_LIB_DIR_PATH
 elif [[ $TARGET =~ linux.* ]]
+then
 	cp $LOCAL_BIN_DIR/liblily_sys.so $INSTALL_LATEST_LIB_DIR_PATH
 	cp $LOCAL_BIN_DIR/liblily_builtin.so $INSTALL_LATEST_LIB_DIR_PATH
 else
