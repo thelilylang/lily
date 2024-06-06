@@ -54,6 +54,9 @@ static VARIANT_DESTRUCTOR(CIDataType, array, CIDataType *self);
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND__ATOMIC).
 static VARIANT_DESTRUCTOR(CIDataType, _atomic, CIDataType *self);
 
+/// @brief Free CIDataType type (CI_DATA_TYPE_KIND_BUILTIN).
+static inline VARIANT_DESTRUCTOR(CIDataType, builtin, CIDataType *self);
+
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_ENUM).
 static inline VARIANT_DESTRUCTOR(CIDataType, enum, CIDataType *self);
 
@@ -386,6 +389,8 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeKind, enum CIDataTypeKind self)
             return "CI_DATA_TYPE_KIND__ATOMIC";
         case CI_DATA_TYPE_KIND_BOOL:
             return "CI_DATA_TYPE_KIND_BOOL";
+        case CI_DATA_TYPE_KIND_BUILTIN:
+            return "CI_DATA_TYPE_KIND_BUILTIN";
         case CI_DATA_TYPE_KIND_CHAR:
             return "CI_DATA_TYPE_KIND_CHAR";
         case CI_DATA_TYPE_KIND_DOUBLE:
@@ -637,6 +642,17 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, _atomic, CIDataType *_atomic)
     return self;
 }
 
+VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, builtin, Usize builtin)
+{
+    CIDataType *self = lily_malloc(sizeof(CIDataType));
+
+    self->kind = CI_DATA_TYPE_KIND_BUILTIN;
+    self->ref_count = 0;
+    self->builtin = builtin;
+
+    return self;
+}
+
 VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, enum, String *enum_)
 {
     CIDataType *self = lily_malloc(sizeof(CIDataType));
@@ -784,6 +800,8 @@ clone__CIDataType(const CIDataType *self)
         case CI_DATA_TYPE_KIND__ATOMIC:
             return NEW_VARIANT(
               CIDataType, _atomic, clone__CIDataType(self->_atomic));
+        case CI_DATA_TYPE_KIND_BUILTIN:
+            return NEW_VARIANT(CIDataType, builtin, self->builtin);
         case CI_DATA_TYPE_KIND_ENUM:
             return NEW_VARIANT(CIDataType, enum, self->enum_);
         case CI_DATA_TYPE_KIND_FUNCTION: {
@@ -904,6 +922,10 @@ serialize__CIDataType(const CIDataType *self, String *buffer)
             serialize__CIDataType(self->_atomic, buffer);
 
             break;
+        case CI_DATA_TYPE_KIND_BUILTIN:
+            SERIALIZE_FMT_PUSH_TO_BUFFER("{zu}", self->builtin);
+
+            break;
         case CI_DATA_TYPE_KIND_ENUM:
             push_str__String(buffer, self->enum_->buffer);
 
@@ -1011,6 +1033,8 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
             }
         case CI_DATA_TYPE_KIND__ATOMIC:
             return eq__CIDataType(self->_atomic, other->_atomic);
+        case CI_DATA_TYPE_KIND_BUILTIN:
+            return self->builtin == other->builtin;
         case CI_DATA_TYPE_KIND_ENUM:
             return !strcmp(self->enum_->buffer, other->enum_->buffer);
         case CI_DATA_TYPE_KIND_FUNCTION:
@@ -1132,6 +1156,10 @@ IMPL_FOR_DEBUG(to_string, CIDataType, const CIDataType *self)
             return format__String("CIDataType{{ kind = {s}, _atomic = {Sr} }",
                                   to_string__Debug__CIDataTypeKind(self->kind),
                                   to_string__Debug__CIDataType(self->_atomic));
+        case CI_DATA_TYPE_KIND_BUILTIN:
+            return format__String("CIDataType{{ kind = {s}, builtin = {zu} }",
+                                  to_string__Debug__CIDataTypeKind(self->kind),
+                                  self->builtin);
         case CI_DATA_TYPE_KIND_ENUM:
             return format__String("CIDataType{{ kind = {s}, enum = {S} }",
                                   to_string__Debug__CIDataTypeKind(self->kind),
@@ -1190,6 +1218,11 @@ VARIANT_DESTRUCTOR(CIDataType, array, CIDataType *self)
 VARIANT_DESTRUCTOR(CIDataType, _atomic, CIDataType *self)
 {
     FREE(CIDataType, self->_atomic);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIDataType, builtin, CIDataType *self)
+{
     lily_free(self);
 }
 
@@ -1258,6 +1291,9 @@ DESTRUCTOR(CIDataType, CIDataType *self)
             break;
         case CI_DATA_TYPE_KIND__ATOMIC:
             FREE_VARIANT(CIDataType, _atomic, self);
+            break;
+        case CI_DATA_TYPE_KIND_BUILTIN:
+            FREE_VARIANT(CIDataType, builtin, self);
             break;
         case CI_DATA_TYPE_KIND_ENUM:
             FREE_VARIANT(CIDataType, enum, self);

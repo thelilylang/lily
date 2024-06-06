@@ -3241,12 +3241,11 @@ scan_include_preprocessor__CIScanner(CIScanner *self)
             FAILED("expected `<` or `\"`");
     }
 
-    return NEW_VARIANT(CIToken,
-                       preprocessor_include,
-                       preprocessor_include_location,
-                       NEW(CITokenPreprocessorInclude,
-                           preprocessor_include_value,
-                           NEW(CITokens)));
+    return NEW_VARIANT(
+      CIToken,
+      preprocessor_include,
+      preprocessor_include_location,
+      NEW(CITokenPreprocessorInclude, preprocessor_include_value));
 }
 
 CIToken *

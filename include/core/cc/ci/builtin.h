@@ -40,7 +40,7 @@
  */
 typedef struct CIBuiltinFunction
 {
-    SizedStr name;
+    const SizedStr *name; // SizedStr* (&)
     CIDataType *return_data_type;
     Vec *params; // Vec<CIDataType*>*
 } CIBuiltinFunction;
@@ -60,7 +60,7 @@ DESTRUCTOR(CIBuiltinFunction, const CIBuiltinFunction *self);
 
 typedef struct CIBuiltinType
 {
-    SizedStr name;
+    const SizedStr *name; // SizedStr* (&)
 } CIBuiltinType;
 
 /**
@@ -69,6 +69,20 @@ typedef struct CIBuiltinType
  */
 CIBuiltinType *
 load__CIBuiltinType();
+
+/**
+ *
+ * @brief Is builtin type.
+ */
+bool
+is__CIBuiltinType(String *name);
+
+/**
+ *
+ * @brief Get id of builtin type.
+ */
+Usize
+get_id__CIBuiltinType(String *name);
 
 typedef struct CIBuiltin
 {
@@ -81,6 +95,22 @@ typedef struct CIBuiltin
  * @brief Construct CIBuiltin type.
  */
 CONSTRUCTOR(CIBuiltin, CIBuiltin);
+
+/**
+ *
+ * @brief Get builtin type from id.
+ * @return const CIBuiltinType* (&)
+ */
+const CIBuiltinType *
+get_builtin_type__CIBuiltin(const CIBuiltin *self, Usize id);
+
+/**
+ *
+ * @brief Get builtin function from id.
+ * @return const CIBuiltinFunction* (&)
+ */
+const CIBuiltinFunction *
+get_builtin_function__CIBuiltin(const CIBuiltin *self, Usize id);
 
 /**
  *

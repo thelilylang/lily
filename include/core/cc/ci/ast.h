@@ -461,6 +461,7 @@ enum CIDataTypeKind
     CI_DATA_TYPE_KIND_ARRAY,
     CI_DATA_TYPE_KIND__ATOMIC,
     CI_DATA_TYPE_KIND_BOOL,
+    CI_DATA_TYPE_KIND_BUILTIN,
     CI_DATA_TYPE_KIND_CHAR,
     CI_DATA_TYPE_KIND_DOUBLE,
     CI_DATA_TYPE_KIND_DOUBLE__COMPLEX,
@@ -740,6 +741,7 @@ typedef struct CIDataType
     {
         CIDataTypeArray array;
         struct CIDataType *_atomic;
+        Usize builtin; // id of the builtin
         String *enum_; // String* (&)
         CIDataTypeFunction function;
         String *generic; // String* (&)
@@ -763,6 +765,12 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, array, CIDataTypeArray array);
  * @brief Construct CIDataType type (CI_DATA_TYPE_KIND__ATOMIC).
  */
 VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, _atomic, CIDataType *_atomic);
+
+/**
+ *
+ * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_BUILTIN).
+ */
+VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, builtin, Usize builtin);
 
 /**
  *

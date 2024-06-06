@@ -3498,7 +3498,9 @@ token_is_data_type__CIParser(CIParser *self, const CIToken *token)
 {
     switch (token->kind) {
         case CI_TOKEN_KIND_IDENTIFIER:
-            return search_typedef__CIResultFile(self->file, token->identifier);
+            return search_typedef__CIResultFile(self->file,
+                                                token->identifier) ||
+                   is__CIBuiltinType(token->identifier);
         case CI_TOKEN_KIND_AT: // TODO: check if the next token is an identifier
                                // (not needed for the moment)
         case CI_TOKEN_KIND_KEYWORD_BOOL:
@@ -4234,6 +4236,15 @@ parse_data_type__CIParser(CIParser *self)
 
     switch (self->previous_token->kind) {
         case CI_TOKEN_KIND_IDENTIFIER: {
+            if (is__CIBuiltinType(self->previous_token->identifier)) {
+                res = NEW_VARIANT(
+                  CIDataType,
+                  builtin,
+                  get_id__CIBuiltinType(self->previous_token->identifier));
+
+                break;
+            }
+
             String *name = self->previous_token->identifier;
             CIGenericParams *generic_params =
               parse_generic_params__CIParser(self, true);

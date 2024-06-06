@@ -531,8 +531,7 @@ extern inline CONSTRUCTOR(CITokenPreprocessorElse,
 
 extern inline CONSTRUCTOR(CITokenPreprocessorInclude,
                           CITokenPreprocessorInclude,
-                          String *value,
-                          CITokens content);
+                          String *value);
 
 extern inline DESTRUCTOR(CITokenPreprocessorInclude,
                          const CITokenPreprocessorInclude *self);

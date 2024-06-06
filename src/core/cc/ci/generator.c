@@ -31,6 +31,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static inline void
+set_result_ref__CIGenerator(const CIResult *result);
+
+static inline void
+unset_result_ref__CIGenerator();
+
 /// @return CIDataType*? (&)
 static CIDataType *
 substitute_generic__CIGenerator(const String *generic_name);
@@ -197,6 +203,8 @@ generate_decl_prototype__CIGenerator(const CIDecl *decl);
 static void
 generate_decls_prototype__CIGenerator(const CIResultFile *file_result);
 
+static const CIResult *result_ref = NULL; // CIResult* (&)
+
 // NOTE: If the program is multi-threaded, you'll need to adapt these variables
 // to multi-threading.
 static String *current_result_content = NULL;
@@ -212,6 +220,18 @@ static CIGenericParams *current_called_generic_params = NULL;
 #define RESET_CURRENT_GENERIC_PARAMS() \
     current_generic_params = NULL;     \
     current_called_generic_params = NULL;
+
+void
+set_result_ref__CIGenerator(const CIResult *result)
+{
+    result_ref = result;
+}
+
+void
+unset_result_ref__CIGenerator()
+{
+    result_ref = NULL;
+}
 
 CIDataType *
 substitute_generic__CIGenerator(const String *generic_name)
@@ -235,6 +255,8 @@ run__CIGenerator(const CIResult *result)
     CIResultLib *current_lib = NULL;
     CIResultBin *current_bin = NULL;
 
+    set_result_ref__CIGenerator(result);
+
     while ((current_lib = next__OrderedHashMapIter(&iter_libs))) {
         run_file__CIGenerator(current_lib->file);
     }
@@ -242,6 +264,8 @@ run__CIGenerator(const CIResult *result)
     while ((current_bin = next__OrderedHashMapIter(&iter_bins))) {
         run_file__CIGenerator(current_bin->file);
     }
+
+    unset_result_ref__CIGenerator();
 }
 
 void
@@ -332,6 +356,14 @@ generate_data_type__CIGenerator(CIDataType *data_type)
             write_str__CIGenerator("bool");
 
             break;
+        case CI_DATA_TYPE_KIND_BUILTIN: {
+            const CIBuiltinType *builtin_type = get_builtin_type__CIBuiltin(
+              result_ref->builtin, subs_data_type->builtin);
+
+            write_str__CIGenerator((char *)builtin_type->name->buffer);
+
+            break;
+        }
         case CI_DATA_TYPE_KIND_CHAR:
             write_str__CIGenerator("char");
 
