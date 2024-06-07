@@ -3325,11 +3325,20 @@ loop:
                 return set_current_token__CIParser(self, next_token);
             case CI_TOKEN_KIND_EOT:
                 switch (next_token->eot.ctx) {
-                    case CI_TOKEN_EOT_CONTEXT_INCLUDE:
+                    case CI_TOKEN_EOT_CONTEXT_INCLUDE: {
+                        CIToken *preprocessor_include_token =
+                          next_token->eot.include;
+
+                        preprocessor_include_token->next = next_token->next;
+
                         // Restore EOF.
                         next_token->kind = CI_TOKEN_KIND_EOF;
+                        next_token->next = NULL;
+
+                        next_token = preprocessor_include_token;
 
                         break;
+                    }
                     case CI_TOKEN_EOT_CONTEXT_MACRO_CALL: {
                         CIParserMacroCall *macro_call =
                           pop__Stack(self->macros_call);
@@ -6414,6 +6423,8 @@ resolve_preprocessor_include__CIParser(CIParser *self,
             // EOF)) -> INCLUDE
             header->scanner.tokens.last->kind = CI_TOKEN_KIND_EOT;
             header->scanner.tokens.last->eot.ctx = CI_TOKEN_EOT_CONTEXT_INCLUDE;
+            header->scanner.tokens.last->eot.include =
+              preprocessor_include_token;
             header->scanner.tokens.last->next =
               preprocessor_include_token->next;
             preprocessor_include_token->next = header->scanner.tokens.first;
