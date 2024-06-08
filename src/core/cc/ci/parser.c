@@ -6433,6 +6433,8 @@ resolve_preprocessor_include__CIParser(CIParser *self,
 
             goto exit;
         } else {
+            lily_free(full_include_path);
+
             continue;
         }
     }
