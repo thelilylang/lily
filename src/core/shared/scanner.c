@@ -85,7 +85,7 @@ end_token__Scanner(Scanner *self,
 char *
 peek_char__Scanner(const Scanner *self, const Usize n)
 {
-    if (self->source.cursor.position < self->source.file->len - 1) {
+    if (self->source.cursor.position + n < self->source.file->len - 1) {
         return (char *)(Uptr)
           self->source.file->content[self->source.cursor.position + n];
     }
