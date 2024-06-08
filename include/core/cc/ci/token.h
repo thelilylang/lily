@@ -350,6 +350,11 @@ typedef struct CITokenEot
     enum CITokenEotContext ctx;
     union
     {
+        // Save the token before connecting it to the included tokens.
+        //
+        // include -> <tokens_of_the_include> -> ...
+        // ^^^^^^^
+        struct CIToken *include; // struct CIToken* (&)
         // Result of: `id`##`id2`
         struct CIToken *merged_token; // struct CIToken*
         // This represents the token to restore after reaching the EOT token in
