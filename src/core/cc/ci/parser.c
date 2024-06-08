@@ -4761,6 +4761,15 @@ parse_function_call__CIParser(CIParser *self,
     }
 
     expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
+
+    if (is__CIBuiltinFunction(identifier)) {
+        return NEW_VARIANT(CIExpr,
+                           function_call_builtin,
+                           NEW(CIExprFunctionCallBuiltin,
+                               get_id__CIBuiltinFunction(identifier),
+                               params));
+    }
+
     generate_function_gen__CIParser(self, identifier, generic_params);
 
     return NEW_VARIANT(

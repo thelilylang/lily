@@ -67,6 +67,8 @@ static Int32 builtin_type_ids[CI_BUILTIN_TYPE_COUNT] = {
     CI_BUILTIN_TYPE_VA_LIST
 };
 
+static CIBuiltin *builtin_ref = NULL; // CIBuiltin* (&)
+
 CIBuiltinFunction *
 load__CIBuiltinFunction()
 {
@@ -81,6 +83,28 @@ load__CIBuiltinFunction()
       NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT));
 
     return builtins;
+}
+
+bool
+is__CIBuiltinFunction(String *name)
+{
+    return get_id__Search(name,
+                          builtin_function_names,
+                          builtin_function_ids,
+                          CI_BUILTIN_FUNCTION_COUNT) != -1;
+}
+
+Usize
+get_id__CIBuiltinFunction(String *name)
+{
+    Usize id = get_id__Search(name,
+                              builtin_function_names,
+                              builtin_function_ids,
+                              CI_BUILTIN_FUNCTION_COUNT);
+
+    ASSERT(id != -1);
+
+    return id;
 }
 
 DESTRUCTOR(CIBuiltinFunction, const CIBuiltinFunction *self)
@@ -141,6 +165,20 @@ get_builtin_function__CIBuiltin(const CIBuiltin *self, Usize id)
     ASSERT(id < CI_BUILTIN_FUNCTION_COUNT);
 
     return &self->functions[id];
+}
+
+void
+set__CIBuiltin(CIBuiltin *self)
+{
+    self = builtin_ref;
+}
+
+CIBuiltin *
+get_ref__CIBuiltin()
+{
+    ASSERT(builtin_ref);
+
+    return builtin_ref;
 }
 
 DESTRUCTOR(CIBuiltin, const CIBuiltin *self)

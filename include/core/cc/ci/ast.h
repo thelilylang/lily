@@ -2300,6 +2300,42 @@ IMPL_FOR_DEBUG(to_string, CIExprFunctionCall, const CIExprFunctionCall *self);
  */
 DESTRUCTOR(CIExprFunctionCall, const CIExprFunctionCall *self);
 
+typedef struct CIExprFunctionCallBuiltin
+{
+    Usize id;    // id of the builtin
+    Vec *params; // Vec<CIExpr*>*
+} CIExprFunctionCallBuiltin;
+
+/**
+ *
+ * @brief Construct CIExprFunctionCallBuiltin type.
+ */
+inline CONSTRUCTOR(CIExprFunctionCallBuiltin,
+                   CIExprFunctionCallBuiltin,
+                   Usize id,
+                   Vec *params)
+{
+    return (CIExprFunctionCallBuiltin){ .id = id, .params = params };
+}
+
+/**
+ *
+ * @brief Convert CIExprFunctionCallBuiltin in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CIExprFunctionCallBuiltin,
+               const CIExprFunctionCallBuiltin *self);
+#endif
+
+/**
+ *
+ * @brief Free CIExprFunctionCallBuiltin type.
+ */
+DESTRUCTOR(CIExprFunctionCallBuiltin, const CIExprFunctionCallBuiltin *self);
+
 typedef struct CIExprStructFieldCall
 {
     Vec *path; // Vec<String* (&)>*
@@ -2372,6 +2408,7 @@ enum CIExprKind
     CI_EXPR_KIND_CAST,
     CI_EXPR_KIND_DATA_TYPE,
     CI_EXPR_KIND_FUNCTION_CALL,
+    CI_EXPR_KIND_FUNCTION_CALL_BUILTIN,
     CI_EXPR_KIND_GROUPING,
     CI_EXPR_KIND_IDENTIFIER,
     CI_EXPR_KIND_LITERAL,
@@ -2405,6 +2442,7 @@ struct CIExpr
         CIExprCast cast;
         CIDataType *data_type;
         CIExprFunctionCall function_call;
+        CIExprFunctionCallBuiltin function_call_builtin;
         CIExpr *grouping;
         String *identifier; // String* (&)
         CIExprLiteral literal;
@@ -2468,6 +2506,15 @@ VARIANT_CONSTRUCTOR(CIExpr *,
                     CIExpr,
                     function_call,
                     CIExprFunctionCall function_call);
+
+/**
+ *
+ * @brief Construct CIExpr type (CI_EXPR_KIND_FUNCTION_CALL_BUILTIN).
+ */
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    function_call_builtin,
+                    CIExprFunctionCallBuiltin function_call_builtin);
 
 /**
  *

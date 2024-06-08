@@ -50,6 +50,7 @@ main(int argc, char **argv)
     CIConfig config = parse__CIConfig(argv[1]);
     CIResult result = NEW(CIResult, &config, &builtin);
 
+    set__CIBuiltin(&builtin);
     build__CIResult(&result);
     run__CIGenerator(&result);
 

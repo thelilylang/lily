@@ -41,7 +41,7 @@ generate__CIPreDefined(const CIConfig *config);
 
 /**
  *
- * @brief Set pre-defined file.
+ * @brief Set pre-defined file to static storage.
  */
 void
 set__CIPreDefined(CIResultFile *predefined_file);

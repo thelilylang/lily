@@ -287,6 +287,11 @@ extern inline CONSTRUCTOR(CIExprFunctionCall,
                           Vec *params,
                           CIGenericParams *generic_params);
 
+extern inline CONSTRUCTOR(CIExprFunctionCallBuiltin,
+                          CIExprFunctionCallBuiltin,
+                          Usize id,
+                          Vec *params);
+
 extern inline CIExpr *
 ref__CIExpr(CIExpr *self);
 

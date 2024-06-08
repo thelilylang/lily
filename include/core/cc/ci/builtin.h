@@ -54,6 +54,20 @@ load__CIBuiltinFunction();
 
 /**
  *
+ * @brief Is builtin function.
+ */
+bool
+is__CIBuiltinFunction(String *name);
+
+/**
+ *
+ * @brief Get id of builtin function.
+ */
+Usize
+get_id__CIBuiltinFunction(String *name);
+
+/**
+ *
  * @brief Free CIBuiltinFunction type.
  */
 DESTRUCTOR(CIBuiltinFunction, const CIBuiltinFunction *self);
@@ -111,6 +125,21 @@ get_builtin_type__CIBuiltin(const CIBuiltin *self, Usize id);
  */
 const CIBuiltinFunction *
 get_builtin_function__CIBuiltin(const CIBuiltin *self, Usize id);
+
+/**
+ *
+ * @brief Set builtin to static storage.
+ */
+void
+set__CIBuiltin(CIBuiltin *self);
+
+/**
+ *
+ * @brief Get builtin ref.
+ * @return CIBuiltin* (&)
+ */
+CIBuiltin *
+get_ref__CIBuiltin();
 
 /**
  *
