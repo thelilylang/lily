@@ -28,6 +28,7 @@
 #include <base/new.h>
 
 #include <core/cc/ci/ast.h>
+#include <core/cc/ci/builtin.h>
 #include <core/cc/ci/token.h>
 
 #include <stdio.h>
@@ -53,6 +54,9 @@ static VARIANT_DESTRUCTOR(CIDataType, array, CIDataType *self);
 
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND__ATOMIC).
 static VARIANT_DESTRUCTOR(CIDataType, _atomic, CIDataType *self);
+
+/// @brief Free CIDataType type (CI_DATA_TYPE_KIND_BUILTIN).
+static inline VARIANT_DESTRUCTOR(CIDataType, builtin, CIDataType *self);
 
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_ENUM).
 static inline VARIANT_DESTRUCTOR(CIDataType, enum, CIDataType *self);
@@ -131,6 +135,9 @@ static VARIANT_DESTRUCTOR(CIExpr, data_type, CIExpr *self);
 
 /// @brief Free CIExpr type (CI_EXPR_KIND_FUNCTION_CALL).
 static VARIANT_DESTRUCTOR(CIExpr, function_call, CIExpr *self);
+
+/// @brief Free CIExpr type (CI_EXPR_KIND_FUNCTION_CALL_BUILTIN).
+static VARIANT_DESTRUCTOR(CIExpr, function_call_builtin, CIExpr *self);
 
 /// @brief Free CIExpr type (CI_EXPR_KIND_GROUPING).
 static VARIANT_DESTRUCTOR(CIExpr, grouping, CIExpr *self);
@@ -386,6 +393,8 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeKind, enum CIDataTypeKind self)
             return "CI_DATA_TYPE_KIND__ATOMIC";
         case CI_DATA_TYPE_KIND_BOOL:
             return "CI_DATA_TYPE_KIND_BOOL";
+        case CI_DATA_TYPE_KIND_BUILTIN:
+            return "CI_DATA_TYPE_KIND_BUILTIN";
         case CI_DATA_TYPE_KIND_CHAR:
             return "CI_DATA_TYPE_KIND_CHAR";
         case CI_DATA_TYPE_KIND_DOUBLE:
@@ -637,6 +646,17 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, _atomic, CIDataType *_atomic)
     return self;
 }
 
+VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, builtin, Usize builtin)
+{
+    CIDataType *self = lily_malloc(sizeof(CIDataType));
+
+    self->kind = CI_DATA_TYPE_KIND_BUILTIN;
+    self->ref_count = 0;
+    self->builtin = builtin;
+
+    return self;
+}
+
 VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, enum, String *enum_)
 {
     CIDataType *self = lily_malloc(sizeof(CIDataType));
@@ -784,6 +804,8 @@ clone__CIDataType(const CIDataType *self)
         case CI_DATA_TYPE_KIND__ATOMIC:
             return NEW_VARIANT(
               CIDataType, _atomic, clone__CIDataType(self->_atomic));
+        case CI_DATA_TYPE_KIND_BUILTIN:
+            return NEW_VARIANT(CIDataType, builtin, self->builtin);
         case CI_DATA_TYPE_KIND_ENUM:
             return NEW_VARIANT(CIDataType, enum, self->enum_);
         case CI_DATA_TYPE_KIND_FUNCTION: {
@@ -904,6 +926,10 @@ serialize__CIDataType(const CIDataType *self, String *buffer)
             serialize__CIDataType(self->_atomic, buffer);
 
             break;
+        case CI_DATA_TYPE_KIND_BUILTIN:
+            SERIALIZE_FMT_PUSH_TO_BUFFER("{zu}", self->builtin);
+
+            break;
         case CI_DATA_TYPE_KIND_ENUM:
             push_str__String(buffer, self->enum_->buffer);
 
@@ -1011,6 +1037,8 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
             }
         case CI_DATA_TYPE_KIND__ATOMIC:
             return eq__CIDataType(self->_atomic, other->_atomic);
+        case CI_DATA_TYPE_KIND_BUILTIN:
+            return self->builtin == other->builtin;
         case CI_DATA_TYPE_KIND_ENUM:
             return !strcmp(self->enum_->buffer, other->enum_->buffer);
         case CI_DATA_TYPE_KIND_FUNCTION:
@@ -1132,6 +1160,10 @@ IMPL_FOR_DEBUG(to_string, CIDataType, const CIDataType *self)
             return format__String("CIDataType{{ kind = {s}, _atomic = {Sr} }",
                                   to_string__Debug__CIDataTypeKind(self->kind),
                                   to_string__Debug__CIDataType(self->_atomic));
+        case CI_DATA_TYPE_KIND_BUILTIN:
+            return format__String("CIDataType{{ kind = {s}, builtin = {zu} }",
+                                  to_string__Debug__CIDataTypeKind(self->kind),
+                                  self->builtin);
         case CI_DATA_TYPE_KIND_ENUM:
             return format__String("CIDataType{{ kind = {s}, enum = {S} }",
                                   to_string__Debug__CIDataTypeKind(self->kind),
@@ -1190,6 +1222,11 @@ VARIANT_DESTRUCTOR(CIDataType, array, CIDataType *self)
 VARIANT_DESTRUCTOR(CIDataType, _atomic, CIDataType *self)
 {
     FREE(CIDataType, self->_atomic);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIDataType, builtin, CIDataType *self)
+{
     lily_free(self);
 }
 
@@ -1258,6 +1295,9 @@ DESTRUCTOR(CIDataType, CIDataType *self)
             break;
         case CI_DATA_TYPE_KIND__ATOMIC:
             FREE_VARIANT(CIDataType, _atomic, self);
+            break;
+        case CI_DATA_TYPE_KIND_BUILTIN:
+            FREE_VARIANT(CIDataType, builtin, self);
             break;
         case CI_DATA_TYPE_KIND_ENUM:
             FREE_VARIANT(CIDataType, enum, self);
@@ -3016,6 +3056,29 @@ DESTRUCTOR(CIExprFunctionCall, const CIExprFunctionCall *self)
     }
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CIExprFunctionCallBuiltin,
+               const CIExprFunctionCallBuiltin *self)
+{
+    String *res = format__String(
+      "CIExprFunctionCallBuiltin{{ id = {zu}, params = ", self->id);
+
+    DEBUG_VEC_STRING(self->params, res, CIExpr);
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CIExprFunctionCallBuiltin, const CIExprFunctionCallBuiltin *self)
+{
+    FREE_BUFFER_ITEMS(self->params->buffer, self->params->len, CIExpr);
+    FREE(Vec, self->params);
+}
+
 CONSTRUCTOR(CIExprStructFieldCall *,
             CIExprStructFieldCall,
             Vec *path,
@@ -3102,6 +3165,8 @@ IMPL_FOR_DEBUG(to_string, CIExprKind, enum CIExprKind self)
             return "CI_EXPR_KIND_DATA_TYPE";
         case CI_EXPR_KIND_FUNCTION_CALL:
             return "CI_EXPR_KIND_FUNCTION_CALL";
+        case CI_EXPR_KIND_FUNCTION_CALL_BUILTIN:
+            return "CI_EXPR_KIND_FUNCTION_CALL_BUILTIN";
         case CI_EXPR_KIND_GROUPING:
             return "CI_EXPR_KIND_GROUPING";
         case CI_EXPR_KIND_IDENTIFIER:
@@ -3213,6 +3278,20 @@ VARIANT_CONSTRUCTOR(CIExpr *,
     self->kind = CI_EXPR_KIND_FUNCTION_CALL;
     self->ref_count = 0;
     self->function_call = function_call;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    function_call_builtin,
+                    CIExprFunctionCallBuiltin function_call_builtin)
+{
+    CIExpr *self = lily_malloc(sizeof(CIExpr));
+
+    self->kind = CI_EXPR_KIND_FUNCTION_CALL_BUILTIN;
+    self->ref_count = 0;
+    self->function_call_builtin = function_call_builtin;
 
     return self;
 }
@@ -3364,6 +3443,15 @@ get_data_type__CIExpr(const CIExpr *self)
             return clone__CIDataType(self->cast.data_type);
         case CI_EXPR_KIND_FUNCTION_CALL:
             TODO("get data from function");
+        case CI_EXPR_KIND_FUNCTION_CALL_BUILTIN: {
+            CIBuiltin *builtin = get_ref__CIBuiltin();
+            const CIBuiltinFunction *function = get_builtin_function__CIBuiltin(
+              builtin, self->function_call_builtin.id);
+
+            ASSERT(function);
+
+            return clone__CIDataType(function->return_data_type);
+        }
         case CI_EXPR_KIND_GROUPING:
             return get_data_type__CIExpr(self->grouping);
         case CI_EXPR_KIND_IDENTIFIER:
@@ -3500,6 +3588,12 @@ IMPL_FOR_DEBUG(to_string, CIExpr, const CIExpr *self)
               "CIExpr{{ kind = {s}, function_call = {Sr} }",
               to_string__Debug__CIExprKind(self->kind),
               to_string__Debug__CIExprFunctionCall(&self->function_call));
+        case CI_EXPR_KIND_FUNCTION_CALL_BUILTIN:
+            return format__String(
+              "CIExpr{{ kind = {s}, function_call_builtin = {Sr} }",
+              to_string__Debug__CIExprKind(self->kind),
+              to_string__Debug__CIExprFunctionCallBuiltin(
+                &self->function_call_builtin));
         case CI_EXPR_KIND_GROUPING:
             return format__String("CIExpr{{ kind = {s}, grouping = {Sr} }",
                                   to_string__Debug__CIExprKind(self->kind),
@@ -3554,6 +3648,7 @@ to_precedence__CIExpr(const CIExpr *self)
             return EXPR_PRECEDENCE_LEVEL_2;
         case CI_EXPR_KIND_ARRAY_ACCESS:
         case CI_EXPR_KIND_FUNCTION_CALL:
+        case CI_EXPR_KIND_FUNCTION_CALL_BUILTIN:
             return EXPR_PRECEDENCE_LEVEL_1;
         case CI_EXPR_KIND_TERNARY:
             return EXPR_PRECEDENCE_LEVEL_13;
@@ -3601,6 +3696,12 @@ VARIANT_DESTRUCTOR(CIExpr, data_type, CIExpr *self)
 VARIANT_DESTRUCTOR(CIExpr, function_call, CIExpr *self)
 {
     FREE(CIExprFunctionCall, &self->function_call);
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIExpr, function_call_builtin, CIExpr *self)
+{
+    FREE(CIExprFunctionCallBuiltin, &self->function_call_builtin);
     lily_free(self);
 }
 
@@ -3672,6 +3773,9 @@ DESTRUCTOR(CIExpr, CIExpr *self)
             break;
         case CI_EXPR_KIND_FUNCTION_CALL:
             FREE_VARIANT(CIExpr, function_call, self);
+            break;
+        case CI_EXPR_KIND_FUNCTION_CALL_BUILTIN:
+            FREE_VARIANT(CIExpr, function_call_builtin, self);
             break;
         case CI_EXPR_KIND_GROUPING:
             FREE_VARIANT(CIExpr, grouping, self);

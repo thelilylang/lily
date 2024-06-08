@@ -2614,10 +2614,10 @@ scan_macro_name__CIScanner(CIScanner *self,
     String *name = scan_identifier__CIScanner(self);
 
     if (identifier_is_standard_predefined_macro__CIScanner(self, name)) {
-        if (!(self->is_builtin ||
+        if (!(self->is_predefined ||
               preprocessor_ctx == CI_TOKEN_KIND_PREPROCESSOR_IFDEF)) {
             FAILED("not expected to undef or re-define standard predefined "
-                   "macro, outside of builtin file");
+                   "macro, outside of predefined file");
         }
     }
 
@@ -3241,12 +3241,11 @@ scan_include_preprocessor__CIScanner(CIScanner *self)
             FAILED("expected `<` or `\"`");
     }
 
-    return NEW_VARIANT(CIToken,
-                       preprocessor_include,
-                       preprocessor_include_location,
-                       NEW(CITokenPreprocessorInclude,
-                           preprocessor_include_value,
-                           NEW(CITokens)));
+    return NEW_VARIANT(
+      CIToken,
+      preprocessor_include,
+      preprocessor_include_location,
+      NEW(CITokenPreprocessorInclude, preprocessor_include_value));
 }
 
 CIToken *

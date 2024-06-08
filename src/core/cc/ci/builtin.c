@@ -22,87 +22,169 @@
  * SOFTWARE.
  */
 
-#include <base/alloc.h>
 #include <base/assert.h>
-#include <base/command.h>
-#include <base/format.h>
 #include <base/new.h>
 
 #include <core/cc/ci/builtin.h>
-#include <core/cc/ci/result.h>
+#include <core/shared/search.h>
 
-// https://gcc.gnu.org/onlinedocs/gcc/Standards.html
-static const char *std[CI_STANDARD_23 + 1] = {
-    [CI_STANDARD_NONE] = "",
-    [CI_STANDARD_KR] = "c89", // NOTE: Not real K&R support of GCC, Clang
-    [CI_STANDARD_89] = "c89", [CI_STANDARD_95] = "iso9899:199409",
-    [CI_STANDARD_99] = "c99", [CI_STANDARD_11] = "c11",
-    [CI_STANDARD_17] = "c17", [CI_STANDARD_23] = "c2x",
+#include <stdio.h>
+#include <stdlib.h>
+
+// NOTE: Here's the minimum builtin requirement to get through the standard
+// library. We'll be adding more in the future, but for now it's not a priority.
+
+#define CI_BUILTIN_FUNCTION(n, rt, pn, ...)                         \
+    (CIBuiltinFunction)                                             \
+    {                                                               \
+        .name = &builtin_function_names[n], .return_data_type = rt, \
+        .params = init__Vec(pn, __VA_ARGS__)                        \
+    }
+
+#define CI_BUILTIN_TYPE_FROM_RAW(n)    \
+    (CIBuiltinType)                    \
+    {                                  \
+        .name = &builtin_type_names[n] \
+    }
+
+#define CI_BUILTIN_FUNCTION_MEMCPY 0
+
+static SizedStr builtin_function_names[CI_BUILTIN_FUNCTION_COUNT] = {
+    SIZED_STR_FROM_RAW("__builtin_memcpy")
 };
 
-static CIResultFile *builtin_file_ref = NULL; // CIResultFile* (&)
+static Int32 builtin_function_ids[CI_BUILTIN_FUNCTION_COUNT] = {
+    CI_BUILTIN_FUNCTION_MEMCPY
+};
 
-String *
-generate__CIBuiltin(const CIConfig *config)
+#define CI_BUILTIN_TYPE_VA_LIST 0
+
+static SizedStr builtin_type_names[CI_BUILTIN_TYPE_COUNT] = {
+    SIZED_STR_FROM_RAW("__builtin_va_list")
+};
+
+static Int32 builtin_type_ids[CI_BUILTIN_TYPE_COUNT] = {
+    CI_BUILTIN_TYPE_VA_LIST
+};
+
+static CIBuiltin *builtin_ref = NULL; // CIBuiltin* (&)
+
+CIBuiltinFunction *
+load__CIBuiltinFunction()
 {
-    char *command = format("{S} -dM -E -std={s} - < /dev/null",
-                           config->compiler.path,
-                           std[config->standard]);
-    String *builtin_h = save__Command(command);
+    CIBuiltinFunction *builtins =
+      lily_malloc(sizeof(CIBuiltinFunction) * CI_BUILTIN_FUNCTION_COUNT);
 
-    lily_free(command);
+    builtins[0] = CI_BUILTIN_FUNCTION(
+      0,
+      NEW_VARIANT(CIDataType, ptr, NEW(CIDataType, CI_DATA_TYPE_KIND_VOID)),
+      2,
+      NEW_VARIANT(CIDataType, ptr, NEW(CIDataType, CI_DATA_TYPE_KIND_VOID)),
+      NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT));
 
-    // Add macro:
-    // __STRICT_ANSI__
-    // _ISOC99_SOURCE
-    // _ISOC11_SOURCE
-    // _ISOC2X_SOURCE
-    switch (config->standard) {
-        case CI_STANDARD_KR:
-        case CI_STANDARD_89:
-        case CI_STANDARD_95:
-            push_str__String(builtin_h, "#define __STRICT_ANSI__\n");
+    return builtins;
+}
 
-            break;
-        case CI_STANDARD_99:
-            push_str__String(builtin_h, "#define _ISOC99_SOURCE\n");
+bool
+is__CIBuiltinFunction(String *name)
+{
+    return get_id__Search(name,
+                          builtin_function_names,
+                          builtin_function_ids,
+                          CI_BUILTIN_FUNCTION_COUNT) != -1;
+}
 
-            break;
-        case CI_STANDARD_11:
-            push_str__String(builtin_h, "#define _ISOC11_SOURCE\n");
+Usize
+get_id__CIBuiltinFunction(String *name)
+{
+    Usize id = get_id__Search(name,
+                              builtin_function_names,
+                              builtin_function_ids,
+                              CI_BUILTIN_FUNCTION_COUNT);
 
-            break;
-        case CI_STANDARD_23:
-            push_str__String(builtin_h, "#define _ISOC2X_SOURCE\n");
+    ASSERT(id != -1);
 
-            break;
-        default:
-            break;
-    }
+    return id;
+}
 
-    // Add _XOPEN_SOURCE macro.
-    switch (config->standard) {
-        case CI_STANDARD_99:
-            push_str__String(builtin_h, "#define _XOPEN_SOURCE 600\n");
+DESTRUCTOR(CIBuiltinFunction, const CIBuiltinFunction *self)
+{
+    FREE(CIDataType, self->return_data_type);
+    FREE_BUFFER_ITEMS(self->params->buffer, self->params->len, CIDataType);
+    FREE(Vec, self->params);
+}
 
-            break;
-        default:
-            push_str__String(builtin_h, "#define _XOPEN_SOURCE 500\n");
-    }
+CIBuiltinType *
+load__CIBuiltinType()
+{
+    CIBuiltinType *builtins =
+      lily_malloc(sizeof(CIBuiltinType) * CI_BUILTIN_TYPE_COUNT);
 
-    return builtin_h;
+    builtins[0] = CI_BUILTIN_TYPE_FROM_RAW(0);
+
+    return builtins;
+}
+
+bool
+is__CIBuiltinType(String *name)
+{
+    return get_id__Search(name,
+                          builtin_type_names,
+                          builtin_type_ids,
+                          CI_BUILTIN_TYPE_COUNT) != -1;
+}
+
+Usize
+get_id__CIBuiltinType(String *name)
+{
+    Usize id = get_id__Search(
+      name, builtin_type_names, builtin_type_ids, CI_BUILTIN_TYPE_COUNT);
+
+    ASSERT(id != -1);
+
+    return id;
+}
+
+CONSTRUCTOR(CIBuiltin, CIBuiltin)
+{
+    return (CIBuiltin){ .functions = load__CIBuiltinFunction(),
+                        .types = load__CIBuiltinType() };
+}
+
+const CIBuiltinType *
+get_builtin_type__CIBuiltin(const CIBuiltin *self, Usize id)
+{
+    ASSERT(id < CI_BUILTIN_TYPE_COUNT);
+
+    return &self->types[id];
+}
+
+const CIBuiltinFunction *
+get_builtin_function__CIBuiltin(const CIBuiltin *self, Usize id)
+{
+    ASSERT(id < CI_BUILTIN_FUNCTION_COUNT);
+
+    return &self->functions[id];
 }
 
 void
-set__CIBuiltin(CIResultFile *builtin_file)
+set__CIBuiltin(CIBuiltin *self)
 {
-    builtin_file_ref = builtin_file;
+    self = builtin_ref;
 }
 
-CIResultFile *
+CIBuiltin *
 get_ref__CIBuiltin()
 {
-    ASSERT(builtin_file_ref);
+    ASSERT(builtin_ref);
 
-    return builtin_file_ref;
+    return builtin_ref;
+}
+
+DESTRUCTOR(CIBuiltin, const CIBuiltin *self)
+{
+    FREE_BUFFER_ITEMS(
+      &self->functions, CI_BUILTIN_FUNCTION_COUNT, CIBuiltinFunction);
+    lily_free(self->functions);
+    lily_free(self->types);
 }

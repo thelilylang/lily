@@ -25,34 +25,126 @@
 #ifndef LILY_CORE_CC_CI_BUILTIN_H
 #define LILY_CORE_CC_CI_BUILTIN_H
 
-#include <base/string.h>
+#include <base/sized_array.h>
+#include <base/sized_str.h>
 
-#include <core/cc/ci/config.h>
+#include <core/cc/ci/ast.h>
 
-typedef struct CIResultFile CIResultFile;
+#define CI_BUILTIN_FUNCTION_COUNT 1
+#define CI_BUILTIN_TYPE_COUNT 1
 
 /**
  *
- * @brief Generate builtin file.
- * @link https://github.com/cpredef/predef
+ * @see for clang buitlins, check: `clang/include/clang/Basic/Builtins.td` on
+ * `https://github.com/llvm/llvm-project`.
  */
-String *
-generate__CIBuiltin(const CIConfig *config);
+typedef struct CIBuiltinFunction
+{
+    const SizedStr *name; // SizedStr* (&)
+    CIDataType *return_data_type;
+    Vec *params; // Vec<CIDataType*>*
+} CIBuiltinFunction;
 
 /**
  *
- * @brief Set builtin file.
+ * @brief Load builtin functions.
+ */
+CIBuiltinFunction *
+load__CIBuiltinFunction();
+
+/**
+ *
+ * @brief Is builtin function.
+ */
+bool
+is__CIBuiltinFunction(String *name);
+
+/**
+ *
+ * @brief Get id of builtin function.
+ */
+Usize
+get_id__CIBuiltinFunction(String *name);
+
+/**
+ *
+ * @brief Free CIBuiltinFunction type.
+ */
+DESTRUCTOR(CIBuiltinFunction, const CIBuiltinFunction *self);
+
+typedef struct CIBuiltinType
+{
+    const SizedStr *name; // SizedStr* (&)
+} CIBuiltinType;
+
+/**
+ *
+ * @brief Load builtin types.
+ */
+CIBuiltinType *
+load__CIBuiltinType();
+
+/**
+ *
+ * @brief Is builtin type.
+ */
+bool
+is__CIBuiltinType(String *name);
+
+/**
+ *
+ * @brief Get id of builtin type.
+ */
+Usize
+get_id__CIBuiltinType(String *name);
+
+typedef struct CIBuiltin
+{
+    CIBuiltinFunction *functions;
+    CIBuiltinType *types;
+} CIBuiltin;
+
+/**
+ *
+ * @brief Construct CIBuiltin type.
+ */
+CONSTRUCTOR(CIBuiltin, CIBuiltin);
+
+/**
+ *
+ * @brief Get builtin type from id.
+ * @return const CIBuiltinType* (&)
+ */
+const CIBuiltinType *
+get_builtin_type__CIBuiltin(const CIBuiltin *self, Usize id);
+
+/**
+ *
+ * @brief Get builtin function from id.
+ * @return const CIBuiltinFunction* (&)
+ */
+const CIBuiltinFunction *
+get_builtin_function__CIBuiltin(const CIBuiltin *self, Usize id);
+
+/**
+ *
+ * @brief Set builtin to static storage.
  */
 void
-set__CIBuiltin(CIResultFile *builtin_file);
+set__CIBuiltin(CIBuiltin *self);
 
 /**
  *
- * @brief Get builtin file ref from static storage.
- * @note In some situations, we need to get builtin file, by that way.
- * @return CIResultFile* (&)
+ * @brief Get builtin ref.
+ * @return CIBuiltin* (&)
  */
-CIResultFile *
+CIBuiltin *
 get_ref__CIBuiltin();
+
+/**
+ *
+ * @brief Free CIBuiltin type.
+ */
+DESTRUCTOR(CIBuiltin, const CIBuiltin *self);
 
 #endif // LILY_CORE_CC_CI_BUILTIN_H

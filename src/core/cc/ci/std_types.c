@@ -31,7 +31,7 @@
 CIDataType *
 load_std_type__StdTypes(char *define_name)
 {
-    CIResultFile *builtin = get_ref__CIBuiltin();
+    CIResultFile *builtin = get_ref__CIPreDefined();
     const CIResultDefine *define =
       get_define_from_str__CIResultFile(builtin, define_name);
 

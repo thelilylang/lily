@@ -26,6 +26,7 @@
 #include <base/dir.h>
 #include <base/yaml.h>
 
+#include <core/cc/ci/builtin.h>
 #include <core/cc/ci/config.h>
 #include <core/cc/ci/generator.h>
 #include <core/cc/ci/include.h>
@@ -45,13 +46,16 @@ main(int argc, char **argv)
         exit(1);
     }
 
+    CIBuiltin builtin = NEW(CIBuiltin);
     CIConfig config = parse__CIConfig(argv[1]);
-    CIResult result = NEW(CIResult, &config);
+    CIResult result = NEW(CIResult, &config, &builtin);
 
+    set__CIBuiltin(&builtin);
     build__CIResult(&result);
     run__CIGenerator(&result);
 
     FREE(CIResult, &result);
+    FREE(CIBuiltin, &builtin);
     FREE(CIConfig, &config);
 
     destroy__CIInclude();

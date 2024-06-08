@@ -313,6 +313,10 @@ IMPL_FOR_DEBUG(debug, CITokens, const CITokens *self)
 
 DESTRUCTOR(CITokens, const CITokens *self)
 {
+    if (!self->first || !self->last) {
+        abort();
+    }
+
     ASSERT(self->first);
     ASSERT(self->last);
 
@@ -896,21 +900,10 @@ IMPL_FOR_DEBUG(to_string,
                CITokenPreprocessorInclude,
                const CITokenPreprocessorInclude *self)
 {
-    String *res = format__String(
-      "CITokenPreprocessorInclude{{ value = {S}, content =", self->value);
-
-    DEBUG_TOKENS(self->content, res);
-    push_str__String(res, " }");
-
-    return res;
+    return format__String("CITokenPreprocessorInclude{{ value = {S} }",
+                          self->value);
 }
 #endif
-
-DESTRUCTOR(CITokenPreprocessorInclude, const CITokenPreprocessorInclude *self)
-{
-    FREE(String, self->value);
-    FREE(CITokens, &self->content);
-}
 
 CONSTRUCTOR(CIToken *, CIToken, enum CITokenKind kind, Location location)
 {

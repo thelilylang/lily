@@ -287,6 +287,11 @@ extern inline CONSTRUCTOR(CIExprFunctionCall,
                           Vec *params,
                           CIGenericParams *generic_params);
 
+extern inline CONSTRUCTOR(CIExprFunctionCallBuiltin,
+                          CIExprFunctionCallBuiltin,
+                          Usize id,
+                          Vec *params);
+
 extern inline CIExpr *
 ref__CIExpr(CIExpr *self);
 
@@ -391,7 +396,10 @@ extern inline CONSTRUCTOR(CIResultEntity,
                           enum CIResultEntityKind kind,
                           String *filename_result);
 
-extern inline CONSTRUCTOR(CIResult, CIResult, const CIConfig *config);
+extern inline CONSTRUCTOR(CIResult,
+                          CIResult,
+                          const CIConfig *config,
+                          const CIBuiltin *builtin);
 
 extern inline bool
 has_header__CIResult(const CIResult *self, const String *filename_result);
@@ -407,7 +415,7 @@ extern inline CONSTRUCTOR(CIScanner,
                           const CIConfig *config);
 
 extern inline void
-set_builtin__CIScanner(CIScanner *self);
+set_predefined__CIScanner(CIScanner *self);
 
 extern inline DESTRUCTOR(CIScanner, const CIScanner *self);
 
@@ -528,8 +536,7 @@ extern inline CONSTRUCTOR(CITokenPreprocessorElse,
 
 extern inline CONSTRUCTOR(CITokenPreprocessorInclude,
                           CITokenPreprocessorInclude,
-                          String *value,
-                          CITokens content);
+                          String *value);
 
 extern inline DESTRUCTOR(CITokenPreprocessorInclude,
                          const CITokenPreprocessorInclude *self);

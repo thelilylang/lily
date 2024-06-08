@@ -37,13 +37,13 @@
 typedef struct SizedStr
 {
     const char *buffer;
-    const Usize len;
+    Usize len;
 } SizedStr;
 
 /**
  *
  * @brief Construct SizedStr type.
  */
-CONSTRUCTOR(SizedStr, SizedStr, const char *buffer, const Usize len);
+CONSTRUCTOR(SizedStr, SizedStr, const char *buffer, Usize len);
 
 #endif // LILY_BASE_SIZED_STR_H

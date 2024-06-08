@@ -983,7 +983,6 @@ DESTRUCTOR(CITokenPreprocessorElse, const CITokenPreprocessorElse *self);
 typedef struct CITokenPreprocessorInclude
 {
     String *value;
-    CITokens content;
 } CITokenPreprocessorInclude;
 
 /**
@@ -992,10 +991,9 @@ typedef struct CITokenPreprocessorInclude
  */
 inline CONSTRUCTOR(CITokenPreprocessorInclude,
                    CITokenPreprocessorInclude,
-                   String *value,
-                   CITokens content)
+                   String *value)
 {
-    return (CITokenPreprocessorInclude){ .value = value, .content = content };
+    return (CITokenPreprocessorInclude){ .value = value };
 }
 
 /**
@@ -1021,7 +1019,11 @@ IMPL_FOR_DEBUG(to_string,
  *
  * @brief Free CITokenPreprocessorInclude type.
  */
-DESTRUCTOR(CITokenPreprocessorInclude, const CITokenPreprocessorInclude *self);
+inline DESTRUCTOR(CITokenPreprocessorInclude,
+                  const CITokenPreprocessorInclude *self)
+{
+    FREE(String, self->value);
+}
 
 typedef struct CIToken
 {

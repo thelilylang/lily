@@ -3498,7 +3498,9 @@ token_is_data_type__CIParser(CIParser *self, const CIToken *token)
 {
     switch (token->kind) {
         case CI_TOKEN_KIND_IDENTIFIER:
-            return search_typedef__CIResultFile(self->file, token->identifier);
+            return search_typedef__CIResultFile(self->file,
+                                                token->identifier) ||
+                   is__CIBuiltinType(token->identifier);
         case CI_TOKEN_KIND_AT: // TODO: check if the next token is an identifier
                                // (not needed for the moment)
         case CI_TOKEN_KIND_KEYWORD_BOOL:
@@ -4234,6 +4236,15 @@ parse_data_type__CIParser(CIParser *self)
 
     switch (self->previous_token->kind) {
         case CI_TOKEN_KIND_IDENTIFIER: {
+            if (is__CIBuiltinType(self->previous_token->identifier)) {
+                res = NEW_VARIANT(
+                  CIDataType,
+                  builtin,
+                  get_id__CIBuiltinType(self->previous_token->identifier));
+
+                break;
+            }
+
             String *name = self->previous_token->identifier;
             CIGenericParams *generic_params =
               parse_generic_params__CIParser(self, true);
@@ -4750,6 +4761,15 @@ parse_function_call__CIParser(CIParser *self,
     }
 
     expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
+
+    if (is__CIBuiltinFunction(identifier)) {
+        return NEW_VARIANT(CIExpr,
+                           function_call_builtin,
+                           NEW(CIExprFunctionCallBuiltin,
+                               get_id__CIBuiltinFunction(identifier),
+                               params));
+    }
+
     generate_function_gen__CIParser(self, identifier, generic_params);
 
     return NEW_VARIANT(
@@ -5987,6 +6007,10 @@ parse_function__CIParser(CIParser *self,
                                    params,
                                    NULL));
         case CI_TOKEN_KIND_LBRACE:
+            if (is__CIBuiltinFunction(name)) {
+                FAILED("cannot redefine a builtin function");
+            }
+
             next_token__CIParser(self);
 
             return NEW_VARIANT(
@@ -6155,6 +6179,10 @@ parse_typedef__CIParser(CIParser *self)
         case CI_TOKEN_KIND_IDENTIFIER:
             typedef_name = self->current_token->identifier;
             next_token__CIParser(self);
+
+            if (is__CIBuiltinType(typedef_name)) {
+                FAILED("cannot redefine builtin type");
+            }
 
             break;
         default:

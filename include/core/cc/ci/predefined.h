@@ -22,9 +22,37 @@
  * SOFTWARE.
  */
 
-#include <base/sized_str.h>
+#ifndef LILY_CORE_CC_CI_PREDEFINED_H
+#define LILY_CORE_CC_CI_PREDEFINED_H
 
-CONSTRUCTOR(SizedStr, SizedStr, const char *buffer, Usize len)
-{
-    return (SizedStr){ .buffer = buffer, .len = len };
-}
+#include <base/string.h>
+
+#include <core/cc/ci/config.h>
+
+typedef struct CIResultFile CIResultFile;
+
+/**
+ *
+ * @brief Generate pre-defined file.
+ * @link https://github.com/cpredef/predef
+ */
+String *
+generate__CIPreDefined(const CIConfig *config);
+
+/**
+ *
+ * @brief Set pre-defined file to static storage.
+ */
+void
+set__CIPreDefined(CIResultFile *predefined_file);
+
+/**
+ *
+ * @brief Get pre-defined file ref from static storage.
+ * @note In some situations, we need to get builtin file, by that way.
+ * @return CIResultFile* (&)
+ */
+CIResultFile *
+get_ref__CIPreDefined();
+
+#endif // LILY_CORE_CC_CI_PREDEFINED_H
