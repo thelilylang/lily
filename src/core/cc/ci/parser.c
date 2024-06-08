@@ -6007,6 +6007,10 @@ parse_function__CIParser(CIParser *self,
                                    params,
                                    NULL));
         case CI_TOKEN_KIND_LBRACE:
+            if (is__CIBuiltinFunction(name)) {
+                FAILED("cannot redefine a builtin function");
+            }
+
             next_token__CIParser(self);
 
             return NEW_VARIANT(
@@ -6175,6 +6179,10 @@ parse_typedef__CIParser(CIParser *self)
         case CI_TOKEN_KIND_IDENTIFIER:
             typedef_name = self->current_token->identifier;
             next_token__CIParser(self);
+
+            if (is__CIBuiltinType(typedef_name)) {
+                FAILED("cannot redefine builtin type");
+            }
 
             break;
         default:
