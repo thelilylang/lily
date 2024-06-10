@@ -3040,7 +3040,7 @@ jump_in_token_block__CIParser(CIParser *self, CIToken *next_token)
                   NEW(CIFileID, self->file->entity.id, self->file->kind));
 
             if (add_define__CIResultFile(self->file, define)) {
-				// TODO: check if the both macros are the same or raise an error
+                // TODO: check if the both macros are the same or raise an error
 
                 FREE(CIResultDefine, define);
             }
