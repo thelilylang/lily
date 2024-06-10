@@ -367,7 +367,7 @@ generate_data_type__CIGenerator(CIDataType *data_type)
             const CIBuiltinType *builtin_type = get_builtin_type__CIBuiltin(
               result_ref->builtin, subs_data_type->builtin);
 
-			ASSERT(builtin_type);
+            ASSERT(builtin_type);
 
             write_str__CIGenerator((char *)builtin_type->name->buffer);
 
