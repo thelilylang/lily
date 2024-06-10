@@ -91,8 +91,15 @@ static void
 generate_function_unary_expr__CIGenerator(const CIExprUnary *unary);
 
 static void
+generate_function_call_params_expr__CIGenerator(Vec *params);
+
+static void
 generate_function_call_expr__CIGenerator(
   const CIExprFunctionCall *function_call);
+
+static void
+generate_function_call_builtin_expr__CIGenerator(
+  const CIExprFunctionCallBuiltin *function_call_builtin);
 
 static void
 generate_function_literal_expr__CIGenerator(const CIExprLiteral *literal);
@@ -359,6 +366,8 @@ generate_data_type__CIGenerator(CIDataType *data_type)
         case CI_DATA_TYPE_KIND_BUILTIN: {
             const CIBuiltinType *builtin_type = get_builtin_type__CIBuiltin(
               result_ref->builtin, subs_data_type->builtin);
+
+			ASSERT(builtin_type);
 
             write_str__CIGenerator((char *)builtin_type->name->buffer);
 
@@ -911,6 +920,22 @@ generate_struct_call_expr__CIGenerator(const CIExprStructCall *struct_call)
 }
 
 void
+generate_function_call_params_expr__CIGenerator(Vec *params)
+{
+    write_str__CIGenerator("(");
+
+    for (Usize i = 0; i < params->len; ++i) {
+        generate_function_expr__CIGenerator(get__Vec(params, i));
+
+        if (i + 1 != params->len) {
+            write_str__CIGenerator(", ");
+        }
+    }
+
+    write_str__CIGenerator(")");
+}
+
+void
 generate_function_call_expr__CIGenerator(
   const CIExprFunctionCall *function_call)
 {
@@ -926,17 +951,21 @@ generate_function_call_expr__CIGenerator(
         write_str__CIGenerator(function_call->identifier->buffer);
     }
 
-    write_str__CIGenerator("(");
+    generate_function_call_params_expr__CIGenerator(function_call->params);
+}
 
-    for (Usize i = 0; i < function_call->params->len; ++i) {
-        generate_function_expr__CIGenerator(get__Vec(function_call->params, i));
+void
+generate_function_call_builtin_expr__CIGenerator(
+  const CIExprFunctionCallBuiltin *function_call_builtin)
+{
+    const CIBuiltinFunction *builtin_function = get_builtin_function__CIBuiltin(
+      result_ref->builtin, function_call_builtin->id);
 
-        if (i + 1 != function_call->params->len) {
-            write_str__CIGenerator(", ");
-        }
-    }
+    ASSERT(builtin_function);
 
-    write_str__CIGenerator(")");
+    write_str__CIGenerator((char *)builtin_function->name->buffer);
+    generate_function_call_params_expr__CIGenerator(
+      function_call_builtin->params);
 }
 
 void
@@ -977,6 +1006,11 @@ generate_function_expr__CIGenerator(const CIExpr *expr)
             break;
         case CI_EXPR_KIND_FUNCTION_CALL:
             generate_function_call_expr__CIGenerator(&expr->function_call);
+
+            break;
+        case CI_EXPR_KIND_FUNCTION_CALL_BUILTIN:
+            generate_function_call_builtin_expr__CIGenerator(
+              &expr->function_call_builtin);
 
             break;
         case CI_EXPR_KIND_GROUPING:
