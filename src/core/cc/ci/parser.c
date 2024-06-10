@@ -3033,14 +3033,20 @@ jump_in_token_block__CIParser(CIParser *self, CIToken *next_token)
     switch (next_token->kind) {
         case CI_TOKEN_KIND_PREPROCESSOR_ENDIF:
             UNREACHABLE("#endif is not expected at this point");
-        case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:
-            add_define__CIResultFile(
-              self->file,
+        case CI_TOKEN_KIND_PREPROCESSOR_DEFINE: {
+            CIResultDefine *define =
               NEW(CIResultDefine,
                   &next_token->preprocessor_define,
-                  NEW(CIFileID, self->file->entity.id, self->file->kind)));
+                  NEW(CIFileID, self->file->entity.id, self->file->kind));
+
+            if (add_define__CIResultFile(self->file, define)) {
+				// TODO: check if the both macros are the same or raise an error
+
+                FREE(CIResultDefine, define);
+            }
 
             break;
+        }
         case CI_TOKEN_KIND_MACRO_PARAM: {
             CIParserMacroCall *current_macro_call =
               peek__Stack(self->macros_call);
