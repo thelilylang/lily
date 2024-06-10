@@ -2638,9 +2638,13 @@ resolve_expr__CIParser(CIParser *self, CIExpr *expr, bool is_partial)
               resolve_expr__CIParser(self, expr->ternary.cond, is_partial);
 
             if (check_if_resolved_expr_is_true__CIParser(self, resolved_cond)) {
+                FREE(CIExpr, resolved_cond);
+
                 return resolve_expr__CIParser(
                   self, expr->ternary.if_, is_partial);
             }
+
+            FREE(CIExpr, resolved_cond);
 
             return resolve_expr__CIParser(
               self, expr->ternary.else_, is_partial);
