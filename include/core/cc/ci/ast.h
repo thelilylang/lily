@@ -527,6 +527,8 @@ typedef struct CIDataTypeArray
 {
     enum CIDataTypeArrayKind kind;
     struct CIDataType *data_type;
+    // NOTE: The only point in having a reference to the name of the variable,
+    // parameter or field is when generating the C code.
     String *name; // String*? (&)
     union
     {
@@ -584,11 +586,13 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeArray, const CIDataTypeArray *self);
  */
 DESTRUCTOR(CIDataTypeArray, const CIDataTypeArray *self);
 
+// <return_data_type>(<function_data_type>)(<params>)
 typedef struct CIDataTypeFunction
 {
-    String *name; // String* (&)
-    Vec *params;  // Vec<CIDataType*>*
+    String *name; // String*? (&)
+    Vec *params;  // Vec<CIDeclFunctionParam*>*?
     struct CIDataType *return_data_type;
+    struct CIDataType *function_data_type; // struct CIDataType*?
 } CIDataTypeFunction;
 
 /**
@@ -599,11 +603,13 @@ inline CONSTRUCTOR(CIDataTypeFunction,
                    CIDataTypeFunction,
                    String *name,
                    Vec *params,
-                   struct CIDataType *return_data_type)
+                   struct CIDataType *return_data_type,
+                   struct CIDataType *function_data_type)
 {
     return (CIDataTypeFunction){ .name = name,
                                  .params = params,
-                                 .return_data_type = return_data_type };
+                                 .return_data_type = return_data_type,
+                                 .function_data_type = function_data_type };
 }
 
 /**
@@ -747,7 +753,7 @@ typedef struct CIDataType
         String *generic; // String* (&)
         struct CIDataType *pre_const;
         struct CIDataType *post_const;
-        struct CIDataType *ptr;
+        struct CIDataType *ptr; // struct CIDataType*?
         CIDataTypeStruct struct_;
         CIDataTypeTypedef typedef_;
         CIDataTypeUnion union_;
@@ -903,6 +909,13 @@ get_ptr__CIDataType(const CIDataType *self);
  */
 const CIGenericParams *
 get_generic_params__CIDataType(const CIDataType *self);
+
+/**
+ *
+ * @brief Check if the data type has name in reference.
+ */
+bool
+has_name__CIDataType(const CIDataType *self);
 
 /**
  *

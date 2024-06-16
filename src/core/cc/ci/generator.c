@@ -334,7 +334,7 @@ generate_data_type__CIGenerator(CIDataType *data_type)
             switch (subs_data_type->array.kind) {
                 case CI_DATA_TYPE_ARRAY_KIND_NONE:
                     write_String__CIGenerator(
-                      format__String("{s}[]",
+                      format__String(" {s}[]",
                                      subs_data_type->array.name
                                        ? subs_data_type->array.name->buffer
                                        : ""));
@@ -342,7 +342,7 @@ generate_data_type__CIGenerator(CIDataType *data_type)
                     break;
                 case CI_DATA_TYPE_ARRAY_KIND_SIZED:
                     write_String__CIGenerator(
-                      format__String("{s}[{zu}]",
+                      format__String(" {s}[{zu}]",
                                      subs_data_type->array.name
                                        ? subs_data_type->array.name->buffer
                                        : "",
@@ -418,8 +418,26 @@ generate_data_type__CIGenerator(CIDataType *data_type)
             write_str__CIGenerator("float _Imaginary");
 
             break;
-        case CI_DATA_TYPE_KIND_FUNCTION:
-            TODO("function");
+        case CI_DATA_TYPE_KIND_FUNCTION: {
+            generate_data_type__CIGenerator(
+              subs_data_type->function.return_data_type);
+            write_str__CIGenerator("(");
+            generate_data_type__CIGenerator(
+              subs_data_type->function.function_data_type);
+
+            if (subs_data_type->function.name) {
+                write_str__CIGenerator(subs_data_type->function.name->buffer);
+            }
+
+            write_str__CIGenerator(")");
+
+            if (subs_data_type->function.params) {
+                generate_function_params__CIGenerator(
+                  subs_data_type->function.params);
+            }
+
+            break;
+        }
         case CI_DATA_TYPE_KIND_GENERIC: {
             String *buffer = NEW(String);
 
@@ -463,7 +481,10 @@ generate_data_type__CIGenerator(CIDataType *data_type)
 
             break;
         case CI_DATA_TYPE_KIND_PTR:
-            generate_data_type__CIGenerator(subs_data_type->ptr);
+            if (subs_data_type->ptr) {
+                generate_data_type__CIGenerator(subs_data_type->ptr);
+            }
+
             write_str__CIGenerator("*");
 
             break;
@@ -610,7 +631,7 @@ generate_function_params__CIGenerator(const Vec *params)
 
             generate_data_type__CIGenerator(param->data_type);
 
-            if (param->name) {
+            if (param->name && !has_name__CIDataType(param->data_type)) {
                 write_String__CIGenerator(format__String(" {S}", param->name));
             }
 
@@ -1288,7 +1309,7 @@ generate_struct_field__CIGenerator(const CIDeclStructField *field)
 {
     generate_data_type__CIGenerator(field->data_type);
 
-    if (field->name) {
+    if (field->name && !has_name__CIDataType(field->data_type)) {
         write_String__CIGenerator(format__String(" {S};\n", field->name));
     } else {
         write_str__CIGenerator(";\n");
@@ -1371,7 +1392,10 @@ void
 generate_variable_decl__CIGenerator(const CIDeclVariable *variable)
 {
     generate_data_type__CIGenerator(variable->data_type);
-    write_String__CIGenerator(format__String(" {S}", variable->name));
+
+    if (!has_name__CIDataType(variable->data_type)) {
+        write_String__CIGenerator(format__String(" {S}", variable->name));
+    }
 
     if (variable->expr) {
         write_str__CIGenerator(" = ");
