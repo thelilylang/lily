@@ -121,7 +121,8 @@ extern inline CONSTRUCTOR(CIDataTypeFunction,
                           CIDataTypeFunction,
                           String *name,
                           Vec *params,
-                          struct CIDataType *return_data_type);
+                          struct CIDataType *return_data_type,
+                          struct CIDataType *function_data_type);
 
 extern inline CONSTRUCTOR(CIDataTypeStruct,
                           CIDataTypeStruct,

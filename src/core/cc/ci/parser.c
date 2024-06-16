@@ -555,8 +555,38 @@ generate_typedef_gen__CIParser(CIParser *self,
                                CIGenericParams *called_generic_params);
 
 /// @brief Parse post data type, like pointer, ...
+/// @param CIDataType*?
 static CIDataType *
 parse_post_data_type__CIParser(CIParser *self, CIDataType *data_type);
+
+/// @brief Parse variable name (name + data type).
+///
+/// @example field, variable, parameter
+///
+/// variable:
+///
+/// int a[2];
+/// //   ^^^
+///
+/// int *(*fn)(int, int);
+/// //   ^^^^^^^^^^^^^^^
+///
+/// field:
+///
+/// struct {
+/// 	int a[2];
+/// 	//   ^^^
+/// 	int *(*fn)(int, int);
+/// 	//   ^^^^^^^^^^^^^^^
+/// }
+static void
+parse_variable_name_and_data_type__CIParser(CIParser *self,
+                                            CIDataType **data_type_ref,
+                                            String **name_ref,
+                                            bool name_is_required);
+
+static CIDataType *
+parse_pre_data_type__CIParser(CIParser *self);
 
 /// @brief Parse enum variants.
 /// @return Vec<CIDeclEnumVariant*>*
@@ -706,6 +736,7 @@ static inline bool
 add_union__CIParser(CIParser *self, CIDecl *union_decl);
 
 /// @brief Parse variable declaration.
+/// @param name String*? (&)
 static CIDecl *
 parse_variable__CIParser(CIParser *self,
                          int storage_class_flag,
@@ -3631,15 +3662,18 @@ substitute_data_type__CIParser(CIDataType *data_type,
             return ref__CIDataType(data_type);
         }
         case CI_DATA_TYPE_KIND__ATOMIC: {
-#define SUBSTITUTE_DATA_TYPE_WITH_MAX_ONE_GENERIC(data_type_name)        \
-    CIDataType *subs = substitute_data_type__CIParser(                   \
-      data_type->data_type_name, generic_params, called_generic_params); \
-                                                                         \
-    if (subs) {                                                          \
-        return NEW_VARIANT(CIDataType, data_type_name, subs);            \
-    }                                                                    \
-                                                                         \
-    return ref__CIDataType(data_type);
+#define SUBSTITUTE_DATA_TYPE_WITH_MAX_ONE_GENERIC(data_type_name)            \
+    if (data_type->data_type_name) {                                         \
+        CIDataType *subs = substitute_data_type__CIParser(                   \
+          data_type->data_type_name, generic_params, called_generic_params); \
+                                                                             \
+        if (subs) {                                                          \
+            return NEW_VARIANT(CIDataType, data_type_name, subs);            \
+        }                                                                    \
+                                                                             \
+        return ref__CIDataType(data_type);                                   \
+    }                                                                        \
+    return NULL;
 
             SUBSTITUTE_DATA_TYPE_WITH_MAX_ONE_GENERIC(_atomic);
         }
@@ -3647,13 +3681,15 @@ substitute_data_type__CIParser(CIDataType *data_type,
             Vec *subs_params = NEW(Vec);
 
             for (Usize i = 0; i < data_type->function.params->len; ++i) {
-                CIDataType *subs_param = substitute_data_type__CIParser(
-                  get__Vec(data_type->function.params, i),
-                  generic_params,
-                  called_generic_params);
+                CIDeclFunctionParam *param =
+                  get__Vec(data_type->function.params, i);
+                CIDataType *subs_data_type = substitute_data_type__CIParser(
+                  param->data_type, generic_params, called_generic_params);
 
-                if (subs_param) {
-                    push__Vec(subs_params, subs_param);
+                if (subs_data_type) {
+                    push__Vec(
+                      subs_params,
+                      NEW(CIDeclFunctionParam, param->name, subs_data_type));
                 }
             }
 
@@ -3670,12 +3706,14 @@ substitute_data_type__CIParser(CIDataType *data_type,
                 FREE(Vec, subs_params);
             }
 
-            return NEW_VARIANT(CIDataType,
-                               function,
-                               NEW(CIDataTypeFunction,
-                                   data_type->function.name,
-                                   subs_params,
-                                   subs_return_data_type));
+            return NEW_VARIANT(
+              CIDataType,
+              function,
+              NEW(CIDataTypeFunction,
+                  data_type->function.name,
+                  subs_params,
+                  subs_return_data_type,
+                  clone__CIDataType(data_type->function.function_data_type)));
         }
         case CI_DATA_TYPE_KIND_GENERIC: {
             CIDataType *res = substitute_generic__CIParser(
@@ -4214,40 +4252,194 @@ CIDataType *
 parse_post_data_type__CIParser(CIParser *self, CIDataType *data_type)
 {
 loop:
-    switch (self->current_token->kind) {
-        case CI_TOKEN_KIND_LPAREN:
-            TODO("function data type");
-        default:
-            if (self->current_token->kind == CI_TOKEN_KIND_STAR ||
-                self->current_token->kind == CI_TOKEN_KIND_KEYWORD_CONST) {
-                while (true) {
-                    switch (self->current_token->kind) {
-                        case CI_TOKEN_KIND_STAR:
-                            data_type = NEW_VARIANT(CIDataType, ptr, data_type);
+    if (self->current_token->kind == CI_TOKEN_KIND_STAR ||
+        self->current_token->kind == CI_TOKEN_KIND_KEYWORD_CONST) {
+        while (true) {
+            switch (self->current_token->kind) {
+                case CI_TOKEN_KIND_STAR:
+                    data_type = NEW_VARIANT(CIDataType, ptr, data_type);
 
-                            break;
-                        case CI_TOKEN_KIND_KEYWORD_CONST:
-                            data_type =
-                              NEW_VARIANT(CIDataType, post_const, data_type);
+                    break;
+                case CI_TOKEN_KIND_KEYWORD_CONST:
+                    data_type = NEW_VARIANT(CIDataType, post_const, data_type);
 
-                            break;
-                        default:
-                            goto exit;
-                    }
-
-                    next_token__CIParser(self);
-                }
-
-                goto loop;
+                    break;
+                default:
+                    goto exit;
             }
+
+            next_token__CIParser(self);
+        }
+
+        goto loop;
     }
 
 exit:
     return data_type;
 }
 
+void
+parse_variable_name_and_data_type__CIParser(CIParser *self,
+                                            CIDataType **data_type_ref,
+                                            String **name_ref,
+                                            bool name_is_required)
+{
+#define PARSE_VARIABLE_NAME(block)                           \
+    switch (self->current_token->kind) {                     \
+        case CI_TOKEN_KIND_IDENTIFIER:                       \
+            if (*name_ref) {                                 \
+                FAILED("identifier is already declared");    \
+            } else {                                         \
+                *name_ref = self->current_token->identifier; \
+                                                             \
+                next_token__CIParser(self);                  \
+            }                                                \
+                                                             \
+            break;                                           \
+            block;                                           \
+        default:                                             \
+            if (name_is_required) {                          \
+                FAILED("expected identifier");               \
+                /* return; */                                \
+            }                                                \
+    }
+
+    ASSERT(data_type_ref);
+    ASSERT(name_ref);
+
+    PARSE_VARIABLE_NAME(case CI_TOKEN_KIND_LPAREN : break;);
+
+    Usize i = 0;
+
+loop:
+    i += 1;
+
+    switch (self->current_token->kind) {
+        case CI_TOKEN_KIND_LHOOK: {
+            next_token__CIParser(self); // skip `[`
+
+            switch (self->current_token->kind) {
+                case CI_TOKEN_KIND_RHOOK:
+                    // <id>[n][p]
+                    *data_type_ref =
+                      NEW_VARIANT(CIDataType,
+                                  array,
+                                  NEW_VARIANT(CIDataTypeArray,
+                                              none,
+                                              *data_type_ref,
+                                              i == 1 ? *name_ref : NULL));
+
+                    next_token__CIParser(self);
+
+                    goto loop;
+                default:
+                    break;
+            }
+
+            CIExpr *expr = parse_expr__CIParser(self);
+
+            if (!expr) {
+                return;
+            }
+
+            CIExpr *resolved_expr = resolve_expr__CIParser(self, expr, false);
+
+            Usize size = 0;
+
+            switch (resolved_expr->kind) {
+                case CI_EXPR_KIND_LITERAL:
+                    switch (resolved_expr->literal.kind) {
+                        case CI_EXPR_LITERAL_KIND_SIGNED_INT:
+                            if (resolved_expr->literal.signed_int < 0) {
+                                FAILED("indexed integer must be positive");
+                            } else {
+                                size = resolved_expr->literal.signed_int;
+                            }
+
+                            break;
+                        case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:
+                            size = resolved_expr->literal.unsigned_int;
+
+                            break;
+                        default:
+                            goto expected_integer_literal;
+                    }
+
+                    break;
+                default:
+                expected_integer_literal:
+                    FAILED("expected integer literal expression");
+            }
+
+            FREE(CIExpr, expr);
+            FREE(CIExpr, resolved_expr);
+
+            expect__CIParser(self, CI_TOKEN_KIND_RHOOK, true);
+
+            *data_type_ref = NEW_VARIANT(CIDataType,
+                                         array,
+                                         NEW_VARIANT(CIDataTypeArray,
+                                                     sized,
+                                                     *data_type_ref,
+                                                     i == 1 ? *name_ref : NULL,
+                                                     size));
+
+            goto loop;
+        }
+        case CI_TOKEN_KIND_LPAREN: {
+            // NOTE: If the name is not NULL at this level, this is the
+            // beginning of a function declaration and not a function data type.
+            if (*name_ref) {
+                goto exit;
+            }
+
+            next_token__CIParser(self); // `(`
+
+            CIDataType *function_data_type = NULL; // CIDataType*?
+
+            switch (self->current_token->kind) {
+                case CI_TOKEN_KIND_STAR:
+                    function_data_type =
+                      parse_post_data_type__CIParser(self, NULL);
+
+                    break;
+                default:
+                    break;
+            }
+
+            PARSE_VARIABLE_NAME({});
+
+            expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
+
+            Vec *params = NULL;
+
+            switch (self->current_token->kind) {
+                case CI_TOKEN_KIND_LPAREN:
+                    params = parse_function_params__CIParser(self);
+                default:
+                    break;
+            }
+
+            *data_type_ref = NEW_VARIANT(CIDataType,
+                                         function,
+                                         NEW(CIDataTypeFunction,
+                                             *name_ref,
+                                             params,
+                                             *data_type_ref,
+                                             function_data_type));
+
+            goto loop;
+        }
+        default:
+            goto exit;
+    }
+
+exit:
+#undef PARSE_VARIABLE_NAME
+}
+
 CIDataType *
-parse_data_type__CIParser(CIParser *self)
+parse_pre_data_type__CIParser(CIParser *self)
 {
     CIDataType *res = NULL;
 
@@ -4567,7 +4759,15 @@ parse_data_type__CIParser(CIParser *self)
             FAILED("expected data type");
     }
 
-    return parse_post_data_type__CIParser(self, res);
+    return res;
+}
+
+CIDataType *
+parse_data_type__CIParser(CIParser *self)
+{
+    CIDataType *pre = parse_pre_data_type__CIParser(self);
+
+    return parse_post_data_type__CIParser(self, pre);
 }
 
 Vec *
@@ -4658,10 +4858,8 @@ parse_function_params__CIParser(CIParser *self)
         CIDataType *data_type = parse_data_type__CIParser(self);
         String *name = NULL; // String*? (&)
 
-        // TODO: ... parameter
-        if (expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, false)) {
-            name = self->previous_token->identifier;
-        }
+        parse_variable_name_and_data_type__CIParser(
+          self, &data_type, &name, false);
 
         push__Vec(params, NEW(CIDeclFunctionParam, name, data_type));
 
@@ -4673,7 +4871,7 @@ parse_function_params__CIParser(CIParser *self)
     if (self->current_token->kind == CI_TOKEN_KIND_EOF) {
         FAILED("hit EOF");
     } else {
-        next_token__CIParser(self); // skip `}`
+        next_token__CIParser(self); // skip `)`
     }
 
     return params;
@@ -6074,6 +6272,9 @@ parse_fields__CIParser(CIParser *self)
                 }
         }
 
+        parse_variable_name_and_data_type__CIParser(
+          self, &data_type, &name, false);
+
         expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
 
         // TODO: parse bits set
@@ -6263,7 +6464,9 @@ parse_variable__CIParser(CIParser *self,
                          bool no_expr,
                          bool is_local)
 {
-    if (in_label) {
+    if (!name) {
+        FAILED("expected name for variable");
+    } else if (in_label) {
         FAILED("Don't accept variable declaration in label");
     }
 
@@ -6330,25 +6533,18 @@ parse_variable_list__CIParser(CIParser *self,
 
         next_token__CIParser(self); // skip `,`
 
-        CIDataType *cloned_data_type =
+        CIDataType *post_data_type =
           parse_post_data_type__CIParser(self, clone__CIDataType(data_type));
         String *name = NULL;
 
-        switch (self->current_token->kind) {
-            case CI_TOKEN_KIND_IDENTIFIER:
-                name = self->current_token->identifier;
-                next_token__CIParser(self);
-
-                break;
-            default:
-                FAILED("expected identifier");
-        }
+        parse_variable_name_and_data_type__CIParser(
+          self, &post_data_type, &name, true);
 
         switch (self->current_token->kind) {
             case CI_TOKEN_KIND_EQ:
                 current_var = parse_variable__CIParser(self,
                                                        storage_class_flag,
-                                                       cloned_data_type,
+                                                       post_data_type,
                                                        name,
                                                        false,
                                                        in_function_body);
@@ -6358,7 +6554,7 @@ parse_variable_list__CIParser(CIParser *self,
             case CI_TOKEN_KIND_SEMICOLON:
                 current_var = parse_variable__CIParser(self,
                                                        storage_class_flag,
-                                                       cloned_data_type,
+                                                       post_data_type,
                                                        name,
                                                        true,
                                                        in_function_body);
@@ -6552,13 +6748,16 @@ parse_decl__CIParser(CIParser *self, bool in_function_body)
         goto exit;
     }
 
-    CIDataType *data_type = parse_data_type__CIParser(self);
+    CIDataType *pre_data_type = parse_pre_data_type__CIParser(self);
+    CIDataType *data_type = parse_post_data_type__CIParser(self, pre_data_type);
 
     switch (self->current_token->kind) {
+        case CI_TOKEN_KIND_LPAREN:
         case CI_TOKEN_KIND_IDENTIFIER: {
-            String *name = self->current_token->identifier;
+            String *name = NULL; // String*? (&)
 
-            next_token__CIParser(self);
+            parse_variable_name_and_data_type__CIParser(
+              self, &data_type, &name, false);
 
             CIGenericParams *generic_params =
               parse_generic_params__CIParser(self, false); // CIGenericParams*?
@@ -6602,7 +6801,7 @@ parse_decl__CIParser(CIParser *self, bool in_function_body)
                                                    name,
                                                    generic_params);
 
-                    break;
+                    goto exit;
                 default:
                     if (!in_function_body) {
                         FAILED("expected `=`, `;`, `(`");
@@ -6614,7 +6813,7 @@ parse_decl__CIParser(CIParser *self, bool in_function_body)
             }
 
             res = parse_variable_list__CIParser(
-              self, res, storage_class_flag, data_type, in_function_body);
+              self, res, storage_class_flag, pre_data_type, in_function_body);
 
             break;
         }
