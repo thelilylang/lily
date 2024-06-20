@@ -131,6 +131,17 @@ get__CIParserMacroCallParams(const CIParserMacroCallParams *self, Usize index);
 
 /**
  *
+ * @brief Get variadic macro call param.
+ */
+inline CIParserMacroCallParam *
+get_macro_param_variadic__CIParserMacroCallParams(
+  const CIParserMacroCallParams *self)
+{
+    return self->last;
+}
+
+/**
+ *
  * @brief Free CIParserMacroCallParams type.
  */
 DESTRUCTOR(CIParserMacroCallParams, const CIParserMacroCallParams *self);

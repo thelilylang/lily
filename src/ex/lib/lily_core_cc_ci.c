@@ -378,6 +378,10 @@ extern inline CONSTRUCTOR(CIParserVisitWaitingList, CIParserVisitWaitingList);
 
 extern inline CONSTRUCTOR(CIParserMacroCallParams, CIParserMacroCallParams);
 
+extern inline CIParserMacroCallParam *
+get_macro_param_variadic__CIParserMacroCallParams(
+  const CIParserMacroCallParams *self);
+
 // <core/cc/ci/result.h>
 extern inline CIResultDefine *
 ref__CIResultDefine(CIResultDefine *self);
@@ -486,7 +490,8 @@ extern inline CONSTRUCTOR(CITokenPreprocessorDefine,
                           CITokenPreprocessorDefine,
                           String *name,
                           Vec *params,
-                          CITokens tokens);
+                          CITokens tokens,
+                          bool is_variadic);
 
 extern inline CONSTRUCTOR(CITokenPreprocessorEmbed,
                           CITokenPreprocessorEmbed,
