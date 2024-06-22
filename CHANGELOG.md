@@ -1,16 +1,33 @@
 # Changelog
 
-## 0.0.1 - 2023-09-21
+## 0.2.0 - 2024-06-22
+
+### Added
+
+- Get builtin values according to the desired standard [#483](https://github.com/thelilylang/lily/pull/483)
+- Implement (scan) variadic param [#482](https://github.com/thelilylang/lily/pull/482)
+- Get compiler include dirs [#486](https://github.com/thelilylang/lily/pull/486)
+- Add `__has_feature` [#487](https://github.com/thelilylang/lily/pull/487)
+- Parse `nullptr` expression [#488](https://github.com/thelilylang/lily/pull/488)
+- Implement way to get standard types from builtin file (e.g. \_\_SIZE_TYPE__) [#489](https://github.com/thelilylang/lily/pull/489)
+- Parse typeof [#491](https://github.com/thelilylang/lily/pull/491)
+- Add functions and types builtin [#492](https://github.com/thelilylang/lily/pull/492)
+- Generate function call builtin [#498](https://github.com/thelilylang/lily/pull/498)
+- Parse fixed array and function data type [#499](https://github.com/thelilylang/lily/pull/499)
 
 ### Fixed
 
-- Fix linking errors on MacOS [#401](https://github.com/thelilylang/lily/pull/401)
+- Fix parse unary [#484](https://github.com/thelilylang/lily/pull/484)
+- Fix bug in include system [#493](https://github.com/thelilylang/lily/pull/493)
+- Fix memory leak in resolve include preprocessor function [#494](https://github.com/thelilylang/lily/pull/494)
+- Fix bug in peek scanner function [#495](https://github.com/thelilylang/lily/pull/495)
+- Fix: Free duplicate macro [#496](https://github.com/thelilylang/lily/pull/496)
+- Fix memory leaks when resolving a ternary expression [#497](https://github.com/thelilylang/lily/pull/497)
 
-## 0.0.2 - 2023-09-22
+### Changed
 
-### Fixed
-
-- Fix infinite wait when running child packages [#403](https://github.com/thelilylang/lily/pull/403)
+- Update until note message [#485](https://github.com/thelilylang/lily/pull/485)
+- Move the token standard check to the parser [#490](https://github.com/thelilylang/lily/pull/490)
 
 ## 0.1.0 - 2024-05-21
 
@@ -59,3 +76,15 @@
 - Update initialization rule [#464](https://github.com/thelilylang/lily/pull/464)
 - Turn token as node [#469](https://github.com/thelilylang/lily/pull/469)
 - Update include system [#476](https://github.com/thelilylang/lily/pull/476)
+
+## 0.0.2 - 2023-09-22
+
+### Fixed
+
+- Fix infinite wait when running child packages [#403](https://github.com/thelilylang/lily/pull/403)
+
+## 0.0.1 - 2023-09-21
+
+### Fixed
+
+- Fix linking errors on MacOS [#401](https://github.com/thelilylang/lily/pull/401)
