@@ -32,6 +32,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/// @brief This function update prototype, according the declaration.
+static void
+update_prototype__CIResult(CIDecl *prototype, CIDecl *decl);
+
 /// @param path char* (&)
 static void
 add_and_run_lib_file__CIResult(const CIResult *self,
@@ -272,13 +276,62 @@ add_include__CIResultFile(const CIResultFile *self)
 {
 }
 
-#define CHECK_FOR_SYMBOL_REDEFINITION_DECL(name, search) \
-    {                                                    \
-        CIDecl *is_exist = search(self, name);           \
-                                                         \
-        if (is_exist) {                                  \
-            return is_exist;                             \
-        }                                                \
+void
+update_prototype__CIResult(CIDecl *prototype, CIDecl *decl)
+{
+    ASSERT(prototype->kind == decl->kind);
+    ASSERT(prototype->is_prototype && !decl->is_prototype);
+
+    switch (prototype->kind) {
+        case CI_DECL_KIND_ENUM:
+            prototype->enum_.variants = decl->enum_.variants;
+            decl->enum_.variants = NULL;
+
+            break;
+        case CI_DECL_KIND_FUNCTION:
+            prototype->function.body = decl->function.body;
+
+            break;
+        case CI_DECL_KIND_STRUCT:
+            prototype->struct_.fields = decl->struct_.fields;
+            decl->struct_.fields = NULL;
+
+            break;
+        case CI_DECL_KIND_TYPEDEF:
+            break;
+        case CI_DECL_KIND_UNION:
+            prototype->union_.fields = decl->union_.fields;
+            decl->union_.fields = NULL;
+
+            break;
+        case CI_DECL_KIND_VARIABLE:
+            UNREACHABLE("prototype variable is impossible");
+        default:
+            UNREACHABLE("the gens variants are not expected");
+    }
+
+    prototype->is_prototype = false;
+}
+
+#define CHECK_FOR_SYMBOL_REDEFINITION_DECL(name, search, decl)                \
+    {                                                                         \
+        CIDecl *is_exist = search(self, name);                                \
+                                                                              \
+        if (is_exist) {                                                       \
+            /* Manage prototype update */                                     \
+            if (!decl->is_prototype) {                                        \
+                if (is_exist->is_prototype && is_exist->kind == decl->kind) { \
+                    update_prototype__CIResult(is_exist, decl);               \
+                                                                              \
+                    return decl;                                              \
+                }                                                             \
+                                                                              \
+                return is_exist;                                              \
+            } else {                                                          \
+                /* No need to update anything in this case. */                \
+                return decl;                                                  \
+            }                                                                 \
+        }                                                                     \
     }
 
 #define CHECK_FOR_SYMBOL_REDEFINITION_VAR(name, scope)                       \
@@ -290,29 +343,40 @@ add_include__CIResultFile(const CIResultFile *self)
         }                                                                    \
     }
 
-#define CHECK_FOR_SYMBOL_REDEFINITION(name, scope, decl)                       \
-    if (!(decl->kind & CI_DECL_KIND_TYPEDEF)) {                                \
-        CHECK_FOR_SYMBOL_REDEFINITION_DECL(name, search_enum__CIResultFile);   \
-        CHECK_FOR_SYMBOL_REDEFINITION_DECL(name, search_struct__CIResultFile); \
-        CHECK_FOR_SYMBOL_REDEFINITION_DECL(name, search_union__CIResultFile);  \
-    }                                                                          \
-                                                                               \
-    if (!(decl->kind & CI_DECL_KIND_ENUM ||                                    \
-          decl->kind & CI_DECL_KIND_STRUCT ||                                  \
-          decl->kind & CI_DECL_KIND_UNION)) {                                  \
-        CHECK_FOR_SYMBOL_REDEFINITION_DECL(name,                               \
-                                           search_typedef__CIResultFile);      \
-    }                                                                          \
-                                                                               \
-    CHECK_FOR_SYMBOL_REDEFINITION_DECL(name, search_function__CIResultFile);   \
+#define CHECK_FOR_SYMBOL_REDEFINITION(name, scope, decl) \
+    if (!(decl->kind & CI_DECL_KIND_TYPEDEF)) {          \
+        CHECK_FOR_SYMBOL_REDEFINITION_DECL(              \
+          name, search_enum__CIResultFile, decl);        \
+        CHECK_FOR_SYMBOL_REDEFINITION_DECL(              \
+          name, search_struct__CIResultFile, decl);      \
+        CHECK_FOR_SYMBOL_REDEFINITION_DECL(              \
+          name, search_union__CIResultFile, decl);       \
+    }                                                    \
+                                                         \
+    if (!(decl->kind & CI_DECL_KIND_ENUM ||              \
+          decl->kind & CI_DECL_KIND_STRUCT ||            \
+          decl->kind & CI_DECL_KIND_UNION)) {            \
+        CHECK_FOR_SYMBOL_REDEFINITION_DECL(              \
+          name, search_typedef__CIResultFile, decl);     \
+    }                                                    \
+                                                         \
+    CHECK_FOR_SYMBOL_REDEFINITION_DECL(                  \
+      name, search_function__CIResultFile, decl);        \
     CHECK_FOR_SYMBOL_REDEFINITION_VAR(name, scope);
 
 #define ADD_X_DECL(X, scope, add_scope, v, add_to_owner)                   \
     const String *name = get_name__CIDecl(X);                              \
                                                                            \
+    if (!name) {                                                           \
+        return NULL;                                                       \
+    }                                                                      \
+                                                                           \
     CHECK_FOR_SYMBOL_REDEFINITION(name, scope, X);                         \
                                                                            \
-    ASSERT(!add_scope);                                                    \
+    if (add_scope) {                                                       \
+        return X;                                                          \
+    }                                                                      \
+                                                                           \
     push__Vec(v, X);                                                       \
                                                                            \
     return self->owner &&                                                  \

@@ -1596,6 +1596,16 @@ IMPL_FOR_DEBUG(to_string, CIDeclEnumVariant, const CIDeclEnumVariant *self)
 }
 #endif
 
+bool
+match_prototype__CIDeclEnum(const CIDeclEnum *self, const CIDeclEnum *other)
+{
+    ASSERT(self->name && other->name);
+    ASSERT(!strcmp(self->name->buffer, other->name->buffer));
+    ASSERT(!self->variants && !other->variants);
+
+    return true;
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclEnum, const CIDeclEnum *self)
@@ -1666,6 +1676,19 @@ serialize_name__CIDeclFunction(const CIDeclFunction *self,
     CI_SERIALIZE_NAME(self->name);
 }
 
+bool
+match_prototype__CIDeclFunction(const CIDeclFunction *self,
+                                const CIDeclFunction *other)
+{
+    ASSERT(self->name && other->name);
+    ASSERT(!strcmp(self->name->buffer, other->name->buffer));
+    // NOTE: Expected prototype
+    ASSERT(!self->body && !other->body);
+
+    return eq__CIDataType(self->return_data_type, other->return_data_type) &&
+           eq_generic_params__CIDeclFunction(self, other);
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclFunction, const CIDeclFunction *self)
@@ -1699,7 +1722,8 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunction, const CIDeclFunction *self)
 }
 #endif
 
-DESTRUCTOR(CIDeclFunction, const CIDeclFunction *self)
+void
+free_as_prototype__CIDeclFunction(const CIDeclFunction *self)
 {
     FREE(CIDataType, self->return_data_type);
 
@@ -1712,6 +1736,11 @@ DESTRUCTOR(CIDeclFunction, const CIDeclFunction *self)
           self->params->buffer, self->params->len, CIDeclFunctionParam);
         FREE(Vec, self->params);
     }
+}
+
+DESTRUCTOR(CIDeclFunction, const CIDeclFunction *self)
+{
+    free_as_prototype__CIDeclFunction(self);
 
     if (self->body) {
         FREE_BUFFER_ITEMS(
@@ -1840,8 +1869,6 @@ IMPL_FOR_DEBUG(to_string, CIDeclStruct, const CIDeclStruct *self)
 void
 free_as_prototype__CIDeclStruct(const CIDeclStruct *self)
 {
-    ASSERT(!self->fields);
-
     if (self->generic_params) {
         FREE(CIGenericParams, self->generic_params);
     }
@@ -1849,9 +1876,7 @@ free_as_prototype__CIDeclStruct(const CIDeclStruct *self)
 
 DESTRUCTOR(CIDeclStruct, const CIDeclStruct *self)
 {
-    if (self->generic_params) {
-        FREE(CIGenericParams, self->generic_params);
-    }
+    free_as_prototype__CIDeclStruct(self);
 
     if (self->fields) {
         FREE_BUFFER_ITEMS(
@@ -1902,6 +1927,18 @@ DESTRUCTOR(CIDeclStructGen, const CIDeclStructGen *self)
     }
 }
 
+bool
+match_prototype__CIDeclTypedef(const CIDeclTypedef *self,
+                               const CIDeclTypedef *other)
+{
+    ASSERT(self->name && other->name);
+    ASSERT(!strcmp(self->name->buffer, other->name->buffer));
+    ASSERT(self->data_type && other->data_type);
+
+    return eq__CIDataType(self->data_type, other->data_type) &&
+           eq_generic_params__CIDeclTypedef(self, other);
+}
+
 String *
 serialize_name__CIDeclTypedef(const CIDeclTypedef *self,
                               const CIGenericParams *called_generic_params)
@@ -1923,7 +1960,8 @@ IMPL_FOR_DEBUG(to_string, CIDeclTypedef, const CIDeclTypedef *self)
 }
 #endif
 
-DESTRUCTOR(CIDeclTypedef, const CIDeclTypedef *self)
+void
+free_as_prototype__CIDeclTypedef(const CIDeclTypedef *self)
 {
     if (self->generic_params) {
         FREE(CIGenericParams, self->generic_params);
@@ -2004,8 +2042,6 @@ IMPL_FOR_DEBUG(to_string, CIDeclUnion, const CIDeclUnion *self)
 void
 free_as_prototype__CIDeclUnion(const CIDeclUnion *self)
 {
-    ASSERT(!self->fields);
-
     if (self->generic_params) {
         FREE(CIGenericParams, self->generic_params);
     }
@@ -2013,9 +2049,7 @@ free_as_prototype__CIDeclUnion(const CIDeclUnion *self)
 
 DESTRUCTOR(CIDeclUnion, const CIDeclUnion *self)
 {
-    if (self->generic_params) {
-        FREE(CIGenericParams, self->generic_params);
-    }
+    free_as_prototype__CIDeclUnion(self);
 
     if (self->fields) {
         FREE_BUFFER_ITEMS(
@@ -2420,9 +2454,17 @@ match_prototype__CIDecl(const CIDecl *self, const CIDecl *other)
     ASSERT(self->kind == other->kind);
 
     switch (self->kind) {
+        case CI_DECL_KIND_ENUM:
+            return match_prototype__CIDeclEnum(&self->enum_, &other->enum_);
+        case CI_DECL_KIND_FUNCTION:
+            return match_prototype__CIDeclFunction(&self->function,
+                                                   &other->function);
         case CI_DECL_KIND_STRUCT:
             return match_prototype__CIDeclStruct(&self->struct_,
                                                  &other->struct_);
+        case CI_DECL_KIND_TYPEDEF:
+            return match_prototype__CIDeclTypedef(&self->typedef_,
+                                                  &other->typedef_);
         case CI_DECL_KIND_UNION:
             return match_prototype__CIDeclUnion(&self->union_, &other->union_);
         default:
@@ -2537,14 +2579,32 @@ free_as_prototype__CIDecl(CIDecl *self)
     ASSERT(self->is_prototype);
 
     switch (self->kind) {
+        case CI_DECL_KIND_ENUM:
+            ASSERT(!self->enum_.variants);
+
+            free_as_prototype__CIDeclEnum(&self->enum_);
+
+            break;
+        case CI_DECL_KIND_FUNCTION:
+            ASSERT(!self->function.body);
+
+            free_as_prototype__CIDeclFunction(&self->function);
+
+            break;
         case CI_DECL_KIND_STRUCT:
+            ASSERT(!self->struct_.fields);
+
             free_as_prototype__CIDeclStruct(&self->struct_);
-            lily_free(self);
+
+            break;
+        case CI_DECL_KIND_TYPEDEF:
+            free_as_prototype__CIDeclTypedef(&self->typedef_);
 
             break;
         case CI_DECL_KIND_UNION:
+            ASSERT(!self->union_.fields);
+
             free_as_prototype__CIDeclUnion(&self->union_);
-            lily_free(self);
 
             break;
         default:
@@ -2552,6 +2612,8 @@ free_as_prototype__CIDecl(CIDecl *self)
                         "been implemented for this type of declaration, or it "
                         "is simply unnecessary");
     }
+
+    lily_free(self);
 }
 
 VARIANT_DESTRUCTOR(CIDecl, enum, CIDecl *self)
