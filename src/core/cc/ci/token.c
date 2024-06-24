@@ -556,6 +556,25 @@ to_string__CITokenPreprocessorDefine(const CITokenPreprocessorDefine *self)
     return res;
 }
 
+Isize
+get_variadic_param_index__CITokenPreprocessorDefine(
+  const CITokenPreprocessorDefine *self)
+{
+    if (!self->is_variadic) {
+        return -1;
+    }
+
+    for (Usize i = 0; i < self->params->len; ++i) {
+        CITokenPreprocessorDefineParam *param = get__Vec(self->params, i);
+
+        if (param->is_variadic) {
+            return i;
+        }
+    }
+
+    UNREACHABLE("a variadic param must be found");
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
@@ -575,7 +594,11 @@ IMPL_FOR_DEBUG(to_string,
 
     DEBUG_TOKENS(self->tokens, res);
 
-    push_str__String(res, " }");
+    {
+        char *s = format(", is_variadic = {b} }", self->is_variadic);
+
+        PUSH_STR_AND_FREE(res, s);
+    }
 
     return res;
 }
@@ -1746,6 +1769,8 @@ to_string__CIToken(CIToken *self)
             return format__String("MACRO_DEFINED({S})", self->macro_defined);
         case CI_TOKEN_KIND_MACRO_PARAM:
             return format__String("MACRO_PARAM({zu})", self->macro_param);
+        case CI_TOKEN_KIND_MACRO_PARAM_VARIADIC:
+            return format__String("__VA_ARGS__");
         case CI_TOKEN_KIND_MINUS:
             return from__String("-");
         case CI_TOKEN_KIND_MINUS_EQ:
@@ -2175,6 +2200,8 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_MACRO_DEFINED";
         case CI_TOKEN_KIND_MACRO_PARAM:
             return "CI_TOKEN_KIND_MACRO_PARAM";
+        case CI_TOKEN_KIND_MACRO_PARAM_VARIADIC:
+            return "CI_TOKEN_KIND_MACRO_PARAM_VARIADIC";
         case CI_TOKEN_KIND_MINUS:
             return "CI_TOKEN_KIND_MINUS";
         case CI_TOKEN_KIND_MINUS_EQ:

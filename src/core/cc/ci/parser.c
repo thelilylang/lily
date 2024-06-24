@@ -408,13 +408,23 @@ parse_target__CIParser(CIParser *self,
 static void
 parse_tokens_in_macro_call_param__CIParser(CIParser *self,
                                            CIToken **current_token,
-                                           CITokens *content);
+                                           CITokens *content,
+                                           bool is_variadic);
 
 static CIParserMacroCallParam *
-parse_macro_call_param__CIParser(CIParser *self, CIToken **current_token);
+parse_macro_call_param__CIParser(CIParser *self,
+                                 CIToken **current_token,
+                                 bool is_variadic);
 
+/// @param macro_param_variadic Index of the first variadic macro param. If the
+/// macro has no variadic parameter, the value `-1` is assigned.
+/// @see `get_variadic_param_index__CITokenPreprocessorDefine` function in
+/// `include/core/cc/ci/token.h`
 static void
-parse_macro_call_params__CIParser(CIParser *self, CIToken **current_token);
+parse_macro_call_params__CIParser(CIParser *self,
+                                  CIToken **current_token,
+                                  Isize macro_param_variadic,
+                                  Usize macro_params_length);
 
 static CIToken *
 jump_in_macro_call__CIParser(CIParser *self, CIToken *next_token);
@@ -2950,12 +2960,17 @@ loop:
 void
 parse_tokens_in_macro_call_param__CIParser(CIParser *self,
                                            CIToken **current_token,
-                                           CITokens *content)
+                                           CITokens *content,
+                                           bool is_variadic)
 {
-
-    while (CURRENT((*current_token))->kind != CI_TOKEN_KIND_COMMA &&
-           CURRENT((*current_token))->kind != CI_TOKEN_KIND_RPAREN &&
-           CURRENT((*current_token))->kind != CI_TOKEN_KIND_EOF) {
+    // In cases where the macro parameter is not variadic, we want the parser to
+    // stop before the comma or the closing parenthesis. On the other hand, in
+    // cases where the macro parameter is variadic, we want the parser to stop
+    // only before the closing parenthesis.
+    while (
+      (CURRENT((*current_token))->kind != CI_TOKEN_KIND_COMMA || is_variadic) &&
+      CURRENT((*current_token))->kind != CI_TOKEN_KIND_RPAREN &&
+      CURRENT((*current_token))->kind != CI_TOKEN_KIND_EOF) {
         add__CITokens(content, CURRENT((*current_token)));
 
         if (CURRENT((*current_token))->kind == CI_TOKEN_KIND_LPAREN ||
@@ -2970,11 +2985,14 @@ parse_tokens_in_macro_call_param__CIParser(CIParser *self,
 }
 
 CIParserMacroCallParam *
-parse_macro_call_param__CIParser(CIParser *self, CIToken **current_token)
+parse_macro_call_param__CIParser(CIParser *self,
+                                 CIToken **current_token,
+                                 bool is_variadic)
 {
     CITokens content = NEW(CITokens);
 
-    parse_tokens_in_macro_call_param__CIParser(self, current_token, &content);
+    parse_tokens_in_macro_call_param__CIParser(
+      self, current_token, &content, is_variadic);
     // NOTE: In practice, it makes no difference that we don't configure the
     // location on this token (CI_TOKEN_KIND_EOT), because it's not used by the
     // parser and is only used as a transition token.
@@ -2990,17 +3008,23 @@ parse_macro_call_param__CIParser(CIParser *self, CIToken **current_token)
 }
 
 void
-parse_macro_call_params__CIParser(CIParser *self, CIToken **current_token)
+parse_macro_call_params__CIParser(CIParser *self,
+                                  CIToken **current_token,
+                                  Isize macro_param_variadic,
+                                  Usize macro_params_length)
 {
     NEXT((*current_token)); // skip `(`
 
     CIParserMacroCall *macro_call = NEW(CIParserMacroCall);
+    Usize macro_param_count = 0;
 
     while (CURRENT((*current_token))->kind != CI_TOKEN_KIND_RPAREN &&
            CURRENT((*current_token))->kind != CI_TOKEN_KIND_EOF) {
-
-        CIParserMacroCallParam *param =
-          parse_macro_call_param__CIParser(self, current_token);
+        CIParserMacroCallParam *param = parse_macro_call_param__CIParser(
+          self,
+          current_token,
+          macro_param_variadic != -1 &&
+            macro_param_count >= macro_param_variadic);
 
         if (CURRENT((*current_token))->kind != CI_TOKEN_KIND_RPAREN) {
             EXPECT((*current_token), CI_TOKEN_KIND_COMMA);
@@ -3008,11 +3032,18 @@ parse_macro_call_params__CIParser(CIParser *self, CIToken **current_token)
         }
 
         add__CIParserMacroCallParams(&macro_call->params, param);
+
+        ++macro_param_count;
     }
 
     EXPECT((*current_token), CI_TOKEN_KIND_RPAREN);
 
-    push__Stack(self->macros_call, macro_call);
+    if (macro_param_count != macro_params_length) {
+        FAILED("The count of the number of macro parameters does not "
+               "correspond to its declaration.");
+    }
+
+    add_macro__CIParser(self, macro_call);
 }
 
 CIToken *
@@ -3022,13 +3053,19 @@ jump_in_macro_call__CIParser(CIParser *self, CIToken *next_token)
       get_define__CIResultFile(self->file, next_token->identifier);
 
     if (define) {
+        Isize macro_param_variadic =
+          get_variadic_param_index__CITokenPreprocessorDefine(define->define);
         CIToken *peeked = PEEK(next_token);
 
         if (peeked) {
             switch (peeked->kind) {
                 case CI_TOKEN_KIND_LPAREN:
                     NEXT(next_token); // skip maco identifier
-                    parse_macro_call_params__CIParser(self, &next_token);
+                    parse_macro_call_params__CIParser(
+                      self,
+                      &next_token,
+                      macro_param_variadic,
+                      define->define->params->len);
 
                     break;
                 default:
@@ -3097,6 +3134,27 @@ jump_in_token_block__CIParser(CIParser *self, CIToken *next_token)
             param->content.last->eot.macro_param = next_token;
 
             return param->content.first;
+        }
+        case CI_TOKEN_KIND_MACRO_PARAM_VARIADIC: {
+            CIParserMacroCall *current_macro_call =
+              peek__Stack(self->macros_call);
+            CIParserMacroCallParam *param =
+              get_macro_param_variadic__CIParserMacroCallParams(
+                &current_macro_call->params);
+
+            if (param) {
+                ASSERT(param->content.last->kind == CI_TOKEN_KIND_EOT);
+                ASSERT(param->content.last->eot.ctx ==
+                       CI_TOKEN_EOT_CONTEXT_MACRO_PARAM);
+
+                // NOTE: Save the `param->content.last->next`, to able to
+                // restore after reach EOT.
+                param->content.last->eot.macro_param = next_token;
+
+                return param->content.first;
+            }
+
+            return next_token->next;
         }
         case CI_TOKEN_KIND_IDENTIFIER:
             return jump_in_macro_call__CIParser(self, next_token);

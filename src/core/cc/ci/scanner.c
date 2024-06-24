@@ -335,7 +335,8 @@ scan_macro_name__CIScanner(CIScanner *self,
 /// @brief Scan defined preprcoessor params.
 /// @return Vec<CITokenPreprocessorDefineParam*>*
 static Vec *
-scan_define_preprocessor_params__CIScanner(CIScanner *self);
+scan_define_preprocessor_params__CIScanner(CIScanner *self,
+                                           bool *macro_is_variadic);
 
 /// @brief Scan preprocessor content.
 /// @return CIToken*
@@ -1707,11 +1708,27 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
             if (is_in_macro__CIScannerContext(ctx) && ctx->macro) {
                 // Determine whether the `last_token->identifier` does not
                 // correspond to a macro parameter.
+                bool has_variadic = false;
+
                 for (Usize i = 0; i < ctx->macro->len; ++i) {
                     CITokenPreprocessorDefineParam *param =
                       get__Vec(ctx->macro, i);
 
-                    if (!param->is_variadic) {
+                    if (param->is_variadic) {
+                        has_variadic = true;
+
+                        if (!strcmp(last_token->identifier->buffer,
+                                    CI_VA_ARGS)) {
+                            res = NEW(CIToken,
+                                      CI_TOKEN_KIND_MACRO_PARAM_VARIADIC,
+                                      last_token->location);
+
+                            FREE(CIToken, last_token);
+                            last_token = NULL;
+
+                            break;
+                        }
+                    } else {
                         ASSERT(param->name);
 
                         if (!strcmp(param->name->buffer,
@@ -1720,10 +1737,17 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
                               CIToken, macro_param, last_token->location, i);
 
                             FREE(CIToken, last_token);
+                            last_token = NULL;
 
                             break;
                         }
                     }
+                }
+
+                if (!has_variadic && last_token &&
+                    !strcmp(last_token->identifier->buffer, CI_VA_ARGS)) {
+                    FAILED("you cannot use `__VA_ARGS__` in macro which have "
+                           "no variadic param");
                 }
 
                 if (res) {
@@ -2619,6 +2643,8 @@ scan_macro_name__CIScanner(CIScanner *self,
             FAILED("not expected to undef or re-define standard predefined "
                    "macro, outside of predefined file");
         }
+    } else if (!strcmp(name->buffer, CI_VA_ARGS)) {
+        FAILED("cannot define __CI_VA_ARGS__");
     }
 
     next_char__CIScanner(self);
@@ -2627,7 +2653,8 @@ scan_macro_name__CIScanner(CIScanner *self,
 }
 
 Vec *
-scan_define_preprocessor_params__CIScanner(CIScanner *self)
+scan_define_preprocessor_params__CIScanner(CIScanner *self,
+                                           bool *macro_is_variadic)
 {
     Vec *params = NEW(Vec);
     CIScannerContext ctx = NEW_VARIANT(CIScannerContext, macro, NULL, NULL);
@@ -2649,7 +2676,7 @@ scan_define_preprocessor_params__CIScanner(CIScanner *self)
 
                     lily_free(param);
 
-                    goto skip_comma;
+                    goto skip_sep;
                 case CI_TOKEN_KIND_DOT_DOT_DOT:
                     push__Vec(
                       params,
@@ -2658,9 +2685,10 @@ scan_define_preprocessor_params__CIScanner(CIScanner *self)
                     jump__CIScanner(self, 3);
                     FREE(CIToken, param);
 
+                    *macro_is_variadic = true;
                     expected_close_paren = true;
 
-                    goto skip_comma;
+                    goto skip_sep;
                 default:
                     FAILED("expected identifier");
             }
@@ -2670,7 +2698,7 @@ scan_define_preprocessor_params__CIScanner(CIScanner *self)
             FREE(CIToken, param);
         }
 
-    skip_comma:
+    skip_sep:
         skip_space_and_backslash__CIScanner(self);
 
         switch (self->base.source.cursor.current) {
@@ -2802,10 +2830,12 @@ scan_define_preprocessor__CIScanner(CIScanner *self)
     }
 
     Vec *params = NULL; // Vec<CITokenpreprocessorDefineParam*>*?
+    bool is_variadic = false;
 
     switch (self->base.source.cursor.current) {
         case '(':
-            params = scan_define_preprocessor_params__CIScanner(self);
+            params =
+              scan_define_preprocessor_params__CIScanner(self, &is_variadic);
 
             break;
         default:
@@ -2819,7 +2849,8 @@ scan_define_preprocessor__CIScanner(CIScanner *self)
                            name,
                            params,
                            scan_preprocessor_content__CIScanner(
-                             self, CI_SCANNER_CONTEXT_LOCATION_MACRO, params)));
+                             self, CI_SCANNER_CONTEXT_LOCATION_MACRO, params),
+                           is_variadic));
 }
 
 CIToken *

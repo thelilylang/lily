@@ -277,6 +277,8 @@ enum CITokenKind
     CI_TOKEN_KIND_LITERAL_CONSTANT_STRING,
     CI_TOKEN_KIND_MACRO_DEFINED,
     CI_TOKEN_KIND_MACRO_PARAM,
+#define CI_VA_ARGS "__VA_ARGS__"
+    CI_TOKEN_KIND_MACRO_PARAM_VARIADIC, // __VA_ARGS__
     CI_TOKEN_KIND_MINUS,
     CI_TOKEN_KIND_MINUS_EQ,
     CI_TOKEN_KIND_MINUS_MINUS,
@@ -569,6 +571,7 @@ typedef struct CITokenPreprocessorDefine
     String *name;
     Vec *params; // Vec<CITokenPreprocessorDefineParam*>*?
     CITokens tokens;
+    bool is_variadic;
 } CITokenPreprocessorDefine;
 
 /**
@@ -579,11 +582,13 @@ inline CONSTRUCTOR(CITokenPreprocessorDefine,
                    CITokenPreprocessorDefine,
                    String *name,
                    Vec *params,
-                   CITokens tokens)
+                   CITokens tokens,
+                   bool is_variadic)
 {
     return (CITokenPreprocessorDefine){ .name = name,
                                         .params = params,
-                                        .tokens = tokens };
+                                        .tokens = tokens,
+                                        .is_variadic = is_variadic };
 }
 
 /**
@@ -592,6 +597,35 @@ inline CONSTRUCTOR(CITokenPreprocessorDefine,
  */
 String *
 to_string__CITokenPreprocessorDefine(const CITokenPreprocessorDefine *self);
+
+/**
+ *
+ * @brief Get the index of the first variadic macro param. If the
+ * macro has no variadic parameter, the value `-1` is assigned.
+ *
+ * @example
+ *
+ * #define A(a, ...)
+ *
+ * A(1, 2, 3, 4, 5)
+ *
+ * index=1
+ *
+ * #define B(a)
+ *
+ * B(1)
+ *
+ * index=-1
+ *
+ * #define C(a, b, c, ...)
+ *
+ * C(1, 2, 3, 4, 5)
+ *
+ * index=3
+ */
+Isize
+get_variadic_param_index__CITokenPreprocessorDefine(
+  const CITokenPreprocessorDefine *self);
 
 /**
  *
