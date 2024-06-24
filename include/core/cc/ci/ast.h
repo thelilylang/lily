@@ -1071,6 +1071,13 @@ inline CONSTRUCTOR(CIDeclEnum, CIDeclEnum, String *name, Vec *variants)
 
 /**
  *
+ * @brief Verify if the both enums prototypes are equal.
+ */
+bool
+match_prototype__CIDeclEnum(const CIDeclEnum *self, const CIDeclEnum *other);
+
+/**
+ *
  * @brief Convert CIDeclEnum in String.
  * @note This function is only used to debug.
  */
@@ -1078,6 +1085,15 @@ inline CONSTRUCTOR(CIDeclEnum, CIDeclEnum, String *name, Vec *variants)
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclEnum, const CIDeclEnum *self);
 #endif
+
+/**
+ *
+ * @brief Free CIDeclEnum type in prototype case.
+ */
+inline void
+free_as_prototype__CIDeclEnum(const CIDeclEnum *self)
+{ /* No-free */
+}
 
 /**
  *
@@ -1156,6 +1172,25 @@ serialize_name__CIDeclFunction(const CIDeclFunction *self,
 
 /**
  *
+ * @brief Check if the both generic params are equal.
+ */
+inline bool
+eq_generic_params__CIDeclFunction(const CIDeclFunction *self,
+                                  const CIDeclFunction *other)
+{
+    return eq_op__CIGenericParams(self->generic_params, other->generic_params);
+}
+
+/**
+ *
+ * @brief Verify if the both functions prototypes are equal.
+ */
+bool
+match_prototype__CIDeclFunction(const CIDeclFunction *self,
+                                const CIDeclFunction *other);
+
+/**
+ *
  * @brief Convert CIDeclFunction in String.
  * @note This function is only used to debug.
  */
@@ -1163,6 +1198,13 @@ serialize_name__CIDeclFunction(const CIDeclFunction *self,
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclFunction, const CIDeclFunction *self);
 #endif
+
+/**
+ *
+ * @brief Free CIDeclFunction type in prototype case.
+ */
+void
+free_as_prototype__CIDeclFunction(const CIDeclFunction *self);
 
 /**
  *
@@ -1407,6 +1449,25 @@ inline CONSTRUCTOR(CIDeclTypedef,
 
 /**
  *
+ * @brief Check if the both generic params are equal.
+ */
+inline bool
+eq_generic_params__CIDeclTypedef(const CIDeclTypedef *self,
+                                 const CIDeclTypedef *other)
+{
+    return eq_op__CIGenericParams(self->generic_params, other->generic_params);
+}
+
+/**
+ *
+ * @brief Verify if the both typedefs prototypes are equal.
+ */
+bool
+match_prototype__CIDeclTypedef(const CIDeclTypedef *self,
+                               const CIDeclTypedef *other);
+
+/**
+ *
  * @brief Serialize typedef name.
  */
 String *
@@ -1425,9 +1486,19 @@ IMPL_FOR_DEBUG(to_string, CIDeclTypedef, const CIDeclTypedef *self);
 
 /**
  *
+ * @brief Free CIDeclTypedef type in prototype case.
+ */
+void
+free_as_prototype__CIDeclTypedef(const CIDeclTypedef *self);
+
+/**
+ *
  * @brief Free CIDeclTypedef type.
  */
-DESTRUCTOR(CIDeclTypedef, const CIDeclTypedef *self);
+inline DESTRUCTOR(CIDeclTypedef, const CIDeclTypedef *self)
+{
+    free_as_prototype__CIDeclTypedef(self);
+}
 
 typedef struct CIDeclTypedefGen
 {

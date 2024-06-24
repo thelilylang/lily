@@ -322,9 +322,12 @@ add_include__CIResultFile(const CIResultFile *self);
 
 /**
  *
- * @brief Add enum declaration to enums field. If the enum name is already
- * defined, the declaration pointer is returned, otherwise NULL is returned.
- * @return const CIDecl*?
+ * @brief Add enum declaration to enums field. If the enumeration name is
+ * already declared, the enumeration found will be returned, but if it's a valid
+ * redeclaration, for example in the case of prototypes, the `CIDecl` pointer
+ * passed in this function will be returned. Finally, if the addition is
+ * successful, a NULL pointer is returned.
+ * @return const CIDecl*? (&)
  */
 const CIDecl *
 add_enum__CIResultFile(const CIResultFile *self, CIDecl *enum_);
@@ -332,18 +335,23 @@ add_enum__CIResultFile(const CIResultFile *self, CIDecl *enum_);
 /**
  *
  * @brief Add function declaration to functions field. If the function name is
- * already defined, the declaration pointer is returned, otherwise NULL is
- * returned.
- * @return const CIDecl*?
+ * already declared, the function found will be returned, but if it's a valid
+ * redeclaration, for example in the case of prototypes, the `CIDecl` pointer
+ * passed in this function will be returned. Finally, if the addition is
+ * successful, a NULL pointer is returned.
+ * @return const CIDecl*? (&)
  */
 const CIDecl *
 add_function__CIResultFile(const CIResultFile *self, CIDecl *function);
 
 /**
  *
- * @brief Add struct declaration to structs field. If the struct name is already
- * defined, the declaration pointer is returned, otherwise NULL is returned.
- * @return const CIDecl*?
+ * @brief Add struct declaration to structs field. If the struct name is
+ * already declared, the struct found will be returned, but if it's a valid
+ * redeclaration, for example in the case of prototypes, the `CIDecl` pointer
+ * passed in this function will be returned. Finally, if the addition is
+ * successful, a NULL pointer is returned.
+ * @return const CIDecl*? (&)
  */
 const CIDecl *
 add_struct__CIResultFile(const CIResultFile *self, CIDecl *struct_);
@@ -351,18 +359,23 @@ add_struct__CIResultFile(const CIResultFile *self, CIDecl *struct_);
 /**
  *
  * @brief Add typedef declaration to typedefs field. If the typedef name is
- * already defined, the declaration pointer is returned, otherwise NULL is
- * returned.
- * @return const CIDecl*?
+ * already declared, the typedef found will be returned, but if it's a valid
+ * redeclaration, for example in the case of prototypes, the `CIDecl` pointer
+ * passed in this function will be returned. Finally, if the addition is
+ * successful, a NULL pointer is returned.
+ * @return const CIDecl*? (&)
  */
 const CIDecl *
 add_typedef__CIResultFile(const CIResultFile *self, CIDecl *typedef_);
 
 /**
  *
- * @brief Add union declaration to unions field. If the union name is already
- * defined, the declaration pointer is returned, otherwise NULL is returned.
- * @return const CIDecl*?
+ * @brief Add union declaration to unions field. If the union name is
+ * already declared, the union found will be returned, but if it's a valid
+ * redeclaration, for example in the case of prototypes, the `CIDecl` pointer
+ * passed in this function will be returned. Finally, if the addition is
+ * successful, a NULL pointer is returned.
+ * @return const CIDecl*? (&)
  */
 const CIDecl *
 add_union__CIResultFile(const CIResultFile *self, CIDecl *union_);
@@ -370,9 +383,11 @@ add_union__CIResultFile(const CIResultFile *self, CIDecl *union_);
 /**
  *
  * @brief Add variable declaration to variables field. If the variable name is
- * already defined, the declaration pointer is returned, otherwise NULL is
- * returned.
- * @return const CIDecl*?
+ * already declared, the variable found will be returned, but if it's a valid
+ * redeclaration, for example in the case of prototypes, the `CIDecl` pointer
+ * passed in this function will be returned. Finally, if the addition is
+ * successful, a NULL pointer is returned.
+ * @return const CIDecl*? (&)
  */
 const CIDecl *
 add_variable__CIResultFile(const CIResultFile *self,

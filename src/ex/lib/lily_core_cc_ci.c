@@ -148,6 +148,9 @@ extern inline DESTRUCTOR(CIDeclEnumVariant, CIDeclEnumVariant *self);
 
 extern inline CONSTRUCTOR(CIDeclEnum, CIDeclEnum, String *name, Vec *variants);
 
+extern inline void
+free_as_prototype__CIDeclEnum(const CIDeclEnum *self);
+
 extern inline CONSTRUCTOR(CIDeclFunction,
                           CIDeclFunction,
                           String *name,
@@ -155,6 +158,10 @@ extern inline CONSTRUCTOR(CIDeclFunction,
                           CIGenericParams *generic_params,
                           Vec *params,
                           Vec *body);
+
+extern inline bool
+eq_generic_params__CIDeclFunction(const CIDeclFunction *self,
+                                  const CIDeclFunction *other);
 
 extern inline CONSTRUCTOR(CIDeclFunctionGen,
                           CIDeclFunctionGen,
@@ -185,6 +192,12 @@ extern inline CONSTRUCTOR(CIDeclTypedef,
                           String *name,
                           CIGenericParams *generic_params,
                           CIDataType *data_type);
+
+extern inline DESTRUCTOR(CIDeclTypedef, const CIDeclTypedef *self);
+
+extern inline bool
+eq_generic_params__CIDeclTypedef(const CIDeclTypedef *self,
+                                 const CIDeclTypedef *other);
 
 extern inline CONSTRUCTOR(CIDeclTypedefGen,
                           CIDeclTypedefGen,
