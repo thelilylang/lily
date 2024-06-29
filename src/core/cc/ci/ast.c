@@ -85,6 +85,9 @@ static VARIANT_DESTRUCTOR(CIDataType, typedef, CIDataType *self);
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_UNION).
 static VARIANT_DESTRUCTOR(CIDataType, union, CIDataType *self);
 
+static const CISizeInfo *
+get_size_info__CIDecl(const CIDecl *self);
+
 /// @brief Free CIDecl type (CI_DECL_KIND_ENUM).
 static VARIANT_DESTRUCTOR(CIDecl, enum, CIDecl *self);
 
@@ -317,6 +320,16 @@ DESTRUCTOR(CIScope, CIScope *self)
 
     lily_free(self);
 }
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CISizeInfo, const CISizeInfo *self)
+{
+    return format__String("CISizeInfo{{ size = {zu}, alignment = {zu} }",
+                          self->size,
+                          self->alignment);
+}
+#endif
 
 CONSTRUCTOR(CIGenericParams *, CIGenericParams, Vec *params)
 {
@@ -1857,9 +1870,15 @@ IMPL_FOR_DEBUG(to_string, CIDeclStruct, const CIDeclStruct *self)
 
     if (self->fields) {
         DEBUG_VEC_STRING(self->fields, res, CIDeclStructField);
-        push_str__String(res, " }");
     } else {
         push_str__String(res, " NULL");
+    }
+
+    {
+        char *s = format(", size_info = {Sr} }",
+                         to_string__Debug__CISizeInfo(&self->size_info));
+
+        PUSH_STR_AND_FREE(res, s);
     }
 
     return res;
@@ -1909,7 +1928,12 @@ IMPL_FOR_DEBUG(to_string, CIDeclStructGen, const CIDeclStructGen *self)
         push_str__String(res, " NULL");
     }
 
-    push_str__String(res, " }");
+    {
+        char *s = format(", size_info = {Sr} }",
+                         to_string__Debug__CISizeInfo(&self->size_info));
+
+        PUSH_STR_AND_FREE(res, s);
+    }
 
     return res;
 }
@@ -1951,12 +1975,14 @@ String *
 IMPL_FOR_DEBUG(to_string, CIDeclTypedef, const CIDeclTypedef *self)
 {
     return format__String(
-      "CIDeclTypedef{{ name = {S}, generic_params = {Sr}, data_type = {Sr} }",
+      "CIDeclTypedef{{ name = {S}, generic_params = {Sr}, data_type = {Sr}, "
+      "size_info = {Sr} }",
       self->name,
       self->generic_params
         ? to_string__Debug__CIGenericParams(self->generic_params)
         : from__String("NULL"),
-      to_string__Debug__CIDataType(self->data_type));
+      to_string__Debug__CIDataType(self->data_type),
+      to_string__Debug__CISizeInfo(&self->size_info));
 }
 #endif
 
@@ -1983,11 +2009,12 @@ IMPL_FOR_DEBUG(to_string, CIDeclTypedefGen, const CIDeclTypedefGen *self)
 {
     return format__String(
       "CIDeclTypedefGen{{ typedef_ = {Sr}, name = {S}, called_generic_params = "
-      "{Sr}, data_type = {Sr} }",
+      "{Sr}, data_type = {Sr}, size_info = {Sr} }",
       to_string__Debug__CIDeclTypedef(self->typedef_),
       self->name,
       to_string__Debug__CIGenericParams(self->called_generic_params),
-      to_string__Debug__CIDataType(self->data_type));
+      to_string__Debug__CIDataType(self->data_type),
+      to_string__Debug__CISizeInfo(&self->size_info));
 }
 #endif
 
@@ -2033,7 +2060,12 @@ IMPL_FOR_DEBUG(to_string, CIDeclUnion, const CIDeclUnion *self)
         push_str__String(res, " NULL");
     }
 
-    push_str__String(res, " }");
+    {
+        char *s = format(", size_info = {Sr} }",
+                         to_string__Debug__CISizeInfo(&self->size_info));
+
+        PUSH_STR_AND_FREE(res, s);
+    }
 
     return res;
 }
@@ -2082,7 +2114,12 @@ IMPL_FOR_DEBUG(to_string, CIDeclUnionGen, const CIDeclUnionGen *self)
         push_str__String(res, " NULL");
     }
 
-    push_str__String(res, " }");
+    {
+        char *s = format(", size_info = {Sr} }",
+                         to_string__Debug__CISizeInfo(&self->size_info));
+
+        PUSH_STR_AND_FREE(res, s);
+    }
 
     return res;
 }
@@ -2216,7 +2253,8 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl *struct_,
                     CIGenericParams *called_generic_params,
                     String *name,
-                    Vec *fields)
+                    Vec *fields,
+                    CISizeInfo size_info)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
     const CIDeclStruct *s = &struct_->struct_;
@@ -2226,7 +2264,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->is_prototype = false;
     self->ref_count = 0;
     self->struct_gen =
-      NEW(CIDeclStructGen, s, name, called_generic_params, fields);
+      NEW(CIDeclStructGen, s, name, called_generic_params, fields, size_info);
 
     return self;
 }
@@ -2250,7 +2288,8 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl *typedef_,
                     CIGenericParams *called_generic_params,
                     String *name,
-                    CIDataType *data_type)
+                    CIDataType *data_type,
+                    CISizeInfo size_info)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
     const CIDeclTypedef *t = &typedef_->typedef_;
@@ -2259,8 +2298,8 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->storage_class_flag = CI_STORAGE_CLASS_NONE;
     self->is_prototype = true;
     self->ref_count = 0;
-    self->typedef_gen =
-      NEW(CIDeclTypedefGen, t, name, called_generic_params, data_type);
+    self->typedef_gen = NEW(
+      CIDeclTypedefGen, t, name, called_generic_params, data_type, size_info);
 
     return self;
 }
@@ -2289,7 +2328,8 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl *union_,
                     CIGenericParams *called_generic_params,
                     String *name,
-                    Vec *fields)
+                    Vec *fields,
+                    CISizeInfo size_info)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
     const CIDeclUnion *u = &union_->union_;
@@ -2299,7 +2339,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->is_prototype = false;
     self->ref_count = 0;
     self->union_gen =
-      NEW(CIDeclUnionGen, u, name, called_generic_params, fields);
+      NEW(CIDeclUnionGen, u, name, called_generic_params, fields, size_info);
 
     return self;
 }
@@ -2471,6 +2511,50 @@ match_prototype__CIDecl(const CIDecl *self, const CIDecl *other)
             UNREACHABLE("match_prototype__* is not implemented for this type "
                         "of declaration or is impossible to implement");
     }
+}
+
+const CISizeInfo *
+get_size_info__CIDecl(const CIDecl *self)
+{
+    switch (self->kind) {
+        case CI_DECL_KIND_ENUM:
+            TODO("get the size of enum");
+        case CI_DECL_KIND_STRUCT:
+            if (self->struct_.generic_params) {
+                UNREACHABLE("cannot get the size of genreic struct");
+            }
+
+            return &self->struct_.size_info;
+        case CI_DECL_KIND_STRUCT_GEN:
+            return &self->struct_gen.size_info;
+        case CI_DECL_KIND_TYPEDEF:
+            return &self->typedef_.size_info;
+        case CI_DECL_KIND_TYPEDEF_GEN:
+            return &self->typedef_gen.size_info;
+        case CI_DECL_KIND_UNION:
+            if (self->union_.generic_params) {
+                UNREACHABLE("cannot get the size of generic union");
+            }
+
+            return &self->union_gen.size_info;
+        case CI_DECL_KIND_UNION_GEN:
+            return &self->union_gen.size_info;
+        default:
+            UNREACHABLE(
+              "not expected to get size with this kind of declaration");
+    }
+}
+
+Usize
+get_size__CIDecl(const CIDecl *self)
+{
+    return get_size_info__CIDecl(self)->size;
+}
+
+Usize
+get_alignment__CIDecl(const CIDecl *self)
+{
+    return get_size_info__CIDecl(self)->alignment;
 }
 
 #ifdef ENV_DEBUG

@@ -386,6 +386,31 @@ search_variable__CIScope(const CIScope *self, const String *name)
  */
 DESTRUCTOR(CIScope, CIScope *self);
 
+typedef struct CISizeInfo
+{
+    Usize size;      // => sizeof
+    Usize alignment; // => alignof
+} CISizeInfo;
+
+/**
+ *
+ * @brief Construct CISizeInfo type.
+ */
+inline CONSTRUCTOR(CISizeInfo, CISizeInfo, Usize size, Usize alignment)
+{
+    return (CISizeInfo){ .size = size, .alignment = alignment };
+}
+
+/**
+ *
+ * @brief Convert CISizeInfo in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CISizeInfo, const CISizeInfo *self);
+#endif
+
 typedef struct CIGenericParams
 {
     Usize ref_count;
@@ -1310,6 +1335,7 @@ typedef struct CIDeclStruct
     String *name;                    // String* (&)
     CIGenericParams *generic_params; // CIGenericParams*?
     Vec *fields;                     // Vec<CIDeclStructField*>*?
+    CISizeInfo size_info;
 } CIDeclStruct;
 
 /**
@@ -1320,11 +1346,13 @@ inline CONSTRUCTOR(CIDeclStruct,
                    CIDeclStruct,
                    String *name,
                    CIGenericParams *generic_params,
-                   Vec *fields)
+                   Vec *fields,
+                   CISizeInfo size_info)
 {
     return (CIDeclStruct){ .name = name,
                            .generic_params = generic_params,
-                           .fields = fields };
+                           .fields = fields,
+                           .size_info = size_info };
 }
 
 /**
@@ -1383,6 +1411,7 @@ typedef struct CIDeclStructGen
     String *name;
     CIGenericParams *called_generic_params; // CIGenericParams*
     Vec *fields;                            // Vec<CIDeclStructField*>*?
+    CISizeInfo size_info;
 } CIDeclStructGen;
 
 /**
@@ -1394,12 +1423,14 @@ inline CONSTRUCTOR(CIDeclStructGen,
                    const CIDeclStruct *struct_,
                    String *name,
                    CIGenericParams *called_generic_params,
-                   Vec *fields)
+                   Vec *fields,
+                   CISizeInfo size_info)
 {
     return (CIDeclStructGen){ .struct_ = struct_,
                               .name = name,
                               .called_generic_params = called_generic_params,
-                              .fields = fields };
+                              .fields = fields,
+                              .size_info = size_info };
 }
 
 /**
@@ -1430,6 +1461,7 @@ typedef struct CIDeclTypedef
     String *name;                    // String* (&)
     CIGenericParams *generic_params; // CIGenericParams*?
     CIDataType *data_type;
+    CISizeInfo size_info;
 } CIDeclTypedef;
 
 /**
@@ -1440,11 +1472,13 @@ inline CONSTRUCTOR(CIDeclTypedef,
                    CIDeclTypedef,
                    String *name,
                    CIGenericParams *generic_params,
-                   CIDataType *data_type)
+                   CIDataType *data_type,
+                   CISizeInfo size_info)
 {
     return (CIDeclTypedef){ .name = name,
                             .generic_params = generic_params,
-                            .data_type = data_type };
+                            .data_type = data_type,
+                            .size_info = size_info };
 }
 
 /**
@@ -1506,6 +1540,7 @@ typedef struct CIDeclTypedefGen
     String *name;
     CIGenericParams *called_generic_params; // CIGenericParams*
     CIDataType *data_type;
+    CISizeInfo size_info;
 } CIDeclTypedefGen;
 
 /**
@@ -1517,12 +1552,14 @@ inline CONSTRUCTOR(CIDeclTypedefGen,
                    const CIDeclTypedef *typedef_,
                    String *name,
                    CIGenericParams *called_generic_params,
-                   CIDataType *data_type)
+                   CIDataType *data_type,
+                   CISizeInfo size_info)
 {
     return (CIDeclTypedefGen){ .typedef_ = typedef_,
                                .name = name,
                                .called_generic_params = called_generic_params,
-                               .data_type = data_type };
+                               .data_type = data_type,
+                               .size_info = size_info };
 }
 
 /**
@@ -1553,6 +1590,7 @@ typedef struct CIDeclUnion
     String *name;                    // String* (&)
     CIGenericParams *generic_params; // CIGenericParams*?
     Vec *fields;                     // Vec<CIDeclStructField*>*?
+    CISizeInfo size_info;
 } CIDeclUnion;
 
 /**
@@ -1563,11 +1601,13 @@ inline CONSTRUCTOR(CIDeclUnion,
                    CIDeclUnion,
                    String *name,
                    CIGenericParams *generic_params,
-                   Vec *fields)
+                   Vec *fields,
+                   CISizeInfo size_info)
 {
     return (CIDeclUnion){ .name = name,
                           .generic_params = generic_params,
-                          .fields = fields };
+                          .fields = fields,
+                          .size_info = size_info };
 }
 
 /**
@@ -1625,6 +1665,7 @@ typedef struct CIDeclUnionGen
     String *name;
     CIGenericParams *called_generic_params; // CIGenericParams*
     Vec *fields;                            // Vec<CIDeclStructField*>*?
+    CISizeInfo size_info;
 } CIDeclUnionGen;
 
 /**
@@ -1636,12 +1677,14 @@ inline CONSTRUCTOR(CIDeclUnionGen,
                    const CIDeclUnion *union_,
                    String *name,
                    CIGenericParams *called_generic_params,
-                   Vec *fields)
+                   Vec *fields,
+                   CISizeInfo size_info)
 {
     return (CIDeclUnionGen){ .union_ = union_,
                              .name = name,
                              .called_generic_params = called_generic_params,
-                             .fields = fields };
+                             .fields = fields,
+                             .size_info = size_info };
 }
 
 /**
@@ -1788,7 +1831,8 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl *struct_,
                     CIGenericParams *called_generic_params,
                     String *name,
-                    Vec *fields);
+                    Vec *fields,
+                    CISizeInfo size_info);
 
 /**
  *
@@ -1806,7 +1850,8 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl *typedef_,
                     CIGenericParams *called_generic_params,
                     String *name,
-                    CIDataType *data_type);
+                    CIDataType *data_type,
+                    CISizeInfo size_info);
 
 /**
  *
@@ -1830,7 +1875,8 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl *union_,
                     CIGenericParams *called_generic_params,
                     String *name,
-                    Vec *fields);
+                    Vec *fields,
+                    CISizeInfo size_info);
 
 /**
  *
@@ -1913,6 +1959,20 @@ is_typedef__CIDecl(CIDecl *self)
     return self->kind == CI_DECL_KIND_TYPEDEF ||
            self->kind == CI_DECL_KIND_TYPEDEF_GEN;
 }
+
+/**
+ *
+ * @brief Get size of struct, union, typedef and enum.
+ */
+Usize
+get_size__CIDecl(const CIDecl *self);
+
+/**
+ *
+ * @brief Get alignment of struct, union, typedef and enum.
+ */
+Usize
+get_alignment__CIDecl(const CIDecl *self);
 
 /**
  *

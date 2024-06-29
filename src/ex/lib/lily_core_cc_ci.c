@@ -104,6 +104,8 @@ extern bool
 eq_op__CIGenericParams(const CIGenericParams *self,
                        const CIGenericParams *other);
 
+extern inline CONSTRUCTOR(CISizeInfo, CISizeInfo, Usize size, Usize alignment);
+
 extern inline VARIANT_CONSTRUCTOR(CIDataTypeArray,
                                   CIDataTypeArray,
                                   sized,
@@ -174,7 +176,8 @@ extern inline CONSTRUCTOR(CIDeclStruct,
                           CIDeclStruct,
                           String *name,
                           CIGenericParams *generic_params,
-                          Vec *fields);
+                          Vec *fields,
+                          CISizeInfo size_info);
 
 extern inline bool
 eq_generic_params__CIDeclStruct(const CIDeclStruct *self,
@@ -185,13 +188,15 @@ extern inline CONSTRUCTOR(CIDeclStructGen,
                           const CIDeclStruct *struct_,
                           String *name,
                           CIGenericParams *called_generic_params,
-                          Vec *fields);
+                          Vec *fields,
+                          CISizeInfo size_info);
 
 extern inline CONSTRUCTOR(CIDeclTypedef,
                           CIDeclTypedef,
                           String *name,
                           CIGenericParams *generic_params,
-                          CIDataType *data_type);
+                          CIDataType *data_type,
+                          CISizeInfo size_info);
 
 extern inline DESTRUCTOR(CIDeclTypedef, const CIDeclTypedef *self);
 
@@ -204,13 +209,15 @@ extern inline CONSTRUCTOR(CIDeclTypedefGen,
                           const CIDeclTypedef *typedef_,
                           String *name,
                           CIGenericParams *called_generic_params,
-                          CIDataType *data_type);
+                          CIDataType *data_type,
+                          CISizeInfo size_info);
 
 extern inline CONSTRUCTOR(CIDeclUnion,
                           CIDeclUnion,
                           String *name,
                           CIGenericParams *generic_params,
-                          Vec *fields);
+                          Vec *fields,
+                          CISizeInfo size_info);
 
 extern inline bool
 eq_generic_params__CIDeclUnion(const CIDeclUnion *self,
@@ -221,7 +228,8 @@ extern inline CONSTRUCTOR(CIDeclUnionGen,
                           const CIDeclUnion *union_,
                           String *name,
                           CIGenericParams *called_generic_params,
-                          Vec *fields);
+                          Vec *fields,
+                          CISizeInfo size_info);
 
 extern inline CONSTRUCTOR(CIDeclVariable,
                           CIDeclVariable,

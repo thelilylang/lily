@@ -130,6 +130,14 @@ is_recursive_struct__CIParser(const CIParser *self, const String *name);
 static String *
 generate_name_error__CIParser();
 
+/// @brief Search declaration, if found return the pointer of the declaration,
+/// otherwise emit an error.
+/// @param kind CI_DECL_KIND_ENUM | CI_DECL_KIND_FUNCTION | CI_DECL_KIND_STRUCT
+/// | CI_DECL_KIND_TYPEDEF | CI_DECL_KIND_UNION | CI_DECL_KIND_VARIABLE
+/// @return CIDecl*?(&)
+static CIDecl *
+search_decl__CIParser(CIParser *self, enum CIDeclKind kind, String *name);
+
 /// @brief lhs + rhs
 /// @param is_partial This makes it possible to have expressions that are not
 /// resolvable at compile time.
@@ -363,6 +371,31 @@ resolve_ref__CIParser(CIParser *self, CIExpr *rhs, bool is_partial);
 /// @brief Resolve unary expresssion
 static CIExpr *
 resolve_unary_expr__CIParser(CIParser *self, CIExpr *expr, bool is_partial);
+
+/// @param fields const Vec<CIDeclStructField*>* (&)
+static Usize
+resolve_struct_size__CIParser(CIParser *self, const Vec *fields);
+
+/// @param fields const Vec<CIDeclStructField*>* (&)
+static Usize
+resolve_union_size__CIParser(CIParser *self, const Vec *fields);
+
+static Usize
+resolve_data_type_size__CIParser(CIParser *self, const CIDataType *data_type);
+
+static CIExpr *
+resolve_sizeof_expr__CIParser(CIParser *self, const CIExpr *expr);
+
+/// @param fields const Vec<CIDeclStructField*>* (&)
+static Usize
+resolve_struct_or_union_alignment__CIParser(CIParser *self, const Vec *fields);
+
+static Usize
+resolve_data_type_alignment__CIParser(CIParser *self,
+                                      const CIDataType *data_type);
+
+static CIExpr *
+resolve_alignof_expr__CIParser(CIParser *self, const CIExpr *expr);
 
 /// @brief Resolve (can be partially) expression at compile time.
 /// @param is_partial This makes it possible to have expressions that are not
@@ -710,6 +743,7 @@ static Vec *
 parse_fields__CIParser(CIParser *self);
 
 /// @brief Parse struct or union fields.
+/// @return Vec<CIDeclStructField*>*?
 static Vec *
 parse_struct_or_union_fields__CIParser(CIParser *self);
 
@@ -1249,6 +1283,48 @@ generate_name_error__CIParser()
     push__Vec(names_error, name_error);
 
     return name_error;
+}
+
+CIDecl *
+search_decl__CIParser(CIParser *self, enum CIDeclKind kind, String *name)
+{
+    CIDecl *res = NULL;
+
+    switch (kind) {
+        case CI_DECL_KIND_ENUM:
+            res = search_enum__CIResultFile(self->file, name);
+
+            break;
+        case CI_DECL_KIND_FUNCTION:
+            res = search_function__CIResultFile(self->file, name);
+
+            break;
+        case CI_DECL_KIND_STRUCT:
+            res = search_struct__CIResultFile(self->file, name);
+
+            break;
+        case CI_DECL_KIND_TYPEDEF:
+            res = search_typedef__CIResultFile(self->file, name);
+
+            break;
+        case CI_DECL_KIND_UNION:
+            res = search_union__CIResultFile(self->file, name);
+
+            break;
+        case CI_DECL_KIND_VARIABLE:
+            res =
+              search_variable__CIResultFile(self->file, current_scope, name);
+
+            break;
+        default:
+            UNREACHABLE("this kind of declaration is not expected");
+    }
+
+    if (!res) {
+        FAILED("the declaration is not found");
+    }
+
+    return res;
 }
 
 // +, -, *, /
@@ -2507,6 +2583,347 @@ resolve_unary_expr__CIParser(CIParser *self, CIExpr *expr, bool is_partial)
     return res;
 }
 
+Usize
+resolve_struct_size__CIParser(CIParser *self, const Vec *fields)
+{
+    Usize total_size = 0;
+    Usize max_alignment = 0;
+
+    for (Usize i = 0; i < fields->len; ++i) {
+        const CIDeclStructField *field = get__Vec(fields, i);
+        Usize field_alignment =
+          resolve_data_type_alignment__CIParser(self, field->data_type);
+
+        if (max_alignment < field_alignment) {
+            max_alignment = field_alignment;
+        }
+
+        if (total_size % field_alignment != 0) {
+            total_size += field_alignment - (total_size % field_alignment);
+        }
+
+        total_size += resolve_data_type_size__CIParser(self, field->data_type);
+    }
+
+    if (total_size % max_alignment != 0) {
+        total_size += max_alignment - (total_size % max_alignment);
+    }
+
+    return total_size;
+}
+
+Usize
+resolve_union_size__CIParser(CIParser *self, const Vec *fields)
+{
+    Usize max_size = 0;
+
+    for (Usize i = 0; i < fields->len; ++i) {
+        const CIDeclStructField *field = get__Vec(fields, i);
+        Usize field_size =
+          resolve_data_type_size__CIParser(self, field->data_type);
+
+        if (field_size > max_size) {
+            max_size = field_size;
+        }
+    }
+
+    return max_size;
+}
+
+Usize
+resolve_data_type_size__CIParser(CIParser *self, const CIDataType *data_type)
+{
+    // NOTE: This part of the code is clearly not adapted to have a transpiler
+    // option for any architecture or OS.
+    switch (data_type->kind) {
+        case CI_DATA_TYPE_KIND_ARRAY:
+            ASSERT(data_type->array.kind == CI_DATA_TYPE_ARRAY_KIND_SIZED);
+
+            return resolve_data_type_size__CIParser(
+                     self, data_type->array.data_type) *
+                   data_type->array.size;
+        case CI_DATA_TYPE_KIND__ATOMIC:
+            return resolve_data_type_size__CIParser(self, data_type->_atomic);
+        case CI_DATA_TYPE_KIND_BOOL:
+            return sizeof(bool);
+        case CI_DATA_TYPE_KIND_BUILTIN:
+            TODO("get builtin size");
+        case CI_DATA_TYPE_KIND_CHAR:
+            return sizeof(char);
+        case CI_DATA_TYPE_KIND_DOUBLE:
+            return sizeof(double);
+        case CI_DATA_TYPE_KIND_DOUBLE__COMPLEX:
+            return sizeof(double _Complex);
+        case CI_DATA_TYPE_KIND_DOUBLE__IMAGINARY:
+            TODO("get double imaginary size");
+        case CI_DATA_TYPE_KIND__DECIMAL32:
+            return sizeof(int32_t);
+        case CI_DATA_TYPE_KIND__DECIMAL64:
+            return sizeof(int64_t);
+        case CI_DATA_TYPE_KIND__DECIMAL128:
+            return sizeof(__int128);
+        case CI_DATA_TYPE_KIND_ENUM:
+            // TODO: For the moment, it's not possible to set another integer
+            // size on an enumeration.
+            return sizeof(int);
+        case CI_DATA_TYPE_KIND_FLOAT:
+            return sizeof(float);
+        case CI_DATA_TYPE_KIND_FLOAT__COMPLEX:
+            return sizeof(float _Complex);
+        case CI_DATA_TYPE_KIND_FLOAT__IMAGINARY:
+            TODO("get float imaginary size");
+        case CI_DATA_TYPE_KIND_FUNCTION:
+            // NOTE: sizeof(int(int)) == sizeof(int(int, int, int)) ==
+            // sizeof(int(int, int, ...)) A function passed by value, will
+            // always have the same size.
+            return sizeof(int(int));
+        case CI_DATA_TYPE_KIND_GENERIC:
+            return 0; // At this point, we have no idea about the size of this
+                      // type.
+        case CI_DATA_TYPE_KIND_INT:
+            return sizeof(int);
+        case CI_DATA_TYPE_KIND_LONG_DOUBLE:
+            return sizeof(long double);
+        case CI_DATA_TYPE_KIND_LONG_DOUBLE__COMPLEX:
+            return sizeof(long double _Complex);
+        case CI_DATA_TYPE_KIND_LONG_DOUBLE__IMAGINARY:
+            TODO("get long double imaginary size");
+        case CI_DATA_TYPE_KIND_LONG_INT:
+            return sizeof(long int);
+        case CI_DATA_TYPE_KIND_LONG_LONG_INT:
+            return sizeof(long long int);
+        case CI_DATA_TYPE_KIND_PRE_CONST:
+            return resolve_data_type_size__CIParser(self, data_type->pre_const);
+        case CI_DATA_TYPE_KIND_POST_CONST:
+            return resolve_data_type_size__CIParser(self,
+                                                    data_type->post_const);
+        case CI_DATA_TYPE_KIND_PTR:
+            return sizeof(void *);
+        case CI_DATA_TYPE_KIND_SHORT_INT:
+            return sizeof(short int);
+        case CI_DATA_TYPE_KIND_SIGNED_CHAR:
+            return sizeof(signed char);
+        case CI_DATA_TYPE_KIND_STRUCT: {
+            if (data_type->struct_.fields) {
+                return resolve_struct_size__CIParser(self,
+                                                     data_type->struct_.fields);
+            }
+
+            ASSERT(data_type->struct_.name);
+
+            CIDecl *decl = search_decl__CIParser(
+              self, CI_DECL_KIND_STRUCT, data_type->struct_.name);
+
+            return decl ? get_size__CIDecl(decl) : 0;
+        }
+        case CI_DATA_TYPE_KIND_TYPEDEF: {
+            const CIDecl *decl = search_decl__CIParser(
+              self, CI_DECL_KIND_TYPEDEF, data_type->typedef_.name);
+
+            return decl ? get_size__CIDecl(decl) : 0;
+        }
+        case CI_DATA_TYPE_KIND_UNSIGNED_INT:
+            return sizeof(unsigned int);
+        case CI_DATA_TYPE_KIND_UNSIGNED_CHAR:
+            return sizeof(unsigned char);
+        case CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT:
+            return sizeof(unsigned long int);
+        case CI_DATA_TYPE_KIND_UNSIGNED_LONG_LONG_INT:
+            return sizeof(unsigned long long int);
+        case CI_DATA_TYPE_KIND_UNSIGNED_SHORT_INT:
+            return sizeof(unsigned short int);
+        case CI_DATA_TYPE_KIND_UNION:
+            if (data_type->union_.fields) {
+                return resolve_union_size__CIParser(self,
+                                                    data_type->struct_.fields);
+            }
+
+            ASSERT(data_type->union_.name);
+
+            CIDecl *decl = search_decl__CIParser(
+              self, CI_DECL_KIND_UNION, data_type->union_.name);
+
+            return decl ? get_size__CIDecl(decl) : 0;
+        case CI_DATA_TYPE_KIND_VOID:
+            return sizeof(void);
+    }
+}
+
+CIExpr *
+resolve_sizeof_expr__CIParser(CIParser *self, const CIExpr *expr)
+{
+    ASSERT(expr->kind == CI_EXPR_KIND_SIZEOF);
+
+    switch (expr->kind) {
+        case CI_EXPR_KIND_DATA_TYPE:
+            return NEW_VARIANT(CIExpr,
+                               literal,
+                               NEW_VARIANT(CIExprLiteral,
+                                           unsigned_int,
+                                           resolve_data_type_size__CIParser(
+                                             self, expr->sizeof_->data_type)));
+        default:
+            TODO("sizeof resolution: resolve data type of the expression");
+    }
+}
+
+Usize
+resolve_struct_or_union_alignment__CIParser(CIParser *self, const Vec *fields)
+{
+    Usize max_alignment = 0;
+
+    for (Usize i = 0; i < fields->len; ++i) {
+        const CIDeclStructField *field = get__Vec(fields, i);
+        Usize field_alignment =
+          resolve_data_type_alignment__CIParser(self, field->data_type);
+
+        if (field_alignment > max_alignment) {
+            max_alignment = field_alignment;
+        }
+    }
+
+    return max_alignment;
+}
+
+Usize
+resolve_data_type_alignment__CIParser(CIParser *self,
+                                      const CIDataType *data_type)
+{
+    // NOTE: This part of the code is clearly not adapted to have a transpiler
+    // option for any architecture or OS.
+    switch (data_type->kind) {
+        case CI_DATA_TYPE_KIND_ARRAY:
+            ASSERT(data_type->array.kind == CI_DATA_TYPE_ARRAY_KIND_SIZED);
+
+            return resolve_data_type_alignment__CIParser(
+                     self, data_type->array.data_type) *
+                   data_type->array.size;
+        case CI_DATA_TYPE_KIND__ATOMIC:
+            return resolve_data_type_alignment__CIParser(self,
+                                                         data_type->_atomic);
+        case CI_DATA_TYPE_KIND_BOOL:
+            return alignof(bool);
+        case CI_DATA_TYPE_KIND_BUILTIN:
+            TODO("get builtin alignment");
+        case CI_DATA_TYPE_KIND_CHAR:
+            return alignof(char);
+        case CI_DATA_TYPE_KIND_DOUBLE:
+            return alignof(double);
+        case CI_DATA_TYPE_KIND_DOUBLE__COMPLEX:
+            return alignof(double _Complex);
+        case CI_DATA_TYPE_KIND_DOUBLE__IMAGINARY:
+            TODO("get double imaginary alignment");
+        case CI_DATA_TYPE_KIND__DECIMAL32:
+            return alignof(int32_t);
+        case CI_DATA_TYPE_KIND__DECIMAL64:
+            return alignof(int64_t);
+        case CI_DATA_TYPE_KIND__DECIMAL128:
+            return alignof(__int128);
+        case CI_DATA_TYPE_KIND_ENUM:
+            // TODO: For the moment, it's not possible to set another integer
+            // size on an enumeration.
+            return alignof(int);
+        case CI_DATA_TYPE_KIND_FLOAT:
+            return alignof(float);
+        case CI_DATA_TYPE_KIND_FLOAT__COMPLEX:
+            return alignof(float _Complex);
+        case CI_DATA_TYPE_KIND_FLOAT__IMAGINARY:
+            TODO("get float imaginary alignment");
+        case CI_DATA_TYPE_KIND_FUNCTION:
+            return alignof(int(int));
+        case CI_DATA_TYPE_KIND_GENERIC:
+            return 0; // At this point, we have no idea about the alignment of
+                      // this
+        case CI_DATA_TYPE_KIND_INT:
+            return alignof(int);
+        case CI_DATA_TYPE_KIND_LONG_DOUBLE:
+            return alignof(long double);
+        case CI_DATA_TYPE_KIND_LONG_DOUBLE__COMPLEX:
+            return alignof(long double _Complex);
+        case CI_DATA_TYPE_KIND_LONG_DOUBLE__IMAGINARY:
+            TODO("get long double imaginary alignment");
+        case CI_DATA_TYPE_KIND_LONG_INT:
+            return alignof(long int);
+        case CI_DATA_TYPE_KIND_LONG_LONG_INT:
+            return alignof(long long int);
+        case CI_DATA_TYPE_KIND_PRE_CONST:
+            return resolve_data_type_alignment__CIParser(self,
+                                                         data_type->pre_const);
+        case CI_DATA_TYPE_KIND_POST_CONST:
+            return resolve_data_type_alignment__CIParser(self,
+                                                         data_type->post_const);
+        case CI_DATA_TYPE_KIND_PTR:
+            return alignof(void *);
+        case CI_DATA_TYPE_KIND_SHORT_INT:
+            return alignof(short int);
+        case CI_DATA_TYPE_KIND_SIGNED_CHAR:
+            return alignof(signed char);
+        case CI_DATA_TYPE_KIND_STRUCT: {
+            if (data_type->struct_.fields) {
+                return resolve_struct_or_union_alignment__CIParser(
+                  self, data_type->struct_.fields);
+            }
+
+            ASSERT(data_type->struct_.name);
+
+            const CIDecl *decl = search_decl__CIParser(
+              self, CI_DECL_KIND_STRUCT, data_type->struct_.name);
+
+            return decl ? decl->struct_.size_info.alignment : 0;
+        }
+        case CI_DATA_TYPE_KIND_TYPEDEF: {
+            CIDecl *decl = search_decl__CIParser(
+              self, CI_DECL_KIND_TYPEDEF, data_type->typedef_.name);
+
+            return decl ? get_alignment__CIDecl(decl) : 0;
+        }
+        case CI_DATA_TYPE_KIND_UNSIGNED_INT:
+            return alignof(unsigned int);
+        case CI_DATA_TYPE_KIND_UNSIGNED_CHAR:
+            return alignof(unsigned char);
+        case CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT:
+            return alignof(unsigned long int);
+        case CI_DATA_TYPE_KIND_UNSIGNED_LONG_LONG_INT:
+            return alignof(unsigned long long int);
+        case CI_DATA_TYPE_KIND_UNSIGNED_SHORT_INT:
+            return alignof(unsigned short int);
+        case CI_DATA_TYPE_KIND_UNION: {
+            if (data_type->union_.fields) {
+                return resolve_struct_or_union_alignment__CIParser(
+                  self, data_type->union_.fields);
+            }
+
+            ASSERT(data_type->union_.name);
+
+            const CIDecl *decl = search_decl__CIParser(
+              self, CI_DECL_KIND_UNION, data_type->union_.name);
+
+            return decl ? decl->union_.size_info.alignment : 0;
+        }
+        case CI_DATA_TYPE_KIND_VOID:
+            return alignof(void);
+    }
+}
+
+CIExpr *
+resolve_alignof_expr__CIParser(CIParser *self, const CIExpr *expr)
+{
+    ASSERT(expr->kind == CI_EXPR_KIND_ALIGNOF);
+
+    switch (expr->alignof_->kind) {
+        case CI_EXPR_KIND_DATA_TYPE:
+            return NEW_VARIANT(
+              CIExpr,
+              literal,
+              NEW_VARIANT(CIExprLiteral,
+                          unsigned_int,
+                          resolve_data_type_alignment__CIParser(
+                            self, expr->alignof_->data_type)));
+        default:
+            TODO("alignof resolution: resolve data type of the expression");
+    }
+}
+
 CIExpr *
 resolve_expr__CIParser(CIParser *self, CIExpr *expr, bool is_partial)
 {
@@ -2514,7 +2931,7 @@ resolve_expr__CIParser(CIParser *self, CIExpr *expr, bool is_partial)
 
     switch (expr->kind) {
         case CI_EXPR_KIND_ALIGNOF:
-            TODO("resolve alignof");
+            return resolve_alignof_expr__CIParser(self, expr);
         case CI_EXPR_KIND_ARRAY_ACCESS:
             TODO("array access");
         case CI_EXPR_KIND_BINARY: {
@@ -2668,7 +3085,7 @@ resolve_expr__CIParser(CIParser *self, CIExpr *expr, bool is_partial)
         case CI_EXPR_KIND_NULLPTR:
             return ref__CIExpr(expr);
         case CI_EXPR_KIND_SIZEOF:
-            TODO("resolve sizeof");
+            return resolve_sizeof_expr__CIParser(self, expr);
         case CI_EXPR_KIND_STRUCT_CALL:
             TODO("resolve struct");
         case CI_EXPR_KIND_TERNARY: {
@@ -4218,39 +4635,64 @@ generate_type_gen__CIParser(CIParser *self,
 
             if (!decl_gen) {
                 switch (decl->kind) {
-                    case CI_DECL_KIND_STRUCT:
+                    case CI_DECL_KIND_STRUCT: {
+                        Vec *fields = visit_struct_or_union__CIParser(
+                          self, decl, called_generic_params);
+                        Usize size =
+                          resolve_struct_size__CIParser(self, fields);
+                        Usize alignment =
+                          resolve_struct_or_union_alignment__CIParser(self,
+                                                                      fields);
+
                         decl_gen = NEW_VARIANT(
                           CIDecl,
                           struct_gen,
                           decl,
                           ref__CIGenericParams(called_generic_params),
                           serialized_called_decl_name,
-                          visit_struct_or_union__CIParser(
-                            self, decl, called_generic_params));
+                          fields,
+                          NEW(CISizeInfo, size, alignment));
 
                         break;
-                    case CI_DECL_KIND_TYPEDEF:
+                    }
+                    case CI_DECL_KIND_TYPEDEF: {
+                        CIDataType *data_type = visit_typedef__CIParser(
+                          self, decl, called_generic_params);
+                        Usize size =
+                          resolve_data_type_size__CIParser(self, data_type);
+                        Usize alignment = resolve_data_type_alignment__CIParser(
+                          self, data_type);
+
                         decl_gen = NEW_VARIANT(
                           CIDecl,
                           typedef_gen,
                           decl,
                           ref__CIGenericParams(called_generic_params),
                           serialized_called_decl_name,
-                          visit_typedef__CIParser(
-                            self, decl, called_generic_params));
+                          data_type,
+                          NEW(CISizeInfo, size, alignment));
 
                         break;
-                    case CI_DECL_KIND_UNION:
+                    }
+                    case CI_DECL_KIND_UNION: {
+                        Vec *fields = visit_struct_or_union__CIParser(
+                          self, decl, called_generic_params);
+                        Usize size = resolve_union_size__CIParser(self, fields);
+                        Usize alignment =
+                          resolve_struct_or_union_alignment__CIParser(self,
+                                                                      fields);
+
                         decl_gen = NEW_VARIANT(
                           CIDecl,
                           union_gen,
                           decl,
                           ref__CIGenericParams(called_generic_params),
                           serialized_called_decl_name,
-                          visit_struct_or_union__CIParser(
-                            self, decl, called_generic_params));
+                          fields,
+                          NEW(CISizeInfo, size, alignment));
 
                         break;
+                    }
                     default:
                         UNREACHABLE("this kind of variant is not expected");
                 }
@@ -6381,12 +6823,25 @@ parse_struct__CIParser(CIParser *self,
     }
 
     Vec *fields = parse_struct_or_union_fields__CIParser(self);
+    // NOTE: There's no point in trying to resolve the size of the structure or
+    // its alignment, if it's generic.
+    Usize size = fields && !generic_params
+                   ? resolve_struct_size__CIParser(self, fields)
+                   : 0;
+    Usize alignment =
+      fields && !generic_params
+        ? resolve_struct_or_union_alignment__CIParser(self, fields)
+        : 0;
 
     return NEW_VARIANT(CIDecl,
                        struct,
                        storage_class_flag,
                        fields ? false : true,
-                       NEW(CIDeclStruct, name, generic_params, fields));
+                       NEW(CIDeclStruct,
+                           name,
+                           generic_params,
+                           fields,
+                           NEW(CISizeInfo, size, alignment)));
 }
 
 CIDecl *
@@ -6401,6 +6856,9 @@ parse_typedef__CIParser(CIParser *self)
     }
 
     CIDataType *data_type = parse_data_type__CIParser(self);
+    Usize data_type_size = resolve_data_type_size__CIParser(self, data_type);
+    Usize data_type_alignment =
+      resolve_data_type_alignment__CIParser(self, data_type);
     String *typedef_name = NULL;
 
     switch (self->current_token->kind) {
@@ -6436,7 +6894,11 @@ parse_typedef__CIParser(CIParser *self)
     return NEW_VARIANT(
       CIDecl,
       typedef,
-      NEW(CIDeclTypedef, typedef_name, generic_params, data_type));
+      NEW(CIDeclTypedef,
+          typedef_name,
+          generic_params,
+          data_type,
+          NEW(CISizeInfo, data_type_size, data_type_alignment)));
 }
 
 CIDecl *
@@ -6450,12 +6912,25 @@ parse_union__CIParser(CIParser *self,
     }
 
     Vec *fields = parse_struct_or_union_fields__CIParser(self);
+    // NOTE: There's no point in trying to resolve the size of the union or
+    // its alignment, if it's generic.
+    Usize size = fields && !generic_params
+                   ? resolve_union_size__CIParser(self, fields)
+                   : 0;
+    Usize alignment =
+      fields && !generic_params
+        ? resolve_struct_or_union_alignment__CIParser(self, fields)
+        : 0;
 
     return NEW_VARIANT(CIDecl,
                        union,
                        storage_class_flag,
                        fields ? false : true,
-                       NEW(CIDeclUnion, name, generic_params, fields));
+                       NEW(CIDeclUnion,
+                           name,
+                           generic_params,
+                           fields,
+                           NEW(CISizeInfo, size, alignment)));
 }
 
 CIDecl *
