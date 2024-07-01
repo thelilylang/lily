@@ -615,7 +615,16 @@ generate_enum_variants__CIGenerator(const Vec *enum_variants)
 void
 generate_enum_decl__CIGenerator(const CIDeclEnum *enum_)
 {
-    write_String__CIGenerator(format__String("enum {S} {{\n", enum_->name));
+    write_String__CIGenerator(format__String("enum {S}", enum_->name));
+
+    if (enum_->data_type) {
+        write_str__CIGenerator(" : ");
+        generate_data_type__CIGenerator(enum_->data_type);
+        write_str__CIGenerator(" ");
+    }
+
+    write_str__CIGenerator("{\n");
+
     generate_enum_variants__CIGenerator(enum_->variants);
     write_str__CIGenerator("}");
 }
@@ -1497,6 +1506,11 @@ void
 generate_enum_prototype__CIGenerator(const CIDeclEnum *enum_)
 {
     write_String__CIGenerator(format__String("enum {S}", enum_->name));
+
+    if (enum_->data_type) {
+        write_str__CIGenerator(" : ");
+        generate_data_type__CIGenerator(enum_->data_type);
+    }
 }
 
 void

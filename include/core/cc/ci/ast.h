@@ -916,6 +916,8 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other);
 /**
  *
  * @brief Check if the data type is an integer (signed or unsigned).
+ * @note This function does not perform a deep check, it only checks whether the
+ * first type cut corresponds to an integer.
  */
 bool
 is_integer__CIDataType(const CIDataType *self);
@@ -1081,17 +1083,27 @@ inline DESTRUCTOR(CIDeclEnumVariant, CIDeclEnumVariant *self)
 
 typedef struct CIDeclEnum
 {
-    String *name;  // String* (&)
-    Vec *variants; // Vec<CIDeclEnumVariant*>*?
+    String *name;          // String* (&)
+    Vec *variants;         // Vec<CIDeclEnumVariant*>*?
+    CIDataType *data_type; // CIDataType*?
+    CISizeInfo size_info;
 } CIDeclEnum;
 
 /**
  *
  * @brief Construct CIDeclEnum type.
  */
-inline CONSTRUCTOR(CIDeclEnum, CIDeclEnum, String *name, Vec *variants)
+inline CONSTRUCTOR(CIDeclEnum,
+                   CIDeclEnum,
+                   String *name,
+                   Vec *variants,
+                   CIDataType *data_type,
+                   CISizeInfo size_info)
 {
-    return (CIDeclEnum){ .name = name, .variants = variants };
+    return (CIDeclEnum){ .name = name,
+                         .variants = variants,
+                         .data_type = data_type,
+                         .size_info = size_info };
 }
 
 /**
@@ -1117,7 +1129,10 @@ IMPL_FOR_DEBUG(to_string, CIDeclEnum, const CIDeclEnum *self);
  */
 inline void
 free_as_prototype__CIDeclEnum(const CIDeclEnum *self)
-{ /* No-free */
+{
+    if (self->data_type) {
+        FREE(CIDataType, self->data_type);
+    }
 }
 
 /**
@@ -1973,6 +1988,13 @@ get_size__CIDecl(const CIDecl *self);
  */
 Usize
 get_alignment__CIDecl(const CIDecl *self);
+
+/**
+ *
+ * @brief Get data type attached to typedef or typedef gen.
+ */
+const CIDataType *
+get_typedef_data_type__CIDecl(const CIDecl *self);
 
 /**
  *

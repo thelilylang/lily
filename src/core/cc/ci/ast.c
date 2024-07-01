@@ -1616,7 +1616,9 @@ match_prototype__CIDeclEnum(const CIDeclEnum *self, const CIDeclEnum *other)
     ASSERT(!strcmp(self->name->buffer, other->name->buffer));
     ASSERT(!self->variants && !other->variants);
 
-    return true;
+    return (self->data_type && other->data_type &&
+            eq__CIDataType(self->data_type, other->data_type)) ||
+           (!self->data_type && !other->data_type);
 }
 
 #ifdef ENV_DEBUG
@@ -1628,9 +1630,15 @@ IMPL_FOR_DEBUG(to_string, CIDeclEnum, const CIDeclEnum *self)
 
     if (self->variants) {
         DEBUG_VEC_STRING(self->variants, res, CIDeclEnumVariant);
-        push_str__String(res, " }");
     } else {
         push_str__String(res, " NULL");
+    }
+
+    {
+        char *s = format(", data_type = {Sr} }",
+                         to_string__Debug__CIDataType(self->data_type));
+
+        PUSH_STR_AND_FREE(res, s);
     }
 
     return res;
@@ -1639,6 +1647,8 @@ IMPL_FOR_DEBUG(to_string, CIDeclEnum, const CIDeclEnum *self)
 
 DESTRUCTOR(CIDeclEnum, const CIDeclEnum *self)
 {
+    free_as_prototype__CIDeclEnum(self);
+
     if (self->variants) {
         FREE_BUFFER_ITEMS(
           self->variants->buffer, self->variants->len, CIDeclEnumVariant);
@@ -2518,7 +2528,7 @@ get_size_info__CIDecl(const CIDecl *self)
 {
     switch (self->kind) {
         case CI_DECL_KIND_ENUM:
-            TODO("get the size of enum");
+            return &self->enum_.size_info;
         case CI_DECL_KIND_STRUCT:
             if (self->struct_.generic_params) {
                 UNREACHABLE("cannot get the size of genreic struct");
@@ -2555,6 +2565,20 @@ Usize
 get_alignment__CIDecl(const CIDecl *self)
 {
     return get_size_info__CIDecl(self)->alignment;
+}
+
+const CIDataType *
+get_typedef_data_type__CIDecl(const CIDecl *self)
+{
+    switch (self->kind) {
+        case CI_DECL_KIND_TYPEDEF:
+            return self->typedef_.data_type;
+        case CI_DECL_KIND_TYPEDEF_GEN:
+            return self->typedef_gen.data_type;
+        default:
+            UNREACHABLE(
+              "impossible to get data type of typedef with this variant");
+    }
 }
 
 #ifdef ENV_DEBUG
