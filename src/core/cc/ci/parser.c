@@ -130,6 +130,9 @@ is_recursive_struct__CIParser(const CIParser *self, const String *name);
 static String *
 generate_name_error__CIParser();
 
+static bool
+is_integer_data_type__CIParser(CIParser *self, const CIDataType *data_type);
+
 /// @brief Search declaration, if found return the pointer of the declaration,
 /// otherwise emit an error.
 /// @param kind CI_DECL_KIND_ENUM | CI_DECL_KIND_FUNCTION | CI_DECL_KIND_STRUCT
@@ -1283,6 +1286,23 @@ generate_name_error__CIParser()
     push__Vec(names_error, name_error);
 
     return name_error;
+}
+
+bool
+is_integer_data_type__CIParser(CIParser *self, const CIDataType *data_type)
+{
+    switch (data_type->kind) {
+        case CI_DATA_TYPE_KIND_TYPEDEF: {
+            CIDecl *decl = search_decl__CIParser(
+              self, CI_DECL_KIND_TYPEDEF, data_type->typedef_.name);
+
+            return decl ? is_integer_data_type__CIParser(
+                            self, get_typedef_data_type__CIDecl(decl))
+                        : false;
+        }
+        default:
+            return is_integer__CIDataType(data_type);
+    }
 }
 
 CIDecl *
@@ -2662,10 +2682,14 @@ resolve_data_type_size__CIParser(CIParser *self, const CIDataType *data_type)
             return sizeof(int64_t);
         case CI_DATA_TYPE_KIND__DECIMAL128:
             return sizeof(__int128);
-        case CI_DATA_TYPE_KIND_ENUM:
-            // TODO: For the moment, it's not possible to set another integer
-            // size on an enumeration.
-            return sizeof(int);
+        case CI_DATA_TYPE_KIND_ENUM: {
+            ASSERT(data_type->enum_);
+
+            CIDecl *decl =
+              search_decl__CIParser(self, CI_DECL_KIND_ENUM, data_type->enum_);
+
+            return decl ? get_size__CIDecl(decl) : 0;
+        }
         case CI_DATA_TYPE_KIND_FLOAT:
             return sizeof(float);
         case CI_DATA_TYPE_KIND_FLOAT__COMPLEX:
@@ -2819,10 +2843,14 @@ resolve_data_type_alignment__CIParser(CIParser *self,
             return alignof(int64_t);
         case CI_DATA_TYPE_KIND__DECIMAL128:
             return alignof(__int128);
-        case CI_DATA_TYPE_KIND_ENUM:
-            // TODO: For the moment, it's not possible to set another integer
-            // size on an enumeration.
-            return alignof(int);
+        case CI_DATA_TYPE_KIND_ENUM: {
+            ASSERT(data_type->enum_);
+
+            CIDecl *decl =
+              search_decl__CIParser(self, CI_DECL_KIND_ENUM, data_type->enum_);
+
+            return decl ? get_alignment__CIDecl(decl) : 0;
+        }
         case CI_DATA_TYPE_KIND_FLOAT:
             return alignof(float);
         case CI_DATA_TYPE_KIND_FLOAT__COMPLEX:
@@ -5007,6 +5035,7 @@ parse_pre_data_type__CIParser(CIParser *self)
             String *name = NULL; // String* (&)
 
             // enum <name> ...;
+            // enum <name> : ...;
             // enum <name> { ... } ...;
             if (expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, true)) {
                 name = self->previous_token->identifier;
@@ -5017,6 +5046,7 @@ parse_pre_data_type__CIParser(CIParser *self)
             res = NEW_VARIANT(CIDataType, enum, name);
 
             switch (self->current_token->kind) {
+                case CI_TOKEN_KIND_COLON:
                 case CI_TOKEN_KIND_LBRACE:
                 case CI_TOKEN_KIND_SEMICOLON: {
                     CIDecl *enum_decl =
@@ -5317,19 +5347,53 @@ parse_enum_variants__CIParser(CIParser *self)
 CIDecl *
 parse_enum__CIParser(CIParser *self, int storage_class_flag, String *name)
 {
-    ASSERT(self->current_token->kind == CI_TOKEN_KIND_LBRACE ||
+    ASSERT(self->current_token->kind == CI_TOKEN_KIND_COLON ||
+           self->current_token->kind == CI_TOKEN_KIND_LBRACE ||
            self->current_token->kind == CI_TOKEN_KIND_SEMICOLON);
+
+    CIDataType *data_type = NULL;
+    Usize data_type_size = 0;
+    Usize data_type_alignment = 0;
+
+    switch (self->current_token->kind) {
+        case CI_TOKEN_KIND_COLON:
+            next_token__CIParser(self);
+
+            data_type = parse_data_type__CIParser(self);
+
+            if (data_type) {
+                if (!is_integer_data_type__CIParser(self, data_type)) {
+                    FAILED("expected integer data type");
+                }
+
+                data_type_size =
+                  resolve_data_type_size__CIParser(self, data_type);
+                data_type_alignment =
+                  resolve_data_type_alignment__CIParser(self, data_type);
+            }
+
+            break;
+        default:
+            break;
+    }
 
     switch (self->current_token->kind) {
         case CI_TOKEN_KIND_LBRACE:
             next_token__CIParser(self);
             break;
+        case CI_TOKEN_KIND_SEMICOLON:
+            return NEW_VARIANT(
+              CIDecl,
+              enum,
+              storage_class_flag,
+              true,
+              NEW(CIDeclEnum,
+                  name,
+                  NULL,
+                  data_type,
+                  NEW(CISizeInfo, data_type_size, data_type_alignment)));
         default:
-            return NEW_VARIANT(CIDecl,
-                               enum,
-                               storage_class_flag,
-                               true,
-                               NEW(CIDeclEnum, name, NULL));
+            FAILED("expected `{` or `;`");
     }
 
     return NEW_VARIANT(
@@ -5337,7 +5401,11 @@ parse_enum__CIParser(CIParser *self, int storage_class_flag, String *name)
       enum,
       storage_class_flag,
       false,
-      NEW(CIDeclEnum, name, parse_enum_variants__CIParser(self)));
+      NEW(CIDeclEnum,
+          name,
+          parse_enum_variants__CIParser(self),
+          data_type,
+          NEW(CISizeInfo, data_type_size, data_type_alignment)));
 }
 
 Vec *

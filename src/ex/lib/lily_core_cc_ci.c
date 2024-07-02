@@ -148,7 +148,12 @@ ref__CIDataType(CIDataType *self);
 
 extern inline DESTRUCTOR(CIDeclEnumVariant, CIDeclEnumVariant *self);
 
-extern inline CONSTRUCTOR(CIDeclEnum, CIDeclEnum, String *name, Vec *variants);
+extern inline CONSTRUCTOR(CIDeclEnum,
+                          CIDeclEnum,
+                          String *name,
+                          Vec *variants,
+                          CIDataType *data_type,
+                          CISizeInfo size_info);
 
 extern inline void
 free_as_prototype__CIDeclEnum(const CIDeclEnum *self);
