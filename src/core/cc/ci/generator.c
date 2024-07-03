@@ -620,10 +620,9 @@ generate_enum_decl__CIGenerator(const CIDeclEnum *enum_)
     if (enum_->data_type) {
         write_str__CIGenerator(" : ");
         generate_data_type__CIGenerator(enum_->data_type);
-        write_str__CIGenerator(" ");
     }
 
-    write_str__CIGenerator("{\n");
+    write_str__CIGenerator(" {\n");
 
     generate_enum_variants__CIGenerator(enum_->variants);
     write_str__CIGenerator("}");
