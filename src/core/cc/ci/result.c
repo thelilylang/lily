@@ -84,6 +84,8 @@ void
 reset__CIResultEntity(CIResultEntity *self)
 {
 #define FREE_ENTITY_VECS()                                                    \
+    FREE_BUFFER_ITEMS(self->decls->buffer, self->decls->len, CIDecl);         \
+    FREE(Vec, self->decls);                                                   \
     FREE_BUFFER_ITEMS(self->enums->buffer, self->enums->len, CIDecl);         \
     FREE(Vec, self->enums);                                                   \
     FREE_BUFFER_ITEMS(self->functions->buffer, self->functions->len, CIDecl); \
@@ -99,6 +101,7 @@ reset__CIResultEntity(CIResultEntity *self)
 
     FREE_ENTITY_VECS();
 
+    self->decls = NEW(Vec);
     self->enums = NEW(Vec);
     self->functions = NEW(Vec);
     self->structs = NEW(Vec);
@@ -378,6 +381,7 @@ update_prototype__CIResult(CIDecl *prototype, CIDecl *decl)
     }                                                                      \
                                                                            \
     push__Vec(v, X);                                                       \
+    push__Vec(self->file_analysis->entity->decls, ref__CIDecl(X));         \
                                                                            \
     return self->owner &&                                                  \
                (X->kind != CI_DECL_KIND_VARIABLE || !X->variable.is_local) \
