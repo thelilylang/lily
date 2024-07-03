@@ -1457,49 +1457,23 @@ generate_decl__CIGenerator(const CIDecl *decl)
 void
 generate_decls__CIGenerator(const CIResultFile *file_result)
 {
-#define DECL_VECS_LEN 5
-#define ENUMS_IDX 0
-#define STRUCTS_IDX 1
-#define UNIONS_IDX 2
-#define VARIABLES_IDX 3
-#define FUNCTIONS_IDX 4
-    const Vec *decl_vecs[DECL_VECS_LEN] = {
-        [ENUMS_IDX] = file_result->entity.enums,
-        [STRUCTS_IDX] = file_result->entity.structs,
-        [UNIONS_IDX] = file_result->entity.unions,
-        [VARIABLES_IDX] = file_result->entity.variables,
-        [FUNCTIONS_IDX] = file_result->entity.functions
-    };
+    CIDecl *decl = NULL;
+    VecIter iter_decl = NEW(VecIter, file_result->entity.decls);
 
-    for (Usize i = 0; i < DECL_VECS_LEN; ++i) {
-        VecIter iter_decls = NEW(VecIter, decl_vecs[i]);
-        CIDecl *decl = NULL;
-
-#define GENERATE_DECL(cond)                       \
-    while ((decl = next__VecIter(&iter_decls))) { \
-        if (cond) {                               \
-            generate_decl__CIGenerator(decl);     \
-        }                                         \
-    }
-
-        switch (i) {
-            case VARIABLES_IDX:
+    while ((decl = next__VecIter(&iter_decl))) {
+        switch (decl->kind) {
+            case CI_DECL_KIND_VARIABLE:
                 // The expression `!decl->variable.is_local` is used to prevent
                 // local variables from being generated in the global scope.
-                GENERATE_DECL(!decl->variable.is_local);
+                if (!decl->variable.is_local) {
+                    generate_decl__CIGenerator(decl);
+                }
+
                 break;
             default:
-                GENERATE_DECL(true);
+                generate_decl__CIGenerator(decl);
         }
     }
-
-#undef DECL_VECS_LEN
-#undef ENUMS_IDX
-#undef STRUCTS_IDX
-#undef UNIONS_IDX
-#undef VARIABLES_IDX
-#undef FUNCTIONS_IDX
-#undef GENERATE_DECL
 }
 
 void
@@ -1612,25 +1586,19 @@ generate_decl_prototype__CIGenerator(const CIDecl *decl)
 void
 generate_decls_prototype__CIGenerator(const CIResultFile *file_result)
 {
-#define DECL_PROTOTYPE_VECS_LEN 5
-    Vec *decl_vecs[DECL_PROTOTYPE_VECS_LEN] = { file_result->entity.enums,
-                                                file_result->entity.structs,
-                                                file_result->entity.unions,
-                                                file_result->entity.typedefs,
-                                                file_result->entity.functions };
+    CIDecl *decl = NULL;
+    VecIter iter_decl = NEW(VecIter, file_result->entity.decls);
 
-    for (Usize i = 0; i < DECL_PROTOTYPE_VECS_LEN; ++i) {
-        VecIter iter_decls = NEW(VecIter, decl_vecs[i]);
-        CIDecl *decl = NULL;
-
-        while ((decl = next__VecIter(&iter_decls))) {
-            generate_decl_prototype__CIGenerator(decl);
+    while ((decl = next__VecIter(&iter_decl))) {
+        switch (decl->kind) {
+            case CI_DECL_KIND_VARIABLE:
+                break;
+            default:
+                generate_decl_prototype__CIGenerator(decl);
         }
     }
 
     write_str__CIGenerator("\n");
-
-#undef DECL_PROTOTYPE_VECS_LEN
 }
 
 void

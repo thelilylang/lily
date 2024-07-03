@@ -140,6 +140,7 @@ typedef struct CIResultEntity
     Vec *typedefs;           // Vec<CIDecl*>*
     Vec *unions;             // Vec<CIDecl*>*
     Vec *variables;          // Vec<CIDecl*>*
+    Vec *decls;              // Vec<CIDecl*>*
     String *filename_result; // String*?
     enum CIResultEntityKind kind;
 } CIResultEntity;
@@ -163,6 +164,7 @@ inline CONSTRUCTOR(CIResultEntity,
                              .typedefs = NEW(Vec),
                              .unions = NEW(Vec),
                              .variables = NEW(Vec),
+                             .decls = NEW(Vec),
                              .filename_result = filename_result,
                              .kind = kind };
 }
