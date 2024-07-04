@@ -1348,265 +1348,258 @@ search_decl__CIParser(CIParser *self, enum CIDeclKind kind, String *name)
 }
 
 // +, -, *, /
-#define RESOLVE_BASIC_BINARY_ARITHMETIC_EXPR(op, binary_kind)                 \
-    ASSERT(lhs &&rhs);                                                        \
-                                                                              \
-    switch (lhs->kind + rhs->kind) {                                          \
-        case CI_EXPR_KIND_LITERAL + CI_EXPR_KIND_LITERAL: {                   \
-            switch (lhs->literal.kind) {                                      \
-                case CI_EXPR_LITERAL_KIND_BOOL:                               \
-                    switch (rhs->literal.kind) {                              \
-                        case CI_EXPR_LITERAL_KIND_BOOL:                       \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(                                    \
-                                CIExprLiteral,                                \
-                                signed_int,                                   \
-                                lhs->literal.bool_ op rhs->literal.bool_));   \
-                        case CI_EXPR_LITERAL_KIND_CHAR:                       \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(                                    \
-                                CIExprLiteral,                                \
-                                signed_int,                                   \
-                                lhs->literal.bool_ op rhs->literal.char_));   \
-                        case CI_EXPR_LITERAL_KIND_FLOAT:                      \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(                                    \
-                                CIExprLiteral,                                \
-                                float,                                        \
-                                lhs->literal.bool_ op rhs->literal.float_));  \
-                        case CI_EXPR_LITERAL_KIND_SIGNED_INT:                 \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          signed_int,                         \
-                                          lhs->literal.bool_ op               \
-                                            rhs->literal.signed_int));        \
-                        case CI_EXPR_LITERAL_KIND_STRING:                     \
-                            FAILED(                                           \
-                              "this operation is unsure at compile-time");    \
-                        case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:               \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          unsigned_int,                       \
-                                          lhs->literal.bool_ op               \
-                                            rhs->literal.unsigned_int));      \
-                        default:                                              \
-                            UNREACHABLE("unknown variant");                   \
-                    }                                                         \
-                case CI_EXPR_LITERAL_KIND_CHAR:                               \
-                    switch (rhs->literal.kind) {                              \
-                        case CI_EXPR_LITERAL_KIND_BOOL:                       \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(                                    \
-                                CIExprLiteral,                                \
-                                signed_int,                                   \
-                                lhs->literal.char_ op rhs->literal.bool_));   \
-                        case CI_EXPR_LITERAL_KIND_CHAR:                       \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(                                    \
-                                CIExprLiteral,                                \
-                                signed_int,                                   \
-                                lhs->literal.char_ op rhs->literal.char_));   \
-                        case CI_EXPR_LITERAL_KIND_FLOAT:                      \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(                                    \
-                                CIExprLiteral,                                \
-                                float,                                        \
-                                lhs->literal.char_ op rhs->literal.float_));  \
-                        case CI_EXPR_LITERAL_KIND_STRING:                     \
-                            FAILED(                                           \
-                              "this operation is unsure at compile-time");    \
-                        case CI_EXPR_LITERAL_KIND_SIGNED_INT:                 \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          signed_int,                         \
-                                          lhs->literal.char_ op               \
-                                            rhs->literal.signed_int));        \
-                        case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:               \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          unsigned_int,                       \
-                                          lhs->literal.char_ op               \
-                                            rhs->literal.unsigned_int));      \
-                        default:                                              \
-                            UNREACHABLE("unknown variant");                   \
-                    }                                                         \
-                case CI_EXPR_LITERAL_KIND_FLOAT:                              \
-                    switch (rhs->literal.kind) {                              \
-                        case CI_EXPR_LITERAL_KIND_BOOL:                       \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(                                    \
-                                CIExprLiteral,                                \
-                                float,                                        \
-                                lhs->literal.float_ op rhs->literal.bool_));  \
-                        case CI_EXPR_LITERAL_KIND_CHAR:                       \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(                                    \
-                                CIExprLiteral,                                \
-                                float,                                        \
-                                lhs->literal.float_ op rhs->literal.char_));  \
-                        case CI_EXPR_LITERAL_KIND_FLOAT:                      \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(                                    \
-                                CIExprLiteral,                                \
-                                float,                                        \
-                                lhs->literal.float_ op rhs->literal.float_)); \
-                        case CI_EXPR_LITERAL_KIND_STRING:                     \
-                            FAILED(                                           \
-                              "this operation is unsure at compile-time");    \
-                        case CI_EXPR_LITERAL_KIND_SIGNED_INT:                 \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          float,                              \
-                                          lhs->literal.float_ op              \
-                                            rhs->literal.signed_int));        \
-                        case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:               \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          float,                              \
-                                          lhs->literal.float_ op              \
-                                            rhs->literal.unsigned_int));      \
-                        default:                                              \
-                            UNREACHABLE("unknown variant");                   \
-                    }                                                         \
-                case CI_EXPR_LITERAL_KIND_SIGNED_INT:                         \
-                    switch (rhs->literal.kind) {                              \
-                        case CI_EXPR_LITERAL_KIND_BOOL:                       \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          signed_int,                         \
-                                          lhs->literal.signed_int op          \
-                                            rhs->literal.bool_));             \
-                        case CI_EXPR_LITERAL_KIND_CHAR:                       \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          signed_int,                         \
-                                          lhs->literal.signed_int op          \
-                                            rhs->literal.char_));             \
-                        case CI_EXPR_LITERAL_KIND_FLOAT:                      \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          float,                              \
-                                          lhs->literal.signed_int op          \
-                                            rhs->literal.float_));            \
-                        case CI_EXPR_LITERAL_KIND_SIGNED_INT:                 \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          signed_int,                         \
-                                          lhs->literal.signed_int op          \
-                                            rhs->literal.signed_int));        \
-                        case CI_EXPR_LITERAL_KIND_STRING:                     \
-                            FAILED(                                           \
-                              "this operation is unsure at compile-time");    \
-                        case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:               \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          signed_int,                         \
-                                          lhs->literal.signed_int op          \
-                                            rhs->literal.unsigned_int));      \
-                        default:                                              \
-                            UNREACHABLE("unknown variant");                   \
-                    }                                                         \
-                case CI_EXPR_LITERAL_KIND_STRING:                             \
-                    FAILED("this operation is unsure at compile-time");       \
-                case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                       \
-                    switch (rhs->literal.kind) {                              \
-                        case CI_EXPR_LITERAL_KIND_BOOL:                       \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          unsigned_int,                       \
-                                          lhs->literal.unsigned_int op        \
-                                            rhs->literal.bool_));             \
-                        case CI_EXPR_LITERAL_KIND_CHAR:                       \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          unsigned_int,                       \
-                                          lhs->literal.unsigned_int op        \
-                                            rhs->literal.char_));             \
-                        case CI_EXPR_LITERAL_KIND_FLOAT:                      \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          float,                              \
-                                          lhs->literal.unsigned_int op        \
-                                            rhs->literal.float_));            \
-                        case CI_EXPR_LITERAL_KIND_STRING:                     \
-                            FAILED(                                           \
-                              "this operation is unsure at compile-time");    \
-                        case CI_EXPR_LITERAL_KIND_SIGNED_INT:                 \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          unsigned_int,                       \
-                                          lhs->literal.unsigned_int op        \
-                                            rhs->literal.signed_int));        \
-                        case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:               \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          unsigned_int,                       \
-                                          lhs->literal.unsigned_int op        \
-                                            rhs->literal.unsigned_int));      \
-                        default:                                              \
-                            UNREACHABLE("unknown variant");                   \
-                    }                                                         \
-            }                                                                 \
-        }                                                                     \
-        default:                                                              \
-            if (!is_partial) {                                                \
-                FAILED(                                                       \
-                  "these expressions are not resolvable at compile-time");    \
-            }                                                                 \
-    }                                                                         \
-    return NEW_VARIANT(                                                       \
-      CIExpr,                                                                 \
-      binary,                                                                 \
+#define RESOLVE_BASIC_BINARY_ARITHMETIC_EXPR(op, binary_kind)                  \
+    ASSERT(lhs &&rhs);                                                         \
+                                                                               \
+    if (lhs->kind == CI_EXPR_KIND_LITERAL &&                                   \
+        rhs->kind == CI_EXPR_KIND_LITERAL) {                                   \
+        switch (lhs->literal.kind) {                                           \
+            case CI_EXPR_LITERAL_KIND_BOOL:                                    \
+                switch (rhs->literal.kind) {                                   \
+                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            signed_int,                                        \
+                            lhs->literal.bool_ op rhs->literal.bool_));        \
+                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            signed_int,                                        \
+                            lhs->literal.bool_ op rhs->literal.char_));        \
+                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            float,                                             \
+                            lhs->literal.bool_ op rhs->literal.float_));       \
+                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            signed_int,                                        \
+                            lhs->literal.bool_ op rhs->literal.signed_int));   \
+                    case CI_EXPR_LITERAL_KIND_STRING:                          \
+                        FAILED("this operation is unsure at compile-time");    \
+                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            unsigned_int,                                      \
+                            lhs->literal.bool_ op rhs->literal.unsigned_int)); \
+                    default:                                                   \
+                        UNREACHABLE("unknown variant");                        \
+                }                                                              \
+            case CI_EXPR_LITERAL_KIND_CHAR:                                    \
+                switch (rhs->literal.kind) {                                   \
+                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            signed_int,                                        \
+                            lhs->literal.char_ op rhs->literal.bool_));        \
+                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            signed_int,                                        \
+                            lhs->literal.char_ op rhs->literal.char_));        \
+                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            float,                                             \
+                            lhs->literal.char_ op rhs->literal.float_));       \
+                    case CI_EXPR_LITERAL_KIND_STRING:                          \
+                        FAILED("this operation is unsure at compile-time");    \
+                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            signed_int,                                        \
+                            lhs->literal.char_ op rhs->literal.signed_int));   \
+                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            unsigned_int,                                      \
+                            lhs->literal.char_ op rhs->literal.unsigned_int)); \
+                    default:                                                   \
+                        UNREACHABLE("unknown variant");                        \
+                }                                                              \
+            case CI_EXPR_LITERAL_KIND_FLOAT:                                   \
+                switch (rhs->literal.kind) {                                   \
+                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            float,                                             \
+                            lhs->literal.float_ op rhs->literal.bool_));       \
+                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            float,                                             \
+                            lhs->literal.float_ op rhs->literal.char_));       \
+                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            float,                                             \
+                            lhs->literal.float_ op rhs->literal.float_));      \
+                    case CI_EXPR_LITERAL_KIND_STRING:                          \
+                        FAILED("this operation is unsure at compile-time");    \
+                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            float,                                             \
+                            lhs->literal.float_ op rhs->literal.signed_int));  \
+                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(CIExprLiteral,                           \
+                                      float,                                   \
+                                      lhs->literal.float_ op                   \
+                                        rhs->literal.unsigned_int));           \
+                    default:                                                   \
+                        UNREACHABLE("unknown variant");                        \
+                }                                                              \
+            case CI_EXPR_LITERAL_KIND_SIGNED_INT:                              \
+                switch (rhs->literal.kind) {                                   \
+                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            signed_int,                                        \
+                            lhs->literal.signed_int op rhs->literal.bool_));   \
+                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            signed_int,                                        \
+                            lhs->literal.signed_int op rhs->literal.char_));   \
+                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            float,                                             \
+                            lhs->literal.signed_int op rhs->literal.float_));  \
+                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(CIExprLiteral,                           \
+                                      signed_int,                              \
+                                      lhs->literal.signed_int op               \
+                                        rhs->literal.signed_int));             \
+                    case CI_EXPR_LITERAL_KIND_STRING:                          \
+                        FAILED("this operation is unsure at compile-time");    \
+                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(CIExprLiteral,                           \
+                                      signed_int,                              \
+                                      lhs->literal.signed_int op               \
+                                        rhs->literal.unsigned_int));           \
+                    default:                                                   \
+                        UNREACHABLE("unknown variant");                        \
+                }                                                              \
+            case CI_EXPR_LITERAL_KIND_STRING:                                  \
+                FAILED("this operation is unsure at compile-time");            \
+            case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                            \
+                switch (rhs->literal.kind) {                                   \
+                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            unsigned_int,                                      \
+                            lhs->literal.unsigned_int op rhs->literal.bool_)); \
+                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            unsigned_int,                                      \
+                            lhs->literal.unsigned_int op rhs->literal.char_)); \
+                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(CIExprLiteral,                           \
+                                      float,                                   \
+                                      lhs->literal.unsigned_int op             \
+                                        rhs->literal.float_));                 \
+                    case CI_EXPR_LITERAL_KIND_STRING:                          \
+                        FAILED("this operation is unsure at compile-time");    \
+                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(CIExprLiteral,                           \
+                                      unsigned_int,                            \
+                                      lhs->literal.unsigned_int op             \
+                                        rhs->literal.signed_int));             \
+                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(CIExprLiteral,                           \
+                                      unsigned_int,                            \
+                                      lhs->literal.unsigned_int op             \
+                                        rhs->literal.unsigned_int));           \
+                    default:                                                   \
+                        UNREACHABLE("unknown variant");                        \
+                }                                                              \
+        }                                                                      \
+    } else {                                                                   \
+        if (!is_partial) {                                                     \
+            FAILED("these expressions are not resolvable at compile-time");    \
+        }                                                                      \
+    }                                                                          \
+    return NEW_VARIANT(                                                        \
+      CIExpr,                                                                  \
+      binary,                                                                  \
       NEW(CIExprBinary, binary_kind, ref__CIExpr(lhs), ref__CIExpr(rhs)));
 
 CIExpr *
@@ -1647,200 +1640,195 @@ resolve_div_expr__CIParser(CIParser *self,
 
 // &, |, ^, <<, >>
 // Also %
-#define RESOLVE_BASIC_BINARY_BIT_EXPR(op, binary_kind)                       \
-    ASSERT(lhs &&rhs);                                                       \
-                                                                             \
-    switch (lhs->kind + rhs->kind) {                                         \
-        case CI_EXPR_KIND_LITERAL + CI_EXPR_KIND_LITERAL: {                  \
-            switch (lhs->literal.kind) {                                     \
-                case CI_EXPR_LITERAL_KIND_BOOL:                              \
-                    switch (rhs->literal.kind) {                             \
-                        case CI_EXPR_LITERAL_KIND_BOOL:                      \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(                                   \
-                                CIExprLiteral,                               \
-                                signed_int,                                  \
-                                lhs->literal.bool_ op rhs->literal.bool_));  \
-                        case CI_EXPR_LITERAL_KIND_CHAR:                      \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(                                   \
-                                CIExprLiteral,                               \
-                                signed_int,                                  \
-                                lhs->literal.bool_ op rhs->literal.char_));  \
-                        case CI_EXPR_LITERAL_KIND_FLOAT:                     \
-                            FAILED("cannot perform this operation with "     \
-                                   "no-castable to int types");              \
-                        case CI_EXPR_LITERAL_KIND_SIGNED_INT:                \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(CIExprLiteral,                     \
-                                          signed_int,                        \
-                                          lhs->literal.bool_ op              \
-                                            rhs->literal.signed_int));       \
-                        case CI_EXPR_LITERAL_KIND_STRING:                    \
-                            FAILED(                                          \
-                              "this operation is unsure at compile-time");   \
-                        case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:              \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(CIExprLiteral,                     \
-                                          unsigned_int,                      \
-                                          lhs->literal.bool_ op              \
-                                            rhs->literal.unsigned_int));     \
-                        default:                                             \
-                            UNREACHABLE("unknown variant");                  \
-                    }                                                        \
-                case CI_EXPR_LITERAL_KIND_CHAR:                              \
-                    switch (rhs->literal.kind) {                             \
-                        case CI_EXPR_LITERAL_KIND_BOOL:                      \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(                                   \
-                                CIExprLiteral,                               \
-                                signed_int,                                  \
-                                lhs->literal.char_ op rhs->literal.bool_));  \
-                        case CI_EXPR_LITERAL_KIND_CHAR:                      \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(                                   \
-                                CIExprLiteral,                               \
-                                signed_int,                                  \
-                                lhs->literal.char_ op rhs->literal.char_));  \
-                        case CI_EXPR_LITERAL_KIND_FLOAT:                     \
-                            FAILED("cannot perform this operation with "     \
-                                   "no-castable to int types");              \
-                        case CI_EXPR_LITERAL_KIND_STRING:                    \
-                            FAILED(                                          \
-                              "this operation is unsure at compile-time");   \
-                        case CI_EXPR_LITERAL_KIND_SIGNED_INT:                \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(CIExprLiteral,                     \
-                                          signed_int,                        \
-                                          lhs->literal.char_ op              \
-                                            rhs->literal.signed_int));       \
-                        case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:              \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(CIExprLiteral,                     \
-                                          unsigned_int,                      \
-                                          lhs->literal.char_ op              \
-                                            rhs->literal.unsigned_int));     \
-                        default:                                             \
-                            UNREACHABLE("unknown variant");                  \
-                    }                                                        \
-                case CI_EXPR_LITERAL_KIND_FLOAT:                             \
-                    FAILED("cannot perform this operation with no-castable " \
-                           "to int types");                                  \
-                case CI_EXPR_LITERAL_KIND_SIGNED_INT:                        \
-                    switch (rhs->literal.kind) {                             \
-                        case CI_EXPR_LITERAL_KIND_BOOL:                      \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(CIExprLiteral,                     \
-                                          signed_int,                        \
-                                          lhs->literal.signed_int op         \
-                                            rhs->literal.bool_));            \
-                        case CI_EXPR_LITERAL_KIND_CHAR:                      \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(CIExprLiteral,                     \
-                                          signed_int,                        \
-                                          lhs->literal.signed_int op         \
-                                            rhs->literal.char_));            \
-                        case CI_EXPR_LITERAL_KIND_FLOAT:                     \
-                            FAILED("cannot perform this operation with "     \
-                                   "no-castable to int types");              \
-                        case CI_EXPR_LITERAL_KIND_STRING:                    \
-                            FAILED(                                          \
-                              "this operation is unsure at compile-time");   \
-                        case CI_EXPR_LITERAL_KIND_SIGNED_INT:                \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(CIExprLiteral,                     \
-                                          signed_int,                        \
-                                          lhs->literal.signed_int op         \
-                                            rhs->literal.signed_int));       \
-                        case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:              \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(CIExprLiteral,                     \
-                                          unsigned_int,                      \
-                                          lhs->literal.signed_int op         \
-                                            rhs->literal.unsigned_int));     \
-                        default:                                             \
-                            UNREACHABLE("unknown variant");                  \
-                    }                                                        \
-                case CI_EXPR_LITERAL_KIND_STRING:                            \
-                    FAILED("this operation is unsure at compile-time");      \
-                case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                      \
-                    switch (rhs->literal.kind) {                             \
-                        case CI_EXPR_LITERAL_KIND_BOOL:                      \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(CIExprLiteral,                     \
-                                          unsigned_int,                      \
-                                          lhs->literal.unsigned_int op       \
-                                            rhs->literal.bool_));            \
-                        case CI_EXPR_LITERAL_KIND_CHAR:                      \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(CIExprLiteral,                     \
-                                          unsigned_int,                      \
-                                          lhs->literal.unsigned_int op       \
-                                            rhs->literal.char_));            \
-                        case CI_EXPR_LITERAL_KIND_FLOAT:                     \
-                            FAILED("cannot perform this operation with "     \
-                                   "no-castable to int types");              \
-                        case CI_EXPR_LITERAL_KIND_STRING:                    \
-                            FAILED(                                          \
-                              "this operation is unsure at compile-time");   \
-                        case CI_EXPR_LITERAL_KIND_SIGNED_INT:                \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(CIExprLiteral,                     \
-                                          unsigned_int,                      \
-                                          lhs->literal.unsigned_int op       \
-                                            rhs->literal.signed_int));       \
-                        case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:              \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(CIExprLiteral,                     \
-                                          unsigned_int,                      \
-                                          lhs->literal.unsigned_int op       \
-                                            rhs->literal.unsigned_int));     \
-                        default:                                             \
-                            UNREACHABLE("unknown variant");                  \
-                    }                                                        \
-            }                                                                \
-        }                                                                    \
-        default:                                                             \
-            if (!is_partial) {                                               \
-                FAILED(                                                      \
-                  "these expressions are not resolvable at compile-time");   \
-            }                                                                \
-    }                                                                        \
-    return NEW_VARIANT(                                                      \
-      CIExpr,                                                                \
-      binary,                                                                \
+#define RESOLVE_BASIC_BINARY_BIT_EXPR(op, binary_kind)                         \
+    ASSERT(lhs &&rhs);                                                         \
+                                                                               \
+    if (lhs->kind == CI_EXPR_KIND_LITERAL &&                                   \
+        rhs->kind == CI_EXPR_KIND_LITERAL) {                                   \
+        switch (lhs->literal.kind) {                                           \
+            case CI_EXPR_LITERAL_KIND_BOOL:                                    \
+                switch (rhs->literal.kind) {                                   \
+                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            signed_int,                                        \
+                            lhs->literal.bool_ op rhs->literal.bool_));        \
+                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            signed_int,                                        \
+                            lhs->literal.bool_ op rhs->literal.char_));        \
+                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
+                        FAILED("cannot perform this operation with "           \
+                               "no-castable to int types");                    \
+                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            signed_int,                                        \
+                            lhs->literal.bool_ op rhs->literal.signed_int));   \
+                    case CI_EXPR_LITERAL_KIND_STRING:                          \
+                        FAILED("this operation is unsure at compile-time");    \
+                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            unsigned_int,                                      \
+                            lhs->literal.bool_ op rhs->literal.unsigned_int)); \
+                    default:                                                   \
+                        UNREACHABLE("unknown variant");                        \
+                }                                                              \
+            case CI_EXPR_LITERAL_KIND_CHAR:                                    \
+                switch (rhs->literal.kind) {                                   \
+                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            signed_int,                                        \
+                            lhs->literal.char_ op rhs->literal.bool_));        \
+                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            signed_int,                                        \
+                            lhs->literal.char_ op rhs->literal.char_));        \
+                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
+                        FAILED("cannot perform this operation with "           \
+                               "no-castable to int types");                    \
+                    case CI_EXPR_LITERAL_KIND_STRING:                          \
+                        FAILED("this operation is unsure at compile-time");    \
+                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            signed_int,                                        \
+                            lhs->literal.char_ op rhs->literal.signed_int));   \
+                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            unsigned_int,                                      \
+                            lhs->literal.char_ op rhs->literal.unsigned_int)); \
+                    default:                                                   \
+                        UNREACHABLE("unknown variant");                        \
+                }                                                              \
+            case CI_EXPR_LITERAL_KIND_FLOAT:                                   \
+                FAILED("cannot perform this operation with no-castable "       \
+                       "to int types");                                        \
+            case CI_EXPR_LITERAL_KIND_SIGNED_INT:                              \
+                switch (rhs->literal.kind) {                                   \
+                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            signed_int,                                        \
+                            lhs->literal.signed_int op rhs->literal.bool_));   \
+                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            signed_int,                                        \
+                            lhs->literal.signed_int op rhs->literal.char_));   \
+                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
+                        FAILED("cannot perform this operation with "           \
+                               "no-castable to int types");                    \
+                    case CI_EXPR_LITERAL_KIND_STRING:                          \
+                        FAILED("this operation is unsure at compile-time");    \
+                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(CIExprLiteral,                           \
+                                      signed_int,                              \
+                                      lhs->literal.signed_int op               \
+                                        rhs->literal.signed_int));             \
+                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(CIExprLiteral,                           \
+                                      unsigned_int,                            \
+                                      lhs->literal.signed_int op               \
+                                        rhs->literal.unsigned_int));           \
+                    default:                                                   \
+                        UNREACHABLE("unknown variant");                        \
+                }                                                              \
+            case CI_EXPR_LITERAL_KIND_STRING:                                  \
+                FAILED("this operation is unsure at compile-time");            \
+            case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                            \
+                switch (rhs->literal.kind) {                                   \
+                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            unsigned_int,                                      \
+                            lhs->literal.unsigned_int op rhs->literal.bool_)); \
+                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            unsigned_int,                                      \
+                            lhs->literal.unsigned_int op rhs->literal.char_)); \
+                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
+                        FAILED("cannot perform this operation with "           \
+                               "no-castable to int types");                    \
+                    case CI_EXPR_LITERAL_KIND_STRING:                          \
+                        FAILED("this operation is unsure at compile-time");    \
+                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(CIExprLiteral,                           \
+                                      unsigned_int,                            \
+                                      lhs->literal.unsigned_int op             \
+                                        rhs->literal.signed_int));             \
+                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(CIExprLiteral,                           \
+                                      unsigned_int,                            \
+                                      lhs->literal.unsigned_int op             \
+                                        rhs->literal.unsigned_int));           \
+                    default:                                                   \
+                        UNREACHABLE("unknown variant");                        \
+                }                                                              \
+        }                                                                      \
+    } else {                                                                   \
+        if (!is_partial) {                                                     \
+            FAILED("these expressions are not resolvable at compile-time");    \
+        }                                                                      \
+    }                                                                          \
+                                                                               \
+    return NEW_VARIANT(                                                        \
+      CIExpr,                                                                  \
+      binary,                                                                  \
       NEW(CIExprBinary, binary_kind, ref__CIExpr(lhs), ref__CIExpr(rhs)));
 
 CIExpr *
@@ -1898,200 +1886,195 @@ resolve_bit_rshift_expr__CIParser(CIParser *self,
 }
 
 // &&, ||
-#define RESOLVE_BASIC_BINARY_LOGICAL_EXPR(op, binary_kind)                   \
-    ASSERT(lhs &&rhs);                                                       \
-                                                                             \
-    switch (lhs->kind + rhs->kind) {                                         \
-        case CI_EXPR_KIND_LITERAL + CI_EXPR_KIND_LITERAL: {                  \
-            switch (lhs->literal.kind) {                                     \
-                case CI_EXPR_LITERAL_KIND_BOOL:                              \
-                    switch (rhs->literal.kind) {                             \
-                        case CI_EXPR_LITERAL_KIND_BOOL:                      \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(                                   \
-                                CIExprLiteral,                               \
-                                bool,                                        \
-                                lhs->literal.bool_ op rhs->literal.bool_));  \
-                        case CI_EXPR_LITERAL_KIND_CHAR:                      \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(                                   \
-                                CIExprLiteral,                               \
-                                bool,                                        \
-                                lhs->literal.bool_ op rhs->literal.char_));  \
-                        case CI_EXPR_LITERAL_KIND_FLOAT:                     \
-                            FAILED("cannot perform this operation with "     \
-                                   "no-castable to int types");              \
-                        case CI_EXPR_LITERAL_KIND_SIGNED_INT:                \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(CIExprLiteral,                     \
-                                          bool,                              \
-                                          lhs->literal.bool_ op              \
-                                            rhs->literal.signed_int));       \
-                        case CI_EXPR_LITERAL_KIND_STRING:                    \
-                            FAILED(                                          \
-                              "this operation is unsure at compile-time");   \
-                        case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:              \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(CIExprLiteral,                     \
-                                          bool,                              \
-                                          lhs->literal.bool_ op              \
-                                            rhs->literal.unsigned_int));     \
-                        default:                                             \
-                            UNREACHABLE("unknown variant");                  \
-                    }                                                        \
-                case CI_EXPR_LITERAL_KIND_CHAR:                              \
-                    switch (rhs->literal.kind) {                             \
-                        case CI_EXPR_LITERAL_KIND_BOOL:                      \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(                                   \
-                                CIExprLiteral,                               \
-                                bool,                                        \
-                                lhs->literal.char_ op rhs->literal.bool_));  \
-                        case CI_EXPR_LITERAL_KIND_CHAR:                      \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(                                   \
-                                CIExprLiteral,                               \
-                                bool,                                        \
-                                lhs->literal.char_ op rhs->literal.char_));  \
-                        case CI_EXPR_LITERAL_KIND_FLOAT:                     \
-                            FAILED("cannot perform this operation with "     \
-                                   "no-castable to int types");              \
-                        case CI_EXPR_LITERAL_KIND_STRING:                    \
-                            FAILED(                                          \
-                              "this operation is unsure at compile-time");   \
-                        case CI_EXPR_LITERAL_KIND_SIGNED_INT:                \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(CIExprLiteral,                     \
-                                          bool,                              \
-                                          lhs->literal.char_ op              \
-                                            rhs->literal.signed_int));       \
-                        case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:              \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(CIExprLiteral,                     \
-                                          bool,                              \
-                                          lhs->literal.char_ op              \
-                                            rhs->literal.unsigned_int));     \
-                        default:                                             \
-                            UNREACHABLE("unknown variant");                  \
-                    }                                                        \
-                case CI_EXPR_LITERAL_KIND_FLOAT:                             \
-                    FAILED("cannot perform this operation with no-castable " \
-                           "to int types");                                  \
-                case CI_EXPR_LITERAL_KIND_SIGNED_INT:                        \
-                    switch (rhs->literal.kind) {                             \
-                        case CI_EXPR_LITERAL_KIND_BOOL:                      \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(CIExprLiteral,                     \
-                                          bool,                              \
-                                          lhs->literal.signed_int op         \
-                                            rhs->literal.bool_));            \
-                        case CI_EXPR_LITERAL_KIND_CHAR:                      \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(CIExprLiteral,                     \
-                                          bool,                              \
-                                          lhs->literal.signed_int op         \
-                                            rhs->literal.char_));            \
-                        case CI_EXPR_LITERAL_KIND_FLOAT:                     \
-                            FAILED("cannot perform this operation with "     \
-                                   "no-castable to int types");              \
-                        case CI_EXPR_LITERAL_KIND_STRING:                    \
-                            FAILED(                                          \
-                              "this operation is unsure at compile-time");   \
-                        case CI_EXPR_LITERAL_KIND_SIGNED_INT:                \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(CIExprLiteral,                     \
-                                          bool,                              \
-                                          lhs->literal.signed_int op         \
-                                            rhs->literal.signed_int));       \
-                        case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:              \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(CIExprLiteral,                     \
-                                          bool,                              \
-                                          lhs->literal.signed_int op         \
-                                            rhs->literal.unsigned_int));     \
-                        default:                                             \
-                            UNREACHABLE("unknown variant");                  \
-                    }                                                        \
-                case CI_EXPR_LITERAL_KIND_STRING:                            \
-                    FAILED("this operation is unsure at compile-time");      \
-                case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                      \
-                    switch (rhs->literal.kind) {                             \
-                        case CI_EXPR_LITERAL_KIND_BOOL:                      \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(CIExprLiteral,                     \
-                                          bool,                              \
-                                          lhs->literal.unsigned_int op       \
-                                            rhs->literal.bool_));            \
-                        case CI_EXPR_LITERAL_KIND_CHAR:                      \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(CIExprLiteral,                     \
-                                          bool,                              \
-                                          lhs->literal.unsigned_int op       \
-                                            rhs->literal.char_));            \
-                        case CI_EXPR_LITERAL_KIND_FLOAT:                     \
-                            FAILED("cannot perform this operation with "     \
-                                   "no-castable to int types");              \
-                        case CI_EXPR_LITERAL_KIND_STRING:                    \
-                            FAILED(                                          \
-                              "this operation is unsure at compile-time");   \
-                        case CI_EXPR_LITERAL_KIND_SIGNED_INT:                \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(CIExprLiteral,                     \
-                                          bool,                              \
-                                          lhs->literal.unsigned_int op       \
-                                            rhs->literal.signed_int));       \
-                        case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:              \
-                            return NEW_VARIANT(                              \
-                              CIExpr,                                        \
-                              literal,                                       \
-                              NEW_VARIANT(CIExprLiteral,                     \
-                                          bool,                              \
-                                          lhs->literal.unsigned_int op       \
-                                            rhs->literal.unsigned_int));     \
-                        default:                                             \
-                            UNREACHABLE("unknown variant");                  \
-                    }                                                        \
-            }                                                                \
-        }                                                                    \
-        default:                                                             \
-            if (!is_partial) {                                               \
-                FAILED(                                                      \
-                  "these expressions are not resolvable at compile-time");   \
-            }                                                                \
-    }                                                                        \
-    return NEW_VARIANT(                                                      \
-      CIExpr,                                                                \
-      binary,                                                                \
+#define RESOLVE_BASIC_BINARY_LOGICAL_EXPR(op, binary_kind)                     \
+    ASSERT(lhs &&rhs);                                                         \
+                                                                               \
+    if (lhs->kind == CI_EXPR_KIND_LITERAL &&                                   \
+        rhs->kind == CI_EXPR_KIND_LITERAL) {                                   \
+        switch (lhs->literal.kind) {                                           \
+            case CI_EXPR_LITERAL_KIND_BOOL:                                    \
+                switch (rhs->literal.kind) {                                   \
+                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.bool_ op rhs->literal.bool_));        \
+                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.bool_ op rhs->literal.char_));        \
+                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
+                        FAILED("cannot perform this operation with "           \
+                               "no-castable to int types");                    \
+                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.bool_ op rhs->literal.signed_int));   \
+                    case CI_EXPR_LITERAL_KIND_STRING:                          \
+                        FAILED("this operation is unsure at compile-time");    \
+                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.bool_ op rhs->literal.unsigned_int)); \
+                    default:                                                   \
+                        UNREACHABLE("unknown variant");                        \
+                }                                                              \
+            case CI_EXPR_LITERAL_KIND_CHAR:                                    \
+                switch (rhs->literal.kind) {                                   \
+                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.char_ op rhs->literal.bool_));        \
+                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.char_ op rhs->literal.char_));        \
+                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
+                        FAILED("cannot perform this operation with "           \
+                               "no-castable to int types");                    \
+                    case CI_EXPR_LITERAL_KIND_STRING:                          \
+                        FAILED("this operation is unsure at compile-time");    \
+                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.char_ op rhs->literal.signed_int));   \
+                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.char_ op rhs->literal.unsigned_int)); \
+                    default:                                                   \
+                        UNREACHABLE("unknown variant");                        \
+                }                                                              \
+            case CI_EXPR_LITERAL_KIND_FLOAT:                                   \
+                FAILED("cannot perform this operation with no-castable "       \
+                       "to int types");                                        \
+            case CI_EXPR_LITERAL_KIND_SIGNED_INT:                              \
+                switch (rhs->literal.kind) {                                   \
+                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.signed_int op rhs->literal.bool_));   \
+                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.signed_int op rhs->literal.char_));   \
+                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
+                        FAILED("cannot perform this operation with "           \
+                               "no-castable to int types");                    \
+                    case CI_EXPR_LITERAL_KIND_STRING:                          \
+                        FAILED("this operation is unsure at compile-time");    \
+                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(CIExprLiteral,                           \
+                                      bool,                                    \
+                                      lhs->literal.signed_int op               \
+                                        rhs->literal.signed_int));             \
+                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(CIExprLiteral,                           \
+                                      bool,                                    \
+                                      lhs->literal.signed_int op               \
+                                        rhs->literal.unsigned_int));           \
+                    default:                                                   \
+                        UNREACHABLE("unknown variant");                        \
+                }                                                              \
+            case CI_EXPR_LITERAL_KIND_STRING:                                  \
+                FAILED("this operation is unsure at compile-time");            \
+            case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                            \
+                switch (rhs->literal.kind) {                                   \
+                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.unsigned_int op rhs->literal.bool_)); \
+                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.unsigned_int op rhs->literal.char_)); \
+                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
+                        FAILED("cannot perform this operation with "           \
+                               "no-castable to int types");                    \
+                    case CI_EXPR_LITERAL_KIND_STRING:                          \
+                        FAILED("this operation is unsure at compile-time");    \
+                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(CIExprLiteral,                           \
+                                      bool,                                    \
+                                      lhs->literal.unsigned_int op             \
+                                        rhs->literal.signed_int));             \
+                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(CIExprLiteral,                           \
+                                      bool,                                    \
+                                      lhs->literal.unsigned_int op             \
+                                        rhs->literal.unsigned_int));           \
+                    default:                                                   \
+                        UNREACHABLE("unknown variant");                        \
+                }                                                              \
+        }                                                                      \
+    } else {                                                                   \
+        if (!is_partial) {                                                     \
+            FAILED("these expressions are not resolvable at compile-time");    \
+        }                                                                      \
+    }                                                                          \
+                                                                               \
+    return NEW_VARIANT(                                                        \
+      CIExpr,                                                                  \
+      binary,                                                                  \
       NEW(CIExprBinary, binary_kind, ref__CIExpr(lhs), ref__CIExpr(rhs)));
 
 CIExpr *
@@ -2112,265 +2095,260 @@ resolve_logical_or_expr__CIParser(CIParser *self,
     RESOLVE_BASIC_BINARY_LOGICAL_EXPR(||, CI_EXPR_BINARY_KIND_OR);
 }
 
-#define RESOLVE_BASIC_BINARY_COMPARISON_EXPR(op, binary_kind)                 \
-    ASSERT(lhs &&rhs);                                                        \
-                                                                              \
-    switch (lhs->kind + rhs->kind) {                                          \
-        case CI_EXPR_KIND_LITERAL + CI_EXPR_KIND_LITERAL: {                   \
-            switch (lhs->literal.kind) {                                      \
-                case CI_EXPR_LITERAL_KIND_BOOL:                               \
-                    switch (rhs->literal.kind) {                              \
-                        case CI_EXPR_LITERAL_KIND_BOOL:                       \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(                                    \
-                                CIExprLiteral,                                \
-                                bool,                                         \
-                                lhs->literal.bool_ op rhs->literal.bool_));   \
-                        case CI_EXPR_LITERAL_KIND_CHAR:                       \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(                                    \
-                                CIExprLiteral,                                \
-                                bool,                                         \
-                                lhs->literal.bool_ op rhs->literal.char_));   \
-                        case CI_EXPR_LITERAL_KIND_FLOAT:                      \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(                                    \
-                                CIExprLiteral,                                \
-                                bool,                                         \
-                                lhs->literal.bool_ op rhs->literal.float_));  \
-                        case CI_EXPR_LITERAL_KIND_SIGNED_INT:                 \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          bool,                               \
-                                          lhs->literal.bool_ op               \
-                                            rhs->literal.signed_int));        \
-                        case CI_EXPR_LITERAL_KIND_STRING:                     \
-                            FAILED(                                           \
-                              "this operation is unsure at compile-time");    \
-                        case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:               \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          bool,                               \
-                                          lhs->literal.bool_ op               \
-                                            rhs->literal.unsigned_int));      \
-                        default:                                              \
-                            UNREACHABLE("unknown variant");                   \
-                    }                                                         \
-                case CI_EXPR_LITERAL_KIND_CHAR:                               \
-                    switch (rhs->literal.kind) {                              \
-                        case CI_EXPR_LITERAL_KIND_BOOL:                       \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(                                    \
-                                CIExprLiteral,                                \
-                                bool,                                         \
-                                lhs->literal.char_ op rhs->literal.bool_));   \
-                        case CI_EXPR_LITERAL_KIND_CHAR:                       \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(                                    \
-                                CIExprLiteral,                                \
-                                bool,                                         \
-                                lhs->literal.char_ op rhs->literal.char_));   \
-                        case CI_EXPR_LITERAL_KIND_FLOAT:                      \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(                                    \
-                                CIExprLiteral,                                \
-                                bool,                                         \
-                                lhs->literal.char_ op rhs->literal.float_));  \
-                        case CI_EXPR_LITERAL_KIND_STRING:                     \
-                            FAILED(                                           \
-                              "this operation is unsure at compile-time");    \
-                        case CI_EXPR_LITERAL_KIND_SIGNED_INT:                 \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          bool,                               \
-                                          lhs->literal.char_ op               \
-                                            rhs->literal.signed_int));        \
-                        case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:               \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          bool,                               \
-                                          lhs->literal.char_ op               \
-                                            rhs->literal.unsigned_int));      \
-                        default:                                              \
-                            UNREACHABLE("unknown variant");                   \
-                    }                                                         \
-                case CI_EXPR_LITERAL_KIND_FLOAT:                              \
-                    switch (rhs->literal.kind) {                              \
-                        case CI_EXPR_LITERAL_KIND_BOOL:                       \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(                                    \
-                                CIExprLiteral,                                \
-                                bool,                                         \
-                                lhs->literal.float_ op rhs->literal.bool_));  \
-                        case CI_EXPR_LITERAL_KIND_CHAR:                       \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(                                    \
-                                CIExprLiteral,                                \
-                                bool,                                         \
-                                lhs->literal.float_ op rhs->literal.char_));  \
-                        case CI_EXPR_LITERAL_KIND_FLOAT:                      \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(                                    \
-                                CIExprLiteral,                                \
-                                bool,                                         \
-                                lhs->literal.float_ op rhs->literal.float_)); \
-                        case CI_EXPR_LITERAL_KIND_STRING:                     \
-                            FAILED(                                           \
-                              "this operation is unsure at compile-time");    \
-                        case CI_EXPR_LITERAL_KIND_SIGNED_INT:                 \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          bool,                               \
-                                          lhs->literal.float_ op              \
-                                            rhs->literal.signed_int));        \
-                        case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:               \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          bool,                               \
-                                          lhs->literal.float_ op              \
-                                            rhs->literal.unsigned_int));      \
-                        default:                                              \
-                            UNREACHABLE("unknown variant");                   \
-                    }                                                         \
-                case CI_EXPR_LITERAL_KIND_SIGNED_INT:                         \
-                    switch (rhs->literal.kind) {                              \
-                        case CI_EXPR_LITERAL_KIND_BOOL:                       \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          bool,                               \
-                                          lhs->literal.signed_int op          \
-                                            rhs->literal.bool_));             \
-                        case CI_EXPR_LITERAL_KIND_CHAR:                       \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          bool,                               \
-                                          lhs->literal.signed_int op          \
-                                            rhs->literal.char_));             \
-                        case CI_EXPR_LITERAL_KIND_FLOAT:                      \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          bool,                               \
-                                          lhs->literal.signed_int op          \
-                                            rhs->literal.float_));            \
-                        case CI_EXPR_LITERAL_KIND_STRING:                     \
-                            FAILED(                                           \
-                              "this operation is unsure at compile-time");    \
-                        case CI_EXPR_LITERAL_KIND_SIGNED_INT:                 \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          bool,                               \
-                                          lhs->literal.signed_int op          \
-                                            rhs->literal.signed_int));        \
-                        case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:               \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          bool,                               \
-                                          lhs->literal.signed_int op          \
-                                            rhs->literal.unsigned_int));      \
-                        default:                                              \
-                            UNREACHABLE("unknown variant");                   \
-                    }                                                         \
-                case CI_EXPR_LITERAL_KIND_STRING:                             \
-                    FAILED("this operation is unsure at compile-time");       \
-                case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                       \
-                    switch (rhs->literal.kind) {                              \
-                        case CI_EXPR_LITERAL_KIND_BOOL:                       \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          bool,                               \
-                                          lhs->literal.unsigned_int op        \
-                                            rhs->literal.bool_));             \
-                        case CI_EXPR_LITERAL_KIND_CHAR:                       \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          bool,                               \
-                                          lhs->literal.unsigned_int op        \
-                                            rhs->literal.char_));             \
-                        case CI_EXPR_LITERAL_KIND_FLOAT:                      \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          bool,                               \
-                                          lhs->literal.unsigned_int op        \
-                                            rhs->literal.float_));            \
-                        case CI_EXPR_LITERAL_KIND_STRING:                     \
-                            FAILED(                                           \
-                              "this operation is unsure at compile-time");    \
-                        case CI_EXPR_LITERAL_KIND_SIGNED_INT:                 \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          bool,                               \
-                                          lhs->literal.unsigned_int op        \
-                                            rhs->literal.signed_int));        \
-                        case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:               \
-                            return NEW_VARIANT(                               \
-                              CIExpr,                                         \
-                              literal,                                        \
-                              NEW_VARIANT(CIExprLiteral,                      \
-                                          bool,                               \
-                                          lhs->literal.unsigned_int op        \
-                                            rhs->literal.unsigned_int));      \
-                        default:                                              \
-                            UNREACHABLE("unknown variant");                   \
-                    }                                                         \
-            }                                                                 \
-        }                                                                     \
-        default:                                                              \
-            if (!is_partial) {                                                \
-                FAILED("these expressions are not resolvable at "             \
-                       "compile-time");                                       \
-            }                                                                 \
-    }                                                                         \
-    return NEW_VARIANT(                                                       \
-      CIExpr,                                                                 \
-      binary,                                                                 \
+#define RESOLVE_BASIC_BINARY_COMPARISON_EXPR(op, binary_kind)                  \
+    ASSERT(lhs &&rhs);                                                         \
+                                                                               \
+    if (lhs->kind == CI_EXPR_KIND_LITERAL &&                                   \
+        rhs->kind == CI_EXPR_KIND_LITERAL) {                                   \
+        switch (lhs->literal.kind) {                                           \
+            case CI_EXPR_LITERAL_KIND_BOOL:                                    \
+                switch (rhs->literal.kind) {                                   \
+                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.bool_ op rhs->literal.bool_));        \
+                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.bool_ op rhs->literal.char_));        \
+                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.bool_ op rhs->literal.float_));       \
+                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.bool_ op rhs->literal.signed_int));   \
+                    case CI_EXPR_LITERAL_KIND_STRING:                          \
+                        FAILED("this operation is unsure at compile-time");    \
+                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.bool_ op rhs->literal.unsigned_int)); \
+                    default:                                                   \
+                        UNREACHABLE("unknown variant");                        \
+                }                                                              \
+            case CI_EXPR_LITERAL_KIND_CHAR:                                    \
+                switch (rhs->literal.kind) {                                   \
+                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.char_ op rhs->literal.bool_));        \
+                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.char_ op rhs->literal.char_));        \
+                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.char_ op rhs->literal.float_));       \
+                    case CI_EXPR_LITERAL_KIND_STRING:                          \
+                        FAILED("this operation is unsure at compile-time");    \
+                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.char_ op rhs->literal.signed_int));   \
+                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.char_ op rhs->literal.unsigned_int)); \
+                    default:                                                   \
+                        UNREACHABLE("unknown variant");                        \
+                }                                                              \
+            case CI_EXPR_LITERAL_KIND_FLOAT:                                   \
+                switch (rhs->literal.kind) {                                   \
+                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.float_ op rhs->literal.bool_));       \
+                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.float_ op rhs->literal.char_));       \
+                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.float_ op rhs->literal.float_));      \
+                    case CI_EXPR_LITERAL_KIND_STRING:                          \
+                        FAILED("this operation is unsure at compile-time");    \
+                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.float_ op rhs->literal.signed_int));  \
+                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(CIExprLiteral,                           \
+                                      bool,                                    \
+                                      lhs->literal.float_ op                   \
+                                        rhs->literal.unsigned_int));           \
+                    default:                                                   \
+                        UNREACHABLE("unknown variant");                        \
+                }                                                              \
+            case CI_EXPR_LITERAL_KIND_SIGNED_INT:                              \
+                switch (rhs->literal.kind) {                                   \
+                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.signed_int op rhs->literal.bool_));   \
+                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.signed_int op rhs->literal.char_));   \
+                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.signed_int op rhs->literal.float_));  \
+                    case CI_EXPR_LITERAL_KIND_STRING:                          \
+                        FAILED("this operation is unsure at compile-time");    \
+                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(CIExprLiteral,                           \
+                                      bool,                                    \
+                                      lhs->literal.signed_int op               \
+                                        rhs->literal.signed_int));             \
+                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(CIExprLiteral,                           \
+                                      bool,                                    \
+                                      lhs->literal.signed_int op               \
+                                        rhs->literal.unsigned_int));           \
+                    default:                                                   \
+                        UNREACHABLE("unknown variant");                        \
+                }                                                              \
+            case CI_EXPR_LITERAL_KIND_STRING:                                  \
+                FAILED("this operation is unsure at compile-time");            \
+            case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                            \
+                switch (rhs->literal.kind) {                                   \
+                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.unsigned_int op rhs->literal.bool_)); \
+                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(                                         \
+                            CIExprLiteral,                                     \
+                            bool,                                              \
+                            lhs->literal.unsigned_int op rhs->literal.char_)); \
+                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(CIExprLiteral,                           \
+                                      bool,                                    \
+                                      lhs->literal.unsigned_int op             \
+                                        rhs->literal.float_));                 \
+                    case CI_EXPR_LITERAL_KIND_STRING:                          \
+                        FAILED("this operation is unsure at compile-time");    \
+                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(CIExprLiteral,                           \
+                                      bool,                                    \
+                                      lhs->literal.unsigned_int op             \
+                                        rhs->literal.signed_int));             \
+                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
+                        return NEW_VARIANT(                                    \
+                          CIExpr,                                              \
+                          literal,                                             \
+                          NEW_VARIANT(CIExprLiteral,                           \
+                                      bool,                                    \
+                                      lhs->literal.unsigned_int op             \
+                                        rhs->literal.unsigned_int));           \
+                    default:                                                   \
+                        UNREACHABLE("unknown variant");                        \
+                }                                                              \
+        }                                                                      \
+    } else {                                                                   \
+        if (!is_partial) {                                                     \
+            FAILED("these expressions are not resolvable at "                  \
+                   "compile-time");                                            \
+        }                                                                      \
+    }                                                                          \
+                                                                               \
+    return NEW_VARIANT(                                                        \
+      CIExpr,                                                                  \
+      binary,                                                                  \
       NEW(CIExprBinary, binary_kind, ref__CIExpr(lhs), ref__CIExpr(rhs)));
 
 CIExpr *
