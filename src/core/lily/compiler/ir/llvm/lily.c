@@ -889,27 +889,35 @@ LilyLLVMBuildVal(const LilyIrLlvm *Self,
             ASSERT(Val->dt->kind == LILY_MIR_DT_KIND_ARRAY);
 
             LLVMTypeRef ElementType = LilyLLVMGetType(Self, Val->dt->array.dt);
+            // { [ ? x ElementType ], i64 }
             LLVMTypeRef array_type = LilyLLVMGetType(Self, Val->dt);
             LLVMValueRef array_ptr =
               LLVMBuildAlloca(Self->builder, array_type, "local.array");
+            // [ ? x ElementType ]
+            LLVMValueRef array_ptr_0 = LLVMBuildGEP2(
+              Self->builder,
+              ptr__LilyIrLlvm(Self, LLVMStructGetTypeAtIndex(array_type, 0)),
+              array_ptr,
+              (LLVMValueRef[]){ LLVMConstInt(i8__LilyIrLlvm(Self), 0, true) },
+              1,
+              "local.array.buffer");
 
             for (Usize i = 0; i < Val->array->len; ++i) {
                 LLVMValueRef value_item = LilyLLVMBuildVal(
                   Self, Scope, Pending, get__Vec(Val->array, i));
-                LLVMValueRef array_ptr_item = LLVMBuildGEP2(
-                  Self->builder,
-                  ElementType,
-                  array_ptr,
-                  (LLVMValueRef[]){
-                    LLVMConstInt(i8__LilyIrLlvm(Self), 0, true),
-                    LLVMConstInt(i8__LilyIrLlvm(Self), 0, true),
-                    LLVMConstInt(intptr__LilyIrLlvm(Self), i, true) },
-                  3,
-                  "local.array.item");
+                // ElementType
+                LLVMValueRef array_ptr_item =
+                  LLVMBuildGEP2(Self->builder,
+                                ElementType,
+                                array_ptr_0,
+                                (LLVMValueRef[]){ LLVMConstInt(
+                                  intptr__LilyIrLlvm(Self), i, true) },
+                                1,
+                                "local.array.item");
 
                 ASSERT(array_ptr_item);
 
-                LLVMBuildStore(Self->builder, array_ptr_item, value_item);
+                LLVMBuildStore(Self->builder, value_item, array_ptr_item);
             }
 
             return array_ptr;
