@@ -75,6 +75,8 @@ DESTRUCTOR(CIBuiltinFunction, const CIBuiltinFunction *self);
 typedef struct CIBuiltinType
 {
     const SizedStr *name; // SizedStr* (&)
+    Usize size;
+    Usize alignment;
 } CIBuiltinType;
 
 /**
