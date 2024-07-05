@@ -2995,7 +2995,7 @@ IMPL_FOR_DEBUG(to_string, LilyCheckedDataType, const LilyCheckedDataType *self)
     switch (self->kind) {
         case LILY_CHECKED_DATA_TYPE_KIND_ARRAY: {
             char *s =
-              format(", array = {Sr} }",
+              format(", array = {sa} }",
                      to_string__Debug__LilyCheckedDataTypeArray(&self->array));
 
             PUSH_STR_AND_FREE(res, s);
