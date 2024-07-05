@@ -332,8 +332,14 @@ IMPL_FOR_DEBUG(to_string, LilyMirDt, const LilyMirDt *self)
         case LILY_MIR_DT_KIND_ANY:
             return format__String("\x1b[35many\x1b[0m");
         case LILY_MIR_DT_KIND_ARRAY:
-            return format__String("\x1b[35m[{d} x {Sr}]\x1b[0m",
-                                  self->array.len,
+            if (self->array.len.is_undef) {
+                return format__String(
+                  "\x1b[35m[? x {Sr}]\x1b[0m",
+                  to_string__Debug__LilyMirDt(self->array.dt));
+            }
+
+            return format__String("\x1b[35m[{zu} x {Sr}]\x1b[0m",
+                                  self->array.len.len,
                                   to_string__Debug__LilyMirDt(self->array.dt));
         case LILY_MIR_DT_KIND_BYTES:
             return format__String("\x1b[35mBytes\x1b[0m");
