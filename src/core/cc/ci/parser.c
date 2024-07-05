@@ -2644,8 +2644,15 @@ resolve_data_type_size__CIParser(CIParser *self, const CIDataType *data_type)
             return resolve_data_type_size__CIParser(self, data_type->_atomic);
         case CI_DATA_TYPE_KIND_BOOL:
             return sizeof(bool);
-        case CI_DATA_TYPE_KIND_BUILTIN:
-            TODO("get builtin size");
+        case CI_DATA_TYPE_KIND_BUILTIN: {
+            const CIBuiltin *builtin = get_ref__CIBuiltin();
+            const CIBuiltinType *builtin_type =
+              get_builtin_type__CIBuiltin(builtin, data_type->builtin);
+
+            ASSERT(builtin_type);
+
+            return builtin_type->size;
+        }
         case CI_DATA_TYPE_KIND_CHAR:
             return sizeof(char);
         case CI_DATA_TYPE_KIND_DOUBLE:
@@ -2805,8 +2812,15 @@ resolve_data_type_alignment__CIParser(CIParser *self,
                                                          data_type->_atomic);
         case CI_DATA_TYPE_KIND_BOOL:
             return alignof(bool);
-        case CI_DATA_TYPE_KIND_BUILTIN:
-            TODO("get builtin alignment");
+        case CI_DATA_TYPE_KIND_BUILTIN: {
+            const CIBuiltin *builtin = get_ref__CIBuiltin();
+            const CIBuiltinType *builtin_type =
+              get_builtin_type__CIBuiltin(builtin, data_type->builtin);
+
+            ASSERT(builtin_type);
+
+            return builtin_type->alignment;
+        }
         case CI_DATA_TYPE_KIND_CHAR:
             return alignof(char);
         case CI_DATA_TYPE_KIND_DOUBLE:

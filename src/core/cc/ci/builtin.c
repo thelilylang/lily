@@ -41,10 +41,11 @@
         .params = init__Vec(pn, __VA_ARGS__)                        \
     }
 
-#define CI_BUILTIN_TYPE_FROM_RAW(n)    \
-    (CIBuiltinType)                    \
-    {                                  \
-        .name = &builtin_type_names[n] \
+#define CI_BUILTIN_TYPE_FROM_RAW(n)                                    \
+    (CIBuiltinType)                                                    \
+    {                                                                  \
+        .name = &builtin_type_names[n], .size = builtin_type_sizes[n], \
+        .alignment = builtin_type_alignments[n]                        \
     }
 
 #define CI_BUILTIN_FUNCTION_MEMCPY 0
@@ -66,6 +67,12 @@ static SizedStr builtin_type_names[CI_BUILTIN_TYPE_COUNT] = {
 static Int32 builtin_type_ids[CI_BUILTIN_TYPE_COUNT] = {
     CI_BUILTIN_TYPE_VA_LIST
 };
+
+static Usize builtin_type_sizes[CI_BUILTIN_TYPE_COUNT] = { sizeof(
+  __builtin_va_list) };
+
+static Usize builtin_type_alignments[CI_BUILTIN_TYPE_COUNT] = { alignof(
+  __builtin_va_list) };
 
 static CIBuiltin *builtin_ref = NULL; // CIBuiltin* (&)
 
@@ -170,7 +177,7 @@ get_builtin_function__CIBuiltin(const CIBuiltin *self, Usize id)
 void
 set__CIBuiltin(CIBuiltin *self)
 {
-    self = builtin_ref;
+    builtin_ref = self;
 }
 
 CIBuiltin *
