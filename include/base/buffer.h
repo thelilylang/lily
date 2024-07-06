@@ -38,11 +38,8 @@
         Usize resize_coeff;   \
     }
 
-#define __new__Buffer(a, c, rc)                               \
-    {                                                         \
-        .allocator = a, .mem = NULL, .len = 0, .capacity = c, \
-        .resize_coeff = rc                                    \
-    }
+#define __new__Buffer(a, c, rc) \
+    { .allocator = a, .mem = NULL, .len = 0, .capacity = c, .resize_coeff = rc }
 
 #define push__Buffer(buffer, item)                            \
     do {                                                      \

@@ -32,10 +32,7 @@
         Usize count; \
     }
 
-#define __new__Rc(T, value)      \
-    {                            \
-        .ptr = value, .count = 0 \
-    }
+#define __new__Rc(T, value) { .ptr = value, .count = 0 }
 
 #define ref__Rc(self)   \
     ({                  \

@@ -47,8 +47,7 @@ binary_update_return_data_type_according_operator_collection__LilyCheckedOperato
 
 int
 add_operator__LilyCheckedOperatorRegister(LilyCheckedOperatorRegister *self,
-                                          LilyCheckedOperator *
-                                          operator)
+                                          LilyCheckedOperator *operator)
 {
     // Look for duplicate operator
     LilyCheckedOperator *duplicate_op =

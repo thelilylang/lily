@@ -48,8 +48,7 @@ inline CONSTRUCTOR(LilyCheckedOperatorRegister, LilyCheckedOperatorRegister)
  */
 int
 add_operator__LilyCheckedOperatorRegister(LilyCheckedOperatorRegister *self,
-                                          LilyCheckedOperator *
-                                          operator);
+                                          LilyCheckedOperator *operator);
 
 /**
  *
