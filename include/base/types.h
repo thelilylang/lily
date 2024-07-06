@@ -29,26 +29,6 @@
 
 #include <stdint.h>
 
-#if __clang_major__ > 15
-typedef _BitInt(8) Int8;
-typedef _BitInt(16) Int16;
-typedef _BitInt(32) Int32;
-typedef _BitInt(64) Int64;
-
-typedef unsigned _BitInt(8) Uint8;
-typedef unsigned _BitInt(16) Uint16;
-typedef unsigned _BitInt(32) Uint32;
-typedef unsigned _BitInt(64) Uint64;
-
-#if defined(PLATFORM_64)
-typedef _BitInt(64) Isize;
-typedef unsigned _BitInt(64) Usize;
-#else
-typedef _BitInt(32) Isize;
-typedef unsigned _BitInt(32) Usize;
-#endif
-
-#else
 typedef int8_t Int8;
 typedef int16_t Int16;
 typedef int32_t Int32;
@@ -65,8 +45,6 @@ typedef uint64_t Usize;
 #else
 typedef int32_t Isize;
 typedef uint32_t Usize;
-#endif
-
 #endif
 
 typedef float Float32;
