@@ -795,6 +795,12 @@ static void
 resolve_preprocessor_error__CIParser(CIParser *self,
                                      CIToken *preprocessor_error_token);
 
+static bool
+load_include__CIParser(CIParser *self,
+                       CIToken *preprocessor_include_token,
+                       const String *current_dir,
+                       const String *include_path);
+
 /// @brief Resolve `#include` preprocessor.
 static void
 resolve_preprocessor_include__CIParser(CIParser *self,
@@ -7129,6 +7135,50 @@ resolve_preprocessor_error__CIParser(CIParser *self,
       self->count_error);
 }
 
+bool
+load_include__CIParser(CIParser *self,
+                       CIToken *preprocessor_include_token,
+                       const String *current_dir,
+                       const String *include_path)
+{
+    // current_dir + '/' + include_path
+    char *full_include_path = format("{S}/{S}", current_dir, include_path);
+
+    if (exists__File(full_include_path)) {
+        CIResultFile *header =
+          add_and_run_header__CIResult(self->file->entity.result,
+                                       self->file,
+                                       full_include_path,
+                                       self->file->entity.result->config);
+
+        // NOTE: The next token is the first token in the header, and the
+        // token following the last token in the header is the current next
+        // token (token after the preprocessor include).
+        //
+        // Before:
+        //
+        // ... -> INCLUDE
+        //
+        // After:
+        //
+        // ... -> INCLUDE -> HEADER_FIRST -> ... -> HEADER_LAST (EOT (old
+        // EOF)) -> INCLUDE
+        header->scanner.tokens.last->kind = CI_TOKEN_KIND_EOT;
+        header->scanner.tokens.last->eot.ctx = CI_TOKEN_EOT_CONTEXT_INCLUDE;
+        header->scanner.tokens.last->eot.include = preprocessor_include_token;
+        header->scanner.tokens.last->next = preprocessor_include_token->next;
+        preprocessor_include_token->next = header->scanner.tokens.first;
+
+        lily_free(full_include_path);
+
+        return true;
+    }
+
+    lily_free(full_include_path);
+
+    return false;
+}
+
 void
 resolve_preprocessor_include__CIParser(CIParser *self,
                                        CIToken *preprocessor_include_token)
@@ -7136,53 +7186,32 @@ resolve_preprocessor_include__CIParser(CIParser *self,
     const Vec *include_dirs = get_include_dirs__CIInclude();
 
     for (Usize i = 0; i < include_dirs->len; ++i) {
-        const String *include_dir = get__Vec(include_dirs, i);
-        // include_dir + '/' + preprocessor_include.value
-        char *full_include_path =
-          format("{S}/{S}",
-                 include_dir,
-                 preprocessor_include_token->preprocessor_include.value);
+        const String *current_dir = get__Vec(include_dirs, i);
 
-        if (exists__File(full_include_path)) {
-            CIResultFile *header =
-              add_and_run_header__CIResult(self->file->entity.result,
-                                           self->file,
-                                           full_include_path,
-                                           self->file->entity.result->config);
-
-            // NOTE: The next token is the first token in the header, and the
-            // token following the last token in the header is the current next
-            // token (token after the preprocessor include).
-            //
-            // Before:
-            //
-            // ... -> INCLUDE
-            //
-            // After:
-            //
-            // ... -> INCLUDE -> HEADER_FIRST -> ... -> HEADER_LAST (EOT (old
-            // EOF)) -> INCLUDE
-            header->scanner.tokens.last->kind = CI_TOKEN_KIND_EOT;
-            header->scanner.tokens.last->eot.ctx = CI_TOKEN_EOT_CONTEXT_INCLUDE;
-            header->scanner.tokens.last->eot.include =
-              preprocessor_include_token;
-            header->scanner.tokens.last->next =
-              preprocessor_include_token->next;
-            preprocessor_include_token->next = header->scanner.tokens.first;
-
-            lily_free(full_include_path);
-
-            goto exit;
-        } else {
-            lily_free(full_include_path);
-
-            continue;
+        if (load_include__CIParser(
+              self,
+              preprocessor_include_token,
+              current_dir,
+              preprocessor_include_token->preprocessor_include.value)) {
+            return;
         }
     }
 
-    FAILED("the include file is not found");
+    String *current_dir =
+      get_dir__File(preprocessor_include_token->location.filename);
+    bool load_include_res = load_include__CIParser(
+      self,
+      preprocessor_include_token,
+      current_dir,
+      preprocessor_include_token->preprocessor_include.value);
 
-exit:
+    FREE(String, current_dir);
+
+    if (load_include_res) {
+        return;
+    }
+
+    FAILED("the include file is not found");
 }
 
 bool

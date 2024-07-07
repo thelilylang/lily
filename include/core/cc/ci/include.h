@@ -35,7 +35,8 @@
  * @brief Initialize include directories vector.
  */
 void
-init_include_dirs__CIInclude(const String *compiler_path);
+init_include_dirs__CIInclude(const String *compiler_path,
+                             const char *base_path);
 
 /**
  *
