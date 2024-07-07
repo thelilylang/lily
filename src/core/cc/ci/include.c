@@ -35,7 +35,7 @@
 static Vec *include_dirs = NULL; // Vec<String*>*?
 
 void
-init_include_dirs__CIInclude(const String *compiler_path)
+init_include_dirs__CIInclude(const String *compiler_path, const char *base_path)
 {
     ASSERT(compiler_path);
 
@@ -45,7 +45,7 @@ init_include_dirs__CIInclude(const String *compiler_path)
     String *include_dirs_s = save__Command(command);
     Vec *split_include_dirs_s = split__String(include_dirs_s, '\n');
 
-    include_dirs = init__Vec(1, from__String("."));
+    include_dirs = init__Vec(1, from__String((char *)base_path));
 
     lily_free(command);
 
