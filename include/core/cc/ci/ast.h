@@ -960,6 +960,145 @@ IMPL_FOR_DEBUG(to_string, CIDataType, const CIDataType *self);
  */
 DESTRUCTOR(CIDataType, CIDataType *self);
 
+enum CIAttributeKind
+{
+    CI_ATTRIBUTE_KIND_CLANG,    // __attribute__((x))
+    CI_ATTRIBUTE_KIND_GNU,      // __attribute__((x))
+    CI_ATTRIBUTE_KIND_STANDARD, // [[x]]
+};
+
+/**
+ *
+ * @brief Convert CIAttributeKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string, CIAttributeKind, const enum CIAttributeKind self);
+#endif
+
+#define CI_N_STANDARD_ATTRIBUTE 16
+
+// https://en.cppreference.com/w/c/language/attributes
+enum CIAttributeStandardKind
+{
+    CI_ATTRIBUTE_STANDARD_KIND_DEPRECATED,
+    CI_ATTRIBUTE_STANDARD_KIND_FALLTHROUGH,
+    CI_ATTRIBUTE_STANDARD_KIND_MAYBE_UNUSED,
+    CI_ATTRIBUTE_STANDARD_KIND_NODISCARD,
+    CI_ATTRIBUTE_STANDARD_KIND_NORETURN,
+    CI_ATTRIBUTE_STANDARD_KIND_UNSEQUENCED,
+    CI_ATTRIBUTE_STANDARD_KIND_REPRODUCIBLE
+};
+
+/**
+ *
+ * @brief Convert CIAttributeStandardKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               CIAttributeStandardKind,
+               const enum CIAttributeStandardKind self);
+#endif
+
+typedef struct CIAttributeStandard
+{
+    enum CIAttributeStandardKind kind;
+    union
+    {
+        String *deprecated; // String*? (&)
+        String *nodiscard;  // String*? (&)
+    };
+} CIAttributeStandard;
+
+/**
+ *
+ * @brief Construct CIAttributeStandard type.
+ */
+inline CONSTRUCTOR(CIAttributeStandard,
+                   CIAttributeStandard,
+                   enum CIAttributeStandardKind kind)
+{
+    return (CIAttributeStandard){ .kind = kind };
+}
+
+/**
+ *
+ * @brief Construct CIAttributeStandard type
+ * (CI_ATTRIBUTE_STANDARD_KIND_DEPRECATED).
+ */
+inline VARIANT_CONSTRUCTOR(CIAttributeStandard,
+                           CIAttributeStandard,
+                           deprecated,
+                           String *deprecated)
+{
+    return (CIAttributeStandard){ .kind = CI_ATTRIBUTE_STANDARD_KIND_DEPRECATED,
+                                  .deprecated = deprecated };
+}
+
+/**
+ *
+ * @brief Construct CIAttributeStandard type
+ * (CI_ATTRIBUTE_STANDARD_KIND_NODISCARD).
+ */
+inline VARIANT_CONSTRUCTOR(CIAttributeStandard,
+                           CIAttributeStandard,
+                           nodiscard,
+                           String *nodiscard)
+{
+    return (CIAttributeStandard){ .kind = CI_ATTRIBUTE_STANDARD_KIND_NODISCARD,
+                                  .nodiscard = nodiscard };
+}
+
+/**
+ *
+ * @brief Convert CIAttributeStandard in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIAttributeStandard, const CIAttributeStandard *self);
+#endif
+
+typedef struct CIAttribute
+{
+    enum CIAttributeKind kind;
+    union
+    {
+        CIAttributeStandard standard;
+    };
+} CIAttribute;
+
+/**
+ *
+ * @brief Construct CIAttribute type (CI_ATTRIBUTE_KIND_STANDARD).
+ */
+VARIANT_CONSTRUCTOR(CIAttribute *,
+                    CIAttribute,
+                    standard,
+                    CIAttributeStandard standard);
+
+/**
+ *
+ * @brief Convert CIAttribute in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIAttribute, const CIAttribute *self);
+#endif
+
+/**
+ *
+ * @brief Free CIAttribute type.
+ */
+inline DESTRUCTOR(CIAttribute, CIAttribute *self)
+{
+    lily_free(self);
+}
+
 enum CIStorageClass
 {
     CI_STORAGE_CLASS_NONE = 0,
@@ -1181,6 +1320,7 @@ typedef struct CIDeclFunction
     CIGenericParams *generic_params; // CIGenericParams*?
     Vec *params;                     // Vec<CIDeclFunctionParam*>*?
     Vec *body;                       // Vec<CIDeclFunctionItem*>*?
+    Vec *attributes;                 // Vec<CIAttribute*>*?
 } CIDeclFunction;
 
 /**
@@ -1193,13 +1333,15 @@ inline CONSTRUCTOR(CIDeclFunction,
                    CIDataType *return_data_type,
                    CIGenericParams *generic_params,
                    Vec *params,
-                   Vec *body)
+                   Vec *body,
+                   Vec *attributes)
 {
     return (CIDeclFunction){ .name = name,
                              .return_data_type = return_data_type,
                              .generic_params = generic_params,
                              .params = params,
-                             .body = body };
+                             .body = body,
+                             .attributes = attributes };
 }
 
 /**

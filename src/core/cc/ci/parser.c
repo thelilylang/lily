@@ -739,7 +739,8 @@ parse_function__CIParser(CIParser *self,
                          int storage_class_flag,
                          CIDataType *return_data_type,
                          String *name,
-                         CIGenericParams *generic_params);
+                         CIGenericParams *generic_params,
+                         Vec *attributes);
 
 /// @brief Parse fields.
 static Vec *
@@ -849,6 +850,13 @@ parse_decl__CIParser(CIParser *self);
 static const CIDecl *
 add_decl_to_scope__CIParser(CIParser *self, CIDecl **decl_ref, bool must_free);
 
+static CIAttribute *
+parse_attribute__CIParser(CIParser *self);
+
+/// @param attributes Vec<CIAttribute*>** (&)
+static void
+parse_attributes__CIParser(CIParser *self, Vec **attributes);
+
 /// @brief Parse storage class specifier.
 /// @return true if the token is a storage class specifier, false otherwise.
 static bool
@@ -925,6 +933,45 @@ static bool in_function_body = false;
 
 #define SET_IN_FUNCTION_BODY() in_function_body = true;
 #define UNSET_IN_FUNCTION_BODY() in_function_body = false;
+
+static const SizedStr ci_standard_attributes[CI_N_STANDARD_ATTRIBUTE] = {
+    SIZED_STR_FROM_RAW("_Noreturn"),
+    SIZED_STR_FROM_RAW("___Noreturn__"),
+    SIZED_STR_FROM_RAW("__deprecated__"),
+    SIZED_STR_FROM_RAW("__falthrough__"),
+    SIZED_STR_FROM_RAW("__maybe_unused__"),
+    SIZED_STR_FROM_RAW("__nodiscard__"),
+    SIZED_STR_FROM_RAW("__noreturn__"),
+    SIZED_STR_FROM_RAW("__unsequenced__"),
+    SIZED_STR_FROM_RAW("__reproducible__"),
+    SIZED_STR_FROM_RAW("deprecated"),
+    SIZED_STR_FROM_RAW("fallthrough"),
+    SIZED_STR_FROM_RAW("maybe_unused"),
+    SIZED_STR_FROM_RAW("nodiscard"),
+    SIZED_STR_FROM_RAW("noreturn"),
+    SIZED_STR_FROM_RAW("unsequenced"),
+    SIZED_STR_FROM_RAW("reproducible"),
+};
+
+static const enum CIAttributeStandardKind
+  ci_standard_attribute_ids[CI_N_STANDARD_ATTRIBUTE] = {
+      CI_ATTRIBUTE_STANDARD_KIND_NORETURN,
+      CI_ATTRIBUTE_STANDARD_KIND_NORETURN,
+      CI_ATTRIBUTE_STANDARD_KIND_DEPRECATED,
+      CI_ATTRIBUTE_STANDARD_KIND_FALLTHROUGH,
+      CI_ATTRIBUTE_STANDARD_KIND_MAYBE_UNUSED,
+      CI_ATTRIBUTE_STANDARD_KIND_NODISCARD,
+      CI_ATTRIBUTE_STANDARD_KIND_NORETURN,
+      CI_ATTRIBUTE_STANDARD_KIND_UNSEQUENCED,
+      CI_ATTRIBUTE_STANDARD_KIND_REPRODUCIBLE,
+      CI_ATTRIBUTE_STANDARD_KIND_DEPRECATED,
+      CI_ATTRIBUTE_STANDARD_KIND_FALLTHROUGH,
+      CI_ATTRIBUTE_STANDARD_KIND_MAYBE_UNUSED,
+      CI_ATTRIBUTE_STANDARD_KIND_NODISCARD,
+      CI_ATTRIBUTE_STANDARD_KIND_NORETURN,
+      CI_ATTRIBUTE_STANDARD_KIND_UNSEQUENCED,
+      CI_ATTRIBUTE_STANDARD_KIND_REPRODUCIBLE
+  };
 
 CONSTRUCTOR(struct CIParserContext, CIParserContext)
 {
@@ -6771,7 +6818,8 @@ parse_function__CIParser(CIParser *self,
                          int storage_class_flag,
                          CIDataType *return_data_type,
                          String *name,
-                         CIGenericParams *generic_params)
+                         CIGenericParams *generic_params,
+                         Vec *attributes)
 {
     init_function_to_visit_waiting_list__CIParser(self, name);
 
@@ -6791,7 +6839,8 @@ parse_function__CIParser(CIParser *self,
                                    return_data_type,
                                    generic_params,
                                    params,
-                                   NULL));
+                                   NULL,
+                                   attributes));
         case CI_TOKEN_KIND_LBRACE:
             if (is__CIBuiltinFunction(name)) {
                 FAILED("cannot redefine a builtin function");
@@ -6814,7 +6863,8 @@ parse_function__CIParser(CIParser *self,
                                    return_data_type,
                                    generic_params,
                                    params,
-                                   body));
+                                   body,
+                                   attributes));
         default:
             FAILED("expected `;` or `{`");
     }
@@ -7299,6 +7349,10 @@ resolve_preprocessor__CIParser(CIParser *self, CIToken *next_token)
 CIDecl *
 parse_decl__CIParser(CIParser *self)
 {
+    Vec *attributes = NULL;
+
+    parse_attributes__CIParser(self, &attributes);
+
     storage_class_flag = CI_STORAGE_CLASS_NONE;
 
     parse_storage_class_specifiers__CIParser(self, &storage_class_flag);
@@ -7363,7 +7417,8 @@ parse_decl__CIParser(CIParser *self)
                                                    storage_class_flag,
                                                    data_type,
                                                    name,
-                                                   generic_params);
+                                                   generic_params,
+                                                   attributes);
 
                     goto exit;
                 default:
@@ -7494,6 +7549,108 @@ free:
     }
 
     return res;
+}
+
+CIAttribute *
+parse_attribute__CIParser(CIParser *self)
+{
+    switch (self->current_token->kind) {
+        case CI_TOKEN_KIND_IDENTIFIER: {
+            const String *attribute_identifier =
+              self->current_token->identifier;
+            const enum CIAttributeStandardKind attr_id =
+              get_id__Search(attribute_identifier,
+                             ci_standard_attributes,
+                             (const Int32 *)ci_standard_attribute_ids,
+                             CI_N_STANDARD_ATTRIBUTE);
+            CIAttribute *res = NULL;
+
+            next_token__CIParser(self);
+
+            switch (attr_id) {
+                case CI_ATTRIBUTE_STANDARD_KIND_DEPRECATED:
+                case CI_ATTRIBUTE_STANDARD_KIND_NODISCARD: {
+                    expect__CIParser(self, CI_TOKEN_KIND_LPAREN, true);
+
+                    String *reason = NULL;
+
+                    switch (self->current_token->kind) {
+                        case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
+                            reason =
+                              self->current_token->literal_constant_string;
+
+                            break;
+                        default:
+                            break;
+                    }
+
+                    expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
+
+                    switch (attr_id) {
+                        case CI_ATTRIBUTE_STANDARD_KIND_DEPRECATED:
+                            res = NEW_VARIANT(CIAttribute,
+                                              standard,
+                                              NEW_VARIANT(CIAttributeStandard,
+                                                          deprecated,
+                                                          reason));
+
+                            break;
+                        case CI_ATTRIBUTE_STANDARD_KIND_NODISCARD:
+                            res = NEW_VARIANT(CIAttribute,
+                                              standard,
+                                              NEW_VARIANT(CIAttributeStandard,
+                                                          nodiscard,
+                                                          reason));
+
+                            break;
+                        default:
+                            UNREACHABLE("unknown variant");
+                    }
+
+                    break;
+                }
+                default:
+                    res = NEW_VARIANT(
+                      CIAttribute, standard, NEW(CIAttributeStandard, attr_id));
+            }
+
+            expect__CIParser(self, CI_TOKEN_KIND_RHOOK, true);
+            expect__CIParser(self, CI_TOKEN_KIND_RHOOK, true);
+
+            return res;
+        }
+        default:
+            FAILED("expected attribute identifier");
+    }
+
+    return NULL;
+}
+
+void
+parse_attributes__CIParser(CIParser *self, Vec **attributes)
+{
+    while (true) {
+        switch (self->current_token->kind) {
+            case CI_TOKEN_KIND_LHOOK: {
+                if (!(*attributes)) {
+                    *attributes = NEW(Vec);
+                }
+
+                next_token__CIParser(self);
+                expect__CIParser(self, CI_TOKEN_KIND_LHOOK, true);
+
+                CIAttribute *attr = parse_attribute__CIParser(self);
+
+                if (attr) {
+                    push__Vec(*attributes, attr);
+                }
+
+                break;
+            }
+            default:
+                return;
+        }
+    }
 }
 
 bool

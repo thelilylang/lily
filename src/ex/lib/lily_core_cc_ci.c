@@ -146,6 +146,22 @@ extern inline CONSTRUCTOR(CIDataTypeUnion,
 extern inline CIDataType *
 ref__CIDataType(CIDataType *self);
 
+extern inline CONSTRUCTOR(CIAttributeStandard,
+                          CIAttributeStandard,
+                          enum CIAttributeStandardKind kind);
+
+extern inline VARIANT_CONSTRUCTOR(CIAttributeStandard,
+                                  CIAttributeStandard,
+                                  deprecated,
+                                  String *deprecated);
+
+extern inline VARIANT_CONSTRUCTOR(CIAttributeStandard,
+                                  CIAttributeStandard,
+                                  nodiscard,
+                                  String *nodiscard);
+
+extern inline DESTRUCTOR(CIAttribute, CIAttribute *self);
+
 extern inline DESTRUCTOR(CIDeclEnumVariant, CIDeclEnumVariant *self);
 
 extern inline CONSTRUCTOR(CIDeclEnum,
@@ -164,7 +180,8 @@ extern inline CONSTRUCTOR(CIDeclFunction,
                           CIDataType *return_data_type,
                           CIGenericParams *generic_params,
                           Vec *params,
-                          Vec *body);
+                          Vec *body,
+                          Vec *attributes);
 
 extern inline bool
 eq_generic_params__CIDeclFunction(const CIDeclFunction *self,
