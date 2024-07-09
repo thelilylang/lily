@@ -1385,6 +1385,102 @@ DESTRUCTOR(CIDataType, CIDataType *self)
 
 #ifdef ENV_DEBUG
 char *
+IMPL_FOR_DEBUG(to_string, CIAttributeKind, const enum CIAttributeKind self)
+{
+    switch (self) {
+        case CI_ATTRIBUTE_KIND_CLANG:
+            return "CI_ATTRIBUTE_KIND_CLANG";
+        case CI_ATTRIBUTE_KIND_GNU:
+            return "CI_ATTRIBUTE_KIND_GNU";
+        case CI_ATTRIBUTE_KIND_STANDARD:
+            return "CI_ATTRIBUTE_KIND_STANDARD";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               CIAttributeStandardKind,
+               const enum CIAttributeStandardKind self)
+{
+    switch (self) {
+        case CI_ATTRIBUTE_STANDARD_KIND_DEPRECATED:
+            return "CI_ATTRIBUTE_STANDARD_KIND_DEPRECATED";
+        case CI_ATTRIBUTE_STANDARD_KIND_FALLTHROUGH:
+            return "CI_ATTRIBUTE_STANDARD_KIND_FALLTHROUGH";
+        case CI_ATTRIBUTE_STANDARD_KIND_MAYBE_UNUSED:
+            return "CI_ATTRIBUTE_STANDARD_KIND_MAYBE_UNUSED";
+        case CI_ATTRIBUTE_STANDARD_KIND_NODISCARD:
+            return "CI_ATTRIBUTE_STANDARD_KIND_NODISCARD";
+        case CI_ATTRIBUTE_STANDARD_KIND_NORETURN:
+            return "CI_ATTRIBUTE_STANDARD_KIND_NORETURN";
+        case CI_ATTRIBUTE_STANDARD_KIND_UNSEQUENCED:
+            return "CI_ATTRIBUTE_STANDARD_KIND_UNSEQUENCED";
+        case CI_ATTRIBUTE_STANDARD_KIND_REPRODUCIBLE:
+            return "CI_ATTRIBUTE_STANDARD_KIND_REPRODUCIBLE";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIAttributeStandard, const CIAttributeStandard *self)
+{
+    switch (self->kind) {
+        case CI_ATTRIBUTE_STANDARD_KIND_DEPRECATED:
+            return format__String(
+              "CIAttributeStandard{{ kind = {s}, deprecated = {S} }",
+              to_string__Debug__CIAttributeStandardKind(self->kind),
+              self->deprecated);
+        case CI_ATTRIBUTE_STANDARD_KIND_NODISCARD:
+            return format__String(
+              "CIAttributeStandard{{ kind = {s}, nodiscard = {S} }",
+              to_string__Debug__CIAttributeStandardKind(self->kind),
+              self->nodiscard);
+        default:
+            return format__String(
+              "CIAttributeStandard{{ kind = {s} }",
+              to_string__Debug__CIAttributeStandardKind(self->kind));
+    }
+}
+#endif
+
+VARIANT_CONSTRUCTOR(CIAttribute *,
+                    CIAttribute,
+                    standard,
+                    CIAttributeStandard standard)
+{
+    CIAttribute *self = lily_malloc(sizeof(CIAttribute));
+
+    self->kind = CI_ATTRIBUTE_KIND_STANDARD;
+    self->standard = standard;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIAttribute, const CIAttribute *self)
+{
+    switch (self->kind) {
+        case CI_ATTRIBUTE_KIND_STANDARD:
+            return format__String(
+              "CIAttribute{{ kind = {s}, standard = {Sr} }",
+              to_string__Debug__CIAttributeKind(self->kind),
+              to_string__Debug__CIAttributeStandard(&self->standard));
+        default:
+            TODO("not yet implemented");
+    }
+}
+#endif
+
+#ifdef ENV_DEBUG
+char *
 IMPL_FOR_DEBUG(to_string, CIStorageClass, int storage_class_flag)
 {
     switch (storage_class_flag) {
@@ -1739,6 +1835,14 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunction, const CIDeclFunction *self)
         push_str__String(res, " NULL");
     }
 
+    push_str__String(res, ", attributes =");
+
+    if (self->attributes) {
+        DEBUG_VEC_STRING(self->attributes, res, CIAttribute);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
     push_str__String(res, " }");
 
     return res;
@@ -1758,6 +1862,12 @@ free_as_prototype__CIDeclFunction(const CIDeclFunction *self)
         FREE_BUFFER_ITEMS(
           self->params->buffer, self->params->len, CIDeclFunctionParam);
         FREE(Vec, self->params);
+    }
+
+    if (self->attributes) {
+        FREE_BUFFER_ITEMS(
+          self->attributes->buffer, self->attributes->len, CIAttribute);
+        FREE(Vec, self->attributes);
     }
 }
 

@@ -67,6 +67,19 @@ static void
 generate_storage_class__CIGenerator(const int *storage_class_flag);
 
 static void
+generate_attribute_standard__CIGenerator(
+  const CIAttributeStandard *attribute_standard);
+
+static void
+generate_attribute__CIGenerator(const CIAttribute *attribute);
+
+static void
+generate_attributes__CIGenerator(const Vec *attributes);
+
+static void
+generate_attributes_by_decl__CIGenerator(const CIDecl *decl);
+
+static void
 generate_data_type__CIGenerator(CIDataType *data_type);
 
 static void
@@ -313,6 +326,91 @@ generate_storage_class__CIGenerator(const int *storage_class_flag)
 
     if (*storage_class_flag != CI_STORAGE_CLASS_NONE) {
         write_str__CIGenerator(" ");
+    }
+}
+
+void
+generate_attribute_standard__CIGenerator(
+  const CIAttributeStandard *attribute_standard)
+{
+    write_str__CIGenerator("[[");
+
+    switch (attribute_standard->kind) {
+        case CI_ATTRIBUTE_STANDARD_KIND_DEPRECATED:
+            write_String__CIGenerator(format__String(
+              "deprecated({S})", attribute_standard->deprecated));
+
+            break;
+        case CI_ATTRIBUTE_STANDARD_KIND_FALLTHROUGH:
+            write_str__CIGenerator("fallthrough");
+
+            break;
+        case CI_ATTRIBUTE_STANDARD_KIND_MAYBE_UNUSED:
+            write_str__CIGenerator("maybe_unused");
+
+            break;
+        case CI_ATTRIBUTE_STANDARD_KIND_NODISCARD:
+            write_String__CIGenerator(
+              format__String("nodiscard({Sr})", attribute_standard->nodiscard));
+
+            break;
+        case CI_ATTRIBUTE_STANDARD_KIND_NORETURN:
+            write_str__CIGenerator("noreturn");
+
+            break;
+        case CI_ATTRIBUTE_STANDARD_KIND_UNSEQUENCED:
+            write_str__CIGenerator("unsequenced");
+
+            break;
+        case CI_ATTRIBUTE_STANDARD_KIND_REPRODUCIBLE:
+            write_str__CIGenerator("reproducible");
+
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+
+    write_str__CIGenerator("]]");
+}
+
+void
+generate_attribute__CIGenerator(const CIAttribute *attribute)
+{
+    switch (attribute->kind) {
+        case CI_ATTRIBUTE_KIND_CLANG:
+            TODO("generate Clang attribute");
+        case CI_ATTRIBUTE_KIND_GNU:
+            TODO("generate GNU attribute");
+        case CI_ATTRIBUTE_KIND_STANDARD:
+            generate_attribute_standard__CIGenerator(&attribute->standard);
+
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+void
+generate_attributes__CIGenerator(const Vec *attributes)
+{
+    if (attributes) {
+        for (Usize i = 0; i < attributes->len; ++i) {
+            generate_attribute__CIGenerator(get__Vec(attributes, i));
+            write_str__CIGenerator(" ");
+        }
+    }
+}
+
+void
+generate_attributes_by_decl__CIGenerator(const CIDecl *decl)
+{
+    switch (decl->kind) {
+        case CI_DECL_KIND_FUNCTION:
+            generate_attributes__CIGenerator(decl->function.attributes);
+
+            break;
+        default:
+            break;
     }
 }
 
@@ -1534,6 +1632,7 @@ void
 generate_decl_prototype__CIGenerator(const CIDecl *decl)
 {
     if (!has_generic__CIDecl(decl)) {
+        generate_attributes_by_decl__CIGenerator(decl);
         generate_storage_class__CIGenerator(&decl->storage_class_flag);
 
         switch (decl->kind) {
