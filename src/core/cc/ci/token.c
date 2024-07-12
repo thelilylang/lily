@@ -36,6 +36,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// Free CITokenEot type (CI_TOKEN_EOT_CONTEXT_MACRO_CALL).
+static inline VARIANT_DESTRUCTOR(CITokenEot,
+                                 macro_call,
+                                 const CITokenEot *self);
+
 // Free CIToken type (CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED).
 static VARIANT_DESTRUCTOR(CIToken, attribute_deprecated, CIToken *self);
 
@@ -44,6 +49,9 @@ static VARIANT_DESTRUCTOR(CIToken, attribute_nodiscard, CIToken *self);
 
 // Free CIToken type (CI_TOKEN_KIND_COMMENT_DOC).
 static VARIANT_DESTRUCTOR(CIToken, comment_doc, CIToken *self);
+
+// Free CIToken type (CI_TOKEN_KIND_EOT).
+static VARIANT_DESTRUCTOR(CIToken, eot, CIToken *self);
 
 // Free CIToken type (CI_TOKEN_KIND_IDENTIFIER).
 static VARIANT_DESTRUCTOR(CIToken, identifier, CIToken *self);
@@ -263,7 +271,7 @@ remove_when_match__CITokens(CITokens *self, struct CIToken *match)
                 APPEND_AND_FREE(res, (String *)s);          \
             }                                               \
                                                             \
-            push_str__String(res, ", ");                    \
+            push_str__String(res, ",\n");                   \
                                                             \
             if (current_token->kind == CI_TOKEN_KIND_EOF || \
                 current_token->kind == CI_TOKEN_KIND_EOT) { \
@@ -367,6 +375,23 @@ IMPL_FOR_DEBUG(to_string, CITokenEot, const CITokenEot *self)
       CALL_DEBUG_IMPL(to_string, CITokenEotContext, self->ctx));
 }
 #endif
+
+VARIANT_DESTRUCTOR(CITokenEot, macro_call, const CITokenEot *self)
+{
+    FREE(Stack, self->macro_call);
+}
+
+DESTRUCTOR(CITokenEot, const CITokenEot *self)
+{
+    switch (self->ctx) {
+        case CI_TOKEN_EOT_CONTEXT_MACRO_CALL:
+            FREE_VARIANT(CITokenEot, macro_call, self);
+
+            break;
+        default:
+            break;
+    }
+}
 
 #ifdef ENV_DEBUG
 char *
@@ -955,18 +980,14 @@ VARIANT_CONSTRUCTOR(CIToken *,
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIToken *,
-                    CIToken,
-                    eot,
-                    Location location,
-                    enum CITokenEotContext eot)
+VARIANT_CONSTRUCTOR(CIToken *, CIToken, eot, Location location, CITokenEot eot)
 {
     CIToken *self = lily_malloc(sizeof(CIToken));
 
     self->kind = CI_TOKEN_KIND_EOT;
     self->location = location;
     self->next = NULL;
-    self->eot = NEW(CITokenEot, eot);
+    self->eot = eot;
 
     return self;
 }
@@ -2584,6 +2605,12 @@ VARIANT_DESTRUCTOR(CIToken, comment_doc, CIToken *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(CIToken, eot, CIToken *self)
+{
+    FREE(CITokenEot, &self->eot);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(CIToken, identifier, CIToken *self)
 {
     FREE(String, self->identifier);
@@ -2765,6 +2792,9 @@ DESTRUCTOR(CIToken, CIToken *self)
             break;
         case CI_TOKEN_KIND_COMMENT_DOC:
             FREE_VARIANT(CIToken, comment_doc, self);
+            break;
+        case CI_TOKEN_KIND_EOT:
+            FREE_VARIANT(CIToken, eot, self);
             break;
         case CI_TOKEN_KIND_IDENTIFIER:
             FREE_VARIANT(CIToken, identifier, self);

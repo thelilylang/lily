@@ -187,7 +187,7 @@ is_num__CIScanner(const CIScanner *self);
 static void
 add_eot_token__CIScanner(CIScanner *self,
                          CIScannerContext *ctx,
-                         enum CITokenEotContext eot_ctx);
+                         CITokenEot eot);
 
 /// @brief Add EOF token to passed scanner context.
 static void
@@ -1438,12 +1438,10 @@ is_num__CIScanner(const CIScanner *self)
 #define ADD_K_TOKEN(k) ADD_K_TOKEN_BASE(ctx->tokens, k);
 
 void
-add_eot_token__CIScanner(CIScanner *self,
-                         CIScannerContext *ctx,
-                         enum CITokenEotContext eot_ctx)
+add_eot_token__CIScanner(CIScanner *self, CIScannerContext *ctx, CITokenEot eot)
 {
-    ADD_K_TOKEN(NEW_VARIANT(
-      CIToken, eot, clone__Location(&self->base.location), eot_ctx));
+    ADD_K_TOKEN(
+      NEW_VARIANT(CIToken, eot, clone__Location(&self->base.location), eot));
 }
 
 void
@@ -2801,11 +2799,12 @@ scan_preprocessor_content__CIScanner(CIScanner *self,
             break;
         case CI_SCANNER_CONTEXT_LOCATION_MACRO:
             add_eot_token__CIScanner(
-              self, &ctx, CI_TOKEN_EOT_CONTEXT_MACRO_CALL);
+              self, &ctx, NEW_VARIANT(CITokenEot, macro_call));
 
             break;
         default:
-            add_eot_token__CIScanner(self, &ctx, CI_TOKEN_EOT_CONTEXT_OTHER);
+            add_eot_token__CIScanner(
+              self, &ctx, NEW(CITokenEot, CI_TOKEN_EOT_CONTEXT_OTHER));
     }
 
     return tokens;
@@ -2856,11 +2855,12 @@ scan_define_preprocessor__CIScanner(CIScanner *self)
 CIToken *
 scan_elif_preprocessor__CIScanner(CIScanner *self, CIScannerContext *ctx_parent)
 {
-#define ADD_EOT(tokens, eot_ctx) \
-    ADD_K_TOKEN_BASE(            \
-      tokens,                    \
-      NEW_VARIANT(               \
-        CIToken, eot, clone__Location(&self->base.location), eot_ctx));
+#define ADD_EOT(tokens, eot_ctx)                                        \
+    ADD_K_TOKEN_BASE(tokens,                                            \
+                     NEW_VARIANT(CIToken,                               \
+                                 eot,                                   \
+                                 clone__Location(&self->base.location), \
+                                 NEW(CITokenEot, eot_ctx)));
 
 #define SCAN_IF_PREPROCESSOR_CONTENT(                                        \
   cond, is_def_preprocessor, ctx_parent, ctx_location, in_prepro_else)       \

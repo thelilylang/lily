@@ -513,6 +513,8 @@ is_empty__CITokens(const CITokens *self);
 
 extern inline CONSTRUCTOR(CITokenEot, CITokenEot, enum CITokenEotContext ctx);
 
+extern inline VARIANT_CONSTRUCTOR(CITokenEot, CITokenEot, macro_call);
+
 extern inline CONSTRUCTOR(CITokenLiteralConstantInt,
                           CITokenLiteralConstantInt,
                           enum CITokenLiteralConstantIntSuffix suffix,

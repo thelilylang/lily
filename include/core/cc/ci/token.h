@@ -51,6 +51,8 @@ struct CIToken;
 
 #define CI_N_PREPROCESSOR 16
 
+#define CI_MACROS_CALL_MAX_SIZE 512
+
 typedef struct CITokens
 {
     struct CIToken *first; // CIToken*?
@@ -362,7 +364,8 @@ typedef struct CITokenEot
         // This represents the token to restore after reaching the EOT token in
         // the context of a macro parameter
         // (CI_TOKEN_EOT_CONTEXT_KIND_MACRO_PARAM).
-        struct CIToken *macro_param; // struct CIToken*? (&)
+        struct CIToken *macro_param; // struct CIToken* (&)
+        Stack *macro_call;           // Stack<struct CIToken* (&)>*
     };
 } CITokenEot;
 
@@ -387,6 +390,16 @@ inline CONSTRUCTOR(CITokenEot, CITokenEot, enum CITokenEotContext ctx)
 
 /**
  *
+ * @brief Construct CITokenEot type (CI_TOKEN_EOT_CONTEXT_MACRO_CALL).
+ */
+inline VARIANT_CONSTRUCTOR(CITokenEot, CITokenEot, macro_call)
+{
+    return (CITokenEot){ .ctx = CI_TOKEN_EOT_CONTEXT_MACRO_CALL,
+                         .macro_call = NEW(Stack, CI_MACROS_CALL_MAX_SIZE) };
+}
+
+/**
+ *
  * @brief Convert CITokenEot in String.
  * @note This function is only used to debug.
  */
@@ -394,6 +407,12 @@ inline CONSTRUCTOR(CITokenEot, CITokenEot, enum CITokenEotContext ctx)
 String *
 IMPL_FOR_DEBUG(to_string, CITokenEot, const CITokenEot *self);
 #endif
+
+/**
+ *
+ * @brief Free CITokenEot type.
+ */
+DESTRUCTOR(CITokenEot, const CITokenEot *self);
 
 enum CITokenLiteralConstantIntSuffix
 {
@@ -1151,11 +1170,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
  *
  * @brief Construct CIToken type (CI_TOKEN_KIND_EOT).
  */
-VARIANT_CONSTRUCTOR(CIToken *,
-                    CIToken,
-                    eot,
-                    Location location,
-                    enum CITokenEotContext eot);
+VARIANT_CONSTRUCTOR(CIToken *, CIToken, eot, Location location, CITokenEot eot);
 
 /**
  *
