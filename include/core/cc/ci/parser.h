@@ -171,8 +171,6 @@ VARIANT_CONSTRUCTOR(CIParserMacroCall *, CIParserMacroCall, is_empty);
  */
 DESTRUCTOR(CIParserMacroCall, CIParserMacroCall *self);
 
-#define CI_PARSER_MACROS_CALL_MAX_SIZE 512
-
 typedef struct CIParser
 {
     CIResultFile *file;       // CIResultFile* (&)

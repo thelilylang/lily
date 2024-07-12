@@ -1309,8 +1309,7 @@ CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner)
                        .tokens = &scanner->tokens,
                        .current_token = scanner->tokens.first,
                        .previous_token = scanner->tokens.first,
-                       .macros_call =
-                         NEW(Stack, CI_PARSER_MACROS_CALL_MAX_SIZE),
+                       .macros_call = NEW(Stack, CI_MACROS_CALL_MAX_SIZE),
                        .visit_waiting_list = NEW(CIParserVisitWaitingList) };
 }
 
@@ -1324,8 +1323,7 @@ from_tokens__CIParser(CIResultFile *file, const CITokens *content)
                        .tokens = content,
                        .current_token = NULL,
                        .previous_token = NULL,
-                       .macros_call =
-                         NEW(Stack, CI_PARSER_MACROS_CALL_MAX_SIZE),
+                       .macros_call = NEW(Stack, CI_MACROS_CALL_MAX_SIZE),
                        .visit_waiting_list = NEW(CIParserVisitWaitingList) };
 }
 
@@ -3489,7 +3487,7 @@ parse_macro_call_param__CIParser(CIParser *self,
       NEW_VARIANT(CIToken,
                   eot,
                   default__Location(""),
-                  CI_TOKEN_EOT_CONTEXT_MACRO_PARAM)));
+                  NEW(CITokenEot, CI_TOKEN_EOT_CONTEXT_MACRO_PARAM))));
 
     return NEW(CIParserMacroCallParam, content);
 }
@@ -3571,7 +3569,7 @@ jump_in_macro_call__CIParser(CIParser *self, CIToken *next_token)
         // after a transition token and if the macro call is
         // called several times the next token after EOT
         // will be updated.
-        define->define->tokens.last->next = next_token->next;
+        push__Stack(define->define->tokens.last->eot.macro_call, next_token);
 
         return define->define->tokens.first;
     }
@@ -3680,7 +3678,7 @@ jump_in_token_block__CIParser(CIParser *self, CIToken *next_token)
                       CIToken,
                       eot,
                       default__Location(next_token->location.filename),
-                      CI_TOKEN_EOT_CONTEXT_MERGED_ID);
+                      NEW(CITokenEot, CI_TOKEN_EOT_CONTEXT_MERGED_ID));
 
                     merged_token->next = eot;
                     // NOTE: We save the merged token pointer in EOT,
@@ -3931,14 +3929,14 @@ loop:
 
                         FREE(CIParserMacroCall, macro_call);
 
+                        next_token = pop__Stack(next_token->eot.macro_call);
+
                         break;
                     }
                     case CI_TOKEN_EOT_CONTEXT_MACRO_PARAM:
                         // NOTE: Restore the saved token in EOT.
-                        if (next_token->eot.macro_param) {
-                            next_token = next_token->eot.macro_param;
-                            next_token->eot.macro_param = NULL;
-                        }
+                        next_token = next_token->eot.macro_param;
+                        next_token->eot.macro_param = NULL;
 
                         break;
                     case CI_TOKEN_EOT_CONTEXT_MERGED_ID: {
@@ -3995,7 +3993,8 @@ check: {
             check_standard__CIParser(self, next_token);
 
             goto check;
-        } else if (next_token->next->kind == CI_TOKEN_KIND_HASHTAG_HASHTAG) {
+        } else if (next_token->next &&
+                   next_token->next->kind == CI_TOKEN_KIND_HASHTAG_HASHTAG) {
             set_current_token__CIParser(self, next_token);
         }
 
