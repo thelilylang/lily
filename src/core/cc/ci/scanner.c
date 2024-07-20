@@ -1731,8 +1731,10 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
 
                         if (!strcmp(param->name->buffer,
                                     last_token->identifier->buffer)) {
-                            res = NEW_VARIANT(
-                              CIToken, macro_param, last_token->location, i);
+                            res = NEW_VARIANT(CIToken,
+                                              macro_param,
+                                              last_token->location,
+                                              NEW(CITokenMacroParam, i));
 
                             FREE(CIToken, last_token);
                             last_token = NULL;

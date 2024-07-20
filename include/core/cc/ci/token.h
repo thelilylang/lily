@@ -364,8 +364,8 @@ typedef struct CITokenEot
         // This represents the token to restore after reaching the EOT token in
         // the context of a macro parameter
         // (CI_TOKEN_EOT_CONTEXT_KIND_MACRO_PARAM).
-        struct CIToken *macro_param; // struct CIToken* (&)
-        Stack *macro_call;           // Stack<struct CIToken* (&)>*
+        Stack *macro_param; // Stack<struct CIToken* (&)>*
+        Stack *macro_call;  // Stack<struct CIToken* (&)>*
     };
 } CITokenEot;
 
@@ -396,6 +396,16 @@ inline VARIANT_CONSTRUCTOR(CITokenEot, CITokenEot, macro_call)
 {
     return (CITokenEot){ .ctx = CI_TOKEN_EOT_CONTEXT_MACRO_CALL,
                          .macro_call = NEW(Stack, CI_MACROS_CALL_MAX_SIZE) };
+}
+
+/**
+ *
+ * @brief Construct CITokenEot type (CI_TOKEN_EOT_CONTEXT_MACRO_PARAM).
+ */
+inline VARIANT_CONSTRUCTOR(CITokenEot, CITokenEot, macro_param)
+{
+    return (CITokenEot){ .ctx = CI_TOKEN_EOT_CONTEXT_MACRO_PARAM,
+                         .macro_param = NEW(Stack, CI_MACROS_CALL_MAX_SIZE) };
 }
 
 /**
@@ -1083,6 +1093,66 @@ inline DESTRUCTOR(CITokenPreprocessorInclude,
     FREE(String, self->value);
 }
 
+typedef struct CITokenMacroCallId
+{
+    Usize id;
+} CITokenMacroCallId;
+
+/**
+ *
+ * @brief Construct CITokenMacroCallId type.
+ */
+CONSTRUCTOR(CITokenMacroCallId *, CITokenMacroCallId, Usize id);
+
+/**
+ *
+ * @brief Free CITokenMacroCallId type.
+ */
+inline DESTRUCTOR(CITokenMacroCallId, CITokenMacroCallId *self)
+{
+    lily_free(self);
+}
+
+typedef struct CITokenMacroParam
+{
+    // The `id` corresponds to the position index in the macro
+    // (#define) params vector (preprocessor_define.params).
+    Usize id;
+    Stack *macro_call_ids; // Stack<CITokenMacroParamCallId*>*
+} CITokenMacroParam;
+
+/**
+ *
+ * @brief Construct CITokenMacroParam type.
+ */
+inline CONSTRUCTOR(CITokenMacroParam, CITokenMacroParam, Usize id)
+{
+    return (CITokenMacroParam){ .id = id,
+                                .macro_call_ids =
+                                  NEW(Stack, CI_MACROS_CALL_MAX_SIZE) };
+}
+
+/**
+ *
+ * @brief Convert CITokenMacroParam in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CITokenMacroParam, const CITokenMacroParam *self);
+#endif
+
+/**
+ *
+ * @brief Free CITokenMacroParam type.
+ */
+inline DESTRUCTOR(CITokenMacroParam, const CITokenMacroParam *self)
+{
+    // NOTE: It's not necessary to free items from the stack, because normally
+    // at the end of the program there will be no more items in the stack.
+    FREE(Stack, self->macro_call_ids);
+}
+
 typedef struct CIToken
 {
     enum CITokenKind kind;
@@ -1117,9 +1187,7 @@ typedef struct CIToken
         char literal_constant_character;
         String *literal_constant_string;
         String *macro_defined;
-        // The `macro_param` corresponds to the position index in the macro
-        // (#define) params vector (preprocessor_define.params).
-        Usize macro_param;
+        CITokenMacroParam macro_param;
         String *standard_predefined_macro___date__;
         String *standard_predefined_macro___file__;
         Usize standard_predefined_macro___line__;
@@ -1260,7 +1328,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     CIToken,
                     macro_param,
                     Location location,
-                    Usize macro_param);
+                    CITokenMacroParam macro_param);
 
 /**
  *
