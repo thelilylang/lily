@@ -48,8 +48,11 @@ struct CIParserContext
 
 static inline CONSTRUCTOR(struct CIParserContext, CIParserContext);
 
-static inline void
-add_macro__CIParser(CIParser *self, CIParserMacroCall *macro_call);
+static const CIParserMacroCall *
+get_macro_call__CIParser(CIParser *self, Usize macro_call_id);
+
+static void
+add_macro_call__CIParser(CIParser *self, CIParserMacroCall *macro_call);
 
 static inline void
 init_function_to_visit_waiting_list__CIParser(CIParser *self, String *name);
@@ -461,6 +464,12 @@ parse_macro_call_params__CIParser(CIParser *self,
                                   CIToken **current_token,
                                   Isize macro_param_variadic,
                                   Usize macro_params_length);
+
+static void
+push_macro_call_id_to_macro_param__CIParser(CIParser *self,
+                                            CIToken *first,
+                                            CIToken *last,
+                                            Usize macro_call_id);
 
 static CIToken *
 jump_in_macro_call__CIParser(CIParser *self, CIToken *next_token);
@@ -980,12 +989,24 @@ CONSTRUCTOR(struct CIParserContext, CIParserContext)
                                      .current_stmt = NULL };
 }
 
+const CIParserMacroCall *
+get_macro_call__CIParser(CIParser *self, Usize macro_call_id)
+{
+    ASSERT(macro_call_id < self->macros_call->len);
+
+    return get__Vec(self->macros_call, macro_call_id);
+}
+
 void
-add_macro__CIParser(CIParser *self, CIParserMacroCall *macro_call)
+add_macro_call__CIParser(CIParser *self, CIParserMacroCall *macro_call)
 {
     ASSERT(macro_call);
 
-    push__Stack(self->macros_call, macro_call);
+    if (self->macros_call->len < CI_MACROS_CALL_MAX_SIZE) {
+        push__Vec(self->macros_call, macro_call);
+    } else {
+        FAILED("the macro call stack overflow");
+    }
 }
 
 #define INIT_X_TO_WAIT_TO_VISIT(hm) \
@@ -1309,7 +1330,7 @@ CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner)
                        .tokens = &scanner->tokens,
                        .current_token = scanner->tokens.first,
                        .previous_token = scanner->tokens.first,
-                       .macros_call = NEW(Stack, CI_MACROS_CALL_MAX_SIZE),
+                       .macros_call = NEW(Vec),
                        .visit_waiting_list = NEW(CIParserVisitWaitingList) };
 }
 
@@ -1323,7 +1344,7 @@ from_tokens__CIParser(CIResultFile *file, const CITokens *content)
                        .tokens = content,
                        .current_token = NULL,
                        .previous_token = NULL,
-                       .macros_call = NEW(Stack, CI_MACROS_CALL_MAX_SIZE),
+                       .macros_call = NEW(Vec),
                        .visit_waiting_list = NEW(CIParserVisitWaitingList) };
 }
 
@@ -3487,7 +3508,7 @@ parse_macro_call_param__CIParser(CIParser *self,
       NEW_VARIANT(CIToken,
                   eot,
                   default__Location(""),
-                  NEW(CITokenEot, CI_TOKEN_EOT_CONTEXT_MACRO_PARAM))));
+                  NEW_VARIANT(CITokenEot, macro_param))));
 
     return NEW(CIParserMacroCallParam, content);
 }
@@ -3528,7 +3549,30 @@ parse_macro_call_params__CIParser(CIParser *self,
                "correspond to its declaration.");
     }
 
-    add_macro__CIParser(self, macro_call);
+    add_macro_call__CIParser(self, macro_call);
+}
+
+void
+push_macro_call_id_to_macro_param__CIParser(CIParser *self,
+                                            CIToken *first,
+                                            CIToken *last,
+                                            Usize macro_call_id)
+{
+    CIToken *current = first;
+
+    while (current && current != last) {
+        switch (current->kind) {
+            case CI_TOKEN_KIND_MACRO_PARAM:
+                push__Stack(current->macro_param.macro_call_ids,
+                            NEW(CITokenMacroCallId, macro_call_id));
+
+                break;
+            default:
+                break;
+        }
+
+        current = current->next;
+    }
 }
 
 CIToken *
@@ -3555,8 +3599,8 @@ jump_in_macro_call__CIParser(CIParser *self, CIToken *next_token)
                     break;
                 default:
                     // Push empty macro call on the stack.
-                    push__Stack(self->macros_call,
-                                NEW_VARIANT(CIParserMacroCall, is_empty));
+                    add_macro_call__CIParser(
+                      self, NEW_VARIANT(CIParserMacroCall, is_empty));
             }
         }
 
@@ -3570,6 +3614,11 @@ jump_in_macro_call__CIParser(CIParser *self, CIToken *next_token)
         // called several times the next token after EOT
         // will be updated.
         push__Stack(define->define->tokens.last->eot.macro_call, next_token);
+        push_macro_call_id_to_macro_param__CIParser(
+          self,
+          define->define->tokens.first,
+          define->define->tokens.last,
+          self->macros_call->len - 1);
 
         return define->define->tokens.first;
     }
@@ -3604,42 +3653,58 @@ jump_in_token_block__CIParser(CIParser *self, CIToken *next_token)
 
             break;
         }
-        case CI_TOKEN_KIND_MACRO_PARAM: {
-            CIParserMacroCall *current_macro_call =
-              peek__Stack(self->macros_call);
-            CIParserMacroCallParam *param = get__CIParserMacroCallParams(
-              &current_macro_call->params, next_token->macro_param);
-
-            ASSERT(param->content.last->kind == CI_TOKEN_KIND_EOT);
-            ASSERT(param->content.last->eot.ctx ==
-                   CI_TOKEN_EOT_CONTEXT_MACRO_PARAM);
-
-            // NOTE: Save the `param->content.last->next`, to able to restore
-            // after reach EOT.
-            param->content.last->eot.macro_param = next_token;
-
-            return param->content.first;
-        }
+        // TODO: merge two next cases.
+        case CI_TOKEN_KIND_MACRO_PARAM:
         case CI_TOKEN_KIND_MACRO_PARAM_VARIADIC: {
-            CIParserMacroCall *current_macro_call =
-              peek__Stack(self->macros_call);
-            CIParserMacroCallParam *param =
-              get_macro_param_variadic__CIParserMacroCallParams(
-                &current_macro_call->params);
+            CITokenMacroCallId *macro_call_id =
+              pop__Stack(next_token->macro_param.macro_call_ids);
+            const CIParserMacroCall *current_macro_call =
+              get_macro_call__CIParser(self, macro_call_id->id);
 
-            if (param) {
-                ASSERT(param->content.last->kind == CI_TOKEN_KIND_EOT);
-                ASSERT(param->content.last->eot.ctx ==
-                       CI_TOKEN_EOT_CONTEXT_MACRO_PARAM);
+            switch (next_token->kind) {
+                case CI_TOKEN_KIND_MACRO_PARAM: {
+                    CIParserMacroCallParam *param =
+                      get__CIParserMacroCallParams(&current_macro_call->params,
+                                                   next_token->macro_param.id);
 
-                // NOTE: Save the `param->content.last->next`, to able to
-                // restore after reach EOT.
-                param->content.last->eot.macro_param = next_token;
+                    FREE(CITokenMacroCallId, macro_call_id);
 
-                return param->content.first;
+                    ASSERT(param->content.last->kind == CI_TOKEN_KIND_EOT);
+                    ASSERT(param->content.last->eot.ctx ==
+                           CI_TOKEN_EOT_CONTEXT_MACRO_PARAM);
+
+                    // NOTE: Save the `param->content.last->next`, to able to
+                    // restore after reach EOT.
+                    push__Stack(param->content.last->eot.macro_param,
+                                next_token);
+
+                    return param->content.first;
+                }
+                case CI_TOKEN_KIND_MACRO_PARAM_VARIADIC: {
+                    CIParserMacroCallParam *param =
+                      get_macro_param_variadic__CIParserMacroCallParams(
+                        &current_macro_call->params);
+
+                    FREE(CITokenMacroCallId, macro_call_id);
+
+                    if (param) {
+                        ASSERT(param->content.last->kind == CI_TOKEN_KIND_EOT);
+                        ASSERT(param->content.last->eot.ctx ==
+                               CI_TOKEN_EOT_CONTEXT_MACRO_PARAM);
+
+                        // NOTE: Save the `param->content.last->next`, to able
+                        // to restore after reach EOT.
+                        push__Stack(param->content.last->eot.macro_param,
+                                    next_token);
+
+                        return param->content.first;
+                    }
+
+                    return next_token->next;
+                }
+                default:
+                    UNREACHABLE("unknown variant");
             }
-
-            return next_token->next;
         }
         case CI_TOKEN_KIND_IDENTIFIER:
             return jump_in_macro_call__CIParser(self, next_token);
@@ -3714,7 +3779,7 @@ jump_in_token_block__CIParser(CIParser *self, CIToken *next_token)
               self->file, standard_predefined_macro_s[next_token->kind]);
 
             if (def) {
-                add_macro__CIParser(self, NEW(CIParserMacroCall));
+                add_macro_call__CIParser(self, NEW(CIParserMacroCall));
 
                 def->define->tokens.last->next = next_token->next;
 
@@ -3925,7 +3990,7 @@ loop:
                     }
                     case CI_TOKEN_EOT_CONTEXT_MACRO_CALL: {
                         CIParserMacroCall *macro_call =
-                          pop__Stack(self->macros_call);
+                          pop__Vec(self->macros_call);
 
                         FREE(CIParserMacroCall, macro_call);
 
@@ -3933,12 +3998,16 @@ loop:
 
                         break;
                     }
-                    case CI_TOKEN_EOT_CONTEXT_MACRO_PARAM:
+                    case CI_TOKEN_EOT_CONTEXT_MACRO_PARAM: {
                         // NOTE: Restore the saved token in EOT.
-                        next_token = next_token->eot.macro_param;
-                        next_token->eot.macro_param = NULL;
+                        ASSERT(next_token->eot.macro_param);
+
+                        CIToken *eot_token = next_token;
+
+                        next_token = pop__Stack(eot_token->eot.macro_param);
 
                         break;
+                    }
                     case CI_TOKEN_EOT_CONTEXT_MERGED_ID: {
                         CIToken *eot = next_token;
 
@@ -7726,8 +7795,7 @@ run__CIParser(CIParser *self)
 void
 free_from_tokens_case__CIParser(const CIParser *self)
 {
-    // FREE_STACK_ITEMS(self->macros_call, CIParserMacroCall);
-    FREE(Stack, self->macros_call);
+    FREE(Vec, self->macros_call);
     FREE(CIParserVisitWaitingList, &self->visit_waiting_list);
 }
 

@@ -41,6 +41,11 @@ static inline VARIANT_DESTRUCTOR(CITokenEot,
                                  macro_call,
                                  const CITokenEot *self);
 
+// Free CITokenEot type (CI_TOKEN_EOT_CONTEXT_MACRO_PARAM).
+static inline VARIANT_DESTRUCTOR(CITokenEot,
+                                 macro_param,
+                                 const CITokenEot *self);
+
 // Free CIToken type (CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED).
 static VARIANT_DESTRUCTOR(CIToken, attribute_deprecated, CIToken *self);
 
@@ -381,11 +386,20 @@ VARIANT_DESTRUCTOR(CITokenEot, macro_call, const CITokenEot *self)
     FREE(Stack, self->macro_call);
 }
 
+VARIANT_DESTRUCTOR(CITokenEot, macro_param, const CITokenEot *self)
+{
+    FREE(Stack, self->macro_param);
+}
+
 DESTRUCTOR(CITokenEot, const CITokenEot *self)
 {
     switch (self->ctx) {
         case CI_TOKEN_EOT_CONTEXT_MACRO_CALL:
             FREE_VARIANT(CITokenEot, macro_call, self);
+
+            break;
+        case CI_TOKEN_EOT_CONTEXT_MACRO_PARAM:
+            FREE_VARIANT(CITokenEot, macro_param, self);
 
             break;
         default:
@@ -953,6 +967,23 @@ IMPL_FOR_DEBUG(to_string,
 }
 #endif
 
+CONSTRUCTOR(CITokenMacroCallId *, CITokenMacroCallId, Usize id)
+{
+    CITokenMacroCallId *self = lily_malloc(sizeof(CITokenMacroCallId));
+
+    self->id = id;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CITokenMacroParam, const CITokenMacroParam *self)
+{
+    return format__String("CITokenMacroParam{{ id = {zu} }", self->id);
+}
+#endif
+
 CONSTRUCTOR(CIToken *, CIToken, enum CITokenKind kind, Location location)
 {
     CIToken *self = lily_malloc(sizeof(CIToken));
@@ -1155,7 +1186,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     CIToken,
                     macro_param,
                     Location location,
-                    Usize macro_param)
+                    CITokenMacroParam macro_param)
 {
     CIToken *self = lily_malloc(sizeof(CIToken));
 
@@ -1789,7 +1820,7 @@ to_string__CIToken(CIToken *self)
         case CI_TOKEN_KIND_MACRO_DEFINED:
             return format__String("MACRO_DEFINED({S})", self->macro_defined);
         case CI_TOKEN_KIND_MACRO_PARAM:
-            return format__String("MACRO_PARAM({zu})", self->macro_param);
+            return format__String("MACRO_PARAM({zu})", self->macro_param.id);
         case CI_TOKEN_KIND_MACRO_PARAM_VARIADIC:
             return format__String("__VA_ARGS__");
         case CI_TOKEN_KIND_MINUS:
@@ -2423,10 +2454,11 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
               self->macro_defined);
         case CI_TOKEN_KIND_MACRO_PARAM:
             return format(
-              "CIToken{{ kind = {s}, location = {sa}, macro_param = {zu} }",
+              "CIToken{{ kind = {s}, location = {sa}, macro_param = {Sr} }",
               CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
               CALL_DEBUG_IMPL(to_string, Location, &self->location),
-              self->macro_param);
+              CALL_DEBUG_IMPL(
+                to_string, CITokenMacroParam, &self->macro_param));
         case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:
             return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_define = {Sr} }",
@@ -2666,6 +2698,7 @@ VARIANT_DESTRUCTOR(CIToken, macro_defined, CIToken *self)
 
 VARIANT_DESTRUCTOR(CIToken, macro_param, CIToken *self)
 {
+    FREE(CITokenMacroParam, &self->macro_param);
     lily_free(self);
 }
 

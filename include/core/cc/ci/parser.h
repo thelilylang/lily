@@ -180,7 +180,7 @@ typedef struct CIParser
     const CITokens *tokens;   // const CITokens* (&)
     CIToken *current_token;   // CIToken* (&)
     CIToken *previous_token;  // CIToken* (&)
-    Stack *macros_call;       // Stack<CIParserMacroCall*>*
+    Vec *macros_call;         // Vec<CIParserMacroCall*>*
     CIParserVisitWaitingList visit_waiting_list;
 } CIParser;
 
