@@ -111,10 +111,7 @@
 #define VARIANT_DESTRUCTOR(name, variant, ...) \
     void __free__##name##__##variant(__VA_ARGS__)
 
-#define ARRAY(...)  \
-    {               \
-        __VA_ARGS__ \
-    }
+#define ARRAY(...) { __VA_ARGS__ }
 #define LEN(arr, item) (((int)sizeof(arr) / sizeof(item)))
 
 // MOVE(pointer1, pointer2)
