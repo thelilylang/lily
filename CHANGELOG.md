@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.3.0 - 2024-07-21
+
+### Added
+
+- Implement \_\_VA_ARGS__ [#500](https://github.com/thelilylang/lily/pull/500)
+- Resolve sizeof and alignof operator [#504](https://github.com/thelilylang/lily/pull/504)
+- Add a way to give different integer size to enum [#505](https://github.com/thelilylang/lily/pull/505)
+- Resolve size and alignment of builtin type [#509](https://github.com/thelilylang/lily/pull/509)
+- Implement attribute for function declaration [#513](https://github.com/thelilylang/lily/pull/513)
+
+### Fixed
+
+- Fix: Allow prototype duplications [#503](https://github.com/thelilylang/lily/pull/503)
+- Fix dependencies order generation [#506](https://github.com/thelilylang/lily/pull/506)
+- Fix space after brace of enum declaration [#507](https://github.com/thelilylang/lily/pull/507)
+- Fix potential bug in expression resolver [#508](https://github.com/thelilylang/lily/pull/508)
+- Fix array LLVM generation [#510](https://github.com/thelilylang/lily/pull/510)
+- Fix include path access [#512](https://github.com/thelilylang/lily/pull/512)
+- Fix wrapped macro call bug [#514](https://github.com/thelilylang/lily/pull/514)
+- Associate macro param with the right macro call ID [#515](https://github.com/thelilylang/lily/pull/515)
+
+### Changed
+
+- Stop to use `_BitInt(x)` Clang extension [#511](https://github.com/thelilylang/lily/pull/511)
+
 ## 0.2.0 - 2024-06-22
 
 ### Added
