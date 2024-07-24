@@ -1009,7 +1009,7 @@ generate_function_literal_expr__CIGenerator(const CIExprLiteral *literal)
             break;
         case CI_EXPR_LITERAL_KIND_STRING:
             write_String__CIGenerator(
-              format__String("\"{S}\"", literal->string));
+              format__String("\"{S}\"", literal->string.value));
 
             break;
         case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:

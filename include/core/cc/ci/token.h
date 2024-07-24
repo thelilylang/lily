@@ -346,6 +346,7 @@ enum CITokenEotContext
     CI_TOKEN_EOT_CONTEXT_MACRO_PARAM,
     CI_TOKEN_EOT_CONTEXT_MACRO_CALL,
     CI_TOKEN_EOT_CONTEXT_MERGED_ID,
+    CI_TOKEN_EOT_CONTEXT_STRINGIFICATION, // #<token>
     CI_TOKEN_EOT_CONTEXT_OTHER
 };
 
@@ -454,6 +455,14 @@ inline CONSTRUCTOR(CITokenLiteralConstantInt,
 
 /**
  *
+ * @brief Convert to string CITokenLiteralConstantIntSuffix type.
+ */
+char *
+to_string__CITokenLiteralConstantIntSuffix(
+  enum CITokenLiteralConstantIntSuffix self);
+
+/**
+ *
  * @brief Convert CITokenLiteralConstantIntSuffix in string.
  * @note This function is only used to debug.
  */
@@ -510,6 +519,14 @@ inline CONSTRUCTOR(CITokenLiteralConstantFloat,
 {
     return (CITokenLiteralConstantFloat){ .suffix = suffix, .value = value };
 }
+
+/**
+ *
+ * @brief Convert to string CITokenLiteralConstantFloatSuffix type.
+ */
+char *
+to_string__CITokenLiteralConstantFloatSuffix(
+  enum CITokenLiteralConstantFloatSuffix self);
 
 /**
  *

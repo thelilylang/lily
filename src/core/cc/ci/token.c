@@ -362,6 +362,8 @@ IMPL_FOR_DEBUG(to_string, CITokenEotContext, enum CITokenEotContext self)
             return "CI_TOKEN_EOT_CONTEXT_MACRO_CALL";
         case CI_TOKEN_EOT_CONTEXT_MERGED_ID:
             return "CI_TOKEN_EOT_CONTEXT_MERGED_ID";
+        case CI_TOKEN_EOT_CONTEXT_STRINGIFICATION:
+            return "CI_TOKEN_EOT_CONTEXT_STRINGIFICATION";
         case CI_TOKEN_EOT_CONTEXT_OTHER:
             return "CI_TOKEN_EOT_CONTEXT_OTHER";
         default:
@@ -407,6 +409,28 @@ DESTRUCTOR(CITokenEot, const CITokenEot *self)
     }
 }
 
+char *
+to_string__CITokenLiteralConstantIntSuffix(
+  enum CITokenLiteralConstantIntSuffix self)
+{
+    switch (self) {
+        case CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_L:
+            return "L";
+        case CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_LL:
+            return "LL";
+        case CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_LU:
+            return "LU";
+        case CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_LLU:
+            return "LLU";
+        case CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_U:
+            return "U";
+        case CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_NONE:
+            return "";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 #ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string,
@@ -444,6 +468,22 @@ IMPL_FOR_DEBUG(to_string,
       self->value);
 }
 #endif
+
+char *
+to_string__CITokenLiteralConstantFloatSuffix(
+  enum CITokenLiteralConstantFloatSuffix self)
+{
+    switch (self) {
+        case CI_TOKEN_LITERAL_CONSTANT_FLOAT_SUFFIX_F:
+            return "F";
+        case CI_TOKEN_LITERAL_CONSTANT_FLOAT_SUFFIX_L:
+            return "L";
+        case CI_TOKEN_LITERAL_CONSTANT_FLOAT_SUFFIX_NONE:
+            return "";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
 
 #ifdef ENV_DEBUG
 char *

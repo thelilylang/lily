@@ -302,7 +302,8 @@ extern inline VARIANT_CONSTRUCTOR(CIExprLiteral,
 extern inline VARIANT_CONSTRUCTOR(CIExprLiteral,
                                   CIExprLiteral,
                                   string,
-                                  String *string);
+                                  String *value,
+                                  bool must_free);
 
 extern inline VARIANT_CONSTRUCTOR(CIExprLiteral,
                                   CIExprLiteral,

@@ -3942,9 +3942,46 @@ get_token__CIScanner(CIScanner *self,
                            clone__Location(&self->base.location));
             }
 
-            return NEW(CIToken,
-                       CI_TOKEN_KIND_HASHTAG,
-                       clone__Location(&self->base.location));
+            {
+                end_token__CIScanner(self,
+                                     self->base.source.cursor.line,
+                                     self->base.source.cursor.column,
+                                     self->base.source.cursor.position);
+                add__CITokens(ctx->tokens,
+                              NEW(CIToken,
+                                  CI_TOKEN_KIND_HASHTAG,
+                                  clone__Location(&self->base.location)));
+            }
+
+            next_char__CIScanner(self);
+            start_token__CIScanner(self,
+                                   self->base.source.cursor.line,
+                                   self->base.source.cursor.column,
+                                   self->base.source.cursor.position);
+
+            if (is_ident__CIScanner(self)) {
+                CIToken *token_id =
+                  scan_multi_part_keyword__CIScanner(self, ctx);
+
+                if (token_id) {
+                    end__Location(&token_id->location,
+                                  self->base.source.cursor.line,
+                                  self->base.source.cursor.column,
+                                  self->base.source.cursor.position);
+                    add__CITokens(ctx->tokens, token_id);
+                }
+            }
+
+            start_token__CIScanner(self,
+                                   self->base.source.cursor.line,
+                                   self->base.source.cursor.column,
+                                   self->base.source.cursor.position);
+
+            return NEW_VARIANT(
+              CIToken,
+              eot,
+              clone__Location(&self->base.location),
+              NEW(CITokenEot, CI_TOKEN_EOT_CONTEXT_STRINGIFICATION));
         }
         // ^=, ^
         case '^':

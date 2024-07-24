@@ -133,6 +133,9 @@ static VARIANT_DESTRUCTOR(CIExpr, binary, CIExpr *self);
 /// @brief Free CIExpr type (CI_EXPR_KIND_CAST).
 static VARIANT_DESTRUCTOR(CIExpr, cast, CIExpr *self);
 
+/// @brief Free CIExprLiteral (CI_EXPR_LITERAL_KIND_STRING).
+static VARIANT_DESTRUCTOR(CIExprLiteral, string, const CIExprLiteral *self);
+
 /// @brief Free CIExpr type (CI_EXPR_KIND_DATA_TYPE).
 static VARIANT_DESTRUCTOR(CIExpr, data_type, CIExpr *self);
 
@@ -149,7 +152,7 @@ static VARIANT_DESTRUCTOR(CIExpr, grouping, CIExpr *self);
 static inline VARIANT_DESTRUCTOR(CIExpr, identifier, CIExpr *self);
 
 /// @brief Free CIExpr type (CI_EXPR_KIND_LITERAL).
-static inline VARIANT_DESTRUCTOR(CIExpr, literal, CIExpr *self);
+static VARIANT_DESTRUCTOR(CIExpr, literal, CIExpr *self);
 
 /// @brief Free CIExpr type (CI_EXPR_KIND_SIZEOF).
 static VARIANT_DESTRUCTOR(CIExpr, sizeof, CIExpr *self);
@@ -3228,7 +3231,7 @@ IMPL_FOR_DEBUG(to_string, CIExprLiteral, const CIExprLiteral *self)
             return format__String(
               "CIExprLiteral{{ kind = {s}, string = {S} }",
               to_string__Debug__CIExprLiteralKind(self->kind),
-              self->string);
+              self->string.value);
         case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:
             return format__String(
               "CIExprLiteral{{ kind = {s}, unsigned_int = {zu} }",
@@ -3239,6 +3242,25 @@ IMPL_FOR_DEBUG(to_string, CIExprLiteral, const CIExprLiteral *self)
     }
 }
 #endif
+
+VARIANT_DESTRUCTOR(CIExprLiteral, string, const CIExprLiteral *self)
+{
+    if (self->string.must_free) {
+        FREE(String, self->string.value);
+    }
+}
+
+DESTRUCTOR(CIExprLiteral, const CIExprLiteral *self)
+{
+    switch (self->kind) {
+        case CI_EXPR_LITERAL_KIND_STRING:
+            FREE_VARIANT(CIExprLiteral, string, self);
+
+            break;
+        default:
+            break;
+    }
+}
 
 #ifdef ENV_DEBUG
 char *
@@ -4037,6 +4059,7 @@ VARIANT_DESTRUCTOR(CIExpr, identifier, CIExpr *self)
 
 VARIANT_DESTRUCTOR(CIExpr, literal, CIExpr *self)
 {
+    FREE(CIExprLiteral, &self->literal);
     lily_free(self);
 }
 
