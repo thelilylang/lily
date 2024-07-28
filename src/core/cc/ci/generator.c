@@ -49,6 +49,9 @@ static void
 run_file__CIGenerator(const CIResultFile *file_result);
 
 static void
+write__CIGenerator(char c);
+
+static void
 write_str__CIGenerator(char *s);
 
 static void
@@ -113,6 +116,12 @@ generate_function_call_expr__CIGenerator(
 static void
 generate_function_call_builtin_expr__CIGenerator(
   const CIExprFunctionCallBuiltin *function_call_builtin);
+
+static void
+generate_function_literal_character_expr__CIGenerator(const char c);
+
+static void
+generate_function_literal_string_expr__CIGenerator(const String *string);
 
 static void
 generate_function_literal_expr__CIGenerator(const CIExprLiteral *literal);
@@ -286,6 +295,12 @@ run__CIGenerator(const CIResult *result)
     }
 
     unset_result_ref__CIGenerator();
+}
+
+void
+write__CIGenerator(char c)
+{
+    push__String(current_result_content, c);
 }
 
 void
@@ -982,6 +997,56 @@ generate_function_unary_expr__CIGenerator(const CIExprUnary *unary)
 }
 
 void
+generate_function_literal_character_expr__CIGenerator(const char c)
+{
+    switch (c) {
+        case '\"':
+            write_str__CIGenerator("\\\"");
+            break;
+        case '\'':
+            write_str__CIGenerator("\\'");
+            break;
+        case '\b':
+            write_str__CIGenerator("\\b");
+            break;
+        case '\f':
+            write_str__CIGenerator("\\f");
+            break;
+        case '\n':
+            write_str__CIGenerator("\\n");
+            break;
+        case '\t':
+            write_str__CIGenerator("\\t");
+            break;
+        case '\r':
+            write_str__CIGenerator("\\r");
+            break;
+        case '\v':
+            write_str__CIGenerator("\\v");
+            break;
+        case '\\':
+            write_str__CIGenerator("\\");
+            break;
+        case '\0':
+            write_str__CIGenerator("\\0");
+            break;
+        default:
+            write__CIGenerator(c);
+    }
+}
+
+void
+generate_function_literal_string_expr__CIGenerator(const String *string)
+{
+    StringIter iter = NEW(StringIter, (String *)string);
+    char current;
+
+    while ((current = next__StringIter(&iter))) {
+        generate_function_literal_character_expr__CIGenerator(current);
+    }
+}
+
+void
 generate_function_literal_expr__CIGenerator(const CIExprLiteral *literal)
 {
     switch (literal->kind) {
@@ -994,8 +1059,10 @@ generate_function_literal_expr__CIGenerator(const CIExprLiteral *literal)
 
             break;
         case CI_EXPR_LITERAL_KIND_CHAR:
-            write_String__CIGenerator(
-              format__String("\'{c}\'", literal->char_));
+            write__CIGenerator('\'');
+            generate_function_literal_character_expr__CIGenerator(
+              literal->char_);
+            write__CIGenerator('\'');
 
             break;
         case CI_EXPR_LITERAL_KIND_FLOAT:
@@ -1008,8 +1075,10 @@ generate_function_literal_expr__CIGenerator(const CIExprLiteral *literal)
 
             break;
         case CI_EXPR_LITERAL_KIND_STRING:
-            write_String__CIGenerator(
-              format__String("\"{S}\"", literal->string.value));
+            write__CIGenerator('\"');
+            generate_function_literal_string_expr__CIGenerator(
+              literal->string.value);
+            write__CIGenerator('\"');
 
             break;
         case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:
