@@ -2152,26 +2152,35 @@ get_character__CIScanner(CIScanner *self, char previous)
             switch (self->base.source.cursor.current) {
                 // NOTE: For the moment we're using \\ for some escapes, because
                 // for the moment CI is only a transpiler to C.
-                case 'n':
-                    res = from__String("\\n");
+                case '\"':
+                    res = from__String("\"");
                     break;
-                case 't':
-                    res = from__String("\\t");
-                    break;
-                case 'r':
-                    res = from__String("\\r");
+                case '\'':
+                    res = from__String("'");
                     break;
                 case 'b':
-                    res = from__String("\\b");
+                    res = from__String("\b");
+                    break;
+                case 'f':
+                    res = from__String("\f");
+                    break;
+                case 'n':
+                    res = from__String("\n");
+                    break;
+                case 't':
+                    res = from__String("\t");
+                    break;
+                case 'r':
+                    res = from__String("\r");
+                    break;
+                case 'v':
+                    res = from__String("\v");
                     break;
                 case '\\':
                     res = from__String("\\");
                     break;
-                case '\'':
-                    res = from__String("\'");
-                    break;
-                case '\"':
-                    res = from__String("\"");
+                case '0':
+                    res = from__String("\0");
                     break;
                 default:
                     end__Location(&location_error,
