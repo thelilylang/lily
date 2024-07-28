@@ -2350,7 +2350,11 @@ typedef struct CIExprLiteral
         char char_;
         double float_;
         Isize signed_int;
-        String *string; // String* (&)
+        struct
+        {
+            String *value; // String* (&) | String*
+            bool must_free;
+        } string;
         Usize unsigned_int;
     };
 } CIExprLiteral;
@@ -2400,10 +2404,15 @@ inline VARIANT_CONSTRUCTOR(CIExprLiteral,
  *
  * @brief Construct CIExprLiteral type (CI_EXPR_LITERAL_KIND_STRING).
  */
-inline VARIANT_CONSTRUCTOR(CIExprLiteral, CIExprLiteral, string, String *string)
+inline VARIANT_CONSTRUCTOR(CIExprLiteral,
+                           CIExprLiteral,
+                           string,
+                           String *value,
+                           bool must_free)
 {
-    return (CIExprLiteral){ .kind = CI_EXPR_LITERAL_KIND_STRING,
-                            .string = string };
+    return (
+      CIExprLiteral){ .kind = CI_EXPR_LITERAL_KIND_STRING,
+                      .string = { .value = value, .must_free = must_free } };
 }
 
 /**
@@ -2428,6 +2437,12 @@ inline VARIANT_CONSTRUCTOR(CIExprLiteral,
 String *
 IMPL_FOR_DEBUG(to_string, CIExprLiteral, const CIExprLiteral *self);
 #endif
+
+/**
+ *
+ * @brief Free CIExprLiteral type.
+ */
+DESTRUCTOR(CIExprLiteral, const CIExprLiteral *self);
 
 enum CIExprUnaryKind
 {

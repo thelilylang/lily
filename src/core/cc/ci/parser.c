@@ -685,6 +685,9 @@ parse_function_call__CIParser(CIParser *self,
 static CIExpr *
 parse_literal_expr__CIParser(CIParser *self);
 
+static String *
+perform_stringification__CIParser(CIParser *self);
+
 /// @brief Parse primary expression.
 /// @return CIExpr*?
 static CIExpr *
@@ -981,6 +984,15 @@ static const enum CIAttributeStandardKind
       CI_ATTRIBUTE_STANDARD_KIND_UNSEQUENCED,
       CI_ATTRIBUTE_STANDARD_KIND_REPRODUCIBLE
   };
+
+#define ENABLE_NEXT_TOKEN_WITH_CHECK() next_token_with_check = true;
+#define DISABLE_NEXT_TOKEN_WITH_CHECK() next_token_with_check = false;
+
+// Enable the ability to jump into macro, macro param, etc.
+//
+// This variable is used when you don't want the parser to jump into token
+// blocks, e.g. for stringification.
+static bool next_token_with_check = true;
 
 CONSTRUCTOR(struct CIParserContext, CIParserContext)
 {
@@ -3294,7 +3306,7 @@ check_if_resolved_expr_is_true__CIParser(CIParser *self, CIExpr *expr)
                 case CI_EXPR_LITERAL_KIND_SIGNED_INT:
                     return expr->literal.signed_int;
                 case CI_EXPR_LITERAL_KIND_STRING:
-                    return expr->literal.string;
+                    return expr->literal.string.value;
                 case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:
                     return expr->literal.unsigned_int;
                 default:
@@ -3567,6 +3579,11 @@ push_macro_call_id_to_macro_param__CIParser(CIParser *self,
                             NEW(CITokenMacroCallId, macro_call_id));
 
                 break;
+            case CI_TOKEN_KIND_MACRO_PARAM_VARIADIC:
+                push__Stack(current->macro_param_variadic.macro_call_ids,
+                            NEW(CITokenMacroCallId, macro_call_id));
+
+                break;
             default:
                 break;
         }
@@ -3657,7 +3674,9 @@ jump_in_token_block__CIParser(CIParser *self, CIToken *next_token)
         case CI_TOKEN_KIND_MACRO_PARAM:
         case CI_TOKEN_KIND_MACRO_PARAM_VARIADIC: {
             CITokenMacroCallId *macro_call_id =
-              pop__Stack(next_token->macro_param.macro_call_ids);
+              pop__Stack(next_token->kind == CI_TOKEN_KIND_MACRO_PARAM
+                           ? next_token->macro_param.macro_call_ids
+                           : next_token->macro_param_variadic.macro_call_ids);
             const CIParserMacroCall *current_macro_call =
               get_macro_call__CIParser(self, macro_call_id->id);
 
@@ -4022,6 +4041,8 @@ loop:
                     }
                     case CI_TOKEN_EOT_CONTEXT_OTHER:
                         break;
+                    case CI_TOKEN_EOT_CONTEXT_STRINGIFICATION:
+                        return;
                     default:
                         UNREACHABLE("unknown variant");
                 }
@@ -4034,44 +4055,45 @@ loop:
 
     next_token = next_token ? next_token->next : self->tokens->first;
 
-check: {
-    CIToken *original_token = next_token;
+check:
+    if (next_token_with_check) {
+        CIToken *original_token = next_token;
 
-    // Resolve preprocessor like #error, #warning, #embed, #include, ...
-    // (not conditional preprocessor).
-    //
-    // If we know that a preprocessor has been solved (when
-    // `resolve_preprocessor__CIParser(self)` == true), we want to move one
-    // token forward again, to skip it.
-    if (resolve_preprocessor__CIParser(self, next_token)) {
-        goto loop;
-    }
-
-    // Jump in token block such as #if, #ifdef, macro call, ...
-    {
-        CIToken *res = jump_in_token_block__CIParser(self, next_token);
-
-        if (res) {
-            next_token = res;
-        }
-    }
-
-    if (next_token_must_continue_to_iter__CIParser(self, next_token)) {
-        if (original_token != next_token &&
-            next_token->kind != CI_TOKEN_KIND_EOF) {
-            check_standard__CIParser(self, next_token);
-
-            goto check;
-        } else if (next_token->next &&
-                   next_token->next->kind == CI_TOKEN_KIND_HASHTAG_HASHTAG) {
-            set_current_token__CIParser(self, next_token);
+        // Resolve preprocessor like #error, #warning, #embed, #include, ...
+        // (not conditional preprocessor).
+        //
+        // If we know that a preprocessor has been solved (when
+        // `resolve_preprocessor__CIParser(self)` == true), we want to move one
+        // token forward again, to skip it.
+        if (resolve_preprocessor__CIParser(self, next_token)) {
+            goto loop;
         }
 
-        goto loop;
+        // Jump in token block such as #if, #ifdef, macro call, ...
+        {
+            CIToken *res = jump_in_token_block__CIParser(self, next_token);
+
+            if (res) {
+                next_token = res;
+            }
+        }
+
+        if (next_token_must_continue_to_iter__CIParser(self, next_token)) {
+            if (original_token != next_token &&
+                next_token->kind != CI_TOKEN_KIND_EOF) {
+                check_standard__CIParser(self, next_token);
+
+                goto check;
+            } else if (next_token->next && next_token->next->kind ==
+                                             CI_TOKEN_KIND_HASHTAG_HASHTAG) {
+                set_current_token__CIParser(self, next_token);
+            }
+
+            goto loop;
+        }
     }
 
     set_current_token__CIParser(self, next_token);
-}
 }
 
 CIToken *
@@ -5759,7 +5781,8 @@ parse_literal_expr__CIParser(CIParser *self)
               literal,
               NEW_VARIANT(CIExprLiteral,
                           string,
-                          self->previous_token->literal_constant_string));
+                          self->previous_token->literal_constant_string,
+                          false));
         default:
             UNREACHABLE("unexpected token");
     }
@@ -5831,6 +5854,99 @@ parse_array__CIParser(CIParser *self)
     return NEW_VARIANT(CIExpr, array, NEW(CIExprArray, array));
 }
 
+String *
+perform_stringification__CIParser(CIParser *self)
+{
+    DISABLE_NEXT_TOKEN_WITH_CHECK();
+
+    String *res = NEW(String);
+
+    while (
+      self->current_token &&
+      !(self->current_token->kind == CI_TOKEN_KIND_EOT &&
+        self->current_token->eot.ctx == CI_TOKEN_EOT_CONTEXT_STRINGIFICATION)) {
+        String *s = NULL;
+
+        switch (self->current_token->kind) {
+            case CI_TOKEN_KIND_IDENTIFIER:
+                s = clone__String(self->current_token->identifier);
+
+                break;
+            case CI_TOKEN_KIND_LITERAL_CONSTANT_INT:
+                s = format__String(
+                  "{S}{s}",
+                  self->current_token->literal_constant_int.value,
+                  to_string__CITokenLiteralConstantIntSuffix(
+                    self->current_token->literal_constant_int.suffix));
+
+                break;
+            case CI_TOKEN_KIND_LITERAL_CONSTANT_FLOAT:
+                s = format__String(
+                  "{S}{s}",
+                  self->current_token->literal_constant_float.value,
+                  to_string__CITokenLiteralConstantFloatSuffix(
+                    self->current_token->literal_constant_float.suffix));
+
+                break;
+            case CI_TOKEN_KIND_LITERAL_CONSTANT_OCTAL:
+                s = format__String(
+                  "0o{S}{s}",
+                  self->current_token->literal_constant_octal.value,
+                  to_string__CITokenLiteralConstantIntSuffix(
+                    self->current_token->literal_constant_octal.suffix));
+
+                break;
+            case CI_TOKEN_KIND_LITERAL_CONSTANT_HEX:
+                s = format__String(
+                  "0x{S}{s}",
+                  self->current_token->literal_constant_hex.value,
+                  to_string__CITokenLiteralConstantIntSuffix(
+                    self->current_token->literal_constant_hex.suffix));
+
+                break;
+            case CI_TOKEN_KIND_LITERAL_CONSTANT_BIN:
+                s = format__String(
+                  "0b{S}{s}",
+                  self->current_token->literal_constant_hex.value,
+                  to_string__CITokenLiteralConstantIntSuffix(
+                    self->current_token->literal_constant_hex.suffix));
+
+                break;
+            case CI_TOKEN_KIND_LITERAL_CONSTANT_CHARACTER:
+                s = format__String(
+                  "{c}", self->current_token->literal_constant_character);
+
+                break;
+            case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
+                s = format__String(
+                  "\"{S}\"", self->current_token->literal_constant_string);
+
+                break;
+            case CI_TOKEN_KIND_EOT:
+                break;
+            default: {
+                s = to_string__CIToken(self->current_token);
+            }
+        }
+
+        if (s) {
+            APPEND_AND_FREE(res, s);
+            push__String(res, ' ');
+        }
+
+        next_token__CIParser(self);
+    }
+
+    pop__String(res); // Remove the extra space
+
+    self->previous_token = self->current_token;
+    self->current_token = self->current_token->next;
+
+    ENABLE_NEXT_TOKEN_WITH_CHECK();
+
+    return res;
+}
+
 CIExpr *
 parse_primary_expr__CIParser(CIParser *self)
 {
@@ -5893,8 +6009,17 @@ parse_primary_expr__CIParser(CIParser *self)
 
             break;
         }
-        case CI_TOKEN_KIND_HASHTAG:
-            TODO("done Stringification");
+        case CI_TOKEN_KIND_HASHTAG: {
+            res =
+              NEW_VARIANT(CIExpr,
+                          literal,
+                          NEW_VARIANT(CIExprLiteral,
+                                      string,
+                                      perform_stringification__CIParser(self),
+                                      true));
+
+            break;
+        }
         case CI_TOKEN_KIND_KEYWORD_SIZEOF: {
             bool has_open_paren = false;
 
@@ -6094,7 +6219,8 @@ parse_primary_expr__CIParser(CIParser *self)
               NEW_VARIANT(
                 CIExprLiteral,
                 string,
-                self->previous_token->standard_predefined_macro___date__));
+                self->previous_token->standard_predefined_macro___date__,
+                false));
 
             break;
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__:
@@ -6104,7 +6230,8 @@ parse_primary_expr__CIParser(CIParser *self)
               NEW_VARIANT(
                 CIExprLiteral,
                 string,
-                self->previous_token->standard_predefined_macro___file__));
+                self->previous_token->standard_predefined_macro___file__,
+                false));
 
             break;
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__:
@@ -6124,7 +6251,8 @@ parse_primary_expr__CIParser(CIParser *self)
               NEW_VARIANT(
                 CIExprLiteral,
                 string,
-                self->previous_token->standard_predefined_macro___time__));
+                self->previous_token->standard_predefined_macro___time__,
+                false));
 
             break;
         default:

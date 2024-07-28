@@ -88,7 +88,10 @@ static VARIANT_DESTRUCTOR(CIToken, literal_constant_string, CIToken *self);
 static VARIANT_DESTRUCTOR(CIToken, macro_defined, CIToken *self);
 
 // Free CIToken type (CI_TOKEN_KIND_MACRO_PARAM).
-static inline VARIANT_DESTRUCTOR(CIToken, macro_param, CIToken *self);
+static VARIANT_DESTRUCTOR(CIToken, macro_param, CIToken *self);
+
+// Free CIToken type (CI_TOKEN_KIND_MACRO_PARAM_VARIADIC).
+static VARIANT_DESTRUCTOR(CIToken, macro_param_variadic, CIToken *self);
 
 // Free CIToken type (CI_TOKEN_KIND_PREPROCESSOR_DEFINE).
 static VARIANT_DESTRUCTOR(CIToken, preprocessor_define, CIToken *self);
@@ -261,32 +264,33 @@ remove_when_match__CITokens(CITokens *self, struct CIToken *match)
     return NULL;
 }
 
-#define X_TOKENS(tokens, res, f, is_debug)                  \
-    {                                                       \
-        push_str__String(res, " { ");                       \
-                                                            \
-        CIToken *current_token = tokens.first;              \
-                                                            \
-        while (current_token) {                             \
-            void *s = f(current_token);                     \
-                                                            \
-            if (is_debug) {                                 \
-                PUSH_STR_AND_FREE(res, (char *)s);          \
-            } else {                                        \
-                APPEND_AND_FREE(res, (String *)s);          \
-            }                                               \
-                                                            \
-            push_str__String(res, ",\n");                   \
-                                                            \
-            if (current_token->kind == CI_TOKEN_KIND_EOF || \
-                current_token->kind == CI_TOKEN_KIND_EOT) { \
-                break;                                      \
-            }                                               \
-                                                            \
-            current_token = current_token->next;            \
-        }                                                   \
-                                                            \
-        push_str__String(res, " }");                        \
+#define X_TOKENS(tokens, res, f, is_debug)                         \
+    {                                                              \
+        push_str__String(res, " { ");                              \
+                                                                   \
+        CIToken *current_token = tokens.first;                     \
+                                                                   \
+        while (current_token) {                                    \
+            void *s = f(current_token);                            \
+                                                                   \
+            if (is_debug) {                                        \
+                PUSH_STR_AND_FREE(res, (char *)s);                 \
+            } else {                                               \
+                APPEND_AND_FREE(res, (String *)s);                 \
+            }                                                      \
+                                                                   \
+            push_str__String(res, ",\n");                          \
+                                                                   \
+            if (current_token->kind == CI_TOKEN_KIND_EOF ||        \
+                (current_token->kind == CI_TOKEN_KIND_EOT &&       \
+                 is_eot_break__CITokenEot(&current_token->eot))) { \
+                break;                                             \
+            }                                                      \
+                                                                   \
+            current_token = current_token->next;                   \
+        }                                                          \
+                                                                   \
+        push_str__String(res, " }");                               \
     }
 
 #define DEBUG_TOKENS(tokens, res) \
@@ -336,7 +340,8 @@ DESTRUCTOR(CITokens, const CITokens *self)
     CIToken *current = self->first;
 
     while (current && (current->kind != CI_TOKEN_KIND_EOF &&
-                       current->kind != CI_TOKEN_KIND_EOT)) {
+                       (current->kind != CI_TOKEN_KIND_EOT ||
+                        !is_eot_break__CITokenEot(&current->eot)))) {
         CIToken *prev = current;
 
         current = current->next;
@@ -362,6 +367,8 @@ IMPL_FOR_DEBUG(to_string, CITokenEotContext, enum CITokenEotContext self)
             return "CI_TOKEN_EOT_CONTEXT_MACRO_CALL";
         case CI_TOKEN_EOT_CONTEXT_MERGED_ID:
             return "CI_TOKEN_EOT_CONTEXT_MERGED_ID";
+        case CI_TOKEN_EOT_CONTEXT_STRINGIFICATION:
+            return "CI_TOKEN_EOT_CONTEXT_STRINGIFICATION";
         case CI_TOKEN_EOT_CONTEXT_OTHER:
             return "CI_TOKEN_EOT_CONTEXT_OTHER";
         default:
@@ -407,6 +414,28 @@ DESTRUCTOR(CITokenEot, const CITokenEot *self)
     }
 }
 
+char *
+to_string__CITokenLiteralConstantIntSuffix(
+  enum CITokenLiteralConstantIntSuffix self)
+{
+    switch (self) {
+        case CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_L:
+            return "L";
+        case CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_LL:
+            return "LL";
+        case CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_LU:
+            return "LU";
+        case CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_LLU:
+            return "LLU";
+        case CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_U:
+            return "U";
+        case CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_NONE:
+            return "";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 #ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string,
@@ -444,6 +473,22 @@ IMPL_FOR_DEBUG(to_string,
       self->value);
 }
 #endif
+
+char *
+to_string__CITokenLiteralConstantFloatSuffix(
+  enum CITokenLiteralConstantFloatSuffix self)
+{
+    switch (self) {
+        case CI_TOKEN_LITERAL_CONSTANT_FLOAT_SUFFIX_F:
+            return "F";
+        case CI_TOKEN_LITERAL_CONSTANT_FLOAT_SUFFIX_L:
+            return "L";
+        case CI_TOKEN_LITERAL_CONSTANT_FLOAT_SUFFIX_NONE:
+            return "";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
 
 #ifdef ENV_DEBUG
 char *
@@ -984,6 +1029,16 @@ IMPL_FOR_DEBUG(to_string, CITokenMacroParam, const CITokenMacroParam *self)
 }
 #endif
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CITokenMacroParamVariadic,
+               const CITokenMacroParamVariadic *self)
+{
+    return format__String("CITokenMacroParamVariadic{{ }");
+}
+#endif
+
 CONSTRUCTOR(CIToken *, CIToken, enum CITokenKind kind, Location location)
 {
     CIToken *self = lily_malloc(sizeof(CIToken));
@@ -1194,6 +1249,22 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->location = location;
     self->next = NULL;
     self->macro_param = macro_param;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    macro_param_variadic,
+                    Location location,
+                    CITokenMacroParamVariadic macro_param_variadic)
+{
+    CIToken *self = lily_malloc(sizeof(CIToken));
+
+    self->kind = CI_TOKEN_KIND_MACRO_PARAM_VARIADIC;
+    self->location = location;
+    self->next = NULL;
+    self->macro_param_variadic = macro_param_variadic;
 
     return self;
 }
@@ -2459,6 +2530,14 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
               CALL_DEBUG_IMPL(to_string, Location, &self->location),
               CALL_DEBUG_IMPL(
                 to_string, CITokenMacroParam, &self->macro_param));
+        case CI_TOKEN_KIND_MACRO_PARAM_VARIADIC:
+            return format("CIToken{{ kind = {s}, location = {sa}, "
+                          "macro_param_variadic = {Sr} }",
+                          CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
+                          CALL_DEBUG_IMPL(to_string, Location, &self->location),
+                          CALL_DEBUG_IMPL(to_string,
+                                          CITokenMacroParamVariadic,
+                                          &self->macro_param_variadic));
         case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:
             return format("CIToken{{ kind = {s}, location = {sa}, "
                           "preprocessor_define = {Sr} }",
@@ -2702,6 +2781,12 @@ VARIANT_DESTRUCTOR(CIToken, macro_param, CIToken *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(CIToken, macro_param_variadic, CIToken *self)
+{
+    FREE(CITokenMacroParamVariadic, &self->macro_param_variadic);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(CIToken, preprocessor_define, CIToken *self)
 {
     FREE(CITokenPreprocessorDefine, &self->preprocessor_define);
@@ -2858,6 +2943,9 @@ DESTRUCTOR(CIToken, CIToken *self)
             break;
         case CI_TOKEN_KIND_MACRO_PARAM:
             FREE_VARIANT(CIToken, macro_param, self);
+            break;
+        case CI_TOKEN_KIND_MACRO_PARAM_VARIADIC:
+            FREE_VARIANT(CIToken, macro_param_variadic, self);
             break;
         case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:
             FREE_VARIANT(CIToken, preprocessor_define, self);

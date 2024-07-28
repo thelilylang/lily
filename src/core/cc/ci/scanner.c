@@ -1717,9 +1717,10 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
 
                         if (!strcmp(last_token->identifier->buffer,
                                     CI_VA_ARGS)) {
-                            res = NEW(CIToken,
-                                      CI_TOKEN_KIND_MACRO_PARAM_VARIADIC,
-                                      last_token->location);
+                            res = NEW_VARIANT(CIToken,
+                                              macro_param_variadic,
+                                              last_token->location,
+                                              NEW(CITokenMacroParamVariadic));
 
                             FREE(CIToken, last_token);
                             last_token = NULL;
@@ -2738,6 +2739,8 @@ scan_preprocessor_content__CIScanner(CIScanner *self,
       ctx_location == CI_SCANNER_CONTEXT_LOCATION_MACRO
         ? NEW_VARIANT(CIScannerContext, macro, &tokens, params)
         : NEW(CIScannerContext, ctx_location, &tokens);
+
+    skip_space_except_new_line__CIScanner(self);
 
     while (self->base.source.cursor.current != '\n') {
         skip_space_and_backslash__CIScanner(self);
@@ -3942,9 +3945,51 @@ get_token__CIScanner(CIScanner *self,
                            clone__Location(&self->base.location));
             }
 
-            return NEW(CIToken,
-                       CI_TOKEN_KIND_HASHTAG,
-                       clone__Location(&self->base.location));
+            {
+                end_token__CIScanner(self,
+                                     self->base.source.cursor.line,
+                                     self->base.source.cursor.column,
+                                     self->base.source.cursor.position);
+                push_token__CIScanner(
+                  self,
+                  ctx,
+                  NEW(CIToken,
+                      CI_TOKEN_KIND_HASHTAG,
+                      clone__Location(&self->base.location)));
+            }
+
+            next_char__CIScanner(self);
+            skip_space__CIScanner(self);
+            start_token__CIScanner(self,
+                                   self->base.source.cursor.line,
+                                   self->base.source.cursor.column,
+                                   self->base.source.cursor.position);
+
+            if (is_ident__CIScanner(self)) {
+                CIToken *token_id =
+                  scan_multi_part_keyword__CIScanner(self, ctx);
+
+                if (token_id) {
+                    end__Location(&token_id->location,
+                                  self->base.source.cursor.line,
+                                  self->base.source.cursor.column,
+                                  self->base.source.cursor.position);
+                    push_token__CIScanner(self, ctx, token_id);
+                }
+            } else {
+                return NULL;
+            }
+
+            start_token__CIScanner(self,
+                                   self->base.source.cursor.line,
+                                   self->base.source.cursor.column,
+                                   self->base.source.cursor.position);
+
+            return NEW_VARIANT(
+              CIToken,
+              eot,
+              clone__Location(&self->base.location),
+              NEW(CITokenEot, CI_TOKEN_EOT_CONTEXT_STRINGIFICATION));
         }
         // ^=, ^
         case '^':
