@@ -72,6 +72,7 @@ cpp
 ex
 
 lib/builtin
+lib/cc
 lib/local
 lib/std
 lib/sys
