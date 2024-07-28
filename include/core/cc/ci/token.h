@@ -411,6 +411,18 @@ inline VARIANT_CONSTRUCTOR(CITokenEot, CITokenEot, macro_param)
 
 /**
  *
+ * @brief Check if is eot break.
+ */
+inline bool
+is_eot_break__CITokenEot(const CITokenEot *self)
+{
+    return self->ctx == CI_TOKEN_EOT_CONTEXT_MACRO_CALL ||
+           self->ctx == CI_TOKEN_EOT_CONTEXT_OTHER ||
+           self->ctx == CI_TOKEN_EOT_CONTEXT_INCLUDE;
+}
+
+/**
+ *
  * @brief Convert CITokenEot in String.
  * @note This function is only used to debug.
  */
@@ -1170,6 +1182,45 @@ inline DESTRUCTOR(CITokenMacroParam, const CITokenMacroParam *self)
     FREE(Stack, self->macro_call_ids);
 }
 
+typedef struct CITokenMacroParamVariadic
+{
+    Stack *macro_call_ids; // Stack<CITokenMacroParamCallId*>*
+} CITokenMacroParamVariadic;
+
+/**
+ *
+ * @brief Construct CITokenMacroParamVariadic type.
+ */
+inline CONSTRUCTOR(CITokenMacroParamVariadic, CITokenMacroParamVariadic)
+{
+    return (CITokenMacroParamVariadic){ .macro_call_ids =
+                                          NEW(Stack, CI_MACROS_CALL_MAX_SIZE) };
+}
+
+/**
+ *
+ * @brief Convert CITokenMacroParamVariadic in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CITokenMacroParamVariadic,
+               const CITokenMacroParamVariadic *self);
+#endif
+
+/**
+ *
+ * @brief Free CITokenMacroParamVariadic type.
+ */
+inline DESTRUCTOR(CITokenMacroParamVariadic,
+                  const CITokenMacroParamVariadic *self)
+{
+    // NOTE: It's not necessary to free items from the stack, because normally
+    // at the end of the program there will be no more items in the stack.
+    FREE(Stack, self->macro_call_ids);
+}
+
 typedef struct CIToken
 {
     enum CITokenKind kind;
@@ -1205,6 +1256,7 @@ typedef struct CIToken
         String *literal_constant_string;
         String *macro_defined;
         CITokenMacroParam macro_param;
+        CITokenMacroParamVariadic macro_param_variadic;
         String *standard_predefined_macro___date__;
         String *standard_predefined_macro___file__;
         Usize standard_predefined_macro___line__;
@@ -1346,6 +1398,16 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     macro_param,
                     Location location,
                     CITokenMacroParam macro_param);
+
+/**
+ *
+ * @brief Construct CIToken type (CI_TOKEN_KIND_MACRO_PARAM_VARIADIC).
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    macro_param_variadic,
+                    Location location,
+                    CITokenMacroParamVariadic macro_param_variadic);
 
 /**
  *

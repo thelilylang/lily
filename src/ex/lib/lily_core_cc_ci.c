@@ -518,6 +518,9 @@ extern inline VARIANT_CONSTRUCTOR(CITokenEot, CITokenEot, macro_call);
 
 extern inline VARIANT_CONSTRUCTOR(CITokenEot, CITokenEot, macro_param);
 
+extern inline bool
+is_eot_break__CITokenEot(const CITokenEot *self);
+
 extern inline CONSTRUCTOR(CITokenLiteralConstantInt,
                           CITokenLiteralConstantInt,
                           enum CITokenLiteralConstantIntSuffix suffix,
@@ -600,5 +603,10 @@ extern inline DESTRUCTOR(CITokenMacroCallId, CITokenMacroCallId *self);
 extern inline CONSTRUCTOR(CITokenMacroParam, CITokenMacroParam, Usize id);
 
 extern inline DESTRUCTOR(CITokenMacroParam, const CITokenMacroParam *self);
+
+extern inline CONSTRUCTOR(CITokenMacroParamVariadic, CITokenMacroParamVariadic);
+
+extern inline DESTRUCTOR(CITokenMacroParamVariadic,
+                         const CITokenMacroParamVariadic *self);
 
 #endif // LILY_EX_LIB_LILY_CORE_CC_CI_C

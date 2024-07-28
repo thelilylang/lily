@@ -3579,6 +3579,11 @@ push_macro_call_id_to_macro_param__CIParser(CIParser *self,
                             NEW(CITokenMacroCallId, macro_call_id));
 
                 break;
+            case CI_TOKEN_KIND_MACRO_PARAM_VARIADIC:
+                push__Stack(current->macro_param_variadic.macro_call_ids,
+                            NEW(CITokenMacroCallId, macro_call_id));
+
+                break;
             default:
                 break;
         }
@@ -3669,7 +3674,9 @@ jump_in_token_block__CIParser(CIParser *self, CIToken *next_token)
         case CI_TOKEN_KIND_MACRO_PARAM:
         case CI_TOKEN_KIND_MACRO_PARAM_VARIADIC: {
             CITokenMacroCallId *macro_call_id =
-              pop__Stack(next_token->macro_param.macro_call_ids);
+              pop__Stack(next_token->kind == CI_TOKEN_KIND_MACRO_PARAM
+                           ? next_token->macro_param.macro_call_ids
+                           : next_token->macro_param_variadic.macro_call_ids);
             const CIParserMacroCall *current_macro_call =
               get_macro_call__CIParser(self, macro_call_id->id);
 
