@@ -609,6 +609,10 @@ generate_typedef_gen__CIParser(CIParser *self,
                                String *typedef_name_ref,
                                CIGenericParams *called_generic_params);
 
+/// @brief Parse data type context, such as: !heap, !non_null, !stack or !trace.
+static enum CIDataTypeContext
+parse_data_type_context__CIParser(CIParser *self);
+
 /// @brief Parse post data type, like pointer, ...
 /// @param CIDataType*?
 static CIDataType *
@@ -4907,6 +4911,57 @@ generate_typedef_gen__CIParser(CIParser *self,
                                 &search_typedef__CIResultFile);
 }
 
+enum CIDataTypeContext
+parse_data_type_context__CIParser(CIParser *self)
+{
+    enum CIDataTypeContext data_type_ctx = CI_DATA_TYPE_CONTEXT_NONE;
+
+    while (self->current_token->kind == CI_TOKEN_KIND_BANG) {
+        next_token__CIParser(self);
+
+        switch (self->current_token->kind) {
+            case CI_TOKEN_KIND_IDENTIFIER: {
+#define CTX_IDS_LEN 4
+                enum CIDataTypeContext ctx_ids[CTX_IDS_LEN] = {
+                    CI_DATA_TYPE_CONTEXT_HEAP,
+                    CI_DATA_TYPE_CONTEXT_NON_NULL,
+                    CI_DATA_TYPE_CONTEXT_STACK,
+                    CI_DATA_TYPE_CONTEXT_TRACE
+                };
+                SizedStr ctx_ids_s[CTX_IDS_LEN] = {
+                    SIZED_STR_FROM_RAW("heap"),
+                    SIZED_STR_FROM_RAW("non_null"),
+                    SIZED_STR_FROM_RAW("stack"),
+                    SIZED_STR_FROM_RAW("trace")
+                };
+                enum CIDataTypeContext current_ctx =
+                  get_id__Search(self->current_token->identifier,
+                                 ctx_ids_s,
+                                 (const Int32 *)ctx_ids,
+                                 CTX_IDS_LEN);
+
+                if (current_ctx == -1) {
+                    FAILED("expected only !heap, !non_null, !stack or !trace "
+                           "as data type context");
+                } else {
+                    data_type_ctx |= current_ctx;
+                }
+
+#undef CTX_IDS_LEN
+
+                next_token__CIParser(self);
+
+                break;
+            }
+            default:
+                FAILED(
+                  "expected identifier after data type context, e.g. !<id>");
+        }
+    }
+
+    return data_type_ctx;
+}
+
 CIDataType *
 parse_post_data_type__CIParser(CIParser *self, CIDataType *data_type)
 {
@@ -4934,6 +4989,8 @@ loop:
     }
 
 exit:
+    set_context__CIDataType(data_type, parse_data_type_context__CIParser(self));
+
     return data_type;
 }
 

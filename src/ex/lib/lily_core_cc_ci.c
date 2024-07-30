@@ -146,6 +146,9 @@ extern inline CONSTRUCTOR(CIDataTypeUnion,
 extern inline CIDataType *
 ref__CIDataType(CIDataType *self);
 
+extern inline void
+set_context__CIDataType(CIDataType *self, enum CIDataTypeContext ctx);
+
 extern inline CONSTRUCTOR(CIAttributeStandard,
                           CIAttributeStandard,
                           enum CIAttributeStandardKind kind);

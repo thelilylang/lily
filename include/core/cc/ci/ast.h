@@ -481,6 +481,15 @@ IMPL_FOR_DEBUG(to_string, CIGenericParams, const CIGenericParams *self);
  */
 DESTRUCTOR(CIGenericParams, CIGenericParams *self);
 
+enum CIDataTypeContext
+{
+    CI_DATA_TYPE_CONTEXT_NONE = 1 << 0,
+    CI_DATA_TYPE_CONTEXT_HEAP = 1 << 1,     // !heap
+    CI_DATA_TYPE_CONTEXT_NON_NULL = 1 << 2, // !non_null
+    CI_DATA_TYPE_CONTEXT_STACK = 1 << 3,    // !stack
+    CI_DATA_TYPE_CONTEXT_TRACE = 1 << 4,    // !trace
+};
+
 enum CIDataTypeKind
 {
     CI_DATA_TYPE_KIND_ARRAY,
@@ -767,6 +776,7 @@ DESTRUCTOR(CIDataTypeUnion, const CIDataTypeUnion *self);
 typedef struct CIDataType
 {
     enum CIDataTypeKind kind;
+    enum CIDataTypeContext ctx;
     Usize ref_count;
     union
     {
@@ -905,6 +915,16 @@ serialize__CIDataType(const CIDataType *self, String *buffer);
  */
 void
 serialize_vec__CIDataType(const Vec *data_types, String *buffer);
+
+/**
+ *
+ * @brief Set context on data type.
+ */
+inline void
+set_context__CIDataType(CIDataType *self, enum CIDataTypeContext ctx)
+{
+    self->ctx = ctx;
+}
 
 /**
  *
