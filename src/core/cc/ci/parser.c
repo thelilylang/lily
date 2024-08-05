@@ -32,6 +32,7 @@
 #include <core/cc/ci/diagnostic/error.h>
 #include <core/cc/ci/include.h>
 #include <core/cc/ci/parser.h>
+#include <core/cc/ci/primary_data_types.h>
 #include <core/cc/ci/result.h>
 #include <core/shared/diagnostic.h>
 
@@ -5199,11 +5200,11 @@ parse_pre_data_type__CIParser(CIParser *self)
         }
         case CI_TOKEN_KIND_KEYWORD_BOOL:
         case CI_TOKEN_KIND_KEYWORD__BOOL:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_BOOL);
+            res = bool__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_CHAR:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_CHAR);
+            res = char__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_CONST:
@@ -5212,15 +5213,15 @@ parse_pre_data_type__CIParser(CIParser *self)
 
             break;
         case CI_TOKEN_KIND_KEYWORD_DOUBLE:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_DOUBLE);
+            res = double__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_DOUBLE__COMPLEX:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_DOUBLE__COMPLEX);
+            res = double__complex__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_DOUBLE__IMAGINARY:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_DOUBLE__IMAGINARY);
+            res = double__imaginary__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_ENUM: {
@@ -5264,43 +5265,43 @@ parse_pre_data_type__CIParser(CIParser *self)
             break;
         }
         case CI_TOKEN_KIND_KEYWORD_FLOAT:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_FLOAT);
+            res = float__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_FLOAT__COMPLEX:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_FLOAT__COMPLEX);
+            res = float__complex__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_FLOAT__IMAGINARY:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_FLOAT__IMAGINARY);
+            res = float__imaginary__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_LONG_DOUBLE);
+            res = long_double__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__COMPLEX:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_LONG_DOUBLE__COMPLEX);
+            res = long_double__complex__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__IMAGINARY:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_LONG_DOUBLE__IMAGINARY);
+            res = long_double__imaginary__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_LONG_INT:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_LONG_INT);
+            res = long_int__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_INT:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
+            res = int__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_SHORT_INT:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_SHORT_INT);
+            res = short_int__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_SIGNED_CHAR:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_SIGNED_CHAR);
+            res = signed_char__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_STRUCT:
@@ -5442,42 +5443,44 @@ parse_pre_data_type__CIParser(CIParser *self)
 
             expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
 
-            TODO("resolve typeof expression");
+            res = infer_expr_data_type__CIParser(self, expr);
+
+            FREE(CIExpr, expr);
 
             break;
         }
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_CHAR:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_CHAR);
+            res = unsigned_char__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_INT:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_INT);
+            res = unsigned_int__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_INT:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT);
+            res = unsigned_long_int__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT_INT:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_SHORT_INT);
+            res = unsigned_short_int__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_VOID:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_VOID);
+            res = void__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_VOLATILE:
             TODO("volatile");
         case CI_TOKEN_KIND_KEYWORD__DECIMAL128:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND__DECIMAL128);
+            res = _decimal128__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD__DECIMAL32:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND__DECIMAL32);
+            res = _decimal32__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD__DECIMAL64:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND__DECIMAL64);
+            res = _decimal64__PrimaryDataTypes();
 
             break;
         default:
