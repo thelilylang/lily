@@ -147,7 +147,7 @@ extern inline CIDataType *
 ref__CIDataType(CIDataType *self);
 
 extern inline void
-set_context__CIDataType(CIDataType *self, enum CIDataTypeContext ctx);
+set_context__CIDataType(CIDataType *self, int ctx);
 
 extern inline CONSTRUCTOR(CIAttributeStandard,
                           CIAttributeStandard,
