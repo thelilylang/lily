@@ -104,7 +104,7 @@ is__CIBuiltinFunction(String *name)
 Usize
 get_id__CIBuiltinFunction(String *name)
 {
-    Usize id = get_id__Search(name,
+    Int32 id = get_id__Search(name,
                               builtin_function_names,
                               builtin_function_ids,
                               CI_BUILTIN_FUNCTION_COUNT);
@@ -144,7 +144,7 @@ is__CIBuiltinType(String *name)
 Usize
 get_id__CIBuiltinType(String *name)
 {
-    Usize id = get_id__Search(
+    Int32 id = get_id__Search(
       name, builtin_type_names, builtin_type_ids, CI_BUILTIN_TYPE_COUNT);
 
     ASSERT(id != -1);

@@ -49,6 +49,18 @@
 #define EXPR_PRECEDENCE_LEVEL_13 40
 #define EXPR_PRECEDENCE_LEVEL_14 35
 
+static inline bool
+has_heap__CIDataTypeContext(int self);
+
+static inline bool
+has_non_null__CIDataTypeContext(int self);
+
+static inline bool
+has_stack__CIDataTypeContext(int self);
+
+static inline bool
+has_trace__CIDataTypeContext(int self);
+
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_ARRAY).
 static VARIANT_DESTRUCTOR(CIDataType, array, CIDataType *self);
 
@@ -182,7 +194,7 @@ static inline VARIANT_DESTRUCTOR(CIStmt, for, const CIStmt *self);
 static inline VARIANT_DESTRUCTOR(CIStmt, if, const CIStmt *self);
 
 /// @brief Free CIStmt type (CI_STMT_KIND_RETURN).
-static inline VARIANT_DESTRUCTOR(CIStmt, return, const CIStmt *self);
+static VARIANT_DESTRUCTOR(CIStmt, return, const CIStmt *self);
 
 /// @brief Free CIStmt type (CI_STMT_KIND_SWITCH).
 static inline VARIANT_DESTRUCTOR(CIStmt, switch, const CIStmt *self);
@@ -373,6 +385,27 @@ clone__CIGenericParams(const CIGenericParams *self)
     return NEW(CIGenericParams, params);
 }
 
+Isize
+find_generic__CIGenericParams(const CIGenericParams *self, String *name)
+{
+    for (Usize i = 0; i < self->params->len; ++i) {
+        CIDataType *param = get__Vec(self->params, i);
+
+        switch (param->kind) {
+            case CI_DATA_TYPE_KIND_GENERIC:
+                if (!strcmp(param->generic->buffer, name->buffer)) {
+                    return i;
+                }
+
+                break;
+            default:
+                break;
+        }
+    }
+
+    return -1;
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIGenericParams, const CIGenericParams *self)
@@ -397,6 +430,99 @@ DESTRUCTOR(CIGenericParams, CIGenericParams *self)
     FREE(Vec, self->params);
     lily_free(self);
 }
+
+bool
+has_heap__CIDataTypeContext(int self)
+{
+    return self & CI_DATA_TYPE_CONTEXT_HEAP;
+}
+
+bool
+has_non_null__CIDataTypeContext(int self)
+{
+    return self & CI_DATA_TYPE_CONTEXT_NON_NULL;
+}
+
+bool
+has_stack__CIDataTypeContext(int self)
+{
+    return self & CI_DATA_TYPE_CONTEXT_STACK;
+}
+
+bool
+has_trace__CIDataTypeContext(int self)
+{
+    return self & CI_DATA_TYPE_CONTEXT_TRACE;
+}
+
+bool
+is_compatible__CIDataTypeContext(int self, int other)
+{
+#define HAS_HEAP2() \
+    (has_heap__CIDataTypeContext(self) && has_heap__CIDataTypeContext(other))
+#define HAS_NON_NULL2()                       \
+    (has_non_null__CIDataTypeContext(self) && \
+     has_non_null__CIDataTypeContext(other))
+#define HAS_STACK2() \
+    (has_stack__CIDataTypeContext(self) && has_stack__CIDataTypeContext(other))
+#define HAS_TRACE2() \
+    (has_trace__CIDataTypeContext(self) && has_trace__CIDataTypeContext(other))
+
+    // Incompatible (vice-versa):
+    //
+    // !heap v. !stack
+    // !non_null v. <nothing>
+    // !trace v. <nothing>
+    // !non_null v. <nothing>
+    // !heap v. <nothing>
+    // !stack v. <nothing>
+
+    if (HAS_HEAP2() && HAS_STACK2()) {
+        return false;
+    } else if (HAS_NON_NULL2() && !HAS_NON_NULL2()) {
+        return false;
+    } else if (!HAS_TRACE2()) {
+        return false;
+    }
+
+    return true;
+
+#undef HAS_HEAP2
+#undef HAS_NON_NULL2
+#undef HAS_STACK2
+#undef HAS_TRACE2
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDataTypeContext, int self)
+{
+#define CTXS_LEN 5
+    int ctxs[CTXS_LEN] = { CI_DATA_TYPE_CONTEXT_NONE,
+                           CI_DATA_TYPE_CONTEXT_HEAP,
+                           CI_DATA_TYPE_CONTEXT_NON_NULL,
+                           CI_DATA_TYPE_CONTEXT_STACK,
+                           CI_DATA_TYPE_CONTEXT_TRACE };
+    char *ctxs_s[CTXS_LEN] = {
+        "CI_DATA_TYPE_CONTEXT_NONE",     "CI_DATA_TYPE_CONTEXT_HEAP",
+        "CI_DATA_TYPE_CONTEXT_NON_NULL", "CI_DATA_TYPE_CONTEXT_STACK",
+        "CI_DATA_TYPE_CONTEXT_TRACE",
+    };
+
+    String *res = NEW(String);
+
+    for (Usize i = 0; i < CTXS_LEN; ++i) {
+        if (self & ctxs[i]) {
+            push_str__String(res, ctxs_s[i]);
+            push__String(res, ' ');
+        }
+    }
+
+#undef CTXS_LEN
+
+    return res;
+}
+#endif
 
 #ifdef ENV_DEBUG
 char *
@@ -808,19 +934,23 @@ CONSTRUCTOR(CIDataType *, CIDataType, enum CIDataTypeKind kind)
 CIDataType *
 clone__CIDataType(const CIDataType *self)
 {
+    CIDataType *res = NULL;
+
     switch (self->kind) {
         case CI_DATA_TYPE_KIND_ARRAY:
             switch (self->array.kind) {
                 case CI_DATA_TYPE_ARRAY_KIND_NONE:
-                    return NEW_VARIANT(
+                    res = NEW_VARIANT(
                       CIDataType,
                       array,
                       NEW_VARIANT(CIDataTypeArray,
                                   none,
                                   clone__CIDataType(self->array.data_type),
                                   self->array.name));
+
+                    break;
                 case CI_DATA_TYPE_ARRAY_KIND_SIZED:
-                    return NEW_VARIANT(
+                    res = NEW_VARIANT(
                       CIDataType,
                       array,
                       NEW_VARIANT(CIDataTypeArray,
@@ -828,16 +958,26 @@ clone__CIDataType(const CIDataType *self)
                                   clone__CIDataType(self->array.data_type),
                                   self->array.name,
                                   self->array.size));
+
+                    break;
                 default:
                     UNREACHABLE("unknown variant");
             }
+
+            break;
         case CI_DATA_TYPE_KIND__ATOMIC:
-            return NEW_VARIANT(
+            res = NEW_VARIANT(
               CIDataType, _atomic, clone__CIDataType(self->_atomic));
+
+            break;
         case CI_DATA_TYPE_KIND_BUILTIN:
-            return NEW_VARIANT(CIDataType, builtin, self->builtin);
+            res = NEW_VARIANT(CIDataType, builtin, self->builtin);
+
+            break;
         case CI_DATA_TYPE_KIND_ENUM:
-            return NEW_VARIANT(CIDataType, enum, self->enum_);
+            res = NEW_VARIANT(CIDataType, enum, self->enum_);
+
+            break;
         case CI_DATA_TYPE_KIND_FUNCTION: {
             Vec *params = NEW(Vec); // Vec<CIDataType*>*
 
@@ -847,7 +987,7 @@ clone__CIDataType(const CIDataType *self)
                   clone__CIDataType(get__Vec(self->function.params, i)));
             }
 
-            return NEW_VARIANT(
+            res = NEW_VARIANT(
               CIDataType,
               function,
               NEW(CIDataTypeFunction,
@@ -855,18 +995,28 @@ clone__CIDataType(const CIDataType *self)
                   params,
                   clone__CIDataType(self->function.return_data_type),
                   clone__CIDataType(self->function.function_data_type)));
+
+            break;
         }
         case CI_DATA_TYPE_KIND_GENERIC:
-            return NEW_VARIANT(CIDataType, generic, self->generic);
+            res = NEW_VARIANT(CIDataType, generic, self->generic);
+
+            break;
         case CI_DATA_TYPE_KIND_PRE_CONST:
-            return NEW_VARIANT(
+            res = NEW_VARIANT(
               CIDataType, pre_const, clone__CIDataType(self->pre_const));
+
+            break;
         case CI_DATA_TYPE_KIND_POST_CONST:
-            return NEW_VARIANT(
+            res = NEW_VARIANT(
               CIDataType, pre_const, clone__CIDataType(self->post_const));
+
+            break;
         case CI_DATA_TYPE_KIND_PTR:
-            return NEW_VARIANT(
+            res = NEW_VARIANT(
               CIDataType, ptr, self->ptr ? clone__CIDataType(self->ptr) : NULL);
+
+            break;
         case CI_DATA_TYPE_KIND_STRUCT: {
             Vec *fields = NULL;
 
@@ -880,7 +1030,7 @@ clone__CIDataType(const CIDataType *self)
                 }
             }
 
-            return NEW_VARIANT(
+            res = NEW_VARIANT(
               CIDataType,
               struct,
               NEW(CIDataTypeStruct,
@@ -889,9 +1039,11 @@ clone__CIDataType(const CIDataType *self)
                     ? clone__CIGenericParams(self->struct_.generic_params)
                     : NULL,
                   fields));
+
+            break;
         }
         case CI_DATA_TYPE_KIND_TYPEDEF:
-            return NEW_VARIANT(
+            res = NEW_VARIANT(
               CIDataType,
               typedef,
               NEW(CIDataTypeTypedef,
@@ -899,6 +1051,8 @@ clone__CIDataType(const CIDataType *self)
                   self->typedef_.generic_params
                     ? clone__CIGenericParams(self->typedef_.generic_params)
                     : NULL));
+
+            break;
         case CI_DATA_TYPE_KIND_UNION: {
             Vec *fields = NULL;
 
@@ -912,7 +1066,7 @@ clone__CIDataType(const CIDataType *self)
                 }
             }
 
-            return NEW_VARIANT(
+            res = NEW_VARIANT(
               CIDataType,
               union,
               NEW(CIDataTypeUnion,
@@ -921,10 +1075,16 @@ clone__CIDataType(const CIDataType *self)
                     ? clone__CIGenericParams(self->union_.generic_params)
                     : NULL,
                   fields));
+
+            break;
         }
         default:
-            return NEW(CIDataType, self->kind);
+            res = NEW(CIDataType, self->kind);
     }
+
+    set_context__CIDataType(res, self->ctx);
+
+    return res;
 }
 
 void
@@ -1049,7 +1209,7 @@ serialize_vec__CIDataType(const Vec *data_types, String *buffer)
 bool
 eq__CIDataType(const CIDataType *self, const CIDataType *other)
 {
-    if (self->kind != other->kind) {
+    if (self->kind != other->kind || self->ctx != other->ctx) {
         return false;
     }
 
@@ -1149,6 +1309,28 @@ is_integer__CIDataType(const CIDataType *self)
     }
 }
 
+bool
+is_float__CIDataType(const CIDataType *self)
+{
+    switch (self->kind) {
+        case CI_DATA_TYPE_KIND__DECIMAL128:
+        case CI_DATA_TYPE_KIND__DECIMAL32:
+        case CI_DATA_TYPE_KIND__DECIMAL64:
+        case CI_DATA_TYPE_KIND_DOUBLE:
+        case CI_DATA_TYPE_KIND_DOUBLE__COMPLEX:
+        case CI_DATA_TYPE_KIND_DOUBLE__IMAGINARY:
+        case CI_DATA_TYPE_KIND_FLOAT:
+        case CI_DATA_TYPE_KIND_FLOAT__COMPLEX:
+        case CI_DATA_TYPE_KIND_FLOAT__IMAGINARY:
+        case CI_DATA_TYPE_KIND_LONG_DOUBLE:
+        case CI_DATA_TYPE_KIND_LONG_DOUBLE__COMPLEX:
+        case CI_DATA_TYPE_KIND_LONG_DOUBLE__IMAGINARY:
+            return true;
+        default:
+            return false;
+    }
+}
+
 CIDataType *
 get_ptr__CIDataType(const CIDataType *self)
 {
@@ -1203,64 +1385,82 @@ IMPL_FOR_DEBUG(to_string, CIDataType, const CIDataType *self)
     switch (self->kind) {
         case CI_DATA_TYPE_KIND_ARRAY:
             return format__String(
-              "CIDataType{{ kind = {s}, array = {Sr} }",
+              "CIDataType{{ kind = {s}, ctx = {Sr}, array = {Sr} }",
               to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx),
               to_string__Debug__CIDataTypeArray(&self->array));
         case CI_DATA_TYPE_KIND__ATOMIC:
-            return format__String("CIDataType{{ kind = {s}, _atomic = {Sr} }",
-                                  to_string__Debug__CIDataTypeKind(self->kind),
-                                  to_string__Debug__CIDataType(self->_atomic));
+            return format__String(
+              "CIDataType{{ kind = {s}, ctx = {Sr}, _atomic = {Sr} }",
+              to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx),
+              to_string__Debug__CIDataType(self->_atomic));
         case CI_DATA_TYPE_KIND_BUILTIN:
-            return format__String("CIDataType{{ kind = {s}, builtin = {zu} }",
-                                  to_string__Debug__CIDataTypeKind(self->kind),
-                                  self->builtin);
+            return format__String(
+              "CIDataType{{ kind = {s}, ctx = {Sr}, builtin = {zu} }",
+              to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx),
+              self->builtin);
         case CI_DATA_TYPE_KIND_ENUM:
-            return format__String("CIDataType{{ kind = {s}, enum = {S} }",
-                                  to_string__Debug__CIDataTypeKind(self->kind),
-                                  self->enum_);
+            return format__String(
+              "CIDataType{{ kind = {s}, ctx = {Sr}, enum = {S} }",
+              to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx),
+              self->enum_);
         case CI_DATA_TYPE_KIND_FUNCTION:
             return format__String(
-              "CIDataType{{ kind = {s}, function = {Sr} }",
+              "CIDataType{{ kind = {s}, ctx = {Sr}, function = {Sr} }",
               to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx),
               to_string__Debug__CIDataTypeFunction(&self->function));
         case CI_DATA_TYPE_KIND_GENERIC:
-            return format__String("CIDataType{{ kind = {s}, generic = {S} }",
-                                  to_string__Debug__CIDataTypeKind(self->kind),
-                                  self->generic);
+            return format__String(
+              "CIDataType{{ kind = {s}, ctx = {Sr}, generic = {S} }",
+              to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx),
+              self->generic);
         case CI_DATA_TYPE_KIND_PRE_CONST:
             return format__String(
-              "CIDataType{{ kind = {s}, pre_const = {Sr} }",
+              "CIDataType{{ kind = {s}, ctx = {Sr}, pre_const = {Sr} }",
               to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx),
               to_string__Debug__CIDataType(self->pre_const));
         case CI_DATA_TYPE_KIND_POST_CONST:
             return format__String(
-              "CIDataType{{ kind = {s}, post_const = {Sr} }",
+              "CIDataType{{ kind = {s}, ctx = {Sr}, post_const = {Sr} }",
               to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx),
               to_string__Debug__CIDataType(self->post_const));
         case CI_DATA_TYPE_KIND_PTR:
-            return format__String("CIDataType{{ kind = {s}, ptr = {Sr} }",
-                                  to_string__Debug__CIDataTypeKind(self->kind),
-                                  self->ptr
-                                    ? to_string__Debug__CIDataType(self->ptr)
-                                    : from__String("NULL"));
+            return format__String(
+              "CIDataType{{ kind = {s}, ctx = {Sr}, ptr = {Sr} }",
+              to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx),
+              self->ptr ? to_string__Debug__CIDataType(self->ptr)
+                        : from__String("NULL"));
         case CI_DATA_TYPE_KIND_STRUCT:
             return format__String(
-              "CIDataType{{ kind = {s}, struct_ = {Sr} }",
+              "CIDataType{{ kind = {s}, ctx = {Sr}, struct_ = {Sr} }",
               to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx),
               to_string__Debug__CIDataTypeStruct(&self->struct_));
         case CI_DATA_TYPE_KIND_TYPEDEF:
             return format__String(
-              "CIDataType{{ kind = {s}, typedef_ = {Sr} }",
+              "CIDataType{{ kind = {s}, ctx = {Sr}, typedef_ = {Sr} }",
               to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx),
               to_string__Debug__CIDataTypeTypedef(&self->typedef_));
         case CI_DATA_TYPE_KIND_UNION:
             return format__String(
-              "CIDataType{{ kind = {s}, union_ = {Sr} }",
+              "CIDataType{{ kind = {s}, ctx = {Sr}, union_ = {Sr} }",
               to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx),
               to_string__Debug__CIDataTypeUnion(&self->union_));
         default:
-            return format__String("CIDataType{{ kind = {s} }",
-                                  to_string__Debug__CIDataTypeKind(self->kind));
+            return format__String(
+              "CIDataType{{ kind = {s}, ctx = {Sr} }",
+              to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx));
     }
 }
 #endif
@@ -2691,6 +2891,20 @@ get_typedef_data_type__CIDecl(const CIDecl *self)
         default:
             UNREACHABLE(
               "impossible to get data type of typedef with this variant");
+    }
+}
+
+const CIDataType *
+get_return_data_type__CIDecl(const CIDecl *self)
+{
+    switch (self->kind) {
+        case CI_DECL_KIND_FUNCTION:
+            return self->function.return_data_type;
+        case CI_DECL_KIND_FUNCTION_GEN:
+            return self->function_gen.return_data_type;
+        default:
+            UNREACHABLE("impossible to get return data type of function with "
+                        "this variant");
     }
 }
 
@@ -4475,7 +4689,9 @@ IMPL_FOR_DEBUG(to_string, CIStmt, const CIStmt *self)
         case CI_STMT_KIND_RETURN:
             return format__String("CIStmt{{ kind = {s}, return_ = {Sr} }",
                                   to_string__Debug__CIStmtKind(self->kind),
-                                  to_string__Debug__CIExpr(self->return_));
+                                  self->return_
+                                    ? to_string__Debug__CIExpr(self->return_)
+                                    : from__String("NULL"));
         case CI_STMT_KIND_SWITCH:
             return format__String(
               "CIStmt{{ kind = {s}, switch_ = {Sr} }",
@@ -4518,7 +4734,9 @@ VARIANT_DESTRUCTOR(CIStmt, if, const CIStmt *self)
 
 VARIANT_DESTRUCTOR(CIStmt, return, const CIStmt *self)
 {
-    FREE(CIExpr, self->return_);
+    if (self->return_) {
+        FREE(CIExpr, self->return_);
+    }
 }
 
 VARIANT_DESTRUCTOR(CIStmt, switch, const CIStmt *self)

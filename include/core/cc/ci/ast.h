@@ -467,6 +467,15 @@ clone__CIGenericParams(const CIGenericParams *self);
 
 /**
  *
+ * @brief Find a generic parameter from its name passed as a parameter.
+ * @return the index of the location of the generic parameter. If no parameters
+ * are found, the function returns -1.
+ */
+Isize
+find_generic__CIGenericParams(const CIGenericParams *self, String *name);
+
+/**
+ *
  * @brief Convert CIGenericParams in String.
  * @note This function is only used to debug.
  */
@@ -489,6 +498,23 @@ enum CIDataTypeContext
     CI_DATA_TYPE_CONTEXT_STACK = 1 << 3,    // !stack
     CI_DATA_TYPE_CONTEXT_TRACE = 1 << 4,    // !trace
 };
+
+/**
+ *
+ * @brief Check if the two given flags context are compatible.
+ */
+bool
+is_compatible__CIDataTypeContext(int self, int other);
+
+/**
+ *
+ * @brief Convert CIDataTypeContext in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDataTypeContext, int self);
+#endif
 
 enum CIDataTypeKind
 {
@@ -776,7 +802,7 @@ DESTRUCTOR(CIDataTypeUnion, const CIDataTypeUnion *self);
 typedef struct CIDataType
 {
     enum CIDataTypeKind kind;
-    enum CIDataTypeContext ctx;
+    int ctx;
     Usize ref_count;
     union
     {
@@ -921,7 +947,7 @@ serialize_vec__CIDataType(const Vec *data_types, String *buffer);
  * @brief Set context on data type.
  */
 inline void
-set_context__CIDataType(CIDataType *self, enum CIDataTypeContext ctx)
+set_context__CIDataType(CIDataType *self, int ctx)
 {
     self->ctx = ctx;
 }
@@ -941,6 +967,15 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other);
  */
 bool
 is_integer__CIDataType(const CIDataType *self);
+
+/**
+ *
+ * @brief Check if the data type is an float.
+ * @note This function does not perform a deep check, it only checks whether the
+ * first type cut corresponds to an integer.
+ */
+bool
+is_float__CIDataType(const CIDataType *self);
 
 /**
  *
@@ -2160,6 +2195,14 @@ get_typedef_data_type__CIDecl(const CIDecl *self);
 
 /**
  *
+ * @brief Get return data type of function or function gen.
+ * @return CIDataType* (&)
+ */
+const CIDataType *
+get_return_data_type__CIDecl(const CIDecl *self);
+
+/**
+ *
  * @brief Convert CIDecl in String.
  * @note This function is only used to debug.
  */
@@ -3245,8 +3288,8 @@ typedef struct CIStmt
         CIStmtFor for_;
         String *goto_; // String* (&)
         CIStmtIf if_;
-        String *label; // String* (&)
-        CIExpr *return_;
+        String *label;   // String* (&)
+        CIExpr *return_; // CIExpr*?
         CIStmtSwitch switch_;
         CIStmtWhile while_;
     };

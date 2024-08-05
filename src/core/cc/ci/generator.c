@@ -1404,7 +1404,11 @@ generate_function_stmt__CIGenerator(const CIStmt *stmt)
             break;
         case CI_STMT_KIND_RETURN:
             write_str__CIGenerator("return ");
-            generate_function_expr__CIGenerator(stmt->return_);
+
+            if (stmt->return_) {
+                generate_function_expr__CIGenerator(stmt->return_);
+            }
+
             write_str__CIGenerator(";");
 
             break;
