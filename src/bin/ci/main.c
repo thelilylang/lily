@@ -31,6 +31,7 @@
 #include <core/cc/ci/generator.h>
 #include <core/cc/ci/include.h>
 #include <core/cc/ci/parser.h>
+#include <core/cc/ci/primary_data_types.h>
 #include <core/cc/ci/result.h>
 #include <core/cc/ci/scanner.h>
 
@@ -50,6 +51,7 @@ main(int argc, char **argv)
     CIConfig config = parse__CIConfig(argv[1]);
     CIResult result = NEW(CIResult, &config, &builtin);
 
+    init__PrimaryDataTypes();
     set__CIBuiltin(&builtin);
     build__CIResult(&result);
     run__CIGenerator(&result);
@@ -59,4 +61,5 @@ main(int argc, char **argv)
     FREE(CIConfig, &config);
 
     destroy__CIInclude();
+    free__PrimaryDataTypes();
 }
