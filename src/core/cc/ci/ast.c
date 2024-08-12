@@ -1991,6 +1991,40 @@ DESTRUCTOR(CIDeclFunctionParam, CIDeclFunctionParam *self)
     lily_free(self);
 }
 
+CONSTRUCTOR(CIDeclFunctionBody *, CIDeclFunctionBody, CIScopeID *scope_id)
+{
+    CIDeclFunctionBody *self = lily_malloc(sizeof(CIDeclFunctionBody));
+
+    self->scope_id = scope_id;
+    self->content = NEW(Vec);
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclFunctionBody, const CIDeclFunctionBody *self)
+{
+    String *res = format__String(
+      "CIDeclFunctionBody{{ scope_id = ScopeID {{ id = {zu} }, content =",
+      self->scope_id->id);
+
+    DEBUG_VEC_STRING(self->content, res, CIDeclFunctionItem);
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CIDeclFunctionBody, CIDeclFunctionBody *self)
+{
+    FREE_BUFFER_ITEMS(
+      self->content->buffer, self->content->len, CIDeclFunctionItem);
+    FREE(Vec, self->content);
+    lily_free(self);
+}
+
 String *
 serialize_name__CIDeclFunction(const CIDeclFunction *self,
                                const CIGenericParams *called_generic_params)
@@ -2030,12 +2064,13 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunction, const CIDeclFunction *self)
         push_str__String(res, " NULL");
     }
 
-    push_str__String(res, ", body =");
+    {
+        String *s = format__String(
+          ", body = {Sr}",
+          self->body ? to_string__Debug__CIDeclFunctionBody(self->body)
+                     : from__String("NULL"));
 
-    if (self->body) {
-        DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
-    } else {
-        push_str__String(res, " NULL");
+        APPEND_AND_FREE(res, s);
     }
 
     push_str__String(res, ", attributes =");
@@ -2079,9 +2114,7 @@ DESTRUCTOR(CIDeclFunction, const CIDeclFunction *self)
     free_as_prototype__CIDeclFunction(self);
 
     if (self->body) {
-        FREE_BUFFER_ITEMS(
-          self->body->buffer, self->body->len, CIDeclFunctionItem);
-        FREE(Vec, self->body);
+        FREE(CIDeclFunctionBody, self->body);
     }
 }
 
@@ -4403,72 +4436,39 @@ IMPL_FOR_DEBUG(to_string, CIStmtKind, enum CIStmtKind self)
 String *
 IMPL_FOR_DEBUG(to_string, CIStmtBlock, const CIStmtBlock *self)
 {
-    String *res = format__String("CIStmtBlock{{ body =");
-
-    DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
-    push_str__String(res, " }");
-
-    return res;
+    return format__String("CIStmtBlock{{ body = {Sr} }",
+                          to_string__Debug__CIDeclFunctionBody(self->body));
 }
 #endif
-
-DESTRUCTOR(CIStmtBlock, const CIStmtBlock *self)
-{
-    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, CIDeclFunctionItem);
-    FREE(Vec, self->body);
-}
 
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIStmtDoWhile, const CIStmtDoWhile *self)
 {
-    String *res = format__String("CIStmtDoWhile{{ body =");
-
-    DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
-
-    {
-        String *s = format__String(", cond = {Sr} }",
-                                   to_string__Debug__CIExpr(self->cond));
-
-        APPEND_AND_FREE(res, s);
-    }
-
-    return res;
+    return format__String("CIStmtDoWhile{{ body = {Sr}, cond = {Sr}",
+                          to_string__Debug__CIDeclFunctionBody(self->body),
+                          to_string__Debug__CIExpr(self->cond));
 }
 #endif
 
 DESTRUCTOR(CIStmtDoWhile, const CIStmtDoWhile *self)
 {
-    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, CIDeclFunctionItem);
-    FREE(Vec, self->body);
+    FREE(CIDeclFunctionBody, self->body);
+    FREE(CIExpr, self->cond);
 }
 
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIStmtFor, const CIStmtFor *self)
 {
-    String *res = format__String("CIStmtFor{ body =");
-
-    DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
-
-    if (self->init_clause) {
-        String *s = format__String(
-          ", init_clause = {Sr}",
-          to_string__Debug__CIDeclFunctionItem(self->init_clause));
-
-        APPEND_AND_FREE(res, s);
-    } else {
-        push_str__String(res, ", init_clause = NULL");
-    }
-
-    if (self->expr1) {
-        String *s = format__String(", expr1 = {Sr}",
-                                   to_string__Debug__CIExpr(self->expr1));
-
-        APPEND_AND_FREE(res, s);
-    } else {
-        push_str__String(res, ", expr1 = NULL");
-    }
+    String *res = format__String(
+      "CIStmtFor{{ body = {Sr}, init_clause = {Sr}, expr1 = {Sr}, exprs2 =",
+      to_string__Debug__CIDeclFunctionBody(self->body),
+      self->init_clause
+        ? to_string__Debug__CIDeclFunctionItem(self->init_clause)
+        : from__String("NULL"),
+      self->expr1 ? to_string__Debug__CIExpr(self->expr1)
+                  : from__String("NULL"));
 
     push_str__String(res, ", exprs2 =");
 
@@ -4486,8 +4486,7 @@ IMPL_FOR_DEBUG(to_string, CIStmtFor, const CIStmtFor *self)
 
 DESTRUCTOR(CIStmtFor, const CIStmtFor *self)
 {
-    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, CIDeclFunctionItem);
-    FREE(Vec, self->body);
+    FREE(CIDeclFunctionBody, self->body);
 
     if (self->init_clause) {
         FREE(CIDeclFunctionItem, self->init_clause);
@@ -4503,7 +4502,10 @@ DESTRUCTOR(CIStmtFor, const CIStmtFor *self)
     }
 }
 
-CONSTRUCTOR(CIStmtIfBranch *, CIStmtIfBranch, CIExpr *cond, Vec *body)
+CONSTRUCTOR(CIStmtIfBranch *,
+            CIStmtIfBranch,
+            CIExpr *cond,
+            CIDeclFunctionBody *body)
 {
     CIStmtIfBranch *self = lily_malloc(sizeof(CIStmtIfBranch));
 
@@ -4517,26 +4519,16 @@ CONSTRUCTOR(CIStmtIfBranch *, CIStmtIfBranch, CIExpr *cond, Vec *body)
 String *
 IMPL_FOR_DEBUG(to_string, CIStmtIfBranch, const CIStmtIfBranch *self)
 {
-    String *res = format__String("CIStmtIfBranch{{ body =");
-
-    DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
-
-    {
-        String *s = format__String(", cond = {Sr} }",
-                                   to_string__Debug__CIExpr(self->cond));
-
-        APPEND_AND_FREE(res, s);
-    }
-
-    return res;
+    return format__String("CIStmtIfBranch{{ body = {Sr}, cond = {Sr}",
+                          to_string__Debug__CIDeclFunctionBody(self->body),
+                          to_string__Debug__CIExpr(self->cond));
 }
 #endif
 
 DESTRUCTOR(CIStmtIfBranch, CIStmtIfBranch *self)
 {
+    FREE(CIDeclFunctionBody, self->body);
     FREE(CIExpr, self->cond);
-    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, CIDeclFunctionItem);
-    FREE(Vec, self->body);
     lily_free(self);
 }
 
@@ -4555,15 +4547,14 @@ IMPL_FOR_DEBUG(to_string, CIStmtIf, const CIStmtIf *self)
         push_str__String(res, " NULL");
     }
 
-    push_str__String(res, ", else_ =");
+    {
+        String *s = format__String(
+          ", else_ = {Sr} }",
+          self->else_ ? to_string__Debug__CIDeclFunctionBody(self->else_)
+                      : from__String("NULL"));
 
-    if (self->else_) {
-        DEBUG_VEC_STRING(self->else_, res, CIDeclFunctionItem);
-    } else {
-        push_str__String(res, " NULL");
+        APPEND_AND_FREE(res, s);
     }
-
-    push_str__String(res, " }");
 
     return res;
 }
@@ -4580,9 +4571,7 @@ DESTRUCTOR(CIStmtIf, const CIStmtIf *self)
     }
 
     if (self->else_) {
-        FREE_BUFFER_ITEMS(
-          self->else_->buffer, self->else_->len, CIDeclFunctionItem);
-        FREE(Vec, self->else_);
+        FREE(CIDeclFunctionBody, self->else_);
     }
 }
 
@@ -4604,45 +4593,31 @@ DESTRUCTOR(CIStmtSwitchCase, const CIStmtSwitchCase *self)
 String *
 IMPL_FOR_DEBUG(to_string, CIStmtSwitch, const CIStmtSwitch *self)
 {
-    String *res = format__String("CIStmtSwitch{{ body =");
-
-    DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
-    push_str__String(res, " }");
-
-    return res;
+    return format__String("CIStmtSwitch{{ expr = {Sr}, body = {Sr} }",
+                          to_string__Debug__CIExpr(self->expr),
+                          to_string__Debug__CIDeclFunctionBody(self->body));
 }
 #endif
 
 DESTRUCTOR(CIStmtSwitch, const CIStmtSwitch *self)
 {
     FREE(CIExpr, self->expr);
-    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, CIDeclFunctionItem);
-    FREE(Vec, self->body);
+    FREE(CIDeclFunctionBody, self->body);
 }
 
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIStmtWhile, const CIStmtWhile *self)
 {
-    String *res = format__String("CIStmtWhile{{ body =");
-
-    DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
-
-    {
-        String *s = format__String(", cond = {Sr} }",
-                                   to_string__Debug__CIExpr(self->cond));
-
-        APPEND_AND_FREE(res, s);
-    }
-
-    return res;
+    return format__String("CIStmtWhile{{ body = {Sr}, cond = {Sr} }",
+                          to_string__Debug__CIDeclFunctionBody(self->body),
+                          to_string__Debug__CIExpr(self->cond));
 }
 #endif
 
 DESTRUCTOR(CIStmtWhile, const CIStmtWhile *self)
 {
-    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, CIDeclFunctionItem);
-    FREE(Vec, self->body);
+    FREE(CIDeclFunctionBody, self->body);
     FREE(CIExpr, self->cond);
 }
 

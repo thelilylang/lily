@@ -1366,6 +1366,44 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunctionParam, const CIDeclFunctionParam *self);
  */
 DESTRUCTOR(CIDeclFunctionParam, CIDeclFunctionParam *self);
 
+typedef struct CIDeclFunctionBody
+{
+    CIScopeID *scope_id; // CIScopeID* (&)
+    Vec *content;        // Vec<CIDeclFunctionItem*>*
+} CIDeclFunctionBody;
+
+/**
+ *
+ * @brief Construct CIDeclFunctionBody type (initialize empty function body).
+ */
+CONSTRUCTOR(CIDeclFunctionBody *, CIDeclFunctionBody, CIScopeID *scope_id);
+
+/**
+ *
+ * @brief Add item to body content.
+ */
+inline void
+add__CIDeclFunctionBody(CIDeclFunctionBody *self, CIDeclFunctionItem *item)
+{
+    push__Vec(self->content, item);
+}
+
+/**
+ *
+ * @brief Convert CIDeclFunctionBody in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclFunctionBody, const CIDeclFunctionBody *self);
+#endif
+
+/**
+ *
+ * @brief Free CIDeclFunctionBody type.
+ */
+DESTRUCTOR(CIDeclFunctionBody, CIDeclFunctionBody *self);
+
 // TODO: Perhaps create a field scope (to have a local scope) in the
 // CIDeclFunction.
 typedef struct CIDeclFunction
@@ -1374,8 +1412,8 @@ typedef struct CIDeclFunction
     CIDataType *return_data_type;
     CIGenericParams *generic_params; // CIGenericParams*?
     Vec *params;                     // Vec<CIDeclFunctionParam*>*?
-    Vec *body;                       // Vec<CIDeclFunctionItem*>*?
-    Vec *attributes;                 // Vec<CIAttribute*>*?
+    CIDeclFunctionBody *body;
+    Vec *attributes; // Vec<CIAttribute*>*?
 } CIDeclFunction;
 
 /**
@@ -1388,7 +1426,7 @@ inline CONSTRUCTOR(CIDeclFunction,
                    CIDataType *return_data_type,
                    CIGenericParams *generic_params,
                    Vec *params,
-                   Vec *body,
+                   CIDeclFunctionBody *body,
                    Vec *attributes)
 {
     return (CIDeclFunction){ .name = name,
@@ -3021,14 +3059,14 @@ IMPL_FOR_DEBUG(to_string, CIStmtKind, enum CIStmtKind self);
 
 typedef struct CIStmtBlock
 {
-    Vec *body; // Vec<CIDeclFunctionItem*>*
+    CIDeclFunctionBody *body;
 } CIStmtBlock;
 
 /**
  *
  * @brief Construct CIStmtBlock type.
  */
-inline CONSTRUCTOR(CIStmtBlock, CIStmtBlock, Vec *body)
+inline CONSTRUCTOR(CIStmtBlock, CIStmtBlock, CIDeclFunctionBody *body)
 {
     return (CIStmtBlock){ .body = body };
 }
@@ -3047,11 +3085,14 @@ IMPL_FOR_DEBUG(to_string, CIStmtBlock, const CIStmtBlock *self);
  *
  * @brief Free CIStmtBlock type.
  */
-DESTRUCTOR(CIStmtBlock, const CIStmtBlock *self);
+inline DESTRUCTOR(CIStmtBlock, const CIStmtBlock *self)
+{
+    FREE(CIDeclFunctionBody, self->body);
+}
 
 typedef struct CIStmtDoWhile
 {
-    Vec *body; // Vec<CIDeclFunctionItem*>*
+    CIDeclFunctionBody *body;
     CIExpr *cond;
 } CIStmtDoWhile;
 
@@ -3059,7 +3100,10 @@ typedef struct CIStmtDoWhile
  *
  * @brief Construct CIStmtDoWhile type.
  */
-inline CONSTRUCTOR(CIStmtDoWhile, CIStmtDoWhile, Vec *body, CIExpr *cond)
+inline CONSTRUCTOR(CIStmtDoWhile,
+                   CIStmtDoWhile,
+                   CIDeclFunctionBody *body,
+                   CIExpr *cond)
 {
     return (CIStmtDoWhile){ .body = body, .cond = cond };
 }
@@ -3082,7 +3126,7 @@ DESTRUCTOR(CIStmtDoWhile, const CIStmtDoWhile *self);
 
 typedef struct CIStmtFor
 {
-    Vec *body;                       // Vec<CIDeclFunctionItem*>*
+    CIDeclFunctionBody *body;
     CIDeclFunctionItem *init_clause; // CIDeclFunctionItem*?
     CIExpr *expr1;                   // CIExpr*?
     Vec *exprs2;                     // Vec<CIExpr*>*?
@@ -3094,7 +3138,7 @@ typedef struct CIStmtFor
  */
 inline CONSTRUCTOR(CIStmtFor,
                    CIStmtFor,
-                   Vec *body,
+                   CIDeclFunctionBody *body,
                    CIDeclFunctionItem *init_clause,
                    CIExpr *expr1,
                    Vec *exprs2)
@@ -3124,14 +3168,17 @@ DESTRUCTOR(CIStmtFor, const CIStmtFor *self);
 typedef struct CIStmtIfBranch
 {
     CIExpr *cond;
-    Vec *body; // Vec<CIDeclFunctionItem*>*
+    CIDeclFunctionBody *body;
 } CIStmtIfBranch;
 
 /**
  *
  * @brief Construct CIStmtIfBranch type.
  */
-CONSTRUCTOR(CIStmtIfBranch *, CIStmtIfBranch, CIExpr *cond, Vec *body);
+CONSTRUCTOR(CIStmtIfBranch *,
+            CIStmtIfBranch,
+            CIExpr *cond,
+            CIDeclFunctionBody *body);
 
 /**
  *
@@ -3153,7 +3200,7 @@ typedef struct CIStmtIf
 {
     CIStmtIfBranch *if_;
     Vec *else_ifs; // Vec<CIStmtIfBranch*>*?
-    Vec *else_;    // Vec<CIDeclFunctionItem*>*?
+    CIDeclFunctionBody *else_;
 } CIStmtIf;
 
 /**
@@ -3164,7 +3211,7 @@ inline CONSTRUCTOR(CIStmtIf,
                    CIStmtIf,
                    CIStmtIfBranch *if_,
                    Vec *else_ifs,
-                   Vec *else_)
+                   CIDeclFunctionBody *else_)
 {
     return (CIStmtIf){ .if_ = if_, .else_ifs = else_ifs, .else_ = else_ };
 }
@@ -3218,14 +3265,17 @@ DESTRUCTOR(CIStmtSwitchCase, const CIStmtSwitchCase *self);
 typedef struct CIStmtSwitch
 {
     CIExpr *expr;
-    Vec *body; // Vec<CIDeclFunctionItem*>*
+    CIDeclFunctionBody *body;
 } CIStmtSwitch;
 
 /**
  *
  * @brief Construct CIStmtSwitch type.
  */
-inline CONSTRUCTOR(CIStmtSwitch, CIStmtSwitch, CIExpr *expr, Vec *body)
+inline CONSTRUCTOR(CIStmtSwitch,
+                   CIStmtSwitch,
+                   CIExpr *expr,
+                   CIDeclFunctionBody *body)
 {
     return (CIStmtSwitch){ .expr = expr, .body = body };
 }
@@ -3249,14 +3299,17 @@ DESTRUCTOR(CIStmtSwitch, const CIStmtSwitch *self);
 typedef struct CIStmtWhile
 {
     CIExpr *cond;
-    Vec *body; // Vec<CIDeclFunctionItem*>*
+    CIDeclFunctionBody *body;
 } CIStmtWhile;
 
 /**
  *
  * @brief Construct CIStmtWhile type.
  */
-inline CONSTRUCTOR(CIStmtWhile, CIStmtWhile, CIExpr *cond, Vec *body)
+inline CONSTRUCTOR(CIStmtWhile,
+                   CIStmtWhile,
+                   CIExpr *cond,
+                   CIDeclFunctionBody *body)
 {
     return (CIStmtWhile){ .cond = cond, .body = body };
 }

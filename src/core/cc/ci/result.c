@@ -546,6 +546,8 @@ CIScope *
 get_scope_from_id__CIResultFile(const CIResultFile *self,
                                 const CIScopeID *scope_id)
 {
+    ASSERT(scope_id);
+
     return get__Vec(self->file_analysis->scopes, scope_id->id);
 }
 

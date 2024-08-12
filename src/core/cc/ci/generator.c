@@ -163,7 +163,7 @@ static void
 generate_function_body_item__CIGenerator(const CIDeclFunctionItem *item);
 
 static void
-generate_function_body__CIGenerator(const Vec *body);
+generate_function_body__CIGenerator(const CIDeclFunctionBody *body);
 
 static void
 generate_function_decl__CIGenerator(const CIDeclFunction *function);
@@ -1449,14 +1449,14 @@ generate_function_body_item__CIGenerator(const CIDeclFunctionItem *item)
 }
 
 void
-generate_function_body__CIGenerator(const Vec *body)
+generate_function_body__CIGenerator(const CIDeclFunctionBody *body)
 {
     write_str__CIGenerator("{\n");
     inc_tab_count__CIGenerator();
 
-    for (Usize i = 0; i < body->len; ++i) {
+    for (Usize i = 0; i < body->content->len; ++i) {
         write_tab__CIGenerator();
-        generate_function_body_item__CIGenerator(get__Vec(body, i));
+        generate_function_body_item__CIGenerator(get__Vec(body->content, i));
     }
 
     dec_tab_count__CIGenerator();
