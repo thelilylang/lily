@@ -666,9 +666,10 @@ static CIDecl *
 parse_enum__CIParser(CIParser *self, int storage_class_flag, String *name);
 
 /// @brief Parse function params.
+/// @param parent_function_scope CIScope*? (&)
 /// @return Vec<CIDeclFunctionParam*>*?
 static Vec *
-parse_function_params__CIParser(CIParser *self);
+parse_function_params__CIParser(CIParser *self, CIScope *parent_function_scope);
 
 /// @brief Parse generic params.
 /// @return Vec<CIDataType*>*
@@ -831,10 +832,28 @@ parse_block_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch);
 static CIDeclFunctionItem *
 parse_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch);
 
-/// @brief Parse function body.
+/// @brief Parse function body (base).
+/// @param parent_function_scope CIScope* (&)*? (&)
 /// @return CIDeclFunctionBody*
 static CIDeclFunctionBody *
-parse_function_body__CIParser(CIParser *self, bool in_loop, bool in_switch);
+parse_function_body_base__CIParser(CIParser *self,
+                                   bool in_loop,
+                                   bool in_switch,
+                                   CIScope **parent_function_scope);
+
+/// @brief Parse function body.
+/// @param parent_function_scope CIScope* (&)*? (&)
+/// @return CIDeclFunctionBody*
+static inline CIDeclFunctionBody *
+parse_function_body__CIParser(CIParser *self,
+                              bool in_loop,
+                              bool in_switch,
+                              CIScope **parent_function_scope);
+
+/// @brief Parse function block
+/// @return CIDeclFunctionBody*
+static inline CIDeclFunctionBody *
+parse_function_block__CIParser(CIParser *self, bool in_loop, bool in_switch);
 
 static CIDeclFunctionItem *
 parse_function_body_item__CIParser(CIParser *self,
@@ -5250,7 +5269,7 @@ loop:
 
             switch (self->current_token->kind) {
                 case CI_TOKEN_KIND_LPAREN:
-                    params = parse_function_params__CIParser(self);
+                    params = parse_function_params__CIParser(self, NULL);
                 default:
                     break;
             }
@@ -5723,7 +5742,7 @@ parse_enum__CIParser(CIParser *self, int storage_class_flag, String *name)
 }
 
 Vec *
-parse_function_params__CIParser(CIParser *self)
+parse_function_params__CIParser(CIParser *self, CIScope *parent_function_scope)
 {
     next_token__CIParser(self); // skip `(`
 
@@ -5747,6 +5766,19 @@ parse_function_params__CIParser(CIParser *self)
           self, &data_type, &name, false);
 
         push__Vec(params, NEW(CIDeclFunctionParam, name, data_type));
+
+        if (parent_function_scope) {
+            CIDecl *param_decl = NEW_VARIANT(
+              CIDecl,
+              variable,
+              CI_STORAGE_CLASS_NONE,
+              false,
+              NEW(
+                CIDeclVariable, ref__CIDataType(data_type), name, NULL, true));
+
+            add_variable__CIResultFile(
+              self->file, parent_function_scope, param_decl);
+        }
 
         if (self->current_token->kind != CI_TOKEN_KIND_RPAREN) {
             expect__CIParser(self, CI_TOKEN_KIND_COMMA, true);
@@ -6785,7 +6817,7 @@ infer_expr_data_type__CIParser(const CIParser *self,
                 return int__PrimaryDataTypes();
             }
 
-            UNREACHABLE("this case is not expected");
+            FAILED("this kind of operation is not possible");
         }
         case CI_EXPR_KIND_CAST:
             return ref__CIDataType(expr->cast.data_type);
@@ -7166,7 +7198,7 @@ parse_do_while_stmt__CIParser(CIParser *self, bool in_switch)
     switch (self->current_token->kind) {
         case CI_TOKEN_KIND_LBRACE:
             next_token__CIParser(self);
-            body = parse_function_body__CIParser(self, true, in_switch);
+            body = parse_function_block__CIParser(self, true, in_switch);
 
             break;
         default: {
@@ -7279,7 +7311,7 @@ parse_for_stmt__CIParser(CIParser *self, bool in_switch)
     switch (self->current_token->kind) {
         case CI_TOKEN_KIND_LBRACE:
             next_token__CIParser(self);
-            body = parse_function_body__CIParser(self, true, in_switch);
+            body = parse_function_block__CIParser(self, true, in_switch);
 
             break;
         default: {
@@ -7316,7 +7348,7 @@ parse_if_branch__CIParser(CIParser *self, bool in_loop, bool in_switch)
     switch (self->current_token->kind) {
         case CI_TOKEN_KIND_LBRACE:
             next_token__CIParser(self);
-            body = parse_function_body__CIParser(self, in_loop, in_switch);
+            body = parse_function_block__CIParser(self, in_loop, in_switch);
 
             break;
         default: {
@@ -7367,7 +7399,8 @@ parse_if_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
             next_token__CIParser(self);
 
             if (expect__CIParser(self, CI_TOKEN_KIND_LBRACE, false)) {
-                else_ = parse_function_body__CIParser(self, in_loop, in_switch);
+                else_ =
+                  parse_function_block__CIParser(self, in_loop, in_switch);
             } else {
                 CIDeclFunctionItem *item =
                   parse_function_body_item__CIParser(self, in_loop, false);
@@ -7409,7 +7442,7 @@ parse_while_stmt__CIParser(CIParser *self, bool in_switch)
     switch (self->current_token->kind) {
         case CI_TOKEN_KIND_LBRACE:
             next_token__CIParser(self);
-            body = parse_function_body__CIParser(self, true, in_switch);
+            body = parse_function_block__CIParser(self, true, in_switch);
 
             break;
         default: {
@@ -7452,7 +7485,7 @@ parse_switch_stmt__CIParser(CIParser *self, bool in_loop)
         case CI_TOKEN_KIND_LBRACE:
             next_token__CIParser(self);
 
-            body = parse_function_body__CIParser(self, in_loop, true);
+            body = parse_function_block__CIParser(self, in_loop, true);
 
             break;
         default: {
@@ -7479,7 +7512,7 @@ CIDeclFunctionItem *
 parse_block_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
 {
     CIDeclFunctionBody *body =
-      parse_function_body__CIParser(self, in_loop, in_switch);
+      parse_function_block__CIParser(self, in_loop, in_switch);
 
     return NEW_VARIANT(CIDeclFunctionItem,
                        stmt,
@@ -7651,7 +7684,10 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
 }
 
 CIDeclFunctionBody *
-parse_function_body__CIParser(CIParser *self, bool in_loop, bool in_switch)
+parse_function_body_base__CIParser(CIParser *self,
+                                   bool in_loop,
+                                   bool in_switch,
+                                   CIScope **parent_function_scope)
 {
     ASSERT(current_scope);
 
@@ -7660,7 +7696,9 @@ parse_function_body__CIParser(CIParser *self, bool in_loop, bool in_switch)
     CIDeclFunctionBody *parent_body = current_body;
 
     current_scope =
-      add_scope__CIResultFile(self->file, current_scope->scope_id, true);
+      parent_function_scope
+        ? *parent_function_scope
+        : add_scope__CIResultFile(self->file, current_scope->scope_id, true);
     current_body = NEW(CIDeclFunctionBody, current_scope->scope_id);
 
     while (self->current_token->kind != CI_TOKEN_KIND_RBRACE &&
@@ -7686,6 +7724,22 @@ parse_function_body__CIParser(CIParser *self, bool in_loop, bool in_switch)
     return res_body;
 }
 
+CIDeclFunctionBody *
+parse_function_body__CIParser(CIParser *self,
+                              bool in_loop,
+                              bool in_switch,
+                              CIScope **parent_function_scope)
+{
+    return parse_function_body_base__CIParser(
+      self, in_loop, in_switch, parent_function_scope);
+}
+
+CIDeclFunctionBody *
+parse_function_block__CIParser(CIParser *self, bool in_loop, bool in_switch)
+{
+    return parse_function_body_base__CIParser(self, in_loop, in_switch, NULL);
+}
+
 CIDecl *
 parse_function__CIParser(CIParser *self,
                          int storage_class_flag,
@@ -7696,8 +7750,10 @@ parse_function__CIParser(CIParser *self,
 {
     init_function_to_visit_waiting_list__CIParser(self, name);
 
-    Vec *params =
-      parse_function_params__CIParser(self); // Vec<CIDeclFunctionParam*>*?
+    CIScope *parent_function_scope =
+      add_scope__CIResultFile(self->file, current_scope->scope_id, true);
+    Vec *params = parse_function_params__CIParser(
+      self, parent_function_scope); // Vec<CIDeclFunctionParam*>*?
     CIDecl *res = NULL;
 
     switch (self->current_token->kind) {
@@ -7726,8 +7782,8 @@ parse_function__CIParser(CIParser *self,
 
             SET_IN_FUNCTION_BODY();
 
-            CIDeclFunctionBody *body =
-              parse_function_body__CIParser(self, false, false);
+            CIDeclFunctionBody *body = parse_function_body__CIParser(
+              self, false, false, &parent_function_scope);
 
             UNSET_IN_FUNCTION_BODY();
 
