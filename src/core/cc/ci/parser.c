@@ -145,6 +145,9 @@ is_integer_data_type__CIParser(CIParser *self, const CIDataType *data_type);
 static bool
 is_float_data_type__CIParser(CIParser *self, const CIDataType *data_type);
 
+static bool
+is_ptr_data_type__CIParser(CIParser *self, const CIDataType *data_type);
+
 /// @brief Search declaration, if found return the pointer of the declaration,
 /// otherwise emit an error.
 /// @param kind CI_DECL_KIND_ENUM | CI_DECL_KIND_FUNCTION | CI_DECL_KIND_STRUCT
@@ -742,6 +745,31 @@ static void
 perform_typecheck__CIParser(const CIParser *self,
                             const CIDataType *expected_data_type,
                             const CIDataType *given_data_type);
+
+/// @param decl_params Vec<CIDeclFunctionParam*>* (&)
+/// @param called_params Vec<CIExpr*>* (&)
+static void
+typecheck_function_call_expr_params__CIParser(
+  const CIParser *self,
+  const CIDecl *decl_function_call,
+  const Vec *called_params,
+  struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_function_call_expr__CIParser(
+  const CIParser *self,
+  const CIExprFunctionCall *function_call,
+  struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_ternary_expr__CIParser(const CIParser *self,
+                                 const CIExprTernary *ternary,
+                                 struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_unary_expr__CIParser(const CIParser *self,
+                               const CIExprUnary *unary,
+                               struct CITypecheckContext *typecheck_ctx);
 
 /// @param called_genericParams const CIGenericParams*? (&)
 /// @param decl_genericParams const CIGenericParams*? (&)
@@ -1523,6 +1551,25 @@ is_float_data_type__CIParser(CIParser *self, const CIDataType *data_type)
         }
         default:
             return is_float__CIDataType(data_type);
+    }
+}
+
+bool
+is_ptr_data_type__CIParser(CIParser *self, const CIDataType *data_type)
+{
+    switch (data_type->kind) {
+        case CI_DATA_TYPE_KIND_TYPEDEF: {
+            CIDecl *decl = search_decl__CIParser(
+              self, CI_DECL_KIND_TYPEDEF, data_type->typedef_.name);
+
+            return decl ? is_ptr_data_type__CIParser(
+                            self, get_typedef_data_type__CIDecl(decl))
+                        : false;
+        }
+        case CI_DATA_TYPE_KIND_PTR:
+            return true;
+        default:
+            return false;
     }
 }
 
@@ -6933,6 +6980,132 @@ perform_typecheck__CIParser(const CIParser *self,
 }
 
 void
+typecheck_function_call_expr_params__CIParser(
+  const CIParser *self,
+  const CIDecl *decl_function_call,
+  const Vec *called_params,
+  struct CITypecheckContext *typecheck_ctx)
+{
+    bool is_variadic = false /* TODO: is_variadic */;
+
+    if (!(decl_function_call->function.params->len == called_params->len ||
+          (called_params->len >= decl_function_call->function.params->len - 1 &&
+           is_variadic))) {
+        FAILED("number of params don't matched");
+    }
+
+    for (Usize i = 0;
+         i < is_variadic ? decl_function_call->function.params->len - 1
+                         : decl_function_call->function.params->len;
+         ++i) {
+        const CIDeclFunctionParam *decl_param =
+          get__Vec(decl_function_call->function.params, i);
+        const CIExpr *called_param = get__Vec(called_params, i);
+
+        typecheck_expr__CIParser(
+          self, decl_param->data_type, called_param, typecheck_ctx);
+    }
+}
+
+void
+typecheck_function_call_expr__CIParser(const CIParser *self,
+                                       const CIExprFunctionCall *function_call,
+                                       struct CITypecheckContext *typecheck_ctx)
+{
+    CIDecl *function_decl =
+      search_function__CIResultFile(self->file, function_call->identifier);
+
+    if (function_decl) {
+        switch (function_decl->kind) {
+            case CI_DECL_KIND_FUNCTION:
+                typecheck_function_call_expr_params__CIParser(
+                  self, function_decl, function_call->params, typecheck_ctx);
+
+                break;
+            case CI_DECL_KIND_FUNCTION_GEN:
+                TODO("typecheck function gen");
+            default:
+                UNREACHABLE("expected function or function gen");
+        }
+
+        return;
+    }
+
+    FAILED("unknown function");
+}
+
+void
+typecheck_unary_expr__CIParser(const CIParser *self,
+                               const CIExprUnary *unary,
+                               struct CITypecheckContext *typecheck_ctx)
+{
+    CIDataType *right_dt = infer_expr_data_type__CIParser(
+      self, unary->expr, typecheck_ctx->current_scope_id);
+
+    switch (unary->kind) {
+        case CI_EXPR_UNARY_KIND_PRE_INCREMENT:
+        case CI_EXPR_UNARY_KIND_PRE_DECREMENT:
+        case CI_EXPR_UNARY_KIND_POST_INCREMENT:
+        case CI_EXPR_UNARY_KIND_POST_DECREMENT:
+        case CI_EXPR_UNARY_KIND_POSITIVE:
+        case CI_EXPR_UNARY_KIND_NEGATIVE:
+            if (!(is_integer_data_type__CIParser((CIParser *)self, right_dt) ||
+                  is_float_data_type__CIParser((CIParser *)self, right_dt))) {
+                FAILED("this operation is not allowed for this data type, "
+                       "expected float or integer");
+            }
+
+            break;
+        case CI_EXPR_UNARY_KIND_BIT_NOT:
+        case CI_EXPR_UNARY_KIND_NOT:
+            if (!is_integer_data_type__CIParser((CIParser *)self, right_dt)) {
+                FAILED("this operation is not allowed for this data type, "
+                       "expected integer");
+            }
+
+            break;
+        case CI_EXPR_UNARY_KIND_DEREFERENCE:
+            if (!is_ptr_data_type__CIParser((CIParser *)self, right_dt)) {
+                FAILED("this operation is not allowed for this data type, "
+                       "expected pointer");
+            }
+
+            break;
+        case CI_EXPR_UNARY_KIND_REF:
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+
+    FREE(CIDataType, right_dt);
+}
+
+void
+typecheck_ternary_expr__CIParser(const CIParser *self,
+                                 const CIExprTernary *ternary,
+                                 struct CITypecheckContext *typecheck_ctx)
+{
+    CIDataType *cond_dt = infer_expr_data_type__CIParser(
+      self, ternary->cond, typecheck_ctx->current_scope_id);
+
+    if (!is_integer_data_type__CIParser((CIParser *)self, cond_dt)) {
+        FAILED("expected interger");
+    }
+
+    FREE(CIDataType, cond_dt);
+
+    CIDataType *if_dt = infer_expr_data_type__CIParser(
+      self, ternary->if_, typecheck_ctx->current_scope_id);
+    CIDataType *else_dt = infer_expr_data_type__CIParser(
+      self, ternary->else_, typecheck_ctx->current_scope_id);
+
+    perform_typecheck__CIParser(self, if_dt, else_dt);
+
+    FREE(CIDataType, if_dt);
+    FREE(CIDataType, else_dt);
+}
+
+void
 typecheck_expr__CIParser(const CIParser *self,
                          const CIDataType *expected_data_type,
                          const CIExpr *given_expr,
@@ -6943,6 +7116,35 @@ typecheck_expr__CIParser(const CIParser *self,
            (!typecheck_ctx->called_generic_params &&
             !typecheck_ctx->decl_generic_params));
 
+    // Typecheck expression content.
+    switch (given_expr->kind) {
+        case CI_EXPR_KIND_FUNCTION_CALL:
+            typecheck_function_call_expr__CIParser(
+              self, &given_expr->function_call, typecheck_ctx);
+
+            break;
+        case CI_EXPR_KIND_FUNCTION_CALL_BUILTIN:
+            TODO("typecheck function call builtin");
+        case CI_EXPR_KIND_GROUPING:
+            typecheck_expr__CIParser(
+              self, expected_data_type, given_expr->grouping, typecheck_ctx);
+
+            break;
+        case CI_EXPR_KIND_TERNARY:
+            typecheck_ternary_expr__CIParser(
+              self, &given_expr->ternary, typecheck_ctx);
+
+            break;
+        case CI_EXPR_KIND_UNARY:
+            typecheck_unary_expr__CIParser(
+              self, &given_expr->unary, typecheck_ctx);
+
+            break;
+        default:
+            break;
+    }
+
+    // Check data type of the given expression.
     bool has_generic = typecheck_ctx->called_generic_params &&
                        typecheck_ctx->decl_generic_params;
 
