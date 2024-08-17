@@ -761,6 +761,21 @@ typecheck_function_call_expr__CIParser(
   const CIExprFunctionCall *function_call,
   struct CITypecheckContext *typecheck_ctx);
 
+/// @param decl_params Vec<CIDataType*>* (&)
+/// @param called_params Vec<CIExpr*>* (&)
+static void
+typecheck_function_call_builtin_expr_params__CIParser(
+  const CIParser *self,
+  const CIBuiltinFunction *decl_function_call_builtin,
+  const Vec *called_params,
+  struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_function_call_builtin_expr__CIParser(
+  const CIParser *self,
+  const CIExprFunctionCallBuiltin *function_call_builtin,
+  struct CITypecheckContext *typecheck_ctx);
+
 static void
 typecheck_ternary_expr__CIParser(const CIParser *self,
                                  const CIExprTernary *ternary,
@@ -7035,6 +7050,43 @@ typecheck_function_call_expr__CIParser(const CIParser *self,
 }
 
 void
+typecheck_function_call_builtin_expr_params__CIParser(
+  const CIParser *self,
+  const CIBuiltinFunction *decl_function_call_builtin,
+  const Vec *called_params,
+  struct CITypecheckContext *typecheck_ctx)
+{
+    if (called_params->len != decl_function_call_builtin->params->len) {
+        FAILED("number of params don't matched");
+    }
+
+    for (Usize i = 0; i < decl_function_call_builtin->params->len; ++i) {
+        const CIDataType *builtin_param =
+          get__Vec(decl_function_call_builtin->params, i);
+        const CIExpr *called_param = get__Vec(called_params, i);
+
+        typecheck_expr__CIParser(
+          self, builtin_param, called_param, typecheck_ctx);
+    }
+}
+
+void
+typecheck_function_call_builtin_expr__CIParser(
+  const CIParser *self,
+  const CIExprFunctionCallBuiltin *function_call_builtin,
+  struct CITypecheckContext *typecheck_ctx)
+{
+    CIBuiltin *builtin = get_ref__CIBuiltin();
+    const CIBuiltinFunction *builtin_function =
+      get_builtin_function__CIBuiltin(builtin, function_call_builtin->id);
+
+    ASSERT(builtin_function);
+
+    typecheck_function_call_builtin_expr_params__CIParser(
+      self, builtin_function, function_call_builtin->params, typecheck_ctx);
+}
+
+void
 typecheck_unary_expr__CIParser(const CIParser *self,
                                const CIExprUnary *unary,
                                struct CITypecheckContext *typecheck_ctx)
@@ -7124,7 +7176,10 @@ typecheck_expr__CIParser(const CIParser *self,
 
             break;
         case CI_EXPR_KIND_FUNCTION_CALL_BUILTIN:
-            TODO("typecheck function call builtin");
+            typecheck_function_call_builtin_expr__CIParser(
+              self, &given_expr->function_call_builtin, typecheck_ctx);
+
+            break;
         case CI_EXPR_KIND_GROUPING:
             typecheck_expr__CIParser(
               self, expected_data_type, given_expr->grouping, typecheck_ctx);
