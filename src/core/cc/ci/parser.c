@@ -3239,18 +3239,19 @@ resolve_alignof_expr__CIParser(CIParser *self, const CIExpr *expr)
 {
     ASSERT(expr->kind == CI_EXPR_KIND_ALIGNOF);
 
-    switch (expr->alignof_->kind) {
-        case CI_EXPR_KIND_DATA_TYPE:
-            return NEW_VARIANT(
-              CIExpr,
-              literal,
-              NEW_VARIANT(CIExprLiteral,
-                          unsigned_int,
-                          resolve_data_type_alignment__CIParser(
-                            self, expr->alignof_->data_type)));
-        default:
-            TODO("alignof resolution: resolve data type of the expression");
-    }
+    CIDataType *expr_data_type = infer_expr_data_type__CIParser(
+      self, expr->alignof_, current_scope->scope_id);
+
+    CIExpr *res = NEW_VARIANT(CIExpr,
+                              literal,
+                              NEW_VARIANT(CIExprLiteral,
+                                          unsigned_int,
+                                          resolve_data_type_alignment__CIParser(
+                                            self, expr->alignof_->data_type)));
+
+    FREE(CIDataType, expr_data_type);
+
+    return res;
 }
 
 CIExpr *
