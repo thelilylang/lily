@@ -40,12 +40,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+struct CurrentSwitch
+{
+    bool is_integer;
+    bool is_float;
+    bool is_present;
+};
+
 struct CITypecheckContext
 {
     const CIDecl *current_decl;                   // const CIDecl*? (&)
     const CIGenericParams *called_generic_params; // const CIGenericParams*? (&)
     const CIGenericParams *decl_generic_params;   // const CIGenericParams*? (&)
     const CIScopeID *current_scope_id;            // const CIScopeID*? (&)
+    struct CurrentSwitch current_switch;
 };
 
 static inline CONSTRUCTOR(struct CITypecheckContext,
@@ -811,6 +819,11 @@ typecheck_body__CIParser(const CIParser *self,
                          struct CITypecheckContext *typecheck_ctx);
 
 static void
+typecheck_case_stmt__CIParser(const CIParser *self,
+                              const CIStmtSwitchCase *case_,
+                              struct CITypecheckContext *typecheck_ctx);
+
+static void
 typecheck_do_while_stmt__CIParser(const CIParser *self,
                                   const CIStmtDoWhile *do_while,
                                   struct CITypecheckContext *typecheck_ctx);
@@ -835,6 +848,16 @@ static void
 typecheck_return_stmt__CIParser(const CIParser *self,
                                 const CIExpr *return_,
                                 struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_switch_stmt__CIParser(const CIParser *self,
+                                const CIStmtSwitch *switch_,
+                                struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_while_stmt__CIParser(const CIParser *self,
+                               const CIStmtWhile *while_,
+                               struct CITypecheckContext *typecheck_ctx);
 
 /// @param called_genericParams const CIGenericParams*? (&)
 /// @param decl_genericParams const CIGenericParams*? (&)
@@ -1156,12 +1179,15 @@ CONSTRUCTOR(struct CITypecheckContext,
             const CIGenericParams *called_generic_params,
             const CIGenericParams *decl_generic_params)
 {
-    return (struct CITypecheckContext){ .current_decl = current_decl,
-                                        .called_generic_params =
-                                          called_generic_params,
-                                        .decl_generic_params =
-                                          decl_generic_params,
-                                        .current_scope_id = NULL };
+    return (struct CITypecheckContext){
+        .current_decl = current_decl,
+        .called_generic_params = called_generic_params,
+        .decl_generic_params = decl_generic_params,
+        .current_scope_id = NULL,
+        .current_switch = { .is_integer = false,
+                            .is_float = false,
+                            .is_present = false }
+    };
 }
 
 const CIParserMacroCall *
@@ -7274,6 +7300,7 @@ typecheck_body__CIParser(const CIParser *self,
     if (body) {
         VecIter body_content_iter = NEW(VecIter, body->content);
         CIDeclFunctionItem *body_content_item = NULL;
+        const CIScopeID *parent_scope_id = typecheck_ctx->current_scope_id;
 
         typecheck_ctx->current_scope_id = body->scope_id;
 
@@ -7281,7 +7308,45 @@ typecheck_body__CIParser(const CIParser *self,
             typecheck_body_item__CIParser(
               self, body_content_item, typecheck_ctx);
         }
+
+        typecheck_ctx->current_scope_id = parent_scope_id;
     }
+}
+
+void
+typecheck_case_stmt__CIParser(const CIParser *self,
+                              const CIStmtSwitchCase *case_,
+                              struct CITypecheckContext *typecheck_ctx)
+{
+    if (typecheck_ctx->current_switch.is_present) {
+        CIDataType *expr_data_type = infer_expr_data_type__CIParser(
+          self, case_->value, typecheck_ctx->current_scope_id);
+
+        if (typecheck_ctx->current_switch.is_integer) {
+            if (!is_integer_data_type__CIParser((CIParser *)self,
+                                                expr_data_type)) {
+                FAILED("expected integer compatible data type");
+            }
+
+            FREE(CIDataType, expr_data_type);
+
+            return;
+        } else if (typecheck_ctx->current_switch.is_float) {
+            if (!is_float_data_type__CIParser((CIParser *)self,
+                                              expr_data_type)) {
+                FAILED("expected float compatible data type");
+            }
+
+            FREE(CIDataType, expr_data_type);
+
+            return;
+        }
+
+        UNREACHABLE("is_integer or is_float must be true");
+    }
+
+    // NOTE: We don't do anything because we're outside the switch
+    // statement.
 }
 
 void
@@ -7390,6 +7455,46 @@ typecheck_return_stmt__CIParser(const CIParser *self,
 }
 
 void
+typecheck_switch_stmt__CIParser(const CIParser *self,
+                                const CIStmtSwitch *switch_,
+                                struct CITypecheckContext *typecheck_ctx)
+{
+    CIDataType *expr_data_type = infer_expr_data_type__CIParser(
+      self, switch_->expr, typecheck_ctx->current_scope_id);
+    struct CurrentSwitch parent_current_switch = typecheck_ctx->current_switch;
+
+    typecheck_ctx->current_switch.is_present = true;
+
+    if (is_integer_data_type__CIParser((CIParser *)self, expr_data_type)) {
+        typecheck_ctx->current_switch.is_integer = true;
+    } else if (is_float_data_type__CIParser((CIParser *)self, expr_data_type)) {
+        typecheck_ctx->current_switch.is_float = true;
+    } else {
+        FAILED("expected integer compatible or float compatible data type");
+    }
+
+    typecheck_body__CIParser(self, switch_->body, typecheck_ctx);
+
+    typecheck_ctx->current_switch = parent_current_switch;
+
+    FREE(CIDataType, expr_data_type);
+}
+
+void
+typecheck_while_stmt__CIParser(const CIParser *self,
+                               const CIStmtWhile *while_,
+                               struct CITypecheckContext *typecheck_ctx)
+{
+    CIDataType *expected_cond_dt = bool__PrimaryDataTypes();
+
+    typecheck_expr__CIParser(
+      self, expected_cond_dt, while_->cond, typecheck_ctx);
+    typecheck_body__CIParser(self, while_->body, typecheck_ctx);
+
+    FREE(CIDataType, expected_cond_dt);
+}
+
+void
 typecheck_stmt__CIParser(const CIParser *self,
                          const CIStmt *given_stmt,
                          struct CITypecheckContext *typecheck_ctx)
@@ -7406,9 +7511,8 @@ typecheck_stmt__CIParser(const CIParser *self,
         case CI_STMT_KIND_BREAK:
             break;
         case CI_STMT_KIND_CASE:
-            // NOTE: We don't do anything because we're outside the switch
-            // statement.
-            break;
+            return typecheck_case_stmt__CIParser(
+              self, &given_stmt->case_, typecheck_ctx);
         case CI_STMT_KIND_CONTINUE:
         case CI_STMT_KIND_DEFAULT:
             break;
@@ -7429,9 +7533,11 @@ typecheck_stmt__CIParser(const CIParser *self,
             return typecheck_return_stmt__CIParser(
               self, given_stmt->return_, typecheck_ctx);
         case CI_STMT_KIND_SWITCH:
-            TODO("typecheck switch");
+            return typecheck_switch_stmt__CIParser(
+              self, &given_stmt->switch_, typecheck_ctx);
         case CI_STMT_KIND_WHILE:
-            TODO("typecheck while");
+            return typecheck_while_stmt__CIParser(
+              self, &given_stmt->while_, typecheck_ctx);
         default:
             UNREACHABLE("unknown variant");
     }
