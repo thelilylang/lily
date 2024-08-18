@@ -90,6 +90,8 @@ reset__CIResultEntity(CIResultEntity *self)
     FREE(Vec, self->enums);                                                   \
     FREE_BUFFER_ITEMS(self->functions->buffer, self->functions->len, CIDecl); \
     FREE(Vec, self->functions);                                               \
+    FREE_BUFFER_ITEMS(self->labels->buffer, self->labels->len, CIDecl);       \
+    FREE(Vec, self->labels);                                                  \
     FREE_BUFFER_ITEMS(self->structs->buffer, self->structs->len, CIDecl);     \
     FREE(Vec, self->structs);                                                 \
     FREE_BUFFER_ITEMS(self->typedefs->buffer, self->typedefs->len, CIDecl);   \
@@ -104,6 +106,7 @@ reset__CIResultEntity(CIResultEntity *self)
     self->decls = NEW(Vec);
     self->enums = NEW(Vec);
     self->functions = NEW(Vec);
+    self->labels = NEW(Vec);
     self->structs = NEW(Vec);
     self->typedefs = NEW(Vec);
     self->unions = NEW(Vec);
@@ -337,55 +340,67 @@ update_prototype__CIResult(CIDecl *prototype, CIDecl *decl)
         }                                                                     \
     }
 
-#define CHECK_FOR_SYMBOL_REDEFINITION_VAR(name, scope)                       \
-    {                                                                        \
-        CIDecl *is_exist = search_variable__CIResultFile(self, scope, name); \
-                                                                             \
-        if (is_exist) {                                                      \
-            return is_exist;                                                 \
-        }                                                                    \
+#define CHECK_FOR_SYMBOL_REDEFINITION_DECL_WITH_SCOPE( \
+  name, search, scope, decl)                           \
+    {                                                  \
+        CIDecl *is_exist = search(self, scope, name);  \
+                                                       \
+        if (is_exist) {                                \
+            return is_exist;                           \
+        }                                              \
     }
 
-#define CHECK_FOR_SYMBOL_REDEFINITION(name, scope, decl) \
-    if (!(decl->kind & CI_DECL_KIND_TYPEDEF)) {          \
-        CHECK_FOR_SYMBOL_REDEFINITION_DECL(              \
-          name, search_enum__CIResultFile, decl);        \
-        CHECK_FOR_SYMBOL_REDEFINITION_DECL(              \
-          name, search_struct__CIResultFile, decl);      \
-        CHECK_FOR_SYMBOL_REDEFINITION_DECL(              \
-          name, search_union__CIResultFile, decl);       \
-    }                                                    \
-                                                         \
-    if (!(decl->kind & CI_DECL_KIND_ENUM ||              \
-          decl->kind & CI_DECL_KIND_STRUCT ||            \
-          decl->kind & CI_DECL_KIND_UNION)) {            \
-        CHECK_FOR_SYMBOL_REDEFINITION_DECL(              \
-          name, search_typedef__CIResultFile, decl);     \
-    }                                                    \
-                                                         \
-    CHECK_FOR_SYMBOL_REDEFINITION_DECL(                  \
-      name, search_function__CIResultFile, decl);        \
-    CHECK_FOR_SYMBOL_REDEFINITION_VAR(name, scope);
+#define CHECK_FOR_SYMBOL_REDEFINITION(name, scope, decl)     \
+    if (decl->kind & CI_DECL_KIND_LABEL) {                   \
+        CHECK_FOR_SYMBOL_REDEFINITION_DECL_WITH_SCOPE(       \
+          name, search_label__CIResultFile, scope, decl);    \
+    } else if (decl->kind & CI_DECL_KIND_FUNCTION ||         \
+               decl->kind & CI_DECL_KIND_VARIABLE) {         \
+        CHECK_FOR_SYMBOL_REDEFINITION_DECL(                  \
+          name, search_function__CIResultFile, decl);        \
+        CHECK_FOR_SYMBOL_REDEFINITION_DECL_WITH_SCOPE(       \
+          name, search_variable__CIResultFile, scope, decl); \
+    } else {                                                 \
+        if (!(decl->kind & CI_DECL_KIND_TYPEDEF)) {          \
+            CHECK_FOR_SYMBOL_REDEFINITION_DECL(              \
+              name, search_enum__CIResultFile, decl);        \
+            CHECK_FOR_SYMBOL_REDEFINITION_DECL(              \
+              name, search_struct__CIResultFile, decl);      \
+            CHECK_FOR_SYMBOL_REDEFINITION_DECL(              \
+              name, search_union__CIResultFile, decl);       \
+        }                                                    \
+                                                             \
+        if (!(decl->kind & CI_DECL_KIND_ENUM ||              \
+              decl->kind & CI_DECL_KIND_STRUCT ||            \
+              decl->kind & CI_DECL_KIND_UNION)) {            \
+            CHECK_FOR_SYMBOL_REDEFINITION_DECL(              \
+              name, search_typedef__CIResultFile, decl);     \
+        }                                                    \
+    }
 
-#define ADD_X_DECL(X, scope, add_scope, v, add_to_owner)                   \
-    const String *name = get_name__CIDecl(X);                              \
-                                                                           \
-    if (!name) {                                                           \
-        return NULL;                                                       \
-    }                                                                      \
-                                                                           \
-    CHECK_FOR_SYMBOL_REDEFINITION(name, scope, X);                         \
-                                                                           \
-    if (add_scope) {                                                       \
-        return X;                                                          \
-    }                                                                      \
-                                                                           \
-    push__Vec(v, X);                                                       \
-    push__Vec(self->file_analysis->entity->decls, ref__CIDecl(X));         \
-                                                                           \
-    return self->owner &&                                                  \
-               (X->kind != CI_DECL_KIND_VARIABLE || !X->variable.is_local) \
-             ? add_to_owner                                                \
+#define ADD_X_DECL(X, scope, add_scope, v, add_to_owner)                      \
+    const String *name = get_name__CIDecl(X);                                 \
+                                                                              \
+    if (!name) {                                                              \
+        return NULL;                                                          \
+    }                                                                         \
+                                                                              \
+    CHECK_FOR_SYMBOL_REDEFINITION(name, scope, X);                            \
+                                                                              \
+    if (add_scope) {                                                          \
+        return X;                                                             \
+    }                                                                         \
+                                                                              \
+    push__Vec(v, X);                                                          \
+                                                                              \
+    if (!is_local__CIDecl(X)) {                                               \
+        push__Vec(self->file_analysis->entity->decls, ref__CIDecl(X));        \
+    }                                                                         \
+                                                                              \
+    return self->owner &&                                                     \
+               (X->kind != CI_DECL_KIND_VARIABLE || !X->variable.is_local) && \
+               X->kind != CI_DECL_KIND_LABEL                                  \
+             ? add_to_owner                                                   \
              : NULL;
 
 const CIDecl *
@@ -412,6 +427,23 @@ add_function__CIResultFile(const CIResultFile *self, CIDecl *function)
                  NEW(CIFileID, self->file_analysis->entity->id, self->kind)),
                self->file_analysis->entity->functions,
                add_function__CIResultFile(self->owner, ref__CIDecl(function)));
+}
+
+const CIDecl *
+add_label__CIResultFile(const CIResultFile *self,
+                        const CIScope *scope,
+                        CIDecl *label)
+{
+    ADD_X_DECL(label,
+               scope,
+               add_label__CIScope(
+                 scope,
+                 name,
+                 *scope->scope_id,
+                 NEW(CIFileID, self->file_analysis->entity->id, self->kind)),
+               self->file_analysis->entity->labels,
+               add_label__CIResultFile(
+                 self->owner, self->owner->scope_base, ref__CIDecl(label)));
 }
 
 const CIDecl *
@@ -502,6 +534,14 @@ get_function_from_id__CIResultFile(const CIResultFile *self,
 }
 
 CIDecl *
+get_label_from_id__CIResultFile(const CIResultFile *self,
+                                const CILabelID *label_id)
+{
+    GET_DECL_FROM_ID__CI_RESULT_FILE(self->file_analysis->entity->labels,
+                                     label_id->id);
+}
+
+CIDecl *
 get_struct_from_id__CIResultFile(const CIResultFile *self,
                                  const CIStructID *struct_id)
 {
@@ -566,6 +606,34 @@ search_function__CIResultFile(const CIResultFile *self, const String *name)
                                 get_function_from_id__CIResultFile);
 }
 
+#define SEARCH_DECL_WITH_SCOPE__CIRESULT_FILE(                                \
+  ty, search_f, scope, get_from_id_f)                                         \
+    while (scope) {                                                           \
+        const ty *id = search_f(scope, name);                                 \
+                                                                              \
+        if (!id) {                                                            \
+            if (scope->parent) {                                              \
+                scope = get_scope_from_id__CIResultFile(self, scope->parent); \
+                continue;                                                     \
+            }                                                                 \
+                                                                              \
+            break;                                                            \
+        }                                                                     \
+                                                                              \
+        return get_from_id_f(self, id);                                       \
+    }                                                                         \
+                                                                              \
+    return NULL;
+
+CIDecl *
+search_label__CIResultFile(const CIResultFile *self,
+                           const CIScope *scope,
+                           const String *name)
+{
+    SEARCH_DECL_WITH_SCOPE__CIRESULT_FILE(
+      CILabelID, search_label__CIScope, scope, get_label_from_id__CIResultFile);
+}
+
 CIDecl *
 search_struct__CIResultFile(const CIResultFile *self, const String *name)
 {
@@ -585,22 +653,10 @@ search_variable__CIResultFile(const CIResultFile *self,
                               const CIScope *scope,
                               const String *name)
 {
-    while (scope) {
-        const CIVariableID *variable_id = search_variable__CIScope(scope, name);
-
-        if (!variable_id) {
-            if (scope->parent) {
-                scope = get_scope_from_id__CIResultFile(self, scope->parent);
-                continue;
-            }
-
-            break;
-        }
-
-        return get_variable_from_id__CIResultFile(self, variable_id);
-    }
-
-    return NULL;
+    SEARCH_DECL_WITH_SCOPE__CIRESULT_FILE(CIVariableID,
+                                          search_variable__CIScope,
+                                          scope,
+                                          get_variable_from_id__CIResultFile);
 }
 
 CIDecl *
@@ -696,6 +752,12 @@ add_functions__CIResultFile(const CIResultFile *self, const CIResultFile *other)
 }
 
 void
+add_labels__CIResultFile(const CIResultFile *self, const CIResultFile *other)
+{
+    /* Empty, because labels are always local. */
+}
+
+void
 add_structs__CIResultFile(const CIResultFile *self, const CIResultFile *other)
 {
     ADD_Xs_DECL(add_struct__CIResultFile,
@@ -753,6 +815,7 @@ merge_content__CIResultFile(const CIResultFile *self, CIResultFile *other)
     add_structs__CIResultFile(self, other);
     add_unions__CIResultFile(self, other);
     add_variables__CIResultFile(self, other);
+    add_labels__CIResultFile(self, other);
 }
 
 void

@@ -172,6 +172,9 @@ static void
 generate_function_gen_decl__CIGenerator(const CIDeclFunctionGen *function_gen);
 
 static void
+generate_label_decl__CIGenerator(const CIDeclLabel *label);
+
+static void
 generate_struct_field__CIGenerator(const CIDeclStructField *field);
 
 static void
@@ -1398,10 +1401,6 @@ generate_function_stmt__CIGenerator(const CIStmt *stmt)
             generate_function_if_stmt__CIGenerator(&stmt->if_);
 
             break;
-        case CI_STMT_KIND_LABEL:
-            write_String__CIGenerator(format__String("{S}:", stmt->label));
-
-            break;
         case CI_STMT_KIND_RETURN:
             write_str__CIGenerator("return ");
 
@@ -1481,6 +1480,12 @@ generate_function_gen_decl__CIGenerator(const CIDeclFunctionGen *function_gen)
     write_str__CIGenerator(" ");
     generate_function_body__CIGenerator(function_gen->function->body);
     RESET_CURRENT_GENERIC_PARAMS();
+}
+
+void
+generate_label_decl__CIGenerator(const CIDeclLabel *label)
+{
+    write_String__CIGenerator(format__String("{S}:\n", label->name));
 }
 
 void
@@ -1598,6 +1603,8 @@ generate_decl__CIGenerator(const CIDecl *decl)
             case CI_DECL_KIND_FUNCTION_GEN:
                 return generate_function_gen_decl__CIGenerator(
                   &decl->function_gen);
+            case CI_DECL_KIND_LABEL:
+                return generate_label_decl__CIGenerator(&decl->label);
             case CI_DECL_KIND_STRUCT:
                 generate_struct_decl__CIGenerator(&decl->struct_);
 
@@ -1762,7 +1769,12 @@ generate_decls_prototype__CIGenerator(const CIResultFile *file_result)
 
     while ((decl = next__VecIter(&iter_decl))) {
         switch (decl->kind) {
+            case CI_DECL_KIND_LABEL:
+                UNREACHABLE("It is impossible to have a label declaration in "
+                            "the global decls vector");
             case CI_DECL_KIND_VARIABLE:
+                // NOTE: We cannot define a prototype for this kind of
+                // declaration.
                 break;
             default:
                 generate_decl_prototype__CIGenerator(decl);

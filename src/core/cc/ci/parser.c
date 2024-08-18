@@ -1026,6 +1026,9 @@ resolve_preprocessor_warning__CIParser(CIParser *self,
 static bool
 resolve_preprocessor__CIParser(CIParser *self, CIToken *next_token);
 
+static CIDecl *
+parse_label__CIParser(CIParser *self);
+
 /// @brief Parse declaration.
 static CIDecl *
 parse_decl__CIParser(CIParser *self);
@@ -7528,8 +7531,6 @@ typecheck_stmt__CIParser(const CIParser *self,
         case CI_STMT_KIND_IF:
             return typecheck_if_stmt__CIParser(
               self, &given_stmt->if_, typecheck_ctx);
-        case CI_STMT_KIND_LABEL:
-            TODO("typecheck label");
         case CI_STMT_KIND_RETURN:
             return typecheck_return_stmt__CIParser(
               self, given_stmt->return_, typecheck_ctx);
@@ -7941,14 +7942,6 @@ parse_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
                                stmt,
                                NEW_VARIANT(CIStmt, goto, label_identifier));
         }
-        case CI_TOKEN_KIND_IDENTIFIER: {
-            String *identifier = self->previous_token->identifier;
-
-            ASSERT(expect__CIParser(self, CI_TOKEN_KIND_COLON, false));
-
-            return NEW_VARIANT(
-              CIDeclFunctionItem, stmt, NEW_VARIANT(CIStmt, label, identifier));
-        }
         case CI_TOKEN_KIND_KEYWORD_IF:
             return parse_if_stmt__CIParser(self, in_loop, in_switch);
         case CI_TOKEN_KIND_KEYWORD_RETURN: {
@@ -7995,7 +7988,7 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
             CIToken *peeked = peek_token__CIParser(self, 1);
 
             if (peeked && peeked->kind == CI_TOKEN_KIND_COLON) {
-                goto parse_stmt;
+                goto parse_decl;
             }
 
             goto default_case;
@@ -8011,8 +8004,7 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
         case CI_TOKEN_KIND_KEYWORD_RETURN:
         case CI_TOKEN_KIND_KEYWORD_SWITCH:
         case CI_TOKEN_KIND_KEYWORD_WHILE:
-        case CI_TOKEN_KIND_LBRACE:
-        parse_stmt: {
+        case CI_TOKEN_KIND_LBRACE: {
             DISABLE_IN_LABEL();
 
             return parse_stmt__CIParser(self, in_loop, in_switch);
@@ -8024,6 +8016,7 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
         default:
         default_case: {
             if (is_data_type__CIParser(self)) {
+            parse_decl: {
                 CIDecl *decl = parse_decl__CIParser(self);
 
                 DISABLE_IN_LABEL();
@@ -8033,6 +8026,7 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
                 } else if (!data_type_as_expression) {
                     return NULL;
                 }
+            }
             }
 
             DISABLE_IN_LABEL();
@@ -8651,8 +8645,40 @@ resolve_preprocessor__CIParser(CIParser *self, CIToken *next_token)
 }
 
 CIDecl *
+parse_label__CIParser(CIParser *self)
+{
+    if (in_function_body) {
+        switch (self->current_token->kind) {
+            case CI_TOKEN_KIND_IDENTIFIER: {
+                String *identifier = self->current_token->identifier;
+                CIToken *peeked_token = peek_token__CIParser(self, 1);
+
+                if (peeked_token && peeked_token->kind == CI_TOKEN_KIND_COLON) {
+                    jump__CIParser(self, 2);
+
+                    return NEW_VARIANT(
+                      CIDecl, label, NEW(CIDeclLabel, identifier));
+                }
+
+                return NULL;
+            }
+            default:
+                return NULL;
+        }
+    }
+
+    return NULL;
+}
+
+CIDecl *
 parse_decl__CIParser(CIParser *self)
 {
+    CIDecl *res = NULL;
+
+    if ((res = parse_label__CIParser(self))) {
+        goto exit;
+    }
+
     Vec *attributes = NULL;
 
     parse_attributes__CIParser(self, &attributes);
@@ -8660,8 +8686,6 @@ parse_decl__CIParser(CIParser *self)
     storage_class_flag = CI_STORAGE_CLASS_NONE;
 
     parse_storage_class_specifiers__CIParser(self, &storage_class_flag);
-
-    CIDecl *res = NULL;
 
     // Parse typedef declaration.
     if (storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
@@ -8783,6 +8807,18 @@ add_decl_to_scope__CIParser(CIParser *self, CIDecl **decl_ref, bool must_free)
                 // See `add_function__CIResultFile` prototype.
                 if (decl != res) {
                     FAILED("function is already defined");
+
+                    goto free;
+                }
+            }
+
+            goto exit;
+        case CI_DECL_KIND_LABEL:
+            if ((res = (CIDecl *)add_label__CIResultFile(
+                   self->file, current_scope, ref__CIDecl(decl)))) {
+                // See `add_label__CIResultFile` prototype.
+                if (decl != res) {
+                    FAILED("label is already defined");
 
                     goto free;
                 }

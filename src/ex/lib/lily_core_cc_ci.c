@@ -48,6 +48,8 @@ extern inline DESTRUCTOR(CIEnumID, CIEnumID *self);
 
 extern inline DESTRUCTOR(CIFunctionID, CIFunctionID *self);
 
+extern inline DESTRUCTOR(CILabelID, CILabelID *self);
+
 extern inline DESTRUCTOR(CIStructID, CIStructID *self);
 
 extern inline DESTRUCTOR(CITypedefID, CITypedefID *self);
@@ -63,6 +65,12 @@ extern inline const CIFunctionID *
 add_function__CIScope(const CIScope *self,
                       const String *name,
                       CIFileID file_id);
+
+extern inline const CILabelID *
+add_label__CIScope(const CIScope *self,
+                   const String *name,
+                   CIScopeID scope_id,
+                   CIFileID file_id);
 
 extern inline const CIStructID *
 add_struct__CIScope(const CIScope *self, const String *name, CIFileID file_id);
@@ -84,6 +92,9 @@ search_enum__CIScope(const CIScope *self, const String *name);
 
 extern inline const CIFunctionID *
 search_function__CIScope(const CIScope *self, const String *name);
+
+extern inline const CILabelID *
+search_label__CIScope(const CIScope *self, const String *name);
 
 extern inline const CIStructID *
 search_struct__CIScope(const CIScope *self, const String *name);
@@ -199,6 +210,8 @@ extern inline CONSTRUCTOR(CIDeclFunctionGen,
                           String *name,
                           CIGenericParams *called_generic_params,
                           CIDataType *return_data_type);
+
+extern inline CONSTRUCTOR(CIDeclLabel, CIDeclLabel, String *name);
 
 extern inline CONSTRUCTOR(CIDeclStruct,
                           CIDeclStruct,

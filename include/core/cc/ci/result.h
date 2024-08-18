@@ -136,6 +136,7 @@ typedef struct CIResultEntity
     const CIResult *result;  // const CIResult* (&)
     Vec *enums;              // Vec<CIDecl*>*
     Vec *functions;          // Vec<CIDecl*>*
+    Vec *labels;             // Vec<CIDecl*>*
     Vec *structs;            // Vec<CIDecl*>*
     Vec *typedefs;           // Vec<CIDecl*>*
     Vec *unions;             // Vec<CIDecl*>*
@@ -160,6 +161,7 @@ inline CONSTRUCTOR(CIResultEntity,
                              .result = result,
                              .enums = NEW(Vec),
                              .functions = NEW(Vec),
+                             .labels = NEW(Vec),
                              .structs = NEW(Vec),
                              .typedefs = NEW(Vec),
                              .unions = NEW(Vec),
@@ -348,6 +350,20 @@ add_function__CIResultFile(const CIResultFile *self, CIDecl *function);
 
 /**
  *
+ * @brief Add label declaration to labels field. If the label name is
+ * already declared, the label found will be returned, but if it's a valid
+ * redeclaration, for example in the case of prototypes, the `CIDecl` pointer
+ * passed in this function will be returned. Finally, if the addition is
+ * successful, a NULL pointer is returned.
+ * @return const CIDecl*? (&)
+ */
+const CIDecl *
+add_label__CIResultFile(const CIResultFile *self,
+                        const CIScope *scope,
+                        CIDecl *label);
+
+/**
+ *
  * @brief Add struct declaration to structs field. If the struct name is
  * already declared, the struct found will be returned, but if it's a valid
  * redeclaration, for example in the case of prototypes, the `CIDecl` pointer
@@ -422,6 +438,14 @@ get_function_from_id__CIResultFile(const CIResultFile *self,
 
 /**
  *
+ * @brief Get label declaration from id.
+ */
+CIDecl *
+get_label_from_id__CIResultFile(const CIResultFile *self,
+                                const CILabelID *label_id);
+
+/**
+ *
  * @brief Get struct declaration from id.
  */
 CIDecl *
@@ -465,6 +489,15 @@ search_enum__CIResultFile(const CIResultFile *self, const String *name);
  */
 CIDecl *
 search_function__CIResultFile(const CIResultFile *self, const String *name);
+
+/**
+ *
+ * @brief Search label declaration in labels map.
+ */
+CIDecl *
+search_label__CIResultFile(const CIResultFile *self,
+                           const CIScope *scope,
+                           const String *name);
 
 /**
  *
@@ -524,6 +557,13 @@ add_enums__CIResultFile(const CIResultFile *self, const CIResultFile *other);
 void
 add_functions__CIResultFile(const CIResultFile *self,
                             const CIResultFile *other);
+
+/**
+ *
+ * @brief Add `labels` vector to `self` file.
+ */
+void
+add_labels__CIResultFile(const CIResultFile *self, const CIResultFile *other);
 
 /**
  *

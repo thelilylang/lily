@@ -128,6 +128,32 @@ inline DESTRUCTOR(CIFunctionID, CIFunctionID *self)
     lily_free(self);
 }
 
+typedef struct CILabelID
+{
+    CIFileID file_id;
+    CIScopeID scope_id;
+    Usize id;
+} CILabelID;
+
+/**
+ *
+ * @brief Construct CILabelID type.
+ */
+CONSTRUCTOR(CILabelID *,
+            CILabelID,
+            CIFileID file_id,
+            CIScopeID scope_id,
+            Usize id);
+
+/**
+ *
+ * @brief Free CILabelID type.
+ */
+inline DESTRUCTOR(CILabelID, CILabelID *self)
+{
+    lily_free(self);
+}
+
 typedef struct CIStructID
 {
     CIFileID file_id;
@@ -224,6 +250,7 @@ typedef struct CIScope
     bool is_block;
     HashMap *enums;     // HashMap<CIEnumID*>*
     HashMap *functions; // HashMap<CIFunctionID*>*
+    HashMap *labels;    // HashMap<CILabelID*>*
     HashMap *structs;   // HashMap<CIStructID*>*
     HashMap *typedefs;  // HashMap<CITypedefID*>*
     HashMap *unions;    // HashMap<CIUnionID*>*
@@ -263,6 +290,20 @@ inline const CIFunctionID *
 add_function__CIScope(const CIScope *self, const String *name, CIFileID file_id)
 {
     ADD_IN_SCOPE(CIFunctionID, self->functions);
+}
+
+/**
+ *
+ * @brief Add label to the scope.
+ * @return CILabelID*? (&)
+ */
+inline const CILabelID *
+add_label__CIScope(const CIScope *self,
+                   const String *name,
+                   CIScopeID scope_id,
+                   CIFileID file_id)
+{
+    ADD_VARIABLE_IN_SCOPE(CILabelID, scope_id, self->labels);
 }
 
 /**
@@ -334,6 +375,17 @@ inline const CIFunctionID *
 search_function__CIScope(const CIScope *self, const String *name)
 {
     SEARCH_IN_SCOPE(self->functions);
+}
+
+/**
+ *
+ * @brief Search label to the scope.
+ * @return CILabelID*? (&)
+ */
+inline const CILabelID *
+search_label__CIScope(const CIScope *self, const String *name)
+{
+    SEARCH_IN_SCOPE(self->labels);
 }
 
 /**
@@ -1188,11 +1240,12 @@ enum CIDeclKind
 {
     CI_DECL_KIND_ENUM = 1 << 0,
     CI_DECL_KIND_FUNCTION = 1 << 1,
-    CI_DECL_KIND_STRUCT = 1 << 2,
-    CI_DECL_KIND_TYPEDEF = 1 << 3,
-    CI_DECL_KIND_UNION = 1 << 4,
-    CI_DECL_KIND_VARIABLE = 1 << 5,
-#define CI_DECL_KIND_GEN (1 << 6)
+    CI_DECL_KIND_LABEL = 1 << 2,
+    CI_DECL_KIND_STRUCT = 1 << 3,
+    CI_DECL_KIND_TYPEDEF = 1 << 4,
+    CI_DECL_KIND_UNION = 1 << 5,
+    CI_DECL_KIND_VARIABLE = 1 << 6,
+#define CI_DECL_KIND_GEN (1 << 7)
     CI_DECL_KIND_FUNCTION_GEN = CI_DECL_KIND_FUNCTION | CI_DECL_KIND_GEN,
     CI_DECL_KIND_STRUCT_GEN = CI_DECL_KIND_STRUCT | CI_DECL_KIND_GEN,
     CI_DECL_KIND_TYPEDEF_GEN = CI_DECL_KIND_TYPEDEF | CI_DECL_KIND_GEN,
@@ -1534,6 +1587,30 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunctionGen, const CIDeclFunctionGen *self);
  * @brief Free CIDeclFunctionGen type.
  */
 DESTRUCTOR(CIDeclFunctionGen, const CIDeclFunctionGen *self);
+
+typedef struct CIDeclLabel
+{
+    String *name; // String* (&)
+} CIDeclLabel;
+
+/**
+ *
+ * @brief Construct CIDeclLabel type.
+ */
+inline CONSTRUCTOR(CIDeclLabel, CIDeclLabel, String *name)
+{
+    return (CIDeclLabel){ .name = name };
+}
+
+/**
+ *
+ * @brief Convert CIDeclLabel in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclLabel, const CIDeclLabel *self);
+#endif
 
 typedef struct CIDeclStructField
 {
@@ -2014,6 +2091,7 @@ typedef struct CIDecl
         CIDeclEnum enum_;
         CIDeclFunction function;
         CIDeclFunctionGen function_gen;
+        CIDeclLabel label;
         CIDeclStruct struct_;
         CIDeclStructGen struct_gen;
         CIDeclTypedef typedef_;
@@ -2058,6 +2136,12 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIGenericParams *called_generic_params,
                     String *name,
                     CIDataType *return_data_type);
+
+/**
+ *
+ * @brief Construct CIDecl type (CI_DECL_KIND_LABEL).
+ */
+VARIANT_CONSTRUCTOR(CIDecl *, CIDecl, label, CIDeclLabel label);
 
 /**
  *
@@ -2238,6 +2322,13 @@ get_typedef_data_type__CIDecl(const CIDecl *self);
  */
 const CIDataType *
 get_return_data_type__CIDecl(const CIDecl *self);
+
+/**
+ *
+ * @brief Check if the given declaration is local.
+ */
+bool
+is_local__CIDecl(const CIDecl *self);
 
 /**
  *
@@ -3041,7 +3132,6 @@ enum CIStmtKind
     CI_STMT_KIND_FOR,
     CI_STMT_KIND_GOTO,
     CI_STMT_KIND_IF,
-    CI_STMT_KIND_LABEL,
     CI_STMT_KIND_RETURN,
     CI_STMT_KIND_SWITCH,
     CI_STMT_KIND_WHILE,
@@ -3341,7 +3431,6 @@ typedef struct CIStmt
         CIStmtFor for_;
         String *goto_; // String* (&)
         CIStmtIf if_;
-        String *label;   // String* (&)
         CIExpr *return_; // CIExpr*?
         CIStmtSwitch switch_;
         CIStmtWhile while_;
@@ -3427,15 +3516,6 @@ inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, goto, String *goto_)
 inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, if, CIStmtIf if_)
 {
     return (CIStmt){ .kind = CI_STMT_KIND_IF, .if_ = if_ };
-}
-
-/**
- *
- * @brief Construct CIStmt type (CI_STMT_KIND_LABEL).
- */
-inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, label, String *label)
-{
-    return (CIStmt){ .kind = CI_STMT_KIND_LABEL, .label = label };
 }
 
 /**

@@ -109,6 +109,9 @@ static VARIANT_DESTRUCTOR(CIDecl, function, CIDecl *self);
 /// @brief Free CIDecl type (CI_DECL_KIND_FUNCTION_GEN).
 static VARIANT_DESTRUCTOR(CIDecl, function_gen, CIDecl *self);
 
+/// @brief Free CIDecl type (CI_DECL_KIND_LABEL).
+static inline VARIANT_DESTRUCTOR(CIDecl, label, CIDecl *self);
+
 /// @brief Free CIDecl type (CI_DECL_KIND_STRUCT).
 static VARIANT_DESTRUCTOR(CIDecl, struct, CIDecl *self);
 
@@ -269,6 +272,21 @@ CONSTRUCTOR(CIFunctionID *, CIFunctionID, CIFileID file_id, Usize id)
     return self;
 }
 
+CONSTRUCTOR(CILabelID *,
+            CILabelID,
+            CIFileID file_id,
+            CIScopeID scope_id,
+            Usize id)
+{
+    CILabelID *self = lily_malloc(sizeof(CILabelID));
+
+    self->file_id = file_id;
+    self->scope_id = scope_id;
+    self->id = id;
+
+    return self;
+}
+
 CONSTRUCTOR(CIUnionID *, CIUnionID, CIFileID file_id, Usize id)
 {
     CIUnionID *self = lily_malloc(sizeof(CIUnionID));
@@ -303,6 +321,7 @@ CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, Usize id, bool is_block)
     self->is_block = is_block;
     self->enums = NEW(HashMap);
     self->functions = NEW(HashMap);
+    self->labels = NEW(HashMap);
     self->structs = NEW(HashMap);
     self->typedefs = NEW(HashMap);
     self->unions = NEW(HashMap);
@@ -320,6 +339,9 @@ DESTRUCTOR(CIScope, CIScope *self)
 
     FREE_HASHMAP_VALUES(self->functions, CIFunctionID);
     FREE(HashMap, self->functions);
+
+    FREE_HASHMAP_VALUES(self->labels, CILabelID);
+    FREE(HashMap, self->labels);
 
     FREE_HASHMAP_VALUES(self->structs, CIStructID);
     FREE(HashMap, self->structs);
@@ -2146,6 +2168,14 @@ DESTRUCTOR(CIDeclFunctionGen, const CIDeclFunctionGen *self)
     FREE(CIDataType, self->return_data_type);
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclLabel, const CIDeclLabel *self)
+{
+    return format__String("CIDeclLabel{{ name = {S} }", self->name);
+}
+#endif
+
 CONSTRUCTOR(CIDeclStructField *,
             CIDeclStructField,
             String *name,
@@ -2585,6 +2615,19 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     return self;
 }
 
+VARIANT_CONSTRUCTOR(CIDecl *, CIDecl, label, CIDeclLabel label)
+{
+    CIDecl *self = lily_malloc(sizeof(CIDecl));
+
+    self->kind = CI_DECL_KIND_LABEL;
+    self->storage_class_flag = CI_STORAGE_CLASS_NONE;
+    self->is_prototype = false;
+    self->ref_count = 0;
+    self->label = label;
+
+    return self;
+}
+
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     struct,
@@ -2772,6 +2815,8 @@ get_name__CIDecl(const CIDecl *self)
             return self->function.name;
         case CI_DECL_KIND_FUNCTION_GEN:
             return self->function_gen.name;
+        case CI_DECL_KIND_LABEL:
+            return self->label.name;
         case CI_DECL_KIND_STRUCT:
             return self->struct_.name;
         case CI_DECL_KIND_STRUCT_GEN:
@@ -2800,6 +2845,7 @@ has_generic__CIDecl(const CIDecl *self)
         case CI_DECL_KIND_FUNCTION_GEN:
             return has_generic__CIDeclFunctionGen(&self->function_gen);
         case CI_DECL_KIND_ENUM:
+        case CI_DECL_KIND_LABEL:
         case CI_DECL_KIND_VARIABLE:
             return false;
         case CI_DECL_KIND_STRUCT:
@@ -2830,6 +2876,7 @@ get_expected_data_type__CIDecl(const CIDecl *self)
             return self->function.return_data_type;
         case CI_DECL_KIND_FUNCTION_GEN:
             TODO("get data type from function gen");
+        case CI_DECL_KIND_LABEL:
         case CI_DECL_KIND_STRUCT:
         case CI_DECL_KIND_STRUCT_GEN:
         case CI_DECL_KIND_TYPEDEF:
@@ -2941,6 +2988,19 @@ get_return_data_type__CIDecl(const CIDecl *self)
     }
 }
 
+bool
+is_local__CIDecl(const CIDecl *self)
+{
+    switch (self->kind) {
+        case CI_DECL_KIND_LABEL:
+            return true;
+        case CI_DECL_KIND_VARIABLE:
+            return self->variable.is_local;
+        default:
+            return false;
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)
@@ -2972,6 +3032,15 @@ IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)
               to_string__Debug__CIStorageClass(self->storage_class_flag),
               self->is_prototype,
               to_string__Debug__CIDeclFunctionGen(&self->function_gen));
+        case CI_DECL_KIND_LABEL:
+            return format__String(
+              "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
+              "{b}, label = {Sr} "
+              "}",
+              to_string__Debug__CIDeclKind(self->kind),
+              to_string__Debug__CIStorageClass(self->storage_class_flag),
+              self->is_prototype,
+              to_string__Debug__CIDeclLabel(&self->label));
         case CI_DECL_KIND_STRUCT:
             return format__String(
               "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
@@ -3102,6 +3171,11 @@ VARIANT_DESTRUCTOR(CIDecl, function_gen, CIDecl *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(CIDecl, label, CIDecl *self)
+{
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(CIDecl, struct, CIDecl *self)
 {
     FREE(CIDeclStruct, &self->struct_);
@@ -3160,6 +3234,9 @@ DESTRUCTOR(CIDecl, CIDecl *self)
             break;
         case CI_DECL_KIND_FUNCTION_GEN:
             FREE_VARIANT(CIDecl, function_gen, self);
+            break;
+        case CI_DECL_KIND_LABEL:
+            FREE_VARIANT(CIDecl, label, self);
             break;
         case CI_DECL_KIND_STRUCT:
             FREE_VARIANT(CIDecl, struct, self);
@@ -4418,8 +4495,6 @@ IMPL_FOR_DEBUG(to_string, CIStmtKind, enum CIStmtKind self)
             return "CI_STMT_KIND_GOTO";
         case CI_STMT_KIND_IF:
             return "CI_STMT_KIND_IF";
-        case CI_STMT_KIND_LABEL:
-            return "CI_STMT_KIND_LABEL";
         case CI_STMT_KIND_RETURN:
             return "CI_STMT_KIND_RETURN";
         case CI_STMT_KIND_SWITCH:
@@ -4657,10 +4732,6 @@ IMPL_FOR_DEBUG(to_string, CIStmt, const CIStmt *self)
             return format__String("CIStmt{{ kind = {s}, if_ = {Sr} }",
                                   to_string__Debug__CIStmtKind(self->kind),
                                   to_string__Debug__CIStmtIf(&self->if_));
-        case CI_STMT_KIND_LABEL:
-            return format__String("CIStmt{{ kind = {s}, label = {S} }",
-                                  to_string__Debug__CIStmtKind(self->kind),
-                                  self->label);
         case CI_STMT_KIND_RETURN:
             return format__String("CIStmt{{ kind = {s}, return_ = {Sr} }",
                                   to_string__Debug__CIStmtKind(self->kind),
@@ -4734,7 +4805,6 @@ DESTRUCTOR(CIStmt, const CIStmt *self)
         case CI_STMT_KIND_CONTINUE:
         case CI_STMT_KIND_DEFAULT:
         case CI_STMT_KIND_GOTO:
-        case CI_STMT_KIND_LABEL:
             break;
         case CI_STMT_KIND_CASE:
             FREE_VARIANT(CIStmt, case, self);
