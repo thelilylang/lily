@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.4.0 - 2024-08-22
+
+### Added
+
+- Implement stringification [#518](https://github.com/thelilylang/lily/pull/518)
+- Add C standard assert header [#520](https://github.com/thelilylang/lily/pull/520)
+- Add C standard errno header [#521](https://github.com/thelilylang/lily/pull/521)
+- Parse data type contexts [#522](https://github.com/thelilylang/lily/pull/522)
+- Begin to implement typecheck [#523](https://github.com/thelilylang/lily/pull/523)
+
+### Fixed
+
+- Fix escape character generation [#519](https://github.com/thelilylang/lily/pull/519)
+
 ## 0.3.0 - 2024-07-21
 
 ### Added
