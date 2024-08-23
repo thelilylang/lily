@@ -754,6 +754,16 @@ perform_typecheck__CIParser(const CIParser *self,
                             const CIDataType *expected_data_type,
                             const CIDataType *given_data_type);
 
+static void
+typecheck_variable_decl__CIParser(const CIParser *self,
+                                  const CIDeclVariable *variable,
+                                  struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_decl__CIParser(const CIParser *self,
+                         const CIDecl *decl,
+                         struct CITypecheckContext *typecheck_ctx);
+
 /// @param decl_params Vec<CIDeclFunctionParam*>* (&)
 /// @param called_params Vec<CIExpr*>* (&)
 static void
@@ -7025,6 +7035,34 @@ perform_typecheck__CIParser(const CIParser *self,
 }
 
 void
+typecheck_variable_decl__CIParser(const CIParser *self,
+                                  const CIDeclVariable *variable,
+                                  struct CITypecheckContext *typecheck_ctx)
+{
+    typecheck_expr__CIParser(
+      self, variable->data_type, variable->expr, typecheck_ctx);
+}
+
+void
+typecheck_decl__CIParser(const CIParser *self,
+                         const CIDecl *decl,
+                         struct CITypecheckContext *typecheck_ctx)
+{
+    switch (decl->kind) {
+        case CI_DECL_KIND_LABEL:
+            break;
+        case CI_DECL_KIND_VARIABLE:
+            typecheck_variable_decl__CIParser(
+              self, &decl->variable, typecheck_ctx);
+
+            break;
+        default:
+            UNREACHABLE("this kind of declaration is not expected or not yet "
+                        "implement in body function");
+    }
+}
+
+void
 typecheck_function_call_expr_params__CIParser(
   const CIParser *self,
   const CIDecl *decl_function_call,
@@ -7040,8 +7078,8 @@ typecheck_function_call_expr_params__CIParser(
     }
 
     for (Usize i = 0;
-         i < is_variadic ? decl_function_call->function.params->len - 1
-                         : decl_function_call->function.params->len;
+         i < (is_variadic ? decl_function_call->function.params->len - 1
+                          : decl_function_call->function.params->len);
          ++i) {
         const CIDeclFunctionParam *decl_param =
           get__Vec(decl_function_call->function.params, i);
@@ -7277,6 +7315,8 @@ typecheck_body_item__CIParser(const CIParser *self,
 {
     switch (item->kind) {
         case CI_DECL_FUNCTION_ITEM_KIND_DECL:
+            typecheck_decl__CIParser(self, item->decl, typecheck_ctx);
+
             break;
         case CI_DECL_FUNCTION_ITEM_KIND_EXPR: {
             CIDataType *void_dt = void__PrimaryDataTypes();
