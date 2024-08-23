@@ -22,8 +22,6 @@
  * SOFTWARE.
  */
 
-// TODO: add a typecheck.
-
 #include <base/assert.h>
 #include <base/atof.h>
 #include <base/atoi.h>
