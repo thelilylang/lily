@@ -48,6 +48,8 @@ extern inline DESTRUCTOR(CIEnumID, CIEnumID *self);
 
 extern inline DESTRUCTOR(CIFunctionID, CIFunctionID *self);
 
+extern inline DESTRUCTOR(CILabelID, CILabelID *self);
+
 extern inline DESTRUCTOR(CIStructID, CIStructID *self);
 
 extern inline DESTRUCTOR(CITypedefID, CITypedefID *self);
@@ -63,6 +65,12 @@ extern inline const CIFunctionID *
 add_function__CIScope(const CIScope *self,
                       const String *name,
                       CIFileID file_id);
+
+extern inline const CILabelID *
+add_label__CIScope(const CIScope *self,
+                   const String *name,
+                   CIScopeID scope_id,
+                   CIFileID file_id);
 
 extern inline const CIStructID *
 add_struct__CIScope(const CIScope *self, const String *name, CIFileID file_id);
@@ -84,6 +92,9 @@ search_enum__CIScope(const CIScope *self, const String *name);
 
 extern inline const CIFunctionID *
 search_function__CIScope(const CIScope *self, const String *name);
+
+extern inline const CILabelID *
+search_label__CIScope(const CIScope *self, const String *name);
 
 extern inline const CIStructID *
 search_struct__CIScope(const CIScope *self, const String *name);
@@ -147,7 +158,7 @@ extern inline CIDataType *
 ref__CIDataType(CIDataType *self);
 
 extern inline void
-set_context__CIDataType(CIDataType *self, enum CIDataTypeContext ctx);
+set_context__CIDataType(CIDataType *self, int ctx);
 
 extern inline CONSTRUCTOR(CIAttributeStandard,
                           CIAttributeStandard,
@@ -177,13 +188,16 @@ extern inline CONSTRUCTOR(CIDeclEnum,
 extern inline void
 free_as_prototype__CIDeclEnum(const CIDeclEnum *self);
 
+extern inline void
+add__CIDeclFunctionBody(CIDeclFunctionBody *self, CIDeclFunctionItem *item);
+
 extern inline CONSTRUCTOR(CIDeclFunction,
                           CIDeclFunction,
                           String *name,
                           CIDataType *return_data_type,
                           CIGenericParams *generic_params,
                           Vec *params,
-                          Vec *body,
+                          CIDeclFunctionBody *body,
                           Vec *attributes);
 
 extern inline bool
@@ -196,6 +210,8 @@ extern inline CONSTRUCTOR(CIDeclFunctionGen,
                           String *name,
                           CIGenericParams *called_generic_params,
                           CIDataType *return_data_type);
+
+extern inline CONSTRUCTOR(CIDeclLabel, CIDeclLabel, String *name);
 
 extern inline CONSTRUCTOR(CIDeclStruct,
                           CIDeclStruct,
@@ -345,16 +361,18 @@ ref__CIExpr(CIExpr *self);
 
 extern inline CONSTRUCTOR(CIExprStructCall, CIExprStructCall, Vec *fields);
 
-extern inline CONSTRUCTOR(CIStmtBlock, CIStmtBlock, Vec *body);
+extern inline CONSTRUCTOR(CIStmtBlock, CIStmtBlock, CIDeclFunctionBody *body);
+
+extern inline DESTRUCTOR(CIStmtBlock, const CIStmtBlock *self);
 
 extern inline CONSTRUCTOR(CIStmtDoWhile,
                           CIStmtDoWhile,
-                          Vec *body,
+                          CIDeclFunctionBody *body,
                           CIExpr *cond);
 
 extern inline CONSTRUCTOR(CIStmtFor,
                           CIStmtFor,
-                          Vec *body,
+                          CIDeclFunctionBody *body,
                           CIDeclFunctionItem *init_clause,
                           CIExpr *expr1,
                           Vec *exprs2);
@@ -363,13 +381,19 @@ extern inline CONSTRUCTOR(CIStmtIf,
                           CIStmtIf,
                           CIStmtIfBranch *if_,
                           Vec *else_ifs,
-                          Vec *else_);
+                          CIDeclFunctionBody *else_);
 
 extern inline CONSTRUCTOR(CIStmtSwitchCase, CIStmtSwitchCase, CIExpr *value);
 
-extern inline CONSTRUCTOR(CIStmtSwitch, CIStmtSwitch, CIExpr *expr, Vec *body);
+extern inline CONSTRUCTOR(CIStmtSwitch,
+                          CIStmtSwitch,
+                          CIExpr *expr,
+                          CIDeclFunctionBody *body);
 
-extern inline CONSTRUCTOR(CIStmtWhile, CIStmtWhile, CIExpr *cond, Vec *body);
+extern inline CONSTRUCTOR(CIStmtWhile,
+                          CIStmtWhile,
+                          CIExpr *cond,
+                          CIDeclFunctionBody *body);
 
 extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, block, CIStmtBlock block);
 

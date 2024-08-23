@@ -128,6 +128,32 @@ inline DESTRUCTOR(CIFunctionID, CIFunctionID *self)
     lily_free(self);
 }
 
+typedef struct CILabelID
+{
+    CIFileID file_id;
+    CIScopeID scope_id;
+    Usize id;
+} CILabelID;
+
+/**
+ *
+ * @brief Construct CILabelID type.
+ */
+CONSTRUCTOR(CILabelID *,
+            CILabelID,
+            CIFileID file_id,
+            CIScopeID scope_id,
+            Usize id);
+
+/**
+ *
+ * @brief Free CILabelID type.
+ */
+inline DESTRUCTOR(CILabelID, CILabelID *self)
+{
+    lily_free(self);
+}
+
 typedef struct CIStructID
 {
     CIFileID file_id;
@@ -224,6 +250,7 @@ typedef struct CIScope
     bool is_block;
     HashMap *enums;     // HashMap<CIEnumID*>*
     HashMap *functions; // HashMap<CIFunctionID*>*
+    HashMap *labels;    // HashMap<CILabelID*>*
     HashMap *structs;   // HashMap<CIStructID*>*
     HashMap *typedefs;  // HashMap<CITypedefID*>*
     HashMap *unions;    // HashMap<CIUnionID*>*
@@ -263,6 +290,20 @@ inline const CIFunctionID *
 add_function__CIScope(const CIScope *self, const String *name, CIFileID file_id)
 {
     ADD_IN_SCOPE(CIFunctionID, self->functions);
+}
+
+/**
+ *
+ * @brief Add label to the scope.
+ * @return CILabelID*? (&)
+ */
+inline const CILabelID *
+add_label__CIScope(const CIScope *self,
+                   const String *name,
+                   CIScopeID scope_id,
+                   CIFileID file_id)
+{
+    ADD_VARIABLE_IN_SCOPE(CILabelID, scope_id, self->labels);
 }
 
 /**
@@ -334,6 +375,17 @@ inline const CIFunctionID *
 search_function__CIScope(const CIScope *self, const String *name)
 {
     SEARCH_IN_SCOPE(self->functions);
+}
+
+/**
+ *
+ * @brief Search label to the scope.
+ * @return CILabelID*? (&)
+ */
+inline const CILabelID *
+search_label__CIScope(const CIScope *self, const String *name)
+{
+    SEARCH_IN_SCOPE(self->labels);
 }
 
 /**
@@ -467,6 +519,15 @@ clone__CIGenericParams(const CIGenericParams *self);
 
 /**
  *
+ * @brief Find a generic parameter from its name passed as a parameter.
+ * @return the index of the location of the generic parameter. If no parameters
+ * are found, the function returns -1.
+ */
+Isize
+find_generic__CIGenericParams(const CIGenericParams *self, String *name);
+
+/**
+ *
  * @brief Convert CIGenericParams in String.
  * @note This function is only used to debug.
  */
@@ -489,6 +550,23 @@ enum CIDataTypeContext
     CI_DATA_TYPE_CONTEXT_STACK = 1 << 3,    // !stack
     CI_DATA_TYPE_CONTEXT_TRACE = 1 << 4,    // !trace
 };
+
+/**
+ *
+ * @brief Check if the two given flags context are compatible.
+ */
+bool
+is_compatible__CIDataTypeContext(int self, int other);
+
+/**
+ *
+ * @brief Convert CIDataTypeContext in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDataTypeContext, int self);
+#endif
 
 enum CIDataTypeKind
 {
@@ -776,7 +854,7 @@ DESTRUCTOR(CIDataTypeUnion, const CIDataTypeUnion *self);
 typedef struct CIDataType
 {
     enum CIDataTypeKind kind;
-    enum CIDataTypeContext ctx;
+    int ctx;
     Usize ref_count;
     union
     {
@@ -921,7 +999,7 @@ serialize_vec__CIDataType(const Vec *data_types, String *buffer);
  * @brief Set context on data type.
  */
 inline void
-set_context__CIDataType(CIDataType *self, enum CIDataTypeContext ctx)
+set_context__CIDataType(CIDataType *self, int ctx)
 {
     self->ctx = ctx;
 }
@@ -941,6 +1019,15 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other);
  */
 bool
 is_integer__CIDataType(const CIDataType *self);
+
+/**
+ *
+ * @brief Check if the data type is an float.
+ * @note This function does not perform a deep check, it only checks whether the
+ * first type cut corresponds to an integer.
+ */
+bool
+is_float__CIDataType(const CIDataType *self);
 
 /**
  *
@@ -1153,11 +1240,12 @@ enum CIDeclKind
 {
     CI_DECL_KIND_ENUM = 1 << 0,
     CI_DECL_KIND_FUNCTION = 1 << 1,
-    CI_DECL_KIND_STRUCT = 1 << 2,
-    CI_DECL_KIND_TYPEDEF = 1 << 3,
-    CI_DECL_KIND_UNION = 1 << 4,
-    CI_DECL_KIND_VARIABLE = 1 << 5,
-#define CI_DECL_KIND_GEN (1 << 6)
+    CI_DECL_KIND_LABEL = 1 << 2,
+    CI_DECL_KIND_STRUCT = 1 << 3,
+    CI_DECL_KIND_TYPEDEF = 1 << 4,
+    CI_DECL_KIND_UNION = 1 << 5,
+    CI_DECL_KIND_VARIABLE = 1 << 6,
+#define CI_DECL_KIND_GEN (1 << 7)
     CI_DECL_KIND_FUNCTION_GEN = CI_DECL_KIND_FUNCTION | CI_DECL_KIND_GEN,
     CI_DECL_KIND_STRUCT_GEN = CI_DECL_KIND_STRUCT | CI_DECL_KIND_GEN,
     CI_DECL_KIND_TYPEDEF_GEN = CI_DECL_KIND_TYPEDEF | CI_DECL_KIND_GEN,
@@ -1331,6 +1419,44 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunctionParam, const CIDeclFunctionParam *self);
  */
 DESTRUCTOR(CIDeclFunctionParam, CIDeclFunctionParam *self);
 
+typedef struct CIDeclFunctionBody
+{
+    CIScopeID *scope_id; // CIScopeID* (&)
+    Vec *content;        // Vec<CIDeclFunctionItem*>*
+} CIDeclFunctionBody;
+
+/**
+ *
+ * @brief Construct CIDeclFunctionBody type (initialize empty function body).
+ */
+CONSTRUCTOR(CIDeclFunctionBody *, CIDeclFunctionBody, CIScopeID *scope_id);
+
+/**
+ *
+ * @brief Add item to body content.
+ */
+inline void
+add__CIDeclFunctionBody(CIDeclFunctionBody *self, CIDeclFunctionItem *item)
+{
+    push__Vec(self->content, item);
+}
+
+/**
+ *
+ * @brief Convert CIDeclFunctionBody in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclFunctionBody, const CIDeclFunctionBody *self);
+#endif
+
+/**
+ *
+ * @brief Free CIDeclFunctionBody type.
+ */
+DESTRUCTOR(CIDeclFunctionBody, CIDeclFunctionBody *self);
+
 // TODO: Perhaps create a field scope (to have a local scope) in the
 // CIDeclFunction.
 typedef struct CIDeclFunction
@@ -1339,8 +1465,8 @@ typedef struct CIDeclFunction
     CIDataType *return_data_type;
     CIGenericParams *generic_params; // CIGenericParams*?
     Vec *params;                     // Vec<CIDeclFunctionParam*>*?
-    Vec *body;                       // Vec<CIDeclFunctionItem*>*?
-    Vec *attributes;                 // Vec<CIAttribute*>*?
+    CIDeclFunctionBody *body;
+    Vec *attributes; // Vec<CIAttribute*>*?
 } CIDeclFunction;
 
 /**
@@ -1353,7 +1479,7 @@ inline CONSTRUCTOR(CIDeclFunction,
                    CIDataType *return_data_type,
                    CIGenericParams *generic_params,
                    Vec *params,
-                   Vec *body,
+                   CIDeclFunctionBody *body,
                    Vec *attributes)
 {
     return (CIDeclFunction){ .name = name,
@@ -1461,6 +1587,30 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunctionGen, const CIDeclFunctionGen *self);
  * @brief Free CIDeclFunctionGen type.
  */
 DESTRUCTOR(CIDeclFunctionGen, const CIDeclFunctionGen *self);
+
+typedef struct CIDeclLabel
+{
+    String *name; // String* (&)
+} CIDeclLabel;
+
+/**
+ *
+ * @brief Construct CIDeclLabel type.
+ */
+inline CONSTRUCTOR(CIDeclLabel, CIDeclLabel, String *name)
+{
+    return (CIDeclLabel){ .name = name };
+}
+
+/**
+ *
+ * @brief Convert CIDeclLabel in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclLabel, const CIDeclLabel *self);
+#endif
 
 typedef struct CIDeclStructField
 {
@@ -1941,6 +2091,7 @@ typedef struct CIDecl
         CIDeclEnum enum_;
         CIDeclFunction function;
         CIDeclFunctionGen function_gen;
+        CIDeclLabel label;
         CIDeclStruct struct_;
         CIDeclStructGen struct_gen;
         CIDeclTypedef typedef_;
@@ -1985,6 +2136,12 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIGenericParams *called_generic_params,
                     String *name,
                     CIDataType *return_data_type);
+
+/**
+ *
+ * @brief Construct CIDecl type (CI_DECL_KIND_LABEL).
+ */
+VARIANT_CONSTRUCTOR(CIDecl *, CIDecl, label, CIDeclLabel label);
 
 /**
  *
@@ -2157,6 +2314,21 @@ get_alignment__CIDecl(const CIDecl *self);
  */
 const CIDataType *
 get_typedef_data_type__CIDecl(const CIDecl *self);
+
+/**
+ *
+ * @brief Get return data type of function or function gen.
+ * @return CIDataType* (&)
+ */
+const CIDataType *
+get_return_data_type__CIDecl(const CIDecl *self);
+
+/**
+ *
+ * @brief Check if the given declaration is local.
+ */
+bool
+is_local__CIDecl(const CIDecl *self);
 
 /**
  *
@@ -2960,7 +3132,6 @@ enum CIStmtKind
     CI_STMT_KIND_FOR,
     CI_STMT_KIND_GOTO,
     CI_STMT_KIND_IF,
-    CI_STMT_KIND_LABEL,
     CI_STMT_KIND_RETURN,
     CI_STMT_KIND_SWITCH,
     CI_STMT_KIND_WHILE,
@@ -2978,14 +3149,14 @@ IMPL_FOR_DEBUG(to_string, CIStmtKind, enum CIStmtKind self);
 
 typedef struct CIStmtBlock
 {
-    Vec *body; // Vec<CIDeclFunctionItem*>*
+    CIDeclFunctionBody *body;
 } CIStmtBlock;
 
 /**
  *
  * @brief Construct CIStmtBlock type.
  */
-inline CONSTRUCTOR(CIStmtBlock, CIStmtBlock, Vec *body)
+inline CONSTRUCTOR(CIStmtBlock, CIStmtBlock, CIDeclFunctionBody *body)
 {
     return (CIStmtBlock){ .body = body };
 }
@@ -3004,11 +3175,14 @@ IMPL_FOR_DEBUG(to_string, CIStmtBlock, const CIStmtBlock *self);
  *
  * @brief Free CIStmtBlock type.
  */
-DESTRUCTOR(CIStmtBlock, const CIStmtBlock *self);
+inline DESTRUCTOR(CIStmtBlock, const CIStmtBlock *self)
+{
+    FREE(CIDeclFunctionBody, self->body);
+}
 
 typedef struct CIStmtDoWhile
 {
-    Vec *body; // Vec<CIDeclFunctionItem*>*
+    CIDeclFunctionBody *body;
     CIExpr *cond;
 } CIStmtDoWhile;
 
@@ -3016,7 +3190,10 @@ typedef struct CIStmtDoWhile
  *
  * @brief Construct CIStmtDoWhile type.
  */
-inline CONSTRUCTOR(CIStmtDoWhile, CIStmtDoWhile, Vec *body, CIExpr *cond)
+inline CONSTRUCTOR(CIStmtDoWhile,
+                   CIStmtDoWhile,
+                   CIDeclFunctionBody *body,
+                   CIExpr *cond)
 {
     return (CIStmtDoWhile){ .body = body, .cond = cond };
 }
@@ -3039,7 +3216,7 @@ DESTRUCTOR(CIStmtDoWhile, const CIStmtDoWhile *self);
 
 typedef struct CIStmtFor
 {
-    Vec *body;                       // Vec<CIDeclFunctionItem*>*
+    CIDeclFunctionBody *body;
     CIDeclFunctionItem *init_clause; // CIDeclFunctionItem*?
     CIExpr *expr1;                   // CIExpr*?
     Vec *exprs2;                     // Vec<CIExpr*>*?
@@ -3051,7 +3228,7 @@ typedef struct CIStmtFor
  */
 inline CONSTRUCTOR(CIStmtFor,
                    CIStmtFor,
-                   Vec *body,
+                   CIDeclFunctionBody *body,
                    CIDeclFunctionItem *init_clause,
                    CIExpr *expr1,
                    Vec *exprs2)
@@ -3081,14 +3258,17 @@ DESTRUCTOR(CIStmtFor, const CIStmtFor *self);
 typedef struct CIStmtIfBranch
 {
     CIExpr *cond;
-    Vec *body; // Vec<CIDeclFunctionItem*>*
+    CIDeclFunctionBody *body;
 } CIStmtIfBranch;
 
 /**
  *
  * @brief Construct CIStmtIfBranch type.
  */
-CONSTRUCTOR(CIStmtIfBranch *, CIStmtIfBranch, CIExpr *cond, Vec *body);
+CONSTRUCTOR(CIStmtIfBranch *,
+            CIStmtIfBranch,
+            CIExpr *cond,
+            CIDeclFunctionBody *body);
 
 /**
  *
@@ -3110,7 +3290,7 @@ typedef struct CIStmtIf
 {
     CIStmtIfBranch *if_;
     Vec *else_ifs; // Vec<CIStmtIfBranch*>*?
-    Vec *else_;    // Vec<CIDeclFunctionItem*>*?
+    CIDeclFunctionBody *else_;
 } CIStmtIf;
 
 /**
@@ -3121,7 +3301,7 @@ inline CONSTRUCTOR(CIStmtIf,
                    CIStmtIf,
                    CIStmtIfBranch *if_,
                    Vec *else_ifs,
-                   Vec *else_)
+                   CIDeclFunctionBody *else_)
 {
     return (CIStmtIf){ .if_ = if_, .else_ifs = else_ifs, .else_ = else_ };
 }
@@ -3175,14 +3355,17 @@ DESTRUCTOR(CIStmtSwitchCase, const CIStmtSwitchCase *self);
 typedef struct CIStmtSwitch
 {
     CIExpr *expr;
-    Vec *body; // Vec<CIDeclFunctionItem*>*
+    CIDeclFunctionBody *body;
 } CIStmtSwitch;
 
 /**
  *
  * @brief Construct CIStmtSwitch type.
  */
-inline CONSTRUCTOR(CIStmtSwitch, CIStmtSwitch, CIExpr *expr, Vec *body)
+inline CONSTRUCTOR(CIStmtSwitch,
+                   CIStmtSwitch,
+                   CIExpr *expr,
+                   CIDeclFunctionBody *body)
 {
     return (CIStmtSwitch){ .expr = expr, .body = body };
 }
@@ -3206,14 +3389,17 @@ DESTRUCTOR(CIStmtSwitch, const CIStmtSwitch *self);
 typedef struct CIStmtWhile
 {
     CIExpr *cond;
-    Vec *body; // Vec<CIDeclFunctionItem*>*
+    CIDeclFunctionBody *body;
 } CIStmtWhile;
 
 /**
  *
  * @brief Construct CIStmtWhile type.
  */
-inline CONSTRUCTOR(CIStmtWhile, CIStmtWhile, CIExpr *cond, Vec *body)
+inline CONSTRUCTOR(CIStmtWhile,
+                   CIStmtWhile,
+                   CIExpr *cond,
+                   CIDeclFunctionBody *body)
 {
     return (CIStmtWhile){ .cond = cond, .body = body };
 }
@@ -3245,8 +3431,7 @@ typedef struct CIStmt
         CIStmtFor for_;
         String *goto_; // String* (&)
         CIStmtIf if_;
-        String *label; // String* (&)
-        CIExpr *return_;
+        CIExpr *return_; // CIExpr*?
         CIStmtSwitch switch_;
         CIStmtWhile while_;
     };
@@ -3331,15 +3516,6 @@ inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, goto, String *goto_)
 inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, if, CIStmtIf if_)
 {
     return (CIStmt){ .kind = CI_STMT_KIND_IF, .if_ = if_ };
-}
-
-/**
- *
- * @brief Construct CIStmt type (CI_STMT_KIND_LABEL).
- */
-inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, label, String *label)
-{
-    return (CIStmt){ .kind = CI_STMT_KIND_LABEL, .label = label };
 }
 
 /**

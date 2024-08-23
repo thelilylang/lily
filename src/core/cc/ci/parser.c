@@ -22,8 +22,6 @@
  * SOFTWARE.
  */
 
-// TODO: add a typecheck.
-
 #include <base/assert.h>
 #include <base/atof.h>
 #include <base/atoi.h>
@@ -32,6 +30,7 @@
 #include <core/cc/ci/diagnostic/error.h>
 #include <core/cc/ci/include.h>
 #include <core/cc/ci/parser.h>
+#include <core/cc/ci/primary_data_types.h>
 #include <core/cc/ci/result.h>
 #include <core/shared/diagnostic.h>
 
@@ -39,14 +38,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct CIParserContext
+struct CurrentSwitch
 {
-    const CIDecl *current_decl; // CIDecl*? (&)
-    const CIExpr *current_expr; // CIExpr*? (&)
-    const CIStmt *current_stmt; // CIStmt*? (&)
+    bool is_integer;
+    bool is_float;
+    bool is_present;
 };
 
-static inline CONSTRUCTOR(struct CIParserContext, CIParserContext);
+struct CITypecheckContext
+{
+    const CIDecl *current_decl;                   // const CIDecl*? (&)
+    const CIGenericParams *called_generic_params; // const CIGenericParams*? (&)
+    const CIGenericParams *decl_generic_params;   // const CIGenericParams*? (&)
+    const CIScopeID *current_scope_id;            // const CIScopeID*? (&)
+    struct CurrentSwitch current_switch;
+};
+
+static inline CONSTRUCTOR(struct CITypecheckContext,
+                          CITypecheckContext,
+                          const CIDecl *current_decl,
+                          const CIGenericParams *called_generic_params,
+                          const CIGenericParams *decl_generic_params);
 
 static const CIParserMacroCall *
 get_macro_call__CIParser(CIParser *self, Usize macro_call_id);
@@ -135,6 +147,12 @@ generate_name_error__CIParser();
 
 static bool
 is_integer_data_type__CIParser(CIParser *self, const CIDataType *data_type);
+
+static bool
+is_float_data_type__CIParser(CIParser *self, const CIDataType *data_type);
+
+static bool
+is_ptr_data_type__CIParser(CIParser *self, const CIDataType *data_type);
 
 /// @brief Search declaration, if found return the pointer of the declaration,
 /// otherwise emit an error.
@@ -610,7 +628,7 @@ generate_typedef_gen__CIParser(CIParser *self,
                                CIGenericParams *called_generic_params);
 
 /// @brief Parse data type context, such as: !heap, !non_null, !stack or !trace.
-static enum CIDataTypeContext
+static int
 parse_data_type_context__CIParser(CIParser *self);
 
 /// @brief Parse post data type, like pointer, ...
@@ -657,9 +675,10 @@ static CIDecl *
 parse_enum__CIParser(CIParser *self, int storage_class_flag, String *name);
 
 /// @brief Parse function params.
+/// @param parent_function_scope CIScope*? (&)
 /// @return Vec<CIDeclFunctionParam*>*?
 static Vec *
-parse_function_params__CIParser(CIParser *self);
+parse_function_params__CIParser(CIParser *self, CIScope *parent_function_scope);
 
 /// @brief Parse generic params.
 /// @return Vec<CIDataType*>*
@@ -710,6 +729,154 @@ parse_binary_expr__CIParser(CIParser *self, CIExpr *expr);
 static CIExpr *
 parse_post_expr__CIParser(CIParser *self, CIExpr *expr);
 
+/// @return CIDataType*
+static CIDataType *
+perform_implicit_cast_on_array__CIParser(const CIParser *self,
+                                         CIDataType *data_type);
+
+static CIDataType *
+infer_expr_literal_data_type__CIParser(const CIParser *self,
+                                       const CIExprLiteral *literal);
+
+static CIDataType *
+infer_expr_data_type__CIParser(const CIParser *self,
+                               const CIExpr *expr,
+                               const CIScopeID *current_scope_id);
+
+/// @return const CIDataType* (&)
+static const CIDataType *
+resolve_data_type__CIParser(const CIParser *self, const CIDataType *data_type);
+
+static void
+perform_typecheck__CIParser(const CIParser *self,
+                            const CIDataType *expected_data_type,
+                            const CIDataType *given_data_type);
+
+static void
+typecheck_variable_decl__CIParser(const CIParser *self,
+                                  const CIDeclVariable *variable,
+                                  struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_decl__CIParser(const CIParser *self,
+                         const CIDecl *decl,
+                         struct CITypecheckContext *typecheck_ctx);
+
+/// @param decl_params Vec<CIDeclFunctionParam*>* (&)
+/// @param called_params Vec<CIExpr*>* (&)
+static void
+typecheck_function_call_expr_params__CIParser(
+  const CIParser *self,
+  const CIDecl *decl_function_call,
+  const Vec *called_params,
+  struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_function_call_expr__CIParser(
+  const CIParser *self,
+  const CIExprFunctionCall *function_call,
+  struct CITypecheckContext *typecheck_ctx);
+
+/// @param decl_params Vec<CIDataType*>* (&)
+/// @param called_params Vec<CIExpr*>* (&)
+static void
+typecheck_function_call_builtin_expr_params__CIParser(
+  const CIParser *self,
+  const CIBuiltinFunction *decl_function_call_builtin,
+  const Vec *called_params,
+  struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_function_call_builtin_expr__CIParser(
+  const CIParser *self,
+  const CIExprFunctionCallBuiltin *function_call_builtin,
+  struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_ternary_expr__CIParser(const CIParser *self,
+                                 const CIExprTernary *ternary,
+                                 struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_unary_expr__CIParser(const CIParser *self,
+                               const CIExprUnary *unary,
+                               struct CITypecheckContext *typecheck_ctx);
+
+/// @param called_genericParams const CIGenericParams*? (&)
+/// @param decl_genericParams const CIGenericParams*? (&)
+static void
+typecheck_expr__CIParser(const CIParser *self,
+                         const CIDataType *expected_data_type,
+                         const CIExpr *given_expr,
+                         struct CITypecheckContext *typecheck_ctx);
+
+/// @param body const CIDeclFunctionItem* (&)
+/// @param called_genericParams const CIGenericParams*? (&)
+/// @param decl_genericParams const CIGenericParams*? (&)
+static void
+typecheck_body_item__CIParser(const CIParser *self,
+                              const CIDeclFunctionItem *item,
+                              struct CITypecheckContext *typecheck_ctx);
+
+/// @param body const Vec<CIDeclFunctionItem*>*? (&)
+/// @param called_genericParams const CIGenericParams*? (&)
+/// @param decl_genericParams const CIGenericParams*? (&)
+static void
+typecheck_body__CIParser(const CIParser *self,
+                         const CIDeclFunctionBody *body,
+                         struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_case_stmt__CIParser(const CIParser *self,
+                              const CIStmtSwitchCase *case_,
+                              struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_do_while_stmt__CIParser(const CIParser *self,
+                                  const CIStmtDoWhile *do_while,
+                                  struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_if_stmt_branch__CIParser(const CIParser *self,
+                                   const CIStmtIfBranch *if_branch,
+                                   struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_if_stmt__CIParser(const CIParser *self,
+                            const CIStmtIf *if_,
+                            struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_for_stmt__CIParser(const CIParser *self,
+                             const CIStmtFor *for_,
+                             struct CITypecheckContext *typecheck_ctx);
+
+/// @param return_ const CIExpr*? (&)
+static void
+typecheck_return_stmt__CIParser(const CIParser *self,
+                                const CIExpr *return_,
+                                struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_switch_stmt__CIParser(const CIParser *self,
+                                const CIStmtSwitch *switch_,
+                                struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_while_stmt__CIParser(const CIParser *self,
+                               const CIStmtWhile *while_,
+                               struct CITypecheckContext *typecheck_ctx);
+
+/// @param called_genericParams const CIGenericParams*? (&)
+/// @param decl_genericParams const CIGenericParams*? (&)
+static void
+typecheck_stmt__CIParser(const CIParser *self,
+                         const CIStmt *given_stmt,
+                         struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_function__CIParser(const CIParser *self, const CIDecl *function_decl);
+
 static CIDeclFunctionItem *
 parse_case__CIParser(CIParser *self);
 
@@ -739,10 +906,28 @@ parse_block_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch);
 static CIDeclFunctionItem *
 parse_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch);
 
+/// @brief Parse function body (base).
+/// @param parent_function_scope CIScope* (&)*? (&)
+/// @return CIDeclFunctionBody*
+static CIDeclFunctionBody *
+parse_function_body_base__CIParser(CIParser *self,
+                                   bool in_loop,
+                                   bool in_switch,
+                                   CIScope **parent_function_scope);
+
 /// @brief Parse function body.
-/// @return Vec<CIDeclFunctionItem*>*
-static Vec *
-parse_function_body__CIParser(CIParser *self, bool in_loop, bool in_switch);
+/// @param parent_function_scope CIScope* (&)*? (&)
+/// @return CIDeclFunctionBody*
+static inline CIDeclFunctionBody *
+parse_function_body__CIParser(CIParser *self,
+                              bool in_loop,
+                              bool in_switch,
+                              CIScope **parent_function_scope);
+
+/// @brief Parse function block
+/// @return CIDeclFunctionBody*
+static inline CIDeclFunctionBody *
+parse_function_block__CIParser(CIParser *self, bool in_loop, bool in_switch);
 
 static CIDeclFunctionItem *
 parse_function_body_item__CIParser(CIParser *self,
@@ -849,6 +1034,9 @@ resolve_preprocessor_warning__CIParser(CIParser *self,
 static bool
 resolve_preprocessor__CIParser(CIParser *self, CIToken *next_token);
 
+static CIDecl *
+parse_label__CIParser(CIParser *self);
+
 /// @brief Parse declaration.
 static CIDecl *
 parse_decl__CIParser(CIParser *self);
@@ -902,8 +1090,6 @@ static CIDataType *data_type_as_expression = NULL;
 
 static int storage_class_flag = CI_STORAGE_CLASS_NONE;
 
-static struct CIParserContext ctx;
-
 // The `in_label` variable checks whether you're in a label and emits an error
 // if there's a variable declaration in a label (also in case and default
 // statetement).
@@ -919,7 +1105,7 @@ static bool in_label = false;
 static CIScope *current_scope = NULL; // CIScope*?
 
 // Represent the `body` of the current block being analyzed.
-static Vec *current_body = NULL; // Vec<CIDeclFunctionItem*>*?
+static CIDeclFunctionBody *current_body = NULL; // CIDeclFunctionBody*?
 
 // Allow initialization.
 //
@@ -998,11 +1184,21 @@ static const enum CIAttributeStandardKind
 // blocks, e.g. for stringification.
 static bool next_token_with_check = true;
 
-CONSTRUCTOR(struct CIParserContext, CIParserContext)
+CONSTRUCTOR(struct CITypecheckContext,
+            CITypecheckContext,
+            const CIDecl *current_decl,
+            const CIGenericParams *called_generic_params,
+            const CIGenericParams *decl_generic_params)
 {
-    return (struct CIParserContext){ .current_decl = NULL,
-                                     .current_expr = NULL,
-                                     .current_stmt = NULL };
+    return (struct CITypecheckContext){
+        .current_decl = current_decl,
+        .called_generic_params = called_generic_params,
+        .decl_generic_params = decl_generic_params,
+        .current_scope_id = NULL,
+        .current_switch = { .is_integer = false,
+                            .is_float = false,
+                            .is_present = false }
+    };
 }
 
 const CIParserMacroCall *
@@ -1337,8 +1533,6 @@ CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner)
         tokens_feature = get_tokens_feature__CIScanner();
     }
 
-    ctx = NEW(CIParserContext);
-
     return (CIParser){ .file = file,
                        .scanner = scanner,
                        .count_error = &file->file_analysis->count_error,
@@ -1388,8 +1582,46 @@ is_integer_data_type__CIParser(CIParser *self, const CIDataType *data_type)
                             self, get_typedef_data_type__CIDecl(decl))
                         : false;
         }
+        case CI_DATA_TYPE_KIND_PTR: // via implicit cast
+            return true;
         default:
             return is_integer__CIDataType(data_type);
+    }
+}
+
+bool
+is_float_data_type__CIParser(CIParser *self, const CIDataType *data_type)
+{
+    switch (data_type->kind) {
+        case CI_DATA_TYPE_KIND_TYPEDEF: {
+            CIDecl *decl = search_decl__CIParser(
+              self, CI_DECL_KIND_TYPEDEF, data_type->typedef_.name);
+
+            return decl ? is_float_data_type__CIParser(
+                            self, get_typedef_data_type__CIDecl(decl))
+                        : false;
+        }
+        default:
+            return is_float__CIDataType(data_type);
+    }
+}
+
+bool
+is_ptr_data_type__CIParser(CIParser *self, const CIDataType *data_type)
+{
+    switch (data_type->kind) {
+        case CI_DATA_TYPE_KIND_TYPEDEF: {
+            CIDecl *decl = search_decl__CIParser(
+              self, CI_DECL_KIND_TYPEDEF, data_type->typedef_.name);
+
+            return decl ? is_ptr_data_type__CIParser(
+                            self, get_typedef_data_type__CIDecl(decl))
+                        : false;
+        }
+        case CI_DATA_TYPE_KIND_PTR:
+            return true;
+        default:
+            return false;
     }
 }
 
@@ -3018,18 +3250,19 @@ resolve_alignof_expr__CIParser(CIParser *self, const CIExpr *expr)
 {
     ASSERT(expr->kind == CI_EXPR_KIND_ALIGNOF);
 
-    switch (expr->alignof_->kind) {
-        case CI_EXPR_KIND_DATA_TYPE:
-            return NEW_VARIANT(
-              CIExpr,
-              literal,
-              NEW_VARIANT(CIExprLiteral,
-                          unsigned_int,
-                          resolve_data_type_alignment__CIParser(
-                            self, expr->alignof_->data_type)));
-        default:
-            TODO("alignof resolution: resolve data type of the expression");
-    }
+    CIDataType *expr_data_type = infer_expr_data_type__CIParser(
+      self, expr->alignof_, current_scope->scope_id);
+
+    CIExpr *res = NEW_VARIANT(CIExpr,
+                              literal,
+                              NEW_VARIANT(CIExprLiteral,
+                                          unsigned_int,
+                                          resolve_data_type_alignment__CIParser(
+                                            self, expr->alignof_->data_type)));
+
+    FREE(CIDataType, expr_data_type);
+
+    return res;
 }
 
 CIExpr *
@@ -3184,6 +3417,10 @@ resolve_expr__CIParser(CIParser *self, CIExpr *expr, bool is_partial)
 
             return res;
         }
+        case CI_EXPR_KIND_CAST:
+            TODO("resolve cast");
+        case CI_EXPR_KIND_DATA_TYPE:
+            return ref__CIExpr(expr);
         case CI_EXPR_KIND_GROUPING:
             return resolve_expr__CIParser(self, expr->grouping, is_partial);
         case CI_EXPR_KIND_IDENTIFIER:
@@ -4657,8 +4894,9 @@ visit_function__CIParser(CIParser *self,
                          const CIDecl *function_decl,
                          CIGenericParams *called_generic_params)
 {
-    for (Usize i = 0; i < function_decl->function.body->len; ++i) {
-        CIDeclFunctionItem *item = get__Vec(function_decl->function.body, i);
+    for (Usize i = 0; i < function_decl->function.body->content->len; ++i) {
+        CIDeclFunctionItem *item =
+          get__Vec(function_decl->function.body->content, i);
 
         switch (item->kind) {
             case CI_DECL_FUNCTION_ITEM_KIND_DECL:
@@ -4911,10 +5149,10 @@ generate_typedef_gen__CIParser(CIParser *self,
                                 &search_typedef__CIResultFile);
 }
 
-enum CIDataTypeContext
+int
 parse_data_type_context__CIParser(CIParser *self)
 {
-    enum CIDataTypeContext data_type_ctx = CI_DATA_TYPE_CONTEXT_NONE;
+    int data_type_ctx = CI_DATA_TYPE_CONTEXT_NONE;
 
     while (self->current_token->kind == CI_TOKEN_KIND_BANG) {
         next_token__CIParser(self);
@@ -4934,7 +5172,7 @@ parse_data_type_context__CIParser(CIParser *self)
                     SIZED_STR_FROM_RAW("stack"),
                     SIZED_STR_FROM_RAW("trace")
                 };
-                enum CIDataTypeContext current_ctx =
+                int current_ctx =
                   get_id__Search(self->current_token->identifier,
                                  ctx_ids_s,
                                  (const Int32 *)ctx_ids,
@@ -5131,7 +5369,7 @@ loop:
 
             switch (self->current_token->kind) {
                 case CI_TOKEN_KIND_LPAREN:
-                    params = parse_function_params__CIParser(self);
+                    params = parse_function_params__CIParser(self, NULL);
                 default:
                     break;
             }
@@ -5199,11 +5437,11 @@ parse_pre_data_type__CIParser(CIParser *self)
         }
         case CI_TOKEN_KIND_KEYWORD_BOOL:
         case CI_TOKEN_KIND_KEYWORD__BOOL:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_BOOL);
+            res = bool__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_CHAR:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_CHAR);
+            res = char__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_CONST:
@@ -5212,15 +5450,15 @@ parse_pre_data_type__CIParser(CIParser *self)
 
             break;
         case CI_TOKEN_KIND_KEYWORD_DOUBLE:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_DOUBLE);
+            res = double__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_DOUBLE__COMPLEX:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_DOUBLE__COMPLEX);
+            res = double__complex__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_DOUBLE__IMAGINARY:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_DOUBLE__IMAGINARY);
+            res = double__imaginary__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_ENUM: {
@@ -5264,43 +5502,43 @@ parse_pre_data_type__CIParser(CIParser *self)
             break;
         }
         case CI_TOKEN_KIND_KEYWORD_FLOAT:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_FLOAT);
+            res = float__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_FLOAT__COMPLEX:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_FLOAT__COMPLEX);
+            res = float__complex__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_FLOAT__IMAGINARY:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_FLOAT__IMAGINARY);
+            res = float__imaginary__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_LONG_DOUBLE);
+            res = long_double__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__COMPLEX:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_LONG_DOUBLE__COMPLEX);
+            res = long_double__complex__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__IMAGINARY:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_LONG_DOUBLE__IMAGINARY);
+            res = long_double__imaginary__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_LONG_INT:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_LONG_INT);
+            res = long_int__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_INT:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
+            res = int__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_SHORT_INT:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_SHORT_INT);
+            res = short_int__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_SIGNED_CHAR:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_SIGNED_CHAR);
+            res = signed_char__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_STRUCT:
@@ -5442,42 +5680,45 @@ parse_pre_data_type__CIParser(CIParser *self)
 
             expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
 
-            TODO("resolve typeof expression");
+            res = infer_expr_data_type__CIParser(
+              self, expr, current_scope ? current_scope->scope_id : NULL);
+
+            FREE(CIExpr, expr);
 
             break;
         }
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_CHAR:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_CHAR);
+            res = unsigned_char__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_INT:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_INT);
+            res = unsigned_int__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_INT:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT);
+            res = unsigned_long_int__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT_INT:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_SHORT_INT);
+            res = unsigned_short_int__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_VOID:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_VOID);
+            res = void__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_VOLATILE:
             TODO("volatile");
         case CI_TOKEN_KIND_KEYWORD__DECIMAL128:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND__DECIMAL128);
+            res = _decimal128__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD__DECIMAL32:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND__DECIMAL32);
+            res = _decimal32__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD__DECIMAL64:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND__DECIMAL64);
+            res = _decimal64__PrimaryDataTypes();
 
             break;
         default:
@@ -5601,7 +5842,7 @@ parse_enum__CIParser(CIParser *self, int storage_class_flag, String *name)
 }
 
 Vec *
-parse_function_params__CIParser(CIParser *self)
+parse_function_params__CIParser(CIParser *self, CIScope *parent_function_scope)
 {
     next_token__CIParser(self); // skip `(`
 
@@ -5625,6 +5866,19 @@ parse_function_params__CIParser(CIParser *self)
           self, &data_type, &name, false);
 
         push__Vec(params, NEW(CIDeclFunctionParam, name, data_type));
+
+        if (parent_function_scope) {
+            CIDecl *param_decl = NEW_VARIANT(
+              CIDecl,
+              variable,
+              CI_STORAGE_CLASS_NONE,
+              false,
+              NEW(
+                CIDeclVariable, ref__CIDataType(data_type), name, NULL, true));
+
+            add_variable__CIResultFile(
+              self->file, parent_function_scope, param_decl);
+        }
 
         if (self->current_token->kind != CI_TOKEN_KIND_RPAREN) {
             expect__CIParser(self, CI_TOKEN_KIND_COMMA, true);
@@ -6561,25 +6815,805 @@ loop:
     }
 }
 
+CIDataType *
+perform_implicit_cast_on_array__CIParser(const CIParser *self,
+                                         CIDataType *data_type)
+{
+    switch (data_type->kind) {
+        case CI_DATA_TYPE_KIND_ARRAY:
+            return NEW_VARIANT(CIDataType,
+                               ptr,
+                               perform_implicit_cast_on_array__CIParser(
+                                 self, data_type->array.data_type));
+        default:
+            return ref__CIDataType(data_type);
+    }
+}
+
+CIDataType *
+infer_expr_literal_data_type__CIParser(const CIParser *self,
+                                       const CIExprLiteral *literal)
+{
+    switch (literal->kind) {
+        case CI_EXPR_LITERAL_KIND_BOOL:
+            return bool__PrimaryDataTypes();
+        case CI_EXPR_LITERAL_KIND_CHAR:
+            return char__PrimaryDataTypes();
+        case CI_EXPR_LITERAL_KIND_FLOAT:
+            return float__PrimaryDataTypes();
+        case CI_EXPR_LITERAL_KIND_SIGNED_INT:
+            return int__PrimaryDataTypes();
+        case CI_EXPR_LITERAL_KIND_STRING:
+            return NEW_VARIANT(
+              CIDataType, ptr, NEW(CIDataType, CI_DATA_TYPE_KIND_CHAR));
+        case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:
+            return unsigned_int__PrimaryDataTypes();
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+CIDataType *
+infer_expr_data_type__CIParser(const CIParser *self,
+                               const CIExpr *expr,
+                               const CIScopeID *current_scope_id)
+{
+    switch (expr->kind) {
+        case CI_EXPR_KIND_ALIGNOF:
+            return unsigned_long_long_int__PrimaryDataTypes(); // size_t
+        case CI_EXPR_KIND_ARRAY: {
+            if (expr->array.array->len == 0) {
+                FAILED("cannot infer on array");
+            }
+
+            CIExpr *first_item = get__Vec(expr->array.array, 0);
+            CIDataType *first_item_dt = infer_expr_data_type__CIParser(
+              self, first_item, current_scope_id);
+
+            return NEW_VARIANT(
+              CIDataType,
+              array,
+              NEW_VARIANT(CIDataTypeArray, none, first_item_dt, NULL));
+        }
+        case CI_EXPR_KIND_ARRAY_ACCESS: {
+            CIDataType *array_data_type = infer_expr_data_type__CIParser(
+              self, expr->array_access.array, current_scope_id);
+            CIDataType *ptr_array_data_type =
+              perform_implicit_cast_on_array__CIParser(self, array_data_type);
+
+            switch (ptr_array_data_type->kind) {
+                case CI_DATA_TYPE_KIND_PTR: {
+                    CIDataType *res = ref__CIDataType(ptr_array_data_type->ptr);
+
+                    FREE(CIDataType, ptr_array_data_type);
+                    FREE(CIDataType, array_data_type);
+
+                    return res;
+                }
+                default:
+                    FAILED("expected pointer after implicit cast on array");
+            }
+        }
+        case CI_EXPR_KIND_BINARY: {
+            CIDataType *left_dt = infer_expr_data_type__CIParser(
+              self, expr->binary.left, current_scope_id);
+            CIDataType *right_dt = infer_expr_data_type__CIParser(
+              self, expr->binary.right, current_scope_id);
+            bool left_dt_is_integer =
+              is_integer_data_type__CIParser((CIParser *)self, left_dt);
+            bool left_dt_is_float =
+              is_float_data_type__CIParser((CIParser *)self, left_dt);
+            bool right_dt_is_integer =
+              is_integer_data_type__CIParser((CIParser *)self, right_dt);
+            bool right_dt_is_float =
+              is_float_data_type__CIParser((CIParser *)self, right_dt);
+
+            FREE(CIDataType, left_dt);
+            FREE(CIDataType, right_dt);
+
+            if (left_dt_is_float || right_dt_is_float) {
+                return float__PrimaryDataTypes();
+            } else if (left_dt_is_integer && right_dt_is_integer) {
+                return int__PrimaryDataTypes();
+            }
+
+            FAILED("this kind of operation is not possible");
+        }
+        case CI_EXPR_KIND_CAST:
+            return ref__CIDataType(expr->cast.data_type);
+        case CI_EXPR_KIND_DATA_TYPE:
+            return ref__CIDataType(expr->data_type);
+        case CI_EXPR_KIND_FUNCTION_CALL: {
+            CIDecl *function_decl = search_function__CIResultFile(
+              self->file, expr->function_call.identifier);
+
+            if (function_decl) {
+                return ref__CIDataType(
+                  function_decl->function.return_data_type);
+            }
+
+            return NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
+        }
+        case CI_EXPR_KIND_FUNCTION_CALL_BUILTIN: {
+            CIBuiltin *builtin = get_ref__CIBuiltin();
+            const CIBuiltinFunction *builtin_function =
+              get_builtin_function__CIBuiltin(builtin,
+                                              expr->function_call_builtin.id);
+
+            return ref__CIDataType(builtin_function->return_data_type);
+        }
+        case CI_EXPR_KIND_GROUPING:
+            return infer_expr_data_type__CIParser(
+              self, expr->grouping, current_scope_id);
+        case CI_EXPR_KIND_IDENTIFIER: {
+            CIScope *local_current_scope =
+              get_scope_from_id__CIResultFile(self->file, current_scope_id);
+
+            ASSERT(local_current_scope);
+
+            CIDecl *variable_decl = search_variable__CIResultFile(
+              self->file, local_current_scope, expr->identifier);
+
+            if (variable_decl) {
+                return ref__CIDataType(variable_decl->variable.data_type);
+            }
+
+            FAILED("cannot infer on unknown variable");
+        }
+        case CI_EXPR_KIND_LITERAL:
+            return infer_expr_literal_data_type__CIParser(self, &expr->literal);
+        case CI_EXPR_KIND_NULLPTR:
+            TODO("infer nullptr");
+        case CI_EXPR_KIND_SIZEOF:
+            return unsigned_long_long_int__PrimaryDataTypes(); // size_t
+        case CI_EXPR_KIND_STRUCT_CALL: {
+            Vec *fields = NEW(Vec); // Vec<CIDataType*>*
+
+            for (Usize i = 0; i < expr->struct_call.fields->len; ++i) {
+                CIExpr *field = get__Vec(expr->struct_call.fields, i);
+
+                push__Vec(fields,
+                          infer_expr_data_type__CIParser(
+                            self, field, current_scope_id));
+            }
+
+            return NEW_VARIANT(
+              CIDataType, struct, NEW(CIDataTypeStruct, NULL, NULL, fields));
+        }
+        case CI_EXPR_KIND_TERNARY:
+            // NOTE: We only need to infer one condition branch.
+            return infer_expr_data_type__CIParser(
+              self, expr->ternary.if_, current_scope_id);
+        case CI_EXPR_KIND_UNARY:
+            return infer_expr_data_type__CIParser(
+              self, expr->unary.expr, current_scope_id);
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+const CIDataType *
+resolve_data_type__CIParser(const CIParser *self, const CIDataType *data_type)
+{
+    switch (data_type->kind) {
+        case CI_DATA_TYPE_KIND_TYPEDEF: {
+            CIDecl *typedef_decl = search_typedef__CIResultFile(
+              self->file, data_type->typedef_.name);
+
+            switch (typedef_decl->kind) {
+                case CI_DECL_KIND_TYPEDEF:
+                    return resolve_data_type__CIParser(
+                      self, typedef_decl->typedef_.data_type);
+                case CI_DECL_KIND_TYPEDEF_GEN:
+                    return resolve_data_type__CIParser(
+                      self, typedef_decl->typedef_gen.data_type);
+                default:
+                    UNREACHABLE("expected typedef");
+            }
+        }
+        default:
+            return data_type;
+    }
+}
+
+void
+perform_typecheck__CIParser(const CIParser *self,
+                            const CIDataType *expected_data_type,
+                            const CIDataType *given_data_type)
+{
+    const CIDataType *resolved_expected_data_type =
+      resolve_data_type__CIParser(self, expected_data_type);
+    const CIDataType *resolved_given_data_type =
+      resolve_data_type__CIParser(self, given_data_type);
+
+    if (!eq__CIDataType(resolved_expected_data_type,
+                        resolved_given_data_type)) {
+        FAILED("data types don't match");
+    }
+}
+
+void
+typecheck_variable_decl__CIParser(const CIParser *self,
+                                  const CIDeclVariable *variable,
+                                  struct CITypecheckContext *typecheck_ctx)
+{
+    typecheck_expr__CIParser(
+      self, variable->data_type, variable->expr, typecheck_ctx);
+}
+
+void
+typecheck_decl__CIParser(const CIParser *self,
+                         const CIDecl *decl,
+                         struct CITypecheckContext *typecheck_ctx)
+{
+    switch (decl->kind) {
+        case CI_DECL_KIND_LABEL:
+            break;
+        case CI_DECL_KIND_VARIABLE:
+            typecheck_variable_decl__CIParser(
+              self, &decl->variable, typecheck_ctx);
+
+            break;
+        default:
+            UNREACHABLE("this kind of declaration is not expected or not yet "
+                        "implement in body function");
+    }
+}
+
+void
+typecheck_function_call_expr_params__CIParser(
+  const CIParser *self,
+  const CIDecl *decl_function_call,
+  const Vec *called_params,
+  struct CITypecheckContext *typecheck_ctx)
+{
+    bool is_variadic = false /* TODO: is_variadic */;
+
+    if (!(decl_function_call->function.params->len == called_params->len ||
+          (called_params->len >= decl_function_call->function.params->len - 1 &&
+           is_variadic))) {
+        FAILED("number of params don't matched");
+    }
+
+    for (Usize i = 0;
+         i < (is_variadic ? decl_function_call->function.params->len - 1
+                          : decl_function_call->function.params->len);
+         ++i) {
+        const CIDeclFunctionParam *decl_param =
+          get__Vec(decl_function_call->function.params, i);
+        const CIExpr *called_param = get__Vec(called_params, i);
+
+        typecheck_expr__CIParser(
+          self, decl_param->data_type, called_param, typecheck_ctx);
+    }
+}
+
+void
+typecheck_function_call_expr__CIParser(const CIParser *self,
+                                       const CIExprFunctionCall *function_call,
+                                       struct CITypecheckContext *typecheck_ctx)
+{
+    CIDecl *function_decl =
+      search_function__CIResultFile(self->file, function_call->identifier);
+
+    if (function_decl) {
+        switch (function_decl->kind) {
+            case CI_DECL_KIND_FUNCTION:
+                typecheck_function_call_expr_params__CIParser(
+                  self, function_decl, function_call->params, typecheck_ctx);
+
+                break;
+            case CI_DECL_KIND_FUNCTION_GEN:
+                TODO("typecheck function gen");
+            default:
+                UNREACHABLE("expected function or function gen");
+        }
+
+        return;
+    }
+
+    FAILED("unknown function");
+}
+
+void
+typecheck_function_call_builtin_expr_params__CIParser(
+  const CIParser *self,
+  const CIBuiltinFunction *decl_function_call_builtin,
+  const Vec *called_params,
+  struct CITypecheckContext *typecheck_ctx)
+{
+    if (called_params->len != decl_function_call_builtin->params->len) {
+        FAILED("number of params don't matched");
+    }
+
+    for (Usize i = 0; i < decl_function_call_builtin->params->len; ++i) {
+        const CIDataType *builtin_param =
+          get__Vec(decl_function_call_builtin->params, i);
+        const CIExpr *called_param = get__Vec(called_params, i);
+
+        typecheck_expr__CIParser(
+          self, builtin_param, called_param, typecheck_ctx);
+    }
+}
+
+void
+typecheck_function_call_builtin_expr__CIParser(
+  const CIParser *self,
+  const CIExprFunctionCallBuiltin *function_call_builtin,
+  struct CITypecheckContext *typecheck_ctx)
+{
+    CIBuiltin *builtin = get_ref__CIBuiltin();
+    const CIBuiltinFunction *builtin_function =
+      get_builtin_function__CIBuiltin(builtin, function_call_builtin->id);
+
+    ASSERT(builtin_function);
+
+    typecheck_function_call_builtin_expr_params__CIParser(
+      self, builtin_function, function_call_builtin->params, typecheck_ctx);
+}
+
+void
+typecheck_unary_expr__CIParser(const CIParser *self,
+                               const CIExprUnary *unary,
+                               struct CITypecheckContext *typecheck_ctx)
+{
+    CIDataType *right_dt = infer_expr_data_type__CIParser(
+      self, unary->expr, typecheck_ctx->current_scope_id);
+
+    switch (unary->kind) {
+        case CI_EXPR_UNARY_KIND_PRE_INCREMENT:
+        case CI_EXPR_UNARY_KIND_PRE_DECREMENT:
+        case CI_EXPR_UNARY_KIND_POST_INCREMENT:
+        case CI_EXPR_UNARY_KIND_POST_DECREMENT:
+        case CI_EXPR_UNARY_KIND_POSITIVE:
+        case CI_EXPR_UNARY_KIND_NEGATIVE:
+            if (!(is_integer_data_type__CIParser((CIParser *)self, right_dt) ||
+                  is_float_data_type__CIParser((CIParser *)self, right_dt))) {
+                FAILED("this operation is not allowed for this data type, "
+                       "expected float or integer");
+            }
+
+            break;
+        case CI_EXPR_UNARY_KIND_BIT_NOT:
+        case CI_EXPR_UNARY_KIND_NOT:
+            if (!is_integer_data_type__CIParser((CIParser *)self, right_dt)) {
+                FAILED("this operation is not allowed for this data type, "
+                       "expected integer");
+            }
+
+            break;
+        case CI_EXPR_UNARY_KIND_DEREFERENCE:
+            if (!is_ptr_data_type__CIParser((CIParser *)self, right_dt)) {
+                FAILED("this operation is not allowed for this data type, "
+                       "expected pointer");
+            }
+
+            break;
+        case CI_EXPR_UNARY_KIND_REF:
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+
+    FREE(CIDataType, right_dt);
+}
+
+void
+typecheck_ternary_expr__CIParser(const CIParser *self,
+                                 const CIExprTernary *ternary,
+                                 struct CITypecheckContext *typecheck_ctx)
+{
+    CIDataType *cond_dt = infer_expr_data_type__CIParser(
+      self, ternary->cond, typecheck_ctx->current_scope_id);
+
+    if (!is_integer_data_type__CIParser((CIParser *)self, cond_dt)) {
+        FAILED("expected interger");
+    }
+
+    FREE(CIDataType, cond_dt);
+
+    CIDataType *if_dt = infer_expr_data_type__CIParser(
+      self, ternary->if_, typecheck_ctx->current_scope_id);
+    CIDataType *else_dt = infer_expr_data_type__CIParser(
+      self, ternary->else_, typecheck_ctx->current_scope_id);
+
+    perform_typecheck__CIParser(self, if_dt, else_dt);
+
+    FREE(CIDataType, if_dt);
+    FREE(CIDataType, else_dt);
+}
+
+void
+typecheck_expr__CIParser(const CIParser *self,
+                         const CIDataType *expected_data_type,
+                         const CIExpr *given_expr,
+                         struct CITypecheckContext *typecheck_ctx)
+{
+    ASSERT((typecheck_ctx->called_generic_params &&
+            typecheck_ctx->decl_generic_params) ||
+           (!typecheck_ctx->called_generic_params &&
+            !typecheck_ctx->decl_generic_params));
+
+    // Typecheck expression content.
+    switch (given_expr->kind) {
+        case CI_EXPR_KIND_FUNCTION_CALL:
+            typecheck_function_call_expr__CIParser(
+              self, &given_expr->function_call, typecheck_ctx);
+
+            break;
+        case CI_EXPR_KIND_FUNCTION_CALL_BUILTIN:
+            typecheck_function_call_builtin_expr__CIParser(
+              self, &given_expr->function_call_builtin, typecheck_ctx);
+
+            break;
+        case CI_EXPR_KIND_GROUPING:
+            typecheck_expr__CIParser(
+              self, expected_data_type, given_expr->grouping, typecheck_ctx);
+
+            break;
+        case CI_EXPR_KIND_TERNARY:
+            typecheck_ternary_expr__CIParser(
+              self, &given_expr->ternary, typecheck_ctx);
+
+            break;
+        case CI_EXPR_KIND_UNARY:
+            typecheck_unary_expr__CIParser(
+              self, &given_expr->unary, typecheck_ctx);
+
+            break;
+        default:
+            break;
+    }
+
+    // Check data type of the given expression.
+    bool has_generic = typecheck_ctx->called_generic_params &&
+                       typecheck_ctx->decl_generic_params;
+
+    ASSERT(typecheck_ctx->current_scope_id);
+
+    CIDataType *given_expr_dt = infer_expr_data_type__CIParser(
+      self, given_expr, typecheck_ctx->current_scope_id);
+
+    switch (expected_data_type->kind) {
+        case CI_DATA_TYPE_KIND_GENERIC: {
+            if (has_generic) {
+                Isize generic_params_index = find_generic__CIGenericParams(
+                  typecheck_ctx->decl_generic_params,
+                  expected_data_type->generic);
+
+                if (generic_params_index == -1) {
+                    FAILED("generic params is not found");
+                }
+
+                CIDataType *called_generic_param_dt =
+                  get__Vec(typecheck_ctx->called_generic_params->params,
+                           generic_params_index);
+
+                perform_typecheck__CIParser(
+                  self, expected_data_type, called_generic_param_dt);
+
+                break;
+            }
+
+            FAILED("expected generic param, to use generic data type");
+        }
+        default:
+            if (!eq__CIDataType(expected_data_type, given_expr_dt)) {
+                FAILED("the data type doesn't match");
+            }
+    }
+
+    FREE(CIDataType, given_expr_dt);
+}
+
+void
+typecheck_body_item__CIParser(const CIParser *self,
+                              const CIDeclFunctionItem *item,
+                              struct CITypecheckContext *typecheck_ctx)
+{
+    switch (item->kind) {
+        case CI_DECL_FUNCTION_ITEM_KIND_DECL:
+            typecheck_decl__CIParser(self, item->decl, typecheck_ctx);
+
+            break;
+        case CI_DECL_FUNCTION_ITEM_KIND_EXPR: {
+            CIDataType *void_dt = void__PrimaryDataTypes();
+
+            typecheck_expr__CIParser(self, void_dt, item->expr, typecheck_ctx);
+
+            FREE(CIDataType, void_dt);
+
+            break;
+        }
+        case CI_DECL_FUNCTION_ITEM_KIND_STMT:
+            typecheck_stmt__CIParser(self, &item->stmt, typecheck_ctx);
+
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+void
+typecheck_body__CIParser(const CIParser *self,
+                         const CIDeclFunctionBody *body,
+                         struct CITypecheckContext *typecheck_ctx)
+{
+    if (body) {
+        VecIter body_content_iter = NEW(VecIter, body->content);
+        CIDeclFunctionItem *body_content_item = NULL;
+        const CIScopeID *parent_scope_id = typecheck_ctx->current_scope_id;
+
+        typecheck_ctx->current_scope_id = body->scope_id;
+
+        while ((body_content_item = next__VecIter(&body_content_iter))) {
+            typecheck_body_item__CIParser(
+              self, body_content_item, typecheck_ctx);
+        }
+
+        typecheck_ctx->current_scope_id = parent_scope_id;
+    }
+}
+
+void
+typecheck_case_stmt__CIParser(const CIParser *self,
+                              const CIStmtSwitchCase *case_,
+                              struct CITypecheckContext *typecheck_ctx)
+{
+    if (typecheck_ctx->current_switch.is_present) {
+        CIDataType *expr_data_type = infer_expr_data_type__CIParser(
+          self, case_->value, typecheck_ctx->current_scope_id);
+
+        if (typecheck_ctx->current_switch.is_integer) {
+            if (!is_integer_data_type__CIParser((CIParser *)self,
+                                                expr_data_type)) {
+                FAILED("expected integer compatible data type");
+            }
+
+            FREE(CIDataType, expr_data_type);
+
+            return;
+        } else if (typecheck_ctx->current_switch.is_float) {
+            if (!is_float_data_type__CIParser((CIParser *)self,
+                                              expr_data_type)) {
+                FAILED("expected float compatible data type");
+            }
+
+            FREE(CIDataType, expr_data_type);
+
+            return;
+        }
+
+        UNREACHABLE("is_integer or is_float must be true");
+    }
+
+    // NOTE: We don't do anything because we're outside the switch
+    // statement.
+}
+
+void
+typecheck_do_while_stmt__CIParser(const CIParser *self,
+                                  const CIStmtDoWhile *do_while,
+                                  struct CITypecheckContext *typecheck_ctx)
+{
+    CIDataType *expected_cond_dt = bool__PrimaryDataTypes();
+
+    typecheck_expr__CIParser(
+      self, expected_cond_dt, do_while->cond, typecheck_ctx);
+    typecheck_body__CIParser(self, do_while->body, typecheck_ctx);
+
+    FREE(CIDataType, expected_cond_dt);
+}
+
+void
+typecheck_if_stmt_branch__CIParser(const CIParser *self,
+                                   const CIStmtIfBranch *if_branch,
+                                   struct CITypecheckContext *typecheck_ctx)
+{
+    CIDataType *expected_cond_dt = bool__PrimaryDataTypes();
+
+    typecheck_expr__CIParser(
+      self, expected_cond_dt, if_branch->cond, typecheck_ctx);
+    typecheck_body__CIParser(self, if_branch->body, typecheck_ctx);
+
+    FREE(CIDataType, expected_cond_dt);
+}
+
+void
+typecheck_if_stmt__CIParser(const CIParser *self,
+                            const CIStmtIf *if_,
+                            struct CITypecheckContext *typecheck_ctx)
+{
+    typecheck_if_stmt_branch__CIParser(self, if_->if_, typecheck_ctx);
+
+    if (if_->else_ifs) {
+        for (Usize i = 0; i < if_->else_ifs->len; ++i) {
+            const CIStmtIfBranch *else_if = get__Vec(if_->else_ifs, i);
+
+            typecheck_if_stmt_branch__CIParser(self, else_if, typecheck_ctx);
+        }
+    }
+
+    if (if_->else_) {
+        typecheck_body__CIParser(self, if_->else_, typecheck_ctx);
+    }
+}
+
+void
+typecheck_for_stmt__CIParser(const CIParser *self,
+                             const CIStmtFor *for_,
+                             struct CITypecheckContext *typecheck_ctx)
+{
+    typecheck_body_item__CIParser(self, for_->init_clause, typecheck_ctx);
+
+    {
+        CIDataType *expected_expr1_dt = bool__PrimaryDataTypes();
+
+        typecheck_expr__CIParser(
+          self, expected_expr1_dt, for_->expr1, typecheck_ctx);
+
+        FREE(CIDataType, expected_expr1_dt);
+    }
+
+    {
+        CIDataType *expected_expr2_dt = void__PrimaryDataTypes();
+
+        for (Usize i = 0; i < for_->exprs2->len; ++i) {
+            CIExpr *expr2 = get__Vec(for_->exprs2, i);
+
+            typecheck_expr__CIParser(
+              self, expected_expr2_dt, expr2, typecheck_ctx);
+        }
+
+        FREE(CIDataType, expected_expr2_dt);
+    }
+
+    if (for_->body) {
+        typecheck_body__CIParser(self, for_->body, typecheck_ctx);
+    }
+}
+
+void
+typecheck_return_stmt__CIParser(const CIParser *self,
+                                const CIExpr *return_,
+                                struct CITypecheckContext *typecheck_ctx)
+{
+    const CIDataType *given_return_data_type =
+      get_return_data_type__CIDecl(typecheck_ctx->current_decl);
+
+    if (return_) {
+        typecheck_expr__CIParser(
+          self, given_return_data_type, return_, typecheck_ctx);
+    } else {
+        CIDataType *expected_return_data_type = void__PrimaryDataTypes();
+
+        if (!eq__CIDataType(expected_return_data_type,
+                            given_return_data_type)) {
+            FAILED("expected void return data type");
+        }
+
+        FREE(CIDataType, expected_return_data_type);
+    }
+}
+
+void
+typecheck_switch_stmt__CIParser(const CIParser *self,
+                                const CIStmtSwitch *switch_,
+                                struct CITypecheckContext *typecheck_ctx)
+{
+    CIDataType *expr_data_type = infer_expr_data_type__CIParser(
+      self, switch_->expr, typecheck_ctx->current_scope_id);
+    struct CurrentSwitch parent_current_switch = typecheck_ctx->current_switch;
+
+    typecheck_ctx->current_switch.is_present = true;
+
+    if (is_integer_data_type__CIParser((CIParser *)self, expr_data_type)) {
+        typecheck_ctx->current_switch.is_integer = true;
+    } else if (is_float_data_type__CIParser((CIParser *)self, expr_data_type)) {
+        typecheck_ctx->current_switch.is_float = true;
+    } else {
+        FAILED("expected integer compatible or float compatible data type");
+    }
+
+    typecheck_body__CIParser(self, switch_->body, typecheck_ctx);
+
+    typecheck_ctx->current_switch = parent_current_switch;
+
+    FREE(CIDataType, expr_data_type);
+}
+
+void
+typecheck_while_stmt__CIParser(const CIParser *self,
+                               const CIStmtWhile *while_,
+                               struct CITypecheckContext *typecheck_ctx)
+{
+    CIDataType *expected_cond_dt = bool__PrimaryDataTypes();
+
+    typecheck_expr__CIParser(
+      self, expected_cond_dt, while_->cond, typecheck_ctx);
+    typecheck_body__CIParser(self, while_->body, typecheck_ctx);
+
+    FREE(CIDataType, expected_cond_dt);
+}
+
+void
+typecheck_stmt__CIParser(const CIParser *self,
+                         const CIStmt *given_stmt,
+                         struct CITypecheckContext *typecheck_ctx)
+{
+    ASSERT((typecheck_ctx->called_generic_params &&
+            typecheck_ctx->decl_generic_params) ||
+           (!typecheck_ctx->called_generic_params &&
+            !typecheck_ctx->decl_generic_params));
+
+    switch (given_stmt->kind) {
+        case CI_STMT_KIND_BLOCK:
+            return typecheck_body__CIParser(
+              self, given_stmt->block.body, typecheck_ctx);
+        case CI_STMT_KIND_BREAK:
+            break;
+        case CI_STMT_KIND_CASE:
+            return typecheck_case_stmt__CIParser(
+              self, &given_stmt->case_, typecheck_ctx);
+        case CI_STMT_KIND_CONTINUE:
+        case CI_STMT_KIND_DEFAULT:
+            break;
+        case CI_STMT_KIND_DO_WHILE:
+            return typecheck_do_while_stmt__CIParser(
+              self, &given_stmt->do_while, typecheck_ctx);
+        case CI_STMT_KIND_FOR:
+            return typecheck_for_stmt__CIParser(
+              self, &given_stmt->for_, typecheck_ctx);
+        case CI_STMT_KIND_GOTO:
+            TODO("typecheck goto");
+        case CI_STMT_KIND_IF:
+            return typecheck_if_stmt__CIParser(
+              self, &given_stmt->if_, typecheck_ctx);
+        case CI_STMT_KIND_RETURN:
+            return typecheck_return_stmt__CIParser(
+              self, given_stmt->return_, typecheck_ctx);
+        case CI_STMT_KIND_SWITCH:
+            return typecheck_switch_stmt__CIParser(
+              self, &given_stmt->switch_, typecheck_ctx);
+        case CI_STMT_KIND_WHILE:
+            return typecheck_while_stmt__CIParser(
+              self, &given_stmt->while_, typecheck_ctx);
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+void
+typecheck_function__CIParser(const CIParser *self, const CIDecl *function_decl)
+{
+    struct CITypecheckContext typecheck_ctx =
+      NEW(CITypecheckContext, function_decl, NULL, NULL);
+
+    typecheck_body__CIParser(
+      self, function_decl->function.body, &typecheck_ctx);
+}
+
 CIDeclFunctionItem *
 parse_do_while_stmt__CIParser(CIParser *self, bool in_switch)
 {
-    Vec *body = NULL;
+    CIDeclFunctionBody *body = NULL;
 
     switch (self->current_token->kind) {
         case CI_TOKEN_KIND_LBRACE:
             next_token__CIParser(self);
-            body = parse_function_body__CIParser(self, true, in_switch);
+            body = parse_function_block__CIParser(self, true, in_switch);
 
             break;
         default: {
             CIDeclFunctionItem *item =
               parse_function_body_item__CIParser(self, true, in_switch);
+            CIScope *scope = add_scope__CIResultFile(
+              self->file, current_scope->scope_id, true);
+
+            body = NEW(CIDeclFunctionBody, scope->scope_id);
 
             if (item) {
-                body = init__Vec(1, item);
-            } else {
-                body = NEW(Vec);
+                add__CIDeclFunctionBody(body, item);
             }
         }
     }
@@ -6626,7 +7660,7 @@ parse_for_stmt__CIParser(CIParser *self, bool in_switch)
     CIDeclFunctionItem *init_clause = NULL;
     CIExpr *expr1 = NULL;
     Vec *exprs2 = NULL;
-    Vec *body = NULL;
+    CIDeclFunctionBody *body = NULL;
 
     expect__CIParser(self, CI_TOKEN_KIND_LPAREN, true);
 
@@ -6680,17 +7714,19 @@ parse_for_stmt__CIParser(CIParser *self, bool in_switch)
     switch (self->current_token->kind) {
         case CI_TOKEN_KIND_LBRACE:
             next_token__CIParser(self);
-            body = parse_function_body__CIParser(self, true, in_switch);
+            body = parse_function_block__CIParser(self, true, in_switch);
 
             break;
         default: {
             CIDeclFunctionItem *item =
               parse_function_body_item__CIParser(self, true, in_switch);
+            CIScope *scope = add_scope__CIResultFile(
+              self->file, current_scope->scope_id, true);
+
+            body = NEW(CIDeclFunctionBody, scope->scope_id);
 
             if (item) {
-                body = init__Vec(1, item);
-            } else {
-                body = NEW(Vec);
+                add__CIDeclFunctionBody(body, item);
             }
         }
     }
@@ -6704,7 +7740,7 @@ parse_if_branch__CIParser(CIParser *self, bool in_loop, bool in_switch)
     expect__CIParser(self, CI_TOKEN_KIND_LPAREN, true);
 
     CIExpr *cond = parse_expr__CIParser(self);
-    Vec *body = NULL;
+    CIDeclFunctionBody *body = NULL;
 
     if (!cond) {
         FAILED("expected if condition");
@@ -6715,17 +7751,19 @@ parse_if_branch__CIParser(CIParser *self, bool in_loop, bool in_switch)
     switch (self->current_token->kind) {
         case CI_TOKEN_KIND_LBRACE:
             next_token__CIParser(self);
-            body = parse_function_body__CIParser(self, in_loop, in_switch);
+            body = parse_function_block__CIParser(self, in_loop, in_switch);
 
             break;
         default: {
             CIDeclFunctionItem *item =
               parse_function_body_item__CIParser(self, in_loop, in_switch);
+            CIScope *scope = add_scope__CIResultFile(
+              self->file, current_scope->scope_id, true);
+
+            body = NEW(CIDeclFunctionBody, scope->scope_id);
 
             if (item) {
-                body = init__Vec(1, item);
-            } else {
-                body = NEW(Vec);
+                add__CIDeclFunctionBody(body, item);
             }
         }
     }
@@ -6738,7 +7776,7 @@ parse_if_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
 {
     CIStmtIfBranch *if_ = parse_if_branch__CIParser(self, in_loop, in_switch);
     Vec *else_ifs = NULL;
-    Vec *else_ = NULL;
+    CIDeclFunctionBody *else_ = NULL;
 
     if (!if_) {
         return NULL;
@@ -6764,15 +7802,18 @@ parse_if_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
             next_token__CIParser(self);
 
             if (expect__CIParser(self, CI_TOKEN_KIND_LBRACE, false)) {
-                else_ = parse_function_body__CIParser(self, in_loop, in_switch);
+                else_ =
+                  parse_function_block__CIParser(self, in_loop, in_switch);
             } else {
                 CIDeclFunctionItem *item =
                   parse_function_body_item__CIParser(self, in_loop, false);
+                CIScope *scope = add_scope__CIResultFile(
+                  self->file, current_scope->scope_id, true);
+
+                else_ = NEW(CIDeclFunctionBody, scope->scope_id);
 
                 if (item) {
-                    else_ = init__Vec(1, item);
-                } else {
-                    else_ = NEW(Vec);
+                    add__CIDeclFunctionBody(else_, item);
                 }
             }
 
@@ -6793,7 +7834,7 @@ parse_while_stmt__CIParser(CIParser *self, bool in_switch)
     expect__CIParser(self, CI_TOKEN_KIND_LPAREN, true);
 
     CIExpr *cond = parse_expr__CIParser(self);
-    Vec *body = NULL;
+    CIDeclFunctionBody *body = NULL;
 
     if (!cond) {
         return NULL;
@@ -6804,7 +7845,7 @@ parse_while_stmt__CIParser(CIParser *self, bool in_switch)
     switch (self->current_token->kind) {
         case CI_TOKEN_KIND_LBRACE:
             next_token__CIParser(self);
-            body = parse_function_body__CIParser(self, true, in_switch);
+            body = parse_function_block__CIParser(self, true, in_switch);
 
             break;
         default: {
@@ -6812,9 +7853,12 @@ parse_while_stmt__CIParser(CIParser *self, bool in_switch)
               parse_function_body_item__CIParser(self, true, in_switch);
 
             if (item) {
-                body = NEW(Vec);
+                CIScope *scope = add_scope__CIResultFile(
+                  self->file, current_scope->scope_id, true);
 
-                push__Vec(body, item);
+                body = NEW(CIDeclFunctionBody, scope->scope_id);
+
+                add__CIDeclFunctionBody(body, item);
             }
         }
     }
@@ -6838,23 +7882,25 @@ parse_switch_stmt__CIParser(CIParser *self, bool in_loop)
 
     expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
 
-    Vec *body = NULL;
+    CIDeclFunctionBody *body = NULL;
 
     switch (self->current_token->kind) {
         case CI_TOKEN_KIND_LBRACE:
             next_token__CIParser(self);
 
-            body = parse_function_body__CIParser(self, in_loop, true);
+            body = parse_function_block__CIParser(self, in_loop, true);
 
             break;
         default: {
             CIDeclFunctionItem *item =
               parse_function_body_item__CIParser(self, in_loop, true);
+            CIScope *scope = add_scope__CIResultFile(
+              self->file, current_scope->scope_id, true);
+
+            body = NEW(CIDeclFunctionBody, scope->scope_id);
 
             if (item) {
-                body = init__Vec(1, item);
-            } else {
-                body = NEW(Vec);
+                add__CIDeclFunctionBody(body, item);
             }
         }
     }
@@ -6868,7 +7914,8 @@ parse_switch_stmt__CIParser(CIParser *self, bool in_loop)
 CIDeclFunctionItem *
 parse_block_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
 {
-    Vec *body = parse_function_body__CIParser(self, in_loop, in_switch);
+    CIDeclFunctionBody *body =
+      parse_function_block__CIParser(self, in_loop, in_switch);
 
     return NEW_VARIANT(CIDeclFunctionItem,
                        stmt,
@@ -6933,31 +7980,32 @@ parse_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
                                stmt,
                                NEW_VARIANT(CIStmt, goto, label_identifier));
         }
-        case CI_TOKEN_KIND_IDENTIFIER: {
-            String *identifier = self->previous_token->identifier;
-
-            ASSERT(expect__CIParser(self, CI_TOKEN_KIND_COLON, false));
-
-            return NEW_VARIANT(
-              CIDeclFunctionItem, stmt, NEW_VARIANT(CIStmt, label, identifier));
-        }
         case CI_TOKEN_KIND_KEYWORD_IF:
             return parse_if_stmt__CIParser(self, in_loop, in_switch);
         case CI_TOKEN_KIND_KEYWORD_RETURN: {
-            ENABLE_ALLOW_INITIALIZATION();
+            switch (self->current_token->kind) {
+                case CI_TOKEN_KIND_SEMICOLON:
+                    return NEW_VARIANT(CIDeclFunctionItem,
+                                       stmt,
+                                       NEW_VARIANT(CIStmt, return, NULL));
+                default: {
+                    ENABLE_ALLOW_INITIALIZATION();
 
-            CIExpr *expr = parse_expr__CIParser(self);
+                    CIExpr *expr = parse_expr__CIParser(self);
 
-            DISABLE_ALLOW_INITIALIZATION();
+                    DISABLE_ALLOW_INITIALIZATION();
 
-            if (expr) {
-                expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
+                    if (expr) {
+                        expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
 
-                return NEW_VARIANT(
-                  CIDeclFunctionItem, stmt, NEW_VARIANT(CIStmt, return, expr));
+                        return NEW_VARIANT(CIDeclFunctionItem,
+                                           stmt,
+                                           NEW_VARIANT(CIStmt, return, expr));
+                    }
+
+                    FAILED("expected expression");
+                }
             }
-
-            FAILED("expected expression");
         }
         case CI_TOKEN_KIND_KEYWORD_SWITCH:
             return parse_switch_stmt__CIParser(self, in_loop);
@@ -6978,7 +8026,7 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
             CIToken *peeked = peek_token__CIParser(self, 1);
 
             if (peeked && peeked->kind == CI_TOKEN_KIND_COLON) {
-                goto parse_stmt;
+                goto parse_decl;
             }
 
             goto default_case;
@@ -6994,8 +8042,7 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
         case CI_TOKEN_KIND_KEYWORD_RETURN:
         case CI_TOKEN_KIND_KEYWORD_SWITCH:
         case CI_TOKEN_KIND_KEYWORD_WHILE:
-        case CI_TOKEN_KIND_LBRACE:
-        parse_stmt: {
+        case CI_TOKEN_KIND_LBRACE: {
             DISABLE_IN_LABEL();
 
             return parse_stmt__CIParser(self, in_loop, in_switch);
@@ -7007,6 +8054,7 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
         default:
         default_case: {
             if (is_data_type__CIParser(self)) {
+            parse_decl: {
                 CIDecl *decl = parse_decl__CIParser(self);
 
                 DISABLE_IN_LABEL();
@@ -7016,6 +8064,7 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
                 } else if (!data_type_as_expression) {
                     return NULL;
                 }
+            }
             }
 
             DISABLE_IN_LABEL();
@@ -7030,18 +8079,23 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
     }
 }
 
-Vec *
-parse_function_body__CIParser(CIParser *self, bool in_loop, bool in_switch)
+CIDeclFunctionBody *
+parse_function_body_base__CIParser(CIParser *self,
+                                   bool in_loop,
+                                   bool in_switch,
+                                   CIScope **parent_function_scope)
 {
     ASSERT(current_scope);
 
     // Save parent values.
     CIScope *parent_scope = current_scope;
-    Vec *parent_body = current_body;
+    CIDeclFunctionBody *parent_body = current_body;
 
     current_scope =
-      add_scope__CIResultFile(self->file, current_scope->scope_id, true);
-    current_body = NEW(Vec);
+      parent_function_scope
+        ? *parent_function_scope
+        : add_scope__CIResultFile(self->file, current_scope->scope_id, true);
+    current_body = NEW(CIDeclFunctionBody, current_scope->scope_id);
 
     while (self->current_token->kind != CI_TOKEN_KIND_RBRACE &&
            self->current_token->kind != CI_TOKEN_KIND_EOF) {
@@ -7049,11 +8103,11 @@ parse_function_body__CIParser(CIParser *self, bool in_loop, bool in_switch)
           parse_function_body_item__CIParser(self, in_loop, in_switch);
 
         if (item) {
-            push__Vec(current_body, item);
+            add__CIDeclFunctionBody(current_body, item);
         }
     }
 
-    Vec *res_body = current_body;
+    CIDeclFunctionBody *res_body = current_body;
 
     // Restore parent values as current.
     current_scope = parent_scope;
@@ -7066,6 +8120,22 @@ parse_function_body__CIParser(CIParser *self, bool in_loop, bool in_switch)
     return res_body;
 }
 
+CIDeclFunctionBody *
+parse_function_body__CIParser(CIParser *self,
+                              bool in_loop,
+                              bool in_switch,
+                              CIScope **parent_function_scope)
+{
+    return parse_function_body_base__CIParser(
+      self, in_loop, in_switch, parent_function_scope);
+}
+
+CIDeclFunctionBody *
+parse_function_block__CIParser(CIParser *self, bool in_loop, bool in_switch)
+{
+    return parse_function_body_base__CIParser(self, in_loop, in_switch, NULL);
+}
+
 CIDecl *
 parse_function__CIParser(CIParser *self,
                          int storage_class_flag,
@@ -7076,24 +8146,29 @@ parse_function__CIParser(CIParser *self,
 {
     init_function_to_visit_waiting_list__CIParser(self, name);
 
-    Vec *params =
-      parse_function_params__CIParser(self); // Vec<CIDeclFunctionParam*>*?
+    CIScope *parent_function_scope =
+      add_scope__CIResultFile(self->file, current_scope->scope_id, true);
+    Vec *params = parse_function_params__CIParser(
+      self, parent_function_scope); // Vec<CIDeclFunctionParam*>*?
+    CIDecl *res = NULL;
 
     switch (self->current_token->kind) {
         case CI_TOKEN_KIND_SEMICOLON:
             next_token__CIParser(self);
 
-            return NEW_VARIANT(CIDecl,
-                               function,
-                               storage_class_flag,
-                               true,
-                               NEW(CIDeclFunction,
-                                   name,
-                                   return_data_type,
-                                   generic_params,
-                                   params,
-                                   NULL,
-                                   attributes));
+            res = NEW_VARIANT(CIDecl,
+                              function,
+                              storage_class_flag,
+                              true,
+                              NEW(CIDeclFunction,
+                                  name,
+                                  return_data_type,
+                                  generic_params,
+                                  params,
+                                  NULL,
+                                  attributes));
+
+            break;
         case CI_TOKEN_KIND_LBRACE:
             if (is__CIBuiltinFunction(name)) {
                 FAILED("cannot redefine a builtin function");
@@ -7103,24 +8178,31 @@ parse_function__CIParser(CIParser *self,
 
             SET_IN_FUNCTION_BODY();
 
-            Vec *body = parse_function_body__CIParser(self, false, false);
+            CIDeclFunctionBody *body = parse_function_body__CIParser(
+              self, false, false, &parent_function_scope);
 
             UNSET_IN_FUNCTION_BODY();
 
-            return NEW_VARIANT(CIDecl,
-                               function,
-                               storage_class_flag,
-                               false,
-                               NEW(CIDeclFunction,
-                                   name,
-                                   return_data_type,
-                                   generic_params,
-                                   params,
-                                   body,
-                                   attributes));
+            res = NEW_VARIANT(CIDecl,
+                              function,
+                              storage_class_flag,
+                              false,
+                              NEW(CIDeclFunction,
+                                  name,
+                                  return_data_type,
+                                  generic_params,
+                                  params,
+                                  body,
+                                  attributes));
+
+            break;
         default:
             FAILED("expected `;` or `{`");
     }
+
+    typecheck_function__CIParser(self, res);
+
+    return res;
 }
 
 Vec *
@@ -7370,8 +8452,9 @@ parse_variable_list__CIParser(CIParser *self,
             if (in_function_body) {
                 ASSERT(current_body);
 
-                push__Vec(current_body,
-                          NEW_VARIANT(CIDeclFunctionItem, decl, current_var));
+                add__CIDeclFunctionBody(
+                  current_body,
+                  NEW_VARIANT(CIDeclFunctionItem, decl, current_var));
             }
         }
 
@@ -7600,8 +8683,40 @@ resolve_preprocessor__CIParser(CIParser *self, CIToken *next_token)
 }
 
 CIDecl *
+parse_label__CIParser(CIParser *self)
+{
+    if (in_function_body) {
+        switch (self->current_token->kind) {
+            case CI_TOKEN_KIND_IDENTIFIER: {
+                String *identifier = self->current_token->identifier;
+                CIToken *peeked_token = peek_token__CIParser(self, 1);
+
+                if (peeked_token && peeked_token->kind == CI_TOKEN_KIND_COLON) {
+                    jump__CIParser(self, 2);
+
+                    return NEW_VARIANT(
+                      CIDecl, label, NEW(CIDeclLabel, identifier));
+                }
+
+                return NULL;
+            }
+            default:
+                return NULL;
+        }
+    }
+
+    return NULL;
+}
+
+CIDecl *
 parse_decl__CIParser(CIParser *self)
 {
+    CIDecl *res = NULL;
+
+    if ((res = parse_label__CIParser(self))) {
+        goto exit;
+    }
+
     Vec *attributes = NULL;
 
     parse_attributes__CIParser(self, &attributes);
@@ -7609,8 +8724,6 @@ parse_decl__CIParser(CIParser *self)
     storage_class_flag = CI_STORAGE_CLASS_NONE;
 
     parse_storage_class_specifiers__CIParser(self, &storage_class_flag);
-
-    CIDecl *res = NULL;
 
     // Parse typedef declaration.
     if (storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
@@ -7732,6 +8845,18 @@ add_decl_to_scope__CIParser(CIParser *self, CIDecl **decl_ref, bool must_free)
                 // See `add_function__CIResultFile` prototype.
                 if (decl != res) {
                     FAILED("function is already defined");
+
+                    goto free;
+                }
+            }
+
+            goto exit;
+        case CI_DECL_KIND_LABEL:
+            if ((res = (CIDecl *)add_label__CIResultFile(
+                   self->file, current_scope, ref__CIDecl(decl)))) {
+                // See `add_label__CIResultFile` prototype.
+                if (decl != res) {
+                    FAILED("label is already defined");
 
                     goto free;
                 }

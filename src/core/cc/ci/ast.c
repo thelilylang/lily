@@ -49,6 +49,18 @@
 #define EXPR_PRECEDENCE_LEVEL_13 40
 #define EXPR_PRECEDENCE_LEVEL_14 35
 
+static inline bool
+has_heap__CIDataTypeContext(int self);
+
+static inline bool
+has_non_null__CIDataTypeContext(int self);
+
+static inline bool
+has_stack__CIDataTypeContext(int self);
+
+static inline bool
+has_trace__CIDataTypeContext(int self);
+
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_ARRAY).
 static VARIANT_DESTRUCTOR(CIDataType, array, CIDataType *self);
 
@@ -96,6 +108,9 @@ static VARIANT_DESTRUCTOR(CIDecl, function, CIDecl *self);
 
 /// @brief Free CIDecl type (CI_DECL_KIND_FUNCTION_GEN).
 static VARIANT_DESTRUCTOR(CIDecl, function_gen, CIDecl *self);
+
+/// @brief Free CIDecl type (CI_DECL_KIND_LABEL).
+static inline VARIANT_DESTRUCTOR(CIDecl, label, CIDecl *self);
 
 /// @brief Free CIDecl type (CI_DECL_KIND_STRUCT).
 static VARIANT_DESTRUCTOR(CIDecl, struct, CIDecl *self);
@@ -182,7 +197,7 @@ static inline VARIANT_DESTRUCTOR(CIStmt, for, const CIStmt *self);
 static inline VARIANT_DESTRUCTOR(CIStmt, if, const CIStmt *self);
 
 /// @brief Free CIStmt type (CI_STMT_KIND_RETURN).
-static inline VARIANT_DESTRUCTOR(CIStmt, return, const CIStmt *self);
+static VARIANT_DESTRUCTOR(CIStmt, return, const CIStmt *self);
 
 /// @brief Free CIStmt type (CI_STMT_KIND_SWITCH).
 static inline VARIANT_DESTRUCTOR(CIStmt, switch, const CIStmt *self);
@@ -257,6 +272,21 @@ CONSTRUCTOR(CIFunctionID *, CIFunctionID, CIFileID file_id, Usize id)
     return self;
 }
 
+CONSTRUCTOR(CILabelID *,
+            CILabelID,
+            CIFileID file_id,
+            CIScopeID scope_id,
+            Usize id)
+{
+    CILabelID *self = lily_malloc(sizeof(CILabelID));
+
+    self->file_id = file_id;
+    self->scope_id = scope_id;
+    self->id = id;
+
+    return self;
+}
+
 CONSTRUCTOR(CIUnionID *, CIUnionID, CIFileID file_id, Usize id)
 {
     CIUnionID *self = lily_malloc(sizeof(CIUnionID));
@@ -291,6 +321,7 @@ CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, Usize id, bool is_block)
     self->is_block = is_block;
     self->enums = NEW(HashMap);
     self->functions = NEW(HashMap);
+    self->labels = NEW(HashMap);
     self->structs = NEW(HashMap);
     self->typedefs = NEW(HashMap);
     self->unions = NEW(HashMap);
@@ -308,6 +339,9 @@ DESTRUCTOR(CIScope, CIScope *self)
 
     FREE_HASHMAP_VALUES(self->functions, CIFunctionID);
     FREE(HashMap, self->functions);
+
+    FREE_HASHMAP_VALUES(self->labels, CILabelID);
+    FREE(HashMap, self->labels);
 
     FREE_HASHMAP_VALUES(self->structs, CIStructID);
     FREE(HashMap, self->structs);
@@ -373,6 +407,27 @@ clone__CIGenericParams(const CIGenericParams *self)
     return NEW(CIGenericParams, params);
 }
 
+Isize
+find_generic__CIGenericParams(const CIGenericParams *self, String *name)
+{
+    for (Usize i = 0; i < self->params->len; ++i) {
+        CIDataType *param = get__Vec(self->params, i);
+
+        switch (param->kind) {
+            case CI_DATA_TYPE_KIND_GENERIC:
+                if (!strcmp(param->generic->buffer, name->buffer)) {
+                    return i;
+                }
+
+                break;
+            default:
+                break;
+        }
+    }
+
+    return -1;
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIGenericParams, const CIGenericParams *self)
@@ -397,6 +452,99 @@ DESTRUCTOR(CIGenericParams, CIGenericParams *self)
     FREE(Vec, self->params);
     lily_free(self);
 }
+
+bool
+has_heap__CIDataTypeContext(int self)
+{
+    return self & CI_DATA_TYPE_CONTEXT_HEAP;
+}
+
+bool
+has_non_null__CIDataTypeContext(int self)
+{
+    return self & CI_DATA_TYPE_CONTEXT_NON_NULL;
+}
+
+bool
+has_stack__CIDataTypeContext(int self)
+{
+    return self & CI_DATA_TYPE_CONTEXT_STACK;
+}
+
+bool
+has_trace__CIDataTypeContext(int self)
+{
+    return self & CI_DATA_TYPE_CONTEXT_TRACE;
+}
+
+bool
+is_compatible__CIDataTypeContext(int self, int other)
+{
+#define HAS_HEAP2() \
+    (has_heap__CIDataTypeContext(self) && has_heap__CIDataTypeContext(other))
+#define HAS_NON_NULL2()                       \
+    (has_non_null__CIDataTypeContext(self) && \
+     has_non_null__CIDataTypeContext(other))
+#define HAS_STACK2() \
+    (has_stack__CIDataTypeContext(self) && has_stack__CIDataTypeContext(other))
+#define HAS_TRACE2() \
+    (has_trace__CIDataTypeContext(self) && has_trace__CIDataTypeContext(other))
+
+    // Incompatible (vice-versa):
+    //
+    // !heap v. !stack
+    // !non_null v. <nothing>
+    // !trace v. <nothing>
+    // !non_null v. <nothing>
+    // !heap v. <nothing>
+    // !stack v. <nothing>
+
+    if (HAS_HEAP2() && HAS_STACK2()) {
+        return false;
+    } else if (HAS_NON_NULL2() && !HAS_NON_NULL2()) {
+        return false;
+    } else if (!HAS_TRACE2()) {
+        return false;
+    }
+
+    return true;
+
+#undef HAS_HEAP2
+#undef HAS_NON_NULL2
+#undef HAS_STACK2
+#undef HAS_TRACE2
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDataTypeContext, int self)
+{
+#define CTXS_LEN 5
+    int ctxs[CTXS_LEN] = { CI_DATA_TYPE_CONTEXT_NONE,
+                           CI_DATA_TYPE_CONTEXT_HEAP,
+                           CI_DATA_TYPE_CONTEXT_NON_NULL,
+                           CI_DATA_TYPE_CONTEXT_STACK,
+                           CI_DATA_TYPE_CONTEXT_TRACE };
+    char *ctxs_s[CTXS_LEN] = {
+        "CI_DATA_TYPE_CONTEXT_NONE",     "CI_DATA_TYPE_CONTEXT_HEAP",
+        "CI_DATA_TYPE_CONTEXT_NON_NULL", "CI_DATA_TYPE_CONTEXT_STACK",
+        "CI_DATA_TYPE_CONTEXT_TRACE",
+    };
+
+    String *res = NEW(String);
+
+    for (Usize i = 0; i < CTXS_LEN; ++i) {
+        if (self & ctxs[i]) {
+            push_str__String(res, ctxs_s[i]);
+            push__String(res, ' ');
+        }
+    }
+
+#undef CTXS_LEN
+
+    return res;
+}
+#endif
 
 #ifdef ENV_DEBUG
 char *
@@ -808,19 +956,23 @@ CONSTRUCTOR(CIDataType *, CIDataType, enum CIDataTypeKind kind)
 CIDataType *
 clone__CIDataType(const CIDataType *self)
 {
+    CIDataType *res = NULL;
+
     switch (self->kind) {
         case CI_DATA_TYPE_KIND_ARRAY:
             switch (self->array.kind) {
                 case CI_DATA_TYPE_ARRAY_KIND_NONE:
-                    return NEW_VARIANT(
+                    res = NEW_VARIANT(
                       CIDataType,
                       array,
                       NEW_VARIANT(CIDataTypeArray,
                                   none,
                                   clone__CIDataType(self->array.data_type),
                                   self->array.name));
+
+                    break;
                 case CI_DATA_TYPE_ARRAY_KIND_SIZED:
-                    return NEW_VARIANT(
+                    res = NEW_VARIANT(
                       CIDataType,
                       array,
                       NEW_VARIANT(CIDataTypeArray,
@@ -828,16 +980,26 @@ clone__CIDataType(const CIDataType *self)
                                   clone__CIDataType(self->array.data_type),
                                   self->array.name,
                                   self->array.size));
+
+                    break;
                 default:
                     UNREACHABLE("unknown variant");
             }
+
+            break;
         case CI_DATA_TYPE_KIND__ATOMIC:
-            return NEW_VARIANT(
+            res = NEW_VARIANT(
               CIDataType, _atomic, clone__CIDataType(self->_atomic));
+
+            break;
         case CI_DATA_TYPE_KIND_BUILTIN:
-            return NEW_VARIANT(CIDataType, builtin, self->builtin);
+            res = NEW_VARIANT(CIDataType, builtin, self->builtin);
+
+            break;
         case CI_DATA_TYPE_KIND_ENUM:
-            return NEW_VARIANT(CIDataType, enum, self->enum_);
+            res = NEW_VARIANT(CIDataType, enum, self->enum_);
+
+            break;
         case CI_DATA_TYPE_KIND_FUNCTION: {
             Vec *params = NEW(Vec); // Vec<CIDataType*>*
 
@@ -847,7 +1009,7 @@ clone__CIDataType(const CIDataType *self)
                   clone__CIDataType(get__Vec(self->function.params, i)));
             }
 
-            return NEW_VARIANT(
+            res = NEW_VARIANT(
               CIDataType,
               function,
               NEW(CIDataTypeFunction,
@@ -855,18 +1017,28 @@ clone__CIDataType(const CIDataType *self)
                   params,
                   clone__CIDataType(self->function.return_data_type),
                   clone__CIDataType(self->function.function_data_type)));
+
+            break;
         }
         case CI_DATA_TYPE_KIND_GENERIC:
-            return NEW_VARIANT(CIDataType, generic, self->generic);
+            res = NEW_VARIANT(CIDataType, generic, self->generic);
+
+            break;
         case CI_DATA_TYPE_KIND_PRE_CONST:
-            return NEW_VARIANT(
+            res = NEW_VARIANT(
               CIDataType, pre_const, clone__CIDataType(self->pre_const));
+
+            break;
         case CI_DATA_TYPE_KIND_POST_CONST:
-            return NEW_VARIANT(
+            res = NEW_VARIANT(
               CIDataType, pre_const, clone__CIDataType(self->post_const));
+
+            break;
         case CI_DATA_TYPE_KIND_PTR:
-            return NEW_VARIANT(
+            res = NEW_VARIANT(
               CIDataType, ptr, self->ptr ? clone__CIDataType(self->ptr) : NULL);
+
+            break;
         case CI_DATA_TYPE_KIND_STRUCT: {
             Vec *fields = NULL;
 
@@ -880,7 +1052,7 @@ clone__CIDataType(const CIDataType *self)
                 }
             }
 
-            return NEW_VARIANT(
+            res = NEW_VARIANT(
               CIDataType,
               struct,
               NEW(CIDataTypeStruct,
@@ -889,9 +1061,11 @@ clone__CIDataType(const CIDataType *self)
                     ? clone__CIGenericParams(self->struct_.generic_params)
                     : NULL,
                   fields));
+
+            break;
         }
         case CI_DATA_TYPE_KIND_TYPEDEF:
-            return NEW_VARIANT(
+            res = NEW_VARIANT(
               CIDataType,
               typedef,
               NEW(CIDataTypeTypedef,
@@ -899,6 +1073,8 @@ clone__CIDataType(const CIDataType *self)
                   self->typedef_.generic_params
                     ? clone__CIGenericParams(self->typedef_.generic_params)
                     : NULL));
+
+            break;
         case CI_DATA_TYPE_KIND_UNION: {
             Vec *fields = NULL;
 
@@ -912,7 +1088,7 @@ clone__CIDataType(const CIDataType *self)
                 }
             }
 
-            return NEW_VARIANT(
+            res = NEW_VARIANT(
               CIDataType,
               union,
               NEW(CIDataTypeUnion,
@@ -921,10 +1097,16 @@ clone__CIDataType(const CIDataType *self)
                     ? clone__CIGenericParams(self->union_.generic_params)
                     : NULL,
                   fields));
+
+            break;
         }
         default:
-            return NEW(CIDataType, self->kind);
+            res = NEW(CIDataType, self->kind);
     }
+
+    set_context__CIDataType(res, self->ctx);
+
+    return res;
 }
 
 void
@@ -1049,7 +1231,7 @@ serialize_vec__CIDataType(const Vec *data_types, String *buffer)
 bool
 eq__CIDataType(const CIDataType *self, const CIDataType *other)
 {
-    if (self->kind != other->kind) {
+    if (self->kind != other->kind || self->ctx != other->ctx) {
         return false;
     }
 
@@ -1149,6 +1331,28 @@ is_integer__CIDataType(const CIDataType *self)
     }
 }
 
+bool
+is_float__CIDataType(const CIDataType *self)
+{
+    switch (self->kind) {
+        case CI_DATA_TYPE_KIND__DECIMAL128:
+        case CI_DATA_TYPE_KIND__DECIMAL32:
+        case CI_DATA_TYPE_KIND__DECIMAL64:
+        case CI_DATA_TYPE_KIND_DOUBLE:
+        case CI_DATA_TYPE_KIND_DOUBLE__COMPLEX:
+        case CI_DATA_TYPE_KIND_DOUBLE__IMAGINARY:
+        case CI_DATA_TYPE_KIND_FLOAT:
+        case CI_DATA_TYPE_KIND_FLOAT__COMPLEX:
+        case CI_DATA_TYPE_KIND_FLOAT__IMAGINARY:
+        case CI_DATA_TYPE_KIND_LONG_DOUBLE:
+        case CI_DATA_TYPE_KIND_LONG_DOUBLE__COMPLEX:
+        case CI_DATA_TYPE_KIND_LONG_DOUBLE__IMAGINARY:
+            return true;
+        default:
+            return false;
+    }
+}
+
 CIDataType *
 get_ptr__CIDataType(const CIDataType *self)
 {
@@ -1203,64 +1407,82 @@ IMPL_FOR_DEBUG(to_string, CIDataType, const CIDataType *self)
     switch (self->kind) {
         case CI_DATA_TYPE_KIND_ARRAY:
             return format__String(
-              "CIDataType{{ kind = {s}, array = {Sr} }",
+              "CIDataType{{ kind = {s}, ctx = {Sr}, array = {Sr} }",
               to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx),
               to_string__Debug__CIDataTypeArray(&self->array));
         case CI_DATA_TYPE_KIND__ATOMIC:
-            return format__String("CIDataType{{ kind = {s}, _atomic = {Sr} }",
-                                  to_string__Debug__CIDataTypeKind(self->kind),
-                                  to_string__Debug__CIDataType(self->_atomic));
+            return format__String(
+              "CIDataType{{ kind = {s}, ctx = {Sr}, _atomic = {Sr} }",
+              to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx),
+              to_string__Debug__CIDataType(self->_atomic));
         case CI_DATA_TYPE_KIND_BUILTIN:
-            return format__String("CIDataType{{ kind = {s}, builtin = {zu} }",
-                                  to_string__Debug__CIDataTypeKind(self->kind),
-                                  self->builtin);
+            return format__String(
+              "CIDataType{{ kind = {s}, ctx = {Sr}, builtin = {zu} }",
+              to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx),
+              self->builtin);
         case CI_DATA_TYPE_KIND_ENUM:
-            return format__String("CIDataType{{ kind = {s}, enum = {S} }",
-                                  to_string__Debug__CIDataTypeKind(self->kind),
-                                  self->enum_);
+            return format__String(
+              "CIDataType{{ kind = {s}, ctx = {Sr}, enum = {S} }",
+              to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx),
+              self->enum_);
         case CI_DATA_TYPE_KIND_FUNCTION:
             return format__String(
-              "CIDataType{{ kind = {s}, function = {Sr} }",
+              "CIDataType{{ kind = {s}, ctx = {Sr}, function = {Sr} }",
               to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx),
               to_string__Debug__CIDataTypeFunction(&self->function));
         case CI_DATA_TYPE_KIND_GENERIC:
-            return format__String("CIDataType{{ kind = {s}, generic = {S} }",
-                                  to_string__Debug__CIDataTypeKind(self->kind),
-                                  self->generic);
+            return format__String(
+              "CIDataType{{ kind = {s}, ctx = {Sr}, generic = {S} }",
+              to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx),
+              self->generic);
         case CI_DATA_TYPE_KIND_PRE_CONST:
             return format__String(
-              "CIDataType{{ kind = {s}, pre_const = {Sr} }",
+              "CIDataType{{ kind = {s}, ctx = {Sr}, pre_const = {Sr} }",
               to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx),
               to_string__Debug__CIDataType(self->pre_const));
         case CI_DATA_TYPE_KIND_POST_CONST:
             return format__String(
-              "CIDataType{{ kind = {s}, post_const = {Sr} }",
+              "CIDataType{{ kind = {s}, ctx = {Sr}, post_const = {Sr} }",
               to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx),
               to_string__Debug__CIDataType(self->post_const));
         case CI_DATA_TYPE_KIND_PTR:
-            return format__String("CIDataType{{ kind = {s}, ptr = {Sr} }",
-                                  to_string__Debug__CIDataTypeKind(self->kind),
-                                  self->ptr
-                                    ? to_string__Debug__CIDataType(self->ptr)
-                                    : from__String("NULL"));
+            return format__String(
+              "CIDataType{{ kind = {s}, ctx = {Sr}, ptr = {Sr} }",
+              to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx),
+              self->ptr ? to_string__Debug__CIDataType(self->ptr)
+                        : from__String("NULL"));
         case CI_DATA_TYPE_KIND_STRUCT:
             return format__String(
-              "CIDataType{{ kind = {s}, struct_ = {Sr} }",
+              "CIDataType{{ kind = {s}, ctx = {Sr}, struct_ = {Sr} }",
               to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx),
               to_string__Debug__CIDataTypeStruct(&self->struct_));
         case CI_DATA_TYPE_KIND_TYPEDEF:
             return format__String(
-              "CIDataType{{ kind = {s}, typedef_ = {Sr} }",
+              "CIDataType{{ kind = {s}, ctx = {Sr}, typedef_ = {Sr} }",
               to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx),
               to_string__Debug__CIDataTypeTypedef(&self->typedef_));
         case CI_DATA_TYPE_KIND_UNION:
             return format__String(
-              "CIDataType{{ kind = {s}, union_ = {Sr} }",
+              "CIDataType{{ kind = {s}, ctx = {Sr}, union_ = {Sr} }",
               to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx),
               to_string__Debug__CIDataTypeUnion(&self->union_));
         default:
-            return format__String("CIDataType{{ kind = {s} }",
-                                  to_string__Debug__CIDataTypeKind(self->kind));
+            return format__String(
+              "CIDataType{{ kind = {s}, ctx = {Sr} }",
+              to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx));
     }
 }
 #endif
@@ -1791,6 +2013,40 @@ DESTRUCTOR(CIDeclFunctionParam, CIDeclFunctionParam *self)
     lily_free(self);
 }
 
+CONSTRUCTOR(CIDeclFunctionBody *, CIDeclFunctionBody, CIScopeID *scope_id)
+{
+    CIDeclFunctionBody *self = lily_malloc(sizeof(CIDeclFunctionBody));
+
+    self->scope_id = scope_id;
+    self->content = NEW(Vec);
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclFunctionBody, const CIDeclFunctionBody *self)
+{
+    String *res = format__String(
+      "CIDeclFunctionBody{{ scope_id = ScopeID {{ id = {zu} }, content =",
+      self->scope_id->id);
+
+    DEBUG_VEC_STRING(self->content, res, CIDeclFunctionItem);
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CIDeclFunctionBody, CIDeclFunctionBody *self)
+{
+    FREE_BUFFER_ITEMS(
+      self->content->buffer, self->content->len, CIDeclFunctionItem);
+    FREE(Vec, self->content);
+    lily_free(self);
+}
+
 String *
 serialize_name__CIDeclFunction(const CIDeclFunction *self,
                                const CIGenericParams *called_generic_params)
@@ -1830,12 +2086,13 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunction, const CIDeclFunction *self)
         push_str__String(res, " NULL");
     }
 
-    push_str__String(res, ", body =");
+    {
+        String *s = format__String(
+          ", body = {Sr}",
+          self->body ? to_string__Debug__CIDeclFunctionBody(self->body)
+                     : from__String("NULL"));
 
-    if (self->body) {
-        DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
-    } else {
-        push_str__String(res, " NULL");
+        APPEND_AND_FREE(res, s);
     }
 
     push_str__String(res, ", attributes =");
@@ -1879,9 +2136,7 @@ DESTRUCTOR(CIDeclFunction, const CIDeclFunction *self)
     free_as_prototype__CIDeclFunction(self);
 
     if (self->body) {
-        FREE_BUFFER_ITEMS(
-          self->body->buffer, self->body->len, CIDeclFunctionItem);
-        FREE(Vec, self->body);
+        FREE(CIDeclFunctionBody, self->body);
     }
 }
 
@@ -1912,6 +2167,14 @@ DESTRUCTOR(CIDeclFunctionGen, const CIDeclFunctionGen *self)
     FREE(CIGenericParams, self->called_generic_params);
     FREE(CIDataType, self->return_data_type);
 }
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclLabel, const CIDeclLabel *self)
+{
+    return format__String("CIDeclLabel{{ name = {S} }", self->name);
+}
+#endif
 
 CONSTRUCTOR(CIDeclStructField *,
             CIDeclStructField,
@@ -2352,6 +2615,19 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     return self;
 }
 
+VARIANT_CONSTRUCTOR(CIDecl *, CIDecl, label, CIDeclLabel label)
+{
+    CIDecl *self = lily_malloc(sizeof(CIDecl));
+
+    self->kind = CI_DECL_KIND_LABEL;
+    self->storage_class_flag = CI_STORAGE_CLASS_NONE;
+    self->is_prototype = false;
+    self->ref_count = 0;
+    self->label = label;
+
+    return self;
+}
+
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     struct,
@@ -2539,6 +2815,8 @@ get_name__CIDecl(const CIDecl *self)
             return self->function.name;
         case CI_DECL_KIND_FUNCTION_GEN:
             return self->function_gen.name;
+        case CI_DECL_KIND_LABEL:
+            return self->label.name;
         case CI_DECL_KIND_STRUCT:
             return self->struct_.name;
         case CI_DECL_KIND_STRUCT_GEN:
@@ -2567,6 +2845,7 @@ has_generic__CIDecl(const CIDecl *self)
         case CI_DECL_KIND_FUNCTION_GEN:
             return has_generic__CIDeclFunctionGen(&self->function_gen);
         case CI_DECL_KIND_ENUM:
+        case CI_DECL_KIND_LABEL:
         case CI_DECL_KIND_VARIABLE:
             return false;
         case CI_DECL_KIND_STRUCT:
@@ -2597,6 +2876,7 @@ get_expected_data_type__CIDecl(const CIDecl *self)
             return self->function.return_data_type;
         case CI_DECL_KIND_FUNCTION_GEN:
             TODO("get data type from function gen");
+        case CI_DECL_KIND_LABEL:
         case CI_DECL_KIND_STRUCT:
         case CI_DECL_KIND_STRUCT_GEN:
         case CI_DECL_KIND_TYPEDEF:
@@ -2694,6 +2974,33 @@ get_typedef_data_type__CIDecl(const CIDecl *self)
     }
 }
 
+const CIDataType *
+get_return_data_type__CIDecl(const CIDecl *self)
+{
+    switch (self->kind) {
+        case CI_DECL_KIND_FUNCTION:
+            return self->function.return_data_type;
+        case CI_DECL_KIND_FUNCTION_GEN:
+            return self->function_gen.return_data_type;
+        default:
+            UNREACHABLE("impossible to get return data type of function with "
+                        "this variant");
+    }
+}
+
+bool
+is_local__CIDecl(const CIDecl *self)
+{
+    switch (self->kind) {
+        case CI_DECL_KIND_LABEL:
+            return true;
+        case CI_DECL_KIND_VARIABLE:
+            return self->variable.is_local;
+        default:
+            return false;
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)
@@ -2725,6 +3032,15 @@ IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)
               to_string__Debug__CIStorageClass(self->storage_class_flag),
               self->is_prototype,
               to_string__Debug__CIDeclFunctionGen(&self->function_gen));
+        case CI_DECL_KIND_LABEL:
+            return format__String(
+              "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
+              "{b}, label = {Sr} "
+              "}",
+              to_string__Debug__CIDeclKind(self->kind),
+              to_string__Debug__CIStorageClass(self->storage_class_flag),
+              self->is_prototype,
+              to_string__Debug__CIDeclLabel(&self->label));
         case CI_DECL_KIND_STRUCT:
             return format__String(
               "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
@@ -2855,6 +3171,11 @@ VARIANT_DESTRUCTOR(CIDecl, function_gen, CIDecl *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(CIDecl, label, CIDecl *self)
+{
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(CIDecl, struct, CIDecl *self)
 {
     FREE(CIDeclStruct, &self->struct_);
@@ -2913,6 +3234,9 @@ DESTRUCTOR(CIDecl, CIDecl *self)
             break;
         case CI_DECL_KIND_FUNCTION_GEN:
             FREE_VARIANT(CIDecl, function_gen, self);
+            break;
+        case CI_DECL_KIND_LABEL:
+            FREE_VARIANT(CIDecl, label, self);
             break;
         case CI_DECL_KIND_STRUCT:
             FREE_VARIANT(CIDecl, struct, self);
@@ -4171,8 +4495,6 @@ IMPL_FOR_DEBUG(to_string, CIStmtKind, enum CIStmtKind self)
             return "CI_STMT_KIND_GOTO";
         case CI_STMT_KIND_IF:
             return "CI_STMT_KIND_IF";
-        case CI_STMT_KIND_LABEL:
-            return "CI_STMT_KIND_LABEL";
         case CI_STMT_KIND_RETURN:
             return "CI_STMT_KIND_RETURN";
         case CI_STMT_KIND_SWITCH:
@@ -4189,72 +4511,39 @@ IMPL_FOR_DEBUG(to_string, CIStmtKind, enum CIStmtKind self)
 String *
 IMPL_FOR_DEBUG(to_string, CIStmtBlock, const CIStmtBlock *self)
 {
-    String *res = format__String("CIStmtBlock{{ body =");
-
-    DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
-    push_str__String(res, " }");
-
-    return res;
+    return format__String("CIStmtBlock{{ body = {Sr} }",
+                          to_string__Debug__CIDeclFunctionBody(self->body));
 }
 #endif
-
-DESTRUCTOR(CIStmtBlock, const CIStmtBlock *self)
-{
-    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, CIDeclFunctionItem);
-    FREE(Vec, self->body);
-}
 
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIStmtDoWhile, const CIStmtDoWhile *self)
 {
-    String *res = format__String("CIStmtDoWhile{{ body =");
-
-    DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
-
-    {
-        String *s = format__String(", cond = {Sr} }",
-                                   to_string__Debug__CIExpr(self->cond));
-
-        APPEND_AND_FREE(res, s);
-    }
-
-    return res;
+    return format__String("CIStmtDoWhile{{ body = {Sr}, cond = {Sr}",
+                          to_string__Debug__CIDeclFunctionBody(self->body),
+                          to_string__Debug__CIExpr(self->cond));
 }
 #endif
 
 DESTRUCTOR(CIStmtDoWhile, const CIStmtDoWhile *self)
 {
-    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, CIDeclFunctionItem);
-    FREE(Vec, self->body);
+    FREE(CIDeclFunctionBody, self->body);
+    FREE(CIExpr, self->cond);
 }
 
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIStmtFor, const CIStmtFor *self)
 {
-    String *res = format__String("CIStmtFor{ body =");
-
-    DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
-
-    if (self->init_clause) {
-        String *s = format__String(
-          ", init_clause = {Sr}",
-          to_string__Debug__CIDeclFunctionItem(self->init_clause));
-
-        APPEND_AND_FREE(res, s);
-    } else {
-        push_str__String(res, ", init_clause = NULL");
-    }
-
-    if (self->expr1) {
-        String *s = format__String(", expr1 = {Sr}",
-                                   to_string__Debug__CIExpr(self->expr1));
-
-        APPEND_AND_FREE(res, s);
-    } else {
-        push_str__String(res, ", expr1 = NULL");
-    }
+    String *res = format__String(
+      "CIStmtFor{{ body = {Sr}, init_clause = {Sr}, expr1 = {Sr}, exprs2 =",
+      to_string__Debug__CIDeclFunctionBody(self->body),
+      self->init_clause
+        ? to_string__Debug__CIDeclFunctionItem(self->init_clause)
+        : from__String("NULL"),
+      self->expr1 ? to_string__Debug__CIExpr(self->expr1)
+                  : from__String("NULL"));
 
     push_str__String(res, ", exprs2 =");
 
@@ -4272,8 +4561,7 @@ IMPL_FOR_DEBUG(to_string, CIStmtFor, const CIStmtFor *self)
 
 DESTRUCTOR(CIStmtFor, const CIStmtFor *self)
 {
-    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, CIDeclFunctionItem);
-    FREE(Vec, self->body);
+    FREE(CIDeclFunctionBody, self->body);
 
     if (self->init_clause) {
         FREE(CIDeclFunctionItem, self->init_clause);
@@ -4289,7 +4577,10 @@ DESTRUCTOR(CIStmtFor, const CIStmtFor *self)
     }
 }
 
-CONSTRUCTOR(CIStmtIfBranch *, CIStmtIfBranch, CIExpr *cond, Vec *body)
+CONSTRUCTOR(CIStmtIfBranch *,
+            CIStmtIfBranch,
+            CIExpr *cond,
+            CIDeclFunctionBody *body)
 {
     CIStmtIfBranch *self = lily_malloc(sizeof(CIStmtIfBranch));
 
@@ -4303,26 +4594,16 @@ CONSTRUCTOR(CIStmtIfBranch *, CIStmtIfBranch, CIExpr *cond, Vec *body)
 String *
 IMPL_FOR_DEBUG(to_string, CIStmtIfBranch, const CIStmtIfBranch *self)
 {
-    String *res = format__String("CIStmtIfBranch{{ body =");
-
-    DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
-
-    {
-        String *s = format__String(", cond = {Sr} }",
-                                   to_string__Debug__CIExpr(self->cond));
-
-        APPEND_AND_FREE(res, s);
-    }
-
-    return res;
+    return format__String("CIStmtIfBranch{{ body = {Sr}, cond = {Sr}",
+                          to_string__Debug__CIDeclFunctionBody(self->body),
+                          to_string__Debug__CIExpr(self->cond));
 }
 #endif
 
 DESTRUCTOR(CIStmtIfBranch, CIStmtIfBranch *self)
 {
+    FREE(CIDeclFunctionBody, self->body);
     FREE(CIExpr, self->cond);
-    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, CIDeclFunctionItem);
-    FREE(Vec, self->body);
     lily_free(self);
 }
 
@@ -4341,15 +4622,14 @@ IMPL_FOR_DEBUG(to_string, CIStmtIf, const CIStmtIf *self)
         push_str__String(res, " NULL");
     }
 
-    push_str__String(res, ", else_ =");
+    {
+        String *s = format__String(
+          ", else_ = {Sr} }",
+          self->else_ ? to_string__Debug__CIDeclFunctionBody(self->else_)
+                      : from__String("NULL"));
 
-    if (self->else_) {
-        DEBUG_VEC_STRING(self->else_, res, CIDeclFunctionItem);
-    } else {
-        push_str__String(res, " NULL");
+        APPEND_AND_FREE(res, s);
     }
-
-    push_str__String(res, " }");
 
     return res;
 }
@@ -4366,9 +4646,7 @@ DESTRUCTOR(CIStmtIf, const CIStmtIf *self)
     }
 
     if (self->else_) {
-        FREE_BUFFER_ITEMS(
-          self->else_->buffer, self->else_->len, CIDeclFunctionItem);
-        FREE(Vec, self->else_);
+        FREE(CIDeclFunctionBody, self->else_);
     }
 }
 
@@ -4390,45 +4668,31 @@ DESTRUCTOR(CIStmtSwitchCase, const CIStmtSwitchCase *self)
 String *
 IMPL_FOR_DEBUG(to_string, CIStmtSwitch, const CIStmtSwitch *self)
 {
-    String *res = format__String("CIStmtSwitch{{ body =");
-
-    DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
-    push_str__String(res, " }");
-
-    return res;
+    return format__String("CIStmtSwitch{{ expr = {Sr}, body = {Sr} }",
+                          to_string__Debug__CIExpr(self->expr),
+                          to_string__Debug__CIDeclFunctionBody(self->body));
 }
 #endif
 
 DESTRUCTOR(CIStmtSwitch, const CIStmtSwitch *self)
 {
     FREE(CIExpr, self->expr);
-    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, CIDeclFunctionItem);
-    FREE(Vec, self->body);
+    FREE(CIDeclFunctionBody, self->body);
 }
 
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIStmtWhile, const CIStmtWhile *self)
 {
-    String *res = format__String("CIStmtWhile{{ body =");
-
-    DEBUG_VEC_STRING(self->body, res, CIDeclFunctionItem);
-
-    {
-        String *s = format__String(", cond = {Sr} }",
-                                   to_string__Debug__CIExpr(self->cond));
-
-        APPEND_AND_FREE(res, s);
-    }
-
-    return res;
+    return format__String("CIStmtWhile{{ body = {Sr}, cond = {Sr} }",
+                          to_string__Debug__CIDeclFunctionBody(self->body),
+                          to_string__Debug__CIExpr(self->cond));
 }
 #endif
 
 DESTRUCTOR(CIStmtWhile, const CIStmtWhile *self)
 {
-    FREE_BUFFER_ITEMS(self->body->buffer, self->body->len, CIDeclFunctionItem);
-    FREE(Vec, self->body);
+    FREE(CIDeclFunctionBody, self->body);
     FREE(CIExpr, self->cond);
 }
 
@@ -4468,14 +4732,12 @@ IMPL_FOR_DEBUG(to_string, CIStmt, const CIStmt *self)
             return format__String("CIStmt{{ kind = {s}, if_ = {Sr} }",
                                   to_string__Debug__CIStmtKind(self->kind),
                                   to_string__Debug__CIStmtIf(&self->if_));
-        case CI_STMT_KIND_LABEL:
-            return format__String("CIStmt{{ kind = {s}, label = {S} }",
-                                  to_string__Debug__CIStmtKind(self->kind),
-                                  self->label);
         case CI_STMT_KIND_RETURN:
             return format__String("CIStmt{{ kind = {s}, return_ = {Sr} }",
                                   to_string__Debug__CIStmtKind(self->kind),
-                                  to_string__Debug__CIExpr(self->return_));
+                                  self->return_
+                                    ? to_string__Debug__CIExpr(self->return_)
+                                    : from__String("NULL"));
         case CI_STMT_KIND_SWITCH:
             return format__String(
               "CIStmt{{ kind = {s}, switch_ = {Sr} }",
@@ -4518,7 +4780,9 @@ VARIANT_DESTRUCTOR(CIStmt, if, const CIStmt *self)
 
 VARIANT_DESTRUCTOR(CIStmt, return, const CIStmt *self)
 {
-    FREE(CIExpr, self->return_);
+    if (self->return_) {
+        FREE(CIExpr, self->return_);
+    }
 }
 
 VARIANT_DESTRUCTOR(CIStmt, switch, const CIStmt *self)
@@ -4541,7 +4805,6 @@ DESTRUCTOR(CIStmt, const CIStmt *self)
         case CI_STMT_KIND_CONTINUE:
         case CI_STMT_KIND_DEFAULT:
         case CI_STMT_KIND_GOTO:
-        case CI_STMT_KIND_LABEL:
             break;
         case CI_STMT_KIND_CASE:
             FREE_VARIANT(CIStmt, case, self);
