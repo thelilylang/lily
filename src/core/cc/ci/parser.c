@@ -739,6 +739,11 @@ infer_expr_literal_data_type__CIParser(const CIParser *self,
                                        const CIExprLiteral *literal);
 
 static CIDataType *
+infer_expr_unary_data_type__CIParser(const CIParser *self,
+                                     const CIExprUnary *unary,
+                                     const CIScopeID *current_scope_id);
+
+static CIDataType *
 infer_expr_data_type__CIParser(const CIParser *self,
                                const CIExpr *expr,
                                const CIScopeID *current_scope_id);
@@ -6854,6 +6859,36 @@ infer_expr_literal_data_type__CIParser(const CIParser *self,
 }
 
 CIDataType *
+infer_expr_unary_data_type__CIParser(const CIParser *self,
+                                     const CIExprUnary *unary,
+                                     const CIScopeID *current_scope_id)
+{
+    CIDataType *unary_right_expr_data_type =
+      infer_expr_data_type__CIParser(self, unary->expr, current_scope_id);
+
+    switch (unary->kind) {
+        case CI_EXPR_UNARY_KIND_REF: {
+            CIDataType *ptr_data_type =
+              NEW_VARIANT(CIDataType, ptr, unary_right_expr_data_type);
+
+            set_context__CIDataType(ptr_data_type, CI_DATA_TYPE_CONTEXT_STACK);
+
+            return ptr_data_type;
+        }
+        case CI_EXPR_UNARY_KIND_DEREFERENCE: {
+            if (is_ptr_data_type__CIParser((CIParser *)self,
+                                           unary_right_expr_data_type)) {
+                TODO("get the type after dereferencing");
+            }
+
+            return unary_right_expr_data_type;
+        }
+        default:
+            return unary_right_expr_data_type;
+    }
+}
+
+CIDataType *
 infer_expr_data_type__CIParser(const CIParser *self,
                                const CIExpr *expr,
                                const CIScopeID *current_scope_id)
@@ -6985,8 +7020,8 @@ infer_expr_data_type__CIParser(const CIParser *self,
             return infer_expr_data_type__CIParser(
               self, expr->ternary.if_, current_scope_id);
         case CI_EXPR_KIND_UNARY:
-            return infer_expr_data_type__CIParser(
-              self, expr->unary.expr, current_scope_id);
+            return infer_expr_unary_data_type__CIParser(
+              self, &expr->unary, current_scope_id);
         default:
             UNREACHABLE("unknown variant");
     }
