@@ -809,6 +809,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, array, CIDataTypeArray array)
     self->kind = CI_DATA_TYPE_KIND_ARRAY;
     self->ref_count = 0;
     self->array = array;
+    self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
 
     return self;
 }
@@ -820,6 +821,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, _atomic, CIDataType *_atomic)
     self->kind = CI_DATA_TYPE_KIND__ATOMIC;
     self->ref_count = 0;
     self->_atomic = _atomic;
+    self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
 
     return self;
 }
@@ -831,6 +833,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, builtin, Usize builtin)
     self->kind = CI_DATA_TYPE_KIND_BUILTIN;
     self->ref_count = 0;
     self->builtin = builtin;
+    self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
 
     return self;
 }
@@ -842,6 +845,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, enum, String *enum_)
     self->kind = CI_DATA_TYPE_KIND_ENUM;
     self->ref_count = 0;
     self->enum_ = enum_;
+    self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
 
     return self;
 }
@@ -856,6 +860,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->kind = CI_DATA_TYPE_KIND_FUNCTION;
     self->ref_count = 0;
     self->function = function;
+    self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
 
     return self;
 }
@@ -867,6 +872,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, generic, String *generic)
     self->kind = CI_DATA_TYPE_KIND_GENERIC;
     self->ref_count = 0;
     self->generic = generic;
+    self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
 
     return self;
 }
@@ -878,6 +884,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, pre_const, CIDataType *pre_const)
     self->kind = CI_DATA_TYPE_KIND_PRE_CONST;
     self->ref_count = 0;
     self->pre_const = pre_const;
+    self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
 
     return self;
 }
@@ -892,6 +899,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->kind = CI_DATA_TYPE_KIND_POST_CONST;
     self->ref_count = 0;
     self->post_const = post_const;
+    self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
 
     return self;
 }
@@ -903,6 +911,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, ptr, CIDataType *ptr)
     self->kind = CI_DATA_TYPE_KIND_PTR;
     self->ref_count = 0;
     self->ptr = ptr;
+    self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
 
     return self;
 }
@@ -914,6 +923,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, struct, CIDataTypeStruct struct_)
     self->kind = CI_DATA_TYPE_KIND_STRUCT;
     self->ref_count = 0;
     self->struct_ = struct_;
+    self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
 
     return self;
 }
@@ -928,6 +938,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->kind = CI_DATA_TYPE_KIND_TYPEDEF;
     self->ref_count = 0;
     self->typedef_ = typedef_;
+    self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
 
     return self;
 }
@@ -939,6 +950,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, union, CIDataTypeUnion union_)
     self->kind = CI_DATA_TYPE_KIND_UNION;
     self->ref_count = 0;
     self->union_ = union_;
+    self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
 
     return self;
 }
@@ -949,6 +961,7 @@ CONSTRUCTOR(CIDataType *, CIDataType, enum CIDataTypeKind kind)
 
     self->kind = kind;
     self->ref_count = 0;
+    self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
 
     return self;
 }

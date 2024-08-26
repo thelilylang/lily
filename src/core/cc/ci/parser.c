@@ -154,6 +154,11 @@ is_float_data_type__CIParser(CIParser *self, const CIDataType *data_type);
 static bool
 is_ptr_data_type__CIParser(CIParser *self, const CIDataType *data_type);
 
+/// @return CIDataType* (&)
+static CIDataType *
+unwrap_implicit_ptr_data_type__CIParser(CIParser *self,
+                                        const CIDataType *data_type);
+
 /// @brief Search declaration, if found return the pointer of the declaration,
 /// otherwise emit an error.
 /// @param kind CI_DECL_KIND_ENUM | CI_DECL_KIND_FUNCTION | CI_DECL_KIND_STRUCT
@@ -748,14 +753,30 @@ infer_expr_data_type__CIParser(const CIParser *self,
                                const CIExpr *expr,
                                const CIScopeID *current_scope_id);
 
+/// @param This function returns the given data type if it is not typedef,
+/// otherwise it attempts to resolve the typedef data type.
 /// @return const CIDataType* (&)
 static const CIDataType *
-resolve_data_type__CIParser(const CIParser *self, const CIDataType *data_type);
+resolve_typedef_data_type__CIParser(const CIParser *self,
+                                    const CIDataType *data_type);
+
+/// @param struct CITypecheckContext* (&)
+/// @return const CIDataType* (&)
+static const CIDataType *
+resolve_data_type__CIParser(const CIParser *self,
+                            const CIDataType *data_type,
+                            struct CITypecheckContext *typecheck_ctx);
+
+static bool
+is_valid_implicit_cast__CIParser(const CIParser *self,
+                                 const CIDataType *left,
+                                 const CIDataType *right);
 
 static void
 perform_typecheck__CIParser(const CIParser *self,
                             const CIDataType *expected_data_type,
-                            const CIDataType *given_data_type);
+                            const CIDataType *given_data_type,
+                            struct CITypecheckContext *typecheck_ctx);
 
 static void
 typecheck_variable_decl__CIParser(const CIParser *self,
@@ -1579,14 +1600,9 @@ bool
 is_integer_data_type__CIParser(CIParser *self, const CIDataType *data_type)
 {
     switch (data_type->kind) {
-        case CI_DATA_TYPE_KIND_TYPEDEF: {
-            CIDecl *decl = search_decl__CIParser(
-              self, CI_DECL_KIND_TYPEDEF, data_type->typedef_.name);
-
-            return decl ? is_integer_data_type__CIParser(
-                            self, get_typedef_data_type__CIDecl(decl))
-                        : false;
-        }
+        case CI_DATA_TYPE_KIND_TYPEDEF:
+            return is_integer__CIDataType(
+              resolve_typedef_data_type__CIParser(self, data_type));
         case CI_DATA_TYPE_KIND_PTR: // via implicit cast
             return true;
         default:
@@ -1598,14 +1614,9 @@ bool
 is_float_data_type__CIParser(CIParser *self, const CIDataType *data_type)
 {
     switch (data_type->kind) {
-        case CI_DATA_TYPE_KIND_TYPEDEF: {
-            CIDecl *decl = search_decl__CIParser(
-              self, CI_DECL_KIND_TYPEDEF, data_type->typedef_.name);
-
-            return decl ? is_float_data_type__CIParser(
-                            self, get_typedef_data_type__CIDecl(decl))
-                        : false;
-        }
+        case CI_DATA_TYPE_KIND_TYPEDEF:
+            return is_float__CIDataType(
+              resolve_typedef_data_type__CIParser(self, data_type));
         default:
             return is_float__CIDataType(data_type);
     }
@@ -1615,18 +1626,42 @@ bool
 is_ptr_data_type__CIParser(CIParser *self, const CIDataType *data_type)
 {
     switch (data_type->kind) {
-        case CI_DATA_TYPE_KIND_TYPEDEF: {
-            CIDecl *decl = search_decl__CIParser(
-              self, CI_DECL_KIND_TYPEDEF, data_type->typedef_.name);
-
-            return decl ? is_ptr_data_type__CIParser(
-                            self, get_typedef_data_type__CIDecl(decl))
-                        : false;
-        }
+        case CI_DATA_TYPE_KIND_TYPEDEF:
+            return is_ptr_data_type__CIParser(
+              self, resolve_typedef_data_type__CIParser(self, data_type));
         case CI_DATA_TYPE_KIND_PTR:
+        case CI_DATA_TYPE_KIND_ARRAY:
             return true;
         default:
             return false;
+    }
+}
+
+CIDataType *
+unwrap_implicit_ptr_data_type__CIParser(CIParser *self,
+                                        const CIDataType *data_type)
+{
+    ASSERT(is_ptr_data_type__CIParser(self, data_type));
+
+    switch (data_type->kind) {
+        case CI_DATA_TYPE_KIND_TYPEDEF: {
+            CIDecl *decl = search_decl__CIParser(
+              self, CI_DECL_KIND_TYPEDEF, data_type->typedef_.name);
+            const CIDataType *typedef_data_type =
+              get_typedef_data_type__CIDecl(decl);
+
+            ASSERT(is_ptr_data_type__CIParser(self, typedef_data_type));
+
+            return unwrap_implicit_ptr_data_type__CIParser(self,
+                                                           typedef_data_type);
+        }
+        case CI_DATA_TYPE_KIND_PTR:
+            return data_type->ptr;
+        case CI_DATA_TYPE_KIND_ARRAY:
+            return data_type->array.data_type;
+        default:
+            UNREACHABLE("this kind of data type is not expected, expected "
+                        "pointer compatible data type");
     }
 }
 
@@ -6848,9 +6883,17 @@ infer_expr_literal_data_type__CIParser(const CIParser *self,
             return float__PrimaryDataTypes();
         case CI_EXPR_LITERAL_KIND_SIGNED_INT:
             return int__PrimaryDataTypes();
-        case CI_EXPR_LITERAL_KIND_STRING:
-            return NEW_VARIANT(
-              CIDataType, ptr, NEW(CIDataType, CI_DATA_TYPE_KIND_CHAR));
+        case CI_EXPR_LITERAL_KIND_STRING: {
+            CIDataType *string_dt =
+              NEW_VARIANT(CIDataType,
+                          array,
+                          NEW_VARIANT(CIDataTypeArray,
+                                      none,
+                                      NEW(CIDataType, CI_DATA_TYPE_KIND_CHAR),
+                                      NULL));
+
+            return string_dt;
+        }
         case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:
             return unsigned_int__PrimaryDataTypes();
         default:
@@ -7028,7 +7071,8 @@ infer_expr_data_type__CIParser(const CIParser *self,
 }
 
 const CIDataType *
-resolve_data_type__CIParser(const CIParser *self, const CIDataType *data_type)
+resolve_typedef_data_type__CIParser(const CIParser *self,
+                                    const CIDataType *data_type)
 {
     switch (data_type->kind) {
         case CI_DATA_TYPE_KIND_TYPEDEF: {
@@ -7037,10 +7081,10 @@ resolve_data_type__CIParser(const CIParser *self, const CIDataType *data_type)
 
             switch (typedef_decl->kind) {
                 case CI_DECL_KIND_TYPEDEF:
-                    return resolve_data_type__CIParser(
+                    return resolve_typedef_data_type__CIParser(
                       self, typedef_decl->typedef_.data_type);
                 case CI_DECL_KIND_TYPEDEF_GEN:
-                    return resolve_data_type__CIParser(
+                    return resolve_typedef_data_type__CIParser(
                       self, typedef_decl->typedef_gen.data_type);
                 default:
                     UNREACHABLE("expected typedef");
@@ -7051,19 +7095,125 @@ resolve_data_type__CIParser(const CIParser *self, const CIDataType *data_type)
     }
 }
 
+const CIDataType *
+resolve_data_type__CIParser(const CIParser *self,
+                            const CIDataType *data_type,
+                            struct CITypecheckContext *typecheck_ctx)
+{
+    switch (data_type->kind) {
+        case CI_DATA_TYPE_KIND_TYPEDEF:
+            return resolve_typedef_data_type__CIParser(self, data_type);
+        case CI_DATA_TYPE_KIND_GENERIC: {
+            bool has_generic = typecheck_ctx->called_generic_params &&
+                               typecheck_ctx->decl_generic_params;
+
+            if (has_generic) {
+                Isize generic_params_index = find_generic__CIGenericParams(
+                  typecheck_ctx->decl_generic_params, data_type->generic);
+
+                if (generic_params_index == -1) {
+                    FAILED("generic params is not found");
+                }
+
+                return get__Vec(typecheck_ctx->called_generic_params->params,
+                                generic_params_index);
+            }
+
+            FAILED("expected generic param, to use generic data type");
+        }
+        default:
+            return data_type;
+    }
+}
+
+bool
+is_valid_implicit_cast__CIParser(const CIParser *self,
+                                 const CIDataType *left,
+                                 const CIDataType *right)
+{
+    switch (right->kind) {
+        case CI_DATA_TYPE_KIND_CHAR:
+        case CI_DATA_TYPE_KIND_INT:
+        case CI_DATA_TYPE_KIND_LONG_INT:
+        case CI_DATA_TYPE_KIND_LONG_LONG_INT:
+        case CI_DATA_TYPE_KIND_SHORT_INT:
+        case CI_DATA_TYPE_KIND_UNSIGNED_CHAR:
+        case CI_DATA_TYPE_KIND_UNSIGNED_INT:
+        case CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT:
+        case CI_DATA_TYPE_KIND_UNSIGNED_LONG_LONG_INT:
+        case CI_DATA_TYPE_KIND_UNSIGNED_SHORT_INT:
+            return is_integer_data_type__CIParser((CIParser *)self, left);
+        case CI_DATA_TYPE_KIND_DOUBLE:
+        case CI_DATA_TYPE_KIND_DOUBLE__COMPLEX:
+        case CI_DATA_TYPE_KIND_DOUBLE__IMAGINARY:
+        case CI_DATA_TYPE_KIND__DECIMAL128:
+        case CI_DATA_TYPE_KIND__DECIMAL32:
+        case CI_DATA_TYPE_KIND__DECIMAL64:
+        case CI_DATA_TYPE_KIND_FLOAT:
+        case CI_DATA_TYPE_KIND_FLOAT__COMPLEX:
+        case CI_DATA_TYPE_KIND_FLOAT__IMAGINARY:
+        case CI_DATA_TYPE_KIND_LONG_DOUBLE:
+        case CI_DATA_TYPE_KIND_LONG_DOUBLE__COMPLEX:
+        case CI_DATA_TYPE_KIND_LONG_DOUBLE__IMAGINARY:
+            return is_float_data_type__CIParser((CIParser *)self, left);
+        case CI_DATA_TYPE_KIND_TYPEDEF:
+            UNREACHABLE(
+              "impossible to get typedef at this point (already resolved)");
+        case CI_DATA_TYPE_KIND_ARRAY:
+        case CI_DATA_TYPE_KIND_PTR:
+            if (is_ptr_data_type__CIParser((CIParser *)self, left)) {
+                CIDataType *left_ptr_dt =
+                  unwrap_implicit_ptr_data_type__CIParser((CIParser *)self,
+                                                          left);
+                CIDataType *right_ptr_dt =
+                  unwrap_implicit_ptr_data_type__CIParser((CIParser *)self,
+                                                          right);
+
+                return is_valid_implicit_cast__CIParser(
+                  self, left_ptr_dt, right_ptr_dt);
+            }
+
+            return false;
+        case CI_DATA_TYPE_KIND_PRE_CONST:
+            if (left->kind == CI_DATA_TYPE_KIND_PRE_CONST) {
+                return is_valid_implicit_cast__CIParser(
+                  self, left->pre_const, right->pre_const);
+            }
+
+            return is_valid_implicit_cast__CIParser(
+              self, left, right->pre_const);
+        case CI_DATA_TYPE_KIND_POST_CONST:
+            if (left->kind == CI_DATA_TYPE_KIND_POST_CONST) {
+                return is_valid_implicit_cast__CIParser(
+                  self, left->post_const, right->post_const);
+            }
+
+            return is_valid_implicit_cast__CIParser(
+              self, left, right->post_const);
+        default:
+            return false;
+    }
+}
+
 void
 perform_typecheck__CIParser(const CIParser *self,
                             const CIDataType *expected_data_type,
-                            const CIDataType *given_data_type)
+                            const CIDataType *given_data_type,
+                            struct CITypecheckContext *typecheck_ctx)
 {
     const CIDataType *resolved_expected_data_type =
-      resolve_data_type__CIParser(self, expected_data_type);
+      resolve_data_type__CIParser(self, expected_data_type, typecheck_ctx);
     const CIDataType *resolved_given_data_type =
-      resolve_data_type__CIParser(self, given_data_type);
+      resolve_data_type__CIParser(self, given_data_type, typecheck_ctx);
 
     if (!eq__CIDataType(resolved_expected_data_type,
                         resolved_given_data_type)) {
-        FAILED("data types don't match");
+        if (!is_valid_implicit_cast__CIParser(
+              self, resolved_expected_data_type, resolved_given_data_type) ||
+            !is_valid_implicit_cast__CIParser(
+              self, resolved_given_data_type, resolved_expected_data_type)) {
+            FAILED("data types don't match");
+        }
     }
 }
 
@@ -7252,7 +7402,7 @@ typecheck_ternary_expr__CIParser(const CIParser *self,
     CIDataType *else_dt = infer_expr_data_type__CIParser(
       self, ternary->else_, typecheck_ctx->current_scope_id);
 
-    perform_typecheck__CIParser(self, if_dt, else_dt);
+    perform_typecheck__CIParser(self, if_dt, else_dt, typecheck_ctx);
 
     FREE(CIDataType, if_dt);
     FREE(CIDataType, else_dt);
@@ -7300,43 +7450,13 @@ typecheck_expr__CIParser(const CIParser *self,
             break;
     }
 
-    // Check data type of the given expression.
-    bool has_generic = typecheck_ctx->called_generic_params &&
-                       typecheck_ctx->decl_generic_params;
-
-    ASSERT(typecheck_ctx->current_scope_id);
-
     CIDataType *given_expr_dt = infer_expr_data_type__CIParser(
       self, given_expr, typecheck_ctx->current_scope_id);
 
-    switch (expected_data_type->kind) {
-        case CI_DATA_TYPE_KIND_GENERIC: {
-            if (has_generic) {
-                Isize generic_params_index = find_generic__CIGenericParams(
-                  typecheck_ctx->decl_generic_params,
-                  expected_data_type->generic);
+    ASSERT(given_expr_dt);
 
-                if (generic_params_index == -1) {
-                    FAILED("generic params is not found");
-                }
-
-                CIDataType *called_generic_param_dt =
-                  get__Vec(typecheck_ctx->called_generic_params->params,
-                           generic_params_index);
-
-                perform_typecheck__CIParser(
-                  self, expected_data_type, called_generic_param_dt);
-
-                break;
-            }
-
-            FAILED("expected generic param, to use generic data type");
-        }
-        default:
-            if (!eq__CIDataType(expected_data_type, given_expr_dt)) {
-                FAILED("the data type doesn't match");
-            }
-    }
+    perform_typecheck__CIParser(
+      self, expected_data_type, given_expr_dt, typecheck_ctx);
 
     FREE(CIDataType, given_expr_dt);
 }
