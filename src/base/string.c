@@ -30,6 +30,7 @@
 #include <base/string.h>
 #include <base/vec.h>
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -70,7 +71,14 @@ clone__String(String *self)
 String *
 format__String(char *fmt, ...)
 {
-    char *buffer = format(fmt);
+    va_list arg;
+
+    va_start(arg, fmt);
+
+    char *buffer = vformat(fmt, arg);
+
+    va_end(arg);
+
     Usize len = strlen(buffer);
     String *self = lily_malloc(sizeof(String));
 

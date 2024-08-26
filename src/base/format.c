@@ -81,6 +81,20 @@
 char *
 format(const char *fmt, ...)
 {
+    va_list arg;
+
+    va_start(arg, fmt);
+
+    char *res = vformat(fmt, arg);
+
+    va_end(arg);
+
+    return res;
+}
+
+char *
+vformat(const char *fmt, va_list arg)
+{
 #define PEEK(n)              \
     if (i + n < len) {       \
         peeked = fmt[i + n]; \
@@ -88,14 +102,12 @@ format(const char *fmt, ...)
         peeked = '\0';       \
     }
 
-    va_list vl;
     char peeked = '\0';
     char *res = lily_malloc(1);
     Usize buffer_size = 0;
     Usize len = strlen(fmt);
 
     res[0] = '\0';
-    va_start(vl, fmt);
 
     for (Usize i = 0; i < len;) {
         switch (fmt[i]) {
@@ -104,7 +116,7 @@ format(const char *fmt, ...)
 
                 switch (peeked) {
                     case 's': {
-                        char *s = va_arg(vl, char *);
+                        char *s = va_arg(arg, char *);
 
                         PUSH_STR(s);
                         PEEK(2);
@@ -122,7 +134,7 @@ format(const char *fmt, ...)
                         break;
                     }
                     case 'd': {
-                        int d = va_arg(vl, int);
+                        int d = va_arg(arg, int);
 
                         PEEK(2);
 
@@ -176,7 +188,7 @@ format(const char *fmt, ...)
                                 TODO("add support for {f64}");
                             }
                             default: {
-                                Float64 f = va_arg(vl, Float64);
+                                Float64 f = va_arg(arg, Float64);
                                 char s[24];
 
                                 sprintf(s, "%lf", f);
@@ -191,7 +203,7 @@ format(const char *fmt, ...)
 
                         break;
                     case 'c': {
-                        char c = va_arg(vl, int);
+                        char c = va_arg(arg, int);
                         res = lily_realloc(res, buffer_size + 2);
 
                         res[buffer_size] = c;
@@ -202,7 +214,7 @@ format(const char *fmt, ...)
                         break;
                     }
                     case 'b': {
-                        bool b = va_arg(vl, int);
+                        bool b = va_arg(arg, int);
 
                         if (b) {
                             res = lily_realloc(res, buffer_size + 5);
@@ -231,7 +243,7 @@ format(const char *fmt, ...)
                     case 'p':
                         TODO("{p}");
                     case 'u': {
-                        int d = va_arg(vl, unsigned int);
+                        int d = va_arg(arg, unsigned int);
 
                         PEEK(2);
 
@@ -272,7 +284,7 @@ format(const char *fmt, ...)
                         break;
                     }
                     case 'S': {
-                        String *s = va_arg(vl, String *);
+                        String *s = va_arg(arg, String *);
 
                         res = lily_realloc(res, buffer_size + s->len + 1);
                         buffer_size += s->len;
@@ -293,7 +305,7 @@ format(const char *fmt, ...)
 
                         switch (peeked) {
                             case 'u': {
-                                size_t zu = va_arg(vl, size_t);
+                                size_t zu = va_arg(arg, size_t);
 
                                 PEEK(3);
 
@@ -334,7 +346,7 @@ format(const char *fmt, ...)
                                 break;
                             }
                             case 'i': {
-                                ssize_t zi = va_arg(vl, ssize_t);
+                                ssize_t zi = va_arg(arg, ssize_t);
 
                                 PEEK(3);
 
@@ -405,8 +417,6 @@ format(const char *fmt, ...)
                 ++i;
         }
     }
-
-    va_end(vl);
 
     return res;
 }

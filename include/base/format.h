@@ -25,6 +25,8 @@
 #ifndef LILY_BASE_FORMAT_H
 #define LILY_BASE_FORMAT_H
 
+#include <stdarg.h>
+
 /**
  *
  * @brief Format string.
@@ -58,5 +60,13 @@
  */
 char *
 format(const char *fmt, ...);
+
+/**
+ *
+ * @brief Alternative version of the format function, to pass the argument
+ * directly.
+ */
+char *
+vformat(const char *fmt, va_list arg);
 
 #endif // LILY_BASE_FORMAT_H
