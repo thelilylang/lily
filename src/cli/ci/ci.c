@@ -22,26 +22,24 @@
  * SOFTWARE.
  */
 
-#include <base/cli/args.h>
-#include <base/cli/result.h>
+#include <cli/lily/lily.h>
+#include <cli/lilyc/lilyc.h>
+#include <cli/version.h>
 
-#include <cli/ci/ci.h>
-#include <cli/ci/parse_config.h>
-
-#include <command/ci/ci.h>
-
-int
-main(int argc, char **argv)
+Cli
+build__CliCI(Vec *args)
 {
-    Vec *args = build__CliArgs(argc, argv);
-    Cli cli = build__CliCI(args);
-    Vec *res = cli.$parse(&cli);
-    CIConfig config = run__CIParseConfig(res);
+    Cli cli = NEW(Cli, args, "ci");
+    CliOption *mode = NEW(CliOption, "--mode");
 
-    FREE_BUFFER_ITEMS(res->buffer, res->len, CliResult);
-    FREE(Vec, args);
-    FREE(Vec, res);
-    FREE(Cli, &cli);
+    mode->$help(mode, "Specify transpilation mode (DEBUG | RELEASE)")
+      ->$value(mode, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "MODE", true));
 
-    run__CI(&config);
+    cli.$version(&cli, VERSION)
+      ->$author(&cli, "ArthurPV")
+      ->$about(&cli, "The CI programming language")
+      ->$option(&cli, mode)
+      ->$single_value(&cli, "PROJECT_PATH", true);
+
+    return cli;
 }

@@ -22,26 +22,34 @@
  * SOFTWARE.
  */
 
-#include <base/cli/args.h>
-#include <base/cli/result.h>
+#ifndef LILY_CLI_CI_CONFIG_H
+#define LILY_CLI_CI_CONFIG_H
 
-#include <cli/ci/ci.h>
-#include <cli/ci/parse_config.h>
+#include <base/macros.h>
 
-#include <command/ci/ci.h>
-
-int
-main(int argc, char **argv)
+enum CIConfigMode
 {
-    Vec *args = build__CliArgs(argc, argv);
-    Cli cli = build__CliCI(args);
-    Vec *res = cli.$parse(&cli);
-    CIConfig config = run__CIParseConfig(res);
+    CI_CONFIG_MODE_DEBUG,
+    CI_CONFIG_MODE_NONE,
+    CI_CONFIG_MODE_RELEASE,
+};
 
-    FREE_BUFFER_ITEMS(res->buffer, res->len, CliResult);
-    FREE(Vec, args);
-    FREE(Vec, res);
-    FREE(Cli, &cli);
+typedef struct CIConfig
+{
+    const char *project_path; // const char* (&)
+    enum CIConfigMode mode;
+} CIConfig;
 
-    run__CI(&config);
+/**
+ *
+ * @brief Construct CIConfig type.
+ */
+inline CONSTRUCTOR(CIConfig,
+                   CIConfig,
+                   const char *project_path,
+                   enum CIConfigMode mode)
+{
+    return (CIConfig){ .project_path = project_path, .mode = mode };
 }
+
+#endif // LILY_CLI_CI_CONFIG_H

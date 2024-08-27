@@ -29,8 +29,8 @@
 #include <base/format.h>
 #include <base/new.h>
 
-#include <core/cc/ci/config.h>
 #include <core/cc/ci/include.h>
+#include <core/cc/ci/project_config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,29 +38,29 @@
 #define CI_CONFIG "CI.yaml"
 
 static enum CIStandard
-parse_standard__CIConfig(YAMLLoadRes *yaml_load_res);
+parse_standard__CIProjectConfig(YAMLLoadRes *yaml_load_res);
 
-static CICompiler
-parse_compiler__CIConfig(YAMLLoadRes *yaml_load_res,
-                         const char *absolute_config_dir);
+static CIProjectConfigCompiler
+parse_compiler__CIProjectConfig(YAMLLoadRes *yaml_load_res,
+                                const char *absolute_config_dir);
 
 static void
-parse_include_dirs__CIConfig(YAMLLoadRes *yaml_load_res,
-                             const String *compiler_path,
-                             const char *base_path);
+parse_include_dirs__CIProjectConfig(YAMLLoadRes *yaml_load_res,
+                                    const String *compiler_path,
+                                    const char *base_path);
 
-/// @return Vec<CILibrary*>*
+/// @return Vec<CIProjectConfigLibrary*>*
 static Vec *
-parse_libraries__CIConfig(YAMLLoadRes *yaml_load_res,
-                          const char *absolute_config_dir);
+parse_libraries__CIProjectConfig(YAMLLoadRes *yaml_load_res,
+                                 const char *absolute_config_dir);
 
-/// @return Vec<CIBin*>*
+/// @return Vec<CIProjectConfigBin*>*
 static Vec *
-parse_bins__CIConfig(YAMLLoadRes *yaml_load_res,
-                     const char *absolute_config_dir);
+parse_bins__CIProjectConfig(YAMLLoadRes *yaml_load_res,
+                            const char *absolute_config_dir);
 
 enum CIStandard
-parse_standard__CIConfig(YAMLLoadRes *yaml_load_res)
+parse_standard__CIProjectConfig(YAMLLoadRes *yaml_load_res)
 {
     enum CIStandard standard;
 
@@ -110,16 +110,16 @@ parse_standard__CIConfig(YAMLLoadRes *yaml_load_res)
     return standard;
 }
 
-CICompiler
-parse_compiler__CIConfig(YAMLLoadRes *yaml_load_res,
-                         const char *absolute_config_dir)
+CIProjectConfigCompiler
+parse_compiler__CIProjectConfig(YAMLLoadRes *yaml_load_res,
+                                const char *absolute_config_dir)
 {
     // compiler:
     //   name: clang | gcc
     //   path: <path_of_command>
     Int32 compiler_value_id = GET_KEY_ON_DEFAULT_MAPPING__YAML(
       yaml_load_res, FIRST_DOCUMENT, "compiler");
-    enum CICompilerKind compiler_kind;
+    enum CIProjectConfigCompilerKind compiler_kind;
     const char *path = NULL;
 
     if (compiler_value_id == -1) {
@@ -167,7 +167,7 @@ parse_compiler__CIConfig(YAMLLoadRes *yaml_load_res,
                    "  path: <path_of_command>");
     }
 
-    return NEW(CICompiler,
+    return NEW(CIProjectConfigCompiler,
                compiler_kind,
                path[0] == '/' // Check if the path is absolute
                  ? from__String((char *)path)
@@ -176,9 +176,9 @@ parse_compiler__CIConfig(YAMLLoadRes *yaml_load_res,
 }
 
 void
-parse_include_dirs__CIConfig(YAMLLoadRes *yaml_load_res,
-                             const String *compiler_path,
-                             const char *base_path)
+parse_include_dirs__CIProjectConfig(YAMLLoadRes *yaml_load_res,
+                                    const String *compiler_path,
+                                    const char *base_path)
 {
     // include_dirs:
     //   - dir
@@ -221,8 +221,8 @@ parse_include_dirs__CIConfig(YAMLLoadRes *yaml_load_res,
 }
 
 Vec *
-parse_libraries__CIConfig(YAMLLoadRes *yaml_load_res,
-                          const char *absolute_config_dir)
+parse_libraries__CIProjectConfig(YAMLLoadRes *yaml_load_res,
+                                 const char *absolute_config_dir)
 {
     Vec *libraries = NEW(Vec);
 
@@ -318,7 +318,8 @@ parse_libraries__CIConfig(YAMLLoadRes *yaml_load_res,
                               goto error;
                       }
 
-                      push__Vec(libraries, NEW(CILibrary, name, paths));
+                      push__Vec(libraries,
+                                NEW(CIProjectConfigLibrary, name, paths));
                   });
 
                 break;
@@ -346,8 +347,8 @@ parse_libraries__CIConfig(YAMLLoadRes *yaml_load_res,
 }
 
 Vec *
-parse_bins__CIConfig(YAMLLoadRes *yaml_load_res,
-                     const char *absolute_config_dir)
+parse_bins__CIProjectConfig(YAMLLoadRes *yaml_load_res,
+                            const char *absolute_config_dir)
 {
     Vec *bins = NEW(Vec);
 
@@ -404,7 +405,7 @@ parse_bins__CIConfig(YAMLLoadRes *yaml_load_res,
                               goto error;
                       }
 
-                      push__Vec(bins, NEW(CIBin, name, path));
+                      push__Vec(bins, NEW(CIProjectConfigBin, name, path));
                   });
 
                 break;
@@ -421,9 +422,12 @@ parse_bins__CIConfig(YAMLLoadRes *yaml_load_res,
     return bins;
 }
 
-CONSTRUCTOR(CILibrary *, CILibrary, const char *name, Vec *paths)
+CONSTRUCTOR(CIProjectConfigLibrary *,
+            CIProjectConfigLibrary,
+            const char *name,
+            Vec *paths)
 {
-    CILibrary *self = lily_malloc(sizeof(CILibrary));
+    CIProjectConfigLibrary *self = lily_malloc(sizeof(CIProjectConfigLibrary));
 
     self->name = name;
     self->paths = paths;
@@ -431,16 +435,19 @@ CONSTRUCTOR(CILibrary *, CILibrary, const char *name, Vec *paths)
     return self;
 }
 
-DESTRUCTOR(CILibrary, CILibrary *self)
+DESTRUCTOR(CIProjectConfigLibrary, CIProjectConfigLibrary *self)
 {
     FREE_BUFFER_ITEMS(self->paths->buffer, self->paths->len, String);
     FREE(Vec, self->paths);
     lily_free(self);
 }
 
-CONSTRUCTOR(CIBin *, CIBin, const char *name, String *path)
+CONSTRUCTOR(CIProjectConfigBin *,
+            CIProjectConfigBin,
+            const char *name,
+            String *path)
 {
-    CIBin *self = lily_malloc(sizeof(CIBin));
+    CIProjectConfigBin *self = lily_malloc(sizeof(CIProjectConfigBin));
 
     self->name = name;
     self->path = path;
@@ -448,14 +455,14 @@ CONSTRUCTOR(CIBin *, CIBin, const char *name, String *path)
     return self;
 }
 
-DESTRUCTOR(CIBin, CIBin *self)
+DESTRUCTOR(CIProjectConfigBin, CIProjectConfigBin *self)
 {
     FREE(String, self->path);
     lily_free(self);
 }
 
-CIConfig
-parse__CIConfig(const char *config_dir)
+CIProjectConfig
+parse__CIProjectConfig(const char *config_dir)
 {
     char *absolute_config_dir = format("{sa}/{s}", get_cwd__Dir(), config_dir);
     String *path_ci_config =
@@ -467,20 +474,22 @@ parse__CIConfig(const char *config_dir)
     }
 
     YAMLLoadRes yaml_load_res = load__YAML(path_ci_config->buffer);
-    enum CIStandard standard = parse_standard__CIConfig(&yaml_load_res);
-    CICompiler compiler =
-      parse_compiler__CIConfig(&yaml_load_res, absolute_config_dir);
+    enum CIStandard standard = parse_standard__CIProjectConfig(&yaml_load_res);
+    CIProjectConfigCompiler compiler =
+      parse_compiler__CIProjectConfig(&yaml_load_res, absolute_config_dir);
 
-    parse_include_dirs__CIConfig(&yaml_load_res, compiler.path, config_dir);
+    parse_include_dirs__CIProjectConfig(
+      &yaml_load_res, compiler.path, config_dir);
 
     Vec *libraries =
-      parse_libraries__CIConfig(&yaml_load_res, absolute_config_dir);
-    Vec *bins = parse_bins__CIConfig(&yaml_load_res, absolute_config_dir);
+      parse_libraries__CIProjectConfig(&yaml_load_res, absolute_config_dir);
+    Vec *bins =
+      parse_bins__CIProjectConfig(&yaml_load_res, absolute_config_dir);
 
     FREE(String, path_ci_config);
     lily_free(absolute_config_dir);
 
-    return NEW(CIConfig,
+    return NEW(CIProjectConfig,
                yaml_load_res,
                standard,
                compiler,
@@ -489,13 +498,14 @@ parse__CIConfig(const char *config_dir)
                bins);
 }
 
-DESTRUCTOR(CIConfig, const CIConfig *self)
+DESTRUCTOR(CIProjectConfig, const CIProjectConfig *self)
 {
     FREE(YAMLLoadRes, &self->yaml_load_res);
-    FREE(CICompiler, &self->compiler);
-    FREE_BUFFER_ITEMS(self->libraries->buffer, self->libraries->len, CILibrary);
+    FREE(CIProjectConfigCompiler, &self->compiler);
+    FREE_BUFFER_ITEMS(
+      self->libraries->buffer, self->libraries->len, CIProjectConfigLibrary);
     FREE(Vec, self->libraries);
 
-    FREE_BUFFER_ITEMS(self->bins->buffer, self->bins->len, CIBin);
+    FREE_BUFFER_ITEMS(self->bins->buffer, self->bins->len, CIProjectConfigBin);
     FREE(Vec, self->bins);
 }

@@ -165,7 +165,7 @@ CONSTRUCTOR(CIResultFile *,
             File file_input,
             bool kind,
             CIResultFile *owner,
-            const CIConfig *config,
+            const CIProjectConfig *config,
             Usize id,
             const CIResult *result,
             enum CIResultEntityKind entity_kind,
@@ -866,7 +866,7 @@ CONSTRUCTOR(CIResultLib *,
             const char *name,
             Usize id,
             const CIResult *result,
-            const CIConfig *config)
+            const CIProjectConfig *config)
 {
     CIResultLib *self = lily_malloc(sizeof(CIResultLib));
 
@@ -1129,7 +1129,8 @@ add_and_run_lib_file__CIResult(const CIResult *self,
 }
 
 void
-add_and_run_lib__CIResult(const CIResult *self, const CILibrary *lib)
+add_and_run_lib__CIResult(const CIResult *self,
+                          const CIProjectConfigLibrary *lib)
 {
     CIResultLib *result_lib = add_lib__CIResult(self, (char *)lib->name);
 
@@ -1156,7 +1157,7 @@ add_and_run_lib__CIResult(const CIResult *self, const CILibrary *lib)
 }
 
 void
-add_and_run_bin__CIResult(const CIResult *self, const CIBin *bin)
+add_and_run_bin__CIResult(const CIResult *self, const CIProjectConfigBin *bin)
 {
     CIResultBin *result_bin = add_bin__CIResult(self, (char *)bin->name);
     char *path = bin->path->buffer;
@@ -1172,7 +1173,7 @@ CIResultFile *
 add_and_run_header__CIResult(const CIResult *self,
                              CIResultFile *file_parent,
                              char *path,
-                             const CIConfig *config)
+                             const CIProjectConfig *config)
 {
     ASSERT(file_parent);
 

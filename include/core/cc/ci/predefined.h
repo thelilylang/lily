@@ -27,7 +27,7 @@
 
 #include <base/string.h>
 
-#include <core/cc/ci/config.h>
+#include <core/cc/ci/project_config.h>
 
 typedef struct CIResultFile CIResultFile;
 
@@ -37,7 +37,7 @@ typedef struct CIResultFile CIResultFile;
  * @link https://github.com/cpredef/predef
  */
 String *
-generate__CIPreDefined(const CIConfig *config);
+generate__CIPreDefined(const CIProjectConfig *config);
 
 /**
  *

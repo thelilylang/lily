@@ -31,6 +31,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// NOTE: The following options, are builtin:
+/*
+#define H_OPTION 0
+#define HELP_OPTION 1
+#define V_OPTION 2
+#define VERSION_OPTION 3
+*/
 #define B_OPTION 4
 #define BUILD_OPTION 5
 #define DUMP_SCANNER_OPTION 6

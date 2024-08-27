@@ -23,58 +23,16 @@
  */
 
 #include <base/cli/args.h>
-#include <base/cli/result.h>
-#include <base/macros.h>
 #include <base/new.h>
-#include <base/platform.h>
 
-#include <cli/lily/lily.h>
-#include <cli/lily/parse_config.h>
-
-#include <command/lily/compile.h>
-#include <command/lily/run.h>
-
-#include <llvm-c/Core.h>
-
-int
-main(int argc, char **argv)
+Vec *
+build__CliArgs(int argc, char **argv)
 {
-    Vec *args = build__CliArgs(argc, argv);
-    Cli cli = build__CliLily(args);
+    Vec *args = NEW(Vec);
 
-    Vec *res = cli.$parse(&cli);
-    LilyConfig config = run__LilyParseConfig(res);
-
-    FREE_BUFFER_ITEMS(res->buffer, res->len, CliResult);
-    FREE(Vec, res);
-    FREE(Cli, &cli);
-
-    switch (config.kind) {
-        case LILY_CONFIG_KIND_BUILD:
-            break;
-        case LILY_CONFIG_KIND_CC:
-            break;
-        case LILY_CONFIG_KIND_COMPILE:
-            run__LilyCompile(args);
-            break;
-        case LILY_CONFIG_KIND_CPP:
-            break;
-        case LILY_CONFIG_KIND_INIT:
-            break;
-        case LILY_CONFIG_KIND_NEW:
-            break;
-        case LILY_CONFIG_KIND_RUN:
-            run__LilyRun(&config);
-            break;
-        case LILY_CONFIG_KIND_TEST:
-            break;
-        case LILY_CONFIG_KIND_TO:
-            break;
+    for (Usize i = 0; i < argc; ++i) {
+        push__Vec(args, argv[i]);
     }
 
-    FREE(Vec, args);
-
-    LLVMShutdown();
-
-    return 0;
+    return args;
 }

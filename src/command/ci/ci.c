@@ -22,26 +22,43 @@
  * SOFTWARE.
  */
 
-#include <base/cli/args.h>
-#include <base/cli/result.h>
-
-#include <cli/ci/ci.h>
-#include <cli/ci/parse_config.h>
+#include <base/macros.h>
 
 #include <command/ci/ci.h>
 
-int
-main(int argc, char **argv)
+#include <core/cc/ci/builtin.h>
+#include <core/cc/ci/generator.h>
+#include <core/cc/ci/include.h>
+#include <core/cc/ci/parser.h>
+#include <core/cc/ci/primary_data_types.h>
+#include <core/cc/ci/project_config.h>
+#include <core/cc/ci/result.h>
+#include <core/cc/ci/scanner.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+
+void
+run__CI(const CIConfig *config)
 {
-    Vec *args = build__CliArgs(argc, argv);
-    Cli cli = build__CliCI(args);
-    Vec *res = cli.$parse(&cli);
-    CIConfig config = run__CIParseConfig(res);
+    if (config->mode != CI_CONFIG_MODE_NONE) {
+        TODO("implement --mode option");
+    }
 
-    FREE_BUFFER_ITEMS(res->buffer, res->len, CliResult);
-    FREE(Vec, args);
-    FREE(Vec, res);
-    FREE(Cli, &cli);
+    CIBuiltin builtin = NEW(CIBuiltin);
+    CIProjectConfig project_config =
+      parse__CIProjectConfig(config->project_path);
+    CIResult result = NEW(CIResult, &project_config, &builtin);
 
-    run__CI(&config);
+    init__PrimaryDataTypes();
+    set__CIBuiltin(&builtin);
+    build__CIResult(&result);
+    run__CIGenerator(&result);
+
+    FREE(CIResult, &result);
+    FREE(CIBuiltin, &builtin);
+    FREE(CIProjectConfig, &project_config);
+
+    destroy__CIInclude();
+    free__PrimaryDataTypes();
 }

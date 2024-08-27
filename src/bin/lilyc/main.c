@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <base/cli/args.h>
 #include <base/cli/result.h>
 
 #include <cli/lilyc/lilyc.h>
@@ -34,12 +35,7 @@
 int
 main(int argc, char **argv)
 {
-    Vec *args = NEW(Vec);
-
-    for (Usize i = 0; i < argc; ++i) {
-        push__Vec(args, argv[i]);
-    }
-
+    Vec *args = build__CliArgs(argc, argv);
     Cli cli = build__CliLilyc(args);
     Vec *res = cli.$parse(&cli);
 

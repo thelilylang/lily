@@ -22,26 +22,14 @@
  * SOFTWARE.
  */
 
-#include <base/cli/args.h>
-#include <base/cli/result.h>
+#ifndef LILY_CLI_CI_PARSE_CONFIG_H
+#define LILY_CLI_CI_PARSE_CONFIG_H
 
-#include <cli/ci/ci.h>
-#include <cli/ci/parse_config.h>
+#include <base/vec.h>
 
-#include <command/ci/ci.h>
+#include <cli/ci/config.h>
 
-int
-main(int argc, char **argv)
-{
-    Vec *args = build__CliArgs(argc, argv);
-    Cli cli = build__CliCI(args);
-    Vec *res = cli.$parse(&cli);
-    CIConfig config = run__CIParseConfig(res);
+CIConfig
+run__CIParseConfig(const Vec *results);
 
-    FREE_BUFFER_ITEMS(res->buffer, res->len, CliResult);
-    FREE(Vec, args);
-    FREE(Vec, res);
-    FREE(Cli, &cli);
-
-    run__CI(&config);
-}
+#endif // LILY_CLI_CI_PARSE_CONFIG_H

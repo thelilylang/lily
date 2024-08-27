@@ -234,7 +234,7 @@ CONSTRUCTOR(CIResultFile *,
             File file_input,
             bool kind,
             CIResultFile *owner,
-            const CIConfig *config,
+            const CIProjectConfig *config,
             Usize id,
             const CIResult *result,
             enum CIResultEntityKind entity_kind,
@@ -630,7 +630,7 @@ CONSTRUCTOR(CIResultLib *,
             const char *name,
             Usize id,
             const CIResult *result,
-            const CIConfig *config);
+            const CIProjectConfig *config);
 
 /**
  *
@@ -672,13 +672,13 @@ DESTRUCTOR(CIResultBin, CIResultBin *self);
 
 typedef struct CIResult
 {
-    CIResultFile *predefined; // CIResultFile* (&)
-    const CIConfig *config;   // const CIConfig* (&)
-    const CIBuiltin *builtin; // const CIBuiltin* (&)
-    OrderedHashMap *headers;  // OrderedHashMap<CIResultFile*>*
-    OrderedHashMap *sources;  // OrderedHashMap<CIResultFile* (&)>*
-    OrderedHashMap *bins;     // OrderedHashMap<CIResultBin*>*
-    OrderedHashMap *libs;     // OrderedHashMap<CIResultLib*>*
+    CIResultFile *predefined;      // CIResultFile* (&)
+    const CIProjectConfig *config; // const CIProjectConfig* (&)
+    const CIBuiltin *builtin;      // const CIBuiltin* (&)
+    OrderedHashMap *headers;       // OrderedHashMap<CIResultFile*>*
+    OrderedHashMap *sources;       // OrderedHashMap<CIResultFile* (&)>*
+    OrderedHashMap *bins;          // OrderedHashMap<CIResultBin*>*
+    OrderedHashMap *libs;          // OrderedHashMap<CIResultLib*>*
 } CIResult;
 
 /**
@@ -687,7 +687,7 @@ typedef struct CIResult
  */
 inline CONSTRUCTOR(CIResult,
                    CIResult,
-                   const CIConfig *config,
+                   const CIProjectConfig *config,
                    const CIBuiltin *builtin)
 {
     return (CIResult){
@@ -804,14 +804,15 @@ run_file__CIResult(const CIResult *self,
  * @brief Add & Run from the passed library.
  */
 void
-add_and_run_lib__CIResult(const CIResult *self, const CILibrary *lib);
+add_and_run_lib__CIResult(const CIResult *self,
+                          const CIProjectConfigLibrary *lib);
 
 /**
  *
  * @brief Add & Run from the passed binary.
  */
 void
-add_and_run_bin__CIResult(const CIResult *self, const CIBin *bin);
+add_and_run_bin__CIResult(const CIResult *self, const CIProjectConfigBin *bin);
 
 /**
  *
@@ -821,7 +822,7 @@ CIResultFile *
 add_and_run_header__CIResult(const CIResult *self,
                              CIResultFile *file_parent,
                              char *path,
-                             const CIConfig *config);
+                             const CIProjectConfig *config);
 
 /**
  *

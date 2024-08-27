@@ -28,7 +28,7 @@
 #include <base/platform.h>
 #include <base/vec.h>
 
-#include <core/cc/ci/config.h>
+#include <core/cc/ci/project_config.h>
 
 /**
  *
