@@ -261,6 +261,7 @@ set(BASE_SRC
     ${CMAKE_SOURCE_DIR}/src/base/bitmap.c
     ${CMAKE_SOURCE_DIR}/src/base/buffer.c
     ${CMAKE_SOURCE_DIR}/src/base/char.c
+    ${CMAKE_SOURCE_DIR}/src/base/cli/args.c
     ${CMAKE_SOURCE_DIR}/src/base/cli/command.c
     ${CMAKE_SOURCE_DIR}/src/base/cli/default_action.c
     ${CMAKE_SOURCE_DIR}/src/base/cli/diagnostic.c
@@ -325,7 +326,8 @@ target_link_libraries(lily_base PRIVATE lily_builtin lily_libyaml)
 target_include_directories(lily_base PRIVATE ${LILY_INCLUDE})
 
 # lily_cli
-set(CLI_LILY_SRC src/cli/lily/lily.c src/cli/lily/parse_config.c)
+set(CLI_LILY_SRC ${CMAKE_SOURCE_DIR}/src/cli/lily/lily.c
+                 ${CMAKE_SOURCE_DIR}/src/cli/lily/parse_config.c)
 
 add_library(lily_cli STATIC ${CLI_LILY_SRC}
                             ${CMAKE_SOURCE_DIR}/src/ex/lib/lily_cli.c)

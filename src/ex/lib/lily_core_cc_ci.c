@@ -26,8 +26,8 @@
 #define LILY_EX_LIB_LILY_CORE_CC_CI_C
 
 #include <core/cc/ci/ast.h>
-#include <core/cc/ci/config.h>
 #include <core/cc/ci/parser.h>
+#include <core/cc/ci/project_config.h>
 #include <core/cc/ci/result.h>
 #include <core/cc/ci/scanner.h>
 #include <core/cc/ci/token.h>
@@ -426,20 +426,21 @@ extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, switch, CIStmtSwitch switch_);
 extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, while, CIStmtWhile while_);
 
 // <core/cc/ci/config.h>
-extern inline CONSTRUCTOR(CICompiler,
-                          CICompiler,
-                          enum CICompilerKind kind,
+extern inline CONSTRUCTOR(CIProjectConfigCompiler,
+                          CIProjectConfigCompiler,
+                          enum CIProjectConfigCompilerKind kind,
                           String *path);
 
-extern inline DESTRUCTOR(CICompiler, const CICompiler *self);
+extern inline DESTRUCTOR(CIProjectConfigCompiler,
+                         const CIProjectConfigCompiler *self);
 
-extern inline DESTRUCTOR(CILibrary, CILibrary *self);
+extern inline DESTRUCTOR(CIProjectConfigLibrary, CIProjectConfigLibrary *self);
 
-extern inline CONSTRUCTOR(CIConfig,
-                          CIConfig,
+extern inline CONSTRUCTOR(CIProjectConfig,
+                          CIProjectConfig,
                           YAMLLoadRes yaml_load_res,
                           enum CIStandard standard,
-                          CICompiler compiler,
+                          CIProjectConfigCompiler compiler,
                           const Vec *include_dirs,
                           Vec *libraries,
                           Vec *bins);
@@ -474,7 +475,7 @@ extern inline CONSTRUCTOR(CIResultEntity,
 
 extern inline CONSTRUCTOR(CIResult,
                           CIResult,
-                          const CIConfig *config,
+                          const CIProjectConfig *config,
                           const CIBuiltin *builtin);
 
 extern inline bool
@@ -488,7 +489,7 @@ extern inline CONSTRUCTOR(CIScanner,
                           CIScanner,
                           Source source,
                           Usize *count_error,
-                          const CIConfig *config);
+                          const CIProjectConfig *config);
 
 extern inline void
 set_predefined__CIScanner(CIScanner *self);

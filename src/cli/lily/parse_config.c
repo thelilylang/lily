@@ -44,14 +44,29 @@
 #define TEST_COMMAND 7
 #define TO_COMMAND 8
 
+// NOTE: The following options, are builtin:
+/*
+#define BUILD_H_OPTION 0
+#define BUILD_HELP_OPTION 1
+*/
 #define BUILD_VERBOSE_OPTION 2
 
+// NOTE: The following options, are builtin:
+/*
+#define RUN_H_OPTION 0
+#define RUN_HELP_OPTION 1
+*/
 #define RUN_V_OPTION 2
 #define RUN_VERBOSE_OPTION 3
 #define RUN_ARGS_OPTION 4
 #define RUN_MAX_STACK_OPTION 5
 #define RUN_MAX_HEAP_OPTION 6
 
+// NOTE: The following options, are builtin:
+/*
+#define TO_H_OPTION 0
+#define TO_HELP_OPTION 1
+*/
 #define TO_CC_OPTION 2
 #define TO_CPP_OPTION 3
 #define TO_JS_OPTION 4

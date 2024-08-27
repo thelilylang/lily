@@ -43,7 +43,7 @@ static const char *std[CI_STANDARD_23 + 1] = {
 static CIResultFile *predefined_file_ref = NULL; // CIResultFile* (&)
 
 String *
-generate__CIPreDefined(const CIConfig *config)
+generate__CIPreDefined(const CIProjectConfig *config)
 {
     char *command = format("{S} -dM -E -std={s} - < /dev/null",
                            config->compiler.path,

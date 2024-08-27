@@ -27,8 +27,6 @@
 
 #include <base/macros.h>
 
-#include <stdbool.h>
-
 typedef struct LilycConfig
 {
     const char *filename;
