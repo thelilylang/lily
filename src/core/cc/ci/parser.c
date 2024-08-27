@@ -2765,12 +2765,59 @@ resolve_ge_expr__CIParser(CIParser *self,
     RESOLVE_BASIC_BINARY_COMPARISON_EXPR(>=, CI_EXPR_BINARY_KIND_GREATER_EQ);
 }
 
+#define RESOLVE_BASIC_ARITHMETIC_UNARY_EXPR(op, unary_kind)                    \
+    ASSERT(rhs);                                                               \
+                                                                               \
+    if (rhs->kind == CI_EXPR_KIND_LITERAL) {                                   \
+        switch (rhs->literal.kind) {                                           \
+            case CI_EXPR_LITERAL_KIND_BOOL:                                    \
+                return NEW_VARIANT(CIExpr,                                     \
+                                   literal,                                    \
+                                   NEW_VARIANT(CIExprLiteral,                  \
+                                               signed_int,                     \
+                                               op(Isize) rhs->literal.bool_)); \
+            case CI_EXPR_LITERAL_KIND_CHAR:                                    \
+                return NEW_VARIANT(                                            \
+                  CIExpr,                                                      \
+                  literal,                                                     \
+                  NEW_VARIANT(CIExprLiteral, char, op rhs->literal.char_));    \
+            case CI_EXPR_LITERAL_KIND_FLOAT:                                   \
+                if (unary_kind == CI_EXPR_UNARY_KIND_BIT_NOT) {                \
+                    FAILED("~ operation is not expected for float");           \
+                }                                                              \
+                                                                               \
+                return NEW_VARIANT(                                            \
+                  CIExpr,                                                      \
+                  literal,                                                     \
+                  NEW_VARIANT(                                                 \
+                    CIExprLiteral, float, op(Isize) rhs->literal.float_));     \
+            case CI_EXPR_LITERAL_KIND_SIGNED_INT:                              \
+                return NEW_VARIANT(CIExpr,                                     \
+                                   literal,                                    \
+                                   NEW_VARIANT(CIExprLiteral,                  \
+                                               signed_int,                     \
+                                               op rhs->literal.signed_int));   \
+            case CI_EXPR_LITERAL_KIND_STRING:                                  \
+                FAILED("this kind of operation is not expected for string");   \
+            case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                            \
+                return NEW_VARIANT(CIExpr,                                     \
+                                   literal,                                    \
+                                   NEW_VARIANT(CIExprLiteral,                  \
+                                               unsigned_int,                   \
+                                               op rhs->literal.unsigned_int)); \
+            default:                                                           \
+                UNREACHABLE("unknown variant");                                \
+        }                                                                      \
+    }                                                                          \
+    return NEW_VARIANT(                                                        \
+      CIExpr, unary, NEW(CIExprUnary, unary_kind, ref__CIExpr(rhs)));
+
 CIExpr *
 resolve_pre_increment_expr__CIParser(CIParser *self,
                                      CIExpr *rhs,
                                      bool is_partial)
 {
-    TODO("resolve ++rhs");
+    FAILED("++rhs cannot be resolved at preprocessor-time (compile-time)");
 }
 
 CIExpr *
@@ -2778,7 +2825,7 @@ resolve_pre_decrement_expr__CIParser(CIParser *self,
                                      CIExpr *rhs,
                                      bool is_partial)
 {
-    TODO("resolve --rhs");
+    FAILED("--rhs cannot be resolved at preprocessor-time (compile-time)");
 }
 
 CIExpr *
@@ -2786,7 +2833,7 @@ resolve_post_increment_expr__CIParser(CIParser *self,
                                       CIExpr *rhs,
                                       bool is_partial)
 {
-    TODO("resolve rhs++");
+    FAILED("rhs++ cannot be resolved at preprocessor-time (compile-time)");
 }
 
 CIExpr *
@@ -2794,25 +2841,25 @@ resolve_post_decrement_expr__CIParser(CIParser *self,
                                       CIExpr *rhs,
                                       bool is_partial)
 {
-    TODO("resolve rhs--");
+    FAILED("rhs-- cannot be resolved at preprocessor-time (compile-time)");
 }
 
 CIExpr *
 resolve_positive_expr__CIParser(CIParser *self, CIExpr *rhs, bool is_partial)
 {
-    TODO("resolve +rhs");
+    RESOLVE_BASIC_ARITHMETIC_UNARY_EXPR(+, CI_EXPR_UNARY_KIND_POSITIVE);
 }
 
 CIExpr *
 resolve_negative_expr__CIParser(CIParser *self, CIExpr *rhs, bool is_partial)
 {
-    TODO("resolve -rhs");
+    RESOLVE_BASIC_ARITHMETIC_UNARY_EXPR(-, CI_EXPR_UNARY_KIND_NEGATIVE);
 }
 
 CIExpr *
 resolve_bit_not_expr__CIParser(CIParser *self, CIExpr *rhs, bool is_partial)
 {
-    TODO("resolve ~rhs");
+    RESOLVE_BASIC_ARITHMETIC_UNARY_EXPR(~, CI_EXPR_UNARY_KIND_BIT_NOT);
 }
 
 CIExpr *
@@ -2882,7 +2929,7 @@ resolve_dereference__CIParser(CIParser *self, CIExpr *rhs, bool is_partial)
 CIExpr *
 resolve_ref__CIParser(CIParser *self, CIExpr *rhs, bool is_partial)
 {
-    TODO("resolve &rhs");
+    FAILED("&rhs cannot be resolved at preprocessor-time (compile-time)");
 }
 
 CIExpr *
