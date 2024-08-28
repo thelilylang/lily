@@ -41,13 +41,13 @@ In my case, the CI advantage is that I can translate Lily's source code in a ver
 For the time being, the only real feature is generic support:
 
 ```c
-struct Vec[@T] {
+struct Vec.[@T] {
     @T *buffer;
     unsigned int len;
     unsigned int capacity;
 };
 
-struct Vec.[@T] init__Vec[@T]() {
+struct Vec.[@T] init__Vec.[@T]() {
     return (struct Vec.[@T]){ .buffer = NULL, .len = 0, .capacity = 4 };
 }
 
