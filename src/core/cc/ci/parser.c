@@ -7057,11 +7057,12 @@ infer_expr_data_type__CIParser(const CIParser *self,
             Vec *fields = NEW(Vec); // Vec<CIDataType*>*
 
             for (Usize i = 0; i < expr->struct_call.fields->len; ++i) {
-                CIExpr *field = get__Vec(expr->struct_call.fields, i);
+                CIExprStructFieldCall *field =
+                  get__Vec(expr->struct_call.fields, i);
 
                 push__Vec(fields,
                           infer_expr_data_type__CIParser(
-                            self, field, current_scope_id));
+                            self, field->value, current_scope_id));
             }
 
             return NEW_VARIANT(
