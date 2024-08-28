@@ -686,21 +686,20 @@ static Vec *
 parse_function_params__CIParser(CIParser *self, CIScope *parent_function_scope);
 
 /// @brief Parse generic params.
-/// @return Vec<CIDataType*>*
-/// @param is_call Check whether this is a generic params call.
+/// @return Vec<CIDataType*>*?
 /// @example
 ///
-/// struct Vec[@T] { // => generic params, so `is_call` is false
+/// struct Vec.[@T] {
 /// 	@T *buffer;
 /// 	Usize len;
 /// 	Usize capacity;
 /// };
 ///
-/// // ...
-///
-/// Vec.[@T] // => generic params call, so `is_call` is true
+/// @T get.[@T](@T x) {
+/// 	return x;
+/// }
 static CIGenericParams *
-parse_generic_params__CIParser(CIParser *self, bool is_call);
+parse_generic_params__CIParser(CIParser *self);
 
 /// @brief Parser function call.
 static CIExpr *
@@ -5499,7 +5498,7 @@ parse_pre_data_type__CIParser(CIParser *self)
 
             String *name = self->previous_token->identifier;
             CIGenericParams *generic_params =
-              parse_generic_params__CIParser(self, true);
+              parse_generic_params__CIParser(self);
 
             res = NEW_VARIANT(CIDataType,
                               typedef,
@@ -5647,19 +5646,8 @@ parse_pre_data_type__CIParser(CIParser *self)
                     break;
             }
 
-            bool generic_params_is_call = false;
-
-            switch (self->current_token->kind) {
-                case CI_TOKEN_KIND_DOT:
-                    generic_params_is_call = true;
-
-                    break;
-                default:
-                    break;
-            }
-
-            CIGenericParams *generic_params = parse_generic_params__CIParser(
-              self, generic_params_is_call); // CIGenericParams*?
+            CIGenericParams *generic_params =
+              parse_generic_params__CIParser(self); // CIGenericParams*?
 
             switch (previous_token_kind) {
                 case CI_TOKEN_KIND_KEYWORD_STRUCT:
@@ -5683,10 +5671,6 @@ parse_pre_data_type__CIParser(CIParser *self)
             switch (self->current_token->kind) {
                 case CI_TOKEN_KIND_LBRACE:
                 case CI_TOKEN_KIND_SEMICOLON:
-                    if (generic_params_is_call) {
-                        FAILED("`.` is not expected before generic params");
-                    }
-
                     switch (previous_token_kind) {
                         case CI_TOKEN_KIND_KEYWORD_STRUCT: {
                             CIDecl *struct_decl = parse_struct__CIParser(
@@ -5982,48 +5966,26 @@ parse_function_params__CIParser(CIParser *self, CIScope *parent_function_scope)
 }
 
 CIGenericParams *
-parse_generic_params__CIParser(CIParser *self, bool is_call)
+parse_generic_params__CIParser(CIParser *self)
 {
-    Usize is_data_type_jump = 0;
 
-    if (is_call) {
-        switch (self->current_token->kind) {
-            case CI_TOKEN_KIND_DOT: {
-                CIToken *peeked = peek_token__CIParser(self, 1);
+    switch (self->current_token->kind) {
+        case CI_TOKEN_KIND_DOT: {
+            CIToken *peeked = peek_token__CIParser(self, 1);
 
-                switch (peeked->kind) {
-                    case CI_TOKEN_KIND_LHOOK:
-                        break;
-                    default:
-                        return NULL;
-                }
-
-                is_data_type_jump = 2;
-
-                break;
+            switch (peeked->kind) {
+                case CI_TOKEN_KIND_LHOOK:
+                    break;
+                default:
+                    return NULL;
             }
-            default:
-                return NULL;
+
+            jump__CIParser(self, 2);
+
+            break;
         }
-    } else {
-        switch (self->current_token->kind) {
-            case CI_TOKEN_KIND_LHOOK:
-                is_data_type_jump = 1;
-
-                break;
-            default:
-                return NULL;
-        }
-    }
-
-    {
-        CIToken *peeked = peek_token__CIParser(self, is_data_type_jump);
-
-        if (token_is_data_type__CIParser(self, peeked)) {
-            jump__CIParser(self, is_data_type_jump);
-        } else {
+        default:
             return NULL;
-        }
     }
 
     Vec *params = NEW(Vec); // Vec<CIDataType*>*
@@ -6449,7 +6411,7 @@ parse_primary_expr__CIParser(CIParser *self)
         case CI_TOKEN_KIND_IDENTIFIER: {
             String *identifier = self->previous_token->identifier;
             CIGenericParams *generic_params =
-              parse_generic_params__CIParser(self, true); // CIGenericParams*?
+              parse_generic_params__CIParser(self); // CIGenericParams*?
 
             switch (self->current_token->kind) {
                 case CI_TOKEN_KIND_LPAREN:
@@ -7788,6 +7750,12 @@ typecheck_stmt__CIParser(const CIParser *self,
 void
 typecheck_function__CIParser(const CIParser *self, const CIDecl *function_decl)
 {
+    // We can't check the types of a function that has as yet unknown generic
+    // types.
+    if (function_decl->function.generic_params) {
+        return;
+    }
+
     struct CITypecheckContext typecheck_ctx =
       NEW(CITypecheckContext, function_decl, NULL, NULL);
 
@@ -8530,8 +8498,7 @@ parse_typedef__CIParser(CIParser *self)
 
     init_typedef_to_visit_waiting_list__CIParser(self, typedef_name);
 
-    CIGenericParams *generic_params =
-      parse_generic_params__CIParser(self, false);
+    CIGenericParams *generic_params = parse_generic_params__CIParser(self);
 
     {
         const CIGenericParams *data_type_generic_params =
@@ -8946,7 +8913,7 @@ parse_decl__CIParser(CIParser *self)
               self, &data_type, &name, false);
 
             CIGenericParams *generic_params =
-              parse_generic_params__CIParser(self, false); // CIGenericParams*?
+              parse_generic_params__CIParser(self); // CIGenericParams*?
 
             switch (self->current_token->kind) {
                 // Parse first variable
