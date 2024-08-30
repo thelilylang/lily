@@ -1053,6 +1053,29 @@ has_name__CIDataType(const CIDataType *self);
 
 /**
  *
+ * @brief Get fields from data type.
+ */
+const Vec *
+get_fields__CIDataType(const CIDataType *self);
+
+/**
+ *
+ * @brief Get name from data type.
+ * @return String*? (&)
+ */
+String *
+get_name__CIDataType(const CIDataType *self);
+
+/**
+ *
+ * @brief Serialize name from called generic params.
+ * @return String*
+ */
+String *
+serialize_name__CIDataType(const CIDataType *self);
+
+/**
+ *
  * @brief Convert CIDataType in String.
  * @note This function is only used to debug.
  */
@@ -1640,6 +1663,15 @@ clone__CIDeclStructField(CIDeclStructField *self);
  */
 Vec *
 clone_fields__CIDeclStructField(Vec *fields);
+
+/**
+ *
+ * @brief Compare vectors of fields (only data types).
+ * @param self_fields const Vec<CIDeclStructField*>* (&)
+ * @param other_fields const Vec<CIDeclStructField*>* (&)
+ */
+bool
+eq__CIDeclStructField(const Vec *self_fields, const Vec *other_fields);
 
 /**
  *
