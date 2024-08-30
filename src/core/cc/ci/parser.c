@@ -154,6 +154,19 @@ is_float_data_type__CIParser(CIParser *self, const CIDataType *data_type);
 static bool
 is_ptr_data_type__CIParser(CIParser *self, const CIDataType *data_type);
 
+static bool
+is_void_ptr_data_type__CIParser(CIParser *self, const CIDataType *data_type);
+
+/// @return The depth of pointer compatible data type.
+static Usize
+count_compatible_pointer_depth__CIParser(CIParser *self,
+                                         const CIDataType *data_type);
+
+static bool
+is_compatible_with_void_ptr_data_type__CIParser(CIParser *self,
+                                                const CIDataType *left,
+                                                const CIDataType *right);
+
 /// @return CIDataType* (&)
 static CIDataType *
 unwrap_implicit_ptr_data_type__CIParser(CIParser *self,
@@ -766,12 +779,26 @@ resolve_data_type__CIParser(const CIParser *self,
                             const CIDataType *data_type,
                             struct CITypecheckContext *typecheck_ctx);
 
+/// @return const Vec<CIDeclStructField*>*? (&)
+static const Vec *
+get_fields_from_data_type__CIParser(const CIParser *self,
+                                    const CIDataType *data_type);
+
+/// @param left_fields const Vec<CIDeclStructField*>* (&)
+/// @param right_fields const Vec<CIDeclStructField*>* (&)
+static bool
+typecheck_field__CIParser(const CIParser *self,
+                          const Vec *left_fields,
+                          const Vec *right_fields,
+                          struct CITypecheckContext *typecheck_ctx);
+
 static bool
 is_valid_implicit_cast__CIParser(const CIParser *self,
                                  const CIDataType *left,
-                                 const CIDataType *right);
+                                 const CIDataType *right,
+                                 struct CITypecheckContext *typecheck_ctx);
 
-static void
+static bool
 perform_typecheck__CIParser(const CIParser *self,
                             const CIDataType *expected_data_type,
                             const CIDataType *given_data_type,
@@ -1634,6 +1661,47 @@ is_ptr_data_type__CIParser(CIParser *self, const CIDataType *data_type)
         default:
             return false;
     }
+}
+
+bool
+is_void_ptr_data_type__CIParser(CIParser *self, const CIDataType *data_type)
+{
+    CIDataType *current_dt = (CIDataType *)data_type;
+
+    while (is_ptr_data_type__CIParser(self, current_dt)) {
+        current_dt = unwrap_implicit_ptr_data_type__CIParser(self, current_dt);
+    }
+
+    return current_dt->kind == CI_DATA_TYPE_KIND_VOID;
+}
+
+Usize
+count_compatible_pointer_depth__CIParser(CIParser *self,
+                                         const CIDataType *data_type)
+{
+    CIDataType *current_dt = (CIDataType *)data_type;
+    Usize depth_count = 0;
+
+    while (is_ptr_data_type__CIParser(self, current_dt)) {
+        ++depth_count;
+        current_dt = unwrap_implicit_ptr_data_type__CIParser(self, current_dt);
+    }
+
+    return depth_count;
+}
+
+bool
+is_compatible_with_void_ptr_data_type__CIParser(CIParser *self,
+                                                const CIDataType *left,
+                                                const CIDataType *right)
+{
+    if (is_void_ptr_data_type__CIParser(self, left) ||
+        is_void_ptr_data_type__CIParser(self, right)) {
+        return count_compatible_pointer_depth__CIParser(self, left) ==
+               count_compatible_pointer_depth__CIParser(self, right);
+    }
+
+    return false;
 }
 
 CIDataType *
@@ -7054,15 +7122,17 @@ infer_expr_data_type__CIParser(const CIParser *self,
         case CI_EXPR_KIND_SIZEOF:
             return unsigned_long_long_int__PrimaryDataTypes(); // size_t
         case CI_EXPR_KIND_STRUCT_CALL: {
-            Vec *fields = NEW(Vec); // Vec<CIDataType*>*
+            Vec *fields = NEW(Vec); // Vec<CIDeclStructField*>*
 
             for (Usize i = 0; i < expr->struct_call.fields->len; ++i) {
                 CIExprStructFieldCall *field =
                   get__Vec(expr->struct_call.fields, i);
 
                 push__Vec(fields,
-                          infer_expr_data_type__CIParser(
-                            self, field->value, current_scope_id));
+                          NEW(CIDeclStructField,
+                              NULL,
+                              infer_expr_data_type__CIParser(
+                                self, field->value, current_scope_id)));
             }
 
             return NEW_VARIANT(
@@ -7136,10 +7206,76 @@ resolve_data_type__CIParser(const CIParser *self,
     }
 }
 
+const Vec *
+get_fields_from_data_type__CIParser(const CIParser *self,
+                                    const CIDataType *data_type)
+{
+    ASSERT(data_type->kind == CI_DATA_TYPE_KIND_STRUCT ||
+           data_type->kind == CI_DATA_TYPE_KIND_UNION);
+
+    const Vec *dt_fields = get_fields__CIDataType(data_type);
+
+    if (dt_fields) {
+        // TODO: The case of a generic anonymous struct/union is not managed.
+        return dt_fields;
+    } else if (data_type->struct_.name) {
+        const CIGenericParams *generic_params =
+          get_generic_params__CIDataType(data_type);
+        String *serialized_name = get_name__CIDataType(data_type);
+
+        if (generic_params) {
+            serialized_name = serialize_name__CIDataType(data_type);
+        }
+
+        CIDecl *struct_decl =
+          search_struct__CIResultFile(self->file, serialized_name);
+
+        if (!struct_decl) {
+            FAILED("struct declaration is not found");
+        }
+
+        if (generic_params) {
+            FREE(String, serialized_name);
+        }
+
+        const Vec *fields = get_fields__CIDecl(struct_decl);
+
+        return fields;
+    }
+
+    return NULL;
+}
+
+bool
+typecheck_field__CIParser(const CIParser *self,
+                          const Vec *left_fields,
+                          const Vec *right_fields,
+                          struct CITypecheckContext *typecheck_ctx)
+{
+    if (left_fields->len != right_fields->len) {
+        return false;
+    }
+
+    for (Usize i = 0; i < left_fields->len; ++i) {
+        CIDeclStructField *left_field = get__Vec(left_fields, i);
+        CIDeclStructField *right_field = get__Vec(right_fields, i);
+
+        if (!perform_typecheck__CIParser(self,
+                                         left_field->data_type,
+                                         right_field->data_type,
+                                         typecheck_ctx)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 bool
 is_valid_implicit_cast__CIParser(const CIParser *self,
                                  const CIDataType *left,
-                                 const CIDataType *right)
+                                 const CIDataType *right,
+                                 struct CITypecheckContext *typecheck_ctx)
 {
     switch (right->kind) {
         case CI_DATA_TYPE_KIND_CHAR:
@@ -7172,6 +7308,11 @@ is_valid_implicit_cast__CIParser(const CIParser *self,
         case CI_DATA_TYPE_KIND_ARRAY:
         case CI_DATA_TYPE_KIND_PTR:
             if (is_ptr_data_type__CIParser((CIParser *)self, left)) {
+                if (is_compatible_with_void_ptr_data_type__CIParser(
+                      (CIParser *)self, left, right)) {
+                    return true;
+                }
+
                 CIDataType *left_ptr_dt =
                   unwrap_implicit_ptr_data_type__CIParser((CIParser *)self,
                                                           left);
@@ -7180,32 +7321,54 @@ is_valid_implicit_cast__CIParser(const CIParser *self,
                                                           right);
 
                 return is_valid_implicit_cast__CIParser(
-                  self, left_ptr_dt, right_ptr_dt);
+                  self, left_ptr_dt, right_ptr_dt, typecheck_ctx);
             }
 
             return false;
         case CI_DATA_TYPE_KIND_PRE_CONST:
             if (left->kind == CI_DATA_TYPE_KIND_PRE_CONST) {
                 return is_valid_implicit_cast__CIParser(
-                  self, left->pre_const, right->pre_const);
+                  self, left->pre_const, right->pre_const, typecheck_ctx);
             }
 
             return is_valid_implicit_cast__CIParser(
-              self, left, right->pre_const);
+              self, left, right->pre_const, typecheck_ctx);
         case CI_DATA_TYPE_KIND_POST_CONST:
             if (left->kind == CI_DATA_TYPE_KIND_POST_CONST) {
                 return is_valid_implicit_cast__CIParser(
-                  self, left->post_const, right->post_const);
+                  self, left->post_const, right->post_const, typecheck_ctx);
             }
 
             return is_valid_implicit_cast__CIParser(
-              self, left, right->post_const);
+              self, left, right->post_const, typecheck_ctx);
+        case CI_DATA_TYPE_KIND_STRUCT:
+            if (left->kind == CI_DATA_TYPE_KIND_STRUCT) {
+                // NOTE: We perform a check if one or both fields are NULL, as
+                // the `eq__CIDataType` function returns a false, because at the
+                // point of this function, we can't perform a thorough check
+                // (search structure).
+                if (!left->struct_.fields || !right->struct_.fields) {
+                    const Vec *left_fields =
+                      get_fields_from_data_type__CIParser(self, left);
+                    const Vec *right_fields =
+                      get_fields_from_data_type__CIParser(self, right);
+
+                    if (left_fields && right_fields) {
+                        return typecheck_field__CIParser(
+                          self, left_fields, right_fields, typecheck_ctx);
+                    }
+                }
+
+                return false;
+            }
+
+            return false;
         default:
             return false;
     }
 }
 
-void
+bool
 perform_typecheck__CIParser(const CIParser *self,
                             const CIDataType *expected_data_type,
                             const CIDataType *given_data_type,
@@ -7218,13 +7381,21 @@ perform_typecheck__CIParser(const CIParser *self,
 
     if (!eq__CIDataType(resolved_expected_data_type,
                         resolved_given_data_type)) {
-        if (!is_valid_implicit_cast__CIParser(
-              self, resolved_expected_data_type, resolved_given_data_type) ||
-            !is_valid_implicit_cast__CIParser(
-              self, resolved_given_data_type, resolved_expected_data_type)) {
+        if (!is_valid_implicit_cast__CIParser(self,
+                                              resolved_expected_data_type,
+                                              resolved_given_data_type,
+                                              typecheck_ctx) ||
+            !is_valid_implicit_cast__CIParser(self,
+                                              resolved_given_data_type,
+                                              resolved_expected_data_type,
+                                              typecheck_ctx)) {
             FAILED("data types don't match");
+
+            return false;
         }
     }
+
+    return true;
 }
 
 void

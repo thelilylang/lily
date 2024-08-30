@@ -1283,7 +1283,15 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
                      ? eq__CIDataType(self->ptr, other->ptr)
                      : false;
         case CI_DATA_TYPE_KIND_STRUCT:
-            TODO("eq__CIDataType: struct data type");
+            if ((!self->struct_.fields || !other->struct_.fields) ||
+                self->struct_.fields->len != other->struct_.fields->len ||
+                (bool)self->struct_.generic_params ==
+                  (bool)other->struct_.generic_params) {
+                return false;
+            }
+
+            return eq__CIDeclStructField(self->struct_.fields,
+                                         other->struct_.fields);
         case CI_DATA_TYPE_KIND_TYPEDEF:
             return !strcmp(self->typedef_.name->buffer,
                            other->typedef_.name->buffer) &&
@@ -1411,6 +1419,50 @@ has_name__CIDataType(const CIDataType *self)
         default:
             return false;
     }
+}
+
+const Vec *
+get_fields__CIDataType(const CIDataType *self)
+{
+    switch (self->kind) {
+        case CI_DATA_TYPE_KIND_STRUCT:
+            return self->struct_.fields;
+        case CI_DATA_TYPE_KIND_UNION:
+            return self->union_.fields;
+        default:
+            UNREACHABLE("cannot get fields from data type");
+    }
+}
+
+String *
+get_name__CIDataType(const CIDataType *self)
+{
+    switch (self->kind) {
+        case CI_DATA_TYPE_KIND_ENUM:
+            return self->enum_;
+        case CI_DATA_TYPE_KIND_STRUCT:
+            return self->struct_.name;
+        case CI_DATA_TYPE_KIND_TYPEDEF:
+            return self->typedef_.name;
+        case CI_DATA_TYPE_KIND_UNION:
+            return self->union_.name;
+        default:
+            UNREACHABLE("cannot get name from data type");
+    }
+}
+
+String *
+serialize_name__CIDataType(const CIDataType *self)
+{
+    const CIGenericParams *called_generic_params =
+      get_generic_params__CIDataType(self);
+    String *name = get_name__CIDataType(self);
+
+    if (!called_generic_params || !name) {
+        UNREACHABLE("called_generic_params is NULL or name is NULL");
+    }
+
+    CI_SERIALIZE_NAME(name);
 }
 
 #ifdef ENV_DEBUG
@@ -2221,12 +2273,31 @@ clone_fields__CIDeclStructField(Vec *fields)
     return res;
 }
 
+bool
+eq__CIDeclStructField(const Vec *self_fields, const Vec *other_fields)
+{
+    if (self_fields->len != other_fields->len) {
+        return false;
+    }
+
+    for (Usize i = 0; i < self_fields->len; ++i) {
+        CIDeclStructField *self_field = get__Vec(self_fields, i);
+        CIDeclStructField *other_field = get__Vec(other_fields, i);
+
+        if (!eq__CIDataType(self_field->data_type, other_field->data_type)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclStructField, const CIDeclStructField *self)
 {
-    return format__String("CIDeclStructField{{ name = {S}, data_type = {Sr} }",
-                          self->name,
+    return format__String("CIDeclStructField{{ name = {s}, data_type = {Sr} }",
+                          self->name ? self->name->buffer : "NULL",
                           to_string__Debug__CIDataType(self->data_type));
 }
 #endif
@@ -2796,8 +2867,12 @@ get_fields__CIDecl(const CIDecl *self)
     switch (self->kind) {
         case CI_DECL_KIND_STRUCT:
             return self->struct_.fields;
+        case CI_DECL_KIND_STRUCT_GEN:
+            return self->struct_gen.fields;
         case CI_DECL_KIND_UNION:
             return self->union_.fields;
+        case CI_DECL_KIND_UNION_GEN:
+            return self->union_gen.fields;
         default:
             UNREACHABLE("cannot get fields from decl");
     }
