@@ -51,6 +51,6 @@ __END_DECLS
   
 #define assert(expr) \
   	(expr) ? __ASSERT_VOID_CAST(0) : __assert_fail(#expr, __FILE__, __LINE__, __func__)
-#endif
+#endif /* NDEBUG */
 
-#endif // _CC_ASSERT_H
+#endif /* _CC_ASSERT_H */

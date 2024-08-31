@@ -29,4 +29,4 @@
 
 #define __CAST(x, ty) ((ty)x)
 
-#endif // _CC___CAST_H
+#endif /* _CC___CAST_H */
