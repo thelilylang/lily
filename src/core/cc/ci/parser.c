@@ -6012,7 +6012,7 @@ parse_function_params__CIParser(CIParser *self, CIScope *parent_function_scope)
 
         push__Vec(params, NEW(CIDeclFunctionParam, name, data_type));
 
-        if (parent_function_scope) {
+        if (parent_function_scope && name) {
             CIDecl *param_decl = NEW_VARIANT(
               CIDecl,
               variable,
@@ -6021,10 +6021,8 @@ parse_function_params__CIParser(CIParser *self, CIScope *parent_function_scope)
               NEW(
                 CIDeclVariable, ref__CIDataType(data_type), name, NULL, true));
 
-            if (name) {
-                add_variable__CIResultFile(
-                  self->file, parent_function_scope, param_decl);
-            }
+            add_variable__CIResultFile(
+              self->file, parent_function_scope, param_decl);
         }
 
         if (self->current_token->kind != CI_TOKEN_KIND_RPAREN) {
