@@ -408,44 +408,64 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 /* 7.18.4.1 Macros for minimum-width integer constants */
 
 #ifdef __INT8_C
+#undef INT8_C
+
 #define INT8_C(c) __INT8_C(c)
 #endif /* __INT8_C */
 
 #ifdef __INT16_C
+#undef INT16_C
+
 #define INT16_C(c) __INT16_C(c)
 #endif /* __INT16_C */
 
 #ifdef __INT32_C
+#undef INT32_C
+
 #define INT32_C(c) __INT32_C(c)
 #endif /* __INT32_C */
 
 #ifdef __INT64_C
+#undef INT64_C
+
 #define INT64_C(c) __INT64_C(c)
 #endif /* __INT64_C */
 
 #ifdef __UINT8_C
+#undef UINT8_C
+
 #define UINT8_C(c) __UINT8_C(c)
 #endif /* __UINT8_C */
 
 #ifdef __UINT16_C
+#undef UINT16_C
+
 #define UINT16_C(c) __UINT16_C(c)
 #endif /* __UINT16_C */
 
 #ifdef __UINT32_C
+#undef UINT32_C
+
 #define UINT32_C(c) __UINT32_C(c)
 #endif /* __UINT32_C */
 
 #ifdef __UINT64_C
+#undef UINT64_C
+
 #define UINT64_C(c) __UINT64_C(c)
 #endif /* __UINT64_C */
 
 /* 7.18.4.2 Macros for greatest-width integer constants */
 
 #ifdef __INTMAX_C
+#undef INTMAX_C
+
 #define INTMAX_C(c) __INTMAX_C(c)
 #endif /* __INTMAX_C */
 
 #ifdef __UINTMAX_C
+#undef UINTMAX_C
+
 #define UINTMAX_C(c) __UINTMAX_C(c)
 #endif /* __UINTMAX_C */
 
