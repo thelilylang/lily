@@ -263,12 +263,11 @@ typedef struct CIScope
  */
 CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, Usize id, bool is_block);
 
-#define ADD_IN_SCOPE(ty, hm) \
-    return insert__HashMap(hm, name->buffer, NEW(ty, file_id, hm->len));
+#define ADD_IN_SCOPE(ty, hm, id) \
+    return insert__HashMap(hm, name->buffer, NEW(ty, file_id, id));
 
-#define ADD_VARIABLE_IN_SCOPE(ty, scope_id, hm) \
-    return insert__HashMap(                     \
-      hm, name->buffer, NEW(ty, file_id, scope_id, hm->len));
+#define ADD_VARIABLE_IN_SCOPE(ty, scope_id, hm, id) \
+    return insert__HashMap(hm, name->buffer, NEW(ty, file_id, scope_id, id));
 
 /**
  *
@@ -276,9 +275,12 @@ CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, Usize id, bool is_block);
  * @return CIEnumID*? (&)
  */
 inline const CIEnumID *
-add_enum__CIScope(const CIScope *self, const String *name, CIFileID file_id)
+add_enum__CIScope(const CIScope *self,
+                  const String *name,
+                  CIFileID file_id,
+                  Usize id)
 {
-    ADD_IN_SCOPE(CIEnumID, self->enums);
+    ADD_IN_SCOPE(CIEnumID, self->enums, id);
 }
 
 /**
@@ -287,9 +289,12 @@ add_enum__CIScope(const CIScope *self, const String *name, CIFileID file_id)
  * @return CIFunctionID*? (&)
  */
 inline const CIFunctionID *
-add_function__CIScope(const CIScope *self, const String *name, CIFileID file_id)
+add_function__CIScope(const CIScope *self,
+                      const String *name,
+                      CIFileID file_id,
+                      Usize id)
 {
-    ADD_IN_SCOPE(CIFunctionID, self->functions);
+    ADD_IN_SCOPE(CIFunctionID, self->functions, id);
 }
 
 /**
@@ -301,9 +306,10 @@ inline const CILabelID *
 add_label__CIScope(const CIScope *self,
                    const String *name,
                    CIScopeID scope_id,
-                   CIFileID file_id)
+                   CIFileID file_id,
+                   Usize id)
 {
-    ADD_VARIABLE_IN_SCOPE(CILabelID, scope_id, self->labels);
+    ADD_VARIABLE_IN_SCOPE(CILabelID, scope_id, self->labels, id);
 }
 
 /**
@@ -312,9 +318,12 @@ add_label__CIScope(const CIScope *self,
  * @return CIStructID*? (&)
  */
 inline const CIStructID *
-add_struct__CIScope(const CIScope *self, const String *name, CIFileID file_id)
+add_struct__CIScope(const CIScope *self,
+                    const String *name,
+                    CIFileID file_id,
+                    Usize id)
 {
-    ADD_IN_SCOPE(CIStructID, self->structs);
+    ADD_IN_SCOPE(CIStructID, self->structs, id);
 }
 
 /**
@@ -323,9 +332,12 @@ add_struct__CIScope(const CIScope *self, const String *name, CIFileID file_id)
  * @return CITypedefID*? (&)
  */
 inline const CITypedefID *
-add_typedef__CIScope(const CIScope *self, const String *name, CIFileID file_id)
+add_typedef__CIScope(const CIScope *self,
+                     const String *name,
+                     CIFileID file_id,
+                     Usize id)
 {
-    ADD_IN_SCOPE(CITypedefID, self->typedefs);
+    ADD_IN_SCOPE(CITypedefID, self->typedefs, id);
 }
 
 /**
@@ -334,9 +346,12 @@ add_typedef__CIScope(const CIScope *self, const String *name, CIFileID file_id)
  * @return CIUnionID*? (&)
  */
 inline const CIUnionID *
-add_union__CIScope(const CIScope *self, const String *name, CIFileID file_id)
+add_union__CIScope(const CIScope *self,
+                   const String *name,
+                   CIFileID file_id,
+                   Usize id)
 {
-    ADD_IN_SCOPE(CIUnionID, self->unions);
+    ADD_IN_SCOPE(CIUnionID, self->unions, id);
 }
 
 /**
@@ -348,9 +363,10 @@ inline const CIVariableID *
 add_variable__CIScope(const CIScope *self,
                       const String *name,
                       CIScopeID scope_id,
-                      CIFileID file_id)
+                      CIFileID file_id,
+                      Usize id)
 {
-    ADD_VARIABLE_IN_SCOPE(CIVariableID, scope_id, self->variables);
+    ADD_VARIABLE_IN_SCOPE(CIVariableID, scope_id, self->variables, id);
 }
 
 #define SEARCH_IN_SCOPE(hm) return get__HashMap(hm, name->buffer);
