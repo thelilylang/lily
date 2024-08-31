@@ -59,33 +59,48 @@ extern inline DESTRUCTOR(CIUnionID, CIUnionID *self);
 extern inline DESTRUCTOR(CIVariableID, CIVariableID *self);
 
 extern inline const CIEnumID *
-add_enum__CIScope(const CIScope *self, const String *name, CIFileID file_id);
+add_enum__CIScope(const CIScope *self,
+                  const String *name,
+                  CIFileID file_id,
+                  Usize id);
 
 extern inline const CIFunctionID *
 add_function__CIScope(const CIScope *self,
                       const String *name,
-                      CIFileID file_id);
+                      CIFileID file_id,
+                      Usize id);
 
 extern inline const CILabelID *
 add_label__CIScope(const CIScope *self,
                    const String *name,
                    CIScopeID scope_id,
-                   CIFileID file_id);
+                   CIFileID file_id,
+                   Usize id);
 
 extern inline const CIStructID *
-add_struct__CIScope(const CIScope *self, const String *name, CIFileID file_id);
+add_struct__CIScope(const CIScope *self,
+                    const String *name,
+                    CIFileID file_id,
+                    Usize id);
 
 extern inline const CITypedefID *
-add_typedef__CIScope(const CIScope *self, const String *name, CIFileID file_id);
+add_typedef__CIScope(const CIScope *self,
+                     const String *name,
+                     CIFileID file_id,
+                     Usize id);
 
 extern inline const CIUnionID *
-add_union__CIScope(const CIScope *self, const String *name, CIFileID file_id);
+add_union__CIScope(const CIScope *self,
+                   const String *name,
+                   CIFileID file_id,
+                   Usize id);
 
 extern inline const CIVariableID *
 add_variable__CIScope(const CIScope *self,
                       const String *name,
                       CIScopeID scope_id,
-                      CIFileID file_id);
+                      CIFileID file_id,
+                      Usize id);
 
 extern inline const CIEnumID *
 search_enum__CIScope(const CIScope *self, const String *name);

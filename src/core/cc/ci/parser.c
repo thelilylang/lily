@@ -5522,8 +5522,14 @@ loop:
             Vec *params = NULL;
 
             switch (self->current_token->kind) {
-                case CI_TOKEN_KIND_LPAREN:
-                    params = parse_function_params__CIParser(self, NULL);
+                case CI_TOKEN_KIND_LPAREN: {
+                    CIScope *parent_function_scope = add_scope__CIResultFile(
+                      self->file, current_scope->scope_id, true);
+                    params = parse_function_params__CIParser(
+                      self, parent_function_scope);
+
+                    break;
+                }
                 default:
                     break;
             }
@@ -6015,8 +6021,10 @@ parse_function_params__CIParser(CIParser *self, CIScope *parent_function_scope)
               NEW(
                 CIDeclVariable, ref__CIDataType(data_type), name, NULL, true));
 
-            add_variable__CIResultFile(
-              self->file, parent_function_scope, param_decl);
+            if (name) {
+                add_variable__CIResultFile(
+                  self->file, parent_function_scope, param_decl);
+            }
         }
 
         if (self->current_token->kind != CI_TOKEN_KIND_RPAREN) {

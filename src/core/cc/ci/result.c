@@ -411,7 +411,8 @@ add_enum__CIResultFile(const CIResultFile *self, CIDecl *enum_)
                add_enum__CIScope(
                  self->file_analysis->scope_base,
                  name,
-                 NEW(CIFileID, self->file_analysis->entity->id, self->kind)),
+                 NEW(CIFileID, self->file_analysis->entity->id, self->kind),
+                 self->file_analysis->entity->enums->len),
                self->file_analysis->entity->enums,
                add_enum__CIResultFile(self->owner, ref__CIDecl(enum_)));
 }
@@ -424,7 +425,8 @@ add_function__CIResultFile(const CIResultFile *self, CIDecl *function)
                add_function__CIScope(
                  self->file_analysis->scope_base,
                  name,
-                 NEW(CIFileID, self->file_analysis->entity->id, self->kind)),
+                 NEW(CIFileID, self->file_analysis->entity->id, self->kind),
+                 self->file_analysis->entity->functions->len),
                self->file_analysis->entity->functions,
                add_function__CIResultFile(self->owner, ref__CIDecl(function)));
 }
@@ -440,7 +442,8 @@ add_label__CIResultFile(const CIResultFile *self,
                  scope,
                  name,
                  *scope->scope_id,
-                 NEW(CIFileID, self->file_analysis->entity->id, self->kind)),
+                 NEW(CIFileID, self->file_analysis->entity->id, self->kind),
+                 self->file_analysis->entity->labels->len),
                self->file_analysis->entity->labels,
                add_label__CIResultFile(
                  self->owner, self->owner->scope_base, ref__CIDecl(label)));
@@ -454,7 +457,8 @@ add_struct__CIResultFile(const CIResultFile *self, CIDecl *struct_)
                add_struct__CIScope(
                  self->file_analysis->scope_base,
                  name,
-                 NEW(CIFileID, self->file_analysis->entity->id, self->kind)),
+                 NEW(CIFileID, self->file_analysis->entity->id, self->kind),
+                 self->file_analysis->entity->structs->len),
                self->file_analysis->entity->structs,
                add_struct__CIResultFile(self->owner, ref__CIDecl(struct_)));
 }
@@ -467,7 +471,8 @@ add_typedef__CIResultFile(const CIResultFile *self, CIDecl *typedef_)
                add_typedef__CIScope(
                  self->file_analysis->scope_base,
                  name,
-                 NEW(CIFileID, self->file_analysis->entity->id, self->kind)),
+                 NEW(CIFileID, self->file_analysis->entity->id, self->kind),
+                 self->file_analysis->entity->typedefs->len),
                self->file_analysis->entity->typedefs,
                add_typedef__CIResultFile(self->owner, ref__CIDecl(typedef_)));
 }
@@ -480,7 +485,8 @@ add_union__CIResultFile(const CIResultFile *self, CIDecl *union_)
                add_union__CIScope(
                  self->file_analysis->scope_base,
                  name,
-                 NEW(CIFileID, self->file_analysis->entity->id, self->kind)),
+                 NEW(CIFileID, self->file_analysis->entity->id, self->kind),
+                 self->file_analysis->entity->unions->len),
                self->file_analysis->entity->unions,
                add_union__CIResultFile(self->owner, ref__CIDecl(union_)));
 }
@@ -496,7 +502,8 @@ add_variable__CIResultFile(const CIResultFile *self,
                  scope,
                  name,
                  *scope->scope_id,
-                 NEW(CIFileID, self->file_analysis->entity->id, self->kind)),
+                 NEW(CIFileID, self->file_analysis->entity->id, self->kind),
+                 self->file_analysis->entity->variables->len),
                self->file_analysis->entity->variables,
                add_variable__CIResultFile(
                  self->owner, self->owner->scope_base, ref__CIDecl(variable)));
