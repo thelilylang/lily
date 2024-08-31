@@ -35,31 +35,16 @@
 #define NULL ((void*)0)
 #define offsetof(t, m) __builtin_offsetof(t, m)
 
-#ifndef __PTRDIFF_TYPE__
-#define __PTRDIFF_TYPE__ long int
+#ifdef __PTRDIFF_TYPE__
+typedef __PTRDIFF_TYPE__ ptrdiff_t;
 #endif /* __PTRDIFF_TYPE__ */
 
-#ifndef __ptrdiff_t
-#define __ptrdiff_t
-typedef __PTRDIFF_TYPE__ ptrdiff_t;
-#endif /* __ptrdiff_t */
-
-#ifndef __SIZE_TYPE__
-#define __SIZE_TYPE__ unsigned long int
+#ifdef __SIZE_TYPE__
+typedef __SIZE_TYPE__ size_t;
 #endif /* __SIZE_TYPE__ */
 
-#ifndef __size_t
-#define __size_t
-typedef __SIZE_TYPE__ size_t;
-#endif /* __size_t */
-
-#ifndef __WCHAR_TYPE__
-#define __WCHAR_TYPE__ int
-#endif /* __WCHAR_TYPE__ */
-
-#ifndef __wchar_t
-#define __wchar_t
+#ifdef __WCHAR_TYPE__
 typedef __WCHAR_TYPE__ wchar_t;
-#endif /* __wchar_t */
+#endif /* __WCHAR_TYPE__ */
 
 #endif /* _CC_STDDEF_H */
