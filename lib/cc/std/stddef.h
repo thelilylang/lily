@@ -22,18 +22,44 @@
  * SOFTWARE.
  */
 
-#ifndef _CC___EXTERN_H
-#define _CC___EXTERN_H
+/*
+ * ISO C99 Standard: 7.17 Common definitions <stddef.h>
+ */
 
-#undef __BEGIN_DECLS
-#undef __END_DECLS
+#ifndef _CC_STDDEF_H
+#define _CC_STDDEF_H
 
-#ifdef __cplusplus
-#define __BEGIN_DECLS extern "C" {
-#define __END_DECLS }
-#else
-#define __BEGIN_DECLS
-#define __END_DECLS
-#endif /* __cplusplus */
+#undef NULL
+#undef offsetof
 
-#endif /* _CC___EXTERN_H */
+#define NULL ((void*)0)
+#define offsetof(t, m) __builtin_offsetof(t, m)
+
+#ifndef __PTRDIFF_TYPE__
+#define __PTRDIFF_TYPE__ long int
+#endif /* __PTRDIFF_TYPE__ */
+
+#ifndef __ptrdiff_t
+#define __ptrdiff_t
+typedef __PTRDIFF_TYPE__ ptrdiff_t;
+#endif /* __ptrdiff_t */
+
+#ifndef __SIZE_TYPE__
+#define __SIZE_TYPE__ unsigned long int
+#endif /* __SIZE_TYPE__ */
+
+#ifndef __size_t
+#define __size_t
+typedef __SIZE_TYPE__ size_t;
+#endif /* __size_t */
+
+#ifndef __WCHAR_TYPE__
+#define __WCHAR_TYPE__ int
+#endif /* __WCHAR_TYPE__ */
+
+#ifndef __wchar_t
+#define __wchar_t
+typedef __WCHAR_TYPE__ wchar_t;
+#endif /* __wchar_t */
+
+#endif /* _CC_STDDEF_H */

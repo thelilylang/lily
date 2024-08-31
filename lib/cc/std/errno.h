@@ -44,4 +44,4 @@ extern int *__errno_location(void);
 
 __END_DECLS
 
-#endif // _CC_ERRNO_H
+#endif /* _CC_ERRNO_H */

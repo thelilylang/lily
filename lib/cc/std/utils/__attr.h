@@ -29,4 +29,4 @@
 
 #define __ATTR(x) [[x]]
 
-#endif // _CC___ATTRIBUTE_H
+#endif /* _CC___ATTRIBUTE_H */
