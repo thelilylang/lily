@@ -609,24 +609,140 @@ visit_typedef__CIParser(CIParser *self,
                         CIGenericParams *called_generic_params);
 
 static void
+visit_function_data_type__CIParser(CIParser *self,
+                                   const CIDataTypeFunction *function,
+                                   CIGenericParams *called_generic_params,
+                                   CIGenericParams *decl_generic_params);
+
+static void
 visit_data_type__CIParser(CIParser *self,
                           const CIDataType *data_type,
-                          CIGenericParams *called_generic_params);
+                          CIGenericParams *called_generic_params,
+                          CIGenericParams *decl_generic_params);
+
+static void
+visit_function_decl_variable__CIParser(CIParser *self,
+                                       const CIDeclVariable *variable,
+                                       CIGenericParams *called_generic_params,
+                                       CIGenericParams *decl_generic_params);
 
 static void
 visit_function_decl__CIParser(CIParser *self,
                               const CIDecl *decl,
-                              CIGenericParams *called_generic_params);
+                              CIGenericParams *called_generic_params,
+                              CIGenericParams *decl_generic_params);
+
+static void
+visit_function_expr_array_access__CIParser(
+  CIParser *self,
+  const CIExprArrayAccess *array_access,
+  CIGenericParams *called_generic_params,
+  CIGenericParams *decl_generic_params);
+
+static void
+visit_function_expr_binary__CIParser(CIParser *self,
+                                     const CIExprBinary *binary,
+                                     CIGenericParams *called_generic_params,
+                                     CIGenericParams *decl_generic_params);
+
+static void
+visit_function_expr_cast__CIParser(CIParser *self,
+                                   const CIExprCast *cast,
+                                   CIGenericParams *called_generic_params,
+                                   CIGenericParams *decl_generic_params);
+
+static void
+visit_function_expr_ternary__CIParser(CIParser *self,
+                                      const CIExprTernary *ternary,
+                                      CIGenericParams *called_generic_params,
+                                      CIGenericParams *decl_generic_params);
+
+static void
+visit_function_expr_function_call__CIParser(
+  CIParser *self,
+  const CIExprFunctionCall *function_call,
+  CIGenericParams *called_generic_params,
+  CIGenericParams *decl_generic_params);
+
+static void
+visit_function_expr_function_call_builtin__CIParser(
+  CIParser *self,
+  const CIExprFunctionCallBuiltin *function_call_builtin,
+  CIGenericParams *called_generic_params,
+  CIGenericParams *decl_generic_params);
+
+static void
+visit_function_expr_struct_call__CIParser(
+  CIParser *self,
+  const CIExprStructCall *struct_call,
+  CIGenericParams *called_generic_params,
+  CIGenericParams *decl_generic_params);
 
 static void
 visit_function_expr__CIParser(CIParser *self,
                               const CIExpr *expr,
-                              CIGenericParams *called_generic_params);
+                              CIGenericParams *called_generic_params,
+                              CIGenericParams *decl_generic_params);
+
+static inline void
+visit_function_stmt_block__CIParser(CIParser *self,
+                                    const CIStmtBlock *block,
+                                    CIGenericParams *called_generic_params,
+                                    CIGenericParams *decl_generic_params);
+
+static inline void
+visit_function_stmt_do_while__CIParser(CIParser *self,
+                                       const CIStmtDoWhile *do_while,
+                                       CIGenericParams *called_generic_params,
+                                       CIGenericParams *decl_generic_params);
+
+static void
+visit_function_stmt_for__CIParser(CIParser *self,
+                                  const CIStmtFor *for_,
+                                  CIGenericParams *called_generic_params,
+                                  CIGenericParams *decl_generic_params);
+
+static void
+visit_function_stmt_if_branch__CIParser(CIParser *self,
+                                        const CIStmtIfBranch *if_branch,
+                                        CIGenericParams *called_generic_params,
+                                        CIGenericParams *decl_generic_params);
+
+static void
+visit_function_stmt_if__CIParser(CIParser *self,
+                                 const CIStmtIf *if_,
+                                 CIGenericParams *called_generic_params,
+                                 CIGenericParams *decl_generic_params);
+
+static inline void
+visit_function_stmt_switch__CIParser(CIParser *self,
+                                     const CIStmtSwitch *switch_,
+                                     CIGenericParams *called_generic_params,
+                                     CIGenericParams *decl_generic_params);
+
+static inline void
+visit_function_stmt_while__CIParser(CIParser *self,
+                                    const CIStmtWhile *while_,
+                                    CIGenericParams *called_generic_params,
+                                    CIGenericParams *decl_generic_params);
 
 static void
 visit_function_stmt__CIParser(CIParser *self,
                               const CIStmt *stmt,
-                              CIGenericParams *called_generic_params);
+                              CIGenericParams *called_generic_params,
+                              CIGenericParams *decl_generic_params);
+
+static void
+visit_function_item__CIParser(CIParser *self,
+                              const CIDeclFunctionItem *item,
+                              CIGenericParams *called_generic_params,
+                              CIGenericParams *decl_generic_params);
+
+static void
+visit_function_body__CIParser(CIParser *self,
+                              const CIDeclFunctionBody *body,
+                              CIGenericParams *called_generic_params,
+                              CIGenericParams *decl_generic_params);
 
 static void
 visit_function__CIParser(CIParser *self,
@@ -873,8 +989,8 @@ typecheck_unary_expr__CIParser(const CIParser *self,
                                const CIExprUnary *unary,
                                struct CITypecheckContext *typecheck_ctx);
 
-/// @param called_genericParams const CIGenericParams*? (&)
-/// @param decl_genericParams const CIGenericParams*? (&)
+/// @param called_generic_params const CIGenericParams*? (&)
+/// @param decl_generic_params const CIGenericParams*? (&)
 static void
 typecheck_expr__CIParser(const CIParser *self,
                          const CIDataType *expected_data_type,
@@ -882,16 +998,16 @@ typecheck_expr__CIParser(const CIParser *self,
                          struct CITypecheckContext *typecheck_ctx);
 
 /// @param body const CIDeclFunctionItem* (&)
-/// @param called_genericParams const CIGenericParams*? (&)
-/// @param decl_genericParams const CIGenericParams*? (&)
+/// @param called_generic_params const CIGenericParams*? (&)
+/// @param decl_generic_params const CIGenericParams*? (&)
 static void
 typecheck_body_item__CIParser(const CIParser *self,
                               const CIDeclFunctionItem *item,
                               struct CITypecheckContext *typecheck_ctx);
 
 /// @param body const Vec<CIDeclFunctionItem*>*? (&)
-/// @param called_genericParams const CIGenericParams*? (&)
-/// @param decl_genericParams const CIGenericParams*? (&)
+/// @param called_generic_params const CIGenericParams*? (&)
+/// @param decl_generic_params const CIGenericParams*? (&)
 static void
 typecheck_body__CIParser(const CIParser *self,
                          const CIDeclFunctionBody *body,
@@ -938,8 +1054,8 @@ typecheck_while_stmt__CIParser(const CIParser *self,
                                const CIStmtWhile *while_,
                                struct CITypecheckContext *typecheck_ctx);
 
-/// @param called_genericParams const CIGenericParams*? (&)
-/// @param decl_genericParams const CIGenericParams*? (&)
+/// @param called_generic_params const CIGenericParams*? (&)
+/// @param decl_generic_params const CIGenericParams*? (&)
 static void
 typecheck_stmt__CIParser(const CIParser *self,
                          const CIStmt *given_stmt,
@@ -4988,16 +5104,88 @@ visit_typedef__CIParser(CIParser *self,
 }
 
 void
+visit_function_data_type__CIParser(CIParser *self,
+                                   const CIDataTypeFunction *function,
+                                   CIGenericParams *called_generic_params,
+                                   CIGenericParams *decl_generic_params)
+{
+    visit_data_type__CIParser(self,
+                              function->return_data_type,
+                              called_generic_params,
+                              decl_generic_params);
+
+    if (function->params) {
+        for (Usize i = 0; i < function->params->len; ++i) {
+            CIDeclFunctionParam *param = get__Vec(function->params, i);
+
+            visit_data_type__CIParser(self,
+                                      param->data_type,
+                                      called_generic_params,
+                                      decl_generic_params);
+        }
+    }
+
+    if (function->function_data_type) {
+        visit_data_type__CIParser(self,
+                                  function->function_data_type,
+                                  called_generic_params,
+                                  decl_generic_params);
+    }
+}
+
+void
 visit_data_type__CIParser(CIParser *self,
                           const CIDataType *data_type,
-                          CIGenericParams *called_generic_params)
+                          CIGenericParams *called_generic_params,
+                          CIGenericParams *decl_generic_params)
 {
     switch (data_type->kind) {
-        case CI_DATA_TYPE_KIND_GENERIC:
+        case CI_DATA_TYPE_KIND_ARRAY:
+            visit_data_type__CIParser(self,
+                                      data_type->array.data_type,
+                                      called_generic_params,
+                                      decl_generic_params);
+
+            break;
+        case CI_DATA_TYPE_KIND__ATOMIC:
+            visit_data_type__CIParser(self,
+                                      data_type->_atomic,
+                                      called_generic_params,
+                                      decl_generic_params);
+
+            break;
+        case CI_DATA_TYPE_KIND_FUNCTION:
+            visit_function_data_type__CIParser(self,
+                                               &data_type->function,
+                                               called_generic_params,
+                                               decl_generic_params);
+
+            break;
+        case CI_DATA_TYPE_KIND_PTR:
+            if (data_type->ptr) {
+                visit_data_type__CIParser(self,
+                                          data_type->ptr,
+                                          called_generic_params,
+                                          decl_generic_params);
+            }
+
             break;
         case CI_DATA_TYPE_KIND_STRUCT:
+            if (data_type->struct_.name) {
+                generate_struct_gen__CIParser(
+                  self,
+                  data_type->struct_.name,
+                  data_type->struct_.generic_params);
+            }
+
             break;
         case CI_DATA_TYPE_KIND_UNION:
+            if (data_type->union_.name) {
+                generate_union_gen__CIParser(self,
+                                             data_type->union_.name,
+                                             data_type->union_.generic_params);
+            }
+
             break;
         default:
             break;
@@ -5005,88 +5193,220 @@ visit_data_type__CIParser(CIParser *self,
 }
 
 void
+visit_function_decl_variable__CIParser(CIParser *self,
+                                       const CIDeclVariable *variable,
+                                       CIGenericParams *called_generic_params,
+                                       CIGenericParams *decl_generic_params)
+{
+    visit_data_type__CIParser(
+      self, variable->data_type, called_generic_params, decl_generic_params);
+    visit_function_expr__CIParser(
+      self, variable->expr, called_generic_params, decl_generic_params);
+}
+
+void
 visit_function_decl__CIParser(CIParser *self,
                               const CIDecl *decl,
-                              CIGenericParams *called_generic_params)
+                              CIGenericParams *called_generic_params,
+                              CIGenericParams *decl_generic_params)
 {
     switch (decl->kind) {
         case CI_DECL_KIND_VARIABLE:
+            visit_function_decl_variable__CIParser(self,
+                                                   &decl->variable,
+                                                   called_generic_params,
+                                                   decl_generic_params);
+
             break;
         default:
+            // TODO: visit other declarations
             break;
+    }
+}
+
+void
+visit_function_expr_array_access__CIParser(
+  CIParser *self,
+  const CIExprArrayAccess *array_access,
+  CIGenericParams *called_generic_params,
+  CIGenericParams *decl_generic_params)
+{
+    visit_function_expr__CIParser(
+      self, array_access->array, called_generic_params, decl_generic_params);
+    visit_function_expr__CIParser(
+      self, array_access->access, called_generic_params, decl_generic_params);
+}
+
+void
+visit_function_expr_binary__CIParser(CIParser *self,
+                                     const CIExprBinary *binary,
+                                     CIGenericParams *called_generic_params,
+                                     CIGenericParams *decl_generic_params)
+{
+    visit_function_expr__CIParser(
+      self, binary->left, called_generic_params, decl_generic_params);
+    visit_function_expr__CIParser(
+      self, binary->right, called_generic_params, decl_generic_params);
+}
+
+void
+visit_function_expr_cast__CIParser(CIParser *self,
+                                   const CIExprCast *cast,
+                                   CIGenericParams *called_generic_params,
+                                   CIGenericParams *decl_generic_params)
+{
+    visit_function_expr__CIParser(
+      self, cast->expr, called_generic_params, decl_generic_params);
+    visit_data_type__CIParser(
+      self, cast->data_type, called_generic_params, decl_generic_params);
+}
+
+void
+visit_function_expr_ternary__CIParser(CIParser *self,
+                                      const CIExprTernary *ternary,
+                                      CIGenericParams *called_generic_params,
+                                      CIGenericParams *decl_generic_params)
+{
+    visit_function_expr__CIParser(
+      self, ternary->cond, called_generic_params, decl_generic_params);
+    visit_function_expr__CIParser(
+      self, ternary->if_, called_generic_params, decl_generic_params);
+    visit_function_expr__CIParser(
+      self, ternary->else_, called_generic_params, decl_generic_params);
+}
+
+void
+visit_function_expr_function_call__CIParser(
+  CIParser *self,
+  const CIExprFunctionCall *function_call,
+  CIGenericParams *called_generic_params,
+  CIGenericParams *decl_generic_params)
+{
+    generate_function_gen__CIParser(
+      self, function_call->identifier, function_call->generic_params);
+
+    for (Usize i = 0; i < function_call->params->len; ++i) {
+        visit_function_expr__CIParser(self,
+                                      get__Vec(function_call->params, i),
+                                      called_generic_params,
+                                      decl_generic_params);
+    }
+}
+
+void
+visit_function_expr_function_call_builtin__CIParser(
+  CIParser *self,
+  const CIExprFunctionCallBuiltin *function_call_builtin,
+  CIGenericParams *called_generic_params,
+  CIGenericParams *decl_generic_params)
+{
+    for (Usize i = 0; i < function_call_builtin->params->len; ++i) {
+        visit_function_expr__CIParser(
+          self,
+          get__Vec(function_call_builtin->params, i),
+          called_generic_params,
+          decl_generic_params);
+    }
+}
+
+void
+visit_function_expr_struct_call__CIParser(
+  CIParser *self,
+  const CIExprStructCall *struct_call,
+  CIGenericParams *called_generic_params,
+  CIGenericParams *decl_generic_params)
+{
+    for (Usize i = 0; i < struct_call->fields->len; ++i) {
+        CIExprStructFieldCall *field_call = get__Vec(struct_call->fields, i);
+
+        visit_function_expr__CIParser(
+          self, field_call->value, called_generic_params, decl_generic_params);
     }
 }
 
 void
 visit_function_expr__CIParser(CIParser *self,
                               const CIExpr *expr,
-                              CIGenericParams *called_generic_params)
+                              CIGenericParams *called_generic_params,
+                              CIGenericParams *decl_generic_params)
 {
     switch (expr->kind) {
         case CI_EXPR_KIND_ALIGNOF:
             visit_function_expr__CIParser(
-              self, expr->alignof_, called_generic_params);
+              self, expr->alignof_, called_generic_params, decl_generic_params);
 
             break;
         case CI_EXPR_KIND_ARRAY_ACCESS:
-            visit_function_expr__CIParser(
-              self, expr->array_access.array, called_generic_params);
-            visit_function_expr__CIParser(
-              self, expr->array_access.access, called_generic_params);
+            visit_function_expr_array_access__CIParser(self,
+                                                       &expr->array_access,
+                                                       called_generic_params,
+                                                       decl_generic_params);
 
             break;
         case CI_EXPR_KIND_BINARY:
-            visit_function_expr__CIParser(
-              self, expr->binary.left, called_generic_params);
-            visit_function_expr__CIParser(
-              self, expr->binary.right, called_generic_params);
+            visit_function_expr_binary__CIParser(
+              self, &expr->binary, called_generic_params, decl_generic_params);
 
             break;
         case CI_EXPR_KIND_CAST:
-            visit_function_expr__CIParser(
-              self, expr->cast.expr, called_generic_params);
-            visit_data_type__CIParser(
-              self, expr->cast.data_type, called_generic_params);
+            visit_function_expr_cast__CIParser(
+              self, &expr->cast, called_generic_params, decl_generic_params);
 
             break;
         case CI_EXPR_KIND_DATA_TYPE:
-            visit_data_type__CIParser(
-              self, expr->data_type, called_generic_params);
+            visit_data_type__CIParser(self,
+                                      expr->data_type,
+                                      called_generic_params,
+                                      decl_generic_params);
 
             break;
         case CI_EXPR_KIND_FUNCTION_CALL:
-            TODO("visit function call");
+            visit_function_expr_function_call__CIParser(self,
+                                                        &expr->function_call,
+                                                        called_generic_params,
+                                                        decl_generic_params);
+
+            break;
+        case CI_EXPR_KIND_FUNCTION_CALL_BUILTIN:
+            visit_function_expr_function_call_builtin__CIParser(
+              self,
+              &expr->function_call_builtin,
+              called_generic_params,
+              decl_generic_params);
 
             break;
         case CI_EXPR_KIND_GROUPING:
             visit_function_expr__CIParser(
-              self, expr->grouping, called_generic_params);
+              self, expr->grouping, called_generic_params, decl_generic_params);
 
             break;
         case CI_EXPR_KIND_IDENTIFIER:
-            TODO("visit identifier");
-
+            // TODO: Handling the case of generic pass-by-reference functions.
             break;
         case CI_EXPR_KIND_LITERAL:
+            break;
         case CI_EXPR_KIND_STRUCT_CALL:
+            visit_function_expr_struct_call__CIParser(self,
+                                                      &expr->struct_call,
+                                                      called_generic_params,
+                                                      decl_generic_params);
+
             break;
         case CI_EXPR_KIND_SIZEOF:
             visit_function_expr__CIParser(
-              self, expr->sizeof_, called_generic_params);
+              self, expr->sizeof_, called_generic_params, decl_generic_params);
 
             break;
         case CI_EXPR_KIND_TERNARY:
-            visit_function_expr__CIParser(
-              self, expr->ternary.cond, called_generic_params);
-            visit_function_expr__CIParser(
-              self, expr->ternary.if_, called_generic_params);
-            visit_function_expr__CIParser(
-              self, expr->ternary.else_, called_generic_params);
+            visit_function_expr_ternary__CIParser(
+              self, &expr->ternary, called_generic_params, decl_generic_params);
 
             break;
         case CI_EXPR_KIND_UNARY:
-            visit_function_expr__CIParser(
-              self, expr->unary.expr, called_generic_params);
+            visit_function_expr__CIParser(self,
+                                          expr->unary.expr,
+                                          called_generic_params,
+                                          decl_generic_params);
 
             break;
         default:
@@ -5095,10 +5415,210 @@ visit_function_expr__CIParser(CIParser *self,
 }
 
 void
+visit_function_stmt_block__CIParser(CIParser *self,
+                                    const CIStmtBlock *block,
+                                    CIGenericParams *called_generic_params,
+                                    CIGenericParams *decl_generic_params)
+{
+    visit_function_body__CIParser(
+      self, block->body, called_generic_params, decl_generic_params);
+}
+
+void
+visit_function_stmt_do_while__CIParser(CIParser *self,
+                                       const CIStmtDoWhile *do_while,
+                                       CIGenericParams *called_generic_params,
+                                       CIGenericParams *decl_generic_params)
+{
+    visit_function_expr__CIParser(
+      self, do_while->cond, called_generic_params, decl_generic_params);
+    visit_function_body__CIParser(
+      self, do_while->body, called_generic_params, decl_generic_params);
+}
+
+void
+visit_function_stmt_for__CIParser(CIParser *self,
+                                  const CIStmtFor *for_,
+                                  CIGenericParams *called_generic_params,
+                                  CIGenericParams *decl_generic_params)
+{
+    if (for_->init_clause) {
+        visit_function_item__CIParser(
+          self, for_->init_clause, called_generic_params, decl_generic_params);
+    }
+
+    if (for_->expr1) {
+        visit_function_expr__CIParser(
+          self, for_->expr1, called_generic_params, decl_generic_params);
+    }
+
+    if (for_->exprs2) {
+        for (Usize i = 0; i < for_->exprs2->len; ++i) {
+            visit_function_expr__CIParser(self,
+                                          get__Vec(for_->exprs2, i),
+                                          called_generic_params,
+                                          decl_generic_params);
+        }
+    }
+
+    visit_function_body__CIParser(
+      self, for_->body, called_generic_params, decl_generic_params);
+}
+
+void
+visit_function_stmt_if_branch__CIParser(CIParser *self,
+                                        const CIStmtIfBranch *if_branch,
+                                        CIGenericParams *called_generic_params,
+                                        CIGenericParams *decl_generic_params)
+{
+    visit_function_expr__CIParser(
+      self, if_branch->cond, called_generic_params, decl_generic_params);
+    visit_function_body__CIParser(
+      self, if_branch->body, called_generic_params, decl_generic_params);
+}
+
+void
+visit_function_stmt_if__CIParser(CIParser *self,
+                                 const CIStmtIf *if_,
+                                 CIGenericParams *called_generic_params,
+                                 CIGenericParams *decl_generic_params)
+{
+    visit_function_stmt_if_branch__CIParser(
+      self, if_->if_, called_generic_params, decl_generic_params);
+
+    if (if_->else_ifs) {
+        for (Usize i = 0; i < if_->else_ifs->len; ++i) {
+            visit_function_stmt_if_branch__CIParser(self,
+                                                    get__Vec(if_->else_ifs, i),
+                                                    called_generic_params,
+                                                    decl_generic_params);
+        }
+    }
+
+    if (if_->else_) {
+        visit_function_body__CIParser(
+          self, if_->else_, called_generic_params, decl_generic_params);
+    }
+}
+
+void
+visit_function_stmt_switch__CIParser(CIParser *self,
+                                     const CIStmtSwitch *switch_,
+                                     CIGenericParams *called_generic_params,
+                                     CIGenericParams *decl_generic_params)
+{
+    visit_function_expr__CIParser(
+      self, switch_->expr, called_generic_params, decl_generic_params);
+    visit_function_body__CIParser(
+      self, switch_->body, called_generic_params, decl_generic_params);
+}
+
+void
+visit_function_stmt_while__CIParser(CIParser *self,
+                                    const CIStmtWhile *while_,
+                                    CIGenericParams *called_generic_params,
+                                    CIGenericParams *decl_generic_params)
+{
+    visit_function_expr__CIParser(
+      self, while_->cond, called_generic_params, decl_generic_params);
+    visit_function_body__CIParser(
+      self, while_->body, called_generic_params, decl_generic_params);
+}
+
+void
 visit_function_stmt__CIParser(CIParser *self,
                               const CIStmt *stmt,
-                              CIGenericParams *called_generic_params)
+                              CIGenericParams *called_generic_params,
+                              CIGenericParams *decl_generic_params)
 {
+    switch (stmt->kind) {
+        case CI_STMT_KIND_BLOCK:
+            visit_function_stmt_block__CIParser(
+              self, &stmt->block, called_generic_params, decl_generic_params);
+
+            break;
+        case CI_STMT_KIND_BREAK:
+        case CI_STMT_KIND_CASE: // NOTE: We skip this case, can only contain
+                                // constant expressions.
+        case CI_STMT_KIND_CONTINUE:
+        case CI_STMT_KIND_DEFAULT:
+            break;
+        case CI_STMT_KIND_DO_WHILE:
+            return visit_function_stmt_do_while__CIParser(self,
+                                                          &stmt->do_while,
+                                                          called_generic_params,
+                                                          decl_generic_params);
+        case CI_STMT_KIND_FOR:
+            visit_function_stmt_for__CIParser(
+              self, &stmt->for_, called_generic_params, decl_generic_params);
+
+            break;
+        case CI_STMT_KIND_GOTO:
+            break;
+        case CI_STMT_KIND_IF:
+            visit_function_stmt_if__CIParser(
+              self, &stmt->if_, called_generic_params, decl_generic_params);
+
+            break;
+        case CI_STMT_KIND_RETURN:
+            visit_function_expr__CIParser(
+              self, stmt->return_, called_generic_params, decl_generic_params);
+
+            break;
+        case CI_STMT_KIND_SWITCH:
+            visit_function_stmt_switch__CIParser(
+              self, &stmt->switch_, called_generic_params, decl_generic_params);
+
+            break;
+        case CI_STMT_KIND_WHILE:
+            visit_function_stmt_while__CIParser(
+              self, &stmt->while_, called_generic_params, decl_generic_params);
+
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+void
+visit_function_item__CIParser(CIParser *self,
+                              const CIDeclFunctionItem *item,
+                              CIGenericParams *called_generic_params,
+                              CIGenericParams *decl_generic_params)
+{
+    switch (item->kind) {
+        case CI_DECL_FUNCTION_ITEM_KIND_DECL:
+            visit_function_decl__CIParser(
+              self, item->decl, called_generic_params, decl_generic_params);
+
+            break;
+        case CI_DECL_FUNCTION_ITEM_KIND_EXPR:
+            visit_function_expr__CIParser(
+              self, item->expr, called_generic_params, decl_generic_params);
+
+            break;
+        case CI_DECL_FUNCTION_ITEM_KIND_STMT:
+            visit_function_stmt__CIParser(
+              self, &item->stmt, called_generic_params, decl_generic_params);
+
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+void
+visit_function_body__CIParser(CIParser *self,
+                              const CIDeclFunctionBody *body,
+                              CIGenericParams *called_generic_params,
+                              CIGenericParams *decl_generic_params)
+{
+    for (Usize i = 0; i < body->content->len; ++i) {
+        visit_function_item__CIParser(self,
+                                      get__Vec(body->content, i),
+                                      called_generic_params,
+                                      decl_generic_params);
+    }
 }
 
 void
@@ -5106,30 +5626,10 @@ visit_function__CIParser(CIParser *self,
                          const CIDecl *function_decl,
                          CIGenericParams *called_generic_params)
 {
-    for (Usize i = 0; i < function_decl->function.body->content->len; ++i) {
-        CIDeclFunctionItem *item =
-          get__Vec(function_decl->function.body->content, i);
-
-        switch (item->kind) {
-            case CI_DECL_FUNCTION_ITEM_KIND_DECL:
-                visit_function_decl__CIParser(
-                  self, item->decl, called_generic_params);
-
-                break;
-            case CI_DECL_FUNCTION_ITEM_KIND_EXPR:
-                visit_function_expr__CIParser(
-                  self, item->expr, called_generic_params);
-
-                break;
-            case CI_DECL_FUNCTION_ITEM_KIND_STMT:
-                visit_function_stmt__CIParser(
-                  self, &item->stmt, called_generic_params);
-
-                break;
-            default:
-                UNREACHABLE("unknown variant");
-        }
-    }
+    visit_function_body__CIParser(self,
+                                  function_decl->function.body,
+                                  called_generic_params,
+                                  function_decl->function.generic_params);
 }
 
 void
