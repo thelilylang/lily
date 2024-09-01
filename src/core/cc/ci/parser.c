@@ -1041,6 +1041,18 @@ parse_union__CIParser(CIParser *self,
                       String *name,
                       CIGenericParams *generic_params);
 
+static inline bool
+is_only_initialization_compatible_data_type__CIParser(CIParser *self,
+                                                      CIDataType *data_type);
+
+static inline bool
+is_initialization_expr__CIParser(CIParser *self, CIExpr *expr);
+
+static void
+check_for_initialization_expr__CIParser(CIParser *self,
+                                        CIDataType *data_type,
+                                        CIExpr *expr);
+
 /// @brief Parse variable declaration.
 /// @param name String*? (&)
 static CIDecl *
@@ -7013,13 +7025,8 @@ infer_expr_literal_data_type__CIParser(const CIParser *self,
         case CI_EXPR_LITERAL_KIND_SIGNED_INT:
             return int__PrimaryDataTypes();
         case CI_EXPR_LITERAL_KIND_STRING: {
-            CIDataType *string_dt =
-              NEW_VARIANT(CIDataType,
-                          array,
-                          NEW_VARIANT(CIDataTypeArray,
-                                      none,
-                                      NEW(CIDataType, CI_DATA_TYPE_KIND_CHAR),
-                                      NULL));
+            CIDataType *string_dt = NEW_VARIANT(
+              CIDataType, ptr, NEW(CIDataType, CI_DATA_TYPE_KIND_CHAR));
 
             return string_dt;
         }
@@ -8815,6 +8822,49 @@ parse_union__CIParser(CIParser *self,
                            NEW(CISizeInfo, size, alignment)));
 }
 
+bool
+is_only_initialization_compatible_data_type__CIParser(CIParser *self,
+                                                      CIDataType *data_type)
+{
+    switch (data_type->kind) {
+        case CI_DATA_TYPE_KIND_ARRAY:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool
+is_initialization_expr__CIParser(CIParser *self, CIExpr *expr)
+{
+    switch (expr->kind) {
+        case CI_EXPR_KIND_ARRAY:
+            return true;
+        case CI_EXPR_KIND_LITERAL:
+            switch (expr->literal.kind) {
+                case CI_EXPR_LITERAL_KIND_STRING:
+                    return true;
+                default:
+                    return false;
+            }
+        default:
+            return false;
+    }
+}
+
+void
+check_for_initialization_expr__CIParser(CIParser *self,
+                                        CIDataType *data_type,
+                                        CIExpr *expr)
+{
+
+    if (is_only_initialization_compatible_data_type__CIParser(self,
+                                                              data_type) &&
+        !is_initialization_expr__CIParser(self, expr)) {
+        FAILED("need initialization expression for array data type");
+    }
+}
+
 CIDecl *
 parse_variable__CIParser(CIParser *self,
                          int storage_class_flag,
@@ -8845,6 +8895,8 @@ parse_variable__CIParser(CIParser *self,
     ENABLE_ALLOW_INITIALIZATION();
 
     CIExpr *expr = parse_expr__CIParser(self);
+
+    check_for_initialization_expr__CIParser(self, data_type, expr);
 
     DISABLE_ALLOW_INITIALIZATION();
 
