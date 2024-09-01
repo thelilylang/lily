@@ -45,20 +45,39 @@ struct CurrentSwitch
     bool is_present;
 };
 
+struct CurrentGenericParams
+{
+    CIGenericParams *called; // CIGenericParams*? (&)
+    CIGenericParams *decl;   // CIGenericParams*? (&)
+};
+
+static inline CONSTRUCTOR(struct CurrentGenericParams,
+                          CurrentGenericParams,
+                          CIGenericParams *called,
+                          CIGenericParams *decl);
+
+static struct CurrentGenericParams
+default__CurrentGenericParams();
+
 struct CITypecheckContext
 {
-    const CIDecl *current_decl;                   // const CIDecl*? (&)
-    const CIGenericParams *called_generic_params; // const CIGenericParams*? (&)
-    const CIGenericParams *decl_generic_params;   // const CIGenericParams*? (&)
-    const CIScopeID *current_scope_id;            // const CIScopeID*? (&)
+    const CIDecl *current_decl; // const CIDecl*? (&)
+    struct CurrentGenericParams current_generic_params;
+    const CIScopeID *current_scope_id; // const CIScopeID*? (&)
     struct CurrentSwitch current_switch;
 };
 
 static inline CONSTRUCTOR(struct CITypecheckContext,
                           CITypecheckContext,
                           const CIDecl *current_decl,
-                          const CIGenericParams *called_generic_params,
-                          const CIGenericParams *decl_generic_params);
+                          CIGenericParams *called_generic_params,
+                          CIGenericParams *decl_generic_params);
+
+/// @return Old value of generic params
+static inline struct CurrentGenericParams
+set_current_generic_params__CITypecheckContext(
+  struct CITypecheckContext *self,
+  struct CurrentGenericParams new_current_generic_params);
 
 static const CIParserMacroCall *
 get_macro_call__CIParser(CIParser *self, Usize macro_call_id);
@@ -1236,21 +1255,48 @@ static const enum CIAttributeStandardKind
 // blocks, e.g. for stringification.
 static bool next_token_with_check = true;
 
+CONSTRUCTOR(struct CurrentGenericParams,
+            CurrentGenericParams,
+            CIGenericParams *called,
+            CIGenericParams *decl)
+{
+    return (struct CurrentGenericParams){ .called = called, .decl = decl };
+}
+
+struct CurrentGenericParams
+default__CurrentGenericParams()
+{
+    return (struct CurrentGenericParams){ .called = NULL, .decl = NULL };
+}
+
 CONSTRUCTOR(struct CITypecheckContext,
             CITypecheckContext,
             const CIDecl *current_decl,
-            const CIGenericParams *called_generic_params,
-            const CIGenericParams *decl_generic_params)
+            CIGenericParams *called_generic_params,
+            CIGenericParams *decl_generic_params)
 {
     return (struct CITypecheckContext){
         .current_decl = current_decl,
-        .called_generic_params = called_generic_params,
-        .decl_generic_params = decl_generic_params,
+        .current_generic_params =
+          NEW(CurrentGenericParams, called_generic_params, decl_generic_params),
         .current_scope_id = NULL,
         .current_switch = { .is_integer = false,
                             .is_float = false,
                             .is_present = false }
     };
+}
+
+struct CurrentGenericParams
+set_current_generic_params__CITypecheckContext(
+  struct CITypecheckContext *self,
+  struct CurrentGenericParams new_current_generic_params)
+{
+    struct CurrentGenericParams old_current_generic_params =
+      self->current_generic_params;
+
+    self->current_generic_params = new_current_generic_params;
+
+    return old_current_generic_params;
 }
 
 const CIParserMacroCall *
@@ -7190,19 +7236,21 @@ resolve_data_type__CIParser(const CIParser *self,
         case CI_DATA_TYPE_KIND_TYPEDEF:
             return resolve_typedef_data_type__CIParser(self, data_type);
         case CI_DATA_TYPE_KIND_GENERIC: {
-            bool has_generic = typecheck_ctx->called_generic_params &&
-                               typecheck_ctx->decl_generic_params;
+            bool has_generic = typecheck_ctx->current_generic_params.called &&
+                               typecheck_ctx->current_generic_params.decl;
 
             if (has_generic) {
                 Isize generic_params_index = find_generic__CIGenericParams(
-                  typecheck_ctx->decl_generic_params, data_type->generic);
+                  typecheck_ctx->current_generic_params.decl,
+                  data_type->generic);
 
                 if (generic_params_index == -1) {
                     FAILED("generic params is not found");
                 }
 
-                return get__Vec(typecheck_ctx->called_generic_params->params,
-                                generic_params_index);
+                return get__Vec(
+                  typecheck_ctx->current_generic_params.called->params,
+                  generic_params_index);
             }
 
             FAILED("expected generic param, to use generic data type");
@@ -7440,16 +7488,29 @@ typecheck_function_call_expr_params__CIParser(
   struct CITypecheckContext *typecheck_ctx)
 {
     bool is_variadic = false /* TODO: is_variadic */;
+    Usize decl_function_call_params_len =
+      decl_function_call->function.params
+        ? decl_function_call->function.params->len
+        : 0;
+    Usize called_params_len = called_params->len;
 
-    if (!(decl_function_call->function.params->len == called_params->len ||
-          (called_params->len >= decl_function_call->function.params->len - 1 &&
-           is_variadic))) {
+    if (decl_function_call_params_len != called_params_len ||
+        (called_params_len < decl_function_call_params_len - 1 &&
+         is_variadic)) {
         FAILED("number of params don't matched");
     }
 
-    for (Usize i = 0;
-         i < (is_variadic ? decl_function_call->function.params->len - 1
-                          : decl_function_call->function.params->len);
+    struct CurrentGenericParams old_current_generic_params =
+      decl_function_call->kind == CI_DECL_KIND_FUNCTION_GEN
+        ? set_current_generic_params__CITypecheckContext(
+            typecheck_ctx,
+            NEW(CurrentGenericParams,
+                decl_function_call->function_gen.called_generic_params,
+                decl_function_call->function_gen.function->generic_params))
+        : default__CurrentGenericParams();
+
+    for (Usize i = 0; i < (is_variadic ? decl_function_call_params_len - 1
+                                       : decl_function_call_params_len);
          ++i) {
         const CIDeclFunctionParam *decl_param =
           get__Vec(decl_function_call->function.params, i);
@@ -7458,6 +7519,11 @@ typecheck_function_call_expr_params__CIParser(
         typecheck_expr__CIParser(
           self, decl_param->data_type, called_param, typecheck_ctx);
     }
+
+    if (decl_function_call->kind == CI_DECL_KIND_FUNCTION_GEN) {
+        set_current_generic_params__CITypecheckContext(
+          typecheck_ctx, old_current_generic_params);
+    }
 }
 
 void
@@ -7465,26 +7531,44 @@ typecheck_function_call_expr__CIParser(const CIParser *self,
                                        const CIExprFunctionCall *function_call,
                                        struct CITypecheckContext *typecheck_ctx)
 {
-    CIDecl *function_decl =
+    CIDecl *function_decl_base =
       search_function__CIResultFile(self->file, function_call->identifier);
+
+    if (!function_decl_base) {
+        FAILED("unknown function");
+    }
+
+    bool has_generic_params = function_decl_base->function.generic_params;
+    String *serialized_name =
+      has_generic_params
+        ? serialize_name__CIDeclFunction(&function_decl_base->function,
+                                         function_call->generic_params)
+        : function_decl_base->function.name;
+    CIDecl *function_decl =
+      has_generic_params
+        ? search_function__CIResultFile(self->file, serialized_name)
+        : function_decl_base;
+
+    if (!function_decl) {
+        UNREACHABLE("the function has not been generated");
+    }
+
+    if (has_generic_params) {
+        FREE(String, serialized_name);
+    }
 
     if (function_decl) {
         switch (function_decl->kind) {
             case CI_DECL_KIND_FUNCTION:
+            case CI_DECL_KIND_FUNCTION_GEN:
                 typecheck_function_call_expr_params__CIParser(
                   self, function_decl, function_call->params, typecheck_ctx);
 
                 break;
-            case CI_DECL_KIND_FUNCTION_GEN:
-                TODO("typecheck function gen");
             default:
                 UNREACHABLE("expected function or function gen");
         }
-
-        return;
     }
-
-    FAILED("unknown function");
 }
 
 void
@@ -7601,10 +7685,10 @@ typecheck_expr__CIParser(const CIParser *self,
                          const CIExpr *given_expr,
                          struct CITypecheckContext *typecheck_ctx)
 {
-    ASSERT((typecheck_ctx->called_generic_params &&
-            typecheck_ctx->decl_generic_params) ||
-           (!typecheck_ctx->called_generic_params &&
-            !typecheck_ctx->decl_generic_params));
+    ASSERT((typecheck_ctx->current_generic_params.called &&
+            typecheck_ctx->current_generic_params.decl) ||
+           (!typecheck_ctx->current_generic_params.called &&
+            !typecheck_ctx->current_generic_params.decl));
 
     // Typecheck expression content.
     switch (given_expr->kind) {
@@ -7883,10 +7967,10 @@ typecheck_stmt__CIParser(const CIParser *self,
                          const CIStmt *given_stmt,
                          struct CITypecheckContext *typecheck_ctx)
 {
-    ASSERT((typecheck_ctx->called_generic_params &&
-            typecheck_ctx->decl_generic_params) ||
-           (!typecheck_ctx->called_generic_params &&
-            !typecheck_ctx->decl_generic_params));
+    ASSERT((typecheck_ctx->current_generic_params.called &&
+            typecheck_ctx->current_generic_params.decl) ||
+           (!typecheck_ctx->current_generic_params.called &&
+            !typecheck_ctx->current_generic_params.decl));
 
     switch (given_stmt->kind) {
         case CI_STMT_KIND_BLOCK:
