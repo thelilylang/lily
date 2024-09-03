@@ -544,6 +544,31 @@ find_generic__CIGenericParams(const CIGenericParams *self, String *name);
 
 /**
  *
+ * @brief Check if the generic params has generic data type.
+ * @param self const CIGenericParams*? (&)
+ */
+bool
+has_generic__CIGenericParams(const CIGenericParams *self);
+
+/**
+ *
+ * @brief Put the result of serialization in the given buffer.
+ */
+void
+put_serialization_into_buffer__CIGenericParams(const CIGenericParams *self,
+                                               String *buffer);
+
+/**
+ *
+ * @brief Serialize name from generic params.
+ * @return String*
+ */
+String *
+serialize_name__CIGenericParams(const CIGenericParams *self,
+                                const String *name);
+
+/**
+ *
  * @brief Convert CIGenericParams in String.
  * @note This function is only used to debug.
  */
@@ -1088,7 +1113,8 @@ get_name__CIDataType(const CIDataType *self);
  * @return String*
  */
 String *
-serialize_name__CIDataType(const CIDataType *self);
+serialize_name__CIDataType(const CIDataType *self,
+                           const CIGenericParams *called_generic_params);
 
 /**
  *
@@ -2270,14 +2296,6 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     int storage_class_flag,
                     bool is_prototype,
                     CIDeclVariable variable);
-
-/**
- *
- * @brief Check if the passed `generic_params` contains generic data type.
- */
-bool
-is_generic_params_contains_generic__CIDecl(
-  const CIGenericParams *generic_params);
 
 /**
  *

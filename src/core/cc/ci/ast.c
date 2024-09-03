@@ -214,13 +214,14 @@ static VARIANT_DESTRUCTOR(CIDeclFunctionItem, expr, CIDeclFunctionItem *self);
 /// @brief Free CIDeclFunctionItem type (CI_DECL_FUNCTION_ITEM_KIND_STMT).
 static VARIANT_DESTRUCTOR(CIDeclFunctionItem, stmt, CIDeclFunctionItem *self);
 
-#define CI_SERIALIZE_NAME(name)                                    \
-    ASSERT(called_generic_params);                                 \
-                                                                   \
-    String *res = format__String("{S}__", name);                   \
-                                                                   \
-    serialize_vec__CIDataType(called_generic_params->params, res); \
-                                                                   \
+#define CI_SERIALIZE_NAME(name)                                           \
+    ASSERT(called_generic_params);                                        \
+                                                                          \
+    String *res = format__String("{S}__", name);                          \
+                                                                          \
+    put_serialization_into_buffer__CIGenericParams(called_generic_params, \
+                                                   res);                  \
+                                                                          \
     return res;
 
 CONSTRUCTOR(CIScopeID *, CIScopeID, Usize id)
@@ -426,6 +427,36 @@ find_generic__CIGenericParams(const CIGenericParams *self, String *name)
     }
 
     return -1;
+}
+
+bool
+has_generic__CIGenericParams(const CIGenericParams *self)
+{
+    if (self) {
+        for (Usize i = 0; i < self->params->len; ++i) {
+            if (CAST(CIDataType *, get__Vec(self->params, i))->kind ==
+                CI_DATA_TYPE_KIND_GENERIC) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+void
+put_serialization_into_buffer__CIGenericParams(const CIGenericParams *self,
+                                               String *buffer)
+{
+    serialize_vec__CIDataType(self->params, buffer);
+}
+
+String *
+serialize_name__CIGenericParams(const CIGenericParams *self, const String *name)
+{
+    const CIGenericParams *called_generic_params = self;
+
+    CI_SERIALIZE_NAME(name);
 }
 
 #ifdef ENV_DEBUG
@@ -1127,13 +1158,14 @@ serialize__CIDataType(const CIDataType *self, String *buffer)
 {
 #define SERIALIZE_NAME(name, name_len) hash_sip(name, name_len, SIP_K0, SIP_K1)
 
-#define SERIALIZE_TYPE_WITH_GENERIC_PARAMS(ty)                            \
-    {                                                                     \
-        push_str__String(buffer, ty.name->buffer);                        \
-                                                                          \
-        if (ty.generic_params) {                                          \
-            serialize_vec__CIDataType(ty.generic_params->params, buffer); \
-        }                                                                 \
+#define SERIALIZE_TYPE_WITH_GENERIC_PARAMS(ty)                                \
+    {                                                                         \
+        push_str__String(buffer, ty.name->buffer);                            \
+                                                                              \
+        if (ty.generic_params) {                                              \
+            put_serialization_into_buffer__CIGenericParams(ty.generic_params, \
+                                                           buffer);           \
+        }                                                                     \
     }
 
 #define SERIALIZE_FMT_PUSH_TO_BUFFER(fmt, ...) \
@@ -1452,10 +1484,9 @@ get_name__CIDataType(const CIDataType *self)
 }
 
 String *
-serialize_name__CIDataType(const CIDataType *self)
+serialize_name__CIDataType(const CIDataType *self,
+                           const CIGenericParams *called_generic_params)
 {
-    const CIGenericParams *called_generic_params =
-      get_generic_params__CIDataType(self);
     String *name = get_name__CIDataType(self);
 
     if (!called_generic_params || !name) {
@@ -2208,8 +2239,7 @@ DESTRUCTOR(CIDeclFunction, const CIDeclFunction *self)
 bool
 has_generic__CIDeclFunctionGen(const CIDeclFunctionGen *self)
 {
-    return is_generic_params_contains_generic__CIDecl(
-      self->called_generic_params);
+    return has_generic__CIGenericParams(self->called_generic_params);
 }
 
 #ifdef ENV_DEBUG
@@ -2377,8 +2407,7 @@ DESTRUCTOR(CIDeclStruct, const CIDeclStruct *self)
 bool
 has_generic__CIDeclStructGen(const CIDeclStructGen *self)
 {
-    return is_generic_params_contains_generic__CIDecl(
-      self->called_generic_params);
+    return has_generic__CIGenericParams(self->called_generic_params);
 }
 
 #ifdef ENV_DEBUG
@@ -2469,8 +2498,7 @@ free_as_prototype__CIDeclTypedef(const CIDeclTypedef *self)
 bool
 has_generic__CIDeclTypedefGen(const CIDeclTypedefGen *self)
 {
-    return is_generic_params_contains_generic__CIDecl(
-      self->called_generic_params);
+    return has_generic__CIGenericParams(self->called_generic_params);
 }
 
 #ifdef ENV_DEBUG
@@ -2563,8 +2591,7 @@ DESTRUCTOR(CIDeclUnion, const CIDeclUnion *self)
 bool
 has_generic__CIDeclUnionGen(const CIDeclUnionGen *self)
 {
-    return is_generic_params_contains_generic__CIDecl(
-      self->called_generic_params);
+    return has_generic__CIGenericParams(self->called_generic_params);
 }
 
 #ifdef ENV_DEBUG
@@ -2843,22 +2870,6 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->variable = variable;
 
     return self;
-}
-
-bool
-is_generic_params_contains_generic__CIDecl(
-  const CIGenericParams *generic_params)
-{
-    if (generic_params) {
-        for (Usize i = 0; i < generic_params->params->len; ++i) {
-            if (CAST(CIDataType *, get__Vec(generic_params->params, i))->kind ==
-                CI_DATA_TYPE_KIND_GENERIC) {
-                return true;
-            }
-        }
-    }
-
-    return false;
 }
 
 const Vec *
