@@ -4937,7 +4937,7 @@ substitute_generic_params__CIParser(
     if (unresolved_generic_params) {
         if (generic_params && called_generic_params &&
             has_generic__CIGenericParams(unresolved_generic_params)) {
-            Vec *subs_params = NEW(Vec);
+            Vec *subs_params = NEW(Vec); // Vec<CIDataType*>*
 
             for (Usize i = 0; i < unresolved_generic_params->params->len; ++i) {
                 CIDataType *subs_param = substitute_data_type__CIParser(
@@ -7809,7 +7809,7 @@ infer_expr_data_type__CIParser(const CIParser *self,
                   (CIDataType *)get_return_data_type__CIDecl(function_decl));
             }
 
-            return NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
+            return int__PrimaryDataTypes();
         }
         case CI_EXPR_KIND_FUNCTION_CALL_BUILTIN: {
             CIBuiltin *builtin = get_ref__CIBuiltin();
@@ -8036,7 +8036,7 @@ resolve_typedef_data_type__CIParser(const CIParser *self, CIDataType *data_type)
             }
         }
         default:
-            return data_type;
+            return ref__CIDataType(data_type);
     }
 }
 
@@ -8079,10 +8079,7 @@ resolve_data_type__CIParser(const CIParser *self,
             return resolve_struct_data_type__CIParser(
               self, data_type, typecheck_ctx);
         case CI_DATA_TYPE_KIND_TYPEDEF:
-            return resolve_data_type__CIParser(
-              self,
-              resolve_typedef_data_type__CIParser(self, data_type),
-              typecheck_ctx);
+            return resolve_typedef_data_type__CIParser(self, data_type);
         case CI_DATA_TYPE_KIND_UNION:
             return resolve_union_data_type__CIParser(
               self, data_type, typecheck_ctx);
@@ -8323,10 +8320,10 @@ typecheck_function_call_expr_params__CIParser(
   struct CITypecheckContext *typecheck_ctx)
 {
     bool is_variadic = false /* TODO: is_variadic */;
+    const Vec *decl_function_call_params =
+      get_function_params__CIDecl(decl_function_call);
     Usize decl_function_call_params_len =
-      decl_function_call->function.params
-        ? decl_function_call->function.params->len
-        : 0;
+      decl_function_call_params ? decl_function_call_params->len : 0;
     Usize called_params_len = called_params->len;
 
     if (decl_function_call_params_len != called_params_len ||
@@ -8348,7 +8345,7 @@ typecheck_function_call_expr_params__CIParser(
                                        : decl_function_call_params_len);
          ++i) {
         const CIDeclFunctionParam *decl_param =
-          get__Vec(decl_function_call->function.params, i);
+          get__Vec(decl_function_call_params, i);
         const CIExpr *called_param = get__Vec(called_params, i);
 
         typecheck_expr__CIParser(
@@ -8366,30 +8363,15 @@ typecheck_function_call_expr__CIParser(const CIParser *self,
                                        const CIExprFunctionCall *function_call,
                                        struct CITypecheckContext *typecheck_ctx)
 {
-    CIDecl *function_decl_base =
-      search_function__CIResultFile(self->file, function_call->identifier);
-
-    if (!function_decl_base) {
-        FAILED("unknown function");
-    }
-
-    bool has_generic_params = function_decl_base->function.generic_params;
-    String *serialized_name =
-      has_generic_params
-        ? serialize_name__CIDeclFunction(&function_decl_base->function,
-                                         function_call->generic_params)
-        : function_decl_base->function.name;
-    CIDecl *function_decl =
-      has_generic_params
-        ? search_function__CIResultFile(self->file, serialized_name)
-        : function_decl_base;
+    CIDecl *function_decl = search_generalizable_function__CIParser(
+      self,
+      function_call->identifier,
+      function_call->generic_params,
+      typecheck_ctx->current_generic_params.called,
+      typecheck_ctx->current_generic_params.decl);
 
     if (!function_decl) {
         UNREACHABLE("the function has not been generated");
-    }
-
-    if (has_generic_params) {
-        FREE(String, serialized_name);
     }
 
     if (function_decl) {

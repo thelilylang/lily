@@ -2206,7 +2206,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     function_gen,
-                    CIDecl *function,
+                    CIDecl *function_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
                     CIDataType *return_data_type);
@@ -2236,7 +2236,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     struct_gen,
-                    CIDecl *struct_,
+                    CIDecl *struct_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
                     Vec *fields,
@@ -2255,7 +2255,7 @@ VARIANT_CONSTRUCTOR(CIDecl *, CIDecl, typedef, CIDeclTypedef typedef_);
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     typedef_gen,
-                    CIDecl *typedef_,
+                    CIDecl *typedef_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
                     CIDataType *data_type,
@@ -2280,7 +2280,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     union_gen,
-                    CIDecl *union_,
+                    CIDecl *union_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
                     Vec *fields,
@@ -2395,6 +2395,14 @@ get_return_data_type__CIDecl(const CIDecl *self);
  */
 bool
 is_local__CIDecl(const CIDecl *self);
+
+/**
+ *
+ * @brief Get function params from declaration.
+ * @return const Vec<CIDeclFunctionParam*>*? (&)
+ */
+const Vec *
+get_function_params__CIDecl(const CIDecl *self);
 
 /**
  *

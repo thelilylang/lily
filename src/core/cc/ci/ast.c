@@ -2703,13 +2703,15 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     function_gen,
-                    CIDecl *function,
+                    CIDecl *function_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
                     CIDataType *return_data_type)
 {
+    ASSERT(function_decl->kind == CI_DECL_KIND_FUNCTION);
+
     CIDecl *self = lily_malloc(sizeof(CIDecl));
-    const CIDeclFunction *f = &function->function;
+    const CIDeclFunction *f = &function_decl->function;
 
     self->kind = CI_DECL_KIND_FUNCTION_GEN;
     // NOTE: We add the "static" storage class flag to all functions
@@ -2717,7 +2719,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     // generic), to avoid symbol duplication between entities (e.g.
     // lib, bin).
     self->storage_class_flag =
-      function->storage_class_flag | CI_STORAGE_CLASS_STATIC;
+      function_decl->storage_class_flag | CI_STORAGE_CLASS_STATIC;
     self->is_prototype = false;
     self->ref_count = 0;
     self->function_gen =
@@ -2760,17 +2762,17 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     struct_gen,
-                    CIDecl *struct_,
+                    CIDecl *struct_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
                     Vec *fields,
                     CISizeInfo size_info)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
-    const CIDeclStruct *s = &struct_->struct_;
+    const CIDeclStruct *s = &struct_decl->struct_;
 
     self->kind = CI_DECL_KIND_STRUCT_GEN;
-    self->storage_class_flag = struct_->storage_class_flag;
+    self->storage_class_flag = struct_decl->storage_class_flag;
     self->is_prototype = false;
     self->ref_count = 0;
     self->struct_gen =
@@ -2795,14 +2797,14 @@ VARIANT_CONSTRUCTOR(CIDecl *, CIDecl, typedef, CIDeclTypedef typedef_)
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     typedef_gen,
-                    CIDecl *typedef_,
+                    CIDecl *typedef_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
                     CIDataType *data_type,
                     CISizeInfo size_info)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
-    const CIDeclTypedef *t = &typedef_->typedef_;
+    const CIDeclTypedef *t = &typedef_decl->typedef_;
 
     self->kind = CI_DECL_KIND_TYPEDEF_GEN;
     self->storage_class_flag = CI_STORAGE_CLASS_NONE;
@@ -2835,17 +2837,17 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     union_gen,
-                    CIDecl *union_,
+                    CIDecl *union_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
                     Vec *fields,
                     CISizeInfo size_info)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
-    const CIDeclUnion *u = &union_->union_;
+    const CIDeclUnion *u = &union_decl->union_;
 
     self->kind = CI_DECL_KIND_UNION_GEN;
-    self->storage_class_flag = union_->storage_class_flag;
+    self->storage_class_flag = union_decl->storage_class_flag;
     self->is_prototype = false;
     self->ref_count = 0;
     self->union_gen =
@@ -3097,6 +3099,19 @@ is_local__CIDecl(const CIDecl *self)
             return self->variable.is_local;
         default:
             return false;
+    }
+}
+
+const Vec *
+get_function_params__CIDecl(const CIDecl *self)
+{
+    switch (self->kind) {
+        case CI_DECL_KIND_FUNCTION:
+            return self->function.params;
+        case CI_DECL_KIND_FUNCTION_GEN:
+            return self->function_gen.function->params;
+        default:
+            UNREACHABLE("cannot get function params");
     }
 }
 
