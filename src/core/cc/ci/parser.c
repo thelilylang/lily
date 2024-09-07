@@ -165,7 +165,9 @@ static String *
 generate_name_error__CIParser();
 
 static bool
-is_integer_data_type__CIParser(CIParser *self, CIDataType *data_type);
+is_integer_data_type__CIParser(CIParser *self,
+                               CIDataType *data_type,
+                               bool allow_implicit_cast);
 
 static bool
 is_float_data_type__CIParser(CIParser *self, CIDataType *data_type);
@@ -587,16 +589,6 @@ token_is_data_type__CIParser(CIParser *self, const CIToken *token);
 static inline bool
 is_data_type__CIParser(CIParser *self);
 
-/// @param unresolved_generic_params CIGenericParams*? (&)
-/// @param generic_params const CIGenericParams* (&)
-/// @param called_generic_params const CIGenericParams* (&)
-/// @return CIGenericParams*?
-static CIGenericParams *
-substitute_generic_params__CIParser(
-  CIGenericParams *unresolved_generic_params,
-  const CIGenericParams *generic_params,
-  const CIGenericParams *called_generic_params);
-
 static CIDataType *
 substitute_and_generate_from_data_type__CIParser(
   CIParser *self,
@@ -919,21 +911,6 @@ infer_expr_data_type__CIParser(const CIParser *self,
                                const CIGenericParams *called_generic_params,
                                const CIGenericParams *decl_generic_params);
 
-/// @brief Search function from the given name, if function_generic_params is
-/// NULL otherwise, it serializes the given name and searches generic function
-/// with this serialized name.
-/// @param function_generic_params CIGenericParams*? (&)
-/// @param called_generic_params CIGenericParams*? (&)
-/// @param decl_generic_params CIGenericParams*? (&)
-/// @return CIDecl*? (&)
-static inline CIDecl *
-search_generalizable_function__CIParser(
-  const CIParser *self,
-  const String *name,
-  CIGenericParams *function_generic_params,
-  const CIGenericParams *called_generic_params,
-  const CIGenericParams *decl_generic_params);
-
 /// @brief Search generalizable declaration from the given name, if
 /// generalizable_decl_generic_params is NULL otherwise, it serializes the given
 /// name and searches declaration with this serialized name.
@@ -948,7 +925,25 @@ search_generalizable_decl__CIParser(
   CIGenericParams *generalizable_decl_generic_params,
   const CIGenericParams *called_generic_params,
   const CIGenericParams *decl_generic_params,
-  CIDecl *(*search_decl)(const CIResultFile *self, const String *name));
+  CIDecl *(*search_decl)(const CIResultFile *self, const String *name),
+  void (*generate_decl_gen)(CIParser *self,
+                            String *name,
+                            CIGenericParams *called_generic_params));
+
+/// @brief Search function from the given name, if function_generic_params is
+/// NULL otherwise, it serializes the given name and searches generic function
+/// with this serialized name.
+/// @param function_generic_params CIGenericParams*? (&)
+/// @param called_generic_params CIGenericParams*? (&)
+/// @param decl_generic_params CIGenericParams*? (&)
+/// @return CIDecl*? (&)
+static inline CIDecl *
+search_generalizable_function__CIParser(
+  const CIParser *self,
+  const String *name,
+  CIGenericParams *function_generic_params,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params);
 
 /// @brief Search struct from the given name, if struct_generic_params is NULL
 /// otherwise, it serializes the given name and searches generic struct with
@@ -980,6 +975,7 @@ search_generalizable_union__CIParser(
   const CIGenericParams *called_generic_params,
   const CIGenericParams *decl_generic_params);
 
+/// @return CIDataType*
 static CIDataType *
 resolve_generic_data_type__CIParser(const CIParser *self,
                                     CIDataType *data_type,
@@ -995,7 +991,7 @@ resolve_struct_data_type__CIParser(const CIParser *self,
 
 /// @brief This function returns the given data type if it is not typedef,
 /// otherwise it attempts to resolve the typedef data type.
-/// @return CIDataType* (&)
+/// @return CIDataType*
 static CIDataType *
 resolve_typedef_data_type__CIParser(const CIParser *self,
                                     CIDataType *data_type);
@@ -1161,6 +1157,10 @@ typecheck_stmt__CIParser(const CIParser *self,
 
 static void
 typecheck_function__CIParser(const CIParser *self, const CIDecl *function_decl);
+
+static void
+typecheck_function_gen__CIParser(const CIParser *self,
+                                 const CIDecl *function_gen_decl);
 
 static CIDeclFunctionItem *
 parse_case__CIParser(CIParser *self);
@@ -1895,14 +1895,22 @@ generate_name_error__CIParser()
 }
 
 bool
-is_integer_data_type__CIParser(CIParser *self, CIDataType *data_type)
+is_integer_data_type__CIParser(CIParser *self,
+                               CIDataType *data_type,
+                               bool allow_implicit_cast)
 {
     switch (data_type->kind) {
-        case CI_DATA_TYPE_KIND_TYPEDEF:
-            return is_integer__CIDataType(
-              resolve_typedef_data_type__CIParser(self, data_type));
+        case CI_DATA_TYPE_KIND_TYPEDEF: {
+            CIDataType *resolved_dt =
+              resolve_typedef_data_type__CIParser(self, data_type);
+            bool res = is_integer__CIDataType(resolved_dt);
+
+            FREE(CIDataType, resolved_dt);
+
+            return res;
+        }
         case CI_DATA_TYPE_KIND_PTR: // via implicit cast
-            return true;
+            return allow_implicit_cast;
         default:
             return is_integer__CIDataType(data_type);
     }
@@ -1912,9 +1920,15 @@ bool
 is_float_data_type__CIParser(CIParser *self, CIDataType *data_type)
 {
     switch (data_type->kind) {
-        case CI_DATA_TYPE_KIND_TYPEDEF:
-            return is_float__CIDataType(
-              resolve_typedef_data_type__CIParser(self, data_type));
+        case CI_DATA_TYPE_KIND_TYPEDEF: {
+            CIDataType *resolved_dt =
+              resolve_typedef_data_type__CIParser(self, data_type);
+            bool res = is_float__CIDataType(resolved_dt);
+
+            FREE(CIDataType, resolved_dt);
+
+            return res;
+        }
         default:
             return is_float__CIDataType(data_type);
     }
@@ -1924,9 +1938,15 @@ bool
 is_ptr_data_type__CIParser(CIParser *self, CIDataType *data_type)
 {
     switch (data_type->kind) {
-        case CI_DATA_TYPE_KIND_TYPEDEF:
-            return is_ptr_data_type__CIParser(
-              self, resolve_typedef_data_type__CIParser(self, data_type));
+        case CI_DATA_TYPE_KIND_TYPEDEF: {
+            CIDataType *resolved_dt =
+              resolve_typedef_data_type__CIParser(self, data_type);
+            bool res = is_ptr_data_type__CIParser(self, resolved_dt);
+
+            FREE(CIDataType, resolved_dt);
+
+            return res;
+        }
         case CI_DATA_TYPE_KIND_PTR:
         case CI_DATA_TYPE_KIND_ARRAY:
             return true;
@@ -5814,6 +5834,10 @@ generate_function_gen__CIParser(CIParser *self,
                                                           .return_data_type) /* Return a ref data type, when the substituted data type is NULL, to avoid an optional data type in the `return_data_type` field. */);
 
                 add_decl_to_scope__CIParser(self, &function_gen_decl, true);
+
+                if (function_gen_decl) {
+                    typecheck_function_gen__CIParser(self, function_gen_decl);
+                }
             }
         }
     }
@@ -6630,7 +6654,7 @@ parse_enum__CIParser(CIParser *self, int storage_class_flag, String *name)
             data_type = parse_data_type__CIParser(self);
 
             if (data_type) {
-                if (!is_integer_data_type__CIParser(self, data_type)) {
+                if (!is_integer_data_type__CIParser(self, data_type, false)) {
                     FAILED("expected integer data type");
                 }
 
@@ -7660,6 +7684,8 @@ infer_expr_literal_data_type__CIParser(const CIParser *self,
             CIDataType *string_dt = NEW_VARIANT(
               CIDataType, ptr, NEW(CIDataType, CI_DATA_TYPE_KIND_CHAR));
 
+            set_context__CIDataType(string_dt, CI_DATA_TYPE_CONTEXT_STACK);
+
             return string_dt;
         }
         case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:
@@ -7771,11 +7797,11 @@ infer_expr_data_type__CIParser(const CIParser *self,
                                              called_generic_params,
                                              decl_generic_params);
             bool left_dt_is_integer =
-              is_integer_data_type__CIParser((CIParser *)self, left_dt);
+              is_integer_data_type__CIParser((CIParser *)self, left_dt, true);
             bool left_dt_is_float =
               is_float_data_type__CIParser((CIParser *)self, left_dt);
             bool right_dt_is_integer =
-              is_integer_data_type__CIParser((CIParser *)self, right_dt);
+              is_integer_data_type__CIParser((CIParser *)self, right_dt, true);
             bool right_dt_is_float =
               is_float_data_type__CIParser((CIParser *)self, right_dt);
 
@@ -7892,8 +7918,17 @@ search_generalizable_decl__CIParser(
   CIGenericParams *generalizable_decl_generic_params,
   const CIGenericParams *called_generic_params,
   const CIGenericParams *decl_generic_params,
-  CIDecl *(*search_decl)(const CIResultFile *self, const String *name))
+  CIDecl *(*search_decl)(const CIResultFile *self, const String *name),
+  void (*generate_decl_gen)(CIParser *self,
+                            String *name,
+                            CIGenericParams *called_generic_params))
 {
+    CIDecl *base_decl = search_decl(self->file, name);
+
+    if (!base_decl) {
+        FAILED("declaration is not found");
+    }
+
     if (generalizable_decl_generic_params &&
         ((called_generic_params && decl_generic_params) ||
          !has_generic__CIGenericParams(generalizable_decl_generic_params))) {
@@ -7908,6 +7943,15 @@ search_generalizable_decl__CIParser(
           serialize_name__CIGenericParams(substituted_generic_params, name);
         CIDecl *decl = search_decl(self->file, serialized_name);
 
+        if (!decl) {
+            generate_decl_gen((CIParser *)self,
+                              (String *)name,
+                              (CIGenericParams *)called_generic_params);
+
+            decl = search_decl(self->file, serialized_name);
+        }
+
+        ASSERT(decl);
         ASSERT(decl->kind & CI_DECL_KIND_GEN);
 
         FREE(String, serialized_name);
@@ -7916,7 +7960,7 @@ search_generalizable_decl__CIParser(
         return decl;
     }
 
-    return search_decl(self->file, name);
+    return base_decl;
 }
 
 CIDecl *
@@ -7927,12 +7971,14 @@ search_generalizable_function__CIParser(
   const CIGenericParams *called_generic_params,
   const CIGenericParams *decl_generic_params)
 {
-    return search_generalizable_decl__CIParser(self,
-                                               name,
-                                               function_generic_params,
-                                               called_generic_params,
-                                               decl_generic_params,
-                                               &search_function__CIResultFile);
+    return search_generalizable_decl__CIParser(
+      self,
+      name,
+      function_generic_params,
+      called_generic_params,
+      decl_generic_params,
+      &search_function__CIResultFile,
+      &generate_function_gen__CIParser);
 }
 
 CIDecl *
@@ -7948,7 +7994,8 @@ search_generalizable_struct__CIParser(
                                                struct_generic_params,
                                                called_generic_params,
                                                decl_generic_params,
-                                               &search_struct__CIResultFile);
+                                               &search_struct__CIResultFile,
+                                               &generate_struct_gen__CIParser);
 }
 
 CIDecl *
@@ -7964,7 +8011,8 @@ search_generalizable_union__CIParser(
                                                union_generic_params,
                                                called_generic_params,
                                                decl_generic_params,
-                                               &search_union__CIResultFile);
+                                               &search_union__CIResultFile,
+                                               &generate_union_gen__CIParser);
 }
 
 CIDataType *
@@ -7983,8 +8031,9 @@ resolve_generic_data_type__CIParser(const CIParser *self,
             FAILED("generic params is not found");
         }
 
-        return get__Vec(typecheck_ctx->current_generic_params.called->params,
-                        generic_params_index);
+        return ref__CIDataType(
+          get__Vec(typecheck_ctx->current_generic_params.called->params,
+                   generic_params_index));
     }
 
     FAILED("expected generic param, to use generic data type");
@@ -8168,7 +8217,7 @@ is_valid_implicit_cast__CIParser(const CIParser *self,
         case CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT:
         case CI_DATA_TYPE_KIND_UNSIGNED_LONG_LONG_INT:
         case CI_DATA_TYPE_KIND_UNSIGNED_SHORT_INT:
-            return is_integer_data_type__CIParser((CIParser *)self, left);
+            return is_integer_data_type__CIParser((CIParser *)self, left, true);
         case CI_DATA_TYPE_KIND_DOUBLE:
         case CI_DATA_TYPE_KIND_DOUBLE__COMPLEX:
         case CI_DATA_TYPE_KIND_DOUBLE__IMAGINARY:
@@ -8444,7 +8493,8 @@ typecheck_unary_expr__CIParser(const CIParser *self,
         case CI_EXPR_UNARY_KIND_POST_DECREMENT:
         case CI_EXPR_UNARY_KIND_POSITIVE:
         case CI_EXPR_UNARY_KIND_NEGATIVE:
-            if (!(is_integer_data_type__CIParser((CIParser *)self, right_dt) ||
+            if (!(is_integer_data_type__CIParser(
+                    (CIParser *)self, right_dt, true) ||
                   is_float_data_type__CIParser((CIParser *)self, right_dt))) {
                 FAILED("this operation is not allowed for this data type, "
                        "expected float or integer");
@@ -8453,7 +8503,8 @@ typecheck_unary_expr__CIParser(const CIParser *self,
             break;
         case CI_EXPR_UNARY_KIND_BIT_NOT:
         case CI_EXPR_UNARY_KIND_NOT:
-            if (!is_integer_data_type__CIParser((CIParser *)self, right_dt)) {
+            if (!is_integer_data_type__CIParser(
+                  (CIParser *)self, right_dt, true)) {
                 FAILED("this operation is not allowed for this data type, "
                        "expected integer");
             }
@@ -8487,7 +8538,7 @@ typecheck_ternary_expr__CIParser(const CIParser *self,
       typecheck_ctx->current_generic_params.called,
       typecheck_ctx->current_generic_params.decl);
 
-    if (!is_integer_data_type__CIParser((CIParser *)self, cond_dt)) {
+    if (!is_integer_data_type__CIParser((CIParser *)self, cond_dt, true)) {
         FAILED("expected interger");
     }
 
@@ -8632,8 +8683,8 @@ typecheck_case_stmt__CIParser(const CIParser *self,
           typecheck_ctx->current_generic_params.decl);
 
         if (typecheck_ctx->current_switch.is_integer) {
-            if (!is_integer_data_type__CIParser((CIParser *)self,
-                                                expr_data_type)) {
+            if (!is_integer_data_type__CIParser(
+                  (CIParser *)self, expr_data_type, false)) {
                 FAILED("expected integer compatible data type");
             }
 
@@ -8778,7 +8829,8 @@ typecheck_switch_stmt__CIParser(const CIParser *self,
 
     typecheck_ctx->current_switch.is_present = true;
 
-    if (is_integer_data_type__CIParser((CIParser *)self, expr_data_type)) {
+    if (is_integer_data_type__CIParser(
+          (CIParser *)self, expr_data_type, false)) {
         typecheck_ctx->current_switch.is_integer = true;
     } else if (is_float_data_type__CIParser((CIParser *)self, expr_data_type)) {
         typecheck_ctx->current_switch.is_float = true;
@@ -8868,6 +8920,20 @@ typecheck_function__CIParser(const CIParser *self, const CIDecl *function_decl)
 
     typecheck_body__CIParser(
       self, function_decl->function.body, &typecheck_ctx);
+}
+
+void
+typecheck_function_gen__CIParser(const CIParser *self,
+                                 const CIDecl *function_gen_decl)
+{
+    struct CITypecheckContext typecheck_ctx =
+      NEW(CITypecheckContext,
+          function_gen_decl,
+          function_gen_decl->function_gen.called_generic_params,
+          function_gen_decl->function_gen.function->generic_params);
+
+    typecheck_body__CIParser(
+      self, function_gen_decl->function_gen.function->body, &typecheck_ctx);
 }
 
 CIDeclFunctionItem *

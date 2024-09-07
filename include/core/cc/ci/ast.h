@@ -544,7 +544,8 @@ find_generic__CIGenericParams(const CIGenericParams *self, String *name);
 
 /**
  *
- * @brief Check if the generic params has generic data type.
+ * @brief Check if the generic params has generic data type (check if it's
+ * resolved).
  * @param self const CIGenericParams*? (&)
  */
 bool

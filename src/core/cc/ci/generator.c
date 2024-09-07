@@ -66,6 +66,14 @@ dec_tab_count__CIGenerator();
 static inline void
 write_tab__CIGenerator();
 
+/// @param unresolved_generic_params CIGenericParams* (&)
+/// @param name const String* (&)
+/// @return String*
+static String *
+substitute_and_serialize_generic_params__CIGenerator(
+  CIGenericParams *unresolved_generic_params,
+  const String *name);
+
 static void
 generate_storage_class__CIGenerator(const int *storage_class_flag);
 
@@ -335,6 +343,36 @@ void
 write_tab__CIGenerator()
 {
     write_String__CIGenerator(repeat__String("\t", tab_count));
+}
+
+String *
+substitute_and_serialize_generic_params__CIGenerator(
+  CIGenericParams *unresolved_generic_params,
+  const String *name)
+{
+    ASSERT(unresolved_generic_params);
+    ASSERT(name);
+
+    if (has_generic__CIGenericParams(unresolved_generic_params)) {
+        ASSERT(current_generic_params);
+        ASSERT(current_called_generic_params);
+
+        CIGenericParams *resolved_generic_params =
+          substitute_generic_params__CIParser(unresolved_generic_params,
+                                              current_generic_params,
+                                              current_called_generic_params);
+
+        ASSERT(resolved_generic_params);
+
+        String *serialized_name =
+          serialize_name__CIGenericParams(resolved_generic_params, name);
+
+        FREE(CIGenericParams, resolved_generic_params);
+
+        return serialized_name;
+    }
+
+    return serialize_name__CIGenericParams(unresolved_generic_params, name);
 }
 
 void
@@ -1132,10 +1170,9 @@ generate_function_call_expr__CIGenerator(
   const CIExprFunctionCall *function_call)
 {
     if (function_call->generic_params) {
-        String *serialized_identifier = serialize_name__CIGenericParams(
-          function_call->generic_params, function_call->identifier);
-
-        write_String__CIGenerator(serialized_identifier);
+        write_String__CIGenerator(
+          substitute_and_serialize_generic_params__CIGenerator(
+            function_call->generic_params, function_call->identifier));
     } else {
         write_str__CIGenerator(function_call->identifier->buffer);
     }
