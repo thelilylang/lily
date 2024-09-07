@@ -660,9 +660,10 @@ generate_data_type__CIGenerator(CIDataType *data_type)
         parser. */                                                           \
         ASSERT(subs_data_type->dt_name.name);                                \
                                                                              \
-        String *serialized_name = serialize_name__CIGenericParams(           \
-          subs_data_type->dt_name.generic_params,                            \
-          subs_data_type->dt_name.name);                                     \
+        String *serialized_name =                                            \
+          substitute_and_serialize_generic_params__CIGenerator(              \
+            subs_data_type->dt_name.generic_params,                          \
+            subs_data_type->dt_name.name);                                   \
                                                                              \
         write__CIGenerator(' ');                                             \
         write_String__CIGenerator(serialized_name);                          \
@@ -681,9 +682,10 @@ generate_data_type__CIGenerator(CIDataType *data_type)
         }
         case CI_DATA_TYPE_KIND_TYPEDEF:
             if (subs_data_type->typedef_.generic_params) {
-                String *serialized_name = serialize_name__CIGenericParams(
-                  subs_data_type->typedef_.generic_params,
-                  subs_data_type->typedef_.name);
+                String *serialized_name =
+                  substitute_and_serialize_generic_params__CIGenerator(
+                    subs_data_type->typedef_.generic_params,
+                    subs_data_type->typedef_.name);
 
                 write_String__CIGenerator(serialized_name);
             } else {
