@@ -66,6 +66,14 @@ dec_tab_count__CIGenerator();
 static inline void
 write_tab__CIGenerator();
 
+/// @param unresolved_generic_params CIGenericParams* (&)
+/// @param name const String* (&)
+/// @return String*
+static String *
+substitute_and_serialize_generic_params__CIGenerator(
+  CIGenericParams *unresolved_generic_params,
+  const String *name);
+
 static void
 generate_storage_class__CIGenerator(const int *storage_class_flag);
 
@@ -335,6 +343,36 @@ void
 write_tab__CIGenerator()
 {
     write_String__CIGenerator(repeat__String("\t", tab_count));
+}
+
+String *
+substitute_and_serialize_generic_params__CIGenerator(
+  CIGenericParams *unresolved_generic_params,
+  const String *name)
+{
+    ASSERT(unresolved_generic_params);
+    ASSERT(name);
+
+    if (has_generic__CIGenericParams(unresolved_generic_params)) {
+        ASSERT(current_generic_params);
+        ASSERT(current_called_generic_params);
+
+        CIGenericParams *resolved_generic_params =
+          substitute_generic_params__CIParser(unresolved_generic_params,
+                                              current_generic_params,
+                                              current_called_generic_params);
+
+        ASSERT(resolved_generic_params);
+
+        String *serialized_name =
+          serialize_name__CIGenericParams(resolved_generic_params, name);
+
+        FREE(CIGenericParams, resolved_generic_params);
+
+        return serialized_name;
+    }
+
+    return serialize_name__CIGenericParams(unresolved_generic_params, name);
 }
 
 void
@@ -612,14 +650,9 @@ generate_data_type__CIGenerator(CIDataType *data_type)
             write_str__CIGenerator("signed char");
 
             break;
-        case CI_DATA_TYPE_KIND_STRUCT:
+        case CI_DATA_TYPE_KIND_STRUCT: {
 #define GENERATE_STRUCT_OR_UNION_DT(dt_name, s)                              \
-    if (subs_data_type->dt_name.name) {                                      \
-        write_String__CIGenerator(                                           \
-          format__String(s " {S}", subs_data_type->dt_name.name));           \
-    } else {                                                                 \
-        write_str__CIGenerator(s);                                           \
-    }                                                                        \
+    write_str__CIGenerator(s);                                               \
                                                                              \
     if (subs_data_type->dt_name.generic_params) {                            \
         /* NOTE: Normally you can't declare a anonymous struct/union with    \
@@ -627,13 +660,12 @@ generate_data_type__CIGenerator(CIDataType *data_type)
         parser. */                                                           \
         ASSERT(subs_data_type->dt_name.name);                                \
                                                                              \
-        write_str__CIGenerator("__");                                        \
+        String *serialized_name = serialize_name__CIGenericParams(           \
+          subs_data_type->dt_name.generic_params,                            \
+          subs_data_type->dt_name.name);                                     \
                                                                              \
-        String *serialize_buffer = NEW(String);                              \
-                                                                             \
-        serialize_vec__CIDataType(                                           \
-          subs_data_type->dt_name.generic_params->params, serialize_buffer); \
-        write_String__CIGenerator(serialize_buffer);                         \
+        write__CIGenerator(' ');                                             \
+        write_String__CIGenerator(serialized_name);                          \
     }                                                                        \
                                                                              \
     if (subs_data_type->dt_name.fields) {                                    \
@@ -646,18 +678,16 @@ generate_data_type__CIGenerator(CIDataType *data_type)
             GENERATE_STRUCT_OR_UNION_DT(struct_, "struct");
 
             break;
+        }
         case CI_DATA_TYPE_KIND_TYPEDEF:
-            write_str__CIGenerator(subs_data_type->typedef_.name->buffer);
-
             if (subs_data_type->typedef_.generic_params) {
-                write_str__CIGenerator("__");
+                String *serialized_name = serialize_name__CIGenericParams(
+                  subs_data_type->typedef_.generic_params,
+                  subs_data_type->typedef_.name);
 
-                String *serialize_buffer = NEW(String);
-
-                serialize_vec__CIDataType(
-                  subs_data_type->typedef_.generic_params->params,
-                  serialize_buffer);
-                write_String__CIGenerator(serialize_buffer);
+                write_String__CIGenerator(serialized_name);
+            } else {
+                write_str__CIGenerator(subs_data_type->typedef_.name->buffer);
             }
 
             break;
@@ -681,10 +711,11 @@ generate_data_type__CIGenerator(CIDataType *data_type)
             write_str__CIGenerator("unsigned short int");
 
             break;
-        case CI_DATA_TYPE_KIND_UNION:
+        case CI_DATA_TYPE_KIND_UNION: {
             GENERATE_STRUCT_OR_UNION_DT(union_, "union");
 
             break;
+        }
         case CI_DATA_TYPE_KIND_VOID:
             write_str__CIGenerator("void");
 
@@ -1139,13 +1170,9 @@ generate_function_call_expr__CIGenerator(
   const CIExprFunctionCall *function_call)
 {
     if (function_call->generic_params) {
-        String *serialized_identifier =
-          format__String("{S}__", function_call->identifier);
-
-        serialize_vec__CIDataType(function_call->generic_params->params,
-                                  serialized_identifier);
-
-        write_String__CIGenerator(serialized_identifier);
+        write_String__CIGenerator(
+          substitute_and_serialize_generic_params__CIGenerator(
+            function_call->generic_params, function_call->identifier));
     } else {
         write_str__CIGenerator(function_call->identifier->buffer);
     }

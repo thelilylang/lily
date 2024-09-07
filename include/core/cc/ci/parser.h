@@ -222,6 +222,7 @@ parse_expr__CIParser(CIParser *self);
 /**
  *
  * @brief Substitute generic data type.
+ * @return CIDataType* (&)
  */
 CIDataType *
 substitute_generic__CIParser(const String *generic_name,
@@ -230,7 +231,22 @@ substitute_generic__CIParser(const String *generic_name,
 
 /**
  *
+ * @param unresolved_generic_params CIGenericParams*? (&)
+ * @param generic_params const CIGenericParams* (&)
+ * @param called_generic_params const CIGenericParams* (&)
+ * @return CIGenericParams*?
+ */
+CIGenericParams *
+substitute_generic_params__CIParser(
+  CIGenericParams *unresolved_generic_params,
+  const CIGenericParams *generic_params,
+  const CIGenericParams *called_generic_params);
+
+/**
+ *
  * @brief Substitute data type (with generic).
+ * @param data_type CIDataType* (&)
+ * @return CIDataType*
  */
 CIDataType *
 substitute_data_type__CIParser(CIDataType *data_type,
