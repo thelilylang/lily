@@ -786,7 +786,9 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeTypedef, const CIDataTypeTypedef *self)
     return format__String(
       "CIDataTypeTypedef{{ name = {S}, generic_params = {Sr} }",
       self->name,
-      to_string__Debug__CIGenericParams(self->generic_params));
+      self->generic_params
+        ? to_string__Debug__CIGenericParams(self->generic_params)
+        : from__String("NULL"));
 }
 #endif
 
@@ -2322,6 +2324,32 @@ eq__CIDeclStructField(const Vec *self_fields, const Vec *other_fields)
     return true;
 }
 
+bool
+has_generic__CIDeclStructField(const Vec *self_fields)
+{
+    for (Usize i = 0; i < self_fields->len; ++i) {
+        const CIDeclStructField *field = get__Vec(self_fields, i);
+
+        switch (field->data_type->kind) {
+            case CI_DATA_TYPE_KIND_GENERIC:
+                return true;
+            default: {
+                const CIGenericParams *generic_params =
+                  get_generic_params__CIDataType(field->data_type);
+
+                if (generic_params &&
+                    has_generic__CIGenericParams(generic_params)) {
+                    return true;
+                }
+
+                continue;
+            }
+        }
+    }
+
+    return false;
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclStructField, const CIDeclStructField *self)
@@ -3024,7 +3052,8 @@ get_size_info__CIDecl(const CIDecl *self)
         case CI_DECL_KIND_ENUM:
             return &self->enum_.size_info;
         case CI_DECL_KIND_STRUCT:
-            if (self->struct_.generic_params) {
+            if (self->struct_.generic_params &&
+                has_generic__CIGenericParams(self->struct_.generic_params)) {
                 UNREACHABLE("cannot get the size of genreic struct");
             }
 
@@ -3036,7 +3065,8 @@ get_size_info__CIDecl(const CIDecl *self)
         case CI_DECL_KIND_TYPEDEF_GEN:
             return &self->typedef_gen.size_info;
         case CI_DECL_KIND_UNION:
-            if (self->union_.generic_params) {
+            if (self->union_.generic_params &&
+                has_generic__CIGenericParams(self->union_.generic_params)) {
                 UNREACHABLE("cannot get the size of generic union");
             }
 
