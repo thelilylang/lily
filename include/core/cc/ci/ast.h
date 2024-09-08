@@ -1718,6 +1718,13 @@ eq__CIDeclStructField(const Vec *self_fields, const Vec *other_fields);
 
 /**
  *
+ * @brief Check if one of fields have generic data type.
+ */
+bool
+has_generic__CIDeclStructField(const Vec *self_fields);
+
+/**
+ *
  * @brief Convert CIDeclStructField in String.
  * @note This function is only used to debug.
  */
