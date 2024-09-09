@@ -8566,6 +8566,11 @@ is_valid_implicit_cast__CIParser(const CIParser *self,
               self, left, right->post_const, typecheck_ctx);
         case CI_DATA_TYPE_KIND_STRUCT:
             if (left->kind == CI_DATA_TYPE_KIND_STRUCT) {
+                if (left->struct_.name && right->struct_.name) {
+                    return !strcmp(left->struct_.name->buffer,
+                                   right->struct_.name->buffer);
+                }
+
                 // NOTE: We perform a check if one or both fields are NULL, as
                 // the `eq__CIDataType` function returns a false, because at the
                 // point of this function, we can't perform a thorough check
