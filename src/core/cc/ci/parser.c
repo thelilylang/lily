@@ -2025,6 +2025,8 @@ is_integer_data_type__CIParser(CIParser *self,
         }
         case CI_DATA_TYPE_KIND_PTR: // via implicit cast
             return allow_implicit_cast;
+        case CI_DATA_TYPE_KIND_PRE_CONST:
+            return is_integer__CIDataType(data_type->pre_const);
         default:
             return is_integer__CIDataType(data_type);
     }
@@ -2046,6 +2048,8 @@ is_float_data_type__CIParser(CIParser *self,
 
             return res;
         }
+        case CI_DATA_TYPE_KIND_PRE_CONST:
+            return is_integer__CIDataType(data_type->pre_const);
         default:
             return is_float__CIDataType(data_type);
     }
@@ -2071,6 +2075,11 @@ is_ptr_data_type__CIParser(CIParser *self,
         case CI_DATA_TYPE_KIND_PTR:
         case CI_DATA_TYPE_KIND_ARRAY:
             return true;
+        case CI_DATA_TYPE_KIND_PRE_CONST:
+            return is_ptr_data_type__CIParser(self,
+                                              data_type->pre_const,
+                                              called_generic_params,
+                                              decl_generic_params);
         default:
             return false;
     }
