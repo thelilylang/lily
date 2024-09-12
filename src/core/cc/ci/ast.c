@@ -2350,6 +2350,20 @@ has_generic__CIDeclStructField(const Vec *self_fields)
     return false;
 }
 
+CIDataType *
+get__CIDeclStructField(const Vec *self_fields, const String *field_name)
+{
+    for (Usize i = 0; i < self_fields->len; ++i) {
+        CIDeclStructField *field = get__Vec(self_fields, i);
+
+        if (!strcmp(field->name->buffer, field_name->buffer)) {
+            return field->data_type;
+        }
+    }
+
+    return NULL;
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclStructField, const CIDeclStructField *self)

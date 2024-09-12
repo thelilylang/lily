@@ -1725,6 +1725,15 @@ has_generic__CIDeclStructField(const Vec *self_fields);
 
 /**
  *
+ * @brief Get field from the given name.
+ * @param field_name const String* (&)
+ * @return CIDataType*? (&)
+ */
+CIDataType *
+get__CIDeclStructField(const Vec *self_fields, const String *field_name);
+
+/**
+ *
  * @brief Convert CIDeclStructField in String.
  * @note This function is only used to debug.
  */
