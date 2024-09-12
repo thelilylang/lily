@@ -35,7 +35,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(LILY_LINUX_OS) || defined(LILY_APPLE_OS)
+#if defined(LILY_LINUX_OS) || defined(LILY_APPLE_OS) || defined(LILY_BSD_OS)
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <unistd.h>
@@ -48,7 +48,7 @@
 Usize
 __max_capacity__$Alloc()
 {
-#if defined(LILY_LINUX_OS) || defined(LILY_APPLE_OS)
+#if defined(LILY_LINUX_OS) || defined(LILY_APPLE_OS) || defined(LILY_BSD_OS)
     return sysconf(_SC_PHYS_PAGES) * sysconf(_SC_PAGESIZE);
 #elif defined(LILY_WINDOWS_OS)
     MEMORYSTATUSEX status;
@@ -80,7 +80,7 @@ __alloc__$Alloc(Usize size, Usize align)
     }
 #endif
 
-#if defined(LILY_LINUX_OS) || defined(LILY_APPLE_OS)
+#if defined(LILY_LINUX_OS) || defined(LILY_APPLE_OS) || defined(LILY_BSD_OS)
     void *mem = mmap(
       NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
@@ -128,7 +128,7 @@ __resize__$Alloc(void *old_mem, Usize old_size, Usize new_size, Usize align)
         // NOTE: We assume that the alignment does not change
         __free__$Alloc(&old_mem, old_size, align);
     }
-#elif defined(LILY_APPLE_OS)
+#elif defined(LILY_APPLE_OS) || defined(LILY_BSD_OS)
     void *new_mem = mmap(NULL,
                          new_size,
                          PROT_READ | PROT_WRITE,
@@ -182,7 +182,7 @@ __free__$Alloc(void **mem, Usize size, Usize align)
     // Calculate the size to unmap, taking into account the alignment
     size_t aligned_size = size + ((uintptr_t)(*mem) - (uintptr_t)(aligned_mem));
 
-#if defined(LILY_LINUX_OS) || defined(LILY_APPLE_OS)
+#if defined(LILY_LINUX_OS) || defined(LILY_APPLE_OS) || defined(LILY_BSD_OS)
     if (munmap(aligned_mem, aligned_size) == -1) {
         perror("Lily(Fail): fail to free memory");
         exit(1);

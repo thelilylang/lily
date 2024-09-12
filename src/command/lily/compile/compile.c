@@ -28,7 +28,7 @@
 
 #include <command/lily/compile/compile.h>
 
-#if defined(LILY_LINUX_OS) || defined(LILY_APPLE_OS)
+#if defined(LILY_LINUX_OS) || defined(LILY_APPLE_OS) || defined(LILY_BSD_OS)
 #include <stdlib.h>
 #elif defined(LILY_WINDOWS_OS)
 #include <process.h>

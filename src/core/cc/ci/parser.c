@@ -5081,7 +5081,7 @@ expect_many__CIParser(CIParser *self, Usize n, ...)
 
     va_list vl;
 
-    va_start(vl);
+    va_start(vl, n);
 
     while (n--) {
         if (!expect__CIParser(self, va_arg(vl, enum CITokenKind), true)) {
@@ -5101,7 +5101,7 @@ expect_with_list__CIParser(CIParser *self, Usize n, ...)
 
     va_list vl;
 
-    va_start(vl);
+    va_start(vl, n);
 
     while (n--) {
         if (expect__CIParser(self, va_arg(vl, enum CITokenKind), false)) {

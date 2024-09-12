@@ -58,6 +58,10 @@ if(UNIX AND NOT APPLE)
   set(LILY_LINUX 1)
 endif()
 
+if(BSD)
+  set(LILY_BSD 1)
+endif()
+
 if(LILY_BUILD_LLVM)
   message(
     WARNING
@@ -217,6 +221,12 @@ else()
   else()
     set(LILY_LLVM_LIBS LLVM)
   endif()
+endif()
+
+if(BSD)
+  set(LILY_THREAD_LIB pthread)
+else()
+  set(LILY_THREAD_LIB)
 endif()
 
 # Set LLD libraries
@@ -713,7 +723,8 @@ target_link_libraries(
           lily_core_lily_mir
           lily_core_lily_parser
           lily_core_lily_precompiler
-          lily_core_lily_compiler_output)
+          lily_core_lily_compiler_output
+          ${LILY_THREAD_LIB})
 target_include_directories(lily_core_lily_compiler_package
                            PRIVATE ${LILY_INCLUDE})
 
