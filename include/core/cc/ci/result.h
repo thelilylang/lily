@@ -538,6 +538,15 @@ search_data_type__CIResultFile(const CIResultFile *self, const String *name);
 
 /**
  *
+ * @brief Search identifier declaration in decls map.
+ */
+CIDecl *
+search_identifier__CIResultFile(const CIResultFile *self,
+                                const CIScope *scope,
+                                const String *name);
+
+/**
+ *
  * @brief Run the scanner, parser and the C generator.
  */
 void

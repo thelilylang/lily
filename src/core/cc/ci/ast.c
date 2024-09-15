@@ -719,7 +719,9 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeFunction, const CIDataTypeFunction *self)
         String *s = format__String(
           ", return_data_type = {Sr}, function_data_type = {Sr} }",
           to_string__Debug__CIDataType(self->return_data_type),
-          to_string__Debug__CIDataType(self->function_data_type));
+          self->function_data_type
+            ? to_string__Debug__CIDataType(self->function_data_type)
+            : from__String("NULL"));
 
         APPEND_AND_FREE(res, s);
     }
@@ -1305,7 +1307,33 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
         case CI_DATA_TYPE_KIND_ENUM:
             return !strcmp(self->enum_->buffer, other->enum_->buffer);
         case CI_DATA_TYPE_KIND_FUNCTION:
-            TODO("eq__CIDataType: function data_type");
+            if (!(self->function.function_data_type &&
+                  other->function.function_data_type) ||
+                !eq__CIDataType(self->function.function_data_type,
+                                other->function.function_data_type) ||
+                !eq__CIDataType(self->function.return_data_type,
+                                other->function.return_data_type)) {
+                return false;
+            } else if (self->function.params && other->function.params
+                         ? self->function.params->len !=
+                             other->function.params->len
+                         : true) {
+                return !self->function.params && !other->function.params;
+            }
+
+            for (Usize i = 0; i < self->function.params->len; ++i) {
+                CIDeclFunctionParam *self_param =
+                  get__Vec(self->function.params, i);
+                CIDeclFunctionParam *other_param =
+                  get__Vec(other->function.params, i);
+
+                if (!eq__CIDataType(self_param->data_type,
+                                    other_param->data_type)) {
+                    return false;
+                }
+            }
+
+            return true;
         case CI_DATA_TYPE_KIND_GENERIC:
             return !strcmp(self->generic->buffer, other->generic->buffer);
         case CI_DATA_TYPE_KIND_PRE_CONST:
@@ -1313,6 +1341,10 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
         case CI_DATA_TYPE_KIND_POST_CONST:
             return eq__CIDataType(self->post_const, other->post_const);
         case CI_DATA_TYPE_KIND_PTR:
+            if (!self->ptr && !other->ptr) {
+                return true;
+            }
+
             return self->ptr && other->ptr
                      ? eq__CIDataType(self->ptr, other->ptr)
                      : false;
@@ -1496,6 +1528,27 @@ serialize_name__CIDataType(const CIDataType *self,
     }
 
     CI_SERIALIZE_NAME(name);
+}
+
+CIDataType *
+wrap_ptr__CIDataType(CIDataType *self, int ptr_ctx)
+{
+    switch (self->kind) {
+        case CI_DATA_TYPE_KIND_FUNCTION:
+            self->function.function_data_type =
+              NEW_VARIANT(CIDataType, ptr, self->function.function_data_type);
+
+            set_context__CIDataType(self->function.function_data_type, ptr_ctx);
+
+            return self;
+        default: {
+            CIDataType *res = NEW_VARIANT(CIDataType, ptr, self);
+
+            set_context__CIDataType(res, ptr_ctx);
+
+            return res;
+        }
+    }
 }
 
 #ifdef ENV_DEBUG

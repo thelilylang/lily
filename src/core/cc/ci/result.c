@@ -711,6 +711,25 @@ search_data_type__CIResultFile(const CIResultFile *self, const String *name)
     return NULL;
 }
 
+CIDecl *
+search_identifier__CIResultFile(const CIResultFile *self,
+                                const CIScope *scope,
+                                const String *name)
+{
+    CIDecl *variable = search_variable__CIResultFile(self, scope, name);
+    CIDecl *function = search_function__CIResultFile(self, name);
+
+    if (variable) {
+        if (variable->variable.is_local) {
+            return variable;
+        }
+    } else if (function) {
+        return function;
+    }
+
+    return NULL;
+}
+
 void
 run__CIResultFile(CIResultFile *self)
 {

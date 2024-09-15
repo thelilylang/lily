@@ -8182,14 +8182,9 @@ infer_expr_unary_data_type__CIParser(
                                      decl_generic_params);
 
     switch (unary->kind) {
-        case CI_EXPR_UNARY_KIND_REF: {
-            CIDataType *ptr_data_type =
-              NEW_VARIANT(CIDataType, ptr, unary_right_expr_data_type);
-
-            set_context__CIDataType(ptr_data_type, CI_DATA_TYPE_CONTEXT_STACK);
-
-            return ptr_data_type;
-        }
+        case CI_EXPR_UNARY_KIND_REF:
+            return wrap_ptr__CIDataType(unary_right_expr_data_type,
+                                                   CI_DATA_TYPE_CONTEXT_NONE);
         case CI_EXPR_UNARY_KIND_DEREFERENCE: {
             if (is_ptr_data_type__CIParser((CIParser *)self,
                                            unary_right_expr_data_type,
@@ -8377,14 +8372,56 @@ infer_expr_data_type__CIParser(const CIParser *self,
 
             ASSERT(local_current_scope);
 
-            CIDecl *variable_decl = search_variable__CIResultFile(
+            CIDecl *decl = search_identifier__CIResultFile(
               self->file, local_current_scope, expr->identifier);
 
-            if (variable_decl) {
-                return ref__CIDataType(variable_decl->variable.data_type);
+            if (decl) {
+                switch (decl->kind) {
+                    case CI_DECL_KIND_FUNCTION: {
+                        // TODO: Call generic function is not yet implemented
+                        CIDataType *function_return_data_type =
+                          (CIDataType *)get_return_data_type__CIDecl(decl);
+                        CIDataType *resolved_function_return_data_type =
+                          resolve_data_type__CIParser(self,
+                                                      function_return_data_type,
+                                                      called_generic_params,
+                                                      decl_generic_params);
+                        const Vec *function_params =
+                          get_function_params__CIDecl(decl);
+                        Vec *cloned_function_params = NULL;
+
+                        if (function_params) {
+                            cloned_function_params = NEW(Vec);
+
+                            for (Usize i = 0; i < function_params->len; ++i) {
+                                CIDeclFunctionParam *param =
+                                  get__Vec(function_params, i);
+
+                                push__Vec(
+                                  cloned_function_params,
+                                  NEW(CIDeclFunctionParam,
+                                      param->name,
+                                      ref__CIDataType(param->data_type)));
+                            }
+                        }
+
+                        return NEW_VARIANT(
+                          CIDataType,
+                          function,
+                          NEW(CIDataTypeFunction,
+                              NULL,
+                              cloned_function_params,
+                              resolved_function_return_data_type,
+                              NULL));
+                    }
+                    case CI_DECL_KIND_VARIABLE:
+                        return ref__CIDataType(decl->variable.data_type);
+                    default:
+                        UNREACHABLE("this declaration is not expected");
+                }
             }
 
-            FAILED("cannot infer on unknown variable");
+            FAILED("cannot infer on unknown identifier");
         }
         case CI_EXPR_KIND_LITERAL:
             return infer_expr_literal_data_type__CIParser(self, &expr->literal);
