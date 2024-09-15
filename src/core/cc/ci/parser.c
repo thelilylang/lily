@@ -8184,7 +8184,7 @@ infer_expr_unary_data_type__CIParser(
     switch (unary->kind) {
         case CI_EXPR_UNARY_KIND_REF:
             return wrap_ptr__CIDataType(unary_right_expr_data_type,
-                                                   CI_DATA_TYPE_CONTEXT_NONE);
+                                        CI_DATA_TYPE_CONTEXT_NONE);
         case CI_EXPR_UNARY_KIND_DEREFERENCE: {
             if (is_ptr_data_type__CIParser((CIParser *)self,
                                            unary_right_expr_data_type,
