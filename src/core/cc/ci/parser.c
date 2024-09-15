@@ -7633,14 +7633,13 @@ parse_primary_expr__CIParser(CIParser *self)
 
             break;
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__:
-            res = NEW_VARIANT(
-              CIExpr,
-              literal,
-              NEW_VARIANT(
-                CIExprLiteral,
-                string,
-                self->previous_token->standard_predefined_macro___file__,
-                false));
+            res =
+              NEW_VARIANT(CIExpr,
+                          literal,
+                          NEW_VARIANT(CIExprLiteral,
+                                      string,
+                                      from__String(self->file->file_input.name),
+                                      true));
 
             break;
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__:

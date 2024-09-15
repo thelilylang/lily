@@ -143,11 +143,6 @@ static VARIANT_DESTRUCTOR(CIToken,
                           standard_predefined_macro___date__,
                           CIToken *self);
 
-// Free CIToken type (CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__).
-static VARIANT_DESTRUCTOR(CIToken,
-                          standard_predefined_macro___file__,
-                          CIToken *self);
-
 // Free CIToken type (CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__).
 static inline VARIANT_DESTRUCTOR(CIToken,
                                  standard_predefined_macro___line__,
@@ -1544,23 +1539,6 @@ VARIANT_CONSTRUCTOR(CIToken *,
 
 VARIANT_CONSTRUCTOR(CIToken *,
                     CIToken,
-                    standard_predefined_macro___file__,
-                    Location location,
-                    String *standard_predefined_macro___file__)
-{
-    CIToken *self = lily_malloc(sizeof(CIToken));
-
-    self->kind = CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__;
-    self->location = location;
-    self->next = NULL;
-    self->standard_predefined_macro___file__ =
-      standard_predefined_macro___file__;
-
-    return self;
-}
-
-VARIANT_CONSTRUCTOR(CIToken *,
-                    CIToken,
                     standard_predefined_macro___line__,
                     Location location,
                     Usize standard_predefined_macro___line__)
@@ -1973,8 +1951,7 @@ to_string__CIToken(CIToken *self)
             return format__String("__DATE__ {S}",
                                   self->standard_predefined_macro___date__);
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__:
-            return format__String("__FILE__ {S}",
-                                  self->standard_predefined_macro___file__);
+            return from__String("__FILE__");
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__:
             return format__String("__LINE__ {zu}",
                                   self->standard_predefined_macro___line__);
@@ -2657,12 +2634,6 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           self->standard_predefined_macro___date__);
-        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__:
-            return format("CIToken{{ kind = {s}, location = {sa}, "
-                          "standard_predefined_macro___file__ = {s} }",
-                          CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
-                          CALL_DEBUG_IMPL(to_string, Location, &self->location),
-                          self->standard_predefined_macro___file__);
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__:
             return format("CIToken{{ kind = {s}, location = {sa}, "
                           "standard_predefined_macro___line__ = {zu} }",
@@ -2877,12 +2848,6 @@ VARIANT_DESTRUCTOR(CIToken, standard_predefined_macro___date__, CIToken *self)
     lily_free(self);
 }
 
-VARIANT_DESTRUCTOR(CIToken, standard_predefined_macro___file__, CIToken *self)
-{
-    FREE(String, self->standard_predefined_macro___file__);
-    lily_free(self);
-}
-
 VARIANT_DESTRUCTOR(CIToken, standard_predefined_macro___line__, CIToken *self)
 {
     lily_free(self);
@@ -2991,9 +2956,6 @@ DESTRUCTOR(CIToken, CIToken *self)
             break;
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__:
             FREE_VARIANT(CIToken, standard_predefined_macro___date__, self);
-            break;
-        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__:
-            FREE_VARIANT(CIToken, standard_predefined_macro___file__, self);
             break;
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__:
             FREE_VARIANT(CIToken, standard_predefined_macro___line__, self);
