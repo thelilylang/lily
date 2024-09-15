@@ -1841,11 +1841,10 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
 #undef DATE_LEN
                     }
                     case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__:
-                        res = NEW_VARIANT(
-                          CIToken,
-                          standard_predefined_macro___file__,
-                          last_token->location,
-                          from__String(self->base.source.file->name));
+                        res =
+                          NEW(CIToken,
+                              CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__,
+                              last_token->location);
 
                         goto free_last_token;
                     case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__:
