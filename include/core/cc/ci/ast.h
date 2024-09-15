@@ -1119,6 +1119,15 @@ serialize_name__CIDataType(const CIDataType *self,
 
 /**
  *
+ * @brief Wrap a pointer to data type.
+ * @param self CIDataType*
+ * @return CIDataType*
+ */
+CIDataType *
+wrap_ptr__CIDataType(CIDataType *self, int ptr_ctx);
+
+/**
+ *
  * @brief Convert CIDataType in String.
  * @note This function is only used to debug.
  */

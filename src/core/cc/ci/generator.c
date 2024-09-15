@@ -588,6 +588,8 @@ generate_data_type__CIGenerator(CIDataType *data_type)
             if (subs_data_type->function.params) {
                 generate_function_params__CIGenerator(
                   subs_data_type->function.params);
+            } else {
+                write_str__CIGenerator("()");
             }
 
             break;
