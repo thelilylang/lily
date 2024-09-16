@@ -26,6 +26,7 @@
 #define LILY_EX_LIB_LILY_CORE_CC_CI_C
 
 #include <core/cc/ci/ast.h>
+#include <core/cc/ci/file.h>
 #include <core/cc/ci/parser.h>
 #include <core/cc/ci/project_config.h>
 #include <core/cc/ci/result.h>
@@ -440,6 +441,13 @@ extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, switch, CIStmtSwitch switch_);
 
 extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, while, CIStmtWhile while_);
 
+// <core/cc/ci/file.h>
+extern inline bool
+is_header__CIFile(const char *filename);
+
+extern inline bool
+is_source__CIFile(const char *filename);
+
 // <core/cc/ci/config.h>
 extern inline CONSTRUCTOR(CIProjectConfigCompiler,
                           CIProjectConfigCompiler,
@@ -468,6 +476,14 @@ extern inline CONSTRUCTOR(CIParserMacroCallParams, CIParserMacroCallParams);
 extern inline CIParserMacroCallParam *
 get_macro_param_variadic__CIParserMacroCallParams(
   const CIParserMacroCallParams *self);
+
+extern inline CONSTRUCTOR(CIParserSpan, CIParserSpan, Usize line, Usize column);
+
+extern inline CIParserSpan
+from_token__CIParserSpan(const CIToken *token);
+
+extern inline CIParserSpan
+default__CIParserSpan();
 
 // <core/cc/ci/result.h>
 extern inline CIResultDefine *

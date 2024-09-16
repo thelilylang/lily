@@ -39,6 +39,13 @@ get_extension__File(const char *path);
 
 /**
  *
+ * @brief Check if the path extension has the same of given extension.
+ */
+bool
+has_extension__File(const char *path, const char *extension);
+
+/**
+ *
  * @brief Get filename (without extension) of the path.
  * @return String*
  * @example a/b/c/file.txt => file

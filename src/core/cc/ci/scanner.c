@@ -1848,10 +1848,10 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
 
                         goto free_last_token;
                     case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__:
-                        res = NEW_VARIANT(CIToken,
-                                          standard_predefined_macro___line__,
-                                          last_token->location,
-                                          self->base.source.cursor.line);
+                        res =
+                          NEW(CIToken,
+                              CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__,
+                              last_token->location);
 
                         goto free_last_token;
                     case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__: {

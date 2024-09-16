@@ -171,6 +171,42 @@ VARIANT_CONSTRUCTOR(CIParserMacroCall *, CIParserMacroCall, is_empty);
  */
 DESTRUCTOR(CIParserMacroCall, CIParserMacroCall *self);
 
+typedef struct CIParserSpan
+{
+    Usize line;
+    Usize column;
+} CIParserSpan;
+
+/**
+ *
+ * @brief Construct CIParserSpan type.
+ */
+inline CONSTRUCTOR(CIParserSpan, CIParserSpan, Usize line, Usize column)
+{
+    return (CIParserSpan){ .line = line, .column = column };
+}
+
+/**
+ *
+ * @brief Construct CIParserSpan type from CIToken (token).
+ */
+inline CIParserSpan
+from_token__CIParserSpan(const CIToken *token)
+{
+    return NEW(
+      CIParserSpan, token->location.start_line, token->location.start_column);
+}
+
+/**
+ *
+ * @brief Construct CIParserSpan type with default values.
+ */
+inline CIParserSpan
+default__CIParserSpan()
+{
+    return (CIParserSpan){ .line = 0, .column = 0 };
+}
+
 typedef struct CIParser
 {
     CIResultFile *file;       // CIResultFile* (&)
@@ -180,7 +216,9 @@ typedef struct CIParser
     const CITokens *tokens;   // const CITokens* (&)
     CIToken *current_token;   // CIToken* (&)
     CIToken *previous_token;  // CIToken* (&)
-    Vec *macros_call;         // Vec<CIParserMacroCall*>*
+    CIParserSpan current_span;
+    CIParserSpan previous_span;
+    Vec *macros_call; // Vec<CIParserMacroCall*>*
     CIParserVisitWaitingList visit_waiting_list;
 } CIParser;
 

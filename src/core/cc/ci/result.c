@@ -27,6 +27,7 @@
 #include <base/dir.h>
 #include <base/macros.h>
 
+#include <core/cc/ci/file.h>
 #include <core/cc/ci/result.h>
 
 #include <stdio.h>
@@ -867,6 +868,28 @@ include_content__CIResultFile(const CIResultFile *self, CIResultFile *other)
     merge_content__CIResultFile(self, other);
 }
 
+bool
+is_same_filename__CIResultFile(const CIResultFile *self, const char *filename)
+{
+    if (is_source__CIFile(filename)) {
+        CIResultFile *source_file =
+          get__OrderedHashMap(self->entity.result->sources, (char *)filename);
+
+        ASSERT(source_file);
+
+        return self->entity.id == source_file->entity.id;
+    } else if (is_header__CIFile(filename)) {
+        CIResultFile *header_file =
+          get__OrderedHashMap(self->entity.result->headers, (char *)filename);
+
+        ASSERT(header_file);
+
+        return self->entity.id == header_file->entity.id;
+    }
+
+    UNREACHABLE("unknown filename extension");
+}
+
 DESTRUCTOR(CIResultFile, CIResultFile *self)
 {
     if (self->file_input.content) {
@@ -1044,7 +1067,7 @@ void
 load_predefined__CIResult(CIResult *self)
 {
     String *predefined_content = generate__CIPreDefined(self->config);
-    File predefined_file = { .name = strdup("**<predefined.hci>**"),
+    File predefined_file = { .name = strdup("<predefined>.hci"),
                              .content = predefined_content->buffer,
                              .len = predefined_content->len };
     CIResultFile *predefined = NEW(CIResultFile,
@@ -1075,18 +1098,16 @@ scan_file__CIResult(const CIResult *self,
                     char *path,
                     Usize id)
 {
-    char *extension = get_extension__File(path);
     String *filename_result = get_filename__File(path);
     bool kind;
 
-    if (!strcmp(extension, ".ci") || !strcmp(extension, ".c")) {
+    if (is_source__CIFile(path)) {
         push_str__String(filename_result, ".c");
         kind = CI_FILE_ID_KIND_SOURCE;
-    } else if (!strcmp(extension, ".hci") || !strcmp(extension, ".h")) {
+    } else if (is_header__CIFile(path)) {
         push_str__String(filename_result, ".h");
         kind = CI_FILE_ID_KIND_HEADER;
     } else {
-        lily_free(extension);
         FREE(String, filename_result);
 
         FAILED("unknown extension, expected `.ci`, `.c`, `.hci` or `.h`");
@@ -1116,8 +1137,6 @@ scan_file__CIResult(const CIResult *self,
     }
 
     run__CIScanner(&result_file->scanner, false);
-
-    lily_free(extension);
 
     return result_file;
 }

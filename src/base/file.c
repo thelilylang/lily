@@ -47,14 +47,42 @@
 
 #define FILE_EXTENSION_SEPARATOR '.'
 
+/// @brief Return a pointer to the beginning of the extension, if one is found,
+/// otherwise returns NULL.
+/// @return char*? (&)
+static char *
+select_extension__File(const char *path);
+
+char *
+select_extension__File(const char *path)
+{
+    char *res = (char *)path;
+
+    while (true) {
+        // app.lily
+        //    ^
+        // ./a/b/c/app.ci
+        // ^
+        // ../a/b/c/d.c
+        // ^
+        // a/b/c/d.c.txt
+        //        ^
+        res = strchr(res, FILE_EXTENSION_SEPARATOR);
+
+        if (res && strchr(res, DIR_SEPARATOR)) {
+            ++res;
+
+            continue;
+        }
+
+        return res;
+    }
+}
+
 char *
 get_extension__File(const char *path)
 {
-    // app.lily
-    //    ^
-    // ./a/b/c/app.ci
-    //            ^
-    const char *path_filename = strrchr(path, FILE_EXTENSION_SEPARATOR);
+    const char *path_filename = select_extension__File(path);
     Usize size = 1;
     char *extension = lily_malloc(1);
 
@@ -71,6 +99,14 @@ get_extension__File(const char *path)
     }
 
     return extension;
+}
+
+bool
+has_extension__File(const char *path, const char *extension)
+{
+    const char *path_filename = select_extension__File(path);
+
+    return path_filename && !strcmp(path_filename, extension);
 }
 
 String *
