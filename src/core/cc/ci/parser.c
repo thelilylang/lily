@@ -2039,6 +2039,8 @@ CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner)
         tokens_feature = get_tokens_feature__CIScanner();
     }
 
+    CIParserSpan current_span = default__CIParserSpan();
+
     return (CIParser){ .file = file,
                        .scanner = scanner,
                        .count_error = &file->file_analysis->count_error,
@@ -2046,6 +2048,8 @@ CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner)
                        .tokens = &scanner->tokens,
                        .current_token = scanner->tokens.first,
                        .previous_token = scanner->tokens.first,
+                       .current_span = current_span,
+                       .previous_span = current_span,
                        .macros_call = NEW(Vec),
                        .visit_waiting_list = NEW(CIParserVisitWaitingList) };
 }
@@ -4455,15 +4459,13 @@ parse_macro_call_param__CIParser(CIParser *self,
 
     parse_tokens_in_macro_call_param__CIParser(
       self, current_token, &content, is_variadic);
-    // NOTE: In practice, it makes no difference that we don't configure the
-    // location on this token (CI_TOKEN_KIND_EOT), because it's not used by the
-    // parser and is only used as a transition token.
+
     ASSERT(insert_after_match__CITokens(
       &content,
       content.last,
       NEW_VARIANT(CIToken,
                   eot,
-                  default__Location(""),
+                  default__Location(content.last->location.filename),
                   NEW_VARIANT(CITokenEot, macro_param))));
 
     return NEW(CIParserMacroCallParam, content);
@@ -4768,6 +4770,12 @@ set_current_token__CIParser(CIParser *self, CIToken *next_token)
     self->previous_token =
       self->current_token ? self->current_token : next_token;
     self->current_token = next_token;
+
+    if (is_same_filename__CIResultFile(
+          self->file, self->current_token->location.filename)) {
+        self->previous_span = self->current_span;
+        self->current_span = from_token__CIParserSpan(self->current_token);
+    }
 }
 
 void
@@ -7643,13 +7651,11 @@ parse_primary_expr__CIParser(CIParser *self)
 
             break;
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__:
-            res = NEW_VARIANT(
-              CIExpr,
-              literal,
-              NEW_VARIANT(
-                CIExprLiteral,
-                unsigned_int,
-                self->previous_token->standard_predefined_macro___line__));
+            res = NEW_VARIANT(CIExpr,
+                              literal,
+                              NEW_VARIANT(CIExprLiteral,
+                                          unsigned_int,
+                                          self->previous_span.line));
 
             break;
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__:

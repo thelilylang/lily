@@ -619,6 +619,13 @@ include_content__CIResultFile(const CIResultFile *self, CIResultFile *other);
 
 /**
  *
+ * @brief Check if is the same filename (check the file id).
+ */
+bool
+is_same_filename__CIResultFile(const CIResultFile *self, const char *filename);
+
+/**
+ *
  * @brief Free CIResultFile type.
  */
 DESTRUCTOR(CIResultFile, CIResultFile *self);

@@ -1258,7 +1258,6 @@ typedef struct CIToken
         CITokenMacroParam macro_param;
         CITokenMacroParamVariadic macro_param_variadic;
         String *standard_predefined_macro___date__;
-        Usize standard_predefined_macro___line__;
         String *standard_predefined_macro___time__;
         enum CIExtensionsHasFeature has_feature;
     };
@@ -1578,17 +1577,6 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     standard_predefined_macro___date__,
                     Location location,
                     String *standard_predefined_macro___date__);
-
-/**
- *
- * @brief Construct CIToken type
- * (CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__).
- */
-VARIANT_CONSTRUCTOR(CIToken *,
-                    CIToken,
-                    standard_predefined_macro___line__,
-                    Location location,
-                    Usize standard_predefined_macro___line__);
 
 /**
  *

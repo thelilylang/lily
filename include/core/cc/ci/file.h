@@ -26,10 +26,28 @@
 #define LILY_CORE_CC_CI_FILE_H
 
 #include <core/shared/file.h>
+#include <stdio.h>
 
-typedef struct CIFile
+/**
+ *
+ * @brief Check if the filename has *.hci or *.h extension.
+ */
+inline bool
+is_header__CIFile(const char *filename)
 {
-    File file;
-} CIFile;
+    return has_extension__File(filename, ".hci") ||
+           has_extension__File(filename, ".h");
+}
+
+/**
+ *
+ * @brief Check if the filename has *.ci or *.c extension.
+ */
+inline bool
+is_source__CIFile(const char *filename)
+{
+    return has_extension__File(filename, ".ci") ||
+           has_extension__File(filename, ".c");
+}
 
 #endif // LILY_CORE_CC_CI_FILE_H
