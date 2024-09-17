@@ -311,6 +311,7 @@ set(BASE_SRC
     ${CMAKE_SOURCE_DIR}/src/base/non_null.c
     ${CMAKE_SOURCE_DIR}/src/base/optional.c
     ${CMAKE_SOURCE_DIR}/src/base/ordered_hash_map.c
+    ${CMAKE_SOURCE_DIR}/src/base/path.c
     ${CMAKE_SOURCE_DIR}/src/base/queue.c
     ${CMAKE_SOURCE_DIR}/src/base/quick_select.c
     ${CMAKE_SOURCE_DIR}/src/base/quick_sort.c
