@@ -22,50 +22,25 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_CC_CI_INCLUDE_H
-#define LILY_CORE_CC_CI_INCLUDE_H
+#include <base/dir.h>
+#include <base/macros.h>
+#include <base/path.h>
 
-#include <base/platform.h>
-#include <base/vec.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-#include <core/cc/ci/project_config.h>
+String *
+convert_to_absolute_path__Path(const char *path)
+{
+    if (!is_relative__Path(path)) {
+        return from__String((char *)path);
+    }
 
-/**
- *
- * @brief Initialize include directories vector.
- */
-void
-init_include_dirs__CIInclude(const String *compiler_path,
-                             const char *base_path);
+    char *cwd = get_cwd__Dir();
 
-/**
- *
- * @brief Add include directory to `include_dirs` vector.
- */
-void
-add_include_dir__CIInclude(String *include_dir);
+    if (!cwd) {
+        UNREACHABLE("unable to get the current working directory");
+    }
 
-/**
- *
- * @brief Insert include directory to `include_dirs` vector at index.
- */
-void
-insert_include_dir__CIInclude(String *include_dir, Usize index);
-
-/**
- *
- * @brief Get `include_dirs` vector.
- * @return Vec<char* (&)>* (&)
- */
-const Vec *
-get_include_dirs__CIInclude();
-
-/**
- *
- * @brief Free `include_dirs` vector.
- * @see src/core/cc/ci/include.c
- */
-void
-destroy__CIInclude();
-
-#endif // LILY_CORE_CC_CI_INCLUDE_H
+    return format__String("{sa}{c}{s}", cwd, DIR_SEPARATOR, path);
+}

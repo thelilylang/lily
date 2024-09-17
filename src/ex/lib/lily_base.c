@@ -39,6 +39,7 @@
 #include <base/memory/page.h>
 #include <base/optional.h>
 #include <base/ordered_hash_map.h>
+#include <base/path.h>
 #include <base/sized_array.h>
 #include <base/string.h>
 #include <base/test.h>
@@ -93,6 +94,10 @@ index__OrderedHashMap(OrderedHashMap *self, char *key);
 extern inline CONSTRUCTOR(OrderedHashMapIter,
                           OrderedHashMapIter,
                           OrderedHashMap *ordered_hash_map);
+
+// <base/path.h>
+extern inline bool
+is_relative__Path(const char *path);
 
 // <base/sized_array.h>
 extern inline SizedArray *

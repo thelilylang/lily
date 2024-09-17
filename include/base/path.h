@@ -22,50 +22,33 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_CC_CI_INCLUDE_H
-#define LILY_CORE_CC_CI_INCLUDE_H
+#ifndef LILY_BASE_PATH_H
+#define LILY_BASE_PATH_H
 
+#include <base/dir_separator.h>
 #include <base/platform.h>
-#include <base/vec.h>
-
-#include <core/cc/ci/project_config.h>
+#include <base/string.h>
 
 /**
  *
- * @brief Initialize include directories vector.
+ * @brief Check if the given path is relative.
  */
-void
-init_include_dirs__CIInclude(const String *compiler_path,
-                             const char *base_path);
+inline bool
+is_relative__Path(const char *path)
+{
+#ifdef LILY_WINDOWS_OS
+    return isalpha(path[0]) && path[1] == ':' && path[2] == DIR_SEPARATOR;
+#else
+    return path[0] != DIR_SEPARATOR;
+#endif
+}
 
 /**
  *
- * @brief Add include directory to `include_dirs` vector.
+ * @brief Convert relative to absolute path.
+ * @return String*
  */
-void
-add_include_dir__CIInclude(String *include_dir);
+String *
+convert_to_absolute_path__Path(const char *path);
 
-/**
- *
- * @brief Insert include directory to `include_dirs` vector at index.
- */
-void
-insert_include_dir__CIInclude(String *include_dir, Usize index);
-
-/**
- *
- * @brief Get `include_dirs` vector.
- * @return Vec<char* (&)>* (&)
- */
-const Vec *
-get_include_dirs__CIInclude();
-
-/**
- *
- * @brief Free `include_dirs` vector.
- * @see src/core/cc/ci/include.c
- */
-void
-destroy__CIInclude();
-
-#endif // LILY_CORE_CC_CI_INCLUDE_H
+#endif // LILY_BASE_PATH_H
