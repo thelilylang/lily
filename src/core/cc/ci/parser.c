@@ -5154,6 +5154,7 @@ token_is_data_type__CIParser(CIParser *self, const CIToken *token)
         case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__COMPLEX:
         case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__IMAGINARY:
         case CI_TOKEN_KIND_KEYWORD_LONG_INT:
+        case CI_TOKEN_KIND_KEYWORD_LONG_LONG_INT:
         case CI_TOKEN_KIND_KEYWORD_INT:
         case CI_TOKEN_KIND_KEYWORD_SHORT_INT:
         case CI_TOKEN_KIND_KEYWORD_SIGNED_CHAR:
@@ -5163,6 +5164,7 @@ token_is_data_type__CIParser(CIParser *self, const CIToken *token)
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_CHAR:
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_INT:
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_INT:
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG_INT:
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT_INT:
         case CI_TOKEN_KIND_KEYWORD_VOID:
         case CI_TOKEN_KIND_KEYWORD_VOLATILE:
@@ -6667,6 +6669,10 @@ parse_pre_data_type__CIParser(CIParser *self)
             res = long_int__PrimaryDataTypes();
 
             break;
+        case CI_TOKEN_KIND_KEYWORD_LONG_LONG_INT:
+            res = long_long_int__PrimaryDataTypes();
+
+            break;
         case CI_TOKEN_KIND_KEYWORD_INT:
             res = int__PrimaryDataTypes();
 
@@ -6824,6 +6830,10 @@ parse_pre_data_type__CIParser(CIParser *self)
             break;
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_INT:
             res = unsigned_long_int__PrimaryDataTypes();
+
+            break;
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG_INT:
+            res = unsigned_long_long_int__PrimaryDataTypes();
 
             break;
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT_INT:
