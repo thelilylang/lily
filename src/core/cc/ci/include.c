@@ -26,6 +26,7 @@
 #include <base/command.h>
 #include <base/format.h>
 #include <base/new.h>
+#include <base/path.h>
 
 #include <core/cc/ci/include.h>
 
@@ -65,9 +66,21 @@ add_include_dir__CIInclude(String *include_dir)
     push__Vec(include_dirs, include_dir);
 }
 
+void
+insert_include_dir__CIInclude(String *include_dir, Usize index)
+{
+    ASSERT(include_dirs);
+
+    insert__Vec(include_dirs, include_dir, index);
+}
+
 const Vec *
 get_include_dirs__CIInclude()
 {
+    // NOTE: You need to call `init_include_dirs__CIInclude` function, before to
+    // use this function.
+    ASSERT(include_dirs);
+
     return include_dirs;
 }
 

@@ -47,6 +47,13 @@ add_include_dir__CIInclude(String *include_dir);
 
 /**
  *
+ * @brief Insert include directory to `include_dirs` vector at index.
+ */
+void
+insert_include_dir__CIInclude(String *include_dir, Usize index);
+
+/**
+ *
  * @brief Get `include_dirs` vector.
  * @return Vec<char* (&)>* (&)
  */

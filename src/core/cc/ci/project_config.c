@@ -28,6 +28,7 @@
 #include <base/file.h>
 #include <base/format.h>
 #include <base/new.h>
+#include <base/path.h>
 
 #include <core/cc/ci/include.h>
 #include <core/cc/ci/project_config.h>
@@ -37,12 +38,23 @@
 
 #define CI_CONFIG "CI.yaml"
 
+/// @param path char* (&)
+/// @param absolute_config_dir const char* (&)
+/// @return String*
+static String *
+convert_path_to_absolute_path__CIProjectConfig(char *path,
+                                               const char *absolute_config_dir);
+
 static enum CIStandard
 parse_standard__CIProjectConfig(YAMLLoadRes *yaml_load_res);
 
 static CIProjectConfigCompiler
 parse_compiler__CIProjectConfig(YAMLLoadRes *yaml_load_res,
                                 const char *absolute_config_dir);
+
+static void
+parse_std_include__CIProjectConfig(YAMLLoadRes *yaml_load_res,
+                                   const char *absolute_config_dir);
 
 static void
 parse_include_dirs__CIProjectConfig(YAMLLoadRes *yaml_load_res,
@@ -58,6 +70,19 @@ parse_libraries__CIProjectConfig(YAMLLoadRes *yaml_load_res,
 static Vec *
 parse_bins__CIProjectConfig(YAMLLoadRes *yaml_load_res,
                             const char *absolute_config_dir);
+
+String *
+convert_path_to_absolute_path__CIProjectConfig(char *path,
+                                               const char *absolute_config_dir)
+{
+    ASSERT(!is_relative__Path(absolute_config_dir));
+
+    if (is_relative__Path(path)) {
+        return format__String("{s}/{s}", absolute_config_dir, path);
+    }
+
+    return from__String(path);
+}
 
 enum CIStandard
 parse_standard__CIProjectConfig(YAMLLoadRes *yaml_load_res)
@@ -176,6 +201,39 @@ parse_compiler__CIProjectConfig(YAMLLoadRes *yaml_load_res,
 }
 
 void
+parse_std_include__CIProjectConfig(YAMLLoadRes *yaml_load_res,
+                                   const char *absolute_config_dir)
+{
+    // std_include: <path>
+    Int32 std_include_value_id = GET_KEY_ON_DEFAULT_MAPPING__YAML(
+      yaml_load_res, FIRST_DOCUMENT, "std_include");
+
+    if (std_include_value_id == -1) {
+        return;
+    }
+
+    YAMLNode *std_include_value_node = get_node_from_id__YAML(
+      yaml_load_res, FIRST_DOCUMENT, std_include_value_id);
+
+    ASSERT(std_include_value_node);
+
+    switch (GET_NODE_TYPE__YAML(std_include_value_node)) {
+        case YAML_SCALAR_NODE:
+            // NOTE: We insert the standard include directory in first, to take
+            // precedence over other include directories.
+            insert_include_dir__CIInclude(
+              convert_path_to_absolute_path__CIProjectConfig(
+                GET_NODE_SCALAR_VALUE__YAML(std_include_value_node),
+                absolute_config_dir),
+              0);
+
+            return;
+        default:
+            FAILED("expected: std_include: <path>");
+    }
+}
+
+void
 parse_include_dirs__CIProjectConfig(YAMLLoadRes *yaml_load_res,
                                     const String *compiler_path,
                                     const char *base_path)
@@ -206,7 +264,8 @@ parse_include_dirs__CIProjectConfig(YAMLLoadRes *yaml_load_res,
                   include_dir,
                   {
                       add_include_dir__CIInclude(
-                        from__String(include_dir_value));
+                        convert_path_to_absolute_path__CIProjectConfig(
+                          include_dir_value, base_path));
                   });
 
                 break;
@@ -464,9 +523,13 @@ DESTRUCTOR(CIProjectConfigBin, CIProjectConfigBin *self)
 CIProjectConfig
 parse__CIProjectConfig(const char *config_dir)
 {
-    char *absolute_config_dir = format("{sa}/{s}", get_cwd__Dir(), config_dir);
-    String *path_ci_config =
-      exists_rec__File(absolute_config_dir, CI_CONFIG); // <path>/CI.yaml
+    String *absolute_config_dir = convert_to_absolute_path__Path(config_dir);
+    String *path_ci_config = exists_rec__File(absolute_config_dir->buffer,
+                                              CI_CONFIG); // <path>/CI.yaml
+
+    FREE(String, absolute_config_dir);
+
+    absolute_config_dir = get_dir__File(path_ci_config->buffer);
 
     if (!path_ci_config) {
         FAILED("could not find CI.yaml in current working directory or parent "
@@ -475,19 +538,21 @@ parse__CIProjectConfig(const char *config_dir)
 
     YAMLLoadRes yaml_load_res = load__YAML(path_ci_config->buffer);
     enum CIStandard standard = parse_standard__CIProjectConfig(&yaml_load_res);
-    CIProjectConfigCompiler compiler =
-      parse_compiler__CIProjectConfig(&yaml_load_res, absolute_config_dir);
+    CIProjectConfigCompiler compiler = parse_compiler__CIProjectConfig(
+      &yaml_load_res, absolute_config_dir->buffer);
 
     parse_include_dirs__CIProjectConfig(
-      &yaml_load_res, compiler.path, config_dir);
+      &yaml_load_res, compiler.path, absolute_config_dir->buffer);
+    parse_std_include__CIProjectConfig(&yaml_load_res,
+                                       absolute_config_dir->buffer);
 
-    Vec *libraries =
-      parse_libraries__CIProjectConfig(&yaml_load_res, absolute_config_dir);
+    Vec *libraries = parse_libraries__CIProjectConfig(
+      &yaml_load_res, absolute_config_dir->buffer);
     Vec *bins =
-      parse_bins__CIProjectConfig(&yaml_load_res, absolute_config_dir);
+      parse_bins__CIProjectConfig(&yaml_load_res, absolute_config_dir->buffer);
 
     FREE(String, path_ci_config);
-    lily_free(absolute_config_dir);
+    FREE(String, absolute_config_dir);
 
     return NEW(CIProjectConfig,
                yaml_load_res,
