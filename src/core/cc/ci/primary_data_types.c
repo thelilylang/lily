@@ -24,6 +24,7 @@
 
 #include <core/cc/ci/primary_data_types.h>
 
+// See: https://en.cppreference.com/w/cpp/language/types
 static CIDataType *primary_data_type_bool = NULL;            // bool
 static CIDataType *primary_data_type_char = NULL;            // char
 static CIDataType *primary_data_type_double = NULL;          // double
