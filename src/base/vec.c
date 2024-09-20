@@ -103,16 +103,25 @@ grow__Vec(Vec *self, Usize new_capacity)
 Vec *
 init__Vec(Usize len, ...)
 {
-    Vec *self = NEW(Vec);
-    va_list vl;
+    va_list arg;
 
-    va_start(vl, len);
+    va_start(arg, len);
+
+    Vec *res = vinit__Vec(len, arg);
+
+    va_end(arg);
+
+    return res;
+}
+
+Vec *
+vinit__Vec(Usize len, va_list arg)
+{
+    Vec *self = NEW(Vec);
 
     for (Usize i = 0; i < len; ++i) {
-        push__Vec(self, va_arg(vl, void *));
+        push__Vec(self, va_arg(arg, void *));
     }
-
-    va_end(vl);
 
     return self;
 }
