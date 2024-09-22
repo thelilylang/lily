@@ -37,6 +37,9 @@
 #include <base/memory/api.h>
 #include <base/memory/arena.h>
 #include <base/memory/page.h>
+#include <base/object/schema.h>
+#include <base/object/value/list.h>
+#include <base/object/value/object.h>
 #include <base/optional.h>
 #include <base/ordered_hash_map.h>
 #include <base/path.h>
@@ -70,6 +73,27 @@ extern inline CONSTRUCTOR(HashMapIter, HashMapIter, HashMap *hash_map);
 
 // <base/linked_list.h>
 extern inline DESTRUCTOR(LinkedListNode, LinkedListNode *self);
+
+// <base/object/schema.h>
+extern inline ObjectSchema *
+make_null__ObjectSchema(ObjectSchema *self);
+
+extern inline ObjectSchema *
+make_required__ObjectSchema(ObjectSchema *self);
+
+// <base/object/value/list.h>
+extern inline CONSTRUCTOR(ObjectValueList, ObjectValueList);
+
+extern inline void
+push__ObjectValueList(ObjectValueList *self, struct ObjectValue *object_value);
+
+// <base/object/value/object.h>
+extern inline CONSTRUCTOR(ObjectValueObject, ObjectValueObject);
+
+extern inline void
+add__ObjectValueObject(ObjectValueObject *self,
+                       char *object_name,
+                       struct ObjectValue *object_value);
 
 // <base/optional.h>
 extern inline bool
