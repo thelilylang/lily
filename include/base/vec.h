@@ -28,6 +28,7 @@
 #include <base/macros.h>
 #include <base/types.h>
 
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -158,6 +159,14 @@ grow__Vec(Vec *self, Usize new_capacity);
  */
 Vec *
 init__Vec(Usize len, ...);
+
+/**
+ *
+ * @brief Alternative version of the `init__Vec` function, to pass the argument
+ * directly.
+ */
+Vec *
+vinit__Vec(Usize len, va_list arg);
 
 /**
  *

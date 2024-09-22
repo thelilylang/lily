@@ -184,6 +184,37 @@ push_bucket__OrderedHashMap(OrderedHashMap *self,
     return NULL;
 }
 
+OrderedHashMap *
+init__OrderedHashMap(Usize count, ...)
+{
+    va_list arg;
+
+    va_start(arg, count);
+
+    OrderedHashMap *res = vinit__OrderedHashMap(count, arg);
+
+    va_end(arg);
+
+    return res;
+}
+
+OrderedHashMap *
+vinit__OrderedHashMap(Usize count, va_list arg)
+{
+    OrderedHashMap *self = NEW(OrderedHashMap);
+
+    for (Usize i = 0; i < count; ++i) {
+        OrderedHashMapInitPair pair = va_arg(arg, OrderedHashMapInitPair);
+
+        if (insert__OrderedHashMap(self, pair.key, pair.value)) {
+            UNREACHABLE(
+              "duplicate key in initialization of the OrderedHashMap");
+        }
+    }
+
+    return self;
+}
+
 void *
 insert__OrderedHashMap(OrderedHashMap *self, char *key, void *value)
 {

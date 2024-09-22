@@ -309,6 +309,10 @@ set(BASE_SRC
     ${CMAKE_SOURCE_DIR}/src/base/memory/page.c
     ${CMAKE_SOURCE_DIR}/src/base/mutex.c
     ${CMAKE_SOURCE_DIR}/src/base/non_null.c
+    ${CMAKE_SOURCE_DIR}/src/base/object/schema.c
+    ${CMAKE_SOURCE_DIR}/src/base/object/value.c
+    ${CMAKE_SOURCE_DIR}/src/base/object/value/list.c
+    ${CMAKE_SOURCE_DIR}/src/base/object/value/object.c
     ${CMAKE_SOURCE_DIR}/src/base/optional.c
     ${CMAKE_SOURCE_DIR}/src/base/ordered_hash_map.c
     ${CMAKE_SOURCE_DIR}/src/base/path.c
