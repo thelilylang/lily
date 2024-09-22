@@ -31,6 +31,7 @@
 #include <base/platform.h>
 #include <base/types.h>
 
+#include <stdarg.h>
 #include <string.h>
 
 #ifdef PLATFORM_64
@@ -200,6 +201,28 @@ index__OrderedHashMap(OrderedHashMap *self, char *key)
 {
     return hash__OrderedHashMap(self, key) % self->capacity;
 }
+
+typedef struct OrderedHashMapInitPair
+{
+    char *key;
+    void *value;
+} OrderedHashMapInitPair;
+
+/**
+ *
+ * @brief Initialize OrderedHashMap with `...` parameter.
+ * @param ... struct OrderedHashMapInitPair
+ */
+OrderedHashMap *
+init__OrderedHashMap(Usize count, ...);
+
+/**
+ *
+ * @brief Alternative version of the `init__OrderedHashMap` function, to pass
+ * the argument directly.
+ */
+OrderedHashMap *
+vinit__OrderedHashMap(Usize count, va_list arg);
 
 /**
  *
