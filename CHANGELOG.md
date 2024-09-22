@@ -1,5 +1,47 @@
 # Changelog
 
+## 0.5.0 - 2024-09-21
+
+### Added
+
+- Implement implicit casting [#527](https://github.com/thelilylang/lily/pull/527)
+- Finish to resolve unary expression [#530](https://github.com/thelilylang/lily/pull/530)
+- Add C standard stddef header [#536](https://github.com/thelilylang/lily/pull/536)
+- Add C standard stdint header [#537](https://github.com/thelilylang/lily/pull/537)
+- Typecheck params for generic function [#539](https://github.com/thelilylang/lily/pull/539)
+- Finish to visit generic function [#541](https://github.com/thelilylang/lily/pull/541)
+- Add the ability to call generic function [#542](https://github.com/thelilylang/lily/pull/542)
+- Add the ability to call struct or union in generic context [#544](https://github.com/thelilylang/lily/pull/544)
+- Add file system watcher [#547](https://github.com/thelilylang/lily/pull/547)
+- Typecheck dot and arrow access [#548](https://github.com/thelilylang/lily/pull/548)
+- Add the ability to call function as identifier [#550](https://github.com/thelilylang/lily/pull/550)
+- Add `std_include` setting to CI configuration [#553](https://github.com/thelilylang/lily/pull/553)
+- Add a script to auto-format files each time they are modified [#555](https://github.com/thelilylang/lily/pull/555)
+- Add object value/object schema structures [#556](https://github.com/thelilylang/lily/pull/556)
+
+### Changed
+
+- Improve inference of unary expression [#526](https://github.com/thelilylang/lily/pull/526)
+- Implement CLI for CI [#529](https://github.com/thelilylang/lily/pull/529)
+- Undef stdint macros [#538](https://github.com/thelilylang/lily/pull/538)
+- Infer string as a pointer [#540](https://github.com/thelilylang/lily/pull/540)
+
+### Fixed
+
+- Fix `format__String` function [#528](https://github.com/thelilylang/lily/pull/528)
+- Fix generic params [#531](https://github.com/thelilylang/lily/pull/531)
+- Fix leak in struct call typecheck [#532](https://github.com/thelilylang/lily/pull/532)
+- Fix struct call typecheck [#533](https://github.com/thelilylang/lily/pull/533)
+- Fix search in scope bug [#534](https://github.com/thelilylang/lily/pull/534)
+- Fix leak in parse function params [#535](https://github.com/thelilylang/lily/pull/535)
+- Fix bad generation of serialized name [#543](https://github.com/thelilylang/lily/pull/543)
+- Fix stack overflow while typechecking named struct [#545](https://github.com/thelilylang/lily/pull/545)
+- Fix bad typecheck diagnostic while using const data type [#546](https://github.com/thelilylang/lily/pull/546)
+- Fix few issues encountered on FreeBSD at compilation [#549](https://github.com/thelilylang/lily/pull/549)
+- Fix `__FILE__` value [#551](https://github.com/thelilylang/lily/pull/551)
+- Fix `__LINE__` value [#552](https://github.com/thelilylang/lily/pull/552)
+- Fix: Add missing data types to the parser of data type [#554](https://github.com/thelilylang/lily/pull/554)
+
 ## 0.4.0 - 2024-08-22
 
 ### Added
