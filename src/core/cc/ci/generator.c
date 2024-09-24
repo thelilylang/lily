@@ -1656,6 +1656,8 @@ generate_decl__CIGenerator(const CIDecl *decl)
 
                 break;
             case CI_DECL_KIND_VARIABLE:
+				generate_storage_class__CIGenerator(&decl->storage_class_flag);
+
                 return generate_variable_decl__CIGenerator(&decl->variable);
             default:
                 UNREACHABLE("unknown variant");
