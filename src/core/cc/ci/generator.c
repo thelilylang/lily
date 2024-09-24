@@ -669,6 +669,9 @@ generate_data_type__CIGenerator(CIDataType *data_type)
                                                                              \
         write__CIGenerator(' ');                                             \
         write_String__CIGenerator(serialized_name);                          \
+    } else if (subs_data_type->dt_name.name) {                               \
+        write__CIGenerator(' ');                                             \
+        write_str__CIGenerator(subs_data_type->dt_name.name->buffer);        \
     }                                                                        \
                                                                              \
     if (subs_data_type->dt_name.fields) {                                    \
