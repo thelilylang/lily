@@ -527,14 +527,14 @@ parse__CIProjectConfig(const char *config_dir)
     String *path_ci_config = exists_rec__File(absolute_config_dir->buffer,
                                               CI_CONFIG); // <path>/CI.yaml
 
-    FREE(String, absolute_config_dir);
-
-    absolute_config_dir = get_dir__File(path_ci_config->buffer);
-
     if (!path_ci_config) {
         FAILED("could not find CI.yaml in current working directory or parent "
                "directory");
     }
+
+    FREE(String, absolute_config_dir);
+
+    absolute_config_dir = get_dir__File(path_ci_config->buffer);
 
     YAMLLoadRes yaml_load_res = load__YAML(path_ci_config->buffer);
     enum CIStandard standard = parse_standard__CIProjectConfig(&yaml_load_res);
