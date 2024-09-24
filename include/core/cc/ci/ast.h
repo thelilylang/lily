@@ -464,10 +464,24 @@ typedef struct CISizeInfo
  *
  * @brief Construct CISizeInfo type.
  */
-inline CONSTRUCTOR(CISizeInfo, CISizeInfo, Usize size, Usize alignment)
+inline CONSTRUCTOR(CISizeInfo, CISizeInfo)
 {
-    return (CISizeInfo){ .size = size, .alignment = alignment };
+    return (CISizeInfo){ .size = 0, .alignment = 0 };
 }
+
+/**
+ *
+ * @brief Fill size field.
+ */
+void
+fill_size__CISizeInfo(CISizeInfo *self, Usize size);
+
+/**
+ *
+ * @brief Fill alignment field.
+ */
+void
+fill_alignment__CISizeInfo(CISizeInfo *self, Usize alignment);
 
 /**
  *
@@ -1419,13 +1433,12 @@ inline CONSTRUCTOR(CIDeclEnum,
                    CIDeclEnum,
                    String *name,
                    Vec *variants,
-                   CIDataType *data_type,
-                   CISizeInfo size_info)
+                   CIDataType *data_type)
 {
     return (CIDeclEnum){ .name = name,
                          .variants = variants,
                          .data_type = data_type,
-                         .size_info = size_info };
+                         .size_info = NEW(CISizeInfo) };
 }
 
 /**
@@ -1773,13 +1786,12 @@ inline CONSTRUCTOR(CIDeclStruct,
                    CIDeclStruct,
                    String *name,
                    CIGenericParams *generic_params,
-                   Vec *fields,
-                   CISizeInfo size_info)
+                   Vec *fields)
 {
     return (CIDeclStruct){ .name = name,
                            .generic_params = generic_params,
                            .fields = fields,
-                           .size_info = size_info };
+                           .size_info = NEW(CISizeInfo) };
 }
 
 /**
@@ -1850,14 +1862,13 @@ inline CONSTRUCTOR(CIDeclStructGen,
                    const CIDeclStruct *struct_,
                    String *name,
                    CIGenericParams *called_generic_params,
-                   Vec *fields,
-                   CISizeInfo size_info)
+                   Vec *fields)
 {
     return (CIDeclStructGen){ .struct_ = struct_,
                               .name = name,
                               .called_generic_params = called_generic_params,
                               .fields = fields,
-                              .size_info = size_info };
+                              .size_info = NEW(CISizeInfo) };
 }
 
 /**
@@ -1899,13 +1910,12 @@ inline CONSTRUCTOR(CIDeclTypedef,
                    CIDeclTypedef,
                    String *name,
                    CIGenericParams *generic_params,
-                   CIDataType *data_type,
-                   CISizeInfo size_info)
+                   CIDataType *data_type)
 {
     return (CIDeclTypedef){ .name = name,
                             .generic_params = generic_params,
                             .data_type = data_type,
-                            .size_info = size_info };
+                            .size_info = NEW(CISizeInfo) };
 }
 
 /**
@@ -1979,14 +1989,13 @@ inline CONSTRUCTOR(CIDeclTypedefGen,
                    const CIDeclTypedef *typedef_,
                    String *name,
                    CIGenericParams *called_generic_params,
-                   CIDataType *data_type,
-                   CISizeInfo size_info)
+                   CIDataType *data_type)
 {
     return (CIDeclTypedefGen){ .typedef_ = typedef_,
                                .name = name,
                                .called_generic_params = called_generic_params,
                                .data_type = data_type,
-                               .size_info = size_info };
+                               .size_info = NEW(CISizeInfo) };
 }
 
 /**
@@ -2028,13 +2037,12 @@ inline CONSTRUCTOR(CIDeclUnion,
                    CIDeclUnion,
                    String *name,
                    CIGenericParams *generic_params,
-                   Vec *fields,
-                   CISizeInfo size_info)
+                   Vec *fields)
 {
     return (CIDeclUnion){ .name = name,
                           .generic_params = generic_params,
                           .fields = fields,
-                          .size_info = size_info };
+                          .size_info = NEW(CISizeInfo) };
 }
 
 /**
@@ -2104,14 +2112,13 @@ inline CONSTRUCTOR(CIDeclUnionGen,
                    const CIDeclUnion *union_,
                    String *name,
                    CIGenericParams *called_generic_params,
-                   Vec *fields,
-                   CISizeInfo size_info)
+                   Vec *fields)
 {
     return (CIDeclUnionGen){ .union_ = union_,
                              .name = name,
                              .called_generic_params = called_generic_params,
                              .fields = fields,
-                             .size_info = size_info };
+                             .size_info = NEW(CISizeInfo) };
 }
 
 /**
@@ -2265,8 +2272,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl *struct_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
-                    Vec *fields,
-                    CISizeInfo size_info);
+                    Vec *fields);
 
 /**
  *
@@ -2284,8 +2290,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl *typedef_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
-                    CIDataType *data_type,
-                    CISizeInfo size_info);
+                    CIDataType *data_type);
 
 /**
  *
@@ -2309,8 +2314,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl *union_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
-                    Vec *fields,
-                    CISizeInfo size_info);
+                    Vec *fields);
 
 /**
  *
@@ -2395,10 +2399,24 @@ get_size__CIDecl(const CIDecl *self);
 
 /**
  *
+ * @brief Fill size of struct, union, typedef and num.
+ */
+void
+fill_size__CIDecl(const CIDecl *self, Usize size);
+
+/**
+ *
  * @brief Get alignment of struct, union, typedef and enum.
  */
 Usize
 get_alignment__CIDecl(const CIDecl *self);
+
+/**
+ *
+ * @brief Fill alignment of struct, union, typedef and enum.
+ */
+void
+fill_alignment__CIDecl(const CIDecl *self, Usize alignment);
 
 /**
  *

@@ -359,6 +359,22 @@ DESTRUCTOR(CIScope, CIScope *self)
     lily_free(self);
 }
 
+void
+fill_size__CISizeInfo(CISizeInfo *self, Usize size)
+{
+    ASSERT(self);
+
+    self->size = size;
+}
+
+void
+fill_alignment__CISizeInfo(CISizeInfo *self, Usize alignment)
+{
+    ASSERT(self);
+
+    self->alignment = alignment;
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CISizeInfo, const CISizeInfo *self)
@@ -2860,8 +2876,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl *struct_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
-                    Vec *fields,
-                    CISizeInfo size_info)
+                    Vec *fields)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
     const CIDeclStruct *s = &struct_decl->struct_;
@@ -2871,7 +2886,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->is_prototype = false;
     self->ref_count = 0;
     self->struct_gen =
-      NEW(CIDeclStructGen, s, name, called_generic_params, fields, size_info);
+      NEW(CIDeclStructGen, s, name, called_generic_params, fields);
 
     return self;
 }
@@ -2895,8 +2910,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl *typedef_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
-                    CIDataType *data_type,
-                    CISizeInfo size_info)
+                    CIDataType *data_type)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
     const CIDeclTypedef *t = &typedef_decl->typedef_;
@@ -2905,8 +2919,8 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->storage_class_flag = CI_STORAGE_CLASS_NONE;
     self->is_prototype = true;
     self->ref_count = 0;
-    self->typedef_gen = NEW(
-      CIDeclTypedefGen, t, name, called_generic_params, data_type, size_info);
+    self->typedef_gen =
+      NEW(CIDeclTypedefGen, t, name, called_generic_params, data_type);
 
     return self;
 }
@@ -2935,8 +2949,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl *union_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
-                    Vec *fields,
-                    CISizeInfo size_info)
+                    Vec *fields)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
     const CIDeclUnion *u = &union_decl->union_;
@@ -2946,7 +2959,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->is_prototype = false;
     self->ref_count = 0;
     self->union_gen =
-      NEW(CIDeclUnionGen, u, name, called_generic_params, fields, size_info);
+      NEW(CIDeclUnionGen, u, name, called_generic_params, fields);
 
     return self;
 }
@@ -3152,10 +3165,26 @@ get_size__CIDecl(const CIDecl *self)
     return get_size_info__CIDecl(self)->size;
 }
 
+void
+fill_size__CIDecl(const CIDecl *self, Usize size)
+{
+    CISizeInfo *size_info = (CISizeInfo *)get_size_info__CIDecl(self);
+
+    fill_size__CISizeInfo(size_info, size);
+}
+
 Usize
 get_alignment__CIDecl(const CIDecl *self)
 {
     return get_size_info__CIDecl(self)->alignment;
+}
+
+void
+fill_alignment__CIDecl(const CIDecl *self, Usize alignment)
+{
+    CISizeInfo *size_info = (CISizeInfo *)get_size_info__CIDecl(self);
+
+    fill_alignment__CISizeInfo(size_info, alignment);
 }
 
 const CIDataType *
