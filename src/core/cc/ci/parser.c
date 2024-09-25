@@ -4780,20 +4780,27 @@ jump_in_macro_call__CIParser(CIParser *self, CIToken *next_token)
     if (define) {
         Isize macro_param_variadic =
           get_variadic_param_index__CITokenPreprocessorDefine(define->define);
+        Usize macro_params_length =
+          define->define->params ? define->define->params->len : 0;
         CIToken *peeked = PEEK(next_token);
 
         if (peeked) {
             switch (peeked->kind) {
                 case CI_TOKEN_KIND_LPAREN:
                     NEXT(next_token); // skip maco identifier
-                    parse_macro_call_params__CIParser(
-                      self,
-                      &next_token,
-                      macro_param_variadic,
-                      define->define->params->len);
+                    parse_macro_call_params__CIParser(self,
+                                                      &next_token,
+                                                      macro_param_variadic,
+                                                      macro_params_length);
 
                     break;
                 default:
+                    if (macro_params_length != 0) {
+                        FAILED("The count of the number of macro parameters "
+                               "does not "
+                               "correspond to its declaration.");
+                    }
+
                     // Push empty macro call on the stack.
                     add_macro_call__CIParser(
                       self, NEW_VARIANT(CIParserMacroCall, is_empty));
