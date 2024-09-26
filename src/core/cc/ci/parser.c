@@ -5543,13 +5543,31 @@ substitute_data_type__CIParser(CIDataType *data_type,
             for (Usize i = 0; i < data_type->function.params->len; ++i) {
                 CIDeclFunctionParam *param =
                   get__Vec(data_type->function.params, i);
-                CIDataType *subs_data_type = substitute_data_type__CIParser(
-                  param->data_type, generic_params, called_generic_params);
 
-                if (subs_data_type) {
-                    push__Vec(
-                      subs_params,
-                      NEW(CIDeclFunctionParam, param->name, subs_data_type));
+                switch (param->kind) {
+                    case CI_DECL_FUNCTION_PARAM_KIND_NORMAL: {
+                        CIDataType *subs_data_type =
+                          substitute_data_type__CIParser(param->data_type,
+                                                         generic_params,
+                                                         called_generic_params);
+
+                        if (subs_data_type) {
+                            push__Vec(subs_params,
+                                      NEW_VARIANT(CIDeclFunctionParam,
+                                                  normal,
+                                                  param->name,
+                                                  subs_data_type));
+                        }
+
+                        break;
+                    }
+                    case CI_DECL_FUNCTION_PARAM_KIND_VARIADIC:
+                        push__Vec(subs_params,
+                                  NEW_VARIANT(CIDeclFunctionParam, variadic));
+
+                        break;
+                    default:
+                        UNREACHABLE("unknown variant");
                 }
             }
 
@@ -7205,25 +7223,40 @@ parse_function_params__CIParser(CIParser *self, CIScope *parent_function_scope)
 
     while (self->current_token->kind != CI_TOKEN_KIND_RPAREN &&
            self->current_token->kind != CI_TOKEN_KIND_EOF) {
-        CIDataType *data_type = parse_data_type__CIParser(self);
-        String *name = NULL; // String*? (&)
+        switch (self->current_token->kind) {
+            case CI_TOKEN_KIND_DOT_DOT_DOT: {
+                push__Vec(params, NEW_VARIANT(CIDeclFunctionParam, variadic));
+                next_token__CIParser(self);
 
-        parse_variable_name_and_data_type__CIParser(
-          self, &data_type, &name, false);
+                break;
+            }
+            default: {
+                CIDataType *data_type = parse_data_type__CIParser(self);
+                String *name = NULL; // String*? (&)
 
-        push__Vec(params, NEW(CIDeclFunctionParam, name, data_type));
+                parse_variable_name_and_data_type__CIParser(
+                  self, &data_type, &name, false);
 
-        if (parent_function_scope && name) {
-            CIDecl *param_decl = NEW_VARIANT(
-              CIDecl,
-              variable,
-              CI_STORAGE_CLASS_NONE,
-              false,
-              NEW(
-                CIDeclVariable, ref__CIDataType(data_type), name, NULL, true));
+                push__Vec(
+                  params,
+                  NEW_VARIANT(CIDeclFunctionParam, normal, name, data_type));
 
-            add_variable__CIResultFile(
-              self->file, parent_function_scope, param_decl);
+                if (parent_function_scope && name) {
+                    CIDecl *param_decl =
+                      NEW_VARIANT(CIDecl,
+                                  variable,
+                                  CI_STORAGE_CLASS_NONE,
+                                  false,
+                                  NEW(CIDeclVariable,
+                                      ref__CIDataType(data_type),
+                                      name,
+                                      NULL,
+                                      true));
+
+                    add_variable__CIResultFile(
+                      self->file, parent_function_scope, param_decl);
+                }
+            }
         }
 
         if (self->current_token->kind != CI_TOKEN_KIND_RPAREN) {
@@ -8611,22 +8644,11 @@ infer_expr_data_type__CIParser(const CIParser *self,
                                                       decl_generic_params);
                         const Vec *function_params =
                           get_function_params__CIDecl(decl);
-                        Vec *cloned_function_params = NULL;
-
-                        if (function_params) {
-                            cloned_function_params = NEW(Vec);
-
-                            for (Usize i = 0; i < function_params->len; ++i) {
-                                CIDeclFunctionParam *param =
-                                  get__Vec(function_params, i);
-
-                                push__Vec(
-                                  cloned_function_params,
-                                  NEW(CIDeclFunctionParam,
-                                      param->name,
-                                      ref__CIDataType(param->data_type)));
-                            }
-                        }
+                        // NOTE: Maybe use ref count instead of.
+                        Vec *cloned_function_params =
+                          function_params
+                            ? clone_params__CIDeclFunctionParam(function_params)
+                            : NULL;
 
                         return NEW_VARIANT(
                           CIDataType,
@@ -9357,16 +9379,19 @@ typecheck_function_call_expr_params__CIParser(
   const Vec *called_params,
   struct CITypecheckContext *typecheck_ctx)
 {
-    bool is_variadic = false /* TODO: is_variadic */;
     const Vec *decl_function_call_params =
       get_function_params__CIDecl(decl_function_call);
+    bool is_variadic =
+      decl_function_call_params
+        ? is_variadic__CIDeclFunctionParam(decl_function_call_params)
+        : false;
     Usize decl_function_call_params_len =
       decl_function_call_params ? decl_function_call_params->len : 0;
     Usize called_params_len = called_params->len;
 
-    if (decl_function_call_params_len != called_params_len ||
-        (called_params_len < decl_function_call_params_len - 1 &&
-         is_variadic)) {
+    if (decl_function_call_params_len != called_params_len &&
+        (is_variadic &&
+         decl_function_call_params_len - 1 < called_params_len)) {
         FAILED("number of params don't matched");
     }
 
@@ -9379,15 +9404,26 @@ typecheck_function_call_expr_params__CIParser(
                 decl_function_call->function_gen.function->generic_params))
         : default__CurrentGenericParams();
 
-    for (Usize i = 0; i < (is_variadic ? decl_function_call_params_len - 1
-                                       : decl_function_call_params_len);
-         ++i) {
-        const CIDeclFunctionParam *decl_param =
-          get__Vec(decl_function_call_params, i);
-        const CIExpr *called_param = get__Vec(called_params, i);
+    for (Usize i = 0; i < called_params_len; ++i) {
+        const CIDeclFunctionParam *decl_param = get__Vec(
+          decl_function_call_params,
+          i > decl_function_call_params_len ? decl_function_call_params_len - 1
+                                            : i);
 
-        typecheck_expr__CIParser(
-          self, decl_param->data_type, called_param, typecheck_ctx);
+        switch (decl_param->kind) {
+            case CI_DECL_FUNCTION_PARAM_KIND_NORMAL: {
+                const CIExpr *called_param = get__Vec(called_params, i);
+
+                typecheck_expr__CIParser(
+                  self, decl_param->data_type, called_param, typecheck_ctx);
+
+                break;
+            }
+            case CI_DECL_FUNCTION_PARAM_KIND_VARIADIC:
+                break;
+            default:
+                UNREACHABLE("unknown variant");
+        }
     }
 
     if (decl_function_call->kind == CI_DECL_KIND_FUNCTION_GEN) {

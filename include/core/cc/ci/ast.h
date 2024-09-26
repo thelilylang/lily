@@ -1476,20 +1476,71 @@ free_as_prototype__CIDeclEnum(const CIDeclEnum *self)
  */
 DESTRUCTOR(CIDeclEnum, const CIDeclEnum *self);
 
+enum CIDeclFunctionParamKind
+{
+    CI_DECL_FUNCTION_PARAM_KIND_NORMAL,
+    CI_DECL_FUNCTION_PARAM_KIND_VARIADIC,
+};
+
+/**
+ *
+ * @brief Convert CIDeclFunctionParamKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               CIDeclFunctionParamKind,
+               enum CIDeclFunctionParamKind self);
+#endif
+
 typedef struct CIDeclFunctionParam
 {
-    String *name; // String*? (&)
-    CIDataType *data_type;
+    enum CIDeclFunctionParamKind kind;
+    String *name;          // String*? (&)
+    CIDataType *data_type; // CIDataType*?
 } CIDeclFunctionParam;
 
 /**
  *
- * @brief Construct CIDeclFunctionParam type.
+ * @brief Construct CIDeclFunctionParam type
+ * (CI_DECL_FUNCTION_PARAM_KIND_NORMAL).
  */
-CONSTRUCTOR(CIDeclFunctionParam *,
-            CIDeclFunctionParam,
-            String *name,
-            CIDataType *data_type);
+VARIANT_CONSTRUCTOR(CIDeclFunctionParam *,
+                    CIDeclFunctionParam,
+                    normal,
+                    String *name,
+                    CIDataType *data_type);
+
+/**
+ *
+ * @brief Construct CIDeclFunctionParam type
+ * (CI_DECL_FUNCTION_PARAM_KIND_VARIADIC).
+ */
+VARIANT_CONSTRUCTOR(CIDeclFunctionParam *, CIDeclFunctionParam, variadic);
+
+/**
+ *
+ * @brief Clone CIDeclFunctionParam type.
+ */
+CIDeclFunctionParam *
+clone__CIDeclFunctionParam(const CIDeclFunctionParam *self);
+
+/**
+ *
+ * @brief Clone params (Vec<CIDeclFunctionParam*>*)
+ * @param params Vec<CIDeclFunctionParam*>* (&)
+ */
+Vec *
+clone_params__CIDeclFunctionParam(const Vec *params);
+
+/**
+ *
+ * @brief Check if the given params contains variadic parametter.
+ * @param params Vec<CIDeclFunctionParam*>* (&)
+ */
+bool
+is_variadic__CIDeclFunctionParam(const Vec *params);
 
 /**
  *

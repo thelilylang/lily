@@ -791,10 +791,25 @@ generate_function_params__CIGenerator(const Vec *params)
         for (Usize i = 0; i < params->len; ++i) {
             const CIDeclFunctionParam *param = get__Vec(params, i);
 
-            generate_data_type__CIGenerator(param->data_type);
+            switch (param->kind) {
+                case CI_DECL_FUNCTION_PARAM_KIND_NORMAL:
+                    ASSERT(param->data_type);
 
-            if (param->name && !has_name__CIDataType(param->data_type)) {
-                write_String__CIGenerator(format__String(" {S}", param->name));
+                    generate_data_type__CIGenerator(param->data_type);
+
+                    if (param->name &&
+                        !has_name__CIDataType(param->data_type)) {
+                        write_String__CIGenerator(
+                          format__String(" {S}", param->name));
+                    }
+
+                    break;
+                case CI_DECL_FUNCTION_PARAM_KIND_VARIADIC:
+                    write_str__CIGenerator("...");
+
+                    break;
+                default:
+                    UNREACHABLE("unknown variant");
             }
 
             if (i + 1 != params->len) {

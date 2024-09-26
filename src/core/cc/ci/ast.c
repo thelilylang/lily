@@ -97,6 +97,16 @@ static VARIANT_DESTRUCTOR(CIDataType, typedef, CIDataType *self);
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_UNION).
 static VARIANT_DESTRUCTOR(CIDataType, union, CIDataType *self);
 
+/// @brief Free CIDeclFUnctionParam type (CI_DECL_FUNCTION_PARAM_KIND_NORMAL).
+static VARIANT_DESTRUCTOR(CIDeclFunctionParam,
+                          normal,
+                          CIDeclFunctionParam *self);
+
+/// @brief Free CIDeclFUnctionParam type (CI_DECL_FUNCTION_PARAM_KIND_VARIADIC).
+static inline VARIANT_DESTRUCTOR(CIDeclFunctionParam,
+                                 variadic,
+                                 CIDeclFunctionParam *self);
+
 static const CISizeInfo *
 get_size_info__CIDecl(const CIDecl *self);
 
@@ -2144,40 +2154,140 @@ DESTRUCTOR(CIDeclEnum, const CIDeclEnum *self)
     }
 }
 
-CONSTRUCTOR(CIDeclFunctionParam *,
-            CIDeclFunctionParam,
-            String *name,
-            CIDataType *data_type)
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               CIDeclFunctionParamKind,
+               enum CIDeclFunctionParamKind self)
+{
+    switch (self) {
+        case CI_DECL_FUNCTION_PARAM_KIND_NORMAL:
+            return "CI_DECL_FUNCTION_PARAM_KIND_NORMAL";
+        case CI_DECL_FUNCTION_PARAM_KIND_VARIADIC:
+            return "CI_DECL_FUNCTION_PARAM_KIND_VARIADIC";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+VARIANT_CONSTRUCTOR(CIDeclFunctionParam *,
+                    CIDeclFunctionParam,
+                    normal,
+                    String *name,
+                    CIDataType *data_type)
 {
     CIDeclFunctionParam *self = lily_malloc(sizeof(CIDeclFunctionParam));
 
+    self->kind = CI_DECL_FUNCTION_PARAM_KIND_NORMAL;
     self->name = name;
     self->data_type = data_type;
 
     return self;
 }
 
+VARIANT_CONSTRUCTOR(CIDeclFunctionParam *, CIDeclFunctionParam, variadic)
+{
+    CIDeclFunctionParam *self = lily_malloc(sizeof(CIDeclFunctionParam));
+
+    self->kind = CI_DECL_FUNCTION_PARAM_KIND_VARIADIC;
+    self->name = NULL;
+    self->data_type = NULL;
+
+    return self;
+}
+
+CIDeclFunctionParam *
+clone__CIDeclFunctionParam(const CIDeclFunctionParam *self)
+{
+    switch (self->kind) {
+        case CI_DECL_FUNCTION_PARAM_KIND_NORMAL:
+            return NEW_VARIANT(
+              CIDeclFunctionParam,
+              normal,
+              self->name,
+              self->data_type ? clone__CIDataType(self->data_type) : NULL);
+        case CI_DECL_FUNCTION_PARAM_KIND_VARIADIC:
+            return NEW_VARIANT(CIDeclFunctionParam, variadic);
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+Vec *
+clone_params__CIDeclFunctionParam(const Vec *params)
+{
+    Vec *cloned_params = NEW(Vec);
+
+    for (Usize i = 0; i < params->len; ++i) {
+        push__Vec(cloned_params,
+                  clone__CIDeclFunctionParam(get__Vec(params, i)));
+    }
+
+    return cloned_params;
+}
+
+bool
+is_variadic__CIDeclFunctionParam(const Vec *params)
+{
+    for (Usize i = 0; i < params->len; ++i) {
+        CIDeclFunctionParam *param = get__Vec(params, i);
+
+        if (param->kind == CI_DECL_FUNCTION_PARAM_KIND_VARIADIC) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclFunctionParam, const CIDeclFunctionParam *self)
 {
-    if (self->name) {
-        return format__String(
-          "CIDeclFunctionParam{{ name = {S}, data_type = {Sr} }",
-          self->name,
-          to_string__Debug__CIDataType(self->data_type));
+    switch (self->kind) {
+        case CI_DECL_FUNCTION_PARAM_KIND_NORMAL:
+            return format__String(
+              "CIDeclFunctionParam{{ kind = {s}, name = {s}, data_type = {Sr}",
+              to_string__Debug__CIDeclFunctionParamKind(self->kind),
+              self->name ? self->name->buffer : "NULL",
+              to_string__Debug__CIDataType(self->data_type));
+        case CI_DECL_FUNCTION_PARAM_KIND_VARIADIC:
+            return format__String(
+              "CIDeclFunctionParam{{ kind = {s}, name = NULL, data_type = NULL "
+              "}",
+              to_string__Debug__CIDeclFunctionParamKind(self->kind));
+        default:
+            UNREACHABLE("unknown variant");
     }
-
-    return format__String(
-      "CIDeclFunctionParam{{ name = NULL, data_type = {Sr} }",
-      to_string__Debug__CIDataType(self->data_type));
 }
 #endif
 
-DESTRUCTOR(CIDeclFunctionParam, CIDeclFunctionParam *self)
+VARIANT_DESTRUCTOR(CIDeclFunctionParam, normal, CIDeclFunctionParam *self)
 {
     FREE(CIDataType, self->data_type);
     lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIDeclFunctionParam, variadic, CIDeclFunctionParam *self)
+{
+    lily_free(self);
+}
+
+DESTRUCTOR(CIDeclFunctionParam, CIDeclFunctionParam *self)
+{
+    switch (self->kind) {
+        case CI_DECL_FUNCTION_PARAM_KIND_NORMAL:
+            FREE_VARIANT(CIDeclFunctionParam, normal, self);
+
+            break;
+        case CI_DECL_FUNCTION_PARAM_KIND_VARIADIC:
+            FREE_VARIANT(CIDeclFunctionParam, variadic, self);
+
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }
 
 CONSTRUCTOR(CIDeclFunctionBody *, CIDeclFunctionBody, CIScopeID *scope_id)
