@@ -9666,13 +9666,20 @@ typecheck_expr__CIParser(const CIParser *self,
               self, &given_expr->binary, typecheck_ctx);
 
             break;
-        case CI_EXPR_KIND_CAST:
-            typecheck_expr__CIParser(self,
-                                     given_expr->cast.data_type,
-                                     given_expr->cast.expr,
-                                     typecheck_ctx);
+        case CI_EXPR_KIND_CAST: {
+            // To allow cast (void) from all types, we expect any data type.
+            CIDataType *expected_dt =
+              given_expr->cast.data_type->kind == CI_DATA_TYPE_KIND_VOID
+                ? any__PrimaryDataTypes()
+                : ref__CIDataType(given_expr->cast.data_type);
+
+            typecheck_expr__CIParser(
+              self, expected_dt, given_expr->cast.expr, typecheck_ctx);
+
+            FREE(CIDataType, expected_dt);
 
             break;
+        }
         case CI_EXPR_KIND_FUNCTION_CALL:
             typecheck_function_call_expr__CIParser(
               self, &given_expr->function_call, typecheck_ctx);
