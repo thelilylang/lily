@@ -9193,6 +9193,9 @@ is_valid_implicit_cast__CIParser(const CIParser *self,
               "impossible to get typedef at this point (already resolved)");
         case CI_DATA_TYPE_KIND_ARRAY:
         case CI_DATA_TYPE_KIND_PTR:
+            // In this case, we check whether the pointers being compared are
+            // compatible. For example, we check whether a `void*` is compatible
+            // with an `int*`.
             if (is_ptr_data_type__CIParser(
                   (CIParser *)self,
                   left,
@@ -9222,6 +9225,19 @@ is_valid_implicit_cast__CIParser(const CIParser *self,
 
                 return is_valid_implicit_cast__CIParser(
                   self, left_ptr_dt, right_ptr_dt, typecheck_ctx);
+            }
+
+            // This case is designed to ensure that a pointer is compatible with
+            // an integer.
+            //
+            // Valid: (void*)0
+            if (is_integer_data_type__CIParser(
+                  (CIParser *)self,
+                  left,
+                  true,
+                  typecheck_ctx->current_generic_params.called,
+                  typecheck_ctx->current_generic_params.decl)) {
+                return true;
             }
 
             return false;
