@@ -45,12 +45,13 @@ run__CI(const CIConfig *config)
         TODO("implement --mode option");
     }
 
+    init__PrimaryDataTypes();
+
     CIBuiltin builtin = NEW(CIBuiltin);
     CIProjectConfig project_config =
       parse__CIProjectConfig(config->project_path);
     CIResult result = NEW(CIResult, &project_config, &builtin);
 
-    init__PrimaryDataTypes();
     set__CIBuiltin(&builtin);
     build__CIResult(&result);
     run__CIGenerator(&result);

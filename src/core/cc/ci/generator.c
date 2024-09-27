@@ -482,6 +482,8 @@ generate_data_type__CIGenerator(CIDataType *data_type)
     }
 
     switch (subs_data_type->kind) {
+        case CI_DATA_TYPE_KIND_ANY:
+            UNREACHABLE("cannot generate this data type");
         case CI_DATA_TYPE_KIND_ARRAY:
             generate_data_type__CIGenerator(subs_data_type->array.data_type);
 
@@ -698,6 +700,8 @@ generate_data_type__CIGenerator(CIDataType *data_type)
             }
 
             break;
+        case CI_DATA_TYPE_KIND_TYPE_INFO:
+            UNREACHABLE("cannot generate this data type");
         case CI_DATA_TYPE_KIND_UNSIGNED_INT:
             write_str__CIGenerator("unsigned int");
 

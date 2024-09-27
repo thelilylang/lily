@@ -608,6 +608,8 @@ char *
 IMPL_FOR_DEBUG(to_string, CIDataTypeKind, enum CIDataTypeKind self)
 {
     switch (self) {
+        case CI_DATA_TYPE_KIND_ANY:
+            return "CI_DATA_TYPE_KIND_ANY";
         case CI_DATA_TYPE_KIND_ARRAY:
             return "CI_DATA_TYPE_KIND_ARRAY";
         case CI_DATA_TYPE_KIND__ATOMIC:
@@ -1260,6 +1262,9 @@ serialize__CIDataType(const CIDataType *self, String *buffer)
             SERIALIZE_TYPE_WITH_GENERIC_PARAMS(self->union_);
 
             break;
+        case CI_DATA_TYPE_KIND_ANY:
+        case CI_DATA_TYPE_KIND_TYPE_INFO:
+            UNREACHABLE("these types couldn't been called in this context");
         case CI_DATA_TYPE_KIND_BOOL:
         case CI_DATA_TYPE_KIND_CHAR:
         case CI_DATA_TYPE_KIND_DOUBLE:
@@ -1306,11 +1311,16 @@ serialize_vec__CIDataType(const Vec *data_types, String *buffer)
 bool
 eq__CIDataType(const CIDataType *self, const CIDataType *other)
 {
-    if (self->kind != other->kind || self->ctx != other->ctx) {
+    if (self->kind == CI_DATA_TYPE_KIND_ANY ||
+        other->kind == CI_DATA_TYPE_KIND_ANY) {
+        return true;
+    } else if (self->kind != other->kind || self->ctx != other->ctx) {
         return false;
     }
 
     switch (self->kind) {
+        case CI_DATA_TYPE_KIND_ANY:
+            UNREACHABLE("unexpected variant at this point");
         case CI_DATA_TYPE_KIND_ARRAY:
             if (self->array.kind != other->array.kind ||
                 !eq__CIDataType(self->array.data_type,
@@ -1410,6 +1420,7 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
         case CI_DATA_TYPE_KIND_LONG_LONG_INT:
         case CI_DATA_TYPE_KIND_SHORT_INT:
         case CI_DATA_TYPE_KIND_SIGNED_CHAR:
+        case CI_DATA_TYPE_KIND_TYPE_INFO:
         case CI_DATA_TYPE_KIND_UNSIGNED_INT:
         case CI_DATA_TYPE_KIND_UNSIGNED_CHAR:
         case CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT:

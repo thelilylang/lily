@@ -3791,6 +3791,8 @@ resolve_data_type_size__CIParser(CIParser *self, const CIDataType *data_type)
     // NOTE: This part of the code is clearly not adapted to have a transpiler
     // option for any architecture or OS.
     switch (data_type->kind) {
+        case CI_DATA_TYPE_KIND_ANY:
+            FAILED("cannot resolve size of any data type");
         case CI_DATA_TYPE_KIND_ARRAY:
             ASSERT(data_type->array.kind == CI_DATA_TYPE_ARRAY_KIND_SIZED);
 
@@ -3896,6 +3898,8 @@ resolve_data_type_size__CIParser(CIParser *self, const CIDataType *data_type)
 
             FAILED("typedef type is incomplete");
         }
+        case CI_DATA_TYPE_KIND_TYPE_INFO:
+            FAILED("cannot resolve size of type info data type");
         case CI_DATA_TYPE_KIND_UNSIGNED_INT:
             return sizeof(unsigned int);
         case CI_DATA_TYPE_KIND_UNSIGNED_CHAR:
@@ -3918,6 +3922,8 @@ resolve_data_type_size__CIParser(CIParser *self, const CIDataType *data_type)
         }
         case CI_DATA_TYPE_KIND_VOID:
             return sizeof(void);
+        default:
+            UNREACHABLE("unknown variant");
     }
 }
 
@@ -4056,6 +4062,8 @@ resolve_data_type_alignment__CIParser(CIParser *self,
     // NOTE: This part of the code is clearly not adapted to have a transpiler
     // option for any architecture or OS.
     switch (data_type->kind) {
+        case CI_DATA_TYPE_KIND_ANY:
+            UNREACHABLE("cannot resolve the size of any data type");
         case CI_DATA_TYPE_KIND_ARRAY:
             ASSERT(data_type->array.kind == CI_DATA_TYPE_ARRAY_KIND_SIZED);
 
@@ -4160,6 +4168,8 @@ resolve_data_type_alignment__CIParser(CIParser *self,
 
             FAILED("type of typedef is incomplete");
         }
+        case CI_DATA_TYPE_KIND_TYPE_INFO:
+            FAILED("cannot resolve the size of type info data type");
         case CI_DATA_TYPE_KIND_UNSIGNED_INT:
             return alignof(unsigned int);
         case CI_DATA_TYPE_KIND_UNSIGNED_CHAR:
@@ -4182,6 +4192,8 @@ resolve_data_type_alignment__CIParser(CIParser *self,
         }
         case CI_DATA_TYPE_KIND_VOID:
             return alignof(void);
+        default:
+            UNREACHABLE("unknown variant");
     }
 }
 
@@ -8589,7 +8601,7 @@ infer_expr_data_type__CIParser(const CIParser *self,
         case CI_EXPR_KIND_CAST:
             return ref__CIDataType(expr->cast.data_type);
         case CI_EXPR_KIND_DATA_TYPE:
-            return ref__CIDataType(expr->data_type);
+            return type_info__PrimaryDataTypes();
         case CI_EXPR_KIND_FUNCTION_CALL: {
             CIDecl *function_decl =
               search_function_in_generic_context__CIParser(

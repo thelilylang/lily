@@ -30,7 +30,7 @@
 
 #include <core/cc/ci/ast.h>
 
-#define CI_BUILTIN_FUNCTION_COUNT 1
+#define CI_BUILTIN_FUNCTION_COUNT 4
 #define CI_BUILTIN_TYPE_COUNT 1
 
 /**

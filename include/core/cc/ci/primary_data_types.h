@@ -41,6 +41,7 @@ init__PrimaryDataTypes();
  */
 #define PRIMARY_FN_DECL(dt) CIDataType *dt##__PrimaryDataTypes();
 
+PRIMARY_FN_DECL(any);
 PRIMARY_FN_DECL(bool);
 PRIMARY_FN_DECL(char);
 PRIMARY_FN_DECL(double);
@@ -60,6 +61,7 @@ PRIMARY_FN_DECL(long_int);
 PRIMARY_FN_DECL(long_long_int);
 PRIMARY_FN_DECL(short_int);
 PRIMARY_FN_DECL(signed_char);
+PRIMARY_FN_DECL(type_info);
 PRIMARY_FN_DECL(unsigned_int);
 PRIMARY_FN_DECL(unsigned_char);
 PRIMARY_FN_DECL(unsigned_long_int);

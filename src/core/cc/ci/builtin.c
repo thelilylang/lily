@@ -26,6 +26,7 @@
 #include <base/new.h>
 
 #include <core/cc/ci/builtin.h>
+#include <core/cc/ci/primary_data_types.h>
 #include <core/shared/search.h>
 
 #include <stdio.h>
@@ -49,13 +50,22 @@
     }
 
 #define CI_BUILTIN_FUNCTION_MEMCPY 0
+#define CI_BUILTIN_FUNCTION_VA_START 1
+#define CI_BUILTIN_FUNCTION_VA_END 2
+#define CI_BUILTIN_FUNCTION_VA_ARG 3
 
 static SizedStr builtin_function_names[CI_BUILTIN_FUNCTION_COUNT] = {
-    SIZED_STR_FROM_RAW("__builtin_memcpy")
+    SIZED_STR_FROM_RAW("__builtin_memcpy"),
+    SIZED_STR_FROM_RAW("__builtin_va_start"),
+    SIZED_STR_FROM_RAW("__builtin_va_end"),
+    SIZED_STR_FROM_RAW("__builtin_va_arg"),
 };
 
 static Int32 builtin_function_ids[CI_BUILTIN_FUNCTION_COUNT] = {
-    CI_BUILTIN_FUNCTION_MEMCPY
+    CI_BUILTIN_FUNCTION_MEMCPY,
+    CI_BUILTIN_FUNCTION_VA_START,
+    CI_BUILTIN_FUNCTION_VA_END,
+    CI_BUILTIN_FUNCTION_VA_ARG
 };
 
 #define CI_BUILTIN_TYPE_VA_LIST 0
@@ -82,12 +92,29 @@ load__CIBuiltinFunction()
     CIBuiltinFunction *builtins =
       lily_malloc(sizeof(CIBuiltinFunction) * CI_BUILTIN_FUNCTION_COUNT);
 
-    builtins[0] = CI_BUILTIN_FUNCTION(
-      0,
-      NEW_VARIANT(CIDataType, ptr, NEW(CIDataType, CI_DATA_TYPE_KIND_VOID)),
+    builtins[CI_BUILTIN_FUNCTION_MEMCPY] = CI_BUILTIN_FUNCTION(
+      CI_BUILTIN_FUNCTION_MEMCPY,
+      NEW_VARIANT(CIDataType, ptr, void__PrimaryDataTypes()),
       2,
-      NEW_VARIANT(CIDataType, ptr, NEW(CIDataType, CI_DATA_TYPE_KIND_VOID)),
-      NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT));
+      NEW_VARIANT(CIDataType, ptr, void__PrimaryDataTypes()),
+      unsigned_long_int__PrimaryDataTypes());
+    builtins[CI_BUILTIN_FUNCTION_VA_START] = CI_BUILTIN_FUNCTION(
+      CI_BUILTIN_FUNCTION_VA_START,
+      void__PrimaryDataTypes(),
+      2,
+      NEW_VARIANT(CIDataType, builtin, CI_BUILTIN_TYPE_VA_LIST),
+      any__PrimaryDataTypes());
+    builtins[CI_BUILTIN_FUNCTION_VA_END] = CI_BUILTIN_FUNCTION(
+      CI_BUILTIN_FUNCTION_VA_END,
+      void__PrimaryDataTypes(),
+      1,
+      NEW_VARIANT(CIDataType, builtin, CI_BUILTIN_TYPE_VA_LIST));
+    builtins[CI_BUILTIN_FUNCTION_VA_ARG] = CI_BUILTIN_FUNCTION(
+      CI_BUILTIN_FUNCTION_VA_ARG,
+      type_info__PrimaryDataTypes(),
+      2,
+      NEW_VARIANT(CIDataType, builtin, CI_BUILTIN_TYPE_VA_LIST),
+      type_info__PrimaryDataTypes());
 
     return builtins;
 }
