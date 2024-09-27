@@ -11266,9 +11266,9 @@ add_decl_to_scope__CIParser(CIParser *self, CIDecl **decl_ref, bool must_free)
                 // See `add_enum__CIResultFile` prototype.
                 if (decl != res) {
                     FAILED("enum is already defined");
-
-                    goto free;
                 }
+
+                goto free;
             }
 
             goto exit;
@@ -11279,9 +11279,9 @@ add_decl_to_scope__CIParser(CIParser *self, CIDecl **decl_ref, bool must_free)
                 // See `add_function__CIResultFile` prototype.
                 if (decl != res) {
                     FAILED("function is already defined");
-
-                    goto free;
                 }
+
+                goto free;
             }
 
             goto exit;
@@ -11291,9 +11291,9 @@ add_decl_to_scope__CIParser(CIParser *self, CIDecl **decl_ref, bool must_free)
                 // See `add_label__CIResultFile` prototype.
                 if (decl != res) {
                     FAILED("label is already defined");
-
-                    goto free;
                 }
+
+                goto free;
             }
 
             goto exit;
@@ -11303,9 +11303,9 @@ add_decl_to_scope__CIParser(CIParser *self, CIDecl **decl_ref, bool must_free)
                 // See `add_struct__CIResultFile` prototype.
                 if (decl != res) {
                     FAILED("struct is already defined");
-
-                    goto free;
                 }
+
+                goto free;
             }
 
             goto exit;
@@ -11315,9 +11315,9 @@ add_decl_to_scope__CIParser(CIParser *self, CIDecl **decl_ref, bool must_free)
                 // See `add_typedef__CIResultFile` prototype.
                 if (decl != res) {
                     FAILED("typedef is already defined");
-
-                    goto free;
                 }
+
+                goto free;
             }
 
             goto exit;
@@ -11327,9 +11327,9 @@ add_decl_to_scope__CIParser(CIParser *self, CIDecl **decl_ref, bool must_free)
                 // See `add_union__CIResultFile` prototype.
                 if (decl != res) {
                     FAILED("union is already defined");
-
-                    goto free;
                 }
+
+                goto free;
             }
 
             goto exit;
@@ -11341,9 +11341,9 @@ add_decl_to_scope__CIParser(CIParser *self, CIDecl **decl_ref, bool must_free)
                 // See `add_variable__CIResultFile` prototype.
                 if (decl != res) {
                     FAILED("variable is already defined");
-
-                    goto free;
                 }
+
+                goto free;
             }
 
             goto exit;
