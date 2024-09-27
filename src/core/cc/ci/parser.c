@@ -9307,8 +9307,10 @@ typecheck_variable_decl__CIParser(const CIParser *self,
                                   const CIDeclVariable *variable,
                                   struct CITypecheckContext *typecheck_ctx)
 {
-    typecheck_expr__CIParser(
-      self, variable->data_type, variable->expr, typecheck_ctx);
+    if (variable->expr) {
+        typecheck_expr__CIParser(
+          self, variable->data_type, variable->expr, typecheck_ctx);
+    }
 }
 
 void
