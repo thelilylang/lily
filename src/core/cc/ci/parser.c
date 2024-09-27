@@ -9430,7 +9430,7 @@ typecheck_function_call_expr_params__CIParser(
 
     if (decl_function_call_params_len != called_params_len &&
         (is_variadic &&
-         decl_function_call_params_len - 1 < called_params_len)) {
+         called_params_len < decl_function_call_params_len - 1)) {
         FAILED("number of params don't matched");
     }
 
@@ -9446,8 +9446,8 @@ typecheck_function_call_expr_params__CIParser(
     for (Usize i = 0; i < called_params_len; ++i) {
         const CIDeclFunctionParam *decl_param = get__Vec(
           decl_function_call_params,
-          i > decl_function_call_params_len ? decl_function_call_params_len - 1
-                                            : i);
+          i >= decl_function_call_params_len ? decl_function_call_params_len - 1
+                                             : i);
 
         switch (decl_param->kind) {
             case CI_DECL_FUNCTION_PARAM_KIND_NORMAL: {
