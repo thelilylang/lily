@@ -53,19 +53,22 @@
 #define CI_BUILTIN_FUNCTION_VA_START 1
 #define CI_BUILTIN_FUNCTION_VA_END 2
 #define CI_BUILTIN_FUNCTION_VA_ARG 3
+#define CI_BUILTIN_FUNCTION_VA_COPY 4
 
 static SizedStr builtin_function_names[CI_BUILTIN_FUNCTION_COUNT] = {
     SIZED_STR_FROM_RAW("__builtin_memcpy"),
     SIZED_STR_FROM_RAW("__builtin_va_start"),
     SIZED_STR_FROM_RAW("__builtin_va_end"),
     SIZED_STR_FROM_RAW("__builtin_va_arg"),
+    SIZED_STR_FROM_RAW("__builtin_va_copy")
 };
 
 static Int32 builtin_function_ids[CI_BUILTIN_FUNCTION_COUNT] = {
     CI_BUILTIN_FUNCTION_MEMCPY,
     CI_BUILTIN_FUNCTION_VA_START,
     CI_BUILTIN_FUNCTION_VA_END,
-    CI_BUILTIN_FUNCTION_VA_ARG
+    CI_BUILTIN_FUNCTION_VA_ARG,
+    CI_BUILTIN_FUNCTION_VA_COPY
 };
 
 #define CI_BUILTIN_TYPE_VA_LIST 0
@@ -115,6 +118,12 @@ load__CIBuiltinFunction()
       2,
       NEW_VARIANT(CIDataType, builtin, CI_BUILTIN_TYPE_VA_LIST),
       type_info__PrimaryDataTypes());
+    builtins[CI_BUILTIN_FUNCTION_VA_COPY] = CI_BUILTIN_FUNCTION(
+      CI_BUILTIN_FUNCTION_VA_COPY,
+      void__PrimaryDataTypes(),
+      2,
+      NEW_VARIANT(CIDataType, builtin, CI_BUILTIN_TYPE_VA_LIST),
+      NEW_VARIANT(CIDataType, builtin, CI_BUILTIN_TYPE_VA_LIST));
 
     return builtins;
 }
