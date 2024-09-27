@@ -9666,6 +9666,13 @@ typecheck_expr__CIParser(const CIParser *self,
               self, &given_expr->binary, typecheck_ctx);
 
             break;
+        case CI_EXPR_KIND_CAST:
+            typecheck_expr__CIParser(self,
+                                     given_expr->cast.data_type,
+                                     given_expr->cast.expr,
+                                     typecheck_ctx);
+
+            break;
         case CI_EXPR_KIND_FUNCTION_CALL:
             typecheck_function_call_expr__CIParser(
               self, &given_expr->function_call, typecheck_ctx);
