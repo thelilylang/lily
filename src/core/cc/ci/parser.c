@@ -1781,9 +1781,15 @@ add_macro_call__CIParser(CIParser *self, CIParserMacroCall *macro_call)
     }
 }
 
-#define INIT_X_TO_WAIT_TO_VISIT(hm) \
-    insert__HashMap(                \
-      hm, name->buffer, NEW(CIParserVisitWaitingListItem, name, NULL));
+#define INIT_X_TO_WAIT_TO_VISIT(hm)                      \
+    {                                                    \
+        CIParserVisitWaitingListItem *item =             \
+          NEW(CIParserVisitWaitingListItem, name, NULL); \
+                                                         \
+        if (insert__HashMap(hm, name->buffer, item)) {   \
+            FREE(CIParserVisitWaitingListItem, item);    \
+        }                                                \
+    }
 
 void
 init_function_to_visit_waiting_list__CIParser(CIParser *self, String *name)
