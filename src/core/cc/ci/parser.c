@@ -7681,6 +7681,9 @@ parse_primary_expr__CIParser(CIParser *self)
                     return NULL;
                 }
 
+                check_for_initialization_expr__CIParser(
+                  (CIParser *)self, data_type, expr);
+
                 res =
                   NEW_VARIANT(CIExpr, cast, NEW(CIExprCast, data_type, expr));
 
@@ -10786,6 +10789,9 @@ is_only_initialization_compatible_data_type__CIParser(CIParser *self,
     switch (data_type->kind) {
         case CI_DATA_TYPE_KIND_ARRAY:
             return true;
+        case CI_DATA_TYPE_KIND_PRE_CONST:
+            return is_only_initialization_compatible_data_type__CIParser(
+              self, data_type->pre_const);
         default:
             return false;
     }
