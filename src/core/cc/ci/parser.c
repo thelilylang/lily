@@ -7681,6 +7681,9 @@ parse_primary_expr__CIParser(CIParser *self)
                     return NULL;
                 }
 
+                check_for_initialization_expr__CIParser(
+                  (CIParser *)self, data_type, expr);
+
                 res =
                   NEW_VARIANT(CIExpr, cast, NEW(CIExprCast, data_type, expr));
 
@@ -9190,6 +9193,9 @@ is_valid_implicit_cast__CIParser(const CIParser *self,
               "impossible to get typedef at this point (already resolved)");
         case CI_DATA_TYPE_KIND_ARRAY:
         case CI_DATA_TYPE_KIND_PTR:
+            // In this case, we check whether the pointers being compared are
+            // compatible. For example, we check whether a `void*` is compatible
+            // with an `int*`.
             if (is_ptr_data_type__CIParser(
                   (CIParser *)self,
                   left,
@@ -9219,6 +9225,19 @@ is_valid_implicit_cast__CIParser(const CIParser *self,
 
                 return is_valid_implicit_cast__CIParser(
                   self, left_ptr_dt, right_ptr_dt, typecheck_ctx);
+            }
+
+            // This case is designed to ensure that a pointer is compatible with
+            // an integer.
+            //
+            // Valid: (void*)0
+            if (is_integer_data_type__CIParser(
+                  (CIParser *)self,
+                  left,
+                  true,
+                  typecheck_ctx->current_generic_params.called,
+                  typecheck_ctx->current_generic_params.decl)) {
+                return true;
             }
 
             return false;
@@ -9411,7 +9430,7 @@ typecheck_function_call_expr_params__CIParser(
 
     if (decl_function_call_params_len != called_params_len &&
         (is_variadic &&
-         decl_function_call_params_len - 1 < called_params_len)) {
+         called_params_len < decl_function_call_params_len - 1)) {
         FAILED("number of params don't matched");
     }
 
@@ -9427,8 +9446,8 @@ typecheck_function_call_expr_params__CIParser(
     for (Usize i = 0; i < called_params_len; ++i) {
         const CIDeclFunctionParam *decl_param = get__Vec(
           decl_function_call_params,
-          i > decl_function_call_params_len ? decl_function_call_params_len - 1
-                                            : i);
+          i >= decl_function_call_params_len ? decl_function_call_params_len - 1
+                                             : i);
 
         switch (decl_param->kind) {
             case CI_DECL_FUNCTION_PARAM_KIND_NORMAL: {
@@ -9647,6 +9666,13 @@ typecheck_expr__CIParser(const CIParser *self,
               self, &given_expr->binary, typecheck_ctx);
 
             break;
+        case CI_EXPR_KIND_CAST:
+            typecheck_expr__CIParser(self,
+                                     given_expr->cast.data_type,
+                                     given_expr->cast.expr,
+                                     typecheck_ctx);
+
+            break;
         case CI_EXPR_KIND_FUNCTION_CALL:
             typecheck_function_call_expr__CIParser(
               self, &given_expr->function_call, typecheck_ctx);
@@ -9702,11 +9728,26 @@ typecheck_body_item__CIParser(const CIParser *self,
 
             break;
         case CI_DECL_FUNCTION_ITEM_KIND_EXPR: {
-            CIDataType *void_dt = void__PrimaryDataTypes();
+            CIDataType *expected_dt = NULL;
 
-            typecheck_expr__CIParser(self, void_dt, item->expr, typecheck_ctx);
+            switch (item->expr->kind) {
+                case CI_EXPR_KIND_FUNCTION_CALL:
+                case CI_EXPR_KIND_FUNCTION_CALL_BUILTIN:
+                    // NOTE: In order to discard the value of a function call,
+                    // we expect the any type, which is usually only used for
+                    // builtins, but which has the particularity of accepting
+                    // all types.
+                    expected_dt = any__PrimaryDataTypes();
 
-            FREE(CIDataType, void_dt);
+                    break;
+                default:
+                    expected_dt = void__PrimaryDataTypes();
+            }
+
+            typecheck_expr__CIParser(
+              self, expected_dt, item->expr, typecheck_ctx);
+
+            FREE(CIDataType, expected_dt);
 
             break;
         }
@@ -10786,6 +10827,9 @@ is_only_initialization_compatible_data_type__CIParser(CIParser *self,
     switch (data_type->kind) {
         case CI_DATA_TYPE_KIND_ARRAY:
             return true;
+        case CI_DATA_TYPE_KIND_PRE_CONST:
+            return is_only_initialization_compatible_data_type__CIParser(
+              self, data_type->pre_const);
         default:
             return false;
     }
