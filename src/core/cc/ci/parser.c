@@ -9728,11 +9728,26 @@ typecheck_body_item__CIParser(const CIParser *self,
 
             break;
         case CI_DECL_FUNCTION_ITEM_KIND_EXPR: {
-            CIDataType *void_dt = void__PrimaryDataTypes();
+            CIDataType *expected_dt = NULL;
 
-            typecheck_expr__CIParser(self, void_dt, item->expr, typecheck_ctx);
+            switch (item->expr->kind) {
+                case CI_EXPR_KIND_FUNCTION_CALL:
+                case CI_EXPR_KIND_FUNCTION_CALL_BUILTIN:
+                    // NOTE: In order to discard the value of a function call,
+                    // we expect the any type, which is usually only used for
+                    // builtins, but which has the particularity of accepting
+                    // all types.
+                    expected_dt = any__PrimaryDataTypes();
 
-            FREE(CIDataType, void_dt);
+                    break;
+                default:
+                    expected_dt = void__PrimaryDataTypes();
+            }
+
+            typecheck_expr__CIParser(
+              self, expected_dt, item->expr, typecheck_ctx);
+
+            FREE(CIDataType, expected_dt);
 
             break;
         }
