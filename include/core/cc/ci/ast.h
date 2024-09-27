@@ -626,7 +626,7 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeContext, int self);
 
 enum CIDataTypeKind
 {
-    CI_DATA_TYPE_KIND_ANY, // only for builtin
+    CI_DATA_TYPE_KIND_ANY, // usually only for the builtin
     CI_DATA_TYPE_KIND_ARRAY,
     CI_DATA_TYPE_KIND__ATOMIC,
     CI_DATA_TYPE_KIND_BOOL,
