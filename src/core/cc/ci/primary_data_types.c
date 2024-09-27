@@ -25,6 +25,7 @@
 #include <core/cc/ci/primary_data_types.h>
 
 // See: https://en.cppreference.com/w/cpp/language/types
+static CIDataType *primary_data_type_any = NULL;             // <any>
 static CIDataType *primary_data_type_bool = NULL;            // bool
 static CIDataType *primary_data_type_char = NULL;            // char
 static CIDataType *primary_data_type_double = NULL;          // double
@@ -46,6 +47,7 @@ static CIDataType *primary_data_type_long_double__imaginary =
   NULL;                                               // long double _Imaginary
 static CIDataType *primary_data_type_long_int = NULL; // long int
 static CIDataType *primary_data_type_long_long_int = NULL; // long long int
+static CIDataType *primary_data_type_type_info = NULL;     // type info
 static CIDataType *primary_data_type_short_int = NULL;     // short int
 static CIDataType *primary_data_type_signed_char = NULL;   // signed char
 static CIDataType *primary_data_type_unsigned_int = NULL;  // unsigned int
@@ -61,6 +63,7 @@ static CIDataType *primary_data_type_void = NULL; // void
 void
 init__PrimaryDataTypes()
 {
+    primary_data_type_any = NEW(CIDataType, CI_DATA_TYPE_KIND_ANY);
     primary_data_type_bool = NEW(CIDataType, CI_DATA_TYPE_KIND_BOOL);
     primary_data_type_char = NEW(CIDataType, CI_DATA_TYPE_KIND_CHAR);
     primary_data_type_double = NEW(CIDataType, CI_DATA_TYPE_KIND_DOUBLE);
@@ -89,6 +92,7 @@ init__PrimaryDataTypes()
     primary_data_type_long_int = NEW(CIDataType, CI_DATA_TYPE_KIND_LONG_INT);
     primary_data_type_long_long_int =
       NEW(CIDataType, CI_DATA_TYPE_KIND_LONG_LONG_INT);
+    primary_data_type_type_info = NEW(CIDataType, CI_DATA_TYPE_KIND_TYPE_INFO);
     primary_data_type_short_int = NEW(CIDataType, CI_DATA_TYPE_KIND_SHORT_INT);
     primary_data_type_signed_char =
       NEW(CIDataType, CI_DATA_TYPE_KIND_SIGNED_CHAR);
@@ -111,6 +115,7 @@ init__PrimaryDataTypes()
         return ref__CIDataType(primary_data_type_##dt); \
     }
 
+PRIMARY_FN_DEF(any);
 PRIMARY_FN_DEF(bool);
 PRIMARY_FN_DEF(char);
 PRIMARY_FN_DEF(double);
@@ -128,6 +133,7 @@ PRIMARY_FN_DEF(long_double__complex);
 PRIMARY_FN_DEF(long_double__imaginary);
 PRIMARY_FN_DEF(long_int);
 PRIMARY_FN_DEF(long_long_int);
+PRIMARY_FN_DEF(type_info);
 PRIMARY_FN_DEF(short_int);
 PRIMARY_FN_DEF(signed_char);
 PRIMARY_FN_DEF(unsigned_int);
@@ -142,6 +148,7 @@ PRIMARY_FN_DEF(void);
 void
 free__PrimaryDataTypes()
 {
+    FREE(CIDataType, primary_data_type_any);
     FREE(CIDataType, primary_data_type_bool);
     FREE(CIDataType, primary_data_type_char);
     FREE(CIDataType, primary_data_type_double);
@@ -159,6 +166,7 @@ free__PrimaryDataTypes()
     FREE(CIDataType, primary_data_type_long_double__imaginary);
     FREE(CIDataType, primary_data_type_long_int);
     FREE(CIDataType, primary_data_type_long_long_int);
+    FREE(CIDataType, primary_data_type_type_info);
     FREE(CIDataType, primary_data_type_short_int);
     FREE(CIDataType, primary_data_type_signed_char);
     FREE(CIDataType, primary_data_type_unsigned_int);
