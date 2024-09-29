@@ -2554,6 +2554,20 @@ get__CIDeclStructField(const Vec *self_fields, const String *field_name)
     return NULL;
 }
 
+Vec *
+build_fields_from_data_type__CIDeclStructField(CIDataType *data_type,
+                                               Usize nb_fields)
+{
+    Vec *fields = NEW(Vec); // Vec<CIDeclStructField*>*
+
+    for (Usize i = 0; i < nb_fields; ++i) {
+        push__Vec(fields,
+                  NEW(CIDeclStructField, NULL, ref__CIDataType(data_type)));
+    }
+
+    return fields;
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclStructField, const CIDeclStructField *self)
@@ -4181,6 +4195,8 @@ IMPL_FOR_DEBUG(to_string, CIExprKind, enum CIExprKind self)
     switch (self) {
         case CI_EXPR_KIND_ALIGNOF:
             return "CI_EXPR_KIND_ALIGNOF";
+        case CI_EXPR_KIND_ARRAY:
+            return "CI_EXPR_KIND_ARRAY";
         case CI_EXPR_KIND_ARRAY_ACCESS:
             return "CI_EXPR_KIND_ARRAY_ACCESS";
         case CI_EXPR_KIND_BINARY:
