@@ -236,6 +236,14 @@ remove__Vec(Vec *self, Usize index)
 }
 
 void
+replace__Vec(Vec *self, Usize index, void *item)
+{
+    ASSERT(index < self->len);
+
+    self->buffer[index] = item;
+}
+
+void
 reverse__Vec(Vec *self)
 {
     Usize i = 0;

@@ -199,6 +199,17 @@ last__Vec(const Vec *self);
 
 /**
  *
+ * @brief Get the last item of the Vec.
+ * @return void*? (&)
+ */
+inline void *
+safe_last__Vec(const Vec *self)
+{
+    return self->len > 0 ? self->buffer[self->len - 1] : NULL;
+}
+
+/**
+ *
  * @brief Remove the last item from Vec.
  */
 void *
@@ -217,6 +228,13 @@ push__Vec(Vec *self, void *item);
  */
 void *
 remove__Vec(Vec *self, Usize index);
+
+/**
+ *
+ * @brief Replace item of the Vector at index position.
+ */
+void
+replace__Vec(Vec *self, Usize index, void *item);
 
 /**
  *

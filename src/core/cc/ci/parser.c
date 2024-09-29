@@ -1247,10 +1247,34 @@ get_fields_from_data_type__CIParser(
 /// @param left_fields const Vec<CIDeclStructField*>* (&)
 /// @param right_fields const Vec<CIDeclStructField*>* (&)
 static bool
-typecheck_field__CIParser(const CIParser *self,
-                          const Vec *left_fields,
-                          const Vec *right_fields,
-                          struct CITypecheckContext *typecheck_ctx);
+typecheck_struct_field__CIParser(const CIParser *self,
+                                 const Vec *left_fields,
+                                 const Vec *right_fields,
+                                 struct CITypecheckContext *typecheck_ctx);
+
+/// @note This is a very specific case, but it allows you to manage
+/// the situation where you declare a struct with an array
+/// initializer, and all the fields in the struct are of the same
+/// type.
+///
+/// @example
+///
+/// struct X {
+/// 	int x;
+/// 	int y;
+/// 	int z;
+/// };
+///
+/// struct X x = { 1, 2, 3 };
+/// ^^^^^^^^     ^^^^^^^^^^^
+/// |                      |
+/// inferred as struct     inferred as array
+static bool
+is_valid_implicit_cast_from_array_to_struct__CIParser(
+  const CIParser *self,
+  CIDataType *array_dt,
+  CIDataType *struct_dt,
+  struct CITypecheckContext *typecheck_ctx);
 
 static bool
 is_valid_implicit_cast__CIParser(const CIParser *self,
@@ -8492,18 +8516,56 @@ infer_expr_data_type__CIParser(const CIParser *self,
                 FAILED("cannot infer on array");
             }
 
-            CIExpr *first_item = get__Vec(expr->array.array, 0);
-            CIDataType *first_item_dt =
-              infer_expr_data_type__CIParser(self,
-                                             first_item,
-                                             current_scope_id,
-                                             called_generic_params,
-                                             decl_generic_params);
+            Vec *expr_dts = NEW(Vec); // Vec<CIDataType*>*
+            bool is_struct = false;
+
+            for (Usize i = 0; i < expr->array.array->len; ++i) {
+                CIExpr *expr_item = get__Vec(expr->array.array, i);
+                CIDataType *expr_item_dt =
+                  infer_expr_data_type__CIParser(self,
+                                                 expr_item,
+                                                 current_scope_id,
+                                                 called_generic_params,
+                                                 decl_generic_params);
+                CIDataType *last_dt = safe_last__Vec(expr_dts);
+
+                if (last_dt && !is_struct) {
+                    if (!eq__CIDataType(expr_item_dt, last_dt)) {
+                        is_struct = true;
+                    }
+                }
+
+                push__Vec(expr_dts, expr_item_dt);
+            }
+
+            if (is_struct) {
+                Vec *fields = expr_dts;
+
+                for (Usize i = 0; i < fields->len; ++i) {
+                    CIDataType *expr_dt = get__Vec(fields, i);
+
+                    replace__Vec(
+                      fields, i, NEW(CIDeclStructField, NULL, expr_dt));
+                }
+
+                return NEW_VARIANT(CIDataType,
+                                   struct,
+                                   NEW(CIDataTypeStruct, NULL, NULL, fields));
+            }
+
+            CIDataType *array_data_type = get__Vec(expr_dts, 0);
+            Usize expr_dts_len = expr_dts->len;
+
+            // NOTE: We don't free the first item contains in this buffer.
+            FREE_BUFFER_ITEMS(
+              (expr_dts->buffer + 1), expr_dts->len - 1, CIDataType);
+            FREE(Vec, expr_dts);
 
             return NEW_VARIANT(
               CIDataType,
               array,
-              NEW_VARIANT(CIDataTypeArray, none, first_item_dt, NULL));
+              NEW_VARIANT(
+                CIDataTypeArray, sized, array_data_type, NULL, expr_dts_len));
         }
         case CI_EXPR_KIND_ARRAY_ACCESS: {
             CIDataType *array_data_type =
@@ -9124,10 +9186,10 @@ get_fields_from_data_type__CIParser(
 }
 
 bool
-typecheck_field__CIParser(const CIParser *self,
-                          const Vec *left_fields,
-                          const Vec *right_fields,
-                          struct CITypecheckContext *typecheck_ctx)
+typecheck_struct_field__CIParser(const CIParser *self,
+                                 const Vec *left_fields,
+                                 const Vec *right_fields,
+                                 struct CITypecheckContext *typecheck_ctx)
 {
     if (left_fields->len != right_fields->len) {
         return false;
@@ -9146,6 +9208,33 @@ typecheck_field__CIParser(const CIParser *self,
     }
 
     return true;
+}
+
+bool
+is_valid_implicit_cast_from_array_to_struct__CIParser(
+  const CIParser *self,
+  CIDataType *array_dt,
+  CIDataType *struct_dt,
+  struct CITypecheckContext *typecheck_ctx)
+{
+    ASSERT(is_sized_array__CIDataType(array_dt));
+
+    const Vec *struct_dt_fields = get_fields_from_data_type__CIParser(
+      self,
+      struct_dt,
+      typecheck_ctx->current_generic_params.called,
+      typecheck_ctx->current_generic_params.decl);
+    Vec *fields_from_array_dt = build_fields_from_data_type__CIDeclStructField(
+      array_dt->array.data_type, array_dt->array.size);
+    bool is_valid_struct_field = typecheck_struct_field__CIParser(
+      self, struct_dt_fields, fields_from_array_dt, typecheck_ctx);
+
+    FREE_BUFFER_ITEMS(fields_from_array_dt->buffer,
+                      fields_from_array_dt->len,
+                      CIDeclStructField);
+    FREE(Vec, fields_from_array_dt);
+
+    return is_valid_struct_field;
 }
 
 bool
@@ -9193,6 +9282,18 @@ is_valid_implicit_cast__CIParser(const CIParser *self,
               "impossible to get typedef at this point (already resolved)");
         case CI_DATA_TYPE_KIND_ARRAY:
         case CI_DATA_TYPE_KIND_PTR:
+            if (is_sized_array__CIDataType(right)) {
+                switch (left->kind) {
+                    case CI_DATA_TYPE_KIND_STRUCT:
+                        return is_valid_implicit_cast_from_array_to_struct__CIParser(
+                          self, right, left, typecheck_ctx);
+                    case CI_DATA_TYPE_KIND_UNION:
+                        TODO("union case");
+                    default:
+                        break;
+                }
+            }
+
             // In this case, we check whether the pointers being compared are
             // compatible. For example, we check whether a `void*` is compatible
             // with an `int*`.
@@ -9258,17 +9359,31 @@ is_valid_implicit_cast__CIParser(const CIParser *self,
             return is_valid_implicit_cast__CIParser(
               self, left, right->post_const, typecheck_ctx);
         case CI_DATA_TYPE_KIND_STRUCT:
-            if (left->kind == CI_DATA_TYPE_KIND_STRUCT) {
-                if (left->struct_.name && right->struct_.name) {
-                    return !strcmp(left->struct_.name->buffer,
-                                   right->struct_.name->buffer);
+        case CI_DATA_TYPE_KIND_UNION:
+            if (is_sized_array__CIDataType(left)) {
+                return is_valid_implicit_cast_from_array_to_struct__CIParser(
+                  self, left, right, typecheck_ctx);
+            } else if ((left->kind == CI_DATA_TYPE_KIND_STRUCT &&
+                        right->kind == CI_DATA_TYPE_KIND_STRUCT) ||
+                       (left->kind == CI_DATA_TYPE_KIND_UNION &&
+                        right->kind == CI_DATA_TYPE_KIND_UNION)) {
+                String *left_name = get_name__CIDataType(left);
+                String *right_name = get_name__CIDataType(right);
+
+                if (left_name && right_name) {
+                    return !strcmp(left_name->buffer, right_name->buffer);
                 }
+
+                const Vec *unresolved_left_fields =
+                  get_fields__CIDataType(left);
+                const Vec *unresolved_right_fields =
+                  get_fields__CIDataType(right);
 
                 // NOTE: We perform a check if one or both fields are NULL, as
                 // the `eq__CIDataType` function returns a false, because at the
                 // point of this function, we can't perform a thorough check
                 // (search structure).
-                if (!left->struct_.fields || !right->struct_.fields) {
+                if (!unresolved_left_fields || !unresolved_right_fields) {
                     const Vec *left_fields =
                       get_fields_from_data_type__CIParser(
                         self,
@@ -9283,8 +9398,18 @@ is_valid_implicit_cast__CIParser(const CIParser *self,
                         typecheck_ctx->current_generic_params.decl);
 
                     if (left_fields && right_fields) {
-                        return typecheck_field__CIParser(
-                          self, left_fields, right_fields, typecheck_ctx);
+                        switch (left->kind) {
+                            case CI_DATA_TYPE_KIND_STRUCT:
+                                return typecheck_struct_field__CIParser(
+                                  self,
+                                  left_fields,
+                                  right_fields,
+                                  typecheck_ctx);
+                            case CI_DATA_TYPE_KIND_UNION:
+                                TODO("typecheck union field");
+                            default:
+                                UNREACHABLE("unknown variant in this case")
+                        }
                     }
                 }
 

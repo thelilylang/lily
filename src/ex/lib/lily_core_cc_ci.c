@@ -176,6 +176,9 @@ ref__CIDataType(CIDataType *self);
 extern inline void
 set_context__CIDataType(CIDataType *self, int ctx);
 
+extern inline bool
+is_sized_array__CIDataType(CIDataType *self);
+
 extern inline CONSTRUCTOR(CIAttributeStandard,
                           CIAttributeStandard,
                           enum CIAttributeStandardKind kind);

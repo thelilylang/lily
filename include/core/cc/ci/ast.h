@@ -1144,6 +1144,17 @@ wrap_ptr__CIDataType(CIDataType *self, int ptr_ctx);
 
 /**
  *
+ * @brief Check if is a sized array data type.
+ */
+inline bool
+is_sized_array__CIDataType(CIDataType *self)
+{
+    return self->kind == CI_DATA_TYPE_KIND_ARRAY &&
+           self->array.kind == CI_DATA_TYPE_ARRAY_KIND_SIZED;
+}
+
+/**
+ *
  * @brief Convert CIDataType in String.
  * @note This function is only used to debug.
  */
@@ -1806,6 +1817,16 @@ has_generic__CIDeclStructField(const Vec *self_fields);
  */
 CIDataType *
 get__CIDeclStructField(const Vec *self_fields, const String *field_name);
+
+/**
+ *
+ * @brief Build fields vector (Vec<CIDeclStructField*>*), from data type.
+ * @param CIDataType* (&)
+ * @return Vec<CIDeclStructField*>*
+ */
+Vec *
+build_fields_from_data_type__CIDeclStructField(CIDataType *data_type,
+                                               Usize nb_fields);
 
 /**
  *
