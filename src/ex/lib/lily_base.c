@@ -165,6 +165,9 @@ extern inline CONSTRUCTOR(Test, Test, char *name);
 
 // <base/vec.h>
 extern inline void *
+safe_last__Vec(const Vec *self);
+
+extern inline void *
 safe_get__Vec(const Vec *self, Usize index);
 
 extern inline CONSTRUCTOR(VecIter, VecIter, const Vec *vec);
