@@ -1373,6 +1373,11 @@ typecheck_case_stmt__CIParser(const CIParser *self,
                               struct CITypecheckContext *typecheck_ctx);
 
 static void
+typecheck_condition_expr__CIParser(const CIParser *self,
+                                   const CIExpr *cond,
+                                   struct CITypecheckContext *typecheck_ctx);
+
+static void
 typecheck_do_while_stmt__CIParser(const CIParser *self,
                                   const CIStmtDoWhile *do_while,
                                   struct CITypecheckContext *typecheck_ctx);
@@ -9961,17 +9966,36 @@ typecheck_case_stmt__CIParser(const CIParser *self,
 }
 
 void
+typecheck_condition_expr__CIParser(const CIParser *self,
+                                   const CIExpr *cond,
+                                   struct CITypecheckContext *typecheck_ctx)
+{
+    CIDataType *cond_expr_dt = infer_expr_data_type__CIParser(
+      self,
+      cond,
+      typecheck_ctx->current_scope_id,
+      typecheck_ctx->current_generic_params.called,
+      typecheck_ctx->current_generic_params.decl);
+
+    if (!is_integer_data_type__CIParser(
+          (CIParser *)self,
+          cond_expr_dt,
+          true,
+          typecheck_ctx->current_generic_params.called,
+          typecheck_ctx->current_generic_params.decl)) {
+        FAILED("expected boolean compatible expression data type");
+    }
+
+    FREE(CIDataType, cond_expr_dt);
+}
+
+void
 typecheck_do_while_stmt__CIParser(const CIParser *self,
                                   const CIStmtDoWhile *do_while,
                                   struct CITypecheckContext *typecheck_ctx)
 {
-    CIDataType *expected_cond_dt = bool__PrimaryDataTypes();
-
-    typecheck_expr__CIParser(
-      self, expected_cond_dt, do_while->cond, typecheck_ctx);
+    typecheck_condition_expr__CIParser(self, do_while->cond, typecheck_ctx);
     typecheck_body__CIParser(self, do_while->body, typecheck_ctx);
-
-    FREE(CIDataType, expected_cond_dt);
 }
 
 void
@@ -9979,13 +10003,8 @@ typecheck_if_stmt_branch__CIParser(const CIParser *self,
                                    const CIStmtIfBranch *if_branch,
                                    struct CITypecheckContext *typecheck_ctx)
 {
-    CIDataType *expected_cond_dt = bool__PrimaryDataTypes();
-
-    typecheck_expr__CIParser(
-      self, expected_cond_dt, if_branch->cond, typecheck_ctx);
+    typecheck_condition_expr__CIParser(self, if_branch->cond, typecheck_ctx);
     typecheck_body__CIParser(self, if_branch->body, typecheck_ctx);
-
-    FREE(CIDataType, expected_cond_dt);
 }
 
 void
@@ -10014,15 +10033,7 @@ typecheck_for_stmt__CIParser(const CIParser *self,
                              struct CITypecheckContext *typecheck_ctx)
 {
     typecheck_body_item__CIParser(self, for_->init_clause, typecheck_ctx);
-
-    {
-        CIDataType *expected_expr1_dt = bool__PrimaryDataTypes();
-
-        typecheck_expr__CIParser(
-          self, expected_expr1_dt, for_->expr1, typecheck_ctx);
-
-        FREE(CIDataType, expected_expr1_dt);
-    }
+    typecheck_condition_expr__CIParser(self, for_->expr1, typecheck_ctx);
 
     {
         CIDataType *expected_expr2_dt = void__PrimaryDataTypes();
@@ -10109,13 +10120,8 @@ typecheck_while_stmt__CIParser(const CIParser *self,
                                const CIStmtWhile *while_,
                                struct CITypecheckContext *typecheck_ctx)
 {
-    CIDataType *expected_cond_dt = bool__PrimaryDataTypes();
-
-    typecheck_expr__CIParser(
-      self, expected_cond_dt, while_->cond, typecheck_ctx);
+    typecheck_condition_expr__CIParser(self, while_->cond, typecheck_ctx);
     typecheck_body__CIParser(self, while_->body, typecheck_ctx);
-
-    FREE(CIDataType, expected_cond_dt);
 }
 
 void
