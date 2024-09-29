@@ -10033,7 +10033,10 @@ typecheck_for_stmt__CIParser(const CIParser *self,
                              struct CITypecheckContext *typecheck_ctx)
 {
     typecheck_body_item__CIParser(self, for_->init_clause, typecheck_ctx);
-    typecheck_condition_expr__CIParser(self, for_->expr1, typecheck_ctx);
+
+    if (for_->expr1) {
+        typecheck_condition_expr__CIParser(self, for_->expr1, typecheck_ctx);
+    }
 
     {
         CIDataType *expected_expr2_dt = void__PrimaryDataTypes();
