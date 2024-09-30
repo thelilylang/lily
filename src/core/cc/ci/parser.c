@@ -10051,9 +10051,7 @@ typecheck_for_stmt__CIParser(const CIParser *self,
         FREE(CIDataType, expected_expr2_dt);
     }
 
-    if (for_->body) {
-        typecheck_body__CIParser(self, for_->body, typecheck_ctx);
-    }
+    typecheck_body__CIParser(self, for_->body, typecheck_ctx);
 }
 
 void
