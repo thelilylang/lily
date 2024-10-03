@@ -439,7 +439,6 @@ run__Test(const Test *self)
                 }
 
                 i--;
-                puts("");
 
                 break;
             }
@@ -469,13 +468,15 @@ run__Test(const Test *self)
                       item->suite.name, (double)(clock() - time_suite));
                 }
 
-                puts("");
-
                 ++n_suite;
 
                 break;
             }
+            default:
+                UNREACHABLE("unknown variant");
         }
+
+        puts("");
     }
 
     if (is_test_failed) {
