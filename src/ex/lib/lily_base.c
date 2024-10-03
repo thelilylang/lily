@@ -157,7 +157,7 @@ next__StringIter(StringIter *self);
 // <base/test.h>
 extern inline DESTRUCTOR(TestCase, TestCase *self);
 
-extern inline CONSTRUCTOR(TestSimple, TestSimple, char *name, int (*f)(void));
+extern inline CONSTRUCTOR(TestSimple, TestSimple, char *name, void (*f)(void));
 
 extern inline CONSTRUCTOR(TestSuite, TestSuite, char *name, Vec *cases);
 

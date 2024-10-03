@@ -26,56 +26,59 @@
 #define LILY_BASE_TEST_H
 
 #include <base/alloc.h>
+#include <base/macros.h>
 #include <base/new.h>
 #include <base/types.h>
 #include <base/vec.h>
 
 #include <stdarg.h>
 
-#define TEST_PASS 0
-#define TEST_FAIL 1
-#define TEST_SKIP -1
+// Here we define non-standard return status codes, which will only be available
+// in this test library.
+#define TEST_PASS EXIT_OK
+#define TEST_FAIL EXIT_ERR
+#define TEST_SKIP 10
 
 #define TEST_ASSERT_EQ(x, y) \
     if ((x) != (y))          \
-        return TEST_FAIL;
+        exit(TEST_FAIL);
 
 #define TEST_ASSERT_NE(x, y) \
     if ((x) == (y))          \
-        return TEST_FAIL;
+        exit(TEST_FAIL);
 
 #define TEST_ASSERT(x) \
     if (!(x))          \
-        return TEST_FAIL;
+        exit(TEST_FAIL);
 
-#define CASE(name, block)   \
-    int test_case__##name() \
-    {                       \
-        block;              \
-        return TEST_PASS;   \
+#define CASE(name, block)    \
+    void test_case__##name() \
+    {                        \
+        block;               \
+        exit(TEST_PASS);     \
     }
 
 #define SKIP_CASE(name, block) \
-    int test_case__##name()    \
+    void test_case__##name()   \
     {                          \
         do {                   \
-            return TEST_SKIP;  \
+            exit(TEST_SKIP);   \
         } while (0);           \
         block;                 \
     }
 
-#define SIMPLE(name, block)   \
-    int test_simple__##name() \
-    {                         \
-        block;                \
-        return TEST_PASS;     \
+#define SIMPLE(name, block)    \
+    void test_simple__##name() \
+    {                          \
+        block;                 \
+        exit(TEST_PASS);       \
     }
 
 #define SKIP_SIMPLE(name, block) \
-    int test_simple__##name()    \
+    void test_simple__##name()   \
     {                            \
         do {                     \
-            return TEST_SKIP;    \
+            exit(TEST_SKIP);     \
         } while (0);             \
         block;                   \
     }
@@ -123,14 +126,14 @@ typedef struct TestSuite TestSuite;
 typedef struct TestCase
 {
     char *name;
-    int (*f)(void);
+    void (*f)(void);
 } TestCase;
 
 /**
  *
  * @brief Construct TestCase type.
  */
-CONSTRUCTOR(TestCase *, TestCase, char *name, int (*f)(void));
+CONSTRUCTOR(TestCase *, TestCase, char *name, void (*f)(void));
 
 /**
  *
@@ -144,14 +147,14 @@ inline DESTRUCTOR(TestCase, TestCase *self)
 typedef struct TestSimple
 {
     char *name;
-    int (*f)(void);
+    void (*f)(void);
 } TestSimple;
 
 /**
  *
  * @brief Construct TestSimple type.
  */
-inline CONSTRUCTOR(TestSimple, TestSimple, char *name, int (*f)(void))
+inline CONSTRUCTOR(TestSimple, TestSimple, char *name, void (*f)(void))
 {
     return (TestSimple){ .name = name, .f = f };
 }

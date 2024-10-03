@@ -37,7 +37,7 @@ main()
               CALL_CASE(atoi_safe));
     ADD_SUITE(2, atof, CALL_CASE(atof__Float32), CALL_CASE(atof__Float64));
     ADD_SUITE(1, buffer, CALL_CASE(buffer_push));
-    ADD_SUITE(8,
+    ADD_SUITE(9,
               format,
               CALL_CASE(format_s_specifier),
               CALL_CASE(format_sa_specifier),

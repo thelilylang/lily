@@ -289,6 +289,7 @@ set(BASE_SRC
     ${CMAKE_SOURCE_DIR}/src/base/error.c
     ${CMAKE_SOURCE_DIR}/src/base/file.c
     ${CMAKE_SOURCE_DIR}/src/base/format.c
+    ${CMAKE_SOURCE_DIR}/src/base/fork.c
     ${CMAKE_SOURCE_DIR}/src/base/fs_watcher.c
     ${CMAKE_SOURCE_DIR}/src/base/hash/custom.c
     ${CMAKE_SOURCE_DIR}/src/base/hash/fnv.c
