@@ -33,55 +33,125 @@
 
 #include <stdarg.h>
 
+// This macro enables the use of fork(...) (or equivalent if we're not talking
+// about a Unix-like OS) during test execution.
+#define TEST_USE_FORK
+
 // Here we define non-standard return status codes, which will only be available
 // in this test library.
 #define TEST_PASS EXIT_OK
 #define TEST_FAIL EXIT_ERR
 #define TEST_SKIP 10
 
-#define TEST_ASSERT_EQ(x, y) \
-    if ((x) != (y))          \
-        exit(TEST_FAIL);
+#define TEST_ASSERT_EQ_BASE(x, y, e) \
+    if ((x) != (y))                  \
+        e(TEST_FAIL);
 
-#define TEST_ASSERT_NE(x, y) \
-    if ((x) == (y))          \
-        exit(TEST_FAIL);
+#ifdef TEST_USE_FORK
+#define TEST_ASSERT_EQ(x, y) TEST_ASSERT_EQ_BASE(x, y, exit)
+#else
+#define TEST_ASSERT_EQ(x, y) TEST_ASSERT_EQ_BASE(x, y, return)
+#endif
 
-#define TEST_ASSERT(x) \
-    if (!(x))          \
-        exit(TEST_FAIL);
+#define TEST_ASSERT_NE_BASE(x, y, e) \
+    if ((x) == (y))                  \
+        e(TEST_FAIL);
 
-#define CASE(name, block)    \
-    void test_case__##name() \
-    {                        \
-        block;               \
-        exit(TEST_PASS);     \
+#ifdef TEST_USE_FORK
+#define TEST_ASSERT_NE(x, y) TEST_ASSERT_NE_BASE(x, y, exit)
+#else
+#define TEST_ASSERT_NE(x, y) TEST_ASSERT_NE_BASE(x, y, return)
+#endif
+
+#define TEST_ASSERT_BASE(x, e) \
+    if (!(x))                  \
+        e(TEST_FAIL);
+
+#ifdef TEST_USE_FORK
+#define TEST_ASSERT(x) TEST_ASSERT_BASE(x, exit)
+#else
+#define TEST_ASSERT(x) TEST_ASSERT_BASE(x, return)
+#endif
+
+#define CASE_BASE(T, name) T test_case__##name()
+
+#ifdef TEST_USE_FORK
+#define CASE(name, block) \
+    CASE_BASE(void, name) \
+    {                     \
+        block;            \
+        exit(TEST_PASS);  \
     }
+#else
+#define CASE(name, block) \
+    CASE_BASE(int, name)  \
+    {                     \
+        block;            \
+        return TEST_PASS; \
+    }
+#endif
 
+#define SKIP_CASE_BASE(T, name) T test_case__##name()
+
+#ifdef TEST_USE_FORK
 #define SKIP_CASE(name, block) \
-    void test_case__##name()   \
+    SKIP_CASE_BASE(void, name) \
     {                          \
         do {                   \
             exit(TEST_SKIP);   \
         } while (0);           \
         block;                 \
     }
-
-#define SIMPLE(name, block)    \
-    void test_simple__##name() \
+#else
+#define SKIP_CASE(name, block) \
+    SKIP_CASE_BASE(int, name)  \
     {                          \
+        do {                   \
+            return TEST_SKIP;  \
+        } while (0);           \
         block;                 \
-        exit(TEST_PASS);       \
     }
+#endif
 
+#define SIMPLE_BASE(T, name) T test_simple__##name()
+
+#ifdef TEST_USE_FORK
+#define SIMPLE(name, block) \
+    SIMPLE_BASE(void, name) \
+    {                       \
+        block;              \
+        exit(TEST_PASS);    \
+    }
+#else
+#define SIMPLE(name, block) \
+    SIMPLE_BASE(int, name)  \
+    {                       \
+        block;              \
+        return TEST_PASS;   \
+    }
+#endif
+
+#define SKIP_SIMPLE_BASE(T, name) T test_simple__##name()
+
+#ifdef TEST_USE_FORK
 #define SKIP_SIMPLE(name, block) \
-    void test_simple__##name()   \
+    SKIP_SIMPLE_BASE(void, name) \
     {                            \
         do {                     \
             exit(TEST_SKIP);     \
         } while (0);             \
         block;                   \
     }
+#else
+#define SKIP_SIMPLE(name, block) \
+    SKIP_SIMPLE_BASE(int, name)  \
+    {                            \
+        do {                     \
+            return TEST_SKIP;    \
+        } while (0);             \
+        block;                   \
+    }
+#endif
 
 #define SUITE(name)                                   \
     TestSuite test_suite__##name(int n_case, ...)     \
@@ -126,14 +196,22 @@ typedef struct TestSuite TestSuite;
 typedef struct TestCase
 {
     char *name;
+#ifdef TEST_USE_FORK
     void (*f)(void);
+#else
+    int (*f)(void);
+#endif
 } TestCase;
 
 /**
  *
  * @brief Construct TestCase type.
  */
+#ifdef TEST_USE_FORK
 CONSTRUCTOR(TestCase *, TestCase, char *name, void (*f)(void));
+#else
+CONSTRUCTOR(TestCase *, TestCase, char *name, int (*f)(void));
+#endif
 
 /**
  *
@@ -147,14 +225,22 @@ inline DESTRUCTOR(TestCase, TestCase *self)
 typedef struct TestSimple
 {
     char *name;
+#ifdef TEST_USE_FORK
     void (*f)(void);
+#else
+    int (*f)(void);
+#endif
 } TestSimple;
 
 /**
  *
  * @brief Construct TestSimple type.
  */
+#ifdef TEST_USE_FORK
 inline CONSTRUCTOR(TestSimple, TestSimple, char *name, void (*f)(void))
+#else
+inline CONSTRUCTOR(TestSimple, TestSimple, char *name, int (*f)(void))
+#endif
 {
     return (TestSimple){ .name = name, .f = f };
 }
