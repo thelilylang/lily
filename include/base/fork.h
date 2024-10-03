@@ -34,34 +34,21 @@
 
 typedef pid_t Fork;
 
-#define USE_FORK(pid, child_process, exit_status, kill_signal, stop_signal) \
-    {                                                                       \
-        switch (pid) {                                                      \
-            case -1:                                                        \
-                UNREACHABLE("failed to fork process");                      \
-            case 0:                                                         \
-                child_process;                                              \
-                exit(EXIT_OK);                                              \
-            default: {                                                      \
-                int status;                                                 \
-                pid_t w = waitpid(pid, &status, 0);                         \
-                                                                            \
-                if (w == -1) {                                              \
-                    UNREACHABLE("something wrong with waitpid");            \
-                } else {                                                    \
-                    if (WIFEXITED(status)) {                                \
-                        (exit_status) = WEXITSTATUS(status);                \
-                    } else if (WIFSIGNALED(status)) {                       \
-                        (kill_signal) = WTERMSIG(status);                   \
-                    } else if (WIFSTOPPED(status)) {                        \
-                        (stop_signal) = WSTOPSIG(status);                   \
-                    }                                                       \
-                }                                                           \
-                                                                            \
-                break;                                                      \
-            }                                                               \
-        }                                                                   \
-    }
+/**
+ *
+ * @brief This function is used to manage child processes and pass the function
+ * to be executed in the child process. In addition, you can optionally pass
+ * parameters to find out the exit code or signal returned by the child process.
+ * @param exit_status int*? (&)
+ * @param kill_signal int*? (&)
+ * @param stop_signal int*? (&)
+ */
+void
+use__Fork(Fork pid,
+          void (*child_process)(void),
+          int *exit_status,
+          int *kill_signal,
+          int *stop_signal);
 #else
 #error "this OS is not yet supported"
 #endif

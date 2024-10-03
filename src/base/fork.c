@@ -23,6 +23,44 @@
  */
 
 #include <base/fork.h>
+#include <base/macros.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#ifdef LILY_UNIX_OS
+void
+use__Fork(Fork pid,
+          void (*child_process)(void),
+          int *exit_status,
+          int *kill_signal,
+          int *stop_signal)
+{
+    switch (pid) {
+        case -1:
+            UNREACHABLE("failed to fork process");
+        case 0:
+            child_process();
+            exit(EXIT_OK);
+        default: {
+            int wstatus;
+            pid_t w = waitpid(pid, &wstatus, 0);
+
+            if (w == -1) {
+                UNREACHABLE("something wrong with waitpid");
+            } else if (exit_status && WIFEXITED(wstatus)) {
+                *exit_status = WEXITSTATUS(wstatus);
+            } else if (kill_signal && WIFSIGNALED(wstatus)) {
+                *kill_signal = WTERMSIG(wstatus);
+            } else if (stop_signal && WIFSTOPPED(wstatus)) {
+                *stop_signal = WSTOPSIG(wstatus);
+            }
+        }
+    }
+}
+#else
+#error "this OS is not yet supported"
+#endif
 
 Fork
 run__Fork()

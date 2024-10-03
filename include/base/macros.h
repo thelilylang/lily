@@ -183,7 +183,7 @@
 
 #define threadlocal _Thread_local
 
-#define EXIT_OK 0
-#define EXIT_ERR 1
+#define EXIT_OK EXIT_SUCCESS
+#define EXIT_ERR EXIT_FAILURE
 
 #endif // LILY_BASE_MACROS_H
