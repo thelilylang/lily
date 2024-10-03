@@ -24,10 +24,13 @@
 
 #define _GNU_SOURCE
 
-#include <base/fork.h>
 #include <base/new.h>
 #include <base/print.h>
 #include <base/test.h>
+
+#ifdef TEST_USE_FORK
+#include <base/fork.h>
+#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -92,14 +95,22 @@ display_failed_suite_output__Test(char *name, double time);
 
 static void
 run_case_or_simple__Test(char *name,
+#ifdef TEST_USE_FORK
                          void (*f)(void),
+#else
+                         int (*f)(void),
+#endif
                          bool *is_parent_failed,
                          Usize *n_skipped,
                          Usize *n_failed,
                          Usize *total,
                          int option);
 
+#ifdef TEST_USE_FORK
 CONSTRUCTOR(TestCase *, TestCase, char *name, void (*f)(void))
+#else
+CONSTRUCTOR(TestCase *, TestCase, char *name, int (*f)(void))
+#endif
 {
     TestCase *self = lily_malloc(sizeof(TestCase));
 
@@ -299,35 +310,67 @@ display_failed_suite_output__Test(char *name, double time)
 
 void
 run_case_or_simple__Test(char *name,
+#ifdef TEST_USE_FORK
                          void (*f)(void),
+#else
+                         int (*f)(void),
+#endif
                          bool *is_parent_failed,
                          Usize *n_skipped,
                          Usize *n_failed,
                          Usize *total,
                          int option)
 {
+#define WHEN_SKIP() \
+    ++(*n_skipped); \
+    f_res = TEST_SKIP
+
+#define WHEN_FAIL()           \
+    ++(*n_failed);            \
+    *is_parent_failed = true; \
+    f_res = TEST_FAIL
+
+#define WHEN_PASS() f_res = TEST_PASS
+
     display_runs_output__Test(name);
 
     clock_t time_simple = clock();
+    int f_res = 0;
     int exit_status = -1;
     int kill_signal = -1;
     int stop_signal = -1;
-    int f_res = 0;
+
+#ifdef TEST_USE_FORK
     Fork fork_pid = run__Fork();
 
     use__Fork(fork_pid, f, &exit_status, &kill_signal, &stop_signal);
 
     if (exit_status == TEST_SKIP) {
-        ++(*n_skipped);
-        f_res = TEST_SKIP;
+        WHEN_SKIP();
     } else if (exit_status == TEST_FAIL || exit_status != TEST_PASS ||
                kill_signal != -1 || stop_signal != -1) {
-        ++(*n_failed);
-        *is_parent_failed = true;
-        f_res = TEST_FAIL;
+        WHEN_FAIL();
     } else {
-        f_res = TEST_PASS;
+        WHEN_PASS();
     }
+#else
+    f_res = f();
+
+    switch (f_res) {
+        case TEST_FAIL:
+            WHEN_FAIL();
+            break;
+        case TEST_PASS:
+            WHEN_PASS();
+            break;
+        case TEST_SKIP:
+            WHEN_SKIP();
+            break;
+        default:
+            UNREACHABLE("unknown return value, expected TEST_FAIL, TEST_PASS "
+                        "or TEST_SKIP");
+    }
+#endif
 
     switch (option) {
         case RUN_OPTION_CASE:
@@ -353,6 +396,10 @@ run_case_or_simple__Test(char *name,
     }
 
     ++(*total);
+
+#undef WHEN_SKIP
+#undef WHEN_FAIL
+#undef WHEN_PASS
 }
 
 int
@@ -392,7 +439,6 @@ run__Test(const Test *self)
                 }
 
                 i--;
-                puts("");
 
                 break;
             }
@@ -422,13 +468,15 @@ run__Test(const Test *self)
                       item->suite.name, (double)(clock() - time_suite));
                 }
 
-                puts("");
-
                 ++n_suite;
 
                 break;
             }
+            default:
+                UNREACHABLE("unknown variant");
         }
+
+        puts("");
     }
 
     if (is_test_failed) {

@@ -157,7 +157,11 @@ next__StringIter(StringIter *self);
 // <base/test.h>
 extern inline DESTRUCTOR(TestCase, TestCase *self);
 
+#ifdef TEST_USE_FORK
 extern inline CONSTRUCTOR(TestSimple, TestSimple, char *name, void (*f)(void));
+#else
+extern inline CONSTRUCTOR(TestSimple, TestSimple, char *name, int (*f)(void));
+#endif
 
 extern inline CONSTRUCTOR(TestSuite, TestSuite, char *name, Vec *cases);
 
