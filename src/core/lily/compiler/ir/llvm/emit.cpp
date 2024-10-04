@@ -77,6 +77,8 @@ LilyLLVMEmit(const LilyIrLlvm *self,
         code_gen_passes.run(module);
         out_asm->flush();
         out_asm->close();
+
+        delete out_asm;
     } else if (emit_obj) {
         auto *out_obj =
           new (std::nothrow) raw_fd_ostream(filename, ec, sys::fs::OF_None);
@@ -98,6 +100,8 @@ LilyLLVMEmit(const LilyIrLlvm *self,
         code_gen_passes.run(module);
         out_obj->flush();
         out_obj->close();
+
+        delete out_obj;
     } else if (emit_bitcode) {
         auto *out_bc =
           new (std::nothrow) raw_fd_ostream(filename, ec, sys::fs::OF_None);
@@ -113,6 +117,8 @@ LilyLLVMEmit(const LilyIrLlvm *self,
         code_gen_passes.run(module);
         out_bc->flush();
         out_bc->close();
+
+        delete out_bc;
     }
 
     return 0;
