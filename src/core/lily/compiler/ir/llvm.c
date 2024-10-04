@@ -118,7 +118,7 @@ CONSTRUCTOR(LilyIrLlvm, LilyIrLlvm, const char *module_name)
     LLVMTargetDataRef target_data =
       LLVMCreateTargetData(LLVMGetDataLayoutStr(module));
 
-    LLVMSetModuleDataLayout(module, LLVMCreateTargetDataLayout(machine));
+    LLVMSetModuleDataLayout(module, target_data);
 
     lily_free(triple);
 
