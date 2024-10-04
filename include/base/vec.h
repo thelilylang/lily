@@ -186,6 +186,7 @@ insert_after__Vec(Vec *self, void *item, Usize index);
  *
  * @brief Join each item with c param.
  * @param self Vec<String*>*
+ * @return String*
  */
 String *
 join__Vec(const Vec *self, char c);

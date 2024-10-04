@@ -262,9 +262,11 @@ reverse__Vec(Vec *self)
 Vec *
 slice__Vec(Vec *self, Usize start, Usize end)
 {
+    ASSERT(start < self->len && end < self->len);
+
     Vec *slice = NEW(Vec);
 
-    for (Usize i = start; i < end; ++i) {
+    for (Usize i = start; i <= end; ++i) {
         push__Vec(slice, get__Vec(self, i));
     }
 

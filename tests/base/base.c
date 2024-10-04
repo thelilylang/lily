@@ -79,17 +79,28 @@ main()
               CALL_CASE(string_split),
               CALL_CASE(string_pop),
               CALL_CASE(string_push));
-    ADD_SUITE(10,
+    ADD_SUITE(19,
               vec,
+              CALL_CASE(vec_append),
+              CALL_CASE(vec_contains_found_case),
+              CALL_CASE(vec_contains_not_found_case),
               CALL_CASE(vec_init),
               CALL_CASE(vec_new),
               CALL_CASE(vec_from),
               CALL_CASE(vec_get),
               CALL_CASE(vec_insert),
               CALL_CASE(vec_insert_after),
+              CALL_CASE(vec_join),
+              CALL_CASE(vec_last),
+              CALL_CASE(vec_safe_last),
               CALL_CASE(vec_pop),
               CALL_CASE(vec_push),
               CALL_CASE(vec_remove),
-              CALL_CASE(vec_reverse));
+              CALL_CASE(vec_replace),
+              CALL_CASE(vec_reverse),
+              CALL_CASE(vec_safe_get),
+              CALL_CASE(vec_slice));
+    ADD_SUITE(
+      2, vec_iter, CALL_CASE(vec_iter_next), CALL_CASE(vec_iter_current));
     RUN_TEST();
 }
