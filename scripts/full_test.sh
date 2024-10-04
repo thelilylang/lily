@@ -19,6 +19,7 @@ function run_test {
 
 cmake --build build/Debug > /dev/null
 
+run_test ./bin/Debug/test_base
 run_test ./bin/Debug/test_core_scanner
 run_test ./bin/Debug/test_core_preparser
 run_test ./bin/Debug/test_core_precompiler
