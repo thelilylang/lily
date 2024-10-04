@@ -46,6 +46,10 @@ else()
   add_compile_options(-Wall -fno-rtti)
 endif()
 
+if(LILY_DEBUG_MEM)
+  add_link_options(-fsanitize=address)
+endif()
+
 if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
   set(CMAKE_C_FLAGS "/wd4710 /wd4711 /wd4255")
 endif()
