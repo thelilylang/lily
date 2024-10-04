@@ -35,6 +35,11 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
       "expected -DCMAKE_BUILD_TYPE=Debug|Release|RelWithDebInfo|MinSizeRel")
 endif()
 
+if(LILY_FULL_DEBUG)
+  set(LILY_DEBUG 1)
+  set(LILY_DEBUG_MEM 1)
+endif()
+
 if(NOT WIN32)
   # NOTE: On WSL you must to disable `-fdiagnostics-color=always`
   add_compile_options(-Wall -fdiagnostics-color=always)
@@ -44,6 +49,10 @@ if(NOT WIN32)
   endif()
 else()
   add_compile_options(-Wall -fno-rtti)
+endif()
+
+if(LILY_DEBUG_MEM)
+  add_link_options(-fsanitize=address)
 endif()
 
 if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
