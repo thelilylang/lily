@@ -2,6 +2,7 @@
 #include <base/macros.h>
 #include <base/new.h>
 #include <base/str.h>
+#include <base/string.h>
 #include <base/test.h>
 #include <base/types.h>
 
@@ -34,4 +35,24 @@ CASE(str_get_slice, {
     TEST_ASSERT(slice[2] == '\0');
 
     lily_free(slice);
+});
+
+CASE(str_replace, {
+    String *s = from__String("Hello");
+
+    replace__Str(s->buffer, 'l', '%');
+
+    TEST_ASSERT(!strcmp(s->buffer, "He%%o"));
+
+    FREE(String, s);
+});
+
+CASE(str_count_c, {
+    String *s = from__String("Hello");
+
+    TEST_ASSERT(count_c__Str(s->buffer, 'l') == 2);
+    TEST_ASSERT(count_c__Str(s->buffer, 'e') == 1);
+    TEST_ASSERT(count_c__Str(s->buffer, 'z') == 0);
+
+    FREE(String, s);
 });
