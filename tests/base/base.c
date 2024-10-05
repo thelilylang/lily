@@ -48,11 +48,13 @@ main()
               CALL_CASE(format_f_specifier),
               CALL_CASE(format_S_specifier),
               CALL_CASE(format_Sr_specifier));
-    ADD_SUITE(3,
+    ADD_SUITE(4,
               hash_map,
               CALL_CASE(hash_map_new),
               CALL_CASE(hash_map_get),
-              CALL_CASE(hash_map_insert));
+              CALL_CASE(hash_map_insert),
+              CALL_CASE(hash_map_remove));
+    ADD_SUITE(1, hash_map_iter, CALL_CASE(hash_map_iter_next));
     ADD_SUITE(1, hash_set, CALL_CASE(hash_set_new));
     ADD_SUITE(4,
               itoa,

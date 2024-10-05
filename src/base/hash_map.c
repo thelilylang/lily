@@ -208,6 +208,8 @@ remove__HashMap(HashMap *self, char *key)
             lily_free(match);
         }
 
+        --self->len;
+
         return res;
     }
 
