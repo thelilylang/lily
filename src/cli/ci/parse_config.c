@@ -40,12 +40,14 @@
 #define VERSION_OPTION 3
 */
 #define MODE_OPTION 4
+#define FILE_OPTION 5
 
 CIConfig
 run__CIParseConfig(const Vec *results)
 {
     enum CIConfigMode mode = CI_CONFIG_MODE_NONE;
-    char *project_path = NULL;
+    bool file = false;
+    char *path = NULL;
 
     VecIter iter = NEW(VecIter, results);
     CliResult *current = NULL;
@@ -56,7 +58,7 @@ run__CIParseConfig(const Vec *results)
                 ASSERT(current->value);
                 ASSERT(current->value->kind == CLI_RESULT_VALUE_KIND_SINGLE);
 
-                project_path = current->value->single;
+                path = current->value->single;
 
                 break;
             case CLI_RESULT_KIND_OPTION:
@@ -78,6 +80,10 @@ run__CIParseConfig(const Vec *results)
                         }
 
                         break;
+                    case FILE_OPTION:
+                        file = true;
+
+                        break;
                     default:
                         UNREACHABLE("unknown option");
                 }
@@ -88,5 +94,5 @@ run__CIParseConfig(const Vec *results)
         }
     }
 
-    return NEW(CIConfig, project_path, mode);
+    return NEW(CIConfig, path, mode, file);
 }

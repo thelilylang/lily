@@ -141,11 +141,11 @@ parse_compiler__CIProjectConfig(YAMLLoadRes *yaml_load_res,
 {
     // compiler:
     //   name: clang | gcc
-    //   path: <path_of_command>
+    //   command: <path_of_command> | <command>
     Int32 compiler_value_id = GET_KEY_ON_DEFAULT_MAPPING__YAML(
       yaml_load_res, FIRST_DOCUMENT, "compiler");
     enum CIProjectConfigCompilerKind compiler_kind;
-    const char *path = NULL;
+    const char *command = NULL;
 
     if (compiler_value_id == -1) {
         FAILED("expected compiler key");
@@ -158,7 +158,7 @@ parse_compiler__CIProjectConfig(YAMLLoadRes *yaml_load_res,
 
     switch (GET_NODE_TYPE__YAML(compiler_value_node)) {
         case YAML_MAPPING_NODE: {
-            const char *expected_mapping_keys[] = { "name", "path" };
+            const char *expected_mapping_keys[] = { "name", "command" };
 
             ITER_ON_MAPPING_NODE_WITH_EXPECTED_KEYS__YAML(
               yaml_load_res,
@@ -169,16 +169,16 @@ parse_compiler__CIProjectConfig(YAMLLoadRes *yaml_load_res,
               {
                   if (!strcmp(compiler_pair_key, "name")) {
                       if (!strcmp(compiler_pair_value, "clang")) {
-                          compiler_kind = CI_COMPILER_KIND_CLANG;
+                          compiler_kind = CI_PROJECT_CONFIG_COMPILER_KIND_CLANG;
                       } else if (!strcmp(compiler_pair_value, "gcc")) {
-                          compiler_kind = CI_COMPILER_KIND_GCC;
+                          compiler_kind = CI_PROJECT_CONFIG_COMPILER_KIND_GCC;
                       } else {
                           UNREACHABLE("unknown compiler");
                       }
-                  } else if (!strcmp(compiler_pair_key, "path")) {
-                      ASSERT(!path);
+                  } else if (!strcmp(compiler_pair_key, "command")) {
+                      ASSERT(!command);
 
-                      path = compiler_pair_value;
+                      command = compiler_pair_value;
                   } else {
                       UNREACHABLE("this situation is impossible");
                   }
@@ -189,15 +189,16 @@ parse_compiler__CIProjectConfig(YAMLLoadRes *yaml_load_res,
         default:
             FAILED("expected compiler:\n"
                    "  name: clang | gcc\n"
-                   "  path: <path_of_command>");
+                   "  command: <path_of_command> | <command>");
     }
 
     return NEW(CIProjectConfigCompiler,
                compiler_kind,
-               path[0] == '/' // Check if the path is absolute
-                 ? from__String((char *)path)
-                 : format__String(
-                     "{s}" DIR_SEPARATOR_S "{s}", absolute_config_dir, path));
+               command[0] == '/' // Check if the path is absolute
+                 ? from__String((char *)command)
+                 : format__String("{s}" DIR_SEPARATOR_S "{s}",
+                                  absolute_config_dir,
+                                  command));
 }
 
 void
@@ -319,7 +320,7 @@ parse_libraries__CIProjectConfig(YAMLLoadRes *yaml_load_res,
                   libraries_value_node,
                   library,
                   {
-                      const char *name = library_key;
+                      String *name = from__String(library_key);
                       Vec *paths = NULL; // Vec<String*>*
 
                       switch (GET_NODE_TYPE__YAML(library_value_node)) {
@@ -431,7 +432,7 @@ parse_bins__CIProjectConfig(YAMLLoadRes *yaml_load_res,
                 //   ...
                 ITER_ON_MAPPING_NODE__YAML(
                   yaml_load_res, FIRST_DOCUMENT, bins_value_node, bin, {
-                      const char *name = bin_key;
+                      String *name = from__String(bin_key);
                       String *path = NULL;
 
                       switch (GET_NODE_TYPE__YAML(bin_value_node)) {
@@ -483,7 +484,7 @@ parse_bins__CIProjectConfig(YAMLLoadRes *yaml_load_res,
 
 CONSTRUCTOR(CIProjectConfigLibrary *,
             CIProjectConfigLibrary,
-            const char *name,
+            String *name,
             Vec *paths)
 {
     CIProjectConfigLibrary *self = lily_malloc(sizeof(CIProjectConfigLibrary));
@@ -496,6 +497,7 @@ CONSTRUCTOR(CIProjectConfigLibrary *,
 
 DESTRUCTOR(CIProjectConfigLibrary, CIProjectConfigLibrary *self)
 {
+    FREE(String, self->name);
     FREE_BUFFER_ITEMS(self->paths->buffer, self->paths->len, String);
     FREE(Vec, self->paths);
     lily_free(self);
@@ -503,7 +505,7 @@ DESTRUCTOR(CIProjectConfigLibrary, CIProjectConfigLibrary *self)
 
 CONSTRUCTOR(CIProjectConfigBin *,
             CIProjectConfigBin,
-            const char *name,
+            String *name,
             String *path)
 {
     CIProjectConfigBin *self = lily_malloc(sizeof(CIProjectConfigBin));
@@ -516,12 +518,40 @@ CONSTRUCTOR(CIProjectConfigBin *,
 
 DESTRUCTOR(CIProjectConfigBin, CIProjectConfigBin *self)
 {
+    FREE(String, self->name);
     FREE(String, self->path);
     lily_free(self);
 }
 
 CIProjectConfig
-parse__CIProjectConfig(const char *config_dir)
+parse_cli__CIProjectConfig(const CIConfig *cli_config)
+{
+    String *bin_name = get_filename__File(cli_config->path);
+    CIProjectConfigCompiler compiler =
+      NEW(CIProjectConfigCompiler,
+          CI_PROJECT_CONFIG_COMPILER_KIND_CLANG,
+          from__String("clang"));
+    String *absolute_path_file_dir = get_absolute_dir__File(cli_config->path);
+
+    init_include_dirs__CIInclude(compiler.command,
+                                 absolute_path_file_dir->buffer);
+
+    FREE(String, absolute_path_file_dir);
+
+    return NEW_VARIANT(CIProjectConfig,
+                       cli,
+                       CI_STANDARD_99,
+                       compiler,
+                       get_include_dirs__CIInclude(),
+                       NEW(Vec),
+                       init__Vec(1,
+                                 NEW(CIProjectConfigBin,
+                                     bin_name,
+                                     from__String((char *)cli_config->path))));
+}
+
+CIProjectConfig
+parse_yaml__CIProjectConfig(const char *config_dir)
 {
     String *absolute_config_dir = convert_to_absolute_path__Path(config_dir);
     String *path_ci_config = exists_rec__File(absolute_config_dir->buffer,
@@ -542,7 +572,7 @@ parse__CIProjectConfig(const char *config_dir)
       &yaml_load_res, absolute_config_dir->buffer);
 
     parse_include_dirs__CIProjectConfig(
-      &yaml_load_res, compiler.path, absolute_config_dir->buffer);
+      &yaml_load_res, compiler.command, absolute_config_dir->buffer);
     parse_std_include__CIProjectConfig(&yaml_load_res,
                                        absolute_config_dir->buffer);
 
@@ -554,18 +584,27 @@ parse__CIProjectConfig(const char *config_dir)
     FREE(String, path_ci_config);
     FREE(String, absolute_config_dir);
 
-    return NEW(CIProjectConfig,
-               yaml_load_res,
-               standard,
-               compiler,
-               get_include_dirs__CIInclude(),
-               libraries,
-               bins);
+    return NEW_VARIANT(CIProjectConfig,
+                       yaml,
+                       yaml_load_res,
+                       standard,
+                       compiler,
+                       get_include_dirs__CIInclude(),
+                       libraries,
+                       bins);
 }
 
 DESTRUCTOR(CIProjectConfig, const CIProjectConfig *self)
 {
-    FREE(YAMLLoadRes, &self->yaml_load_res);
+    switch (self->kind) {
+        case CI_PROJECT_CONFIG_KIND_YAML:
+            FREE(YAMLLoadRes, &self->yaml);
+
+            break;
+        default:
+            break;
+    }
+
     FREE(CIProjectConfigCompiler, &self->compiler);
     FREE_BUFFER_ITEMS(
       self->libraries->buffer, self->libraries->len, CIProjectConfigLibrary);

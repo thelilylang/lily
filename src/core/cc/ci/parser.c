@@ -7912,7 +7912,7 @@ parse_primary_expr__CIParser(CIParser *self)
                     break;
                 case CI_EXTENSIONS_HAS_FEATURE_ADDRESS_SANITIZER:
                     if (self->file->entity.result->config->compiler.kind ==
-                        CI_COMPILER_KIND_CLANG) {
+                        CI_PROJECT_CONFIG_COMPILER_KIND_CLANG) {
                         has_feature = true;
                     }
 

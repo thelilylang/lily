@@ -46,7 +46,7 @@ String *
 generate__CIPreDefined(const CIProjectConfig *config)
 {
     char *command = format("{S} -dM -E -std={s} - < /dev/null",
-                           config->compiler.path,
+                           config->compiler.command,
                            std[config->standard]);
     String *builtin_h = save__Command(command);
 

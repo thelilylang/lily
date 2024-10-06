@@ -30,6 +30,7 @@
 #include <base/format.h>
 #include <base/macros.h>
 #include <base/new.h>
+#include <base/path.h>
 #include <base/str.h>
 #include <base/sys.h>
 #include <base/types.h>
@@ -170,6 +171,22 @@ get_dir__File(const char *path)
     }
 
     return dir;
+}
+
+String *
+get_absolute_dir__File(const char *path)
+{
+    ASSERT(path);
+
+    String *absolute_path = convert_to_absolute_path__Path(path);
+
+    ASSERT(absolute_path);
+
+    String *absolute_path_dir = get_dir__File(absolute_path->buffer);
+
+    FREE(String, absolute_path);
+
+    return absolute_path_dir;
 }
 
 Usize

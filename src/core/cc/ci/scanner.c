@@ -1892,7 +1892,7 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
                 switch (builtin_macro) {
                     case CI_TOKEN_KIND_BUILTIN_MACRO___HAS_FEATURE:
                         if (self->config->compiler.kind ==
-                            CI_COMPILER_KIND_CLANG) {
+                            CI_PROJECT_CONFIG_COMPILER_KIND_CLANG) {
                             next_char__CIScanner(self); // __has_feature(x)
                                                         //             ^
                             skip_space_and_backslash__CIScanner(self);

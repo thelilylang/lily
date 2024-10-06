@@ -32,7 +32,8 @@
 // <cli/ci/config.h>
 extern inline CONSTRUCTOR(CIConfig,
                           CIConfig,
-                          const char *project_path,
-                          enum CIConfigMode mode);
+                          const char *path,
+                          enum CIConfigMode mode,
+                          bool file);
 
 #endif // LILY_EX_LIB_CI_CLI_C

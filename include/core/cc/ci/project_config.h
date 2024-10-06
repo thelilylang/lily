@@ -31,18 +31,19 @@
 #include <base/vec.h>
 #include <base/yaml.h>
 
+#include <cli/ci/config.h>
 #include <core/cc/ci/features.h>
 
 enum CIProjectConfigCompilerKind
 {
-    CI_COMPILER_KIND_CLANG,
-    CI_COMPILER_KIND_GCC,
+    CI_PROJECT_CONFIG_COMPILER_KIND_CLANG,
+    CI_PROJECT_CONFIG_COMPILER_KIND_GCC,
 };
 
 typedef struct CIProjectConfigCompiler
 {
     enum CIProjectConfigCompilerKind kind;
-    String *path;
+    String *command;
 } CIProjectConfigCompiler;
 
 /**
@@ -52,9 +53,9 @@ typedef struct CIProjectConfigCompiler
 inline CONSTRUCTOR(CIProjectConfigCompiler,
                    CIProjectConfigCompiler,
                    enum CIProjectConfigCompilerKind kind,
-                   String *path)
+                   String *command)
 {
-    return (CIProjectConfigCompiler){ .kind = kind, .path = path };
+    return (CIProjectConfigCompiler){ .kind = kind, .command = command };
 }
 
 /**
@@ -63,13 +64,13 @@ inline CONSTRUCTOR(CIProjectConfigCompiler,
  */
 inline DESTRUCTOR(CIProjectConfigCompiler, const CIProjectConfigCompiler *self)
 {
-    FREE(String, self->path);
+    FREE(String, self->command);
 }
 
 typedef struct CIProjectConfigLibrary
 {
-    const char *name; // const char* (&)
-    Vec *paths;       // Vec<String*>*
+    String *name;
+    Vec *paths; // Vec<String*>*
 } CIProjectConfigLibrary;
 
 /**
@@ -78,7 +79,7 @@ typedef struct CIProjectConfigLibrary
  */
 CONSTRUCTOR(CIProjectConfigLibrary *,
             CIProjectConfigLibrary,
-            const char *name,
+            String *name,
             Vec *paths);
 
 /**
@@ -89,7 +90,7 @@ DESTRUCTOR(CIProjectConfigLibrary, CIProjectConfigLibrary *self);
 
 typedef struct CIProjectConfigBin
 {
-    const char *name; // const char* (&)
+    String *name;
     String *path;
 } CIProjectConfigBin;
 
@@ -99,7 +100,7 @@ typedef struct CIProjectConfigBin
  */
 CONSTRUCTOR(CIProjectConfigBin *,
             CIProjectConfigBin,
-            const char *name,
+            String *name,
             String *path);
 
 /**
@@ -108,9 +109,19 @@ CONSTRUCTOR(CIProjectConfigBin *,
  */
 DESTRUCTOR(CIProjectConfigBin, CIProjectConfigBin *self);
 
+enum CIProjectConfigKind
+{
+    CI_PROJECT_CONFIG_KIND_CLI,  // config values passed by a CLI
+    CI_PROJECT_CONFIG_KIND_YAML, // config values passed by a YAML config
+};
+
 typedef struct CIProjectConfig
 {
-    YAMLLoadRes yaml_load_res;
+    enum CIProjectConfigKind kind;
+    union
+    {
+        YAMLLoadRes yaml;
+    };
     enum CIStandard standard;
     CIProjectConfigCompiler compiler;
     const Vec *include_dirs; // Vec<char* (&)>* (&)
@@ -120,18 +131,18 @@ typedef struct CIProjectConfig
 
 /**
  *
- * @brief Construct CIProjectConfig type.
+ * @brief Construct CIProjectConfig type (CI_PROJECT_CONFIG_KIND_CLI).
  */
-inline CONSTRUCTOR(CIProjectConfig,
-                   CIProjectConfig,
-                   YAMLLoadRes yaml_load_res,
-                   enum CIStandard standard,
-                   CIProjectConfigCompiler compiler,
-                   const Vec *include_dirs,
-                   Vec *libraries,
-                   Vec *bins)
+inline VARIANT_CONSTRUCTOR(CIProjectConfig,
+                           CIProjectConfig,
+                           cli,
+                           enum CIStandard standard,
+                           CIProjectConfigCompiler compiler,
+                           const Vec *include_dirs,
+                           Vec *libraries,
+                           Vec *bins)
 {
-    return (CIProjectConfig){ .yaml_load_res = yaml_load_res,
+    return (CIProjectConfig){ .kind = CI_PROJECT_CONFIG_KIND_CLI,
                               .standard = standard,
                               .compiler = compiler,
                               .include_dirs = include_dirs,
@@ -141,10 +152,40 @@ inline CONSTRUCTOR(CIProjectConfig,
 
 /**
  *
- * @brief Parse CI configuration.
+ * @brief Construct CIProjectConfig type (CI_PROJECT_CONFIG_KIND_YAML).
+ */
+inline VARIANT_CONSTRUCTOR(CIProjectConfig,
+                           CIProjectConfig,
+                           yaml,
+                           YAMLLoadRes yaml,
+                           enum CIStandard standard,
+                           CIProjectConfigCompiler compiler,
+                           const Vec *include_dirs,
+                           Vec *libraries,
+                           Vec *bins)
+{
+    return (CIProjectConfig){ .kind = CI_PROJECT_CONFIG_KIND_YAML,
+                              .yaml = yaml,
+                              .standard = standard,
+                              .compiler = compiler,
+                              .include_dirs = include_dirs,
+                              .libraries = libraries,
+                              .bins = bins };
+}
+
+/**
+ *
+ * @brief Parse CLI configuration.
  */
 CIProjectConfig
-parse__CIProjectConfig(const char *config_dir);
+parse_cli__CIProjectConfig(const CIConfig *cli_config);
+
+/**
+ *
+ * @brief Parse YAML CI configuration.
+ */
+CIProjectConfig
+parse_yaml__CIProjectConfig(const char *config_dir);
 
 /**
  *

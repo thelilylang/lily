@@ -444,7 +444,7 @@ is_header__CIFile(const char *filename);
 extern inline bool
 is_source__CIFile(const char *filename);
 
-// <core/cc/ci/config.h>
+// <core/cc/ci/project_config.h>
 extern inline CONSTRUCTOR(CIProjectConfigCompiler,
                           CIProjectConfigCompiler,
                           enum CIProjectConfigCompilerKind kind,
@@ -455,14 +455,24 @@ extern inline DESTRUCTOR(CIProjectConfigCompiler,
 
 extern inline DESTRUCTOR(CIProjectConfigLibrary, CIProjectConfigLibrary *self);
 
-extern inline CONSTRUCTOR(CIProjectConfig,
-                          CIProjectConfig,
-                          YAMLLoadRes yaml_load_res,
-                          enum CIStandard standard,
-                          CIProjectConfigCompiler compiler,
-                          const Vec *include_dirs,
-                          Vec *libraries,
-                          Vec *bins);
+extern inline VARIANT_CONSTRUCTOR(CIProjectConfig,
+                                  CIProjectConfig,
+                                  cli,
+                                  enum CIStandard standard,
+                                  CIProjectConfigCompiler compiler,
+                                  const Vec *include_dirs,
+                                  Vec *libraries,
+                                  Vec *bins);
+
+extern inline VARIANT_CONSTRUCTOR(CIProjectConfig,
+                                  CIProjectConfig,
+                                  yaml,
+                                  YAMLLoadRes yaml_load_res,
+                                  enum CIStandard standard,
+                                  CIProjectConfigCompiler compiler,
+                                  const Vec *include_dirs,
+                                  Vec *libraries,
+                                  Vec *bins);
 
 // <core/cc/ci/parser.h>
 extern inline CONSTRUCTOR(CIParserVisitWaitingList, CIParserVisitWaitingList);

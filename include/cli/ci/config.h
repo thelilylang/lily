@@ -36,8 +36,10 @@ enum CIConfigMode
 
 typedef struct CIConfig
 {
-    const char *project_path; // const char* (&)
+    // PROJECT_PATH | FILE_PATH
+    const char *path; // const char* (&)
     enum CIConfigMode mode;
+    bool file;
 } CIConfig;
 
 /**
@@ -46,10 +48,11 @@ typedef struct CIConfig
  */
 inline CONSTRUCTOR(CIConfig,
                    CIConfig,
-                   const char *project_path,
-                   enum CIConfigMode mode)
+                   const char *path,
+                   enum CIConfigMode mode,
+                   bool file)
 {
-    return (CIConfig){ .project_path = project_path, .mode = mode };
+    return (CIConfig){ .path = path, .mode = mode, .file = file };
 }
 
 #endif // LILY_CLI_CI_CONFIG_H

@@ -73,6 +73,15 @@ get_dir__File(const char *path);
 
 /**
  *
+ * @brief Get absolute directory of the path.
+ * @return String*
+ * @example a => $HOME/a => $HOME
+ */
+String *
+get_absolute_dir__File(const char *path);
+
+/**
+ *
  * @brief Get size of the file.
  */
 Usize
