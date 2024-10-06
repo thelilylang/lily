@@ -49,7 +49,8 @@ run__CI(const CIConfig *config)
 
     CIBuiltin builtin = NEW(CIBuiltin);
     CIProjectConfig project_config =
-      parse__CIProjectConfig(config->project_path);
+      config->file ? parse_cli__CIProjectConfig(config)
+                   : parse_yaml__CIProjectConfig(config->path);
     CIResult result = NEW(CIResult, &project_config, &builtin);
 
     set__CIBuiltin(&builtin);

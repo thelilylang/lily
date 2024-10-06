@@ -31,15 +31,20 @@ build__CliCI(Vec *args)
 {
     Cli cli = NEW(Cli, args, "ci");
     CliOption *mode = NEW(CliOption, "--mode");
+    CliOption *file = NEW(CliOption, "--file");
 
     mode->$help(mode, "Specify transpilation mode (DEBUG | RELEASE)")
       ->$value(mode, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "MODE", true));
+
+    file->$help(file, "Allow to pass a file instead of a project path")
+      ->$short_name(file, "-f");
 
     cli.$version(&cli, VERSION)
       ->$author(&cli, "ArthurPV")
       ->$about(&cli, "The CI programming language")
       ->$option(&cli, mode)
-      ->$single_value(&cli, "PROJECT_PATH", true);
+      ->$option(&cli, file)
+      ->$single_value(&cli, "PROJECT_PATH | FILE_PATH", true);
 
     return cli;
 }

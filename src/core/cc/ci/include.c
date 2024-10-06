@@ -36,13 +36,14 @@
 static Vec *include_dirs = NULL; // Vec<String*>*?
 
 void
-init_include_dirs__CIInclude(const String *compiler_path, const char *base_path)
+init_include_dirs__CIInclude(const String *compiler_command,
+                             const char *base_path)
 {
-    ASSERT(compiler_path);
+    ASSERT(compiler_command);
 
     char *command =
       format("echo | {S} -E -Wp,-v - 2>&1 | grep \"^ \" | sed 's/^ *//'",
-             compiler_path);
+             compiler_command);
     String *include_dirs_s = save__Command(command);
     Vec *split_include_dirs_s = split__String(include_dirs_s, '\n');
 
@@ -87,6 +88,8 @@ get_include_dirs__CIInclude()
 void
 destroy__CIInclude()
 {
-    FREE_BUFFER_ITEMS(include_dirs->buffer, include_dirs->len, String);
-    FREE(Vec, include_dirs);
+    if (include_dirs) {
+        FREE_BUFFER_ITEMS(include_dirs->buffer, include_dirs->len, String);
+        FREE(Vec, include_dirs);
+    }
 }

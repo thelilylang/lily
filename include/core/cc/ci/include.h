@@ -33,9 +33,10 @@
 /**
  *
  * @brief Initialize include directories vector.
+ * @param compiler_command const String* (&)
  */
 void
-init_include_dirs__CIInclude(const String *compiler_path,
+init_include_dirs__CIInclude(const String *compiler_command,
                              const char *base_path);
 
 /**

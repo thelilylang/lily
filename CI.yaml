@@ -6,7 +6,7 @@ standard: c23
 # clang: <bin_path> | gcc: <bin_path>
 compiler:
   name: clang
-  path: /usr/bin/clang
+  command: /usr/bin/clang
 
 include_dirs:
   - include
