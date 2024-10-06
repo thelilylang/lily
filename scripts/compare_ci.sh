@@ -82,7 +82,7 @@ function process_standard() {
 
 	while IFS= read -r -d '' FILE
 	do
-		check_status "ci_command --syntax -std=c$1 $FILE" "inc_success CI_SUCCESS[$2]" $FILE $CI
+		check_status "ci_command -f $FILE" "inc_success CI_SUCCESS[$2]" $FILE $CI
 	done < <(find "${!dir_ci}" -type l -print0)
 }
 
@@ -101,12 +101,12 @@ function summary_program() {
 	local success_c23="$1_SUCCESS[$C23]"
 
 	echo "$1:"
-	echo "C89: ${!success_c89}/${N_FILES[$C89]} = $((${!success_c89}/${N_FILES[$C89]}))"
-	echo "C99: ${!success_c99}/${N_FILES[$C99]} = $((${!success_c99}/${N_FILES[$C99]}))"
-	echo "C11: ${!success_c11}/${N_FILES[$C11]} = $((${!success_c11}/${N_FILES[$C11]}))"
-	echo "C17: ${!success_c17}/${N_FILES[$C17]} = $((${!success_c17}/${N_FILES[$C17]}))"
-	echo "C23: ${!success_c23}/${N_FILES[$C23]} = $((${!success_c23}/${N_FILES[$C23]}))"
-	echo "Total: $(($(($((${!success_c89} + ${!success_c99} + ${!success_c11} + ${!success_c17} + ${!success_c23})) / $((${N_FILES[$C89]} + ${N_FILES[$C99]} + ${N_FILES[$C11]} + ${N_FILES[$C17]} + ${N_FILES[$C23]})))) * 100))%"
+	echo "C89: ${!success_c89}/${N_FILES[$C89]} = $(echo "scale=2; (${!success_c89} / ${N_FILES[$C89]}) * 100" | bc)%"
+	echo "C99: ${!success_c99}/${N_FILES[$C99]} = $(echo "scale=2; (${!success_c99} / ${N_FILES[$C99]}) * 100" | bc)%"
+	echo "C11: ${!success_c11}/${N_FILES[$C11]} = $(echo "scale=2; (${!success_c11} / ${N_FILES[$C11]}) * 100" | bc)%"
+	echo "C17: ${!success_c17}/${N_FILES[$C17]} = $(echo "scale=2; (${!success_c17} / ${N_FILES[$C17]}) * 100" | bc)%"
+	echo "C23: ${!success_c23}/${N_FILES[$C23]} = $(echo "scale=2; (${!success_c23} / ${N_FILES[$C23]}) * 100" | bc)%"
+	echo "Total: $(echo "scale=2; (${!success_c89} + ${!success_c99} + ${!success_c11} + ${!success_c17} + ${!success_c23}) / (${N_FILES[$C89]} + ${N_FILES[$C99]} + ${N_FILES[$C11]} + ${N_FILES[$C17]} + ${N_FILES[$C23]}) * 100" | bc)%"
 }
 
 echo "Summary:"
