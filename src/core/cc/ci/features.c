@@ -22,19 +22,33 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_EX_LIB_CI_CLI_C
-#define LILY_EX_LIB_CI_CLI_C
+#include <core/cc/ci/features.h>
 
-#include <cli/ci/ci.h>
-#include <cli/ci/config.h>
-#include <cli/ci/parse_config.h>
+// NOTE: This table must be sorted in ascending order.
+static const SizedStr standards[CI_N_STANDARD] = {
+    [CI_STANDARD_NONE] = SIZED_STR_FROM_RAW(""),
+    [CI_STANDARD_11] = SIZED_STR_FROM_RAW("c11"),
+    [CI_STANDARD_17] = SIZED_STR_FROM_RAW("c17"),
+    [CI_STANDARD_23] = SIZED_STR_FROM_RAW("c23"),
+    [CI_STANDARD_89] = SIZED_STR_FROM_RAW("c89"),
+    [CI_STANDARD_95] = SIZED_STR_FROM_RAW("c95"),
+    [CI_STANDARD_99] = SIZED_STR_FROM_RAW("c99"),
+    [CI_STANDARD_KR] = SIZED_STR_FROM_RAW("kr"),
+};
 
-// <cli/ci/config.h>
-extern inline CONSTRUCTOR(CIConfig,
-                          CIConfig,
-                          const char *path,
-                          enum CIConfigMode mode,
-                          bool file,
-                          enum CIStandard standard);
+static const Int32 standard_ids[CI_N_STANDARD] = {
+    CI_STANDARD_NONE, CI_STANDARD_KR, CI_STANDARD_89, CI_STANDARD_95,
+    CI_STANDARD_99,   CI_STANDARD_11, CI_STANDARD_17, CI_STANDARD_23
+};
 
-#endif // LILY_EX_LIB_CI_CLI_C
+const SizedStr *
+get_standards__CIStandard()
+{
+    return standards;
+}
+
+const Int32 *
+get_standard_ids__CIStandard()
+{
+    return standard_ids;
+}

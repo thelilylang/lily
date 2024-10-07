@@ -32,6 +32,7 @@ build__CliCI(Vec *args)
     Cli cli = NEW(Cli, args, "ci");
     CliOption *mode = NEW(CliOption, "--mode");
     CliOption *file = NEW(CliOption, "--file");
+    CliOption *standard = NEW(CliOption, "--std");
 
     mode->$help(mode, "Specify transpilation mode (DEBUG | RELEASE)")
       ->$value(mode, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "MODE", true));
@@ -39,11 +40,19 @@ build__CliCI(Vec *args)
     file->$help(file, "Allow to pass a file instead of a project path")
       ->$short_name(file, "-f");
 
+    standard
+      ->$help(standard,
+              "Pass the standard to use (values: kr | c89 | c95 | c99 | c11 | "
+              "c17 | c23, default: c99)")
+      ->$value(standard, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "STD", true))
+      ->$short_name(standard, "-s");
+
     cli.$version(&cli, VERSION)
       ->$author(&cli, "ArthurPV")
       ->$about(&cli, "The CI programming language")
       ->$option(&cli, mode)
       ->$option(&cli, file)
+      ->$option(&cli, standard)
       ->$single_value(&cli, "PROJECT_PATH | FILE_PATH", true);
 
     return cli;

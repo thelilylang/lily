@@ -25,6 +25,11 @@
 #ifndef LILY_CORE_CC_CI_FEATURES_H
 #define LILY_CORE_CC_CI_FEATURES_H
 
+#include <base/sized_str.h>
+#include <base/types.h>
+
+#define CI_N_STANDARD 8
+
 enum CIStandard
 {
     CI_STANDARD_NONE = 0,
@@ -36,6 +41,22 @@ enum CIStandard
     CI_STANDARD_17 = 6,
     CI_STANDARD_23 = 7,
 };
+
+/**
+ *
+ * @brief Get list of standard in str.
+ * @return const SizedStr* (&)
+ */
+const SizedStr *
+get_standards__CIStandard();
+
+/**
+ *
+ * @brief Get list of standard ids.
+ * @return Int32 * (&)
+ */
+const Int32 *
+get_standard_ids__CIStandard();
 
 // TODO: When we move ci scanner dependencies in src/core/cc or include/core/cc
 // directories, rename CIEnable to CCCIEnable

@@ -43,12 +43,13 @@ target_include_directories(lily_core_cc_ci_extensions PRIVATE ${LILY_INCLUDE})
 set(CI_SRC
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/ast.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/builtin.c
-    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/project_config.c
+    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/features.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/generator.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/include.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/parser.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/predefined.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/primary_data_types.c
+    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/project_config.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/result.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/scanner.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/std_types.c
