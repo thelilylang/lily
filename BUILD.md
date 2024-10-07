@@ -119,4 +119,6 @@ lily -h # installed version
 
 ## BSD
 
-...
+### FreeBSD
+
+The steps for building on FreeBSD are exactly the same as those described for Linux.
