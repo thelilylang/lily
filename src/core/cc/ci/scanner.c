@@ -3462,7 +3462,16 @@ get_num__CIScanner(CIScanner *self)
             SUFFIX_U, SUFFIX_L, SUFFIX_L2, SUFFIX_F, SUFFIX_D
         };
 
-#define ADD_SUFFIX(s) suffixes |= s;
+#define ADD_SUFFIX(s)              \
+    switch (s) {                   \
+        case SUFFIX_L2:            \
+            suffixes &= ~SUFFIX_L; \
+            break;                 \
+        default:                   \
+            break;                 \
+    }                              \
+                                   \
+    suffixes |= s;
 
 #define UPDATE_FLOAT_SUFFIX(new_suffix)                      \
     switch (res->kind) {                                     \
@@ -3511,7 +3520,7 @@ get_num__CIScanner(CIScanner *self)
             case 'u':
                 ADD_SUFFIX(SUFFIX_U);
 
-                if (c2 == (char *)'l') {
+                if (c2 == (char *)'L' || c2 == (char *)'l') {
                     ADD_SUFFIX(SUFFIX_L);
 
                     if (c3 == (char *)'L' || c3 == (char *)'l') {
@@ -3543,7 +3552,7 @@ get_num__CIScanner(CIScanner *self)
                     UPDATE_INT_SUFFIX(CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_LU);
 
                     break;
-                } else if (c2 == (char *)'l') {
+                } else if (c2 == (char *)'L' || c2 == (char *)'l') {
                     ADD_SUFFIX(SUFFIX_L2);
 
                     if (c3 == (char *)'U' || c3 == (char *)'u') {
@@ -3604,15 +3613,26 @@ get_num__CIScanner(CIScanner *self)
                 break;
         }
 
-        Usize flag_count = 0;
+        Usize character_count = 0;
 
-        // Count the number of flags.
-        for (int s = suffixes, i = 0; s > 0 && i < SUFFIXES_ARRAY_LENGTH;
-             s &= ~suffixes_arr[i++]) {
-            ++flag_count;
+        // Count the number of characters taken by the `suffixes` mask.
+        for (int s = suffixes, i = 0; s > 0 && i < SUFFIXES_ARRAY_LENGTH; ++i) {
+            const int current_suffix = suffixes_arr[i];
+
+            if (s & current_suffix) {
+                switch (current_suffix) {
+                    case SUFFIX_L2:
+                        character_count += 2;
+                        break;
+                    default:
+                        ++character_count;
+                }
+
+                s &= ~current_suffix;
+            }
         }
 
-        jump__CIScanner(self, flag_count > 0 ? flag_count - 1 : 0);
+        jump__CIScanner(self, character_count);
 
 #undef SUFFIX_U
 #undef SUFFIX_L
