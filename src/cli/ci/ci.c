@@ -43,7 +43,7 @@ build__CliCI(Vec *args)
     standard
       ->$help(standard,
               "Pass the standard to use (values: kr | c89 | c95 | c99 | c11 | "
-              "c17 | c23, default: c99)")
+              "c17 | c2x, default: c99)")
       ->$value(standard, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "STD", true))
       ->$short_name(standard, "-s");
 
