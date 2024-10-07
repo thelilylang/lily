@@ -540,7 +540,7 @@ parse_cli__CIProjectConfig(const CIConfig *cli_config)
 
     return NEW_VARIANT(CIProjectConfig,
                        cli,
-                       CI_STANDARD_99,
+                       cli_config->standard,
                        compiler,
                        get_include_dirs__CIInclude(),
                        NEW(Vec),

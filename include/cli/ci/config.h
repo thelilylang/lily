@@ -27,6 +27,8 @@
 
 #include <base/macros.h>
 
+#include <core/cc/ci/features.h>
+
 enum CIConfigMode
 {
     CI_CONFIG_MODE_DEBUG,
@@ -40,6 +42,7 @@ typedef struct CIConfig
     const char *path; // const char* (&)
     enum CIConfigMode mode;
     bool file;
+    enum CIStandard standard;
 } CIConfig;
 
 /**
@@ -50,9 +53,12 @@ inline CONSTRUCTOR(CIConfig,
                    CIConfig,
                    const char *path,
                    enum CIConfigMode mode,
-                   bool file)
+                   bool file,
+                   enum CIStandard standard)
 {
-    return (CIConfig){ .path = path, .mode = mode, .file = file };
+    return (CIConfig){
+        .path = path, .mode = mode, .file = file, .standard = standard
+    };
 }
 
 #endif // LILY_CLI_CI_CONFIG_H

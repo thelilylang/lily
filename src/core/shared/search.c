@@ -22,9 +22,9 @@
  * SOFTWARE.
  */
 
-#include <string.h>
-
 #include <core/shared/search.h>
+
+#include <string.h>
 
 Int32
 get_id__Search(const String *id,
@@ -38,7 +38,7 @@ get_id__Search(const String *id,
     char first_current_pointer_letter = current_pointer->buffer[0];
 
     // Try matching the first_id_letter with the first_current_pointer_letter.
-    while (first_id_letter > first_current_pointer_letter &&
+    while (first_id_letter != first_current_pointer_letter &&
            pointer + 1 < ids_s_len) {
         current_pointer = &ids_s[++pointer];
         first_current_pointer_letter = current_pointer->buffer[0];

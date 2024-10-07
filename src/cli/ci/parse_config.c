@@ -28,6 +28,9 @@
 #include <cli/ci/parse_config.h>
 #include <cli/emit.h>
 
+#include <core/cc/ci/features.h>
+#include <core/shared/search.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,7 +43,10 @@
 #define VERSION_OPTION 3
 */
 #define MODE_OPTION 4
-#define FILE_OPTION 5
+#define F_OPTION 5
+#define FILE_OPTION 6
+#define S_OPTION 7
+#define STD_OPTION 8
 
 CIConfig
 run__CIParseConfig(const Vec *results)
@@ -48,6 +54,7 @@ run__CIParseConfig(const Vec *results)
     enum CIConfigMode mode = CI_CONFIG_MODE_NONE;
     bool file = false;
     char *path = NULL;
+    enum CIStandard standard = CI_STANDARD_NONE;
 
     VecIter iter = NEW(VecIter, results);
     CliResult *current = NULL;
@@ -80,10 +87,36 @@ run__CIParseConfig(const Vec *results)
                         }
 
                         break;
+                    case F_OPTION:
                     case FILE_OPTION:
                         file = true;
 
                         break;
+                    case S_OPTION:
+                    case STD_OPTION: {
+                        ASSERT(current->option->value);
+                        ASSERT(current->option->value->kind ==
+                               CLI_RESULT_VALUE_KIND_SINGLE);
+
+                        String *option_s =
+                          from__String(current->option->value->single);
+                        Int32 res =
+                          get_id__Search(option_s,
+                                         get_standards__CIStandard(),
+                                         get_standard_ids__CIStandard(),
+                                         CI_N_STANDARD);
+
+                        if (res == -1) {
+                            FAILED("this value is not expected to be a valid "
+                                   "standard value");
+                        } else {
+                            standard = res;
+                        }
+
+                        FREE(String, option_s);
+
+                        break;
+                    }
                     default:
                         UNREACHABLE("unknown option");
                 }
@@ -94,5 +127,9 @@ run__CIParseConfig(const Vec *results)
         }
     }
 
-    return NEW(CIConfig, path, mode, file);
+    if (standard == CI_STANDARD_NONE) {
+        standard = CI_STANDARD_99;
+    }
+
+    return NEW(CIConfig, path, mode, file, standard);
 }
