@@ -79,7 +79,6 @@ if(LILY_BUILD_LLVM)
 
   set(LLVM_DIR "${CMAKE_SOURCE_DIR}/lib/local/src/llvm-project/llvm")
   set(LLVM_VERSION "16.0.6")
-  set(LLVM_ENABLE_PROJECTS "lld")
 
   # Add include directories
   include_directories(
