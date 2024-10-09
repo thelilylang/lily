@@ -4503,9 +4503,6 @@ next_conditional_preprocessor__CIParser(CIParser *self, CIToken **next_token)
 
     // Move onto the next conditional preprocessor.
     while (current->kind != CI_TOKEN_KIND_EOT) {
-        *next_token = (*next_token)->next;
-        current = *next_token;
-
         check_standard__CIParser(self, current);
 
         if (is_conditional_preprocessor__CITokenKind(current->kind) &&
@@ -4514,6 +4511,9 @@ next_conditional_preprocessor__CIParser(CIParser *self, CIToken **next_token)
             current->kind != CI_TOKEN_KIND_PREPROCESSOR_IFNDEF) {
             return;
         }
+
+        *next_token = (*next_token)->next;
+        current = *next_token;
     }
 }
 
