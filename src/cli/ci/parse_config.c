@@ -47,6 +47,8 @@
 #define FILE_OPTION 6
 #define S_OPTION 7
 #define STD_OPTION 8
+#define I_OPTION 9
+#define INCLUDE_OPTION 10
 
 CIConfig
 run__CIParseConfig(const Vec *results)
@@ -55,6 +57,7 @@ run__CIParseConfig(const Vec *results)
     bool file = false;
     char *path = NULL;
     enum CIStandard standard = CI_STANDARD_NONE;
+    Vec *includes = NEW(Vec); // Vec<char* (&)>*
 
     VecIter iter = NEW(VecIter, results);
     CliResult *current = NULL;
@@ -117,6 +120,15 @@ run__CIParseConfig(const Vec *results)
 
                         break;
                     }
+                    case I_OPTION:
+                    case INCLUDE_OPTION:
+                        ASSERT(current->option->value);
+                        ASSERT(current->option->value->kind ==
+                               CLI_RESULT_VALUE_KIND_SINGLE);
+
+                        push__Vec(includes, current->option->value->single);
+
+                        break;
                     default:
                         UNREACHABLE("unknown option");
                 }
@@ -131,5 +143,5 @@ run__CIParseConfig(const Vec *results)
         standard = CI_STANDARD_99;
     }
 
-    return NEW(CIConfig, path, mode, file, standard);
+    return NEW(CIConfig, path, mode, file, standard, includes);
 }
