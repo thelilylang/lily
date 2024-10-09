@@ -22,7 +22,11 @@
  * SOFTWARE.
  */
 
+#include <base/assert.h>
 #include <base/cli/value.h>
+
+#include <stdio.h>
+#include <stdlib.h>
 
 CONSTRUCTOR(CliValue *,
             CliValue,
@@ -37,4 +41,23 @@ CONSTRUCTOR(CliValue *,
     self->is_required = is_required;
 
     return self;
+}
+
+String *
+format__CliValue(CliValue *self)
+{
+    ASSERT(self);
+
+#define REQUIRED_VALUE_FORMAT "<{s}>{s}"
+#define NOT_REQUIRED_VALUE_FORMAT "[{s}]{s}"
+
+    return format__String(self->is_required ? REQUIRED_VALUE_FORMAT
+                                            : NOT_REQUIRED_VALUE_FORMAT,
+                          self->name,
+                          self->kind == CLI_VALUE_KIND_MULTIPLE       ? "..."
+                          : self->kind == CLI_VALUE_KIND_MULTIPLE_INF ? "...$"
+                                                                      : "");
+
+#undef REQUIRED_VALUE_FORMAT
+#undef NOT_REQUIRED_VALUE_FORMAT
 }
