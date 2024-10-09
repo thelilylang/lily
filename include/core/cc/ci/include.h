@@ -56,7 +56,7 @@ insert_include_dir__CIInclude(String *include_dir, Usize index);
 /**
  *
  * @brief Get `include_dirs` vector.
- * @return Vec<char* (&)>* (&)
+ * @return Vec<String*>* (&)
  */
 const Vec *
 get_include_dirs__CIInclude();

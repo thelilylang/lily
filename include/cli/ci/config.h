@@ -46,6 +46,9 @@ typedef struct CIConfig
     enum CIStandard standard;
     // Store values passed via the `-I`/`--include` option
     Vec *includes; // Vec<char* (&)>*
+
+    // Store values passed via the `--include0` option
+    Vec *includes0; // Vec<char* (&)>*
 } CIConfig;
 
 /**
@@ -58,13 +61,15 @@ inline CONSTRUCTOR(CIConfig,
                    enum CIConfigMode mode,
                    bool file,
                    enum CIStandard standard,
-                   Vec *includes)
+                   Vec *includes,
+                   Vec *includes0)
 {
     return (CIConfig){ .path = path,
                        .mode = mode,
                        .file = file,
                        .standard = standard,
-                       .includes = includes };
+                       .includes = includes,
+                       .includes0 = includes0 };
 }
 
 /**
