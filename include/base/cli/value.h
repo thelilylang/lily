@@ -27,6 +27,7 @@
 
 #include <base/alloc.h>
 #include <base/macros.h>
+#include <base/string.h>
 
 #include <stdbool.h>
 
@@ -53,6 +54,25 @@ CONSTRUCTOR(CliValue *,
             enum CliValueKind kind,
             char *name,
             bool is_required);
+
+/**
+ *
+ * @brief Format.
+ *
+ * @example
+ *
+ * self->name = "PATH"
+ * self->is_required = true
+ *
+ * Return: "<PATH>"
+ *
+ * self->name = "FILE"
+ * self->is_required = false
+ *
+ * Return: "[PATH]"
+ */
+String *
+format__CliValue(CliValue *self);
 
 /**
  *

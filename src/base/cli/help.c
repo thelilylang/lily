@@ -42,19 +42,12 @@
                          options->len > 0 ? " [options]" : "");                  \
                                                                                  \
         if (cmd_value) {                                                         \
-            push_str__String(usage, " [");                                       \
-            push_str__String(usage, (char *)cmd_value->name);                    \
-            push__String(usage, ']');                                            \
+            push__String(usage, ' ');                                            \
                                                                                  \
-            switch (cmd_value->kind) {                                           \
-                case CLI_VALUE_KIND_MULTIPLE:                                    \
-                    push_str__String(usage, "...");                              \
-                    break;                                                       \
-                case CLI_VALUE_KIND_MULTIPLE_INF:                                \
-                    push_str__String(usage, "...$");                             \
-                    break;                                                       \
-                default:                                                         \
-                    break;                                                       \
+            {                                                                    \
+                String *value = format__CliValue(cmd_value);                     \
+                                                                                 \
+                APPEND_AND_FREE(usage, value);                                   \
             }                                                                    \
         }                                                                        \
                                                                                  \
@@ -81,16 +74,29 @@
                 }                                                        \
             }                                                            \
                                                                          \
+            String *value = NULL;                                        \
+                                                                         \
+            if (current->value) {                                        \
+                value = format__CliValue(current->value);                \
+            } else {                                                     \
+                value = from__String("");                                \
+            }                                                            \
+                                                                         \
             String *option = format__String(                             \
-              "  {s}{s}{s}{Sr}",                                         \
+              "  {s}{s}{s}{s}{S}{Sr}",                                   \
               current->name,                                             \
               current->short_name ? ", " : "",                           \
               current->short_name ? current->short_name : "",            \
+              current->value ? " " : "",                                 \
+              value,                                                     \
               repeat__String(" ",                                        \
                              MAX_SPACE - strlen(current->name) -         \
+                               (value->len == 0 ? 0 : value->len + 1) -  \
                                (current->short_name                      \
                                   ? strlen(current->short_name) + 2      \
                                   : 0)));                                \
+                                                                         \
+            FREE(String, value);                                         \
                                                                          \
             if (current->help) {                                         \
                 push_str__String(option, current->help);                 \
