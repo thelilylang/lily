@@ -18,7 +18,7 @@ DIR=("$BASE_DIR/c89" "$BASE_DIR/c99" "$BASE_DIR/c11" "$BASE_DIR/c17" "$BASE_DIR/
 
 CLANG="clang"
 GCC="gcc"
-CI="./bin/ci"
+CI="./bin/Debug/ci"
 
 # C89, C99, C11, C17, C23
 N_FILES=(0 0 0 0 0)
@@ -82,7 +82,7 @@ function process_standard() {
 
 	while IFS= read -r -d '' FILE
 	do
-		check_status "ci_command -f $FILE" "inc_success CI_SUCCESS[$2]" $FILE $CI
+		check_status "ci_command --include0 lib/cc/std -f -s $1 $FILE" "inc_success CI_SUCCESS[$2]" $FILE $CI
 	done < <(find "${!dir_ci}" -type l -print0)
 }
 
