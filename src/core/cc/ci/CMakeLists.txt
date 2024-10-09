@@ -1,7 +1,8 @@
 include(${CMAKE_SOURCE_DIR}/cmake/Lily.cmake)
 
-set(CI_CLI_SRC ${CMAKE_SOURCE_DIR}/src/cli/ci/ci.c
-               ${CMAKE_SOURCE_DIR}/src/cli/ci/parse_config.c)
+set(CI_CLI_SRC
+    ${CMAKE_SOURCE_DIR}/src/cli/ci/ci.c ${CMAKE_SOURCE_DIR}/src/cli/ci/config.c
+    ${CMAKE_SOURCE_DIR}/src/cli/ci/parse_config.c)
 
 # ci_cli
 add_library(ci_cli STATIC ${CI_CLI_SRC} ${CMAKE_SOURCE_DIR}/src/ex/lib/ci_cli.c)

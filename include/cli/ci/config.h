@@ -26,6 +26,7 @@
 #define LILY_CLI_CI_CONFIG_H
 
 #include <base/macros.h>
+#include <base/vec.h>
 
 #include <core/cc/ci/features.h>
 
@@ -43,6 +44,8 @@ typedef struct CIConfig
     enum CIConfigMode mode;
     bool file;
     enum CIStandard standard;
+    // Store values passed via the `-I`/`--include` option
+    Vec *includes; // Vec<char* (&)>*
 } CIConfig;
 
 /**
@@ -54,11 +57,20 @@ inline CONSTRUCTOR(CIConfig,
                    const char *path,
                    enum CIConfigMode mode,
                    bool file,
-                   enum CIStandard standard)
+                   enum CIStandard standard,
+                   Vec *includes)
 {
-    return (CIConfig){
-        .path = path, .mode = mode, .file = file, .standard = standard
-    };
+    return (CIConfig){ .path = path,
+                       .mode = mode,
+                       .file = file,
+                       .standard = standard,
+                       .includes = includes };
 }
+
+/**
+ *
+ * @brief Free CIConfig type.
+ */
+DESTRUCTOR(CIConfig, const CIConfig *self);
 
 #endif // LILY_CLI_CI_CONFIG_H

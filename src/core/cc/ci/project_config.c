@@ -538,6 +538,13 @@ parse_cli__CIProjectConfig(const CIConfig *cli_config)
 
     FREE(String, absolute_path_file_dir);
 
+    // Add include dir passed via the CLI with the option `-I`/`--include` to
+    // the end of the list of include dirs.
+    for (Usize i = 0; i < cli_config->includes->len; ++i) {
+        add_include_dir__CIInclude(
+          from__String(get__Vec(cli_config->includes, i)));
+    }
+
     return NEW_VARIANT(CIProjectConfig,
                        cli,
                        cli_config->standard,
