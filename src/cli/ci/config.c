@@ -29,4 +29,5 @@
 DESTRUCTOR(CIConfig, const CIConfig *self)
 {
     FREE(Vec, self->includes);
+    FREE(Vec, self->includes0);
 }

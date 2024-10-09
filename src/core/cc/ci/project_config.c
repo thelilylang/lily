@@ -542,7 +542,15 @@ parse_cli__CIProjectConfig(const CIConfig *cli_config)
     // the end of the list of include dirs.
     for (Usize i = 0; i < cli_config->includes->len; ++i) {
         add_include_dir__CIInclude(
-          get_absolute_dir__File(get__Vec(cli_config->includes, i)));
+          convert_to_absolute_path__Path(get__Vec(cli_config->includes, i)));
+    }
+
+    // Add include dir passed via the CLI with the option `--include0` to
+    // the begin of the list of include dirs.
+    for (Usize i = 0; i < cli_config->includes0->len; ++i) {
+        insert_include_dir__CIInclude(
+          convert_to_absolute_path__Path(get__Vec(cli_config->includes0, i)),
+          0);
     }
 
     return NEW_VARIANT(CIProjectConfig,
