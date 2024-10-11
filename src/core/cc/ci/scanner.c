@@ -770,7 +770,10 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                             .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_PREPROCESSOR_UNDEF] = { .since = CI_STANDARD_NONE,
                                            .until = CI_STANDARD_NONE },
-    [CI_TOKEN_KIND_PREPROCESSOR_WARNING] = { .since = CI_STANDARD_23,
+    // NOTE: Normally, the preprocessor `#warning` is only supported in C23, but
+    // it seems that Clang and GCC use it as an extension so that this feature
+    // is valid in all standards.
+    [CI_TOKEN_KIND_PREPROCESSOR_WARNING] = { .since = CI_STANDARD_NONE,
                                              .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_RBRACE] = { .since = CI_STANDARD_NONE,
                                .until = CI_STANDARD_NONE },
