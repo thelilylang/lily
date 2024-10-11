@@ -221,6 +221,15 @@ get_preprocessor__CIScanner(const String *id);
 static enum CITokenKind
 get_single_keyword__CIScanner(const String *id);
 
+/// @brief Standardize keyword.
+///
+/// @example
+///
+/// short => short int
+/// signed short => short int
+enum CITokenKind
+standardize_keyword__CIScanner(enum CITokenKind kind);
+
 /// @brief Scan multi-part keyword.
 /// @example long int, long long, unsigned long long, ...
 static CIToken *
@@ -1567,9 +1576,12 @@ get_single_keyword__CIScanner(const String *id)
 }
 
 enum CITokenKind
-standarize_keyword__CIScanner(enum CITokenKind kind)
+standardize_keyword__CIScanner(enum CITokenKind kind)
 {
     switch (kind) {
+        case CI_TOKEN_KIND_KEYWORD_CHAR:
+        case CI_TOKEN_KIND_KEYWORD_SIGNED_CHAR:
+            return CI_TOKEN_KIND_KEYWORD_CHAR;
         case CI_TOKEN_KIND_KEYWORD_SHORT:
         case CI_TOKEN_KIND_KEYWORD_SIGNED_SHORT:
         case CI_TOKEN_KIND_KEYWORD_SIGNED_SHORT_INT:
@@ -1621,7 +1633,7 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
               convert_multi_part_keyword_to_token_kind__CIKeywordMultiPart( \
                 flags),                                                     \
               clone__Location(&self->base.location));                       \
-            t->kind = standarize_keyword__CIScanner(t->kind);               \
+            t->kind = standardize_keyword__CIScanner(t->kind);              \
             DEFAULT_LAST_SET_AND_CHECK(t);                                  \
             push_token__CIScanner(self, ctx, t);                            \
         }                                                                   \
@@ -1958,7 +1970,7 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
             break;
         default:
             res = last_token;
-            res->kind = standarize_keyword__CIScanner(res->kind);
+            res->kind = standardize_keyword__CIScanner(res->kind);
     }
 
 #undef MAX_KEYWORD_PART
