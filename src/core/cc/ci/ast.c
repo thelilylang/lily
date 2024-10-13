@@ -1385,22 +1385,22 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
                      ? eq__CIDataType(self->ptr, other->ptr)
                      : false;
         case CI_DATA_TYPE_KIND_STRUCT:
-            if ((!self->struct_.fields || !other->struct_.fields) ||
-                self->struct_.fields->len != other->struct_.fields->len ||
-                (bool)self->struct_.generic_params ==
-                  (bool)other->struct_.generic_params) {
+        case CI_DATA_TYPE_KIND_UNION: {
+            const Vec *self_fields = get_fields__CIDataType(self);
+            const Vec *other_fields = get_fields__CIDataType(other);
+
+            if ((!self_fields || !other_fields) ||
+                self_fields->len != other_fields->len) {
                 return false;
             }
 
-            return eq__CIDeclStructField(self->struct_.fields,
-                                         other->struct_.fields);
+            return eq__CIDeclStructField(self_fields, other_fields);
+        }
         case CI_DATA_TYPE_KIND_TYPEDEF:
             return !strcmp(self->typedef_.name->buffer,
                            other->typedef_.name->buffer) &&
                    eq__CIGenericParams(self->typedef_.generic_params,
                                        other->typedef_.generic_params);
-        case CI_DATA_TYPE_KIND_UNION:
-            TODO("eq__CIDataType: union data type");
         case CI_DATA_TYPE_KIND_BOOL:
         case CI_DATA_TYPE_KIND_CHAR:
         case CI_DATA_TYPE_KIND_DOUBLE:
