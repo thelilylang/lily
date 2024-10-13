@@ -1252,6 +1252,14 @@ typecheck_struct_field__CIParser(const CIParser *self,
                                  const Vec *right_fields,
                                  struct CITypecheckContext *typecheck_ctx);
 
+/// @param left_fields const Vec<CIDeclStructField*>* (&)
+/// @param right_fields const Vec<CIDeclStructField*>* (&)
+static bool
+typecheck_union_field__CIParser(const CIParser *self,
+                                const Vec *decl_fields,
+                                const Vec *called_fields,
+                                struct CITypecheckContext *typecheck_ctx);
+
 /// @note This is a very specific case, but it allows you to manage
 /// the situation where you declare a struct with an array
 /// initializer, and all the fields in the struct are of the same
@@ -1277,6 +1285,20 @@ is_valid_implicit_cast_from_array_to_struct__CIParser(
   struct CITypecheckContext *typecheck_ctx);
 
 static bool
+is_valid_implicit_cast_from_array_to_union__CIParser(
+  const CIParser *self,
+  CIDataType *array_dt,
+  CIDataType *union_dt,
+  struct CITypecheckContext *typecheck_ctx);
+
+static bool
+is_valid_implicit_cast_from_struct_to_union__CIParser(
+  const CIParser *self,
+  CIDataType *struct_dt,
+  CIDataType *union_dt,
+  struct CITypecheckContext *typecheck_ctx);
+
+static bool
 is_valid_implicit_cast__CIParser(const CIParser *self,
                                  CIDataType *left,
                                  CIDataType *right,
@@ -1286,6 +1308,7 @@ static bool
 perform_typecheck__CIParser(const CIParser *self,
                             CIDataType *expected_data_type,
                             CIDataType *given_data_type,
+                            bool can_try,
                             struct CITypecheckContext *typecheck_ctx);
 
 static void
@@ -9207,12 +9230,49 @@ typecheck_struct_field__CIParser(const CIParser *self,
         if (!perform_typecheck__CIParser(self,
                                          left_field->data_type,
                                          right_field->data_type,
+                                         false,
                                          typecheck_ctx)) {
             return false;
         }
     }
 
     return true;
+}
+
+bool
+typecheck_union_field__CIParser(const CIParser *self,
+                                const Vec *decl_fields,
+                                const Vec *called_fields,
+                                struct CITypecheckContext *typecheck_ctx)
+{
+    if (called_fields->len > 1) {
+        FAILED("expected one or zero field for a union initializer");
+    } else if (called_fields->len == 0) {
+        return true;
+    }
+
+    CIDeclStructField *called_field = last__Vec(called_fields);
+
+    for (Usize i = 0; i < decl_fields->len; ++i) {
+        CIDeclStructField *decl_field = get__Vec(decl_fields, i);
+
+        if ((called_field->name &&
+             !strcmp(called_field->name->buffer, decl_field->name->buffer)) ||
+            !called_field->name) {
+            if (perform_typecheck__CIParser(self,
+                                            called_field->data_type,
+                                            decl_field->data_type,
+                                            true,
+                                            typecheck_ctx)) {
+                return true;
+            }
+        }
+    }
+
+    FAILED("the data type of the given field in the union don't match with any "
+           "fields of the union");
+
+    return false;
 }
 
 bool
@@ -9240,6 +9300,58 @@ is_valid_implicit_cast_from_array_to_struct__CIParser(
     FREE(Vec, fields_from_array_dt);
 
     return is_valid_struct_field;
+}
+
+bool
+is_valid_implicit_cast_from_array_to_union__CIParser(
+  const CIParser *self,
+  CIDataType *array_dt,
+  CIDataType *union_dt,
+  struct CITypecheckContext *typecheck_ctx)
+{
+    ASSERT(is_sized_array__CIDataType(array_dt));
+
+    const Vec *union_dt_fields = get_fields_from_data_type__CIParser(
+      self,
+      union_dt,
+      typecheck_ctx->current_generic_params.called,
+      typecheck_ctx->current_generic_params.decl);
+    Vec *fields_from_array_dt = build_fields_from_data_type__CIDeclStructField(
+      array_dt->array.data_type, 1);
+    bool is_valid_union_field = typecheck_union_field__CIParser(
+      self, union_dt_fields, fields_from_array_dt, typecheck_ctx);
+
+    FREE_BUFFER_ITEMS(fields_from_array_dt->buffer,
+                      fields_from_array_dt->len,
+                      CIDeclStructField);
+    FREE(Vec, fields_from_array_dt);
+
+    return is_valid_union_field;
+}
+
+bool
+is_valid_implicit_cast_from_struct_to_union__CIParser(
+  const CIParser *self,
+  CIDataType *struct_dt,
+  CIDataType *union_dt,
+  struct CITypecheckContext *typecheck_ctx)
+{
+    const Vec *struct_fields = get_fields_from_data_type__CIParser(
+      self,
+      struct_dt,
+      typecheck_ctx->current_generic_params.called,
+      typecheck_ctx->current_generic_params.decl);
+    const Vec *union_fields = get_fields_from_data_type__CIParser(
+      self,
+      union_dt,
+      typecheck_ctx->current_generic_params.called,
+      typecheck_ctx->current_generic_params.decl);
+
+    ASSERT(struct_fields);
+    ASSERT(union_fields);
+
+    return typecheck_union_field__CIParser(
+      self, union_fields, struct_fields, typecheck_ctx);
 }
 
 bool
@@ -9293,7 +9405,8 @@ is_valid_implicit_cast__CIParser(const CIParser *self,
                         return is_valid_implicit_cast_from_array_to_struct__CIParser(
                           self, right, left, typecheck_ctx);
                     case CI_DATA_TYPE_KIND_UNION:
-                        TODO("union case");
+                        return is_valid_implicit_cast_from_array_to_union__CIParser(
+                          self, right, left, typecheck_ctx);
                     default:
                         break;
                 }
@@ -9411,7 +9524,11 @@ is_valid_implicit_cast__CIParser(const CIParser *self,
                                   right_fields,
                                   typecheck_ctx);
                             case CI_DATA_TYPE_KIND_UNION:
-                                TODO("typecheck union field");
+                                return typecheck_union_field__CIParser(
+                                  self,
+                                  left_fields,
+                                  right_fields,
+                                  typecheck_ctx);
                             default:
                                 UNREACHABLE("unknown variant in this case")
                         }
@@ -9419,6 +9536,13 @@ is_valid_implicit_cast__CIParser(const CIParser *self,
                 }
 
                 return false;
+            } else if (left->kind == CI_DATA_TYPE_KIND_STRUCT &&
+                       right->kind == CI_DATA_TYPE_KIND_UNION) {
+                return is_valid_implicit_cast_from_struct_to_union__CIParser(
+                  self, left, right, typecheck_ctx);
+            } else {
+                return is_valid_implicit_cast_from_struct_to_union__CIParser(
+                  self, right, left, typecheck_ctx);
             }
 
             return false;
@@ -9431,6 +9555,7 @@ bool
 perform_typecheck__CIParser(const CIParser *self,
                             CIDataType *expected_data_type,
                             CIDataType *given_data_type,
+                            bool can_try,
                             struct CITypecheckContext *typecheck_ctx)
 {
     CIDataType *resolved_expected_data_type =
@@ -9457,7 +9582,9 @@ perform_typecheck__CIParser(const CIParser *self,
             FREE(CIDataType, resolved_expected_data_type);
             FREE(CIDataType, resolved_given_data_type);
 
-            FAILED("data types don't match");
+            if (!can_try) {
+                FAILED("data types don't match");
+            }
 
             return false;
         }
@@ -9529,7 +9656,8 @@ typecheck_binary_expr__CIParser(const CIParser *self,
               typecheck_ctx->current_generic_params.called,
               typecheck_ctx->current_generic_params.called);
 
-            perform_typecheck__CIParser(self, left_dt, right_dt, typecheck_ctx);
+            perform_typecheck__CIParser(
+              self, left_dt, right_dt, false, typecheck_ctx);
 
             FREE(CIDataType, left_dt);
             FREE(CIDataType, right_dt);
@@ -9772,7 +9900,7 @@ typecheck_ternary_expr__CIParser(const CIParser *self,
       typecheck_ctx->current_generic_params.called,
       typecheck_ctx->current_generic_params.decl);
 
-    perform_typecheck__CIParser(self, if_dt, else_dt, typecheck_ctx);
+    perform_typecheck__CIParser(self, if_dt, else_dt, false, typecheck_ctx);
 
     FREE(CIDataType, if_dt);
     FREE(CIDataType, else_dt);
@@ -9849,7 +9977,7 @@ typecheck_expr__CIParser(const CIParser *self,
     ASSERT(given_expr_dt);
 
     perform_typecheck__CIParser(
-      self, expected_data_type, given_expr_dt, typecheck_ctx);
+      self, expected_data_type, given_expr_dt, false, typecheck_ctx);
 
     FREE(CIDataType, given_expr_dt);
 }
