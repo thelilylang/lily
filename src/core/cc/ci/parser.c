@@ -9371,12 +9371,19 @@ is_valid_implicit_cast__CIParser(const CIParser *self,
         case CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT:
         case CI_DATA_TYPE_KIND_UNSIGNED_LONG_LONG_INT:
         case CI_DATA_TYPE_KIND_UNSIGNED_SHORT_INT:
+            // NOTE: For the moment, we accept a cast from a float to an integer
+            // without emitting a warning/error.
             return is_integer_data_type__CIParser(
-              (CIParser *)self,
-              left,
-              true,
-              typecheck_ctx->current_generic_params.called,
-              typecheck_ctx->current_generic_params.decl);
+                     (CIParser *)self,
+                     left,
+                     true,
+                     typecheck_ctx->current_generic_params.called,
+                     typecheck_ctx->current_generic_params.decl) ||
+                   is_float_data_type__CIParser(
+                     (CIParser *)self,
+                     left,
+                     typecheck_ctx->current_generic_params.called,
+                     typecheck_ctx->current_generic_params.decl);
         case CI_DATA_TYPE_KIND_DOUBLE:
         case CI_DATA_TYPE_KIND_DOUBLE__COMPLEX:
         case CI_DATA_TYPE_KIND_DOUBLE__IMAGINARY:
@@ -9389,11 +9396,19 @@ is_valid_implicit_cast__CIParser(const CIParser *self,
         case CI_DATA_TYPE_KIND_LONG_DOUBLE:
         case CI_DATA_TYPE_KIND_LONG_DOUBLE__COMPLEX:
         case CI_DATA_TYPE_KIND_LONG_DOUBLE__IMAGINARY:
+            // NOTE: For the moment, we accept a cast from an integer to a float
+            // without emitting a warning/error.
             return is_float_data_type__CIParser(
-              (CIParser *)self,
-              left,
-              typecheck_ctx->current_generic_params.called,
-              typecheck_ctx->current_generic_params.decl);
+                     (CIParser *)self,
+                     left,
+                     typecheck_ctx->current_generic_params.called,
+                     typecheck_ctx->current_generic_params.decl) ||
+                   is_integer_data_type__CIParser(
+                     (CIParser *)self,
+                     left,
+                     true,
+                     typecheck_ctx->current_generic_params.called,
+                     typecheck_ctx->current_generic_params.decl);
         case CI_DATA_TYPE_KIND_TYPEDEF:
             UNREACHABLE(
               "impossible to get typedef at this point (already resolved)");
@@ -9540,7 +9555,8 @@ is_valid_implicit_cast__CIParser(const CIParser *self,
                        right->kind == CI_DATA_TYPE_KIND_UNION) {
                 return is_valid_implicit_cast_from_struct_to_union__CIParser(
                   self, left, right, typecheck_ctx);
-            } else {
+            } else if (left->kind == CI_DATA_TYPE_KIND_UNION &&
+                       right->kind == CI_DATA_TYPE_KIND_STRUCT) {
                 return is_valid_implicit_cast_from_struct_to_union__CIParser(
                   self, right, left, typecheck_ctx);
             }
@@ -9933,6 +9949,9 @@ typecheck_expr__CIParser(const CIParser *self,
 
             typecheck_expr__CIParser(
               self, expected_dt, given_expr->cast.expr, typecheck_ctx);
+
+            // TODO: Implement a specific check to verify what can be cast
+            // explicitly.
 
             FREE(CIDataType, expected_dt);
 
