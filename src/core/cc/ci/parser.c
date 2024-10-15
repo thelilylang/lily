@@ -9361,6 +9361,7 @@ is_valid_implicit_cast__CIParser(const CIParser *self,
                                  struct CITypecheckContext *typecheck_ctx)
 {
     switch (right->kind) {
+        case CI_DATA_TYPE_KIND_BOOL:
         case CI_DATA_TYPE_KIND_CHAR:
         case CI_DATA_TYPE_KIND_INT:
         case CI_DATA_TYPE_KIND_LONG_INT:
