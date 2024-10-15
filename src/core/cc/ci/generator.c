@@ -253,6 +253,8 @@ static Usize tab_count = 0;
 static CIGenericParams *current_generic_params = NULL;
 static CIGenericParams *current_called_generic_params = NULL;
 
+static enum CIStandard current_standard = CI_STANDARD_NONE;
+
 #define SET_CURRENT_GENERIC_PARAMS(cgp, ccgp) \
     current_generic_params = cgp;             \
     current_called_generic_params = ccgp;
@@ -516,7 +518,11 @@ generate_data_type__CIGenerator(CIDataType *data_type)
 
             break;
         case CI_DATA_TYPE_KIND_BOOL:
-            write_str__CIGenerator("bool");
+            if (current_standard < CI_STANDARD_23) {
+                write_str__CIGenerator("_Bool");
+            } else {
+                write_str__CIGenerator("bool");
+            }
 
             break;
         case CI_DATA_TYPE_KIND_BUILTIN: {
@@ -1843,6 +1849,12 @@ void
 run_file__CIGenerator(const CIResultFile *file_result)
 {
     current_result_content = NEW(String);
+
+    // Set the standard specified in the project configuration.
+    if (current_standard == CI_STANDARD_NONE) {
+        current_standard = file_result->scanner.config->standard;
+    }
+
     // TODO: Add a possibly to the user to "create its custom output director"
     const char *output_dir = "out.ci";
     String *dir_result = format__String(
