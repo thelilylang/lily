@@ -1,4 +1,4 @@
-#include <stdbool.h>
+#define bool int
 
 int main() {
 	bool a = 20 == 10;
