@@ -10208,7 +10208,9 @@ typecheck_for_stmt__CIParser(const CIParser *self,
                              const CIStmtFor *for_,
                              struct CITypecheckContext *typecheck_ctx)
 {
-    typecheck_body_item__CIParser(self, for_->init_clause, typecheck_ctx);
+    if (for_->init_clause) {
+        typecheck_body_item__CIParser(self, for_->init_clause, typecheck_ctx);
+    }
 
     if (for_->expr1) {
         typecheck_condition_expr__CIParser(self, for_->expr1, typecheck_ctx);
