@@ -2220,6 +2220,7 @@ is_integer_data_type__CIParser(CIParser *self,
 
             return res;
         }
+        case CI_DATA_TYPE_KIND_ARRAY:
         case CI_DATA_TYPE_KIND_PTR: // via implicit cast
             return allow_implicit_cast;
         case CI_DATA_TYPE_KIND_PRE_CONST:
@@ -8492,8 +8493,14 @@ infer_expr_literal_data_type__CIParser(const CIParser *self,
         case CI_EXPR_LITERAL_KIND_SIGNED_INT:
             return int__PrimaryDataTypes();
         case CI_EXPR_LITERAL_KIND_STRING: {
-            CIDataType *string_dt = NEW_VARIANT(
-              CIDataType, ptr, NEW(CIDataType, CI_DATA_TYPE_KIND_CHAR));
+            CIDataType *string_dt =
+              NEW_VARIANT(CIDataType,
+                          array,
+                          NEW_VARIANT(CIDataTypeArray,
+                                      sized,
+                                      char__PrimaryDataTypes(),
+                                      NULL,
+                                      literal->string.value->len));
 
             set_context__CIDataType(string_dt, CI_DATA_TYPE_CONTEXT_STACK);
 
@@ -9461,10 +9468,10 @@ is_valid_implicit_cast__CIParser(const CIParser *self,
                   self, left_ptr_dt, right_ptr_dt, typecheck_ctx);
             }
 
-            // This case is designed to ensure that a pointer is compatible with
-            // an integer.
+            // This case is designed to ensure that a pointer or an array is
+            // compatible with an integer.
             //
-            // Valid: (void*)0
+            // Valid: (void*)0, {1,2,3}, "hello"
             if (is_integer_data_type__CIParser(
                   (CIParser *)self,
                   left,
@@ -10259,6 +10266,8 @@ typecheck_return_stmt__CIParser(const CIParser *self,
                                 const CIExpr *return_,
                                 struct CITypecheckContext *typecheck_ctx)
 {
+    ASSERT(typecheck_ctx->current_decl);
+
     const CIDataType *given_return_data_type =
       get_return_data_type__CIDecl(typecheck_ctx->current_decl);
 
