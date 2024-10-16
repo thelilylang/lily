@@ -90,7 +90,7 @@ process_standard "c89" $C89
 process_standard "c99" $C99
 process_standard "c11" $C11
 process_standard "c17" $C17
-process_standard "c2x" $C23
+process_standard "c23" $C23
 
 # $1 program
 function summary_program() {

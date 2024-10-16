@@ -37,7 +37,7 @@ static const char *std[CI_STANDARD_23 + 1] = {
     [CI_STANDARD_KR] = "c89", // NOTE: Not real K&R support of GCC, Clang
     [CI_STANDARD_89] = "c89", [CI_STANDARD_95] = "iso9899:199409",
     [CI_STANDARD_99] = "c99", [CI_STANDARD_11] = "c11",
-    [CI_STANDARD_17] = "c17", [CI_STANDARD_23] = "c2x",
+    [CI_STANDARD_17] = "c17", [CI_STANDARD_23] = "c23",
 };
 
 static CIResultFile *predefined_file_ref = NULL; // CIResultFile* (&)
