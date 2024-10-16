@@ -10064,6 +10064,8 @@ typecheck_body_item__CIParser(const CIParser *self,
             break;
         case CI_DECL_FUNCTION_ITEM_KIND_EXPR:
             typecheck_expr_and_try_discard(self, item->expr, typecheck_ctx);
+
+            break;
         case CI_DECL_FUNCTION_ITEM_KIND_STMT:
             typecheck_stmt__CIParser(self, &item->stmt, typecheck_ctx);
 
