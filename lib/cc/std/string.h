@@ -55,7 +55,7 @@ extern char *strstr(const char *s1, const char *s2);
 extern char *strok(char * /* restrict */ s1, const char * /* restrict */ s2);
 extern void *memset(void *s, int c, size_t n);
 extern char *strerror(int errnum);
-size_t strlen(const char *s);
+extern size_t strlen(const char *s);
 
 __END_DECLS
 
