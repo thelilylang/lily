@@ -1374,6 +1374,12 @@ typecheck_expr__CIParser(const CIParser *self,
                          const CIExpr *given_expr,
                          struct CITypecheckContext *typecheck_ctx);
 
+/// @brief Typecheck the expression and try to discard it whenever possible.
+static void
+typecheck_expr_and_try_discard(const CIParser *self,
+                               CIExpr *expr,
+                               struct CITypecheckContext *typecheck_ctx);
+
 /// @param body const CIDeclFunctionItem* (&)
 /// @param called_generic_params const CIGenericParams*? (&)
 /// @param decl_generic_params const CIGenericParams*? (&)
@@ -8634,18 +8640,6 @@ infer_expr_data_type__CIParser(const CIParser *self,
                       current_scope_id,
                       called_generic_params,
                       decl_generic_params);
-                case CI_EXPR_BINARY_KIND_ASSIGN:
-                case CI_EXPR_BINARY_KIND_ASSIGN_ADD:
-                case CI_EXPR_BINARY_KIND_ASSIGN_SUB:
-                case CI_EXPR_BINARY_KIND_ASSIGN_MUL:
-                case CI_EXPR_BINARY_KIND_ASSIGN_DIV:
-                case CI_EXPR_BINARY_KIND_ASSIGN_MOD:
-                case CI_EXPR_BINARY_KIND_ASSIGN_BIT_AND:
-                case CI_EXPR_BINARY_KIND_ASSIGN_BIT_OR:
-                case CI_EXPR_BINARY_KIND_ASSIGN_XOR:
-                case CI_EXPR_BINARY_KIND_ASSIGN_BIT_LSHIFT:
-                case CI_EXPR_BINARY_KIND_ASSIGN_BIT_RSHIFT:
-                    return void__PrimaryDataTypes();
                 default:
                     break;
             }
@@ -10003,6 +9997,62 @@ typecheck_expr__CIParser(const CIParser *self,
 }
 
 void
+typecheck_expr_and_try_discard(const CIParser *self,
+                               CIExpr *expr,
+                               struct CITypecheckContext *typecheck_ctx)
+{
+    CIDataType *expected_dt = NULL;
+
+    // Here are the expressions whose value can be discarded by default.
+    switch (expr->kind) {
+        case CI_EXPR_KIND_BINARY:
+            switch (expr->binary.kind) {
+                case CI_EXPR_BINARY_KIND_ASSIGN:
+                case CI_EXPR_BINARY_KIND_ASSIGN_ADD:
+                case CI_EXPR_BINARY_KIND_ASSIGN_SUB:
+                case CI_EXPR_BINARY_KIND_ASSIGN_MUL:
+                case CI_EXPR_BINARY_KIND_ASSIGN_DIV:
+                case CI_EXPR_BINARY_KIND_ASSIGN_MOD:
+                case CI_EXPR_BINARY_KIND_ASSIGN_BIT_AND:
+                case CI_EXPR_BINARY_KIND_ASSIGN_BIT_OR:
+                case CI_EXPR_BINARY_KIND_ASSIGN_XOR:
+                case CI_EXPR_BINARY_KIND_ASSIGN_BIT_LSHIFT:
+                case CI_EXPR_BINARY_KIND_ASSIGN_BIT_RSHIFT:
+                    goto expected_any;
+                default:
+                    goto expected_void;
+            }
+        case CI_EXPR_KIND_FUNCTION_CALL:
+        case CI_EXPR_KIND_FUNCTION_CALL_BUILTIN:
+        expected_any:
+            // NOTE: In order to discard the value of a function call,
+            // we expect the any type, which is usually only used for
+            // builtins, but which has the particularity of accepting
+            // all types.
+            expected_dt = any__PrimaryDataTypes();
+
+            break;
+        case CI_EXPR_KIND_UNARY:
+            switch (expr->unary.kind) {
+                case CI_EXPR_UNARY_KIND_PRE_INCREMENT:
+                case CI_EXPR_UNARY_KIND_POST_INCREMENT:
+                case CI_EXPR_UNARY_KIND_PRE_DECREMENT:
+                case CI_EXPR_UNARY_KIND_POST_DECREMENT:
+                    goto expected_any;
+                default:
+                    goto expected_void;
+            }
+        default:
+        expected_void:
+            expected_dt = void__PrimaryDataTypes();
+    }
+
+    typecheck_expr__CIParser(self, expected_dt, expr, typecheck_ctx);
+
+    FREE(CIDataType, expected_dt);
+}
+
+void
 typecheck_body_item__CIParser(const CIParser *self,
                               const CIDeclFunctionItem *item,
                               struct CITypecheckContext *typecheck_ctx)
@@ -10012,30 +10062,8 @@ typecheck_body_item__CIParser(const CIParser *self,
             typecheck_decl__CIParser(self, item->decl, typecheck_ctx);
 
             break;
-        case CI_DECL_FUNCTION_ITEM_KIND_EXPR: {
-            CIDataType *expected_dt = NULL;
-
-            switch (item->expr->kind) {
-                case CI_EXPR_KIND_FUNCTION_CALL:
-                case CI_EXPR_KIND_FUNCTION_CALL_BUILTIN:
-                    // NOTE: In order to discard the value of a function call,
-                    // we expect the any type, which is usually only used for
-                    // builtins, but which has the particularity of accepting
-                    // all types.
-                    expected_dt = any__PrimaryDataTypes();
-
-                    break;
-                default:
-                    expected_dt = void__PrimaryDataTypes();
-            }
-
-            typecheck_expr__CIParser(
-              self, expected_dt, item->expr, typecheck_ctx);
-
-            FREE(CIDataType, expected_dt);
-
-            break;
-        }
+        case CI_DECL_FUNCTION_ITEM_KIND_EXPR:
+            typecheck_expr_and_try_discard(self, item->expr, typecheck_ctx);
         case CI_DECL_FUNCTION_ITEM_KIND_STMT:
             typecheck_stmt__CIParser(self, &item->stmt, typecheck_ctx);
 
@@ -10192,8 +10220,7 @@ typecheck_for_stmt__CIParser(const CIParser *self,
         for (Usize i = 0; i < for_->exprs2->len; ++i) {
             CIExpr *expr2 = get__Vec(for_->exprs2, i);
 
-            typecheck_expr__CIParser(
-              self, expected_expr2_dt, expr2, typecheck_ctx);
+            typecheck_expr_and_try_discard(self, expr2, typecheck_ctx);
         }
 
         FREE(CIDataType, expected_expr2_dt);
