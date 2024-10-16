@@ -682,6 +682,14 @@ token_is_data_type__CIParser(CIParser *self, const CIToken *token);
 static inline bool
 is_data_type__CIParser(CIParser *self);
 
+/// @brief Check if the passed token is a storage class.
+static bool
+token_is_storage_class__CIParser(CIParser *self, const CIToken *token);
+
+/// @brief Check if the current token can be a storage class.
+static inline bool
+is_storage_class__CIParser(CIParser *self);
+
 static CIDataType *
 substitute_and_generate_from_data_type__CIParser(
   CIParser *self,
@@ -5504,6 +5512,31 @@ bool
 is_data_type__CIParser(CIParser *self)
 {
     return token_is_data_type__CIParser(self, self->current_token);
+}
+
+bool
+token_is_storage_class__CIParser(CIParser *self, const CIToken *token)
+{
+    switch (token->kind) {
+        case CI_TOKEN_KIND_KEYWORD_AUTO:
+        case CI_TOKEN_KIND_KEYWORD_CONSTEXPR:
+        case CI_TOKEN_KIND_KEYWORD_EXTERN:
+        case CI_TOKEN_KIND_KEYWORD_INLINE:
+        case CI_TOKEN_KIND_KEYWORD_REGISTER:
+        case CI_TOKEN_KIND_KEYWORD_STATIC:
+        case CI_TOKEN_KIND_KEYWORD_THREAD_LOCAL:
+        case CI_TOKEN_KIND_KEYWORD__THREAD_LOCAL:
+        case CI_TOKEN_KIND_KEYWORD_TYPEDEF:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool
+is_storage_class__CIParser(CIParser *self)
+{
+    return token_is_storage_class__CIParser(self, self->current_token);
 }
 
 CIDataType *
@@ -10872,7 +10905,8 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
             return NULL;
         default:
         default_case: {
-            if (is_data_type__CIParser(self)) {
+            if (is_data_type__CIParser(self) ||
+                is_storage_class__CIParser(self)) {
             parse_decl: {
                 CIDecl *decl = parse_decl__CIParser(self);
 
