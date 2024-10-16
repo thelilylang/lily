@@ -1378,9 +1378,9 @@ generate_function_for_stmt__CIGenerator(const CIStmtFor *for_)
 
     if (for_->init_clause) {
         generate_function_body_item__CIGenerator(for_->init_clause);
+    } else {
+        write_str__CIGenerator(";");
     }
-
-    write_str__CIGenerator(";");
 
     if (for_->expr1) {
         generate_function_expr__CIGenerator(for_->expr1);
