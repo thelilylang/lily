@@ -1426,6 +1426,11 @@ typecheck_for_stmt__CIParser(const CIParser *self,
                              const CIStmtFor *for_,
                              struct CITypecheckContext *typecheck_ctx);
 
+static void
+typecheck_goto_stmt__CIParser(const CIParser *self,
+                              const String *goto_,
+                              struct CITypecheckContext *typecheck_ctx);
+
 /// @param return_ const CIExpr*? (&)
 static void
 typecheck_return_stmt__CIParser(const CIParser *self,
@@ -10234,6 +10239,22 @@ typecheck_for_stmt__CIParser(const CIParser *self,
 }
 
 void
+typecheck_goto_stmt__CIParser(const CIParser *self,
+                              const String *goto_,
+                              struct CITypecheckContext *typecheck_ctx)
+{
+    const CIScope *local_current_scope = get_scope_from_id__CIResultFile(
+      self->file, typecheck_ctx->current_scope_id);
+
+    CIDecl *label_decl =
+      search_label__CIResultFile(self->file, local_current_scope, goto_);
+
+    if (!label_decl) {
+        FAILED("the specified label defined in goto doesn't exist");
+    }
+}
+
+void
 typecheck_return_stmt__CIParser(const CIParser *self,
                                 const CIExpr *return_,
                                 struct CITypecheckContext *typecheck_ctx)
@@ -10333,7 +10354,8 @@ typecheck_stmt__CIParser(const CIParser *self,
             return typecheck_for_stmt__CIParser(
               self, &given_stmt->for_, typecheck_ctx);
         case CI_STMT_KIND_GOTO:
-            TODO("typecheck goto");
+            return typecheck_goto_stmt__CIParser(
+              self, given_stmt->goto_, typecheck_ctx);
         case CI_STMT_KIND_IF:
             return typecheck_if_stmt__CIParser(
               self, &given_stmt->if_, typecheck_ctx);
