@@ -1000,12 +1000,12 @@ generate_function_unary_expr__CIGenerator(const CIExprUnary *unary)
     char *s_kind = NULL;
 
     switch (unary->kind) {
-        case CI_EXPR_UNARY_KIND_PRE_DECREMENT:
-            s_kind = "--";
+        case CI_EXPR_UNARY_KIND_POST_INCREMENT:
+            s_kind = "++";
 
             break;
-        case CI_EXPR_UNARY_KIND_PRE_INCREMENT:
-            s_kind = "++";
+        case CI_EXPR_UNARY_KIND_POST_DECREMENT:
+            s_kind = "--";
 
             break;
         default:
@@ -1020,12 +1020,12 @@ generate_function_unary_expr__CIGenerator(const CIExprUnary *unary)
     }
 
     switch (unary->kind) {
-        case CI_EXPR_UNARY_KIND_POST_INCREMENT:
-            s_kind = "++";
+        case CI_EXPR_UNARY_KIND_PRE_DECREMENT:
+            s_kind = "--";
 
             break;
-        case CI_EXPR_UNARY_KIND_POST_DECREMENT:
-            s_kind = "--";
+        case CI_EXPR_UNARY_KIND_PRE_INCREMENT:
+            s_kind = "++";
 
             break;
         case CI_EXPR_UNARY_KIND_POSITIVE:
