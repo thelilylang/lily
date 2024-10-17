@@ -1,5 +1,7 @@
 # Build
 
+## Introduction
+
 First, you need to load the git submodules.
 
 ```
@@ -11,10 +13,19 @@ make submodules
 > You can run the `make submodules_without_llvm` command instead.
 
 If you only want to use `Lily` locally to try it out, run:<br>
-NOTE: Currently there is no script to install Lily on the machine.
 
 ```bash
 ./scripts/patches/enable_local.sh
+```
+
+If you want to install Lily on your machine, you'll be able to do so when you finish building in release mode (configure with `make configure`):
+
+> [!CAUTION]
+> For the moment, the script only supports Unix machines and the Bash, Zsh and Fish shells.
+> The script will also modify your shell configuration file.
+
+```bash
+./scripts/install.sh
 ```
 
 ## Linux
