@@ -206,6 +206,9 @@ extern inline CONSTRUCTOR(CIDeclEnum,
 extern inline void
 free_as_prototype__CIDeclEnum(const CIDeclEnum *self);
 
+extern inline bool
+is_variable__CIDeclFunctionItem(const CIDeclFunctionItem *self);
+
 extern inline void
 add__CIDeclFunctionBody(CIDeclFunctionBody *self, CIDeclFunctionItem *item);
 
@@ -385,7 +388,7 @@ extern inline CONSTRUCTOR(CIStmtDoWhile,
 extern inline CONSTRUCTOR(CIStmtFor,
                           CIStmtFor,
                           CIDeclFunctionBody *body,
-                          CIDeclFunctionItem *init_clause,
+                          Vec *init_clauses,
                           CIExpr *expr1,
                           Vec *exprs2);
 

@@ -3409,9 +3409,9 @@ DESTRUCTOR(CIStmtDoWhile, const CIStmtDoWhile *self);
 typedef struct CIStmtFor
 {
     CIDeclFunctionBody *body;
-    CIDeclFunctionItem *init_clause; // CIDeclFunctionItem*?
-    CIExpr *expr1;                   // CIExpr*?
-    Vec *exprs2;                     // Vec<CIExpr*>*?
+    Vec *init_clauses; // Vec<CIDeclFunctionItem*>*?
+    CIExpr *expr1;     // CIExpr*?
+    Vec *exprs2;       // Vec<CIExpr*>*?
 } CIStmtFor;
 
 /**
@@ -3421,12 +3421,12 @@ typedef struct CIStmtFor
 inline CONSTRUCTOR(CIStmtFor,
                    CIStmtFor,
                    CIDeclFunctionBody *body,
-                   CIDeclFunctionItem *init_clause,
+                   Vec *init_clauses,
                    CIExpr *expr1,
                    Vec *exprs2)
 {
     return (CIStmtFor){ .body = body,
-                        .init_clause = init_clause,
+                        .init_clauses = init_clauses,
                         .expr1 = expr1,
                         .exprs2 = exprs2 };
 }
@@ -3816,6 +3816,17 @@ VARIANT_CONSTRUCTOR(CIDeclFunctionItem *,
  */
 bool
 is_for_init_clause__CIDeclFunctionItem(const CIDeclFunctionItem *self);
+
+/**
+ *
+ * @brief Check if `CIDeclFunctionItem` is a variable.
+ */
+inline bool
+is_variable__CIDeclFunctionItem(const CIDeclFunctionItem *self)
+{
+    return self->kind == CI_DECL_FUNCTION_ITEM_KIND_DECL &&
+           self->decl->kind == CI_DECL_KIND_VARIABLE;
+}
 
 /**
  *
