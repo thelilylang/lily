@@ -7895,7 +7895,7 @@ parse_primary_expr__CIParser(CIParser *self)
         case CI_TOKEN_KIND_PLUS_PLUS:
         case CI_TOKEN_KIND_MINUS_MINUS: {
             enum CITokenKind unary_token_kind = self->previous_token->kind;
-            CIExpr *expr = parse_primary_expr__CIParser(self);
+            CIExpr *expr = parse_expr__CIParser(self);
 
             if (!expr) {
                 return NULL;
