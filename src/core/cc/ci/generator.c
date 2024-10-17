@@ -263,6 +263,13 @@ static enum CIStandard current_standard = CI_STANDARD_NONE;
     current_generic_params = NULL;     \
     current_called_generic_params = NULL;
 
+// This variable can be used to disable the writing of ';' on file contents, for
+// example when generating an expression or variable declaration.
+static bool write_semicolon = true;
+
+#define SET_WRITE_SEMICOLON() write_semicolon = true;
+#define UNSET_WRITE_SEMICOLON() write_semicolon = false;
+
 void
 set_result_ref__CIGenerator(const CIResult *result)
 {
@@ -1376,17 +1383,28 @@ generate_function_for_stmt__CIGenerator(const CIStmtFor *for_)
 {
     write_str__CIGenerator("for (");
 
-    if (for_->init_clause) {
-        generate_function_body_item__CIGenerator(for_->init_clause);
-    } else {
-        write_str__CIGenerator(";");
+    if (for_->init_clauses) {
+        UNSET_WRITE_SEMICOLON();
+
+        for (Usize i = 0; i < for_->init_clauses->len; ++i) {
+            generate_function_body_item__CIGenerator(
+              get__Vec(for_->init_clauses, i));
+
+            if (i + 1 != for_->init_clauses->len) {
+                write__CIGenerator(',');
+            }
+        }
+
+        SET_WRITE_SEMICOLON();
     }
+
+    write__CIGenerator(';');
 
     if (for_->expr1) {
         generate_function_expr__CIGenerator(for_->expr1);
     }
 
-    write_str__CIGenerator(";");
+    write__CIGenerator(';');
 
     if (for_->exprs2) {
         for (Usize i = 0; i < for_->exprs2->len; ++i) {
@@ -1493,7 +1511,10 @@ generate_function_body_item__CIGenerator(const CIDeclFunctionItem *item)
             break;
         case CI_DECL_FUNCTION_ITEM_KIND_EXPR:
             generate_function_expr__CIGenerator(item->expr);
-            write_str__CIGenerator(";\n");
+
+            if (write_semicolon) {
+                write_str__CIGenerator(";\n");
+            }
 
             break;
         case CI_DECL_FUNCTION_ITEM_KIND_STMT:
@@ -1645,7 +1666,9 @@ generate_variable_decl__CIGenerator(const CIDeclVariable *variable)
         generate_function_expr__CIGenerator(variable->expr);
     }
 
-    write_str__CIGenerator(";\n");
+    if (write_semicolon) {
+        write_str__CIGenerator(";\n");
+    }
 }
 
 void

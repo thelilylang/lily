@@ -1740,6 +1740,17 @@ static bool in_function_body = false;
 #define SET_IN_FUNCTION_BODY() in_function_body = true;
 #define UNSET_IN_FUNCTION_BODY() in_function_body = false;
 
+// In some situations we don't want to eat the `;` token, for example when
+// parsing variable declarations in a `for` loop.
+//
+// e.g.
+//
+// for (int i = 0, a = 20;;);
+static bool eat_semicolon = true;
+
+#define SET_EAT_SEMICOLON() eat_semicolon = true;
+#define UNSET_EAT_SEMICOLON() eat_semicolon = false;
+
 static const SizedStr ci_standard_attributes[CI_N_STANDARD_ATTRIBUTE] = {
     SIZED_STR_FROM_RAW("_Noreturn"),
     SIZED_STR_FROM_RAW("___Noreturn__"),
@@ -6231,9 +6242,13 @@ visit_function_stmt_for__CIParser(CIParser *self,
                                   CIGenericParams *called_generic_params,
                                   CIGenericParams *decl_generic_params)
 {
-    if (for_->init_clause) {
-        visit_function_item__CIParser(
-          self, for_->init_clause, called_generic_params, decl_generic_params);
+    if (for_->init_clauses) {
+        for (Usize i = 0; i < for_->init_clauses->len; ++i) {
+            visit_function_item__CIParser(self,
+                                          get__Vec(for_->init_clauses, i),
+                                          called_generic_params,
+                                          decl_generic_params);
+        }
     }
 
     if (for_->expr1) {
@@ -10255,8 +10270,11 @@ typecheck_for_stmt__CIParser(const CIParser *self,
                              const CIStmtFor *for_,
                              struct CITypecheckContext *typecheck_ctx)
 {
-    if (for_->init_clause) {
-        typecheck_body_item__CIParser(self, for_->init_clause, typecheck_ctx);
+    if (for_->init_clauses) {
+        for (Usize i = 0; i < for_->init_clauses->len; ++i) {
+            typecheck_body_item__CIParser(
+              self, get__Vec(for_->init_clauses, i), typecheck_ctx);
+        }
     }
 
     if (for_->expr1) {
@@ -10509,9 +10527,9 @@ parse_case__CIParser(CIParser *self)
 CIDeclFunctionItem *
 parse_for_stmt__CIParser(CIParser *self, bool in_switch)
 {
-    CIDeclFunctionItem *init_clause = NULL;
+    Vec *init_clauses = NULL; // Vec<CIDeclFunctionItem*>*?
     CIExpr *expr1 = NULL;
-    Vec *exprs2 = NULL;
+    Vec *exprs2 = NULL; // Vec<CIExpr*>*?
     CIDeclFunctionBody *body = NULL;
 
     expect__CIParser(self, CI_TOKEN_KIND_LPAREN, true);
@@ -10521,14 +10539,38 @@ parse_for_stmt__CIParser(CIParser *self, bool in_switch)
             next_token__CIParser(self);
             break;
         default:
-            init_clause =
-              parse_function_body_item__CIParser(self, false, false);
+            init_clauses = NEW(Vec);
 
-            if (init_clause) {
+            UNSET_EAT_SEMICOLON();
+
+            while (self->current_token->kind != CI_TOKEN_KIND_EOF) {
+                CIDeclFunctionItem *init_clause =
+                  parse_function_body_item__CIParser(self, false, false);
+
                 if (!is_for_init_clause__CIDeclFunctionItem(init_clause)) {
                     FAILED("expected valid for init-clause");
+                } else if (is_variable__CIDeclFunctionItem(init_clause) &&
+                           self->scanner->config->standard < CI_STANDARD_99) {
+                    FAILED("it is impossible to have a variable declaration in "
+                           "an `init clause` before C99");
+                }
+
+                push__Vec(init_clauses, init_clause);
+
+                switch (self->current_token->kind) {
+                    case CI_TOKEN_KIND_COMMA:
+                        next_token__CIParser(self);
+
+                        continue;
+                    default:
+                        goto parse_init_clauses_exit;
                 }
             }
+
+        parse_init_clauses_exit:
+            expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
+
+            SET_EAT_SEMICOLON();
     }
 
     switch (self->current_token->kind) {
@@ -10583,7 +10625,7 @@ parse_for_stmt__CIParser(CIParser *self, bool in_switch)
         }
     }
 
-    return NEW_VARIANT(CIDeclFunctionItem, stmt, NEW_VARIANT(CIStmt, for, NEW(CIStmtFor, body, init_clause, expr1, exprs2)));
+    return NEW_VARIANT(CIDeclFunctionItem, stmt, NEW_VARIANT(CIStmt, for, NEW(CIStmtFor, body, init_clauses, expr1, exprs2)));
 }
 
 CIStmtIfBranch *
@@ -10925,7 +10967,9 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
             CIDeclFunctionItem *item =
               NEW_VARIANT(CIDeclFunctionItem, expr, parse_expr__CIParser(self));
 
-            expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
+            if (eat_semicolon) {
+                expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
+            }
 
             return item;
         }
@@ -11286,7 +11330,10 @@ parse_variable__CIParser(CIParser *self,
 
     switch (self->current_token->kind) {
         case CI_TOKEN_KIND_SEMICOLON:
-            next_token__CIParser(self);
+            if (eat_semicolon) {
+                next_token__CIParser(self);
+            }
+
             break;
         case CI_TOKEN_KIND_COMMA:
             break;

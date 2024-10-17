@@ -4913,14 +4913,25 @@ DESTRUCTOR(CIStmtDoWhile, const CIStmtDoWhile *self)
 String *
 IMPL_FOR_DEBUG(to_string, CIStmtFor, const CIStmtFor *self)
 {
-    String *res = format__String(
-      "CIStmtFor{{ body = {Sr}, init_clause = {Sr}, expr1 = {Sr}, exprs2 =",
-      to_string__Debug__CIDeclFunctionBody(self->body),
-      self->init_clause
-        ? to_string__Debug__CIDeclFunctionItem(self->init_clause)
-        : from__String("NULL"),
-      self->expr1 ? to_string__Debug__CIExpr(self->expr1)
-                  : from__String("NULL"));
+    String *res =
+      format__String("CIStmtFor{{ body = {Sr}, init_clause =",
+                     to_string__Debug__CIDeclFunctionBody(self->body));
+
+    if (self->init_clauses) {
+        DEBUG_VEC_STRING(self->exprs2, res, CIDeclFunctionItem);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, ", expr1 =");
+
+    if (self->expr1) {
+        String *s = to_string__Debug__CIExpr(self->expr1);
+
+        APPEND_AND_FREE(res, s);
+    } else {
+        push_str__String(res, " NULL");
+    }
 
     push_str__String(res, ", exprs2 =");
 
@@ -4940,8 +4951,11 @@ DESTRUCTOR(CIStmtFor, const CIStmtFor *self)
 {
     FREE(CIDeclFunctionBody, self->body);
 
-    if (self->init_clause) {
-        FREE(CIDeclFunctionItem, self->init_clause);
+    if (self->init_clauses) {
+        FREE_BUFFER_ITEMS(self->init_clauses->buffer,
+                          self->init_clauses->len,
+                          CIDeclFunctionItem);
+        FREE(Vec, self->init_clauses);
     }
 
     if (self->expr1) {
