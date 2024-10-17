@@ -38,44 +38,30 @@ In my case, the CI advantage is that I can translate Lily's source code in a ver
 
 ## Features
 
-For the time being, the only real feature is generic support:
+- Real generic support
+- C syntax support
+- Data type contexts
+- Built-in build system
+
+## Examples
 
 ```c
-struct Vec.[@T] {
-    @T *buffer;
-    unsigned int len;
-    unsigned int capacity;
-};
+#include <stdio.h>
 
-struct Vec.[@T] init__Vec.[@T]() {
-    return (struct Vec.[@T]){ .buffer = NULL, .len = 0, .capacity = 4 };
+// Generic function
+@T
+get.[@T](@T value) {
+    return value;
 }
 
 int main() {
-    struct Vec.[int] v = init__Vec.[int]();
+    printf("%d\n", get.[int](10));
+    printf("%s\n", get.[char*]("Hello, World!"));
 }
 ```
 
-Here's the C code generated from this file:
+You can find more code examples in the following [directory](/examples/core/cc/ci).
 
-```c
-struct Vec__16;
-struct Vec__16 init__Vec__16();
-int main();
+## Documentation
 
-struct Vec__16 {
-	int* buffer;
-	unsigned int len;
-	unsigned int capacity;
-};
-struct Vec__16 init__Vec__16() {
-	return (struct Vec__16){.buffer = NULL, .len = 0, .capacity = 4};
-}
-int main() {
-	struct Vec__16 v = init__Vec__16();
-}
-```
-
-I hope you've used this document to get a clearer picture of CI applications.
-
-More details coming soon...
+You can find the documentation in the following [directory](/docs/core/cc/ci).
