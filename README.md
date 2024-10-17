@@ -31,7 +31,7 @@ Welcome to the Lily repository. This repository hosts several sub-projects, most
 
 ## Progression
 
-You can access the progression [here](docs/progression.md).
+You can access to the progression [here](docs/progression.md).
 
 ## Release Schedule
 
