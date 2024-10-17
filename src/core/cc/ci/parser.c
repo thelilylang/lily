@@ -8386,6 +8386,39 @@ infer_expr_access_data_type__CIParser(
 
     while (true) {
         switch (expr_access->kind) {
+            case CI_EXPR_KIND_ARRAY_ACCESS: {
+                CIDataType *array_dt = infer_expr_access_data_type__CIParser(
+                  self,
+                  expr_access->array_access.array,
+                  fields,
+                  current_scope_id,
+                  called_generic_params,
+                  decl_generic_params);
+
+                if (current_infer_dt) {
+                    FREE(CIDataType, current_infer_dt);
+                }
+
+                // NOTE: Lower the `array_dt` count before assigning it.
+                ASSERT(array_dt->ref_count >= 1);
+                FREE(CIDataType, array_dt);
+
+                if (is_ptr_data_type__CIParser((CIParser *)self,
+                                               array_dt,
+                                               called_generic_params,
+                                               decl_generic_params)) {
+                    current_infer_dt = unwrap_implicit_ptr_data_type__CIParser(
+                      (CIParser *)self,
+                      array_dt,
+                      called_generic_params,
+                      decl_generic_params);
+                } else {
+                    current_infer_dt = NULL;
+                    FAILED("expected array or pointer");
+                }
+
+                goto exit;
+            }
             case CI_EXPR_KIND_BINARY:
                 switch (expr_access->binary.kind) {
                     case CI_EXPR_BINARY_KIND_ARROW:
@@ -8452,6 +8485,10 @@ infer_expr_access_data_type__CIParser(
 
                 break;
             case CI_EXPR_KIND_IDENTIFIER:
+                if (current_infer_dt) {
+                    FREE(CIDataType, current_infer_dt);
+                }
+
                 current_infer_dt = get__CIDeclStructField(
                   current_fields, expr_access->identifier);
 
@@ -8488,10 +8525,13 @@ infer_expr_dot_binary_access_data_type__CIParser(
                                          CI_EXPR_BINARY_KIND_DOT,
                                          called_generic_params,
                                          decl_generic_params);
-    const Vec *struct_or_union_fields = get_fields_from_data_type__CIParser(
+    CIDataType *struct_or_union_dt = resolve_data_type__CIParser(
       self, resolved_left_dt, called_generic_params, decl_generic_params);
+    const Vec *struct_or_union_fields = get_fields_from_data_type__CIParser(
+      self, struct_or_union_dt, called_generic_params, decl_generic_params);
 
     FREE(CIDataType, left_dt);
+    FREE(CIDataType, struct_or_union_dt);
 
     return infer_expr_access_data_type__CIParser(self,
                                                  dot_access->right,
@@ -8520,10 +8560,13 @@ infer_expr_arrow_binary_access_data_type__CIParser(
                                          CI_EXPR_BINARY_KIND_ARROW,
                                          called_generic_params,
                                          decl_generic_params);
-    const Vec *struct_or_union_fields = get_fields_from_data_type__CIParser(
+    CIDataType *struct_or_union_dt = resolve_data_type__CIParser(
       self, resolved_left_dt, called_generic_params, decl_generic_params);
+    const Vec *struct_or_union_fields = get_fields_from_data_type__CIParser(
+      self, struct_or_union_dt, called_generic_params, decl_generic_params);
 
     FREE(CIDataType, left_dt);
+    FREE(CIDataType, struct_or_union_dt);
 
     return infer_expr_access_data_type__CIParser(self,
                                                  arrow_access->right,
@@ -8716,6 +8759,14 @@ infer_expr_data_type__CIParser(const CIParser *self,
                                              current_scope_id,
                                              called_generic_params,
                                              decl_generic_params);
+
+            switch (expr->binary.kind) {
+                case CI_EXPR_BINARY_KIND_ASSIGN:
+                    return left_dt;
+                default:
+                    break;
+            }
+
             CIDataType *right_dt =
               infer_expr_data_type__CIParser(self,
                                              expr->binary.right,
@@ -9213,6 +9264,22 @@ resolve_data_type__CIParser(const CIParser *self,
         case CI_DATA_TYPE_KIND_UNION:
             return resolve_union_data_type__CIParser(
               self, data_type, called_generic_params, decl_generic_params);
+        case CI_DATA_TYPE_KIND_PTR:
+            return NEW_VARIANT(
+              CIDataType,
+              ptr,
+              resolve_data_type__CIParser(self,
+                                          data_type->ptr,
+                                          called_generic_params,
+                                          decl_generic_params));
+        case CI_DATA_TYPE_KIND_PRE_CONST:
+            return NEW_VARIANT(
+              CIDataType,
+              pre_const,
+              resolve_data_type__CIParser(self,
+                                          data_type->pre_const,
+                                          called_generic_params,
+                                          decl_generic_params));
         default:
             return ref__CIDataType(data_type);
     }
