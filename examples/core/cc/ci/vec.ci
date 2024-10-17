@@ -1,0 +1,63 @@
+#include <stddef.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+#define DEFAULT_VEC_CAPACITY 4
+
+typedef struct Vec.[@T] {
+	@T *buffer;
+	size_t len;
+	size_t capacity;
+} Vec.[@T];
+
+Vec.[@T] new_vec.[@T]() {
+	return (Vec.[@T]){
+		.buffer = NULL,
+		.len = 0,
+		.capacity = DEFAULT_VEC_CAPACITY
+	};
+}
+
+void
+push_vec.[@T](Vec.[@T] *self, @T item)
+{
+	if (!self->buffer) {	
+		self->buffer = malloc(sizeof(@T) * self->capacity);
+	}
+
+	if (self->len == self->capacity) {
+		self->capacity <<= 1;
+		self->buffer = realloc(self->buffer, sizeof(@T) * self->capacity);
+	}
+
+	self->buffer[self->len] = item;
+	++self->len;
+}
+
+@T *
+get_vec.[@T](Vec.[@T] *self, size_t index)
+{
+	return index >= self->len ? NULL : &self->buffer[index];
+}
+
+void
+free_vec.[@T](Vec.[@T] *self)
+{
+	if (self->buffer) {
+		free(self->buffer);
+	}
+}
+
+int main() {
+	Vec.[int] v = new_vec.[int]();
+
+	for (int i = 0; i < 100; ++i) {
+		push_vec.[int](&v, i);
+	}
+
+	for (int j = 0; j < 100; ++j) {
+		printf("%d: %d\n", j, *get_vec.[int](&v, j));
+	}
+
+	free_vec.[int](&v);
+}
