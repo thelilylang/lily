@@ -553,6 +553,8 @@ static CIExpr *
 resolve_alignof_expr__CIParser(CIParser *self, const CIExpr *expr);
 
 /// @brief Resolve (can be partially) expression at compile time.
+/// @note For the moment, this function is only used to solve expressions in the
+/// preprocessor.
 /// @param is_partial This makes it possible to have expressions that are not
 /// resolvable at compile time.
 static CIExpr *
@@ -4465,7 +4467,11 @@ resolve_expr__CIParser(CIParser *self, CIExpr *expr, bool is_partial)
         case CI_EXPR_KIND_GROUPING:
             return resolve_expr__CIParser(self, expr->grouping, is_partial);
         case CI_EXPR_KIND_IDENTIFIER:
-            TODO("resolve identifier");
+            // NOTE: Return 0 by default if the preprocessor encounters an
+            // identifier, since this means that the macro named with this
+            // identifier has not been defined.
+            return NEW_VARIANT(
+              CIExpr, literal, NEW_VARIANT(CIExprLiteral, signed_int, 0));
         case CI_EXPR_KIND_LITERAL:
             return ref__CIExpr(expr);
         case CI_EXPR_KIND_NULLPTR:
