@@ -1,5 +1,7 @@
 int main() {
-	for (int i = 0; i < 10; ++i) {
+	int i;
+
+	for (i = 0; i < 10; ++i) {
 	}
 
 	int j = 0;
@@ -14,6 +16,9 @@ int main() {
 
 	int l = 0;
 	int m = 0;
+
+	for (l = 10, m = 40;;) {
+	}
 
 	for (;; ++l, ++m) {
 	}
