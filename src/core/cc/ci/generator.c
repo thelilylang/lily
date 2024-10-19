@@ -744,8 +744,10 @@ generate_data_type__CIGenerator(CIDataType *data_type)
             UNREACHABLE("unknown variant");
     }
 
-    write__CIGenerator(' ');
-    generate_data_type_qualifier__CIGenerator(&data_type->qualifier);
+    if (data_type->qualifier != CI_DATA_TYPE_QUALIFIER_NONE) {
+        write__CIGenerator(' ');
+        generate_data_type_qualifier__CIGenerator(&data_type->qualifier);
+    }
 
     FREE(CIDataType, subs_data_type);
 }
