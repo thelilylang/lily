@@ -91,6 +91,9 @@ static void
 generate_attributes_by_decl__CIGenerator(const CIDecl *decl);
 
 static void
+generate_data_type_qualifier__CIGenerator(const int *data_type_qualifier);
+
+static void
 generate_data_type__CIGenerator(CIDataType *data_type);
 
 static void
@@ -387,10 +390,11 @@ substitute_and_serialize_generic_params__CIGenerator(
 void
 generate_storage_class__CIGenerator(const int *storage_class_flag)
 {
-    write_str__CIGenerator(to_string__CIStorageClass(*storage_class_flag));
+    write_String__CIGenerator(
+      to_string__CIStorageClass(*storage_class_flag, current_standard));
 
     if (*storage_class_flag != CI_STORAGE_CLASS_NONE) {
-        write_str__CIGenerator(" ");
+        write__CIGenerator(' ');
     }
 }
 
@@ -480,6 +484,17 @@ generate_attributes_by_decl__CIGenerator(const CIDecl *decl)
 }
 
 void
+generate_data_type_qualifier__CIGenerator(const int *data_type_qualifier)
+{
+    write_String__CIGenerator(
+      to_string__CIDataTypeQualifier(*data_type_qualifier));
+
+    if (*data_type_qualifier != CI_DATA_TYPE_QUALIFIER_NONE) {
+        write__CIGenerator(' ');
+    }
+}
+
+void
 generate_data_type__CIGenerator(CIDataType *data_type)
 {
     CIDataType *subs_data_type = NULL;
@@ -489,6 +504,8 @@ generate_data_type__CIGenerator(CIDataType *data_type)
     } else {
         subs_data_type = ref__CIDataType(data_type);
     }
+
+    generate_data_type_qualifier__CIGenerator(&data_type->qualifier);
 
     switch (subs_data_type->kind) {
         case CI_DATA_TYPE_KIND_ANY:
@@ -517,11 +534,6 @@ generate_data_type__CIGenerator(CIDataType *data_type)
                 default:
                     UNREACHABLE("unknown variant");
             }
-
-            break;
-        case CI_DATA_TYPE_KIND__ATOMIC:
-            write_str__CIGenerator("_Atomic ");
-            generate_data_type__CIGenerator(subs_data_type->_atomic);
 
             break;
         case CI_DATA_TYPE_KIND_BOOL:
@@ -639,16 +651,6 @@ generate_data_type__CIGenerator(CIDataType *data_type)
             break;
         case CI_DATA_TYPE_KIND_LONG_LONG_INT:
             write_str__CIGenerator("long long int");
-
-            break;
-        case CI_DATA_TYPE_KIND_PRE_CONST:
-            write_str__CIGenerator("const ");
-            generate_data_type__CIGenerator(subs_data_type->pre_const);
-
-            break;
-        case CI_DATA_TYPE_KIND_POST_CONST:
-            generate_data_type__CIGenerator(subs_data_type->post_const);
-            write_str__CIGenerator(" const");
 
             break;
         case CI_DATA_TYPE_KIND_PTR:

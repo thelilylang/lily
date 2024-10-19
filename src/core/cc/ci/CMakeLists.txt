@@ -49,7 +49,6 @@ set(CI_SRC
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/include.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/parser.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/predefined.c
-    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/primary_data_types.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/project_config.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/result.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/scanner.c

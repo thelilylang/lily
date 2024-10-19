@@ -64,9 +64,6 @@ has_trace__CIDataTypeContext(int self);
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_ARRAY).
 static VARIANT_DESTRUCTOR(CIDataType, array, CIDataType *self);
 
-/// @brief Free CIDataType type (CI_DATA_TYPE_KIND__ATOMIC).
-static VARIANT_DESTRUCTOR(CIDataType, _atomic, CIDataType *self);
-
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_BUILTIN).
 static inline VARIANT_DESTRUCTOR(CIDataType, builtin, CIDataType *self);
 
@@ -78,12 +75,6 @@ static VARIANT_DESTRUCTOR(CIDataType, function, CIDataType *self);
 
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_GENERIC).
 static inline VARIANT_DESTRUCTOR(CIDataType, generic, CIDataType *self);
-
-/// @brief Free CIDataType type (CI_DATA_TYPE_KIND_PRE_CONST).
-static VARIANT_DESTRUCTOR(CIDataType, pre_const, CIDataType *self);
-
-/// @brief Free CIDataType type (CI_DATA_TYPE_KIND_POST_CONST).
-static VARIANT_DESTRUCTOR(CIDataType, post_const, CIDataType *self);
 
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_PTR).
 static VARIANT_DESTRUCTOR(CIDataType, ptr, CIDataType *self);
@@ -223,6 +214,26 @@ static VARIANT_DESTRUCTOR(CIDeclFunctionItem, expr, CIDeclFunctionItem *self);
 
 /// @brief Free CIDeclFunctionItem type (CI_DECL_FUNCTION_ITEM_KIND_STMT).
 static VARIANT_DESTRUCTOR(CIDeclFunctionItem, stmt, CIDeclFunctionItem *self);
+
+static const enum CIStorageClass storage_class_ids[] = {
+    CI_STORAGE_CLASS_NONE,      CI_STORAGE_CLASS_AUTO,
+    CI_STORAGE_CLASS_CONSTEXPR, CI_STORAGE_CLASS_EXTERN,
+    CI_STORAGE_CLASS_INLINE,    CI_STORAGE_CLASS_REGISTER,
+    CI_STORAGE_CLASS_STATIC,    CI_STORAGE_CLASS_THREAD_LOCAL,
+    CI_STORAGE_CLASS_TYPEDEF,
+};
+static const Usize storage_class_ids_count =
+  sizeof(storage_class_ids) / sizeof(*storage_class_ids);
+
+static const enum CIDataTypeQualifier data_type_qualifier_ids[] = {
+    CI_DATA_TYPE_QUALIFIER_NONE,
+    CI_DATA_TYPE_QUALIFIER_CONST,
+    CI_DATA_TYPE_QUALIFIER_VOLATILE,
+    CI_DATA_TYPE_QUALIFIER_RESTRICT,
+    CI_DATA_TYPE_QUALIFIER__ATOMIC
+};
+static const Usize data_type_qualifier_ids_count =
+  sizeof(data_type_qualifier_ids) / sizeof(*data_type_qualifier_ids);
 
 #define CI_SERIALIZE_NAME(name)                                           \
     ASSERT(called_generic_params);                                        \
@@ -612,8 +623,6 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeKind, enum CIDataTypeKind self)
             return "CI_DATA_TYPE_KIND_ANY";
         case CI_DATA_TYPE_KIND_ARRAY:
             return "CI_DATA_TYPE_KIND_ARRAY";
-        case CI_DATA_TYPE_KIND__ATOMIC:
-            return "CI_DATA_TYPE_KIND__ATOMIC";
         case CI_DATA_TYPE_KIND_BOOL:
             return "CI_DATA_TYPE_KIND_BOOL";
         case CI_DATA_TYPE_KIND_BUILTIN:
@@ -656,10 +665,6 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeKind, enum CIDataTypeKind self)
             return "CI_DATA_TYPE_KIND_LONG_INT";
         case CI_DATA_TYPE_KIND_LONG_LONG_INT:
             return "CI_DATA_TYPE_KIND_LONG_LONG_INT";
-        case CI_DATA_TYPE_KIND_PRE_CONST:
-            return "CI_DATA_TYPE_KIND_PRE_CONST";
-        case CI_DATA_TYPE_KIND_POST_CONST:
-            return "CI_DATA_TYPE_KIND_POST_CONST";
         case CI_DATA_TYPE_KIND_PTR:
             return "CI_DATA_TYPE_KIND_PTR";
         case CI_DATA_TYPE_KIND_SHORT_INT:
@@ -865,6 +870,72 @@ DESTRUCTOR(CIDataTypeUnion, const CIDataTypeUnion *self)
     }
 }
 
+String *
+to_string__CIDataTypeQualifier(int data_type_qualifier_flag)
+{
+    static char *data_type_qualifier_id_s[] = {
+        "", "const", "volatile", "restrict", "_Atomic"
+    };
+    static_assert(data_type_qualifier_ids_count ==
+                    sizeof(data_type_qualifier_id_s) /
+                      sizeof(*data_type_qualifier_id_s),
+                  "number of items don't match");
+
+    String *res = NEW(String);
+
+    for (Usize i = 0;
+         i < data_type_qualifier_ids_count && data_type_qualifier_flag > 0;
+         ++i) {
+        if (data_type_qualifier_flag & data_type_qualifier_ids[i]) {
+            push_str__String(res, data_type_qualifier_id_s[i]);
+
+            data_type_qualifier_flag &= ~data_type_qualifier_ids[i];
+
+            if (data_type_qualifier_flag != CI_DATA_TYPE_QUALIFIER_NONE) {
+                push__String(res, ' ');
+            }
+        }
+    }
+
+    return res;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDataTypeQualifier, int data_type_qualifier_flag)
+{
+    static char *data_type_qualifier_id_s[] = {
+        "CI_STORAGE_CLASS_NONE",
+        "CI_DATA_TYPE_QUALIFIER_CONST",
+        "CI_DATA_TYPE_QUALIFIER_VOLATILE",
+        "CI_DATA_TYPE_QUALIFIER_RESTRICT",
+        "CI_DATA_TYPE_QUALIFIER__ATOMIC"
+    };
+    static_assert(data_type_qualifier_ids_count ==
+                    sizeof(data_type_qualifier_id_s) /
+                      sizeof(*data_type_qualifier_id_s),
+                  "number of items don't match");
+
+    String *res = NEW(String);
+
+    for (Usize i = 0;
+         i < data_type_qualifier_ids_count && data_type_qualifier_flag > 0;
+         ++i) {
+        if (data_type_qualifier_flag & data_type_qualifier_ids[i]) {
+            push_str__String(res, data_type_qualifier_id_s[i]);
+
+            data_type_qualifier_flag &= ~data_type_qualifier_ids[i];
+
+            if (data_type_qualifier_flag != 0) {
+                push_str__String(res, " | ");
+            }
+        }
+    }
+
+    return res;
+}
+#endif
+
 VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, array, CIDataTypeArray array)
 {
     CIDataType *self = lily_malloc(sizeof(CIDataType));
@@ -873,18 +944,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, array, CIDataTypeArray array)
     self->ref_count = 0;
     self->array = array;
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
-
-    return self;
-}
-
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, _atomic, CIDataType *_atomic)
-{
-    CIDataType *self = lily_malloc(sizeof(CIDataType));
-
-    self->kind = CI_DATA_TYPE_KIND__ATOMIC;
-    self->ref_count = 0;
-    self->_atomic = _atomic;
-    self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
+    self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
 
     return self;
 }
@@ -897,6 +957,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, builtin, Usize builtin)
     self->ref_count = 0;
     self->builtin = builtin;
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
+    self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
 
     return self;
 }
@@ -909,6 +970,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, enum, String *enum_)
     self->ref_count = 0;
     self->enum_ = enum_;
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
+    self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
 
     return self;
 }
@@ -924,6 +986,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->ref_count = 0;
     self->function = function;
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
+    self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
 
     return self;
 }
@@ -936,33 +999,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, generic, String *generic)
     self->ref_count = 0;
     self->generic = generic;
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
-
-    return self;
-}
-
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, pre_const, CIDataType *pre_const)
-{
-    CIDataType *self = lily_malloc(sizeof(CIDataType));
-
-    self->kind = CI_DATA_TYPE_KIND_PRE_CONST;
-    self->ref_count = 0;
-    self->pre_const = pre_const;
-    self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
-
-    return self;
-}
-
-VARIANT_CONSTRUCTOR(CIDataType *,
-                    CIDataType,
-                    post_const,
-                    CIDataType *post_const)
-{
-    CIDataType *self = lily_malloc(sizeof(CIDataType));
-
-    self->kind = CI_DATA_TYPE_KIND_POST_CONST;
-    self->ref_count = 0;
-    self->post_const = post_const;
-    self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
+    self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
 
     return self;
 }
@@ -975,6 +1012,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, ptr, CIDataType *ptr)
     self->ref_count = 0;
     self->ptr = ptr;
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
+    self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
 
     return self;
 }
@@ -987,6 +1025,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, struct, CIDataTypeStruct struct_)
     self->ref_count = 0;
     self->struct_ = struct_;
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
+    self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
 
     return self;
 }
@@ -1002,6 +1041,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->ref_count = 0;
     self->typedef_ = typedef_;
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
+    self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
 
     return self;
 }
@@ -1014,6 +1054,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, union, CIDataTypeUnion union_)
     self->ref_count = 0;
     self->union_ = union_;
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
+    self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
 
     return self;
 }
@@ -1025,6 +1066,7 @@ CONSTRUCTOR(CIDataType *, CIDataType, enum CIDataTypeKind kind)
     self->kind = kind;
     self->ref_count = 0;
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
+    self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
 
     return self;
 }
@@ -1063,11 +1105,6 @@ clone__CIDataType(const CIDataType *self)
             }
 
             break;
-        case CI_DATA_TYPE_KIND__ATOMIC:
-            res = NEW_VARIANT(
-              CIDataType, _atomic, clone__CIDataType(self->_atomic));
-
-            break;
         case CI_DATA_TYPE_KIND_BUILTIN:
             res = NEW_VARIANT(CIDataType, builtin, self->builtin);
 
@@ -1098,16 +1135,6 @@ clone__CIDataType(const CIDataType *self)
         }
         case CI_DATA_TYPE_KIND_GENERIC:
             res = NEW_VARIANT(CIDataType, generic, self->generic);
-
-            break;
-        case CI_DATA_TYPE_KIND_PRE_CONST:
-            res = NEW_VARIANT(
-              CIDataType, pre_const, clone__CIDataType(self->pre_const));
-
-            break;
-        case CI_DATA_TYPE_KIND_POST_CONST:
-            res = NEW_VARIANT(
-              CIDataType, pre_const, clone__CIDataType(self->post_const));
 
             break;
         case CI_DATA_TYPE_KIND_PTR:
@@ -1181,6 +1208,7 @@ clone__CIDataType(const CIDataType *self)
     }
 
     set_context__CIDataType(res, self->ctx);
+    set_qualifier__CIDataType(res, self->qualifier);
 
     return res;
 }
@@ -1208,13 +1236,13 @@ serialize__CIDataType(const CIDataType *self, String *buffer)
 
     SERIALIZE_FMT_PUSH_TO_BUFFER("{d}", self->kind);
 
+    if (self->qualifier != CI_DATA_TYPE_QUALIFIER_NONE) {
+        SERIALIZE_FMT_PUSH_TO_BUFFER("{d}", self->qualifier);
+    }
+
     switch (self->kind) {
         case CI_DATA_TYPE_KIND_ARRAY:
             serialize__CIDataType(self->array.data_type, buffer);
-
-            break;
-        case CI_DATA_TYPE_KIND__ATOMIC:
-            serialize__CIDataType(self->_atomic, buffer);
 
             break;
         case CI_DATA_TYPE_KIND_BUILTIN:
@@ -1234,14 +1262,6 @@ serialize__CIDataType(const CIDataType *self, String *buffer)
             SERIALIZE_FMT_PUSH_TO_BUFFER(
               "{zu}",
               SERIALIZE_NAME(self->generic->buffer, self->generic->len));
-
-            break;
-        case CI_DATA_TYPE_KIND_PRE_CONST:
-            serialize__CIDataType(self->pre_const, buffer);
-
-            break;
-        case CI_DATA_TYPE_KIND_POST_CONST:
-            serialize__CIDataType(self->post_const, buffer);
 
             break;
         case CI_DATA_TYPE_KIND_PTR:
@@ -1314,7 +1334,8 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
     if (self->kind == CI_DATA_TYPE_KIND_ANY ||
         other->kind == CI_DATA_TYPE_KIND_ANY) {
         return true;
-    } else if (self->kind != other->kind || self->ctx != other->ctx) {
+    } else if (self->kind != other->kind || self->ctx != other->ctx ||
+               self->qualifier != other->qualifier) {
         return false;
     }
 
@@ -1336,8 +1357,6 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
                 default:
                     UNREACHABLE("unknown variant");
             }
-        case CI_DATA_TYPE_KIND__ATOMIC:
-            return eq__CIDataType(self->_atomic, other->_atomic);
         case CI_DATA_TYPE_KIND_BUILTIN:
             return self->builtin == other->builtin;
         case CI_DATA_TYPE_KIND_ENUM:
@@ -1372,10 +1391,6 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
             return true;
         case CI_DATA_TYPE_KIND_GENERIC:
             return !strcmp(self->generic->buffer, other->generic->buffer);
-        case CI_DATA_TYPE_KIND_PRE_CONST:
-            return eq__CIDataType(self->pre_const, other->pre_const);
-        case CI_DATA_TYPE_KIND_POST_CONST:
-            return eq__CIDataType(self->post_const, other->post_const);
         case CI_DATA_TYPE_KIND_PTR:
             if (!self->ptr && !other->ptr) {
                 return true;
@@ -1483,10 +1498,6 @@ get_ptr__CIDataType(const CIDataType *self)
     switch (self->kind) {
         case CI_DATA_TYPE_KIND_PTR:
             return self->ptr;
-        case CI_DATA_TYPE_KIND_PRE_CONST:
-            return get_ptr__CIDataType(self->pre_const);
-        case CI_DATA_TYPE_KIND_POST_CONST:
-            return get_ptr__CIDataType(self->post_const);
         default:
             return NULL;
     }
@@ -1595,82 +1606,83 @@ IMPL_FOR_DEBUG(to_string, CIDataType, const CIDataType *self)
     switch (self->kind) {
         case CI_DATA_TYPE_KIND_ARRAY:
             return format__String(
-              "CIDataType{{ kind = {s}, ctx = {Sr}, array = {Sr} }",
+              "CIDataType{{ kind = {s}, ctx = {Sr}, qualifier = {Sr}, array = "
+              "{Sr} }",
               to_string__Debug__CIDataTypeKind(self->kind),
               to_string__Debug__CIDataTypeContext(self->ctx),
+              to_string__Debug__CIDataTypeQualifier(self->qualifier),
               to_string__Debug__CIDataTypeArray(&self->array));
-        case CI_DATA_TYPE_KIND__ATOMIC:
-            return format__String(
-              "CIDataType{{ kind = {s}, ctx = {Sr}, _atomic = {Sr} }",
-              to_string__Debug__CIDataTypeKind(self->kind),
-              to_string__Debug__CIDataTypeContext(self->ctx),
-              to_string__Debug__CIDataType(self->_atomic));
         case CI_DATA_TYPE_KIND_BUILTIN:
             return format__String(
-              "CIDataType{{ kind = {s}, ctx = {Sr}, builtin = {zu} }",
+              "CIDataType{{ kind = {s}, ctx = {Sr}, qualifier = {Sr}, builtin "
+              "= {zu} }",
               to_string__Debug__CIDataTypeKind(self->kind),
               to_string__Debug__CIDataTypeContext(self->ctx),
+              to_string__Debug__CIDataTypeQualifier(self->qualifier),
               self->builtin);
         case CI_DATA_TYPE_KIND_ENUM:
             return format__String(
-              "CIDataType{{ kind = {s}, ctx = {Sr}, enum = {S} }",
+              "CIDataType{{ kind = {s}, ctx = {Sr}, qualifier = {Sr}, enum = "
+              "{S} }",
               to_string__Debug__CIDataTypeKind(self->kind),
               to_string__Debug__CIDataTypeContext(self->ctx),
+              to_string__Debug__CIDataTypeQualifier(self->qualifier),
               self->enum_);
         case CI_DATA_TYPE_KIND_FUNCTION:
             return format__String(
-              "CIDataType{{ kind = {s}, ctx = {Sr}, function = {Sr} }",
+              "CIDataType{{ kind = {s}, ctx = {Sr}, qualifier = {Sr}, function "
+              "= {Sr} }",
               to_string__Debug__CIDataTypeKind(self->kind),
               to_string__Debug__CIDataTypeContext(self->ctx),
+              to_string__Debug__CIDataTypeQualifier(self->qualifier),
               to_string__Debug__CIDataTypeFunction(&self->function));
         case CI_DATA_TYPE_KIND_GENERIC:
             return format__String(
-              "CIDataType{{ kind = {s}, ctx = {Sr}, generic = {S} }",
+              "CIDataType{{ kind = {s}, ctx = {Sr}, qualifier = {Sr}, generic "
+              "= {S} }",
               to_string__Debug__CIDataTypeKind(self->kind),
               to_string__Debug__CIDataTypeContext(self->ctx),
+              to_string__Debug__CIDataTypeQualifier(self->qualifier),
               self->generic);
-        case CI_DATA_TYPE_KIND_PRE_CONST:
-            return format__String(
-              "CIDataType{{ kind = {s}, ctx = {Sr}, pre_const = {Sr} }",
-              to_string__Debug__CIDataTypeKind(self->kind),
-              to_string__Debug__CIDataTypeContext(self->ctx),
-              to_string__Debug__CIDataType(self->pre_const));
-        case CI_DATA_TYPE_KIND_POST_CONST:
-            return format__String(
-              "CIDataType{{ kind = {s}, ctx = {Sr}, post_const = {Sr} }",
-              to_string__Debug__CIDataTypeKind(self->kind),
-              to_string__Debug__CIDataTypeContext(self->ctx),
-              to_string__Debug__CIDataType(self->post_const));
         case CI_DATA_TYPE_KIND_PTR:
             return format__String(
-              "CIDataType{{ kind = {s}, ctx = {Sr}, ptr = {Sr} }",
+              "CIDataType{{ kind = {s}, ctx = {Sr}, qualifier = {Sr}, ptr = "
+              "{Sr} }",
               to_string__Debug__CIDataTypeKind(self->kind),
               to_string__Debug__CIDataTypeContext(self->ctx),
+              to_string__Debug__CIDataTypeQualifier(self->qualifier),
               self->ptr ? to_string__Debug__CIDataType(self->ptr)
                         : from__String("NULL"));
         case CI_DATA_TYPE_KIND_STRUCT:
             return format__String(
-              "CIDataType{{ kind = {s}, ctx = {Sr}, struct_ = {Sr} }",
+              "CIDataType{{ kind = {s}, ctx = {Sr}, qualifier = {Sr}, struct_ "
+              "= {Sr} }",
               to_string__Debug__CIDataTypeKind(self->kind),
               to_string__Debug__CIDataTypeContext(self->ctx),
+              to_string__Debug__CIDataTypeQualifier(self->qualifier),
               to_string__Debug__CIDataTypeStruct(&self->struct_));
         case CI_DATA_TYPE_KIND_TYPEDEF:
             return format__String(
-              "CIDataType{{ kind = {s}, ctx = {Sr}, typedef_ = {Sr} }",
+              "CIDataType{{ kind = {s}, ctx = {Sr}, qualifier = {Sr}, typedef_ "
+              "= {Sr} }",
               to_string__Debug__CIDataTypeKind(self->kind),
               to_string__Debug__CIDataTypeContext(self->ctx),
+              to_string__Debug__CIDataTypeQualifier(self->qualifier),
               to_string__Debug__CIDataTypeTypedef(&self->typedef_));
         case CI_DATA_TYPE_KIND_UNION:
             return format__String(
-              "CIDataType{{ kind = {s}, ctx = {Sr}, union_ = {Sr} }",
+              "CIDataType{{ kind = {s}, ctx = {Sr}, qualifier = {Sr}, union_ = "
+              "{Sr} }",
               to_string__Debug__CIDataTypeKind(self->kind),
               to_string__Debug__CIDataTypeContext(self->ctx),
+              to_string__Debug__CIDataTypeQualifier(self->qualifier),
               to_string__Debug__CIDataTypeUnion(&self->union_));
         default:
             return format__String(
-              "CIDataType{{ kind = {s}, ctx = {Sr} }",
+              "CIDataType{{ kind = {s}, ctx = {Sr}, qualifier = {Sr} }",
               to_string__Debug__CIDataTypeKind(self->kind),
-              to_string__Debug__CIDataTypeContext(self->ctx));
+              to_string__Debug__CIDataTypeContext(self->ctx),
+              to_string__Debug__CIDataTypeQualifier(self->qualifier));
     }
 }
 #endif
@@ -1678,12 +1690,6 @@ IMPL_FOR_DEBUG(to_string, CIDataType, const CIDataType *self)
 VARIANT_DESTRUCTOR(CIDataType, array, CIDataType *self)
 {
     FREE(CIDataTypeArray, &self->array);
-    lily_free(self);
-}
-
-VARIANT_DESTRUCTOR(CIDataType, _atomic, CIDataType *self)
-{
-    FREE(CIDataType, self->_atomic);
     lily_free(self);
 }
 
@@ -1705,18 +1711,6 @@ VARIANT_DESTRUCTOR(CIDataType, function, CIDataType *self)
 
 VARIANT_DESTRUCTOR(CIDataType, generic, CIDataType *self)
 {
-    lily_free(self);
-}
-
-VARIANT_DESTRUCTOR(CIDataType, pre_const, CIDataType *self)
-{
-    FREE(CIDataType, self->pre_const);
-    lily_free(self);
-}
-
-VARIANT_DESTRUCTOR(CIDataType, post_const, CIDataType *self)
-{
-    FREE(CIDataType, self->post_const);
     lily_free(self);
 }
 
@@ -1758,9 +1752,6 @@ DESTRUCTOR(CIDataType, CIDataType *self)
         case CI_DATA_TYPE_KIND_ARRAY:
             FREE_VARIANT(CIDataType, array, self);
             break;
-        case CI_DATA_TYPE_KIND__ATOMIC:
-            FREE_VARIANT(CIDataType, _atomic, self);
-            break;
         case CI_DATA_TYPE_KIND_BUILTIN:
             FREE_VARIANT(CIDataType, builtin, self);
             break;
@@ -1772,12 +1763,6 @@ DESTRUCTOR(CIDataType, CIDataType *self)
             break;
         case CI_DATA_TYPE_KIND_GENERIC:
             FREE_VARIANT(CIDataType, generic, self);
-            break;
-        case CI_DATA_TYPE_KIND_PRE_CONST:
-            FREE_VARIANT(CIDataType, pre_const, self);
-            break;
-        case CI_DATA_TYPE_KIND_POST_CONST:
-            FREE_VARIANT(CIDataType, post_const, self);
             break;
         case CI_DATA_TYPE_KIND_PTR:
             FREE_VARIANT(CIDataType, ptr, self);
@@ -1892,132 +1877,99 @@ IMPL_FOR_DEBUG(to_string, CIAttribute, const CIAttribute *self)
 }
 #endif
 
+String *
+to_string__CIStorageClass(int storage_class_flag, enum CIStandard standard)
+{
+    String *res = NEW(String);
+
+    for (Usize i = 0; i < storage_class_ids_count && storage_class_flag > 0;
+         ++i) {
+        if (storage_class_flag & storage_class_ids[i]) {
+            switch (storage_class_ids[i]) {
+                case CI_STORAGE_CLASS_AUTO:
+                    push_str__String(res, "auto");
+
+                    break;
+                case CI_STORAGE_CLASS_CONSTEXPR:
+                    push_str__String(res, "constexpr");
+
+                    break;
+                case CI_STORAGE_CLASS_EXTERN:
+                    push_str__String(res, "extern");
+
+                    break;
+                case CI_STORAGE_CLASS_INLINE:
+                    push_str__String(res, "inline");
+
+                    break;
+                case CI_STORAGE_CLASS_REGISTER:
+                    push_str__String(res, "register");
+
+                    break;
+                case CI_STORAGE_CLASS_STATIC:
+                    push_str__String(res, "static");
+
+                    break;
+                case CI_STORAGE_CLASS_THREAD_LOCAL:
+                    if (standard >= CI_STANDARD_23) {
+                        push_str__String(res, "thread_local");
+                    } else {
+                        push_str__String(res, "_Thread_local");
+                    }
+
+                    break;
+                case CI_STORAGE_CLASS_TYPEDEF:
+                    push_str__String(res, "typedef");
+
+                    break;
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+
+            storage_class_flag &= ~storage_class_ids[i];
+
+            if (storage_class_flag != CI_STORAGE_CLASS_NONE) {
+                push__String(res, ' ');
+            }
+        }
+    }
+
+    return res;
+}
+
 #ifdef ENV_DEBUG
-char *
+String *
 IMPL_FOR_DEBUG(to_string, CIStorageClass, int storage_class_flag)
 {
-    switch (storage_class_flag) {
-        case CI_STORAGE_CLASS_NONE:
-            return "CI_STORAGE_CLASS_NONE";
-        case CI_STORAGE_CLASS_AUTO:
-            return "CI_STORAGE_CLASS_AUTO";
-        case CI_STORAGE_CLASS_CONSTEXPR:
-            return "CI_STORAGE_CLASS_CONSTEXPR";
-        case CI_STORAGE_CLASS_EXTERN:
-            return "CI_STORAGE_CLASS_EXTERN";
-        case CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_AUTO:
-            return "CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_AUTO";
-        case CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_AUTO |
-          CI_STORAGE_CLASS_REGISTER:
-            return "CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_AUTO | "
-                   "CI_STORAGE_CLASS_REGISTER";
-        case CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_STATIC |
-          CI_STORAGE_CLASS_AUTO:
-            return "CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_STATIC | "
-                   "CI_STORAGE_CLASS_AUTO";
-        case CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_STATIC |
-          CI_STORAGE_CLASS_REGISTER:
-            return "CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_STATIC | "
-                   "CI_STORAGE_CLASS_REGISTER";
-        case CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_STATIC |
-          CI_STORAGE_CLASS_AUTO | CI_STORAGE_CLASS_REGISTER:
-            return "CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_STATIC | "
-                   "CI_STORAGE_CLASS_AUTO | CI_STORAGE_CLASS_REGISTER";
-        case CI_STORAGE_CLASS_INLINE:
-            return "CI_STORAGE_CLASS_INLINE";
-        case CI_STORAGE_CLASS_REGISTER:
-            return "CI_STORAGE_CLASS_REGISTER";
-        case CI_STORAGE_CLASS_REGISTER | CI_STORAGE_CLASS_AUTO:
-            return "CI_STORAGE_CLASS_REGISTER | CI_STORAGE_CLASS_AUTO";
-        case CI_STORAGE_CLASS_STATIC:
-            return "CI_STORAGE_CLASS_STATIC";
-        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_AUTO:
-            return "CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_AUTO";
-        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_CONSTEXPR:
-            return "CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_CONSTEXPR";
-        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_EXTERN:
-            return "CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_EXTERN";
-        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_INLINE:
-            return "CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_INLINE";
-        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_REGISTER:
-            return "CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_REGISTER";
-        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_THREAD_LOCAL:
-            return "CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_THREAD_LOCAL";
-        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_TYPEDEF:
-            return "CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_TYPEDEF";
-        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_AUTO |
-          CI_STORAGE_CLASS_REGISTER:
-            return "CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_AUTO | "
-                   "CI_STORAGE_CLASS_REGISTER";
-        case CI_STORAGE_CLASS_THREAD_LOCAL:
-            return "CI_STORAGE_CLASS_THREAD_LOCAL";
-        case CI_STORAGE_CLASS_TYPEDEF:
-            return "CI_STORAGE_CLASS_TYPEDEF";
-        default:
-            UNREACHABLE("unknown variant");
+    static char *storage_class_id_s[] = {
+        "CI_STORAGE_CLASS_NONE",      "CI_STORAGE_CLASS_AUTO",
+        "CI_STORAGE_CLASS_CONSTEXPR", "CI_STORAGE_CLASS_EXTERN",
+        "CI_STORAGE_CLASS_INLINE",    "CI_STORAGE_CLASS_REGISTER",
+        "CI_STORAGE_CLASS_STATIC",    "CI_STORAGE_CLASS_THREAD_LOCAL",
+        "CI_STORAGE_CLASS_TYPEDEF",
+    };
+    static_assert(storage_class_ids_count ==
+                    sizeof(storage_class_id_s) / sizeof(*storage_class_id_s),
+                  "number of items don't match");
+
+    String *res = NEW(String);
+
+    for (Usize i = 0; i < storage_class_ids_count && storage_class_flag > 0;
+         ++i) {
+        if (storage_class_flag & storage_class_ids[i]) {
+            push_str__String(res, storage_class_id_s[i]);
+
+            storage_class_flag &= ~storage_class_ids[i];
+
+            if (storage_class_flag != 0) {
+                push_str__String(res, " | ");
+            }
+        }
     }
+
+    return res;
 }
 #endif
-
-char *
-to_string__CIStorageClass(int storage_class_flag)
-{
-    switch (storage_class_flag) {
-        case CI_STORAGE_CLASS_NONE:
-            return "";
-        case CI_STORAGE_CLASS_AUTO:
-            return "auto";
-        case CI_STORAGE_CLASS_CONSTEXPR:
-            return "constexpr";
-        case CI_STORAGE_CLASS_EXTERN:
-            return "extern";
-        case CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_AUTO:
-            return "extern auto";
-        case CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_AUTO |
-          CI_STORAGE_CLASS_REGISTER:
-            return "extern auto register";
-        case CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_STATIC |
-          CI_STORAGE_CLASS_AUTO:
-            return "extern static auto";
-        case CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_STATIC |
-          CI_STORAGE_CLASS_REGISTER:
-            return "extern static register";
-        case CI_STORAGE_CLASS_EXTERN | CI_STORAGE_CLASS_STATIC |
-          CI_STORAGE_CLASS_AUTO | CI_STORAGE_CLASS_REGISTER:
-            return "extern static auto register";
-        case CI_STORAGE_CLASS_INLINE:
-            return "inline";
-        case CI_STORAGE_CLASS_REGISTER:
-            return "register";
-        case CI_STORAGE_CLASS_REGISTER | CI_STORAGE_CLASS_AUTO:
-            return "register auto";
-        case CI_STORAGE_CLASS_STATIC:
-            return "static";
-        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_AUTO:
-            return "static auto";
-        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_CONSTEXPR:
-            return "static constexpr";
-        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_EXTERN:
-            return "static extern";
-        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_INLINE:
-            return "static inline";
-        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_REGISTER:
-            return "static register";
-        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_THREAD_LOCAL:
-            return "static thread_local";
-        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_TYPEDEF:
-            return "static typedef";
-        case CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_AUTO |
-          CI_STORAGE_CLASS_REGISTER:
-            return "static auto register";
-        case CI_STORAGE_CLASS_THREAD_LOCAL:
-            return "thread_local";
-        case CI_STORAGE_CLASS_TYPEDEF:
-            return "typedef";
-        default:
-            UNREACHABLE("unknown variant");
-    }
-}
 
 #ifdef ENV_DEBUG
 char *
@@ -3383,7 +3335,7 @@ IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)
     switch (self->kind) {
         case CI_DECL_KIND_ENUM:
             return format__String(
-              "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
+              "CIDecl{{ kind = {s}, storage_class_flag = {Sr}, is_prototype = "
               "{b}, enum_ = {Sr} }",
               to_string__Debug__CIDeclKind(self->kind),
               to_string__Debug__CIStorageClass(self->storage_class_flag),
@@ -3391,7 +3343,7 @@ IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)
               to_string__Debug__CIDeclEnum(&self->enum_));
         case CI_DECL_KIND_FUNCTION:
             return format__String(
-              "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
+              "CIDecl{{ kind = {s}, storage_class_flag = {Sr}, is_prototype = "
               "{b}, function = {Sr} "
               "}",
               to_string__Debug__CIDeclKind(self->kind),
@@ -3400,7 +3352,7 @@ IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)
               to_string__Debug__CIDeclFunction(&self->function));
         case CI_DECL_KIND_FUNCTION_GEN:
             return format__String(
-              "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
+              "CIDecl{{ kind = {s}, storage_class_flag = {Sr}, is_prototype = "
               "{b}, function_gen = {Sr} "
               "}",
               to_string__Debug__CIDeclKind(self->kind),
@@ -3409,7 +3361,7 @@ IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)
               to_string__Debug__CIDeclFunctionGen(&self->function_gen));
         case CI_DECL_KIND_LABEL:
             return format__String(
-              "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
+              "CIDecl{{ kind = {s}, storage_class_flag = {Sr}, is_prototype = "
               "{b}, label = {Sr} "
               "}",
               to_string__Debug__CIDeclKind(self->kind),
@@ -3418,7 +3370,7 @@ IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)
               to_string__Debug__CIDeclLabel(&self->label));
         case CI_DECL_KIND_STRUCT:
             return format__String(
-              "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
+              "CIDecl{{ kind = {s}, storage_class_flag = {Sr}, is_prototype = "
               "{b}, struct_ = {Sr} "
               "}",
               to_string__Debug__CIDeclKind(self->kind),
@@ -3427,7 +3379,7 @@ IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)
               to_string__Debug__CIDeclStruct(&self->struct_));
         case CI_DECL_KIND_STRUCT_GEN:
             return format__String(
-              "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
+              "CIDecl{{ kind = {s}, storage_class_flag = {Sr}, is_prototype = "
               "{b}, struct_gen = {Sr} "
               "}",
               to_string__Debug__CIDeclKind(self->kind),
@@ -3436,7 +3388,7 @@ IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)
               to_string__Debug__CIDeclStructGen(&self->struct_gen));
         case CI_DECL_KIND_TYPEDEF:
             return format__String(
-              "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
+              "CIDecl{{ kind = {s}, storage_class_flag = {Sr}, is_prototype = "
               "{b}, typedef_ = {Sr} "
               "}",
               to_string__Debug__CIDeclKind(self->kind),
@@ -3445,7 +3397,7 @@ IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)
               to_string__Debug__CIDeclTypedef(&self->typedef_));
         case CI_DECL_KIND_TYPEDEF_GEN:
             return format__String(
-              "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
+              "CIDecl{{ kind = {s}, storage_class_flag = {Sr}, is_prototype = "
               "{b}, typedef_gen = {Sr} "
               "}",
               to_string__Debug__CIDeclKind(self->kind),
@@ -3454,7 +3406,7 @@ IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)
               to_string__Debug__CIDeclTypedefGen(&self->typedef_gen));
         case CI_DECL_KIND_VARIABLE:
             return format__String(
-              "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
+              "CIDecl{{ kind = {s}, storage_class_flag = {Sr}, is_prototype = "
               "{b}, variable = {Sr} "
               "}",
               to_string__Debug__CIDeclKind(self->kind),
@@ -3463,7 +3415,7 @@ IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)
               to_string__Debug__CIDeclVariable(&self->variable));
         case CI_DECL_KIND_UNION:
             return format__String(
-              "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
+              "CIDecl{{ kind = {s}, storage_class_flag = {Sr}, is_prototype = "
               "{b}, union_ = {Sr} "
               "}",
               to_string__Debug__CIDeclKind(self->kind),
@@ -3472,7 +3424,7 @@ IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)
               to_string__Debug__CIDeclUnion(&self->union_));
         case CI_DECL_KIND_UNION_GEN:
             return format__String(
-              "CIDecl{{ kind = {s}, storage_class_flag = {s}, is_prototype = "
+              "CIDecl{{ kind = {s}, storage_class_flag = {Sr}, is_prototype = "
               "{b}, union_gen = {Sr} "
               "}",
               to_string__Debug__CIDeclKind(self->kind),
@@ -4574,15 +4526,7 @@ get_data_type__CIExpr(const CIExpr *self)
                     CIDataType *right = get_data_type__CIExpr(self->unary.expr);
 
                     if (right) {
-                        switch (right->kind) {
-                            case CI_DATA_TYPE_KIND_PRE_CONST:
-                                return NEW_VARIANT(
-                                  CIDataType,
-                                  pre_const,
-                                  NEW_VARIANT(CIDataType, ptr, right));
-                            default:
-                                return NEW_VARIANT(CIDataType, ptr, right);
-                        }
+                        return NEW_VARIANT(CIDataType, ptr, right);
                     }
 
                     return NULL;

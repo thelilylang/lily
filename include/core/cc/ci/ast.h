@@ -31,6 +31,8 @@
 #include <base/types.h>
 #include <base/vec.h>
 
+#include <core/cc/ci/features.h>
+
 #define MAX_CI_EXPR_PRECEDENCE 100
 
 typedef struct CIToken CIToken;
@@ -628,7 +630,6 @@ enum CIDataTypeKind
 {
     CI_DATA_TYPE_KIND_ANY, // usually only for the builtin
     CI_DATA_TYPE_KIND_ARRAY,
-    CI_DATA_TYPE_KIND__ATOMIC,
     CI_DATA_TYPE_KIND_BOOL,
     CI_DATA_TYPE_KIND_BUILTIN,
     CI_DATA_TYPE_KIND_CHAR,
@@ -650,8 +651,6 @@ enum CIDataTypeKind
     CI_DATA_TYPE_KIND_LONG_DOUBLE__IMAGINARY,
     CI_DATA_TYPE_KIND_LONG_INT,
     CI_DATA_TYPE_KIND_LONG_LONG_INT,
-    CI_DATA_TYPE_KIND_PRE_CONST,
-    CI_DATA_TYPE_KIND_POST_CONST,
     CI_DATA_TYPE_KIND_PTR,
     CI_DATA_TYPE_KIND_SHORT_INT,
     CI_DATA_TYPE_KIND_SIGNED_CHAR,
@@ -909,21 +908,46 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeUnion, const CIDataTypeUnion *self);
  */
 DESTRUCTOR(CIDataTypeUnion, const CIDataTypeUnion *self);
 
+enum CIDataTypeQualifier
+{
+    CI_DATA_TYPE_QUALIFIER_NONE = 0,
+    CI_DATA_TYPE_QUALIFIER_CONST = 1 << 0,
+    CI_DATA_TYPE_QUALIFIER_VOLATILE = 1 << 1,
+    CI_DATA_TYPE_QUALIFIER_RESTRICT = 1 << 2,
+    CI_DATA_TYPE_QUALIFIER__ATOMIC = 1 << 3,
+};
+
+/**
+ *
+ * @brief Convert CIDataTypeQualifier in string.
+ * @return String*
+ */
+String *
+to_string__CIDataTypeQualifier(int data_type_qualifier_flag);
+
+/**
+ *
+ * @brief Convert CIDataTypeQualifier in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDataTypeQualifier, int data_type_qualifier_flag);
+#endif
+
 typedef struct CIDataType
 {
     enum CIDataTypeKind kind;
     int ctx;
+    int qualifier;
     Usize ref_count;
     union
     {
         CIDataTypeArray array;
-        struct CIDataType *_atomic;
         Usize builtin; // id of the builtin
         String *enum_; // String* (&)
         CIDataTypeFunction function;
-        String *generic; // String* (&)
-        struct CIDataType *pre_const;
-        struct CIDataType *post_const;
+        String *generic;        // String* (&)
         struct CIDataType *ptr; // struct CIDataType*?
         CIDataTypeStruct struct_;
         CIDataTypeTypedef typedef_;
@@ -936,12 +960,6 @@ typedef struct CIDataType
  * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_ARRAY).
  */
 VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, array, CIDataTypeArray array);
-
-/**
- *
- * @brief Construct CIDataType type (CI_DATA_TYPE_KIND__ATOMIC).
- */
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, _atomic, CIDataType *_atomic);
 
 /**
  *
@@ -969,21 +987,6 @@ VARIANT_CONSTRUCTOR(CIDataType *,
  * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_GENERIC).
  */
 VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, generic, String *generic);
-
-/**
- *
- * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_PRE_CONST).
- */
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, pre_const, CIDataType *pre_const);
-
-/**
- *
- * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_POST_CONST).
- */
-VARIANT_CONSTRUCTOR(CIDataType *,
-                    CIDataType,
-                    post_const,
-                    CIDataType *post_const);
 
 /**
  *
@@ -1151,6 +1154,16 @@ is_sized_array__CIDataType(CIDataType *self)
 {
     return self->kind == CI_DATA_TYPE_KIND_ARRAY &&
            self->array.kind == CI_DATA_TYPE_ARRAY_KIND_SIZED;
+}
+
+/**
+ *
+ * @brief Set a qualifier to a data type.
+ */
+inline void
+set_qualifier__CIDataType(CIDataType *self, int qualifier)
+{
+    self->qualifier = qualifier;
 }
 
 /**
@@ -1323,20 +1336,21 @@ enum CIStorageClass
 
 /**
  *
- * @brief Convert CIStorageClass in string.
- * @note This function is only used to debug.
+ * @brief Convert CIStorageClass in String.
+ * @return String*
  */
-#ifdef ENV_DEBUG
-char *
-IMPL_FOR_DEBUG(to_string, CIStorageClass, int storage_class_flag);
-#endif
+String *
+to_string__CIStorageClass(int storage_class_flag, enum CIStandard standard);
 
 /**
  *
- * @brief Convert CIStorageClass in string.
+ * @brief Convert CIStorageClass in String.
+ * @note This function is only used to debug.
  */
-char *
-to_string__CIStorageClass(int storage_class_flag);
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIStorageClass, int storage_class_flag);
+#endif
 
 enum CIDeclKind
 {

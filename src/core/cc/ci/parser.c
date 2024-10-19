@@ -30,7 +30,6 @@
 #include <core/cc/ci/diagnostic/error.h>
 #include <core/cc/ci/include.h>
 #include <core/cc/ci/parser.h>
-#include <core/cc/ci/primary_data_types.h>
 #include <core/cc/ci/result.h>
 #include <core/shared/diagnostic.h>
 
@@ -691,6 +690,14 @@ token_is_storage_class__CIParser(CIParser *self, const CIToken *token);
 /// @brief Check if the current token can be a storage class.
 static inline bool
 is_storage_class__CIParser(CIParser *self);
+
+/// @brief Check if the passed token is a data type qualifier.
+static bool
+token_is_data_type_qualifier__CIParser(CIParser *self, const CIToken *token);
+
+/// @brief Check if the current token can be a data type qualifier.
+static inline bool
+is_data_type_qualifier__CIParser(CIParser *self);
 
 static CIDataType *
 substitute_and_generate_from_data_type__CIParser(
@@ -1667,6 +1674,17 @@ parse_attribute__CIParser(CIParser *self);
 static void
 parse_attributes__CIParser(CIParser *self, Vec **attributes);
 
+/// @brief Parse data type qualifier.
+/// @return true if the token is a data type qualifier, false otherwise.
+static bool
+parse_data_type_qualifier__CIParser(CIParser *self,
+                                    int *data_type_qualifier_flag);
+
+/// @brief Parse many data type qualifiers.
+static void
+parse_data_type_qualifiers__CIParser(CIParser *self,
+                                     int *data_type_qualifier_flag);
+
 /// @brief Parse storage class specifier.
 /// @return true if the token is a storage class specifier, false otherwise.
 static bool
@@ -1695,6 +1713,7 @@ static Usize name_error_count = 0;
 static CIDataType *data_type_as_expression = NULL;
 
 static int storage_class_flag = CI_STORAGE_CLASS_NONE;
+static int data_type_qualifier_flag = CI_DATA_TYPE_QUALIFIER_NONE;
 
 // The `in_label` variable checks whether you're in a label and emits an error
 // if there's a variable declaration in a label (also in case and default
@@ -2244,8 +2263,6 @@ is_integer_data_type__CIParser(CIParser *self,
         case CI_DATA_TYPE_KIND_ARRAY:
         case CI_DATA_TYPE_KIND_PTR: // via implicit cast
             return allow_implicit_cast;
-        case CI_DATA_TYPE_KIND_PRE_CONST:
-            return is_integer__CIDataType(data_type->pre_const);
         default:
             return is_integer__CIDataType(data_type);
     }
@@ -2267,8 +2284,6 @@ is_float_data_type__CIParser(CIParser *self,
 
             return res;
         }
-        case CI_DATA_TYPE_KIND_PRE_CONST:
-            return is_integer__CIDataType(data_type->pre_const);
         default:
             return is_float__CIDataType(data_type);
     }
@@ -2294,16 +2309,6 @@ is_ptr_data_type__CIParser(CIParser *self,
         case CI_DATA_TYPE_KIND_PTR:
         case CI_DATA_TYPE_KIND_ARRAY:
             return true;
-        case CI_DATA_TYPE_KIND_PRE_CONST:
-            return is_ptr_data_type__CIParser(self,
-                                              data_type->pre_const,
-                                              called_generic_params,
-                                              decl_generic_params);
-        case CI_DATA_TYPE_KIND_POST_CONST:
-            return is_ptr_data_type__CIParser(self,
-                                              data_type->post_const,
-                                              called_generic_params,
-                                              decl_generic_params);
         default:
             return false;
     }
@@ -2334,16 +2339,6 @@ is_struct_or_union_data_type__CIParser(
   const CIGenericParams *decl_generic_params)
 {
     switch (data_type->kind) {
-        case CI_DATA_TYPE_KIND_PRE_CONST:
-            return is_struct_or_union_data_type__CIParser(self,
-                                                          data_type->pre_const,
-                                                          called_generic_params,
-                                                          decl_generic_params);
-        case CI_DATA_TYPE_KIND_POST_CONST:
-            return is_struct_or_union_data_type__CIParser(self,
-                                                          data_type->post_const,
-                                                          called_generic_params,
-                                                          decl_generic_params);
         case CI_DATA_TYPE_KIND_STRUCT:
         case CI_DATA_TYPE_KIND_UNION:
             return true;
@@ -2438,18 +2433,6 @@ unwrap_implicit_ptr_data_type__CIParser(
             return data_type->ptr;
         case CI_DATA_TYPE_KIND_ARRAY:
             return data_type->array.data_type;
-        case CI_DATA_TYPE_KIND_PRE_CONST:
-            return unwrap_implicit_ptr_data_type__CIParser(
-              self,
-              data_type->pre_const,
-              called_generic_params,
-              decl_generic_params);
-        case CI_DATA_TYPE_KIND_POST_CONST:
-            return unwrap_implicit_ptr_data_type__CIParser(
-              self,
-              data_type->post_const,
-              called_generic_params,
-              decl_generic_params);
         default:
             UNREACHABLE("this kind of data type is not expected, expected "
                         "pointer compatible data type");
@@ -3890,8 +3873,6 @@ resolve_data_type_size__CIParser(CIParser *self, const CIDataType *data_type)
             return resolve_data_type_size__CIParser(
                      self, data_type->array.data_type) *
                    data_type->array.size;
-        case CI_DATA_TYPE_KIND__ATOMIC:
-            return resolve_data_type_size__CIParser(self, data_type->_atomic);
         case CI_DATA_TYPE_KIND_BOOL:
             return sizeof(bool);
         case CI_DATA_TYPE_KIND_BUILTIN: {
@@ -3955,11 +3936,6 @@ resolve_data_type_size__CIParser(CIParser *self, const CIDataType *data_type)
             return sizeof(long int);
         case CI_DATA_TYPE_KIND_LONG_LONG_INT:
             return sizeof(long long int);
-        case CI_DATA_TYPE_KIND_PRE_CONST:
-            return resolve_data_type_size__CIParser(self, data_type->pre_const);
-        case CI_DATA_TYPE_KIND_POST_CONST:
-            return resolve_data_type_size__CIParser(self,
-                                                    data_type->post_const);
         case CI_DATA_TYPE_KIND_PTR:
             return sizeof(void *);
         case CI_DATA_TYPE_KIND_SHORT_INT:
@@ -4161,9 +4137,6 @@ resolve_data_type_alignment__CIParser(CIParser *self,
             return resolve_data_type_alignment__CIParser(
                      self, data_type->array.data_type) *
                    data_type->array.size;
-        case CI_DATA_TYPE_KIND__ATOMIC:
-            return resolve_data_type_alignment__CIParser(self,
-                                                         data_type->_atomic);
         case CI_DATA_TYPE_KIND_BOOL:
             return alignof(bool);
         case CI_DATA_TYPE_KIND_BUILTIN: {
@@ -4224,12 +4197,6 @@ resolve_data_type_alignment__CIParser(CIParser *self,
             return alignof(long int);
         case CI_DATA_TYPE_KIND_LONG_LONG_INT:
             return alignof(long long int);
-        case CI_DATA_TYPE_KIND_PRE_CONST:
-            return resolve_data_type_alignment__CIParser(self,
-                                                         data_type->pre_const);
-        case CI_DATA_TYPE_KIND_POST_CONST:
-            return resolve_data_type_alignment__CIParser(self,
-                                                         data_type->post_const);
         case CI_DATA_TYPE_KIND_PTR:
             return alignof(void *);
         case CI_DATA_TYPE_KIND_SHORT_INT:
@@ -5489,7 +5456,6 @@ token_is_data_type__CIParser(CIParser *self, const CIToken *token)
                                // (not needed for the moment)
         case CI_TOKEN_KIND_KEYWORD_BOOL:
         case CI_TOKEN_KIND_KEYWORD_CHAR:
-        case CI_TOKEN_KIND_KEYWORD_CONST:
         case CI_TOKEN_KIND_KEYWORD_DOUBLE:
         case CI_TOKEN_KIND_KEYWORD_DOUBLE__COMPLEX:
         case CI_TOKEN_KIND_KEYWORD_DOUBLE__IMAGINARY:
@@ -5514,14 +5480,13 @@ token_is_data_type__CIParser(CIParser *self, const CIToken *token)
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG_INT:
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT_INT:
         case CI_TOKEN_KIND_KEYWORD_VOID:
-        case CI_TOKEN_KIND_KEYWORD_VOLATILE:
         case CI_TOKEN_KIND_KEYWORD__BOOL:
         case CI_TOKEN_KIND_KEYWORD__DECIMAL128:
         case CI_TOKEN_KIND_KEYWORD__DECIMAL32:
         case CI_TOKEN_KIND_KEYWORD__DECIMAL64:
             return true;
         default:
-            return false;
+            return token_is_data_type_qualifier__CIParser(self, token);
     }
 }
 
@@ -5554,6 +5519,26 @@ bool
 is_storage_class__CIParser(CIParser *self)
 {
     return token_is_storage_class__CIParser(self, self->current_token);
+}
+
+bool
+token_is_data_type_qualifier__CIParser(CIParser *self, const CIToken *token)
+{
+    switch (token->kind) {
+        case CI_TOKEN_KIND_KEYWORD_CONST:
+        case CI_TOKEN_KIND_KEYWORD_VOLATILE:
+        case CI_TOKEN_KIND_KEYWORD_RESTRICT:
+        case CI_TOKEN_KIND_KEYWORD__ATOMIC:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool
+is_data_type_qualifier__CIParser(CIParser *self)
+{
+    return token_is_data_type_qualifier__CIParser(self, self->current_token);
 }
 
 CIDataType *
@@ -5624,6 +5609,8 @@ substitute_data_type__CIParser(CIDataType *data_type,
                                CIGenericParams *generic_params,
                                CIGenericParams *called_generic_params)
 {
+    CIDataType *res = NULL;
+
     switch (data_type->kind) {
         case CI_DATA_TYPE_KIND_ARRAY: {
             CIDataType *subs = substitute_data_type__CIParser(
@@ -5632,42 +5619,32 @@ substitute_data_type__CIParser(CIDataType *data_type,
             if (subs) {
                 switch (data_type->array.kind) {
                     case CI_DATA_TYPE_ARRAY_KIND_SIZED:
-                        return NEW_VARIANT(CIDataType,
-                                           array,
-                                           NEW_VARIANT(CIDataTypeArray,
-                                                       sized,
-                                                       subs,
-                                                       data_type->array.name,
-                                                       data_type->array.size));
+                        res = NEW_VARIANT(CIDataType,
+                                          array,
+                                          NEW_VARIANT(CIDataTypeArray,
+                                                      sized,
+                                                      subs,
+                                                      data_type->array.name,
+                                                      data_type->array.size));
+
+                        break;
                     case CI_DATA_TYPE_ARRAY_KIND_NONE:
-                        return NEW_VARIANT(CIDataType,
-                                           array,
-                                           NEW_VARIANT(CIDataTypeArray,
-                                                       none,
-                                                       subs,
-                                                       data_type->array.name));
+                        res = NEW_VARIANT(CIDataType,
+                                          array,
+                                          NEW_VARIANT(CIDataTypeArray,
+                                                      none,
+                                                      subs,
+                                                      data_type->array.name));
+
+                        break;
                     default:
                         UNREACHABLE("unknown variant");
                 }
+            } else {
+                return ref__CIDataType(data_type);
             }
 
-            return ref__CIDataType(data_type);
-        }
-        case CI_DATA_TYPE_KIND__ATOMIC: {
-#define SUBSTITUTE_DATA_TYPE_WITH_MAX_ONE_GENERIC(data_type_name)            \
-    if (data_type->data_type_name) {                                         \
-        CIDataType *subs = substitute_data_type__CIParser(                   \
-          data_type->data_type_name, generic_params, called_generic_params); \
-                                                                             \
-        if (subs) {                                                          \
-            return NEW_VARIANT(CIDataType, data_type_name, subs);            \
-        }                                                                    \
-                                                                             \
-        return ref__CIDataType(data_type);                                   \
-    }                                                                        \
-    return NULL;
-
-            SUBSTITUTE_DATA_TYPE_WITH_MAX_ONE_GENERIC(_atomic);
+            break;
         }
         case CI_DATA_TYPE_KIND_FUNCTION: {
             Vec *subs_params = NEW(Vec);
@@ -5716,7 +5693,7 @@ substitute_data_type__CIParser(CIDataType *data_type,
                 FREE(Vec, subs_params);
             }
 
-            return NEW_VARIANT(
+            res = NEW_VARIANT(
               CIDataType,
               function,
               NEW(CIDataTypeFunction,
@@ -5724,25 +5701,34 @@ substitute_data_type__CIParser(CIDataType *data_type,
                   subs_params,
                   subs_return_data_type,
                   clone__CIDataType(data_type->function.function_data_type)));
+
+            break;
         }
         case CI_DATA_TYPE_KIND_GENERIC: {
-            CIDataType *res = substitute_generic__CIParser(
+            CIDataType *res_generic = substitute_generic__CIParser(
               data_type->generic, generic_params, called_generic_params);
 
-            if (res) {
-                return ref__CIDataType(res);
+            if (res_generic) {
+                return ref__CIDataType(res_generic);
             }
 
             return NULL;
         }
-        case CI_DATA_TYPE_KIND_PRE_CONST: {
-            SUBSTITUTE_DATA_TYPE_WITH_MAX_ONE_GENERIC(pre_const);
-        }
-        case CI_DATA_TYPE_KIND_POST_CONST: {
-            SUBSTITUTE_DATA_TYPE_WITH_MAX_ONE_GENERIC(post_const);
-        }
         case CI_DATA_TYPE_KIND_PTR: {
-            SUBSTITUTE_DATA_TYPE_WITH_MAX_ONE_GENERIC(ptr);
+            if (data_type->ptr) {
+                CIDataType *subs = substitute_data_type__CIParser(
+                  data_type->ptr, generic_params, called_generic_params);
+
+                if (subs) {
+                    res = NEW_VARIANT(CIDataType, ptr, subs);
+                } else {
+                    return ref__CIDataType(data_type);
+                }
+            } else {
+                return NULL;
+            }
+
+            break;
         }
         case CI_DATA_TYPE_KIND_STRUCT: {
 #define SUBSTITUTE_STRUCT_OR_UNION(decl_name, decl_ty, variant)                \
@@ -5763,15 +5749,17 @@ substitute_data_type__CIParser(CIDataType *data_type,
             }                                                                  \
         }                                                                      \
                                                                                \
-        return NEW_VARIANT(CIDataType,                                         \
-                           variant,                                            \
-                           NEW(decl_ty,                                        \
-                               data_type->decl_name.name,                      \
-                               substitute_generic_params__CIParser(            \
-                                 data_type->decl_name.generic_params,          \
-                                 generic_params,                               \
-                                 called_generic_params),                       \
-                               subs_fields));                                  \
+        res = NEW_VARIANT(CIDataType,                                          \
+                          variant,                                             \
+                          NEW(decl_ty,                                         \
+                              data_type->decl_name.name,                       \
+                              substitute_generic_params__CIParser(             \
+                                data_type->decl_name.generic_params,           \
+                                generic_params,                                \
+                                called_generic_params),                        \
+                              subs_fields));                                   \
+                                                                               \
+        break;                                                                 \
     }                                                                          \
                                                                                \
     return ref__CIDataType(data_type);
@@ -5780,17 +5768,19 @@ substitute_data_type__CIParser(CIDataType *data_type,
         }
         case CI_DATA_TYPE_KIND_TYPEDEF: {
             if (data_type->typedef_.generic_params) {
-                return NEW_VARIANT(CIDataType,
-                                   typedef,
-                                   NEW(CIDataTypeTypedef,
-                                       data_type->typedef_.name,
-                                       substitute_generic_params__CIParser(
-                                         data_type->typedef_.generic_params,
-                                         generic_params,
-                                         called_generic_params)));
+                res = NEW_VARIANT(CIDataType,
+                                  typedef,
+                                  NEW(CIDataTypeTypedef,
+                                      data_type->typedef_.name,
+                                      substitute_generic_params__CIParser(
+                                        data_type->typedef_.generic_params,
+                                        generic_params,
+                                        called_generic_params)));
+            } else {
+                return ref__CIDataType(data_type);
             }
 
-            return ref__CIDataType(data_type);
+            break;
         }
         case CI_DATA_TYPE_KIND_UNION: {
             SUBSTITUTE_STRUCT_OR_UNION(union_, CIDataTypeUnion, union);
@@ -5798,6 +5788,11 @@ substitute_data_type__CIParser(CIDataType *data_type,
         default:
             return ref__CIDataType(data_type);
     }
+
+    set_context__CIDataType(res, data_type->ctx);
+    set_qualifier__CIDataType(res, data_type->qualifier);
+
+    return res;
 }
 
 CIDataType *
@@ -5934,32 +5929,11 @@ visit_data_type__CIParser(CIParser *self,
                                       decl_generic_params);
 
             break;
-        case CI_DATA_TYPE_KIND__ATOMIC:
-            visit_data_type__CIParser(self,
-                                      data_type->_atomic,
-                                      called_generic_params,
-                                      decl_generic_params);
-
-            break;
         case CI_DATA_TYPE_KIND_FUNCTION:
             visit_function_data_type__CIParser(self,
                                                &data_type->function,
                                                called_generic_params,
                                                decl_generic_params);
-
-            break;
-        case CI_DATA_TYPE_KIND_PRE_CONST:
-            visit_data_type__CIParser(self,
-                                      data_type->pre_const,
-                                      called_generic_params,
-                                      decl_generic_params);
-
-            break;
-        case CI_DATA_TYPE_KIND_POST_CONST:
-            visit_data_type__CIParser(self,
-                                      data_type->post_const,
-                                      called_generic_params,
-                                      decl_generic_params);
 
             break;
         case CI_DATA_TYPE_KIND_PTR:
@@ -6678,7 +6652,7 @@ parse_data_type_context__CIParser(CIParser *self)
                     CI_DATA_TYPE_CONTEXT_STACK,
                     CI_DATA_TYPE_CONTEXT_TRACE
                 };
-                SizedStr ctx_ids_s[CTX_IDS_LEN] = {
+                static SizedStr ctx_ids_s[CTX_IDS_LEN] = {
                     SIZED_STR_FROM_RAW("heap"),
                     SIZED_STR_FROM_RAW("non_null"),
                     SIZED_STR_FROM_RAW("stack"),
@@ -6715,31 +6689,32 @@ parse_data_type_context__CIParser(CIParser *self)
 CIDataType *
 parse_post_data_type__CIParser(CIParser *self, CIDataType *data_type)
 {
-loop:
-    if (self->current_token->kind == CI_TOKEN_KIND_STAR ||
-        self->current_token->kind == CI_TOKEN_KIND_KEYWORD_CONST) {
-        while (true) {
-            switch (self->current_token->kind) {
-                case CI_TOKEN_KIND_STAR:
-                    data_type = NEW_VARIANT(CIDataType, ptr, data_type);
+    bool is_data_type_qualifier = false;
 
-                    break;
-                case CI_TOKEN_KIND_KEYWORD_CONST:
-                    data_type = NEW_VARIANT(CIDataType, post_const, data_type);
+    while (self->current_token->kind == CI_TOKEN_KIND_STAR ||
+           (is_data_type_qualifier = is_data_type_qualifier__CIParser(self))) {
+        if (is_data_type_qualifier) {
+            parse_data_type_qualifiers__CIParser(self,
+                                                 &data_type_qualifier_flag);
 
-                    break;
-                default:
-                    goto exit;
-            }
-
-            next_token__CIParser(self);
+            continue;
         }
 
-        goto loop;
+        switch (self->current_token->kind) {
+            case CI_TOKEN_KIND_STAR:
+                data_type = NEW_VARIANT(CIDataType, ptr, data_type);
+
+                break;
+            default:
+                goto exit;
+        }
+
+        next_token__CIParser(self);
     }
 
 exit:
     set_context__CIDataType(data_type, parse_data_type_context__CIParser(self));
+    set_qualifier__CIDataType(data_type, data_type_qualifier_flag);
 
     return data_type;
 }
@@ -6915,6 +6890,7 @@ parse_pre_data_type__CIParser(CIParser *self)
 {
     CIDataType *res = NULL;
 
+    parse_data_type_qualifiers__CIParser(self, &data_type_qualifier_flag);
     next_token__CIParser(self);
 
     switch (self->previous_token->kind) {
@@ -6955,28 +6931,23 @@ parse_pre_data_type__CIParser(CIParser *self)
         }
         case CI_TOKEN_KIND_KEYWORD_BOOL:
         case CI_TOKEN_KIND_KEYWORD__BOOL:
-            res = bool__PrimaryDataTypes();
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_BOOL);
 
             break;
         case CI_TOKEN_KIND_KEYWORD_CHAR:
-            res = char__PrimaryDataTypes();
-
-            break;
-        case CI_TOKEN_KIND_KEYWORD_CONST:
-            res = NEW_VARIANT(
-              CIDataType, pre_const, parse_data_type__CIParser(self));
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_CHAR);
 
             break;
         case CI_TOKEN_KIND_KEYWORD_DOUBLE:
-            res = double__PrimaryDataTypes();
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_DOUBLE);
 
             break;
         case CI_TOKEN_KIND_KEYWORD_DOUBLE__COMPLEX:
-            res = double__complex__PrimaryDataTypes();
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_DOUBLE__COMPLEX);
 
             break;
         case CI_TOKEN_KIND_KEYWORD_DOUBLE__IMAGINARY:
-            res = double__imaginary__PrimaryDataTypes();
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_DOUBLE__IMAGINARY);
 
             break;
         case CI_TOKEN_KIND_KEYWORD_ENUM: {
@@ -7020,47 +6991,47 @@ parse_pre_data_type__CIParser(CIParser *self)
             break;
         }
         case CI_TOKEN_KIND_KEYWORD_FLOAT:
-            res = float__PrimaryDataTypes();
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_FLOAT);
 
             break;
         case CI_TOKEN_KIND_KEYWORD_FLOAT__COMPLEX:
-            res = float__complex__PrimaryDataTypes();
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_FLOAT__COMPLEX);
 
             break;
         case CI_TOKEN_KIND_KEYWORD_FLOAT__IMAGINARY:
-            res = float__imaginary__PrimaryDataTypes();
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_FLOAT__IMAGINARY);
 
             break;
         case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE:
-            res = long_double__PrimaryDataTypes();
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_LONG_DOUBLE);
 
             break;
         case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__COMPLEX:
-            res = long_double__complex__PrimaryDataTypes();
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_LONG_DOUBLE__COMPLEX);
 
             break;
         case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__IMAGINARY:
-            res = long_double__imaginary__PrimaryDataTypes();
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_LONG_DOUBLE__IMAGINARY);
 
             break;
         case CI_TOKEN_KIND_KEYWORD_LONG_INT:
-            res = long_int__PrimaryDataTypes();
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_LONG_INT);
 
             break;
         case CI_TOKEN_KIND_KEYWORD_LONG_LONG_INT:
-            res = long_long_int__PrimaryDataTypes();
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_LONG_LONG_INT);
 
             break;
         case CI_TOKEN_KIND_KEYWORD_INT:
-            res = int__PrimaryDataTypes();
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
 
             break;
         case CI_TOKEN_KIND_KEYWORD_SHORT_INT:
-            res = short_int__PrimaryDataTypes();
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_SHORT_INT);
 
             break;
         case CI_TOKEN_KIND_KEYWORD_SIGNED_CHAR:
-            res = signed_char__PrimaryDataTypes();
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_SIGNED_CHAR);
 
             break;
         case CI_TOKEN_KIND_KEYWORD_STRUCT:
@@ -7199,41 +7170,39 @@ parse_pre_data_type__CIParser(CIParser *self)
             break;
         }
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_CHAR:
-            res = unsigned_char__PrimaryDataTypes();
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_CHAR);
 
             break;
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_INT:
-            res = unsigned_int__PrimaryDataTypes();
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_INT);
 
             break;
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_INT:
-            res = unsigned_long_int__PrimaryDataTypes();
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT);
 
             break;
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG_INT:
-            res = unsigned_long_long_int__PrimaryDataTypes();
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_LONG_LONG_INT);
 
             break;
         case CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT_INT:
-            res = unsigned_short_int__PrimaryDataTypes();
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_SHORT_INT);
 
             break;
         case CI_TOKEN_KIND_KEYWORD_VOID:
-            res = void__PrimaryDataTypes();
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_VOID);
 
             break;
-        case CI_TOKEN_KIND_KEYWORD_VOLATILE:
-            TODO("volatile");
         case CI_TOKEN_KIND_KEYWORD__DECIMAL128:
-            res = _decimal128__PrimaryDataTypes();
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND__DECIMAL128);
 
             break;
         case CI_TOKEN_KIND_KEYWORD__DECIMAL32:
-            res = _decimal32__PrimaryDataTypes();
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND__DECIMAL32);
 
             break;
         case CI_TOKEN_KIND_KEYWORD__DECIMAL64:
-            res = _decimal64__PrimaryDataTypes();
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND__DECIMAL64);
 
             break;
         default:
@@ -7246,6 +7215,8 @@ parse_pre_data_type__CIParser(CIParser *self)
 CIDataType *
 parse_data_type__CIParser(CIParser *self)
 {
+    data_type_qualifier_flag = CI_DATA_TYPE_QUALIFIER_NONE;
+
     CIDataType *pre = parse_pre_data_type__CIParser(self);
 
     return parse_post_data_type__CIParser(self, pre);
@@ -8582,20 +8553,20 @@ infer_expr_literal_data_type__CIParser(const CIParser *self,
 {
     switch (literal->kind) {
         case CI_EXPR_LITERAL_KIND_BOOL:
-            return bool__PrimaryDataTypes();
+            return NEW(CIDataType, CI_DATA_TYPE_KIND_BOOL);
         case CI_EXPR_LITERAL_KIND_CHAR:
-            return char__PrimaryDataTypes();
+            return NEW(CIDataType, CI_DATA_TYPE_KIND_CHAR);
         case CI_EXPR_LITERAL_KIND_FLOAT:
-            return float__PrimaryDataTypes();
+            return NEW(CIDataType, CI_DATA_TYPE_KIND_FLOAT);
         case CI_EXPR_LITERAL_KIND_SIGNED_INT:
-            return int__PrimaryDataTypes();
+            return NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
         case CI_EXPR_LITERAL_KIND_STRING: {
             CIDataType *string_dt =
               NEW_VARIANT(CIDataType,
                           array,
                           NEW_VARIANT(CIDataTypeArray,
                                       sized,
-                                      char__PrimaryDataTypes(),
+                                      NEW(CIDataType, CI_DATA_TYPE_KIND_CHAR),
                                       NULL,
                                       literal->string.value->len));
 
@@ -8604,7 +8575,7 @@ infer_expr_literal_data_type__CIParser(const CIParser *self,
             return string_dt;
         }
         case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:
-            return unsigned_int__PrimaryDataTypes();
+            return NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_INT);
         default:
             UNREACHABLE("unknown variant");
     }
@@ -8653,7 +8624,9 @@ infer_expr_data_type__CIParser(const CIParser *self,
 {
     switch (expr->kind) {
         case CI_EXPR_KIND_ALIGNOF:
-            return unsigned_long_long_int__PrimaryDataTypes(); // size_t
+            // FIXME: Get the size_t data type for 32 bits.
+            return NEW(CIDataType,
+                       CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT); // size_t
         case CI_EXPR_KIND_ARRAY: {
             if (expr->array.array->len == 0) {
                 FAILED("cannot infer on array");
@@ -8801,9 +8774,9 @@ infer_expr_data_type__CIParser(const CIParser *self,
             FREE(CIDataType, right_dt);
 
             if (left_dt_is_float || right_dt_is_float) {
-                return float__PrimaryDataTypes();
+                return NEW(CIDataType, CI_DATA_TYPE_KIND_FLOAT);
             } else if (left_dt_is_integer && right_dt_is_integer) {
-                return int__PrimaryDataTypes();
+                return NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
             }
 
             FAILED("this kind of operation is not possible");
@@ -8811,7 +8784,7 @@ infer_expr_data_type__CIParser(const CIParser *self,
         case CI_EXPR_KIND_CAST:
             return ref__CIDataType(expr->cast.data_type);
         case CI_EXPR_KIND_DATA_TYPE:
-            return type_info__PrimaryDataTypes();
+            return NEW(CIDataType, CI_DATA_TYPE_KIND_TYPE_INFO);
         case CI_EXPR_KIND_FUNCTION_CALL: {
             CIDecl *function_decl =
               search_function_in_generic_context__CIParser(
@@ -8828,7 +8801,7 @@ infer_expr_data_type__CIParser(const CIParser *self,
                   (CIDataType *)get_return_data_type__CIDecl(function_decl));
             }
 
-            return int__PrimaryDataTypes();
+            return NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
         }
         case CI_EXPR_KIND_FUNCTION_CALL_BUILTIN: {
             CIBuiltin *builtin = get_ref__CIBuiltin();
@@ -8895,7 +8868,9 @@ infer_expr_data_type__CIParser(const CIParser *self,
         case CI_EXPR_KIND_NULLPTR:
             TODO("infer nullptr");
         case CI_EXPR_KIND_SIZEOF:
-            return unsigned_long_long_int__PrimaryDataTypes(); // size_t
+            // FIXME: Get the size_t data type for 32 bits.
+            return NEW(CIDataType,
+                       CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT); // size_t
         case CI_EXPR_KIND_STRUCT_CALL: {
             Vec *fields = NEW(Vec); // Vec<CIDeclStructField*>*
 
@@ -9272,14 +9247,6 @@ resolve_data_type__CIParser(const CIParser *self,
                                           data_type->ptr,
                                           called_generic_params,
                                           decl_generic_params));
-        case CI_DATA_TYPE_KIND_PRE_CONST:
-            return NEW_VARIANT(
-              CIDataType,
-              pre_const,
-              resolve_data_type__CIParser(self,
-                                          data_type->pre_const,
-                                          called_generic_params,
-                                          decl_generic_params));
         default:
             return ref__CIDataType(data_type);
     }
@@ -9603,22 +9570,6 @@ is_valid_implicit_cast__CIParser(const CIParser *self,
             }
 
             return false;
-        case CI_DATA_TYPE_KIND_PRE_CONST:
-            if (left->kind == CI_DATA_TYPE_KIND_PRE_CONST) {
-                return is_valid_implicit_cast__CIParser(
-                  self, left->pre_const, right->pre_const, typecheck_ctx);
-            }
-
-            return is_valid_implicit_cast__CIParser(
-              self, left, right->pre_const, typecheck_ctx);
-        case CI_DATA_TYPE_KIND_POST_CONST:
-            if (left->kind == CI_DATA_TYPE_KIND_POST_CONST) {
-                return is_valid_implicit_cast__CIParser(
-                  self, left->post_const, right->post_const, typecheck_ctx);
-            }
-
-            return is_valid_implicit_cast__CIParser(
-              self, left, right->post_const, typecheck_ctx);
         case CI_DATA_TYPE_KIND_STRUCT:
         case CI_DATA_TYPE_KIND_UNION:
             if (is_sized_array__CIDataType(left)) {
@@ -10072,7 +10023,7 @@ typecheck_expr__CIParser(const CIParser *self,
             // To allow cast (void) from all types, we expect any data type.
             CIDataType *expected_dt =
               given_expr->cast.data_type->kind == CI_DATA_TYPE_KIND_VOID
-                ? any__PrimaryDataTypes()
+                ? NEW(CIDataType, CI_DATA_TYPE_KIND_ANY)
                 : ref__CIDataType(given_expr->cast.data_type);
 
             typecheck_expr__CIParser(
@@ -10162,7 +10113,7 @@ typecheck_expr_and_try_discard(const CIParser *self,
             // we expect the any type, which is usually only used for
             // builtins, but which has the particularity of accepting
             // all types.
-            expected_dt = any__PrimaryDataTypes();
+            expected_dt = NEW(CIDataType, CI_DATA_TYPE_KIND_ANY);
 
             break;
         case CI_EXPR_KIND_UNARY:
@@ -10177,7 +10128,7 @@ typecheck_expr_and_try_discard(const CIParser *self,
             }
         default:
         expected_void:
-            expected_dt = void__PrimaryDataTypes();
+            expected_dt = NEW(CIDataType, CI_DATA_TYPE_KIND_VOID);
     }
 
     typecheck_expr__CIParser(self, expected_dt, expr, typecheck_ctx);
@@ -10355,7 +10306,7 @@ typecheck_for_stmt__CIParser(const CIParser *self,
     }
 
     if (for_->exprs2) {
-        CIDataType *expected_expr2_dt = void__PrimaryDataTypes();
+        CIDataType *expected_expr2_dt = NEW(CIDataType, CI_DATA_TYPE_KIND_VOID);
 
         for (Usize i = 0; i < for_->exprs2->len; ++i) {
             CIExpr *expr2 = get__Vec(for_->exprs2, i);
@@ -10399,7 +10350,8 @@ typecheck_return_stmt__CIParser(const CIParser *self,
         typecheck_expr__CIParser(
           self, (CIDataType *)given_return_data_type, return_, typecheck_ctx);
     } else {
-        CIDataType *expected_return_data_type = void__PrimaryDataTypes();
+        CIDataType *expected_return_data_type =
+          NEW(CIDataType, CI_DATA_TYPE_KIND_VOID);
 
         if (!eq__CIDataType(expected_return_data_type,
                             given_return_data_type)) {
@@ -11327,9 +11279,6 @@ is_only_initialization_compatible_data_type__CIParser(CIParser *self,
     switch (data_type->kind) {
         case CI_DATA_TYPE_KIND_ARRAY:
             return true;
-        case CI_DATA_TYPE_KIND_PRE_CONST:
-            return is_only_initialization_compatible_data_type__CIParser(
-              self, data_type->pre_const);
         default:
             return false;
     }
@@ -11709,6 +11658,7 @@ parse_decl__CIParser(CIParser *self)
     parse_attributes__CIParser(self, &attributes);
 
     storage_class_flag = CI_STORAGE_CLASS_NONE;
+    data_type_qualifier_flag = CI_DATA_TYPE_QUALIFIER_NONE;
 
     parse_storage_class_specifiers__CIParser(self, &storage_class_flag);
 
@@ -12015,6 +11965,48 @@ parse_attributes__CIParser(CIParser *self, Vec **attributes)
             default:
                 return;
         }
+    }
+}
+
+bool
+parse_data_type_qualifier__CIParser(CIParser *self,
+                                    int *data_type_qualifier_flag)
+{
+    switch (self->current_token->kind) {
+        case CI_TOKEN_KIND_KEYWORD_CONST:
+            *data_type_qualifier_flag |= CI_DATA_TYPE_QUALIFIER_CONST;
+            break;
+        case CI_TOKEN_KIND_KEYWORD_VOLATILE:
+            *data_type_qualifier_flag |= CI_DATA_TYPE_QUALIFIER_VOLATILE;
+            break;
+        case CI_TOKEN_KIND_KEYWORD_RESTRICT:
+            *data_type_qualifier_flag |= CI_DATA_TYPE_QUALIFIER_RESTRICT;
+            break;
+        case CI_TOKEN_KIND_KEYWORD__ATOMIC:
+            *data_type_qualifier_flag |= CI_DATA_TYPE_QUALIFIER__ATOMIC;
+            break;
+        default:
+            return false;
+    }
+
+    return true;
+}
+
+void
+parse_data_type_qualifiers__CIParser(CIParser *self,
+                                     int *data_type_qualifier_flag)
+{
+    int old_data_type_qualifier_flag = *data_type_qualifier_flag;
+
+    while (
+      parse_data_type_qualifier__CIParser(self, data_type_qualifier_flag)) {
+        next_token__CIParser(self);
+
+        if (old_data_type_qualifier_flag == *data_type_qualifier_flag) {
+            FAILED("warning: duplicate storage class specifier");
+        }
+
+        old_data_type_qualifier_flag = *data_type_qualifier_flag;
     }
 }
 
