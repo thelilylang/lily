@@ -488,10 +488,6 @@ generate_data_type_qualifier__CIGenerator(const int *data_type_qualifier)
 {
     write_String__CIGenerator(
       to_string__CIDataTypeQualifier(*data_type_qualifier));
-
-    if (*data_type_qualifier != CI_DATA_TYPE_QUALIFIER_NONE) {
-        write__CIGenerator(' ');
-    }
 }
 
 void
@@ -504,8 +500,6 @@ generate_data_type__CIGenerator(CIDataType *data_type)
     } else {
         subs_data_type = ref__CIDataType(data_type);
     }
-
-    generate_data_type_qualifier__CIGenerator(&data_type->qualifier);
 
     switch (subs_data_type->kind) {
         case CI_DATA_TYPE_KIND_ANY:
@@ -749,6 +743,9 @@ generate_data_type__CIGenerator(CIDataType *data_type)
         default:
             UNREACHABLE("unknown variant");
     }
+
+    write__CIGenerator(' ');
+    generate_data_type_qualifier__CIGenerator(&data_type->qualifier);
 
     FREE(CIDataType, subs_data_type);
 }
