@@ -26,7 +26,6 @@
 #include <base/new.h>
 
 #include <core/cc/ci/builtin.h>
-#include <core/cc/ci/primary_data_types.h>
 #include <core/shared/search.h>
 
 #include <stdio.h>
@@ -97,30 +96,30 @@ load__CIBuiltinFunction()
 
     builtins[CI_BUILTIN_FUNCTION_MEMCPY] = CI_BUILTIN_FUNCTION(
       CI_BUILTIN_FUNCTION_MEMCPY,
-      NEW_VARIANT(CIDataType, ptr, void__PrimaryDataTypes()),
+      NEW_VARIANT(CIDataType, ptr, NEW(CIDataType, CI_DATA_TYPE_KIND_VOID)),
       2,
-      NEW_VARIANT(CIDataType, ptr, void__PrimaryDataTypes()),
-      unsigned_long_int__PrimaryDataTypes());
+      NEW_VARIANT(CIDataType, ptr, NEW(CIDataType, CI_DATA_TYPE_KIND_VOID)),
+      NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT));
     builtins[CI_BUILTIN_FUNCTION_VA_START] = CI_BUILTIN_FUNCTION(
       CI_BUILTIN_FUNCTION_VA_START,
-      void__PrimaryDataTypes(),
+      NEW(CIDataType, CI_DATA_TYPE_KIND_VOID),
       2,
       NEW_VARIANT(CIDataType, builtin, CI_BUILTIN_TYPE_VA_LIST),
-      any__PrimaryDataTypes());
+      NEW(CIDataType, CI_DATA_TYPE_KIND_ANY));
     builtins[CI_BUILTIN_FUNCTION_VA_END] = CI_BUILTIN_FUNCTION(
       CI_BUILTIN_FUNCTION_VA_END,
-      void__PrimaryDataTypes(),
+      NEW(CIDataType, CI_DATA_TYPE_KIND_VOID),
       1,
       NEW_VARIANT(CIDataType, builtin, CI_BUILTIN_TYPE_VA_LIST));
     builtins[CI_BUILTIN_FUNCTION_VA_ARG] = CI_BUILTIN_FUNCTION(
       CI_BUILTIN_FUNCTION_VA_ARG,
-      type_info__PrimaryDataTypes(),
+      NEW(CIDataType, CI_DATA_TYPE_KIND_TYPE_INFO),
       2,
       NEW_VARIANT(CIDataType, builtin, CI_BUILTIN_TYPE_VA_LIST),
-      type_info__PrimaryDataTypes());
+      NEW(CIDataType, CI_DATA_TYPE_KIND_TYPE_INFO));
     builtins[CI_BUILTIN_FUNCTION_VA_COPY] = CI_BUILTIN_FUNCTION(
       CI_BUILTIN_FUNCTION_VA_COPY,
-      void__PrimaryDataTypes(),
+      NEW(CIDataType, CI_DATA_TYPE_KIND_VOID),
       2,
       NEW_VARIANT(CIDataType, builtin, CI_BUILTIN_TYPE_VA_LIST),
       NEW_VARIANT(CIDataType, builtin, CI_BUILTIN_TYPE_VA_LIST));

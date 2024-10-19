@@ -30,7 +30,6 @@
 #include <core/cc/ci/generator.h>
 #include <core/cc/ci/include.h>
 #include <core/cc/ci/parser.h>
-#include <core/cc/ci/primary_data_types.h>
 #include <core/cc/ci/project_config.h>
 #include <core/cc/ci/result.h>
 #include <core/cc/ci/scanner.h>
@@ -44,8 +43,6 @@ run__CI(const CIConfig *config)
     if (config->mode != CI_CONFIG_MODE_NONE) {
         TODO("implement --mode option");
     }
-
-    init__PrimaryDataTypes();
 
     CIBuiltin builtin = NEW(CIBuiltin);
     CIProjectConfig project_config =
@@ -62,5 +59,4 @@ run__CI(const CIConfig *config)
     FREE(CIProjectConfig, &project_config);
 
     destroy__CIInclude();
-    free__PrimaryDataTypes();
 }
