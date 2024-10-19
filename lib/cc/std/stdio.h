@@ -30,6 +30,10 @@
 #define _CC_STDIO_H
 
 #define _STDIO_H
+
+#include "stddef.h"
+#include "stdarg.h"
+
 #define __GLIBC_INTERNAL_STARTING_HEADER_IMPLEMENTATION
 
 #include <bits/libc-header-start.h>
@@ -40,8 +44,7 @@
 #include <bits/types/__FILE.h>
 #include <bits/types/struct_FILE.h>
 #include <bits/types/FILE.h>
-#include "stddef.h"
-#include "stdarg.h"
+
 #include "utils/__extern.h"
 
 typedef __FILE FILE;
