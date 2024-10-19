@@ -933,6 +933,12 @@ parse_storage_class_specifiers_and_data_type_qualifiers__CIParser(
   int *data_type_qualifier_flag,
   int *storage_class_flag);
 
+/// @brief Set and verify if the qualifier is valid given the data type.
+static void
+set_and_check_qualifier__CIParser(CIParser *self,
+                                  CIDataType *data_type,
+                                  int data_type_qualifier_flag);
+
 static CIDataType *
 parse_pre_data_type__CIParser(CIParser *self);
 
@@ -6709,7 +6715,8 @@ parse_post_data_type__CIParser(CIParser *self, CIDataType *data_type)
         if (is_data_type_qualifier) {
             parse_data_type_qualifiers__CIParser(self,
                                                  &data_type_qualifier_flag);
-            set_qualifier__CIDataType(data_type, data_type_qualifier_flag);
+            set_and_check_qualifier__CIParser(
+              self, data_type, data_type_qualifier_flag);
 
             RESET_DATA_TYPE_QUALIFIER_FLAG();
 
@@ -6919,6 +6926,20 @@ parse_storage_class_specifiers_and_data_type_qualifiers__CIParser(
             parse_storage_class_specifiers__CIParser(self, storage_class_flag);
         }
     }
+}
+
+void
+set_and_check_qualifier__CIParser(CIParser *self,
+                                  CIDataType *data_type,
+                                  int data_type_qualifier_flag)
+{
+    if (data_type_qualifier_flag & CI_DATA_TYPE_QUALIFIER_RESTRICT) {
+        if (!is_ptr_data_type__CIParser(self, data_type, NULL, NULL)) {
+            FAILED("expected pointer with restrict qualifier");
+        }
+    }
+
+    set_qualifier__CIDataType(data_type, data_type_qualifier_flag);
 }
 
 CIDataType *
@@ -7253,7 +7274,7 @@ parse_pre_data_type__CIParser(CIParser *self)
     parse_storage_class_specifiers_and_data_type_qualifiers__CIParser(
       self, &data_type_qualifier_flag, &storage_class_flag);
 
-    set_qualifier__CIDataType(res, data_type_qualifier_flag);
+    set_and_check_qualifier__CIParser(self, res, data_type_qualifier_flag);
 
     RESET_DATA_TYPE_QUALIFIER_FLAG();
 
