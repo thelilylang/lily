@@ -891,9 +891,10 @@ generate_typedef_gen__CIParser(CIParser *self,
                                String *typedef_name_ref,
                                CIGenericParams *called_generic_params);
 
-/// @brief Parse data type context, such as: !heap, !non_null, !stack or !trace.
+/// @brief Parse data type context(s), such as: !heap, !non_null, !stack or
+/// !trace.
 static int
-parse_data_type_context__CIParser(CIParser *self);
+parse_data_type_contexts__CIParser(CIParser *self);
 
 /// @brief Parse post data type, like pointer, ...
 /// @param CIDataType*?
@@ -925,6 +926,12 @@ parse_variable_name_and_data_type__CIParser(CIParser *self,
                                             CIDataType **data_type_ref,
                                             String **name_ref,
                                             bool name_is_required);
+
+static void
+parse_storage_class_specifiers_and_data_type_qualifiers__CIParser(
+  CIParser *self,
+  int *data_type_qualifier_flag,
+  int *storage_class_flag);
 
 static CIDataType *
 parse_pre_data_type__CIParser(CIParser *self);
@@ -1713,7 +1720,13 @@ static Usize name_error_count = 0;
 static CIDataType *data_type_as_expression = NULL;
 
 static int storage_class_flag = CI_STORAGE_CLASS_NONE;
+
+#define RESET_STORAGE_CLASS_FLAG() storage_class_flag = CI_STORAGE_CLASS_NONE;
+
 static int data_type_qualifier_flag = CI_DATA_TYPE_QUALIFIER_NONE;
+
+#define RESET_DATA_TYPE_QUALIFIER_FLAG() \
+    data_type_qualifier_flag = CI_DATA_TYPE_QUALIFIER_NONE;
 
 // The `in_label` variable checks whether you're in a label and emits an error
 // if there's a variable declaration in a label (also in case and default
@@ -6636,7 +6649,7 @@ generate_typedef_gen__CIParser(CIParser *self,
 }
 
 int
-parse_data_type_context__CIParser(CIParser *self)
+parse_data_type_contexts__CIParser(CIParser *self)
 {
     int data_type_ctx = CI_DATA_TYPE_CONTEXT_NONE;
 
@@ -6696,6 +6709,9 @@ parse_post_data_type__CIParser(CIParser *self, CIDataType *data_type)
         if (is_data_type_qualifier) {
             parse_data_type_qualifiers__CIParser(self,
                                                  &data_type_qualifier_flag);
+            set_qualifier__CIDataType(data_type, data_type_qualifier_flag);
+
+            RESET_DATA_TYPE_QUALIFIER_FLAG();
 
             continue;
         }
@@ -6713,8 +6729,8 @@ parse_post_data_type__CIParser(CIParser *self, CIDataType *data_type)
     }
 
 exit:
-    set_context__CIDataType(data_type, parse_data_type_context__CIParser(self));
-    set_qualifier__CIDataType(data_type, data_type_qualifier_flag);
+    set_context__CIDataType(data_type,
+                            parse_data_type_contexts__CIParser(self));
 
     return data_type;
 }
@@ -6885,12 +6901,35 @@ exit:
 #undef PARSE_VARIABLE_NAME
 }
 
+void
+parse_storage_class_specifiers_and_data_type_qualifiers__CIParser(
+  CIParser *self,
+  int *data_type_qualifier_flag,
+  int *storage_class_flag)
+{
+    bool is_data_type_qualifier = false;
+    bool is_storage_class_specifier = false;
+
+    while ((is_data_type_qualifier = is_data_type_qualifier__CIParser(self)) ||
+           (is_storage_class_specifier = is_storage_class__CIParser(self))) {
+        if (is_data_type_qualifier) {
+            parse_data_type_qualifiers__CIParser(self,
+                                                 data_type_qualifier_flag);
+        } else if (is_storage_class_specifier) {
+            parse_storage_class_specifiers__CIParser(self, storage_class_flag);
+        }
+    }
+}
+
 CIDataType *
 parse_pre_data_type__CIParser(CIParser *self)
 {
     CIDataType *res = NULL;
 
-    parse_data_type_qualifiers__CIParser(self, &data_type_qualifier_flag);
+    // <storage_class_flag | dt_qualifier> <pre_dt>
+    // e.g. static int, const int
+    parse_storage_class_specifiers_and_data_type_qualifiers__CIParser(
+      self, &data_type_qualifier_flag, &storage_class_flag);
     next_token__CIParser(self);
 
     switch (self->previous_token->kind) {
@@ -7209,13 +7248,22 @@ parse_pre_data_type__CIParser(CIParser *self)
             FAILED("expected data type");
     }
 
+    // <pre_dt> <storage_class_flag | dt_qualifier>
+    // e.g. int static, int const
+    parse_storage_class_specifiers_and_data_type_qualifiers__CIParser(
+      self, &data_type_qualifier_flag, &storage_class_flag);
+
+    set_qualifier__CIDataType(res, data_type_qualifier_flag);
+
+    RESET_DATA_TYPE_QUALIFIER_FLAG();
+
     return res;
 }
 
 CIDataType *
 parse_data_type__CIParser(CIParser *self)
 {
-    data_type_qualifier_flag = CI_DATA_TYPE_QUALIFIER_NONE;
+    RESET_DATA_TYPE_QUALIFIER_FLAG();
 
     CIDataType *pre = parse_pre_data_type__CIParser(self);
 
@@ -11657,8 +11705,8 @@ parse_decl__CIParser(CIParser *self)
 
     parse_attributes__CIParser(self, &attributes);
 
-    storage_class_flag = CI_STORAGE_CLASS_NONE;
-    data_type_qualifier_flag = CI_DATA_TYPE_QUALIFIER_NONE;
+    RESET_STORAGE_CLASS_FLAG();
+    RESET_DATA_TYPE_QUALIFIER_FLAG();
 
     parse_storage_class_specifiers__CIParser(self, &storage_class_flag);
 
