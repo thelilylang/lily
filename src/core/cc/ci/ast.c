@@ -226,11 +226,9 @@ static const Usize storage_class_ids_count =
   sizeof(storage_class_ids) / sizeof(*storage_class_ids);
 
 static const enum CIDataTypeQualifier data_type_qualifier_ids[] = {
-    CI_DATA_TYPE_QUALIFIER_NONE,
-    CI_DATA_TYPE_QUALIFIER_CONST,
-    CI_DATA_TYPE_QUALIFIER_VOLATILE,
-    CI_DATA_TYPE_QUALIFIER_RESTRICT,
-    CI_DATA_TYPE_QUALIFIER__ATOMIC
+    CI_DATA_TYPE_QUALIFIER_NONE,     CI_DATA_TYPE_QUALIFIER_CONST,
+    CI_DATA_TYPE_QUALIFIER_VOLATILE, CI_DATA_TYPE_QUALIFIER_RESTRICT,
+    CI_DATA_TYPE_QUALIFIER__ATOMIC,  CI_DATA_TYPE_QUALIFIER__NORETURN
 };
 static const Usize data_type_qualifier_ids_count =
   sizeof(data_type_qualifier_ids) / sizeof(*data_type_qualifier_ids);
@@ -873,9 +871,9 @@ DESTRUCTOR(CIDataTypeUnion, const CIDataTypeUnion *self)
 String *
 to_string__CIDataTypeQualifier(int data_type_qualifier_flag)
 {
-    static char *data_type_qualifier_id_s[] = {
-        "", "const", "volatile", "restrict", "_Atomic"
-    };
+    static char *data_type_qualifier_id_s[] = { "",         "const",
+                                                "volatile", "restrict",
+                                                "_Atomic",  "_Noreturn" };
     static_assert(data_type_qualifier_ids_count ==
                     sizeof(data_type_qualifier_id_s) /
                       sizeof(*data_type_qualifier_id_s),
@@ -905,11 +903,9 @@ String *
 IMPL_FOR_DEBUG(to_string, CIDataTypeQualifier, int data_type_qualifier_flag)
 {
     static char *data_type_qualifier_id_s[] = {
-        "CI_STORAGE_CLASS_NONE",
-        "CI_DATA_TYPE_QUALIFIER_CONST",
-        "CI_DATA_TYPE_QUALIFIER_VOLATILE",
-        "CI_DATA_TYPE_QUALIFIER_RESTRICT",
-        "CI_DATA_TYPE_QUALIFIER__ATOMIC"
+        "CI_STORAGE_CLASS_NONE",           "CI_DATA_TYPE_QUALIFIER_CONST",
+        "CI_DATA_TYPE_QUALIFIER_VOLATILE", "CI_DATA_TYPE_QUALIFIER_RESTRICT",
+        "CI_DATA_TYPE_QUALIFIER__ATOMIC",  "CI_DATA_TYPE_QUALIFIER__NORETURN"
     };
     static_assert(data_type_qualifier_ids_count ==
                     sizeof(data_type_qualifier_id_s) /

@@ -1,6 +1,7 @@
+#include <stdnoreturn.h>
 #include <stdlib.h>
 
-_Noreturn void bye() {
+noreturn void bye() {
 	exit(0);
 }
 
