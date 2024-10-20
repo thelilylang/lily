@@ -32,6 +32,7 @@
 #ifndef __VA_LIST__
 #define __VA_LIST__
 typedef __builtin_va_list va_list;
+typedef va_list __gnuc_va_list;
 #endif /* __VA_LIST__ */
 
 #undef va_start
