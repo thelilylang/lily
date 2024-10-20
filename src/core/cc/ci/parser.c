@@ -5565,6 +5565,7 @@ token_is_data_type_qualifier__CIParser(CIParser *self, const CIToken *token)
         case CI_TOKEN_KIND_KEYWORD_VOLATILE:
         case CI_TOKEN_KIND_KEYWORD_RESTRICT:
         case CI_TOKEN_KIND_KEYWORD__ATOMIC:
+        case CI_TOKEN_KIND_KEYWORD__NORETURN:
             return true;
         default:
             return false;
@@ -12087,6 +12088,9 @@ parse_data_type_qualifier__CIParser(CIParser *self,
             break;
         case CI_TOKEN_KIND_KEYWORD__ATOMIC:
             *data_type_qualifier_flag |= CI_DATA_TYPE_QUALIFIER__ATOMIC;
+            break;
+        case CI_TOKEN_KIND_KEYWORD__NORETURN:
+            *data_type_qualifier_flag |= CI_DATA_TYPE_QUALIFIER__NORETURN;
             break;
         default:
             return false;
