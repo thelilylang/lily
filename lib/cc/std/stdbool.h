@@ -29,6 +29,10 @@
 #ifndef _CC_STDBOOL_H
 #define _CC_STDBOOL_H
 
+#ifndef __STDC_VERSION__
+#define _Bool int
+#endif /* __STDC_VERSION__ */
+
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ > 201710L
 /* bool, true, false are keywords. */
 #else
