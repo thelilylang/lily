@@ -1548,7 +1548,11 @@ parse_function_body_item__CIParser(CIParser *self,
                                    bool in_loop,
                                    bool in_switch);
 
-/// @brief Parse function declaration.
+/// @brief Parse function declaration. Note that if the
+/// "storage_class_flag" variable contains the storage class "typedef", this
+/// function will parse and return a typedef declaration, but if it doesn't, it
+/// will parse and return a function declaration.
+/// @param typedef_generic_params CIGenericParams*?
 static CIDecl *
 parse_function__CIParser(CIParser *self,
                          int storage_class_flag,
@@ -1574,8 +1578,14 @@ parse_struct__CIParser(CIParser *self,
                        CIGenericParams *generic_params);
 
 /// @brief Parse typedef declaration.
+/// @param aliased_decl CIDecl* - This can be a variable declaration or a
+/// function.
+/// @param generic_params CIGenericParams* (&)
+/// @note Free aliased_decl.
 static CIDecl *
-parse_typedef__CIParser(CIParser *self);
+parse_typedef__CIParser(CIParser *self,
+                        CIDecl *aliased_decl,
+                        CIGenericParams *generic_params);
 
 /// @brief Parse union declaration.
 static CIDecl *
@@ -1606,12 +1616,17 @@ parse_variable__CIParser(CIParser *self,
                          bool no_expr,
                          bool is_local);
 
-/// @brief Parse list of variable declaration.
+/// @brief Parse list of variable declaration. Note that if the
+/// "storage_class_flag" variable contains the storage class "typedef", this
+/// function will parse and return a typedef declaration, but if it doesn't, it
+/// will parse and return a variable declaration.
+/// @param typedef_generic_params CIGenericParams*?
 static CIDecl *
 parse_variable_list__CIParser(CIParser *self,
                               CIDecl *current_var,
                               int storage_class_flag,
-                              CIDataType *data_type);
+                              CIDataType *data_type,
+                              CIGenericParams *typedef_generic_params);
 
 /// @brief Resolve `#embed` preprocessor.
 static void
@@ -1728,6 +1743,8 @@ static CIDataType *data_type_as_expression = NULL;
 static int storage_class_flag = CI_STORAGE_CLASS_NONE;
 
 #define RESET_STORAGE_CLASS_FLAG() storage_class_flag = CI_STORAGE_CLASS_NONE;
+#define HAS_TYPEDEF_STORAGE_CLASS_FLAG() \
+    (storage_class_flag & CI_STORAGE_CLASS_TYPEDEF)
 
 static int data_type_qualifier_flag = CI_DATA_TYPE_QUALIFIER_NONE;
 
@@ -11159,9 +11176,15 @@ parse_function__CIParser(CIParser *self,
                                   NULL,
                                   attributes));
 
+            if (HAS_TYPEDEF_STORAGE_CLASS_FLAG()) {
+                return parse_typedef__CIParser(self, res, generic_params);
+            }
+
             break;
         case CI_TOKEN_KIND_LBRACE:
-            if (is__CIBuiltinFunction(name)) {
+            if (HAS_TYPEDEF_STORAGE_CLASS_FLAG()) {
+                FAILED("not expected to have a body when typedef is passed");
+            } else if (is__CIBuiltinFunction(name)) {
                 FAILED("cannot redefine a builtin function");
             }
 
@@ -11274,52 +11297,60 @@ parse_struct__CIParser(CIParser *self,
 }
 
 CIDecl *
-parse_typedef__CIParser(CIParser *self)
+parse_typedef__CIParser(CIParser *self,
+                        CIDecl *aliased_decl,
+                        CIGenericParams *generic_params)
 {
-    // Disable `typedef`, as we no longer need it.
-    storage_class_flag &= ~CI_STORAGE_CLASS_TYPEDEF;
-
-    if (storage_class_flag != CI_STORAGE_CLASS_NONE) {
+    if ((storage_class_flag & ~CI_STORAGE_CLASS_TYPEDEF) !=
+        CI_STORAGE_CLASS_NONE) {
         FAILED(
           "cannot combine other storage class specifier(s) with `typedef`");
     }
 
-    CIDataType *data_type = parse_data_type__CIParser(self);
-    String *typedef_name = NULL;
+    String *decl_name = get_name__CIDecl(aliased_decl);
+    CIDecl *res = NULL;
 
-    switch (self->current_token->kind) {
-        case CI_TOKEN_KIND_IDENTIFIER:
-            typedef_name = self->current_token->identifier;
-            next_token__CIParser(self);
+#define NEW_TYPEDEF(need_ref, dt)                            \
+    NEW_VARIANT(CIDecl,                                      \
+                typedef,                                     \
+                NEW(CIDeclTypedef,                           \
+                    decl_name,                               \
+                    generic_params &&need_ref                \
+                      ? ref__CIGenericParams(generic_params) \
+                      : generic_params,                      \
+                    dt))
 
-            if (is__CIBuiltinType(typedef_name)) {
-                FAILED("cannot redefine builtin type");
-            }
+    switch (aliased_decl->kind) {
+        case CI_DECL_KIND_VARIABLE:
+            res = NEW_TYPEDEF(
+              false, ref__CIDataType(aliased_decl->variable.data_type));
+
+            break;
+        case CI_DECL_KIND_FUNCTION:
+            res = NEW_TYPEDEF(
+              true,
+              NEW_VARIANT(
+                CIDataType,
+                function,
+                NEW(CIDataTypeFunction,
+                    aliased_decl->function.name,
+                    aliased_decl->function.params
+                      ? clone_params__CIDeclFunctionParam(
+                          aliased_decl->function.params)
+                      : NULL,
+                    ref__CIDataType(aliased_decl->function.return_data_type),
+                    NULL)));
 
             break;
         default:
-            FAILED("expected typedef identifier");
+            UNREACHABLE("this kind of declaration is not exepcted");
     }
 
-    init_typedef_to_visit_waiting_list__CIParser(self, typedef_name);
+    FREE(CIDecl, aliased_decl);
 
-    CIGenericParams *generic_params = parse_generic_params__CIParser(self);
+    return res;
 
-    {
-        const CIGenericParams *data_type_generic_params =
-          get_generic_params__CIDataType(data_type);
-
-        if (!eq_op__CIGenericParams(generic_params, data_type_generic_params)) {
-            FAILED("expected same generic params in typedef declaration");
-        }
-    }
-
-    expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
-
-    return NEW_VARIANT(
-      CIDecl,
-      typedef,
-      NEW(CIDeclTypedef, typedef_name, generic_params, data_type));
+#undef NEW_TYPEDEF
 }
 
 CIDecl *
@@ -11409,6 +11440,8 @@ parse_variable__CIParser(CIParser *self,
           storage_class_flag,
           false,
           NEW(CIDeclVariable, data_type, name, NULL, is_local));
+    } else if (HAS_TYPEDEF_STORAGE_CLASS_FLAG()) {
+        FAILED("expression is not expected with typedef storage class");
     }
 
     ENABLE_ALLOW_INITIALIZATION();
@@ -11443,23 +11476,35 @@ CIDecl *
 parse_variable_list__CIParser(CIParser *self,
                               CIDecl *current_var,
                               int storage_class_flag,
-                              CIDataType *data_type)
+                              CIDataType *data_type,
+                              CIGenericParams *typedef_generic_params)
 {
     // Parse list of variable.
     // first_variable, <var2>, <var3>;
     while (self->current_token->kind == CI_TOKEN_KIND_COMMA &&
            self->previous_token->kind != CI_TOKEN_KIND_SEMICOLON) {
         if (current_var) {
-            add_decl_to_scope__CIParser(self, &current_var, true);
+            if (HAS_TYPEDEF_STORAGE_CLASS_FLAG()) {
+                CIDecl *typedef_decl = parse_typedef__CIParser(
+                  self, current_var, typedef_generic_params);
 
-            // Push to the current body of the function the current
-            // variable.
-            if (in_function_body) {
-                ASSERT(current_body);
+                // NOTE: "current_var" is not available after calling
+                // "parse_typedef__CIParser"
+                current_var = NULL;
 
-                add__CIDeclFunctionBody(
-                  current_body,
-                  NEW_VARIANT(CIDeclFunctionItem, decl, current_var));
+                add_decl_to_scope__CIParser(self, &typedef_decl, true);
+            } else {
+                add_decl_to_scope__CIParser(self, &current_var, true);
+
+                // Push to the current body of the function the current
+                // variable.
+                if (in_function_body) {
+                    ASSERT(current_body);
+
+                    add__CIDeclFunctionBody(
+                      current_body,
+                      NEW_VARIANT(CIDeclFunctionItem, decl, current_var));
+                }
             }
         }
 
@@ -11474,6 +11519,11 @@ parse_variable_list__CIParser(CIParser *self,
 
         switch (self->current_token->kind) {
             case CI_TOKEN_KIND_EQ:
+                if (HAS_TYPEDEF_STORAGE_CLASS_FLAG()) {
+                    FAILED("not expected `=` when typedef storage class is "
+                           "specified");
+                }
+
                 current_var = parse_variable__CIParser(self,
                                                        storage_class_flag,
                                                        post_data_type,
@@ -11497,7 +11547,10 @@ parse_variable_list__CIParser(CIParser *self,
         }
     }
 
-    return current_var;
+    return HAS_TYPEDEF_STORAGE_CLASS_FLAG()
+             ? parse_typedef__CIParser(
+                 self, current_var, typedef_generic_params)
+             : current_var;
 }
 
 void
@@ -11731,13 +11784,6 @@ parse_decl__CIParser(CIParser *self)
 
     parse_storage_class_specifiers__CIParser(self, &storage_class_flag);
 
-    // Parse typedef declaration.
-    if (storage_class_flag & CI_STORAGE_CLASS_TYPEDEF) {
-        res = parse_typedef__CIParser(self);
-
-        goto exit;
-    }
-
     CIDataType *pre_data_type = parse_pre_data_type__CIParser(self);
     CIDataType *data_type = parse_post_data_type__CIParser(self, pre_data_type);
 
@@ -11755,33 +11801,21 @@ parse_decl__CIParser(CIParser *self)
             switch (self->current_token->kind) {
                 // Parse first variable
                 case CI_TOKEN_KIND_EQ:
-                    if (generic_params) {
-                        goto no_generic_params_expected;
-                    }
-
-                    res = parse_variable__CIParser(self,
-                                                   storage_class_flag,
-                                                   data_type,
-                                                   name,
-                                                   false,
-                                                   in_function_body);
-
-                    break;
                 case CI_TOKEN_KIND_COMMA:
                 case CI_TOKEN_KIND_SEMICOLON:
-                    if (generic_params) {
-                    no_generic_params_expected: {
+                    if (generic_params && !HAS_TYPEDEF_STORAGE_CLASS_FLAG()) {
                         FAILED("no generic params are expected in variable "
                                "declaration");
                     }
-                    }
 
-                    res = parse_variable__CIParser(self,
-                                                   storage_class_flag,
-                                                   data_type,
-                                                   name,
-                                                   true,
-                                                   in_function_body);
+                    res = parse_variable__CIParser(
+                      self,
+                      storage_class_flag,
+                      data_type,
+                      name,
+                      self->current_token->kind == CI_TOKEN_KIND_EQ ? false
+                                                                    : true,
+                      in_function_body);
 
                     break;
                 case CI_TOKEN_KIND_LPAREN:
@@ -11804,7 +11838,7 @@ parse_decl__CIParser(CIParser *self)
             }
 
             res = parse_variable_list__CIParser(
-              self, res, storage_class_flag, pre_data_type);
+              self, res, storage_class_flag, pre_data_type, generic_params);
 
             break;
         }

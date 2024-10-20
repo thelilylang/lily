@@ -596,15 +596,27 @@ generate_data_type__CIGenerator(CIDataType *data_type)
         case CI_DATA_TYPE_KIND_FUNCTION: {
             generate_data_type__CIGenerator(
               subs_data_type->function.return_data_type);
-            write_str__CIGenerator("(");
-            generate_data_type__CIGenerator(
-              subs_data_type->function.function_data_type);
 
-            if (subs_data_type->function.name) {
-                write_str__CIGenerator(subs_data_type->function.name->buffer);
+            if (subs_data_type->function.function_data_type) {
+                write_str__CIGenerator("(");
+
+                generate_data_type__CIGenerator(
+                  subs_data_type->function.function_data_type);
+
+                if (subs_data_type->function.name) {
+                    write_str__CIGenerator(
+                      subs_data_type->function.name->buffer);
+                }
+
+                write_str__CIGenerator(")");
+            } else {
+                write__CIGenerator(' ');
+
+                if (subs_data_type->function.name) {
+                    write_str__CIGenerator(
+                      subs_data_type->function.name->buffer);
+                }
             }
-
-            write_str__CIGenerator(")");
 
             if (subs_data_type->function.params) {
                 generate_function_params__CIGenerator(
@@ -1619,7 +1631,10 @@ generate_typedef_decl__CIGenerator(const CIDeclTypedef *typedef_)
 {
     write_str__CIGenerator("typedef ");
     generate_data_type__CIGenerator(typedef_->data_type);
-    write_String__CIGenerator(format__String(" {S}", typedef_->name));
+
+    if (!has_name__CIDataType(typedef_->data_type)) {
+        write_String__CIGenerator(format__String(" {S}", typedef_->name));
+    }
 }
 
 void
@@ -1629,7 +1644,11 @@ generate_typedef_gen_decl__CIGenerator(const CIDeclTypedefGen *typedef_gen)
                                typedef_gen->called_generic_params);
     write_str__CIGenerator("typedef ");
     generate_data_type__CIGenerator(typedef_gen->typedef_->data_type);
-    write_String__CIGenerator(format__String(" {S}", typedef_gen->name));
+
+    if (!has_name__CIDataType(typedef_gen->data_type)) {
+        write_String__CIGenerator(format__String(" {S}", typedef_gen->name));
+    }
+
     RESET_CURRENT_GENERIC_PARAMS();
 }
 
