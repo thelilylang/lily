@@ -2815,10 +2815,13 @@ scan_preprocessor_content__CIScanner(CIScanner *self,
             switch (token->kind) {
                 DEFAULT_FILTER_TOKEN(token, &ctx);
                 case CI_TOKEN_KIND_COMMENT_LINE:
-                    FAILED("comment line is not expected in macro-style");
+                    FREE(CIToken, token);
+                    goto exit;
             }
         }
     }
+
+exit:
 
     switch (ctx_location) {
         case CI_SCANNER_CONTEXT_LOCATION_PREPROCESSOR_COND:
@@ -4152,6 +4155,8 @@ get_token__CIScanner(CIScanner *self,
             return NEW(CIToken,
                        CI_TOKEN_KIND_PERCENTAGE,
                        clone__Location(&self->base.location));
+
+        // ~, ~=
         case '~':
             if (c1 == (char *)'=') {
                 return NEW(CIToken,
