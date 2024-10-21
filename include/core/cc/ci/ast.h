@@ -602,11 +602,11 @@ DESTRUCTOR(CIGenericParams, CIGenericParams *self);
 
 enum CIDataTypeContext
 {
-    CI_DATA_TYPE_CONTEXT_NONE = 1 << 0,
-    CI_DATA_TYPE_CONTEXT_HEAP = 1 << 1,     // !heap
-    CI_DATA_TYPE_CONTEXT_NON_NULL = 1 << 2, // !non_null
-    CI_DATA_TYPE_CONTEXT_STACK = 1 << 3,    // !stack
-    CI_DATA_TYPE_CONTEXT_TRACE = 1 << 4,    // !trace
+    CI_DATA_TYPE_CONTEXT_NONE = 0,
+    CI_DATA_TYPE_CONTEXT_HEAP = 1 << 0,     // !heap
+    CI_DATA_TYPE_CONTEXT_NON_NULL = 1 << 1, // !non_null
+    CI_DATA_TYPE_CONTEXT_STACK = 1 << 2,    // !stack
+    CI_DATA_TYPE_CONTEXT_TRACE = 1 << 3,    // !trace
 };
 
 /**
@@ -615,6 +615,19 @@ enum CIDataTypeContext
  */
 bool
 is_compatible__CIDataTypeContext(int self, int other);
+
+typedef struct CIDataTypeContextIds
+{
+    const enum CIDataTypeContext *buffer; // const enum CIDataTypeContext* (&)
+    const Usize len;
+} CIDataTypeContextIds;
+
+/**
+ *
+ * @brief Get all data type contexts in array.
+ */
+CIDataTypeContextIds
+get_ids__CIDataTypeContext();
 
 /**
  *

@@ -215,6 +215,16 @@ static VARIANT_DESTRUCTOR(CIDeclFunctionItem, expr, CIDeclFunctionItem *self);
 /// @brief Free CIDeclFunctionItem type (CI_DECL_FUNCTION_ITEM_KIND_STMT).
 static VARIANT_DESTRUCTOR(CIDeclFunctionItem, stmt, CIDeclFunctionItem *self);
 
+static const enum CIDataTypeContext data_type_ctx_ids[] = {
+    CI_DATA_TYPE_CONTEXT_NONE,
+    CI_DATA_TYPE_CONTEXT_HEAP,
+    CI_DATA_TYPE_CONTEXT_NON_NULL,
+    CI_DATA_TYPE_CONTEXT_STACK,
+    CI_DATA_TYPE_CONTEXT_TRACE
+};
+static const Usize data_type_ctx_ids_count =
+  sizeof(data_type_ctx_ids) / sizeof(*data_type_ctx_ids);
+
 static const enum CIStorageClass storage_class_ids[] = {
     CI_STORAGE_CLASS_NONE,      CI_STORAGE_CLASS_AUTO,
     CI_STORAGE_CLASS_CONSTEXPR, CI_STORAGE_CLASS_EXTERN,
@@ -581,27 +591,32 @@ is_compatible__CIDataTypeContext(int self, int other)
 #undef HAS_TRACE2
 }
 
+CIDataTypeContextIds
+get_ids__CIDataTypeContext()
+{
+    return (struct CIDataTypeContextIds){ .buffer = data_type_ctx_ids,
+                                          .len = data_type_ctx_ids_count };
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIDataTypeContext, int self)
 {
-#define CTXS_LEN 5
-    int ctxs[CTXS_LEN] = { CI_DATA_TYPE_CONTEXT_NONE,
-                           CI_DATA_TYPE_CONTEXT_HEAP,
-                           CI_DATA_TYPE_CONTEXT_NON_NULL,
-                           CI_DATA_TYPE_CONTEXT_STACK,
-                           CI_DATA_TYPE_CONTEXT_TRACE };
-    char *ctxs_s[CTXS_LEN] = {
+    static char *data_type_ctxs[] = {
         "CI_DATA_TYPE_CONTEXT_NONE",     "CI_DATA_TYPE_CONTEXT_HEAP",
         "CI_DATA_TYPE_CONTEXT_NON_NULL", "CI_DATA_TYPE_CONTEXT_STACK",
         "CI_DATA_TYPE_CONTEXT_TRACE",
     };
 
+    static_assert(data_type_ctx_ids_count ==
+                    sizeof(data_type_ctxs) / sizeof(*data_type_ctxs),
+                  "number of items don't match");
+
     String *res = NEW(String);
 
-    for (Usize i = 0; i < CTXS_LEN; ++i) {
-        if (self & ctxs[i]) {
-            push_str__String(res, ctxs_s[i]);
+    for (Usize i = 0; i < data_type_ctx_ids_count; ++i) {
+        if (self & data_type_ctx_ids[i]) {
+            push_str__String(res, data_type_ctxs[i]);
             push__String(res, ' ');
         }
     }
@@ -871,12 +886,12 @@ DESTRUCTOR(CIDataTypeUnion, const CIDataTypeUnion *self)
 String *
 to_string__CIDataTypeQualifier(int data_type_qualifier_flag)
 {
-    static char *data_type_qualifier_id_s[] = { "",         "const",
-                                                "volatile", "restrict",
-                                                "_Atomic",  "_Noreturn" };
+    static char *data_type_qualifiers[] = {
+        "", "const", "volatile", "restrict", "_Atomic", "_Noreturn"
+    };
     static_assert(data_type_qualifier_ids_count ==
-                    sizeof(data_type_qualifier_id_s) /
-                      sizeof(*data_type_qualifier_id_s),
+                    sizeof(data_type_qualifiers) /
+                      sizeof(*data_type_qualifiers),
                   "number of items don't match");
 
     String *res = NEW(String);
@@ -885,7 +900,7 @@ to_string__CIDataTypeQualifier(int data_type_qualifier_flag)
          i < data_type_qualifier_ids_count && data_type_qualifier_flag > 0;
          ++i) {
         if (data_type_qualifier_flag & data_type_qualifier_ids[i]) {
-            push_str__String(res, data_type_qualifier_id_s[i]);
+            push_str__String(res, data_type_qualifiers[i]);
 
             data_type_qualifier_flag &= ~data_type_qualifier_ids[i];
 
@@ -902,23 +917,25 @@ to_string__CIDataTypeQualifier(int data_type_qualifier_flag)
 String *
 IMPL_FOR_DEBUG(to_string, CIDataTypeQualifier, int data_type_qualifier_flag)
 {
-    static char *data_type_qualifier_id_s[] = {
+    static char *data_type_qualifiers[] = {
         "CI_STORAGE_CLASS_NONE",           "CI_DATA_TYPE_QUALIFIER_CONST",
         "CI_DATA_TYPE_QUALIFIER_VOLATILE", "CI_DATA_TYPE_QUALIFIER_RESTRICT",
         "CI_DATA_TYPE_QUALIFIER__ATOMIC",  "CI_DATA_TYPE_QUALIFIER__NORETURN"
     };
     static_assert(data_type_qualifier_ids_count ==
-                    sizeof(data_type_qualifier_id_s) /
-                      sizeof(*data_type_qualifier_id_s),
+                    sizeof(data_type_qualifiers) /
+                      sizeof(*data_type_qualifiers),
                   "number of items don't match");
 
-    String *res = NEW(String);
+    String *res = data_type_qualifier_flag == 0
+                    ? from__String(data_type_qualifiers[CI_STORAGE_CLASS_NONE])
+                    : NEW(String);
 
     for (Usize i = 0;
          i < data_type_qualifier_ids_count && data_type_qualifier_flag > 0;
          ++i) {
         if (data_type_qualifier_flag & data_type_qualifier_ids[i]) {
-            push_str__String(res, data_type_qualifier_id_s[i]);
+            push_str__String(res, data_type_qualifiers[i]);
 
             data_type_qualifier_flag &= ~data_type_qualifier_ids[i];
 
@@ -1876,51 +1893,24 @@ IMPL_FOR_DEBUG(to_string, CIAttribute, const CIAttribute *self)
 String *
 to_string__CIStorageClass(int storage_class_flag, enum CIStandard standard)
 {
+    char *storage_classes[] = {
+        "",
+        "auto",
+        "contexpr",
+        "extern",
+        "inline",
+        "register",
+        "static",
+        standard >= CI_STANDARD_23 ? "thread_local" : "_Thread_local",
+        "typedef",
+    };
+
     String *res = NEW(String);
 
     for (Usize i = 0; i < storage_class_ids_count && storage_class_flag > 0;
          ++i) {
         if (storage_class_flag & storage_class_ids[i]) {
-            switch (storage_class_ids[i]) {
-                case CI_STORAGE_CLASS_AUTO:
-                    push_str__String(res, "auto");
-
-                    break;
-                case CI_STORAGE_CLASS_CONSTEXPR:
-                    push_str__String(res, "constexpr");
-
-                    break;
-                case CI_STORAGE_CLASS_EXTERN:
-                    push_str__String(res, "extern");
-
-                    break;
-                case CI_STORAGE_CLASS_INLINE:
-                    push_str__String(res, "inline");
-
-                    break;
-                case CI_STORAGE_CLASS_REGISTER:
-                    push_str__String(res, "register");
-
-                    break;
-                case CI_STORAGE_CLASS_STATIC:
-                    push_str__String(res, "static");
-
-                    break;
-                case CI_STORAGE_CLASS_THREAD_LOCAL:
-                    if (standard >= CI_STANDARD_23) {
-                        push_str__String(res, "thread_local");
-                    } else {
-                        push_str__String(res, "_Thread_local");
-                    }
-
-                    break;
-                case CI_STORAGE_CLASS_TYPEDEF:
-                    push_str__String(res, "typedef");
-
-                    break;
-                default:
-                    UNREACHABLE("unknown variant");
-            }
+            push_str__String(res, storage_classes[i]);
 
             storage_class_flag &= ~storage_class_ids[i];
 
@@ -1937,7 +1927,7 @@ to_string__CIStorageClass(int storage_class_flag, enum CIStandard standard)
 String *
 IMPL_FOR_DEBUG(to_string, CIStorageClass, int storage_class_flag)
 {
-    static char *storage_class_id_s[] = {
+    static char *storage_classes[] = {
         "CI_STORAGE_CLASS_NONE",      "CI_STORAGE_CLASS_AUTO",
         "CI_STORAGE_CLASS_CONSTEXPR", "CI_STORAGE_CLASS_EXTERN",
         "CI_STORAGE_CLASS_INLINE",    "CI_STORAGE_CLASS_REGISTER",
@@ -1945,15 +1935,17 @@ IMPL_FOR_DEBUG(to_string, CIStorageClass, int storage_class_flag)
         "CI_STORAGE_CLASS_TYPEDEF",
     };
     static_assert(storage_class_ids_count ==
-                    sizeof(storage_class_id_s) / sizeof(*storage_class_id_s),
+                    sizeof(storage_classes) / sizeof(*storage_classes),
                   "number of items don't match");
 
-    String *res = NEW(String);
+    String *res = storage_class_flag == 0
+                    ? from__String(storage_classes[CI_STORAGE_CLASS_NONE])
+                    : NEW(String);
 
     for (Usize i = 0; i < storage_class_ids_count && storage_class_flag > 0;
          ++i) {
         if (storage_class_flag & storage_class_ids[i]) {
-            push_str__String(res, storage_class_id_s[i]);
+            push_str__String(res, storage_classes[i]);
 
             storage_class_flag &= ~storage_class_ids[i];
 
