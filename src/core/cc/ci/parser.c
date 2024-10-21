@@ -935,9 +935,24 @@ parse_storage_class_specifiers_and_data_type_qualifiers__CIParser(
 
 /// @brief Set and verify if the qualifier is valid given the data type.
 static void
-set_and_check_qualifier__CIParser(CIParser *self,
-                                  CIDataType *data_type,
-                                  int data_type_qualifier_flag);
+set_and_check_data_type_qualifier__CIParser(CIParser *self,
+                                            CIDataType *data_type,
+                                            int data_type_qualifier_flag);
+
+/// @brief Check if the data type context is compatible with other data type
+/// context contains in `context_flag`.
+static void
+valid_data_type_context__CIParser(CIParser *self, int context_flag);
+
+static void
+valid_data_type_context_according_data_type__CIParser(CIParser *self,
+                                                      CIDataType *data_type,
+                                                      int context_flag);
+
+static void
+set_and_check_data_type_context__CIParser(CIParser *self,
+                                          CIDataType *data_type,
+                                          int context_flag);
 
 static CIDataType *
 parse_pre_data_type__CIParser(CIParser *self);
@@ -6733,7 +6748,7 @@ parse_post_data_type__CIParser(CIParser *self, CIDataType *data_type)
         if (is_data_type_qualifier) {
             parse_data_type_qualifiers__CIParser(self,
                                                  &data_type_qualifier_flag);
-            set_and_check_qualifier__CIParser(
+            set_and_check_data_type_qualifier__CIParser(
               self, data_type, data_type_qualifier_flag);
 
             RESET_DATA_TYPE_QUALIFIER_FLAG();
@@ -6754,8 +6769,8 @@ parse_post_data_type__CIParser(CIParser *self, CIDataType *data_type)
     }
 
 exit:
-    set_context__CIDataType(data_type,
-                            parse_data_type_contexts__CIParser(self));
+    set_and_check_data_type_context__CIParser(
+      self, data_type, parse_data_type_contexts__CIParser(self));
 
     return data_type;
 }
@@ -6947,9 +6962,9 @@ parse_storage_class_specifiers_and_data_type_qualifiers__CIParser(
 }
 
 void
-set_and_check_qualifier__CIParser(CIParser *self,
-                                  CIDataType *data_type,
-                                  int data_type_qualifier_flag)
+set_and_check_data_type_qualifier__CIParser(CIParser *self,
+                                            CIDataType *data_type,
+                                            int data_type_qualifier_flag)
 {
     if (data_type_qualifier_flag & CI_DATA_TYPE_QUALIFIER_RESTRICT) {
         if (!is_ptr_data_type__CIParser(self, data_type, NULL, NULL)) {
@@ -6958,6 +6973,85 @@ set_and_check_qualifier__CIParser(CIParser *self,
     }
 
     set_qualifier__CIDataType(data_type, data_type_qualifier_flag);
+}
+
+void
+valid_data_type_context__CIParser(CIParser *self, int context_flag)
+{
+    static enum CIDataTypeContext rejected_context_when_none_is_present[] = {};
+    static enum CIDataTypeContext rejected_context_when_heap_is_present[] = {
+        CI_DATA_TYPE_CONTEXT_STACK
+    };
+    static enum CIDataTypeContext
+      rejected_context_when_non_null_is_present[] = {};
+    static enum CIDataTypeContext rejected_context_when_stack_is_present[] = {
+        CI_DATA_TYPE_CONTEXT_HEAP
+    };
+    static enum CIDataTypeContext rejected_context_when_trace_is_present[] = {};
+    typedef struct CIDataTypeRejectedContexts
+    {
+        enum CIDataTypeContext *buffer;
+        Usize len;
+    } CIDataTypeRejectedContexts;
+    static CIDataTypeRejectedContexts
+      rejected_context_when_x_context_is_present[] = {
+          { rejected_context_when_none_is_present,
+            sizeof(rejected_context_when_none_is_present) /
+              sizeof(*rejected_context_when_none_is_present) },
+          { rejected_context_when_heap_is_present,
+            sizeof(rejected_context_when_heap_is_present) /
+              sizeof(*rejected_context_when_heap_is_present) },
+          { rejected_context_when_non_null_is_present,
+            sizeof(rejected_context_when_non_null_is_present) /
+              sizeof(*rejected_context_when_non_null_is_present) },
+          { rejected_context_when_stack_is_present,
+            sizeof(rejected_context_when_stack_is_present) /
+              sizeof(*rejected_context_when_stack_is_present) },
+          { rejected_context_when_trace_is_present,
+            sizeof(rejected_context_when_trace_is_present) /
+              sizeof(*rejected_context_when_trace_is_present) }
+      };
+    CIDataTypeContextIds data_type_context_ids = get_ids__CIDataTypeContext();
+
+    ASSERT(data_type_context_ids.len ==
+           sizeof(rejected_context_when_x_context_is_present) /
+             sizeof(*rejected_context_when_x_context_is_present));
+
+    for (Usize i = 0; i < data_type_context_ids.len; ++i) {
+        if (context_flag & data_type_context_ids.buffer[i]) {
+            const CIDataTypeRejectedContexts *rejected_context_item =
+              &rejected_context_when_x_context_is_present[i];
+
+            for (Usize j = 0; j < rejected_context_item->len; ++j) {
+                if (context_flag & rejected_context_item->buffer[j]) {
+                    FAILED("incompatible data type context");
+                }
+            }
+        }
+    }
+}
+
+void
+valid_data_type_context_according_data_type__CIParser(CIParser *self,
+                                                      CIDataType *data_type,
+                                                      int context_flag)
+{
+    if (context_flag != CI_DATA_TYPE_CONTEXT_NONE &&
+        !is_ptr_data_type__CIParser(self, data_type, NULL, NULL)) {
+        FAILED("the data type need to be a pointer to set this kind of context "
+               "flag");
+    }
+}
+
+void
+set_and_check_data_type_context__CIParser(CIParser *self,
+                                          CIDataType *data_type,
+                                          int context_flag)
+{
+    valid_data_type_context__CIParser(self, context_flag);
+    valid_data_type_context_according_data_type__CIParser(
+      self, data_type, context_flag);
+    set_context__CIDataType(data_type, context_flag);
 }
 
 CIDataType *
@@ -7292,7 +7386,8 @@ parse_pre_data_type__CIParser(CIParser *self)
     parse_storage_class_specifiers_and_data_type_qualifiers__CIParser(
       self, &data_type_qualifier_flag, &storage_class_flag);
 
-    set_and_check_qualifier__CIParser(self, res, data_type_qualifier_flag);
+    set_and_check_data_type_qualifier__CIParser(
+      self, res, data_type_qualifier_flag);
 
     RESET_DATA_TYPE_QUALIFIER_FLAG();
 
