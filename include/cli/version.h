@@ -26,9 +26,9 @@
 #define LILY_CLI_VERSION_H
 
 #define MAJOR 0
-#define MINOR 5
+#define MINOR 6
 #define PATCH 0
 
-#define VERSION "0.5.0"
+#define VERSION "0.6.0"
 
 #endif // LILY_CLI_VERSION_H
