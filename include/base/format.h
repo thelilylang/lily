@@ -48,7 +48,7 @@
  * - {u:x}: Unsigned, Uint32 (hex)
  * - {u}: Unsigned, Uint32
  * - {S}: Dynamic String (base/string.h)
- * - {Sr}: Raw dynamic string (free it after use) (base/string.h)
+ * - {Sr}: Raw dynamic string (free after use) (base/string.h)
  * - {zi:b} ssize_t, Isize (binary)
  * - {zi:o} ssize_t, Isize (octal)
  * - {zi:x} ssize_t, Isize (hex)
