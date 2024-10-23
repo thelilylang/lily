@@ -170,6 +170,7 @@ enum CITokenKind
     CI_TOKEN_KIND_EOT, // End Of Token (only a transition token)
     CI_TOKEN_KIND_EQ,
     CI_TOKEN_KIND_EQ_EQ,
+    CI_TOKEN_KIND_GNU_ATTRIBUTE, // __attribute__((x))
     CI_TOKEN_KIND_HASHTAG,
     CI_TOKEN_KIND_HASHTAG_HASHTAG,
     CI_TOKEN_KIND_HAT,
@@ -437,6 +438,41 @@ IMPL_FOR_DEBUG(to_string, CITokenEot, const CITokenEot *self);
  * @brief Free CITokenEot type.
  */
 DESTRUCTOR(CITokenEot, const CITokenEot *self);
+
+typedef struct CITokenGNUAttribute
+{
+    // content __attribute__((<X>))
+    CITokens content;
+} CITokenGNUAttribute;
+
+/**
+ *
+ * @brief Construct CITokenGNUAttribute type.
+ */
+CONSTRUCTOR(CITokenGNUAttribute, CITokenGNUAttribute, CITokens content);
+
+/**
+ *
+ * @brief Convert to string CITokenGNUAttribute type.
+ */
+String *
+to_string__CITokenGNUAttribute(const CITokenGNUAttribute *self);
+
+/**
+ *
+ * @brief Convert CITokenGNUAttribute in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CITokenGNUAttribute, const CITokenGNUAttribute *self);
+#endif
+
+/**
+ *
+ * @brief Free CITokenGNUAttribute type.
+ */
+DESTRUCTOR(CITokenGNUAttribute, const CITokenGNUAttribute *self);
 
 enum CITokenLiteralConstantIntSuffix
 {
@@ -1233,6 +1269,7 @@ typedef struct CIToken
         String *attribute_nodiscard;  // String*?
         String *comment_doc;
         CITokenEot eot;
+        CITokenGNUAttribute gnu_attribute;
         CITokenPreprocessorDefine preprocessor_define;
         CITokenPreprocessorElif preprocessor_elif;
         CITokenPreprocessorElifdef preprocessor_elifdef;
@@ -1307,6 +1344,16 @@ VARIANT_CONSTRUCTOR(CIToken *,
  * @brief Construct CIToken type (CI_TOKEN_KIND_EOT).
  */
 VARIANT_CONSTRUCTOR(CIToken *, CIToken, eot, Location location, CITokenEot eot);
+
+/**
+ *
+ * @brief Construct CIToken type (CI_TOKEN_KIND_GNU_ATTRIBUTE).
+ */
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
+                    gnu_attribute,
+                    Location location,
+                    CITokenGNUAttribute gnu_attribute);
 
 /**
  *

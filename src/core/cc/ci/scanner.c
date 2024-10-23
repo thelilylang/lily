@@ -305,6 +305,12 @@ skip_space_and_backslash__CIScanner(CIScanner *self);
 static void
 skip_backslash__CIScanner(CIScanner *self);
 
+/// @brief In some cases we want to skip spaces and backslashes when we're
+/// inside a macro, and if not, we skip all spaces.
+static void
+skip_space_according_ctx__CIScanner(CIScanner *self,
+                                    const CIScannerContext *ctx);
+
 /// @brief Scan macro name of #ifdef, #ifndef, #elifdef, #elifndef, #define or
 /// #undef preprocessor.
 /// @example
@@ -417,6 +423,10 @@ scan_undef_preprocessor__CIScanner(CIScanner *self);
 /// @brief Scan warning preprocessor.
 static CIToken *
 scan_warning_preprocessor__CIScanner(CIScanner *self);
+
+/// @brief Scan GNU attribute.
+static CIToken *
+scan_gnu_attribute__CIScanner(CIScanner *self, CIScannerContext *ctx);
 
 /// @brief Scan all numbers (hexadecimal, octal, binary, decimal and float).
 static CIToken *
@@ -2643,6 +2653,20 @@ skip_backslash__CIScanner(CIScanner *self)
 
 #undef BACKSLASH_DIAGNOSTIC
 
+void
+skip_space_according_ctx__CIScanner(CIScanner *self,
+                                    const CIScannerContext *ctx)
+{
+    switch (ctx->ctx_location) {
+        case CI_SCANNER_CONTEXT_LOCATION_MACRO:
+            skip_space_and_backslash__CIScanner(self);
+
+            break;
+        default:
+            skip_space__CIScanner(self);
+    }
+}
+
 String *
 scan_macro_name__CIScanner(CIScanner *self,
                            CIScannerContext *ctx,
@@ -2782,32 +2806,35 @@ scan_preprocessor_content__CIScanner(CIScanner *self,
             //
             // What's more, you might have noticed that this macro has been
             // designed so that custom cases can be added if required.
-#define DEFAULT_FILTER_TOKEN(token, ctx)                           \
-    /* NOTE: This switch case should be left in first position. */ \
-    case CI_TOKEN_KIND_COMMENT_BLOCK:                              \
-        FREE(CIToken, token);                                      \
-        break;                                                     \
-    case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:                        \
-    case CI_TOKEN_KIND_PREPROCESSOR_ELIF:                          \
-    case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:                       \
-    case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:                      \
-    case CI_TOKEN_KIND_PREPROCESSOR_ELSE:                          \
-    case CI_TOKEN_KIND_PREPROCESSOR_EMBED:                         \
-    case CI_TOKEN_KIND_PREPROCESSOR_ENDIF:                         \
-    case CI_TOKEN_KIND_PREPROCESSOR_ERROR:                         \
-    case CI_TOKEN_KIND_PREPROCESSOR_IF:                            \
-    case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:                         \
-    case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:                        \
-    case CI_TOKEN_KIND_PREPROCESSOR_INCLUDE:                       \
-    case CI_TOKEN_KIND_PREPROCESSOR_LINE:                          \
-    case CI_TOKEN_KIND_PREPROCESSOR_PRAGMA:                        \
-    case CI_TOKEN_KIND_PREPROCESSOR_UNDEF:                         \
-    case CI_TOKEN_KIND_PREPROCESSOR_WARNING:                       \
-        push_token__CIScanner(self, ctx, token);                   \
-        break;                                                     \
-    default:                                                       \
-        next_char__CIScanner(self);                                \
-        push_token__CIScanner(self, ctx, token);                   \
+#define DEFAULT_FILTER_TOKEN(token, ctx)                                     \
+    /* NOTE: This switch case should be left in first position. */           \
+    case CI_TOKEN_KIND_COMMENT_BLOCK:                                        \
+    /* FIXME: This case has been added temporarily to skip the GNU attribute \
+     * token, as it is not yet supported. */                                 \
+    case CI_TOKEN_KIND_GNU_ATTRIBUTE:                                        \
+        FREE(CIToken, token);                                                \
+        break;                                                               \
+    case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:                                  \
+    case CI_TOKEN_KIND_PREPROCESSOR_ELIF:                                    \
+    case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:                                 \
+    case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:                                \
+    case CI_TOKEN_KIND_PREPROCESSOR_ELSE:                                    \
+    case CI_TOKEN_KIND_PREPROCESSOR_EMBED:                                   \
+    case CI_TOKEN_KIND_PREPROCESSOR_ENDIF:                                   \
+    case CI_TOKEN_KIND_PREPROCESSOR_ERROR:                                   \
+    case CI_TOKEN_KIND_PREPROCESSOR_IF:                                      \
+    case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:                                   \
+    case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:                                  \
+    case CI_TOKEN_KIND_PREPROCESSOR_INCLUDE:                                 \
+    case CI_TOKEN_KIND_PREPROCESSOR_LINE:                                    \
+    case CI_TOKEN_KIND_PREPROCESSOR_PRAGMA:                                  \
+    case CI_TOKEN_KIND_PREPROCESSOR_UNDEF:                                   \
+    case CI_TOKEN_KIND_PREPROCESSOR_WARNING:                                 \
+        push_token__CIScanner(self, ctx, token);                             \
+        break;                                                               \
+    default:                                                                 \
+        next_char__CIScanner(self);                                          \
+        push_token__CIScanner(self, ctx, token);                             \
         break;
 
             DEFAULT_LAST_SET_AND_CHECK(token);
@@ -3423,6 +3450,70 @@ scan_warning_preprocessor__CIScanner(CIScanner *self)
     token->preprocessor_warning = token->preprocessor_error;
 
     return token;
+}
+
+CIToken *
+scan_gnu_attribute__CIScanner(CIScanner *self, CIScannerContext *ctx)
+{
+    static const SizedStr gnu_attribute_s = SIZED_STR_FROM_RAW("__attribute__");
+    Location gnu_attribute_location = clone__Location(&self->base.location);
+
+    for (Usize i = 0; i < gnu_attribute_s.len; ++i) {
+        if (peek_char__CIScanner(self, i) !=
+            (char *)(Uptr)gnu_attribute_s.buffer[i]) {
+            return NULL;
+        }
+    }
+
+    jump__CIScanner(self, gnu_attribute_s.len);
+    skip_space_according_ctx__CIScanner(self, ctx);
+
+    if (self->base.source.cursor.current == '(' &&
+        peek_char__CIScanner(self, 1) == (char *)'(') {
+        jump__CIScanner(self, 2);
+    } else {
+        FAILED("expected `((` after __attribute__");
+    }
+
+    CITokens gnu_attribute_content = NEW(CITokens);
+    CIScannerContext gnu_attribute_ctx = NEW(CIScannerContext,
+                                             CI_SCANNER_CONTEXT_LOCATION_NONE,
+                                             &gnu_attribute_content);
+    bool has_reach_end = false;
+
+    while (self->base.source.cursor.current != ')' ||
+           peek_char__CIScanner(self, 1) != (char *)')') {
+        if (HAS_REACH_END(self)) {
+            has_reach_end = true;
+            goto not_closed;
+        }
+
+        skip_space_according_ctx__CIScanner(self, ctx);
+
+        CIToken *token = get_token__CIScanner(self, &gnu_attribute_ctx, ctx);
+
+        if (token) {
+            DEFAULT_LAST_SET_AND_CHECK(token);
+
+            switch (token->kind) {
+                DEFAULT_FILTER_TOKEN(token, &gnu_attribute_ctx);
+            }
+        }
+    }
+
+    jump__CIScanner(self, 2);
+
+not_closed:
+    if (has_reach_end) {
+        FAILED("GNU attribute not closed expected `))`");
+    }
+
+    add_eof_token__CIScanner(self, &gnu_attribute_ctx);
+
+    return NEW_VARIANT(CIToken,
+                       gnu_attribute,
+                       gnu_attribute_location,
+                       NEW(CITokenGNUAttribute, gnu_attribute_content));
 }
 
 CIToken *
@@ -4048,9 +4139,16 @@ get_token__CIScanner(CIScanner *self,
             return NEW(CIToken,
                        CI_TOKEN_KIND_HAT,
                        clone__Location(&self->base.location));
-        // IDENTIFIER, KEYWORD
-        case IS_ID:
+        // IDENTIFIER, KEYWORD, __attrbiute__((x))
+        case IS_ID: {
+            CIToken *gnu_attribute = scan_gnu_attribute__CIScanner(self, ctx);
+
+            if (gnu_attribute) {
+                return gnu_attribute;
+            }
+
             return scan_multi_part_keyword__CIScanner(self, ctx);
+        }
         // ?
         case '?':
             return NEW(CIToken,
