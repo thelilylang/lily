@@ -58,6 +58,9 @@ static VARIANT_DESTRUCTOR(CIToken, comment_doc, CIToken *self);
 // Free CIToken type (CI_TOKEN_KIND_EOT).
 static VARIANT_DESTRUCTOR(CIToken, eot, CIToken *self);
 
+// Free CIToken type (CI_TOKEN_KIND_GNU_ATTRIBUTE).
+static VARIANT_DESTRUCTOR(CIToken, gnu_attribute, CIToken *self);
+
 // Free CIToken type (CI_TOKEN_KIND_IDENTIFIER).
 static VARIANT_DESTRUCTOR(CIToken, identifier, CIToken *self);
 
@@ -402,6 +405,37 @@ DESTRUCTOR(CITokenEot, const CITokenEot *self)
         default:
             break;
     }
+}
+
+CONSTRUCTOR(CITokenGNUAttribute, CITokenGNUAttribute, CITokens content)
+{
+    return (CITokenGNUAttribute){ .content = content };
+}
+
+String *
+to_string__CITokenGNUAttribute(const CITokenGNUAttribute *self)
+{
+    String *res = from__String("__attribute__((");
+
+    TO_STRING_TOKENS(self->content, res);
+
+    push_str__String(res, "))");
+
+    return res;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CITokenGNUAttribute, const CITokenGNUAttribute *self)
+{
+    return format__String("CITokenGNUAttribute{{ content = {Sr} }",
+                          to_string__Debug__CITokens(&self->content));
+}
+#endif
+
+DESTRUCTOR(CITokenGNUAttribute, const CITokenGNUAttribute *self)
+{
+    FREE(CITokens, &self->content);
 }
 
 char *
@@ -1070,6 +1104,22 @@ VARIANT_CONSTRUCTOR(CIToken *, CIToken, eot, Location location, CITokenEot eot)
 
 VARIANT_CONSTRUCTOR(CIToken *,
                     CIToken,
+                    gnu_attribute,
+                    Location location,
+                    CITokenGNUAttribute gnu_attribute)
+{
+    CIToken *self = lily_malloc(sizeof(CIToken));
+
+    self->kind = CI_TOKEN_KIND_GNU_ATTRIBUTE;
+    self->location = location;
+    self->next = NULL;
+    self->gnu_attribute = gnu_attribute;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
                     attribute_deprecated,
                     Location location,
                     String *attribute_deprecated)
@@ -1621,6 +1671,9 @@ to_string__CIToken(CIToken *self)
             return from__String("=");
         case CI_TOKEN_KIND_EQ_EQ:
             return from__String("==");
+        case CI_TOKEN_KIND_GNU_ATTRIBUTE:
+            return format__String(
+              "{Sr}", to_string__CITokenGNUAttribute(&self->gnu_attribute));
         case CI_TOKEN_KIND_HASHTAG:
             return from__String("#");
         case CI_TOKEN_KIND_HASHTAG_HASHTAG:
@@ -2057,6 +2110,8 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_EQ";
         case CI_TOKEN_KIND_EQ_EQ:
             return "CI_TOKEN_KIND_EQ_EQ";
+        case CI_TOKEN_KIND_GNU_ATTRIBUTE:
+            return "CI_TOKEN_KIND_GNU_ATTRIBUTE";
         case CI_TOKEN_KIND_HASHTAG:
             return "CI_TOKEN_KIND_HASHTAG";
         case CI_TOKEN_KIND_HASHTAG_HASHTAG:
@@ -2413,6 +2468,13 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
                           CALL_DEBUG_IMPL(to_string, CITokenEot, &self->eot));
+        case CI_TOKEN_KIND_GNU_ATTRIBUTE:
+            return format(
+              "CIToken{{ kind = {s}, location = {sa}, gnu_attribute = {Sr} }",
+              CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
+              CALL_DEBUG_IMPL(to_string, Location, &self->location),
+              CALL_DEBUG_IMPL(
+                to_string, CITokenGNUAttribute, &self->gnu_attribute));
         case CI_TOKEN_KIND_IDENTIFIER:
             return format(
               "CIToken{{ kind = {s}, location = {sa}, identifier = {S} }",
@@ -2664,6 +2726,12 @@ VARIANT_DESTRUCTOR(CIToken, eot, CIToken *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(CIToken, gnu_attribute, CIToken *self)
+{
+    FREE(CITokenGNUAttribute, &self->gnu_attribute);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(CIToken, identifier, CIToken *self)
 {
     FREE(String, self->identifier);
@@ -2844,6 +2912,9 @@ DESTRUCTOR(CIToken, CIToken *self)
             break;
         case CI_TOKEN_KIND_EOT:
             FREE_VARIANT(CIToken, eot, self);
+            break;
+        case CI_TOKEN_KIND_GNU_ATTRIBUTE:
+            FREE_VARIANT(CIToken, gnu_attribute, self);
             break;
         case CI_TOKEN_KIND_IDENTIFIER:
             FREE_VARIANT(CIToken, identifier, self);
