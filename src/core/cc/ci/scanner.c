@@ -426,7 +426,9 @@ scan_warning_preprocessor__CIScanner(CIScanner *self);
 
 /// @brief Scan GNU attribute.
 static CIToken *
-scan_gnu_attribute__CIScanner(CIScanner *self, CIScannerContext *ctx);
+scan_gnu_attribute__CIScanner(CIScanner *self,
+                              CIScannerContext *ctx,
+                              Location gnu_attribute_location);
 
 /// @brief Scan all numbers (hexadecimal, octal, binary, decimal and float).
 static CIToken *
@@ -702,6 +704,8 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                                .until = CI_STANDARD_23 },
     [CI_TOKEN_KIND_KEYWORD__THREAD_LOCAL] = { .since = CI_STANDARD_11,
                                               .until = CI_STANDARD_23 },
+    [CI_TOKEN_KIND_KEYWORD___ATTRIBUTE__] = { .since = CI_STANDARD_NONE,
+                                              .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_LBRACE] = { .since = CI_STANDARD_NONE,
                                .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_LHOOK] = { .since = CI_STANDARD_NONE,
@@ -865,6 +869,7 @@ static const SizedStr ci_single_keywords[CI_N_SINGLE_KEYWORD] = {
     SIZED_STR_FROM_RAW("_Noreturn"),
     SIZED_STR_FROM_RAW("_Static_assert"),
     SIZED_STR_FROM_RAW("_Thread_local"),
+    SIZED_STR_FROM_RAW("__attribute__"),
     SIZED_STR_FROM_RAW("alignas"),
     SIZED_STR_FROM_RAW("alignof"),
     SIZED_STR_FROM_RAW("asm"),
@@ -929,6 +934,7 @@ static const enum CITokenKind ci_single_keyword_ids[CI_N_SINGLE_KEYWORD] = {
     CI_TOKEN_KIND_KEYWORD__NORETURN,
     CI_TOKEN_KIND_KEYWORD__STATIC_ASSERT,
     CI_TOKEN_KIND_KEYWORD__THREAD_LOCAL,
+    CI_TOKEN_KIND_KEYWORD___ATTRIBUTE__,
     CI_TOKEN_KIND_KEYWORD_ALIGNAS,
     CI_TOKEN_KIND_KEYWORD_ALIGNOF,
     CI_TOKEN_KIND_KEYWORD_ASM,
@@ -1981,6 +1987,13 @@ scan_multi_part_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
         free_last_token:
             FREE(CIToken, last_token);
             break;
+        case CI_TOKEN_KIND_KEYWORD___ATTRIBUTE__: {
+            Location location = clone__Location(&last_token->location);
+
+            FREE(CIToken, last_token);
+
+            return scan_gnu_attribute__CIScanner(self, ctx, location);
+        }
         default:
             res = last_token;
             res->kind = standardize_keyword__CIScanner(res->kind);
@@ -3453,19 +3466,16 @@ scan_warning_preprocessor__CIScanner(CIScanner *self)
 }
 
 CIToken *
-scan_gnu_attribute__CIScanner(CIScanner *self, CIScannerContext *ctx)
+scan_gnu_attribute__CIScanner(CIScanner *self,
+                              CIScannerContext *ctx,
+                              Location gnu_attribute_location)
 {
-    static const SizedStr gnu_attribute_s = SIZED_STR_FROM_RAW("__attribute__");
-    Location gnu_attribute_location = clone__Location(&self->base.location);
+    ASSERT(self->base.source.cursor.current == '_');
 
-    for (Usize i = 0; i < gnu_attribute_s.len; ++i) {
-        if (peek_char__CIScanner(self, i) !=
-            (char *)(Uptr)gnu_attribute_s.buffer[i]) {
-            return NULL;
-        }
-    }
+    // Eat the last character of __attrbiute__
+    //                                       ^
+    next_char__CIScanner(self);
 
-    jump__CIScanner(self, gnu_attribute_s.len);
     skip_space_according_ctx__CIScanner(self, ctx);
 
     if (self->base.source.cursor.current == '(' &&
@@ -4139,16 +4149,9 @@ get_token__CIScanner(CIScanner *self,
             return NEW(CIToken,
                        CI_TOKEN_KIND_HAT,
                        clone__Location(&self->base.location));
-        // IDENTIFIER, KEYWORD, __attrbiute__((x))
-        case IS_ID: {
-            CIToken *gnu_attribute = scan_gnu_attribute__CIScanner(self, ctx);
-
-            if (gnu_attribute) {
-                return gnu_attribute;
-            }
-
+        // IDENTIFIER, KEYWORD
+        case IS_ID:
             return scan_multi_part_keyword__CIScanner(self, ctx);
-        }
         // ?
         case '?':
             return NEW(CIToken,

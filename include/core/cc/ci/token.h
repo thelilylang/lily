@@ -41,7 +41,7 @@ struct CIToken;
 
 // NOTE: Does not take multi-part keywords into account.
 // e.g. unsigned int, unsigned long long int, ...
-#define CI_N_SINGLE_KEYWORD 60
+#define CI_N_SINGLE_KEYWORD 61
 
 #define CI_N_ATTRIBUTE 8
 
@@ -265,6 +265,7 @@ enum CITokenKind
     CI_TOKEN_KIND_KEYWORD__NORETURN,
     CI_TOKEN_KIND_KEYWORD__STATIC_ASSERT,
     CI_TOKEN_KIND_KEYWORD__THREAD_LOCAL,
+    CI_TOKEN_KIND_KEYWORD___ATTRIBUTE__, // NOTE: #1
     CI_TOKEN_KIND_LBRACE,
     CI_TOKEN_KIND_LHOOK,
     CI_TOKEN_KIND_LPAREN,
