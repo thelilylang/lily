@@ -3490,9 +3490,10 @@ scan_gnu_attribute__CIScanner(CIScanner *self,
                                              CI_SCANNER_CONTEXT_LOCATION_NONE,
                                              &gnu_attribute_content);
     bool has_reach_end = false;
+    Uint32 in_paren_count = 0;
 
     while (self->base.source.cursor.current != ')' ||
-           peek_char__CIScanner(self, 1) != (char *)')') {
+           peek_char__CIScanner(self, 1) != (char *)')' || in_paren_count > 0) {
         if (HAS_REACH_END(self)) {
             has_reach_end = true;
             goto not_closed;
@@ -3503,6 +3504,23 @@ scan_gnu_attribute__CIScanner(CIScanner *self,
         CIToken *token = get_token__CIScanner(self, &gnu_attribute_ctx, ctx);
 
         if (token) {
+            switch (token->kind) {
+                case CI_TOKEN_KIND_LPAREN:
+                    ++in_paren_count;
+
+                    break;
+                case CI_TOKEN_KIND_RPAREN:
+                    if (in_paren_count > 0) {
+                        --in_paren_count;
+                    } else {
+                        FAILED("expected `(` before `)`");
+                    }
+
+                    break;
+                default:
+                    break;
+            }
+
             DEFAULT_LAST_SET_AND_CHECK(token);
 
             switch (token->kind) {
