@@ -85,14 +85,14 @@ run__CIScanner(CIScanner *self, bool dump_scanner);
 const CIFeature *
 get_tokens_feature__CIScanner();
 
-#define CHECK_STANDARD_SINCE(standard, since, block) \
-    if (standard < since) {                          \
-        block;                                       \
+#define CI_CHECK_STANDARD_SINCE(standard, since, block) \
+    if (standard < since) {                             \
+        block;                                          \
     }
 
-#define CHECK_STANDARD_UNTIL(standard, until, block) \
-    if (standard >= until) {                         \
-        block;                                       \
+#define CI_CHECK_STANDARD_UNTIL(standard, until, block) \
+    if (standard >= until) {                            \
+        block;                                          \
     }
 
 /**
