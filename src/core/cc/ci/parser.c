@@ -37,6 +37,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+enum CIDataTypeCombination
+{
+    CI_DATA_TYPE_COMBINATION_NONE = 0,
+    CI_DATA_TYPE_COMBINATION_CHAR = 1 << 0,
+    CI_DATA_TYPE_COMBINATION_DOUBLE = 1 << 1,
+    CI_DATA_TYPE_COMBINATION_FLOAT = 1 << 2,
+    CI_DATA_TYPE_COMBINATION_INT = 1 << 3,
+    CI_DATA_TYPE_COMBINATION_LONG = 1 << 4,
+    CI_DATA_TYPE_COMBINATION_LONG_LONG = 1 << 5,
+    CI_DATA_TYPE_COMBINATION_SHORT = 1 << 6,
+    CI_DATA_TYPE_COMBINATION_SIGNED = 1 << 7,
+    CI_DATA_TYPE_COMBINATION_UNSIGNED = 1 << 8,
+    CI_DATA_TYPE_COMBINATION__COMPLEX = 1 << 9,
+    CI_DATA_TYPE_COMBINATION__IMAGINARY = 1 << 10,
+};
+
 struct CurrentSwitch
 {
     bool is_integer;
@@ -953,6 +969,32 @@ static void
 set_and_check_data_type_context__CIParser(CIParser *self,
                                           CIDataType *data_type,
                                           int context_flag);
+
+/// @brief Add flag to multi part keyword.
+static void
+add_flag__CIDataTypeCombination(CIParser *self,
+                                Uint32 *flags,
+                                enum CIDataTypeCombination flag);
+
+/// @brief Convert data type combination to token kind.
+static enum CIDataTypeCombination
+convert_token_kind_to_data_type_combination__CIDataTypeCombination(
+  enum CITokenKind kind);
+
+/// @brief Check if the token kind is multi part keyword.
+bool
+is_multi_part_keyword_from_token_kind__CIKeywordMultiPart(
+  enum CITokenKind kind);
+
+/// @return enum CIDataTypeKind | int (-1)
+static int
+convert_data_type_combination_to_data_type__CIParser(CIParser *self,
+                                                     int combination);
+
+/// @example signed int, long long int, ...
+/// @return enum CIDataTypeKind | int (-1)
+static int
+parse_data_type_combination__CIParser(CIParser *self);
 
 static CIDataType *
 parse_pre_data_type__CIParser(CIParser *self);
@@ -5191,7 +5233,7 @@ check_standard__CIParser(CIParser *self, CIToken *token)
     Location location_error = clone__Location(&token->location);
     const CIFeature *feature = &tokens_feature[token->kind];
 
-    CHECK_STANDARD_SINCE(
+    CI_CHECK_STANDARD_SINCE(
       self->file->entity.result->config->standard, feature->since, {
           enum CIErrorKind error_kind;
 
@@ -5239,7 +5281,7 @@ check_standard__CIParser(CIParser *self, CIToken *token)
                            self->count_error);
       });
 
-    CHECK_STANDARD_UNTIL(
+    CI_CHECK_STANDARD_UNTIL(
       self->file->entity.result->config->standard, feature->until, {
           String *note = NULL;
 
@@ -5291,9 +5333,6 @@ check_standard__CIParser(CIParser *self, CIToken *token)
                                             NULL,
                                             NULL));
       });
-
-#undef CHECK_STANDARD_SINCE
-#undef CHECK_STANDARD_UNTIL
 }
 
 void
@@ -5508,33 +5547,23 @@ token_is_data_type__CIParser(CIParser *self, const CIToken *token)
         case CI_TOKEN_KIND_KEYWORD_BOOL:
         case CI_TOKEN_KIND_KEYWORD_CHAR:
         case CI_TOKEN_KIND_KEYWORD_DOUBLE:
-        case CI_TOKEN_KIND_KEYWORD_DOUBLE__COMPLEX:
-        case CI_TOKEN_KIND_KEYWORD_DOUBLE__IMAGINARY:
         case CI_TOKEN_KIND_KEYWORD_ENUM:
         case CI_TOKEN_KIND_KEYWORD_FLOAT:
-        case CI_TOKEN_KIND_KEYWORD_FLOAT__COMPLEX:
-        case CI_TOKEN_KIND_KEYWORD_FLOAT__IMAGINARY:
-        case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE:
-        case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__COMPLEX:
-        case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__IMAGINARY:
-        case CI_TOKEN_KIND_KEYWORD_LONG_INT:
-        case CI_TOKEN_KIND_KEYWORD_LONG_LONG_INT:
         case CI_TOKEN_KIND_KEYWORD_INT:
-        case CI_TOKEN_KIND_KEYWORD_SHORT_INT:
-        case CI_TOKEN_KIND_KEYWORD_SIGNED_CHAR:
+        case CI_TOKEN_KIND_KEYWORD_LONG:
+        case CI_TOKEN_KIND_KEYWORD_SHORT:
+        case CI_TOKEN_KIND_KEYWORD_SIGNED:
         case CI_TOKEN_KIND_KEYWORD_STRUCT:
         case CI_TOKEN_KIND_KEYWORD_TYPEOF:
         case CI_TOKEN_KIND_KEYWORD_UNION:
-        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_CHAR:
-        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_INT:
-        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_INT:
-        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG_INT:
-        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT_INT:
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED:
         case CI_TOKEN_KIND_KEYWORD_VOID:
         case CI_TOKEN_KIND_KEYWORD__BOOL:
+        case CI_TOKEN_KIND_KEYWORD__COMPLEX:
         case CI_TOKEN_KIND_KEYWORD__DECIMAL128:
         case CI_TOKEN_KIND_KEYWORD__DECIMAL32:
         case CI_TOKEN_KIND_KEYWORD__DECIMAL64:
+        case CI_TOKEN_KIND_KEYWORD__IMAGINARY:
             return true;
         default:
             return token_is_data_type_qualifier__CIParser(self, token);
@@ -7056,6 +7085,180 @@ set_and_check_data_type_context__CIParser(CIParser *self,
     set_context__CIDataType(data_type, context_flag);
 }
 
+void
+add_flag__CIDataTypeCombination(CIParser *self,
+                                Uint32 *flags,
+                                enum CIDataTypeCombination flag)
+{
+    Uint32 old_flags = *flags;
+
+    *flags |= flag;
+
+    if (old_flags == *flags) {
+        // Set `long long` flag if `long` flag is already set.
+        if (flag == CI_DATA_TYPE_COMBINATION_LONG) {
+            *flags &= ~CI_DATA_TYPE_COMBINATION_LONG;
+            *flags |= CI_DATA_TYPE_COMBINATION_LONG_LONG;
+        } else {
+            FAILED("flag already set");
+        }
+    }
+}
+
+enum CIDataTypeCombination
+convert_token_kind_to_data_type_combination__CIDataTypeCombination(
+  enum CITokenKind kind)
+{
+    switch (kind) {
+        case CI_TOKEN_KIND_KEYWORD_CHAR:
+            return CI_DATA_TYPE_COMBINATION_CHAR;
+        case CI_TOKEN_KIND_KEYWORD_DOUBLE:
+            return CI_DATA_TYPE_COMBINATION_DOUBLE;
+        case CI_TOKEN_KIND_KEYWORD_FLOAT:
+            return CI_DATA_TYPE_COMBINATION_FLOAT;
+        case CI_TOKEN_KIND_KEYWORD_INT:
+            return CI_DATA_TYPE_COMBINATION_INT;
+        case CI_TOKEN_KIND_KEYWORD_LONG:
+            return CI_DATA_TYPE_COMBINATION_LONG;
+        case CI_TOKEN_KIND_KEYWORD_SHORT:
+            return CI_DATA_TYPE_COMBINATION_SHORT;
+        case CI_TOKEN_KIND_KEYWORD_SIGNED:
+            return CI_DATA_TYPE_COMBINATION_SIGNED;
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED:
+            return CI_DATA_TYPE_COMBINATION_UNSIGNED;
+        case CI_TOKEN_KIND_KEYWORD__COMPLEX:
+            return CI_DATA_TYPE_COMBINATION__COMPLEX;
+        case CI_TOKEN_KIND_KEYWORD__IMAGINARY:
+            return CI_DATA_TYPE_COMBINATION__IMAGINARY;
+        default:
+            return CI_DATA_TYPE_COMBINATION_NONE;
+    }
+}
+
+bool
+is_multi_part_keyword_from_token_kind__CIKeywordMultiPart(enum CITokenKind kind)
+{
+    switch (kind) {
+        case CI_TOKEN_KIND_KEYWORD_CHAR:
+        case CI_TOKEN_KIND_KEYWORD_DOUBLE:
+        case CI_TOKEN_KIND_KEYWORD_FLOAT:
+        case CI_TOKEN_KIND_KEYWORD_INT:
+        case CI_TOKEN_KIND_KEYWORD_LONG:
+        case CI_TOKEN_KIND_KEYWORD_SHORT:
+        case CI_TOKEN_KIND_KEYWORD_SIGNED:
+        case CI_TOKEN_KIND_KEYWORD_UNSIGNED:
+        case CI_TOKEN_KIND_KEYWORD__COMPLEX:
+        case CI_TOKEN_KIND_KEYWORD__IMAGINARY:
+            return true;
+        default:
+            return false;
+    }
+}
+
+int
+convert_data_type_combination_to_data_type__CIParser(CIParser *self,
+                                                     int combination)
+{
+    switch (combination) {
+        case CI_DATA_TYPE_COMBINATION_CHAR:
+            return CI_DATA_TYPE_KIND_CHAR;
+        case CI_DATA_TYPE_COMBINATION_DOUBLE:
+            return CI_DATA_TYPE_KIND_DOUBLE;
+        case CI_DATA_TYPE_COMBINATION_DOUBLE |
+          CI_DATA_TYPE_COMBINATION__COMPLEX:
+            return CI_DATA_TYPE_KIND_DOUBLE__COMPLEX;
+        case CI_DATA_TYPE_COMBINATION_DOUBLE |
+          CI_DATA_TYPE_COMBINATION__IMAGINARY:
+            return CI_DATA_TYPE_KIND_DOUBLE__IMAGINARY;
+        case CI_DATA_TYPE_COMBINATION_FLOAT:
+            return CI_DATA_TYPE_KIND_FLOAT;
+        case CI_DATA_TYPE_COMBINATION_FLOAT | CI_DATA_TYPE_COMBINATION__COMPLEX:
+            return CI_DATA_TYPE_KIND_FLOAT__COMPLEX;
+        case CI_DATA_TYPE_COMBINATION_FLOAT |
+          CI_DATA_TYPE_COMBINATION__IMAGINARY:
+            return CI_DATA_TYPE_KIND_FLOAT__IMAGINARY;
+        case CI_DATA_TYPE_COMBINATION_INT:
+        case CI_DATA_TYPE_COMBINATION_SIGNED:
+        case CI_DATA_TYPE_COMBINATION_SIGNED | CI_DATA_TYPE_COMBINATION_INT:
+            return CI_DATA_TYPE_KIND_INT;
+        case CI_DATA_TYPE_COMBINATION_LONG:
+        case CI_DATA_TYPE_COMBINATION_LONG | CI_DATA_TYPE_COMBINATION_INT:
+        case CI_DATA_TYPE_COMBINATION_SIGNED | CI_DATA_TYPE_COMBINATION_LONG:
+        case CI_DATA_TYPE_COMBINATION_SIGNED | CI_DATA_TYPE_COMBINATION_LONG |
+          CI_DATA_TYPE_COMBINATION_INT:
+            return CI_DATA_TYPE_KIND_LONG_INT;
+        case CI_DATA_TYPE_COMBINATION_LONG | CI_DATA_TYPE_COMBINATION_DOUBLE:
+            return CI_DATA_TYPE_KIND_LONG_DOUBLE;
+        case CI_DATA_TYPE_COMBINATION_LONG | CI_DATA_TYPE_COMBINATION_DOUBLE |
+          CI_DATA_TYPE_COMBINATION__COMPLEX:
+            return CI_DATA_TYPE_KIND_LONG_DOUBLE__COMPLEX;
+        case CI_DATA_TYPE_COMBINATION_LONG | CI_DATA_TYPE_COMBINATION_DOUBLE |
+          CI_DATA_TYPE_COMBINATION__IMAGINARY:
+            return CI_DATA_TYPE_KIND_LONG_DOUBLE__IMAGINARY;
+        case CI_DATA_TYPE_COMBINATION_LONG_LONG:
+        case CI_DATA_TYPE_COMBINATION_LONG_LONG | CI_DATA_TYPE_COMBINATION_INT:
+        case CI_DATA_TYPE_COMBINATION_SIGNED |
+          CI_DATA_TYPE_COMBINATION_LONG_LONG:
+        case CI_DATA_TYPE_COMBINATION_SIGNED |
+          CI_DATA_TYPE_COMBINATION_LONG_LONG | CI_DATA_TYPE_COMBINATION_INT:
+            return CI_DATA_TYPE_KIND_LONG_LONG_INT;
+        case CI_DATA_TYPE_COMBINATION_SHORT:
+        case CI_DATA_TYPE_COMBINATION_SHORT | CI_DATA_TYPE_COMBINATION_INT:
+        case CI_DATA_TYPE_COMBINATION_SIGNED | CI_DATA_TYPE_COMBINATION_SHORT:
+        case CI_DATA_TYPE_COMBINATION_SIGNED | CI_DATA_TYPE_COMBINATION_SHORT |
+          CI_DATA_TYPE_COMBINATION_INT:
+            return CI_DATA_TYPE_KIND_SHORT_INT;
+        case CI_DATA_TYPE_COMBINATION_SIGNED | CI_DATA_TYPE_COMBINATION_CHAR:
+            return CI_DATA_TYPE_KIND_SIGNED_CHAR;
+        case CI_DATA_TYPE_COMBINATION_UNSIGNED:
+        case CI_DATA_TYPE_COMBINATION_UNSIGNED | CI_DATA_TYPE_COMBINATION_INT:
+            return CI_DATA_TYPE_KIND_UNSIGNED_INT;
+        case CI_DATA_TYPE_COMBINATION_UNSIGNED | CI_DATA_TYPE_COMBINATION_CHAR:
+            return CI_DATA_TYPE_KIND_UNSIGNED_CHAR;
+        case CI_DATA_TYPE_COMBINATION_UNSIGNED | CI_DATA_TYPE_COMBINATION_LONG:
+        case CI_DATA_TYPE_COMBINATION_UNSIGNED | CI_DATA_TYPE_COMBINATION_LONG |
+          CI_DATA_TYPE_COMBINATION_INT:
+            return CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT;
+        case CI_DATA_TYPE_COMBINATION_UNSIGNED |
+          CI_DATA_TYPE_COMBINATION_LONG_LONG:
+        case CI_DATA_TYPE_COMBINATION_UNSIGNED |
+          CI_DATA_TYPE_COMBINATION_LONG_LONG | CI_DATA_TYPE_COMBINATION_INT:
+            return CI_DATA_TYPE_KIND_UNSIGNED_LONG_LONG_INT;
+        case CI_DATA_TYPE_COMBINATION_UNSIGNED | CI_DATA_TYPE_COMBINATION_SHORT:
+        case CI_DATA_TYPE_COMBINATION_UNSIGNED |
+          CI_DATA_TYPE_COMBINATION_SHORT | CI_DATA_TYPE_COMBINATION_INT:
+            return CI_DATA_TYPE_KIND_UNSIGNED_SHORT_INT;
+        default:
+            return -1;
+    }
+}
+
+int
+parse_data_type_combination__CIParser(CIParser *self)
+{
+    Uint32 keyword_multi_part_flag = 0;
+
+    while (is_multi_part_keyword_from_token_kind__CIKeywordMultiPart(
+      self->previous_token->kind)) {
+        enum CIDataTypeCombination data_type_combination =
+          convert_token_kind_to_data_type_combination__CIDataTypeCombination(
+            self->previous_token->kind);
+
+        add_flag__CIDataTypeCombination(
+          self, &keyword_multi_part_flag, data_type_combination);
+
+        if (is_multi_part_keyword_from_token_kind__CIKeywordMultiPart(
+              self->current_token->kind)) {
+            next_token__CIParser(self);
+        } else {
+            break;
+        }
+    }
+
+    return convert_data_type_combination_to_data_type__CIParser(
+      self, keyword_multi_part_flag);
+}
+
 CIDataType *
 parse_pre_data_type__CIParser(CIParser *self)
 {
@@ -7108,22 +7311,6 @@ parse_pre_data_type__CIParser(CIParser *self)
             res = NEW(CIDataType, CI_DATA_TYPE_KIND_BOOL);
 
             break;
-        case CI_TOKEN_KIND_KEYWORD_CHAR:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_CHAR);
-
-            break;
-        case CI_TOKEN_KIND_KEYWORD_DOUBLE:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_DOUBLE);
-
-            break;
-        case CI_TOKEN_KIND_KEYWORD_DOUBLE__COMPLEX:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_DOUBLE__COMPLEX);
-
-            break;
-        case CI_TOKEN_KIND_KEYWORD_DOUBLE__IMAGINARY:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_DOUBLE__IMAGINARY);
-
-            break;
         case CI_TOKEN_KIND_KEYWORD_ENUM: {
             String *name = NULL; // String* (&)
 
@@ -7164,50 +7351,6 @@ parse_pre_data_type__CIParser(CIParser *self)
 
             break;
         }
-        case CI_TOKEN_KIND_KEYWORD_FLOAT:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_FLOAT);
-
-            break;
-        case CI_TOKEN_KIND_KEYWORD_FLOAT__COMPLEX:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_FLOAT__COMPLEX);
-
-            break;
-        case CI_TOKEN_KIND_KEYWORD_FLOAT__IMAGINARY:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_FLOAT__IMAGINARY);
-
-            break;
-        case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_LONG_DOUBLE);
-
-            break;
-        case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__COMPLEX:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_LONG_DOUBLE__COMPLEX);
-
-            break;
-        case CI_TOKEN_KIND_KEYWORD_LONG_DOUBLE__IMAGINARY:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_LONG_DOUBLE__IMAGINARY);
-
-            break;
-        case CI_TOKEN_KIND_KEYWORD_LONG_INT:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_LONG_INT);
-
-            break;
-        case CI_TOKEN_KIND_KEYWORD_LONG_LONG_INT:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_LONG_LONG_INT);
-
-            break;
-        case CI_TOKEN_KIND_KEYWORD_INT:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
-
-            break;
-        case CI_TOKEN_KIND_KEYWORD_SHORT_INT:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_SHORT_INT);
-
-            break;
-        case CI_TOKEN_KIND_KEYWORD_SIGNED_CHAR:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_SIGNED_CHAR);
-
-            break;
         case CI_TOKEN_KIND_KEYWORD_STRUCT:
         case CI_TOKEN_KIND_KEYWORD_UNION: {
             enum CITokenKind previous_token_kind = self->previous_token->kind;
@@ -7343,26 +7486,6 @@ parse_pre_data_type__CIParser(CIParser *self)
 
             break;
         }
-        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_CHAR:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_CHAR);
-
-            break;
-        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_INT:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_INT);
-
-            break;
-        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_INT:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT);
-
-            break;
-        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_LONG_LONG_INT:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_LONG_LONG_INT);
-
-            break;
-        case CI_TOKEN_KIND_KEYWORD_UNSIGNED_SHORT_INT:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_SHORT_INT);
-
-            break;
         case CI_TOKEN_KIND_KEYWORD_VOID:
             res = NEW(CIDataType, CI_DATA_TYPE_KIND_VOID);
 
@@ -7379,8 +7502,15 @@ parse_pre_data_type__CIParser(CIParser *self)
             res = NEW(CIDataType, CI_DATA_TYPE_KIND__DECIMAL64);
 
             break;
-        default:
-            FAILED("expected data type");
+        default: {
+            int data_type_kind = parse_data_type_combination__CIParser(self);
+
+            if (data_type_kind == -1) {
+                FAILED("expected data type");
+            }
+
+            res = NEW(CIDataType, data_type_kind);
+        }
     }
 
     // <pre_dt> <storage_class_flag | dt_qualifier>
@@ -9645,8 +9775,9 @@ is_valid_implicit_cast__CIParser(const CIParser *self,
         case CI_DATA_TYPE_KIND_LONG_INT:
         case CI_DATA_TYPE_KIND_LONG_LONG_INT:
         case CI_DATA_TYPE_KIND_SHORT_INT:
-        case CI_DATA_TYPE_KIND_UNSIGNED_CHAR:
+        case CI_DATA_TYPE_KIND_SIGNED_CHAR:
         case CI_DATA_TYPE_KIND_UNSIGNED_INT:
+        case CI_DATA_TYPE_KIND_UNSIGNED_CHAR:
         case CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT:
         case CI_DATA_TYPE_KIND_UNSIGNED_LONG_LONG_INT:
         case CI_DATA_TYPE_KIND_UNSIGNED_SHORT_INT:
