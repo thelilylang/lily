@@ -1813,6 +1813,8 @@ to_string__CIToken(CIToken *self)
             return from__String("_Thread_local");
         case CI_TOKEN_KIND_KEYWORD___ATTRIBUTE__:
             return from__String("__attribute__");
+        case CI_TOKEN_KIND_KEYWORD___EXTENSION__:
+            return from__String("__extension__");
         case CI_TOKEN_KIND_KEYWORD___RESTRICT:
             return from__String("__restrict");
         case CI_TOKEN_KIND_KEYWORD___RESTRICT__:
@@ -2203,6 +2205,8 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_KEYWORD__THREAD_LOCAL";
         case CI_TOKEN_KIND_KEYWORD___ATTRIBUTE__:
             return "CI_TOKEN_KIND_KEYWORD___ATTRIBUTE__";
+        case CI_TOKEN_KIND_KEYWORD___EXTENSION__:
+            return "CI_TOKEN_KIND_KEYWORD___EXTENSION__";
         case CI_TOKEN_KIND_KEYWORD___RESTRICT:
             return "CI_TOKEN_KIND_KEYWORD___RESTRICT";
         case CI_TOKEN_KIND_KEYWORD___RESTRICT__:

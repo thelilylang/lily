@@ -614,6 +614,8 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                               .until = CI_STANDARD_23 },
     [CI_TOKEN_KIND_KEYWORD___ATTRIBUTE__] = { .since = CI_STANDARD_NONE,
                                               .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD___EXTENSION__] = { .since = CI_STANDARD_NONE,
+                                              .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD___RESTRICT] = { .since = CI_STANDARD_NONE,
                                            .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD___RESTRICT__] = { .since = CI_STANDARD_NONE,
@@ -782,6 +784,7 @@ static const SizedStr ci_keywords[CI_N_KEYWORD] = {
     SIZED_STR_FROM_RAW("_Static_assert"),
     SIZED_STR_FROM_RAW("_Thread_local"),
     SIZED_STR_FROM_RAW("__attribute__"),
+    SIZED_STR_FROM_RAW("__extension__"),
     SIZED_STR_FROM_RAW("__restrict"),
     SIZED_STR_FROM_RAW("__restrict__"),
     SIZED_STR_FROM_RAW("alignas"),
@@ -849,6 +852,7 @@ static const enum CITokenKind ci_keyword_ids[CI_N_KEYWORD] = {
     CI_TOKEN_KIND_KEYWORD__STATIC_ASSERT,
     CI_TOKEN_KIND_KEYWORD__THREAD_LOCAL,
     CI_TOKEN_KIND_KEYWORD___ATTRIBUTE__,
+    CI_TOKEN_KIND_KEYWORD___EXTENSION__,
     CI_TOKEN_KIND_KEYWORD___RESTRICT,
     CI_TOKEN_KIND_KEYWORD___RESTRICT__,
     CI_TOKEN_KIND_KEYWORD_ALIGNAS,
@@ -2480,35 +2484,41 @@ scan_preprocessor_content__CIScanner(CIScanner *self,
             //
             // What's more, you might have noticed that this macro has been
             // designed so that custom cases can be added if required.
-#define DEFAULT_FILTER_TOKEN(token, ctx)                                     \
-    /* NOTE: This switch case should be left in first position. */           \
-    case CI_TOKEN_KIND_COMMENT_BLOCK:                                        \
-    /* FIXME: This case has been added temporarily to skip the GNU attribute \
-     * token, as it is not yet supported. */                                 \
-    case CI_TOKEN_KIND_GNU_ATTRIBUTE:                                        \
-        FREE(CIToken, token);                                                \
-        break;                                                               \
-    case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:                                  \
-    case CI_TOKEN_KIND_PREPROCESSOR_ELIF:                                    \
-    case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:                                 \
-    case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:                                \
-    case CI_TOKEN_KIND_PREPROCESSOR_ELSE:                                    \
-    case CI_TOKEN_KIND_PREPROCESSOR_EMBED:                                   \
-    case CI_TOKEN_KIND_PREPROCESSOR_ENDIF:                                   \
-    case CI_TOKEN_KIND_PREPROCESSOR_ERROR:                                   \
-    case CI_TOKEN_KIND_PREPROCESSOR_IF:                                      \
-    case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:                                   \
-    case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:                                  \
-    case CI_TOKEN_KIND_PREPROCESSOR_INCLUDE:                                 \
-    case CI_TOKEN_KIND_PREPROCESSOR_LINE:                                    \
-    case CI_TOKEN_KIND_PREPROCESSOR_PRAGMA:                                  \
-    case CI_TOKEN_KIND_PREPROCESSOR_UNDEF:                                   \
-    case CI_TOKEN_KIND_PREPROCESSOR_WARNING:                                 \
-        push_token__CIScanner(self, ctx, token);                             \
-        break;                                                               \
-    default:                                                                 \
-        next_char__CIScanner(self);                                          \
-        push_token__CIScanner(self, ctx, token);                             \
+#define DEFAULT_FILTER_TOKEN(token, ctx)                                       \
+    /* NOTE: This switch case should be left in first position. */             \
+    case CI_TOKEN_KIND_COMMENT_BLOCK:                                          \
+    /* FIXME: This case has been added temporarily to skip the GNU attribute   \
+     * token, as it is not yet supported. */                                   \
+    case CI_TOKEN_KIND_GNU_ATTRIBUTE:                                          \
+        FREE(CIToken, token);                                                  \
+        break;                                                                 \
+    /* NOTE: For the moment, we're ignoring this token as we don't yet support \
+     * it. */                                                                  \
+    case CI_TOKEN_KIND_KEYWORD___EXTENSION__:                                  \
+        next_char__CIScanner(self);                                            \
+        FREE(CIToken, token);                                                  \
+        break;                                                                 \
+    case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:                                    \
+    case CI_TOKEN_KIND_PREPROCESSOR_ELIF:                                      \
+    case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:                                   \
+    case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:                                  \
+    case CI_TOKEN_KIND_PREPROCESSOR_ELSE:                                      \
+    case CI_TOKEN_KIND_PREPROCESSOR_EMBED:                                     \
+    case CI_TOKEN_KIND_PREPROCESSOR_ENDIF:                                     \
+    case CI_TOKEN_KIND_PREPROCESSOR_ERROR:                                     \
+    case CI_TOKEN_KIND_PREPROCESSOR_IF:                                        \
+    case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:                                     \
+    case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:                                    \
+    case CI_TOKEN_KIND_PREPROCESSOR_INCLUDE:                                   \
+    case CI_TOKEN_KIND_PREPROCESSOR_LINE:                                      \
+    case CI_TOKEN_KIND_PREPROCESSOR_PRAGMA:                                    \
+    case CI_TOKEN_KIND_PREPROCESSOR_UNDEF:                                     \
+    case CI_TOKEN_KIND_PREPROCESSOR_WARNING:                                   \
+        push_token__CIScanner(self, ctx, token);                               \
+        break;                                                                 \
+    default:                                                                   \
+        next_char__CIScanner(self);                                            \
+        push_token__CIScanner(self, ctx, token);                               \
         break;
 
             DEFAULT_LAST_SET_AND_CHECK(token);
