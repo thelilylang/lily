@@ -1913,6 +1913,10 @@ static const enum CIAttributeStandardKind
 // blocks, e.g. for stringification.
 static bool next_token_with_check = true;
 
+// <TOKEN> ## <TOKEN>
+// ^^^^^^^
+static CIToken *lhs_merged_id_token = NULL; // CIToken*? (&)
+
 CONSTRUCTOR(struct CurrentGenericParams,
             CurrentGenericParams,
             CIGenericParams *called,
@@ -5081,7 +5085,9 @@ jump_in_token_block__CIParser(CIParser *self, CIToken *next_token)
         case CI_TOKEN_KIND_IDENTIFIER:
             return jump_in_macro_call__CIParser(self, next_token);
         case CI_TOKEN_KIND_HASHTAG_HASHTAG: {
-            CIToken *pre_id = self->current_token;
+            CIToken *pre_id = lhs_merged_id_token;
+
+            ASSERT(pre_id);
 
             switch (pre_id->kind) {
                 case CI_TOKEN_KIND_IDENTIFIER:
@@ -5442,7 +5448,7 @@ check:
                 goto check;
             } else if (next_token->next && next_token->next->kind ==
                                              CI_TOKEN_KIND_HASHTAG_HASHTAG) {
-                set_current_token__CIParser(self, next_token);
+                lhs_merged_id_token = next_token;
             }
 
             goto loop;

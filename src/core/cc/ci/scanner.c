@@ -2289,7 +2289,7 @@ skip_space_and_backslash__CIScanner(CIScanner *self)
       self->base.source.cursor.current != '\n' &&
       (is_space__CIScanner(self) || self->base.source.cursor.current == '\\') &&
       !HAS_REACH_END(self)) {
-        skip_space__CIScanner(self);
+        skip_space_except_new_line__CIScanner(self);
 
         if (self->base.source.cursor.current == '\\') {
             next_char__CIScanner(self);
