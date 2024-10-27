@@ -90,6 +90,17 @@ generate__CIPreDefined(const CIProjectConfig *config)
             push_str__String(builtin_h, "#define _XOPEN_SOURCE 500\n");
     }
 
+    // NOTE: For the moment, we're adding these '#undef', to avoid errors caused
+    // by the extensions that are specific to these compilers, because we don't
+    // support them all yet.
+    push_str__String(builtin_h, "#undef __GNUC__\n");
+    push_str__String(builtin_h, "#undef __GNUC_PATCHLEVEL__\n");
+    push_str__String(builtin_h, "#undef __GNUC_MINOR__\n");
+    push_str__String(builtin_h, "#undef __clang_major__\n");
+    push_str__String(builtin_h, "#undef __clang_minor__\n");
+    push_str__String(builtin_h, "#undef __clang_patchlevel__\n");
+    push_str__String(builtin_h, "#undef __clang_version__\n");
+
     return builtin_h;
 }
 
