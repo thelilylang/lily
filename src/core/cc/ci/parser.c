@@ -8186,7 +8186,7 @@ parse_primary_expr__CIParser(CIParser *self)
         case CI_TOKEN_KIND_PLUS_PLUS:
         case CI_TOKEN_KIND_MINUS_MINUS: {
             enum CITokenKind unary_token_kind = self->previous_token->kind;
-            CIExpr *expr = parse_expr__CIParser(self);
+            CIExpr *expr = parse_primary_expr__CIParser(self);
 
             if (!expr) {
                 return NULL;
@@ -8393,9 +8393,7 @@ parse_binary_expr__CIParser(CIParser *self, CIExpr *expr)
            self->current_token->kind == CI_TOKEN_KIND_LSHIFT ||
            self->current_token->kind == CI_TOKEN_KIND_RSHIFT ||
            self->current_token->kind == CI_TOKEN_KIND_LSHIFT_EQ ||
-           self->current_token->kind == CI_TOKEN_KIND_RSHIFT_EQ ||
-           self->current_token->kind == CI_TOKEN_KIND_DOT ||
-           self->current_token->kind == CI_TOKEN_KIND_ARROW) {
+           self->current_token->kind == CI_TOKEN_KIND_RSHIFT_EQ) {
         enum CIExprBinaryKind op =
           from_token__CIExprBinaryKind(self->current_token);
         Usize precedence = to_precedence__CIExprBinaryKind(op);
@@ -8499,6 +8497,28 @@ loop:
 
             goto loop;
         }
+        case CI_TOKEN_KIND_DOT:
+            next_token__CIParser(self);
+
+            expr = NEW_VARIANT(CIExpr,
+                               binary,
+                               NEW(CIExprBinary,
+                                   CI_EXPR_BINARY_KIND_DOT,
+                                   expr,
+                                   parse_primary_expr__CIParser(self)));
+
+            goto loop;
+        case CI_TOKEN_KIND_ARROW:
+            next_token__CIParser(self);
+
+            expr = NEW_VARIANT(CIExpr,
+                               binary,
+                               NEW(CIExprBinary,
+                                   CI_EXPR_BINARY_KIND_ARROW,
+                                   expr,
+                                   parse_primary_expr__CIParser(self)));
+
+            goto loop;
         default:
             return expr;
     }
@@ -8568,8 +8588,6 @@ loop:
         case CI_TOKEN_KIND_RSHIFT:
         case CI_TOKEN_KIND_LSHIFT_EQ:
         case CI_TOKEN_KIND_RSHIFT_EQ:
-        case CI_TOKEN_KIND_DOT:
-        case CI_TOKEN_KIND_ARROW:
             expr = parse_binary_expr__CIParser(self, expr);
 
             goto loop;
