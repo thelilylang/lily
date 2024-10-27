@@ -39,7 +39,7 @@
 typedef struct CIResultFile CIResultFile;
 struct CIToken;
 
-#define CI_N_KEYWORD 63
+#define CI_N_KEYWORD 64
 
 #define CI_N_ATTRIBUTE 8
 
@@ -237,6 +237,8 @@ enum CITokenKind
     CI_TOKEN_KIND_KEYWORD__STATIC_ASSERT,
     CI_TOKEN_KIND_KEYWORD__THREAD_LOCAL,
     CI_TOKEN_KIND_KEYWORD___ATTRIBUTE__, // NOTE: #1
+    // See https://gcc.gnu.org/onlinedocs/gcc/Alternate-Keywords.html
+    CI_TOKEN_KIND_KEYWORD___EXTENSION__,
     // See https://gcc.gnu.org/onlinedocs/gcc/Restricted-Pointers.html
     CI_TOKEN_KIND_KEYWORD___RESTRICT,
     CI_TOKEN_KIND_KEYWORD___RESTRICT__,
