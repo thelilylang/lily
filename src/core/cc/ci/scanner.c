@@ -1409,6 +1409,8 @@ scan_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
 
                         if (!strcmp(last_token->identifier->buffer,
                                     CI_VA_ARGS)) {
+                            param->is_used = true;
+
                             res = NEW_VARIANT(CIToken,
                                               macro_param_variadic,
                                               last_token->location,
@@ -1424,6 +1426,8 @@ scan_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
 
                         if (!strcmp(param->name->buffer,
                                     last_token->identifier->buffer)) {
+                            param->is_used = true;
+
                             res = NEW_VARIANT(CIToken,
                                               macro_param,
                                               last_token->location,

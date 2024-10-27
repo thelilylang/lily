@@ -556,6 +556,7 @@ VARIANT_CONSTRUCTOR(CITokenPreprocessorDefineParam *,
 
     self->name = NULL;
     self->is_variadic = true;
+    self->is_used = false;
 
     return self;
 }
@@ -570,6 +571,7 @@ VARIANT_CONSTRUCTOR(CITokenPreprocessorDefineParam *,
 
     self->name = name;
     self->is_variadic = false;
+    self->is_used = false;
 
     return self;
 }
@@ -593,10 +595,11 @@ IMPL_FOR_DEBUG(to_string,
                CITokenPreprocessorDefineParam,
                const CITokenPreprocessorDefineParam *self)
 {
-    return format__String(
-      "CITokenPreprocessorDefineParam{{ name = {s}, is_variadic = {b} }",
-      self->name ? self->name->buffer : "NULL",
-      self->is_variadic);
+    return format__String("CITokenPreprocessorDefineParam{{ name = {s}, "
+                          "is_variadic = {b}, is_used = {b} }",
+                          self->name ? self->name->buffer : "NULL",
+                          self->is_variadic,
+                          self->is_used);
 }
 #endif
 
