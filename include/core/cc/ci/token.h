@@ -590,6 +590,7 @@ typedef struct CITokenPreprocessorDefineParam
 {
     String *name; // String*?
     bool is_variadic;
+    bool is_used;
 } CITokenPreprocessorDefineParam;
 
 /**
