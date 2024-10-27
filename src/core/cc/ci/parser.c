@@ -6862,6 +6862,7 @@ parse_post_data_type__CIParser(CIParser *self, CIDataType *data_type)
               self, data_type, data_type_qualifier_flag);
 
             RESET_DATA_TYPE_QUALIFIER_FLAG();
+            is_data_type_qualifier = false;
 
             continue;
         }
