@@ -1073,6 +1073,7 @@ CONSTRUCTOR(CIToken *, CIToken, enum CITokenKind kind, Location location)
     self->kind = kind;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
 
     return self;
 }
@@ -1088,6 +1089,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_COMMENT_DOC;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->comment_doc = comment_doc;
 
     return self;
@@ -1100,6 +1102,7 @@ VARIANT_CONSTRUCTOR(CIToken *, CIToken, eot, Location location, CITokenEot eot)
     self->kind = CI_TOKEN_KIND_EOT;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->eot = eot;
 
     return self;
@@ -1116,6 +1119,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_GNU_ATTRIBUTE;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->gnu_attribute = gnu_attribute;
 
     return self;
@@ -1132,6 +1136,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->attribute_deprecated = attribute_deprecated;
 
     return self;
@@ -1148,6 +1153,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_ATTRIBUTE_NODISCARD;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->attribute_nodiscard = attribute_nodiscard;
 
     return self;
@@ -1157,13 +1163,14 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     CIToken,
                     identifier,
                     Location location,
-                    String *identifier)
+                    Rc *identifier)
 {
     CIToken *self = lily_malloc(sizeof(CIToken));
 
     self->kind = CI_TOKEN_KIND_IDENTIFIER;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->identifier = identifier;
 
     return self;
@@ -1180,6 +1187,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_LITERAL_CONSTANT_INT;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->literal_constant_int = literal_constant_int;
 
     return self;
@@ -1196,6 +1204,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_LITERAL_CONSTANT_FLOAT;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->literal_constant_float = literal_constant_float;
 
     return self;
@@ -1212,6 +1221,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_LITERAL_CONSTANT_OCTAL;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->literal_constant_octal = literal_constant_octal;
 
     return self;
@@ -1227,6 +1237,8 @@ VARIANT_CONSTRUCTOR(CIToken *,
 
     self->kind = CI_TOKEN_KIND_LITERAL_CONSTANT_HEX;
     self->location = location;
+    self->next = NULL;
+    self->ref_count = 0;
     self->literal_constant_hex = literal_constant_hex;
 
     return self;
@@ -1243,6 +1255,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_LITERAL_CONSTANT_BIN;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->literal_constant_bin = literal_constant_bin;
 
     return self;
@@ -1259,6 +1272,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_LITERAL_CONSTANT_CHARACTER;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->literal_constant_character = literal_constant_character;
 
     return self;
@@ -1268,13 +1282,14 @@ VARIANT_CONSTRUCTOR(CIToken *,
                     CIToken,
                     literal_constant_string,
                     Location location,
-                    String *literal_constant_string)
+                    Rc *literal_constant_string)
 {
     CIToken *self = lily_malloc(sizeof(CIToken));
 
     self->kind = CI_TOKEN_KIND_LITERAL_CONSTANT_STRING;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->literal_constant_string = literal_constant_string;
 
     return self;
@@ -1291,6 +1306,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_MACRO_PARAM;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->macro_param = macro_param;
 
     return self;
@@ -1307,6 +1323,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_MACRO_PARAM_VARIADIC;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->macro_param_variadic = macro_param_variadic;
 
     return self;
@@ -1323,6 +1340,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_MACRO_DEFINED;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->macro_defined = macro_defined;
 
     return self;
@@ -1339,6 +1357,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_PREPROCESSOR_DEFINE;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->preprocessor_define = preprocessor_define;
 
     return self;
@@ -1355,6 +1374,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_PREPROCESSOR_ELIF;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->preprocessor_elif = preprocessor_elif;
 
     return self;
@@ -1371,6 +1391,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->preprocessor_elifdef = preprocessor_elifdef;
 
     return self;
@@ -1387,6 +1408,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->preprocessor_elifndef = preprocessor_elifndef;
 
     return self;
@@ -1403,6 +1425,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_PREPROCESSOR_ELSE;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->preprocessor_else = preprocessor_else;
 
     return self;
@@ -1419,6 +1442,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_PREPROCESSOR_EMBED;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->preprocessor_embed = preprocessor_embed;
 
     return self;
@@ -1435,6 +1459,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_PREPROCESSOR_ERROR;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->preprocessor_error = preprocessor_error;
 
     return self;
@@ -1451,6 +1476,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_PREPROCESSOR_IF;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->preprocessor_if = preprocessor_if;
 
     return self;
@@ -1467,6 +1493,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_PREPROCESSOR_IFDEF;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->preprocessor_ifdef = preprocessor_ifdef;
 
     return self;
@@ -1483,6 +1510,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_PREPROCESSOR_IFDEF;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->preprocessor_ifndef = preprocessor_ifndef;
 
     return self;
@@ -1499,6 +1527,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_PREPROCESSOR_INCLUDE;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->preprocessor_include = preprocessor_include;
 
     return self;
@@ -1515,6 +1544,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_PREPROCESSOR_LINE;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->preprocessor_line = preprocessor_line;
 
     return self;
@@ -1531,6 +1561,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_PREPROCESSOR_UNDEF;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->preprocessor_undef = preprocessor_undef;
 
     return self;
@@ -1547,6 +1578,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_PREPROCESSOR_WARNING;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->preprocessor_warning = preprocessor_warning;
 
     return self;
@@ -1563,6 +1595,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_BUILTIN_MACRO___HAS_FEATURE;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->has_feature = has_feature;
 
     return self;
@@ -1579,6 +1612,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->standard_predefined_macro___date__ =
       standard_predefined_macro___date__;
 
@@ -1596,6 +1630,7 @@ VARIANT_CONSTRUCTOR(CIToken *,
     self->kind = CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__;
     self->location = location;
     self->next = NULL;
+    self->ref_count = 0;
     self->standard_predefined_macro___time__ =
       standard_predefined_macro___time__;
 
@@ -1686,7 +1721,8 @@ to_string__CIToken(CIToken *self)
         case CI_TOKEN_KIND_HAT_EQ:
             return from__String("^=");
         case CI_TOKEN_KIND_IDENTIFIER:
-            return format__String("IDENTIFIER({S})", self->identifier);
+            return format__String("IDENTIFIER({S})",
+                                  GET_PTR_RC(String, self->identifier));
         case CI_TOKEN_KIND_INTERROGATION:
             return from__String("?");
         case CI_TOKEN_KIND_KEYWORD_ALIGNOF:
@@ -1852,8 +1888,9 @@ to_string__CIToken(CIToken *self)
             return format__String("LITERAL_CONSTANT(CHARACTER({c}))",
                                   self->literal_constant_character);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
-            return format__String("LITERAL_CONSTANT(STRING({S}))",
-                                  self->literal_constant_string);
+            return format__String(
+              "LITERAL_CONSTANT(STRING({S}))",
+              GET_PTR_RC(String, self->literal_constant_string));
         case CI_TOKEN_KIND_MACRO_DEFINED:
             return format__String("MACRO_DEFINED({S})", self->macro_defined);
         case CI_TOKEN_KIND_MACRO_PARAM:
@@ -2391,7 +2428,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
               "CIToken{{ kind = {s}, location = {sa}, identifier = {S} }",
               CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
               CALL_DEBUG_IMPL(to_string, Location, &self->location),
-              self->identifier);
+              GET_PTR_RC(String, self->identifier));
         case CI_TOKEN_KIND_LITERAL_CONSTANT_INT:
             return format("CIToken{{ kind = {s}, location = {sa}, "
                           "literal_constant_int = {Sr} }",
@@ -2443,7 +2480,7 @@ IMPL_FOR_DEBUG(to_string, CIToken, const CIToken *self)
                           "literal_constant_string = {S} }",
                           CALL_DEBUG_IMPL(to_string, CITokenKind, self->kind),
                           CALL_DEBUG_IMPL(to_string, Location, &self->location),
-                          self->literal_constant_string);
+                          GET_PTR_RC(String, self->literal_constant_string));
         case CI_TOKEN_KIND_MACRO_DEFINED:
             return format(
               "CIToken{{ kind = {s}, location = {sa}, macro_defined = {S} }",
@@ -2645,7 +2682,7 @@ VARIANT_DESTRUCTOR(CIToken, gnu_attribute, CIToken *self)
 
 VARIANT_DESTRUCTOR(CIToken, identifier, CIToken *self)
 {
-    FREE(String, self->identifier);
+    FREE_RC(String, self->identifier)
     lily_free(self);
 }
 
@@ -2686,7 +2723,7 @@ VARIANT_DESTRUCTOR(CIToken, literal_constant_character, CIToken *self)
 
 VARIANT_DESTRUCTOR(CIToken, literal_constant_string, CIToken *self)
 {
-    FREE(String, self->literal_constant_string);
+    FREE_RC(String, self->literal_constant_string);
     lily_free(self);
 }
 
@@ -2811,6 +2848,11 @@ VARIANT_DESTRUCTOR(CIToken, has_feature, CIToken *self)
 
 DESTRUCTOR(CIToken, CIToken *self)
 {
+    if (self->ref_count > 0) {
+        --self->ref_count;
+        return;
+    }
+
     switch (self->kind) {
         case CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED:
             FREE_VARIANT(CIToken, attribute_deprecated, self);

@@ -29,6 +29,8 @@
 #include <core/cc/ci/file.h>
 #include <core/cc/ci/parser.h>
 #include <core/cc/ci/project_config.h>
+#include <core/cc/ci/resolver.h>
+#include <core/cc/ci/resolver/expr.h>
 #include <core/cc/ci/result.h>
 #include <core/cc/ci/scanner.h>
 #include <core/cc/ci/token.h>
@@ -137,36 +139,36 @@ extern inline VARIANT_CONSTRUCTOR(CIDataTypeArray,
                                   CIDataTypeArray,
                                   sized,
                                   struct CIDataType *data_type,
-                                  String *name,
+                                  Rc *name,
                                   Usize size);
 
 extern inline VARIANT_CONSTRUCTOR(CIDataTypeArray,
                                   CIDataTypeArray,
                                   none,
                                   struct CIDataType *data_type,
-                                  String *name);
+                                  Rc *name);
 
 extern inline CONSTRUCTOR(CIDataTypeFunction,
                           CIDataTypeFunction,
-                          String *name,
+                          Rc *name,
                           Vec *params,
                           struct CIDataType *return_data_type,
                           struct CIDataType *function_data_type);
 
 extern inline CONSTRUCTOR(CIDataTypeStruct,
                           CIDataTypeStruct,
-                          String *name,
+                          Rc *name,
                           CIGenericParams *generic_params,
                           Vec *fields);
 
 extern inline CONSTRUCTOR(CIDataTypeTypedef,
                           CIDataTypeTypedef,
-                          String *name,
+                          Rc *name,
                           CIGenericParams *generic_params);
 
 extern inline CONSTRUCTOR(CIDataTypeUnion,
                           CIDataTypeUnion,
-                          String *name,
+                          Rc *name,
                           CIGenericParams *generic_params,
                           Vec *fields);
 
@@ -189,25 +191,18 @@ extern inline CONSTRUCTOR(CIAttributeStandard,
 extern inline VARIANT_CONSTRUCTOR(CIAttributeStandard,
                                   CIAttributeStandard,
                                   deprecated,
-                                  String *deprecated);
+                                  Rc *deprecated);
 
 extern inline VARIANT_CONSTRUCTOR(CIAttributeStandard,
                                   CIAttributeStandard,
                                   nodiscard,
-                                  String *nodiscard);
-
-extern inline DESTRUCTOR(CIAttribute, CIAttribute *self);
-
-extern inline DESTRUCTOR(CIDeclEnumVariant, CIDeclEnumVariant *self);
+                                  Rc *nodiscard);
 
 extern inline CONSTRUCTOR(CIDeclEnum,
                           CIDeclEnum,
-                          String *name,
+                          Rc *name,
                           Vec *variants,
                           CIDataType *data_type);
-
-extern inline void
-free_as_prototype__CIDeclEnum(const CIDeclEnum *self);
 
 extern inline bool
 is_variable__CIDeclFunctionItem(const CIDeclFunctionItem *self);
@@ -217,7 +212,7 @@ add__CIDeclFunctionBody(CIDeclFunctionBody *self, CIDeclFunctionItem *item);
 
 extern inline CONSTRUCTOR(CIDeclFunction,
                           CIDeclFunction,
-                          String *name,
+                          Rc *name,
                           CIDataType *return_data_type,
                           CIGenericParams *generic_params,
                           Vec *params,
@@ -235,11 +230,11 @@ extern inline CONSTRUCTOR(CIDeclFunctionGen,
                           CIGenericParams *called_generic_params,
                           CIDataType *return_data_type);
 
-extern inline CONSTRUCTOR(CIDeclLabel, CIDeclLabel, String *name);
+extern inline CONSTRUCTOR(CIDeclLabel, CIDeclLabel, Rc *name);
 
 extern inline CONSTRUCTOR(CIDeclStruct,
                           CIDeclStruct,
-                          String *name,
+                          Rc *name,
                           CIGenericParams *generic_params,
                           Vec *fields);
 
@@ -256,7 +251,7 @@ extern inline CONSTRUCTOR(CIDeclStructGen,
 
 extern inline CONSTRUCTOR(CIDeclTypedef,
                           CIDeclTypedef,
-                          String *name,
+                          Rc *name,
                           CIGenericParams *generic_params,
                           CIDataType *data_type);
 
@@ -275,7 +270,7 @@ extern inline CONSTRUCTOR(CIDeclTypedefGen,
 
 extern inline CONSTRUCTOR(CIDeclUnion,
                           CIDeclUnion,
-                          String *name,
+                          Rc *name,
                           CIGenericParams *generic_params,
                           Vec *fields);
 
@@ -293,7 +288,7 @@ extern inline CONSTRUCTOR(CIDeclUnionGen,
 extern inline CONSTRUCTOR(CIDeclVariable,
                           CIDeclVariable,
                           CIDataType *data_type,
-                          String *name,
+                          Rc *name,
                           CIExpr *expr,
                           bool is_local);
 
@@ -339,8 +334,7 @@ extern inline VARIANT_CONSTRUCTOR(CIExprLiteral,
 extern inline VARIANT_CONSTRUCTOR(CIExprLiteral,
                                   CIExprLiteral,
                                   string,
-                                  String *value,
-                                  bool must_free);
+                                  Rc *value);
 
 extern inline VARIANT_CONSTRUCTOR(CIExprLiteral,
                                   CIExprLiteral,
@@ -365,7 +359,7 @@ extern inline CONSTRUCTOR(CIExprCast,
 
 extern inline CONSTRUCTOR(CIExprFunctionCall,
                           CIExprFunctionCall,
-                          String *identifier,
+                          Rc *identifier,
                           Vec *params,
                           CIGenericParams *generic_params);
 
@@ -428,10 +422,10 @@ extern inline VARIANT_CONSTRUCTOR(CIStmt,
                                   do_while,
                                   CIStmtDoWhile do_while);
 
-extern 
+extern
 inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, for, CIStmtFor for_);
 
-extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, goto, String *goto_);
+extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, goto, Rc *goto_);
 
 extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, if, CIStmtIf if_);
 
@@ -483,12 +477,6 @@ extern inline VARIANT_CONSTRUCTOR(CIProjectConfig,
 // <core/cc/ci/parser.h>
 extern inline CONSTRUCTOR(CIParserVisitWaitingList, CIParserVisitWaitingList);
 
-extern inline CONSTRUCTOR(CIParserMacroCallParams, CIParserMacroCallParams);
-
-extern inline CIParserMacroCallParam *
-get_macro_param_variadic__CIParserMacroCallParams(
-  const CIParserMacroCallParams *self);
-
 extern inline CONSTRUCTOR(CIParserSpan, CIParserSpan, Usize line, Usize column);
 
 extern inline CIParserSpan
@@ -496,6 +484,54 @@ from_token__CIParserSpan(const CIToken *token);
 
 extern inline CIParserSpan
 default__CIParserSpan();
+
+extern inline bool
+has_reach_end__CIParser(CIParser *self);
+
+// <core/cc/ci/resolver.h>
+extern inline void
+add__CIResolvedTokens(const CIResolvedTokens *self, CIToken *token);
+
+extern inline CIToken *
+get__CIResolvedTokens(const CIResolvedTokens *self, Usize index);
+
+extern inline CIToken *
+last__CIResolvedTokens(const CIResolvedTokens *self);
+
+extern inline void
+replace__CIResolvedTokens(CIResolvedTokens *self, Usize index, CIToken *token);
+
+extern inline CIToken *
+remove__CIResolvedTokens(CIResolvedTokens *self, Usize index);
+
+extern inline Usize
+count__CIResolvedTokens(const CIResolvedTokens *self);
+
+extern inline CIResolvedTokens *
+ref__CIResolvedTokens(CIResolvedTokens *self);
+
+extern inline CONSTRUCTOR(CIResolverMacroCallParams, CIResolverMacroCallParams);
+
+extern inline CIResolverMacroCallParam *
+get_macro_param_variadic__CIResolverMacroCallParams(
+  const CIResolverMacroCallParams *self);
+
+extern inline CIResolverMacroCall *
+ref__CIResolverMacroCall(CIResolverMacroCall *self);
+
+extern inline CONSTRUCTOR(CIResolver,
+                          CIResolver,
+                          CIResultFile *file,
+                          const CITokens *tokens,
+                          Usize *count_error,
+                          Usize *count_warning);
+
+// <core/cc/ci/resolver/expr.h>
+extern inline CONSTRUCTOR(CIResolverExpr,
+                          CIResolverExpr,
+                          const CIParser *parser,
+                          const CIScope *scope,
+                          bool at_preprocessor_time);
 
 // <core/cc/ci/result.h>
 extern inline CIResultDefine *
@@ -679,5 +715,8 @@ extern inline CONSTRUCTOR(CITokenMacroParamVariadic, CITokenMacroParamVariadic);
 
 extern inline DESTRUCTOR(CITokenMacroParamVariadic,
                          const CITokenMacroParamVariadic *self);
+
+extern inline CIToken *
+ref__CIToken(CIToken *self);
 
 #endif // LILY_EX_LIB_LILY_CORE_CC_CI_C

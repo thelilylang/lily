@@ -30,6 +30,7 @@
 #include <core/cc/ci/diagnostic/error.h>
 #include <core/cc/ci/include.h>
 #include <core/cc/ci/parser.h>
+#include <core/cc/ci/resolver/expr.h>
 #include <core/cc/ci/result.h>
 #include <core/shared/diagnostic.h>
 
@@ -93,12 +94,6 @@ static inline struct CurrentGenericParams
 set_current_generic_params__CITypecheckContext(
   struct CITypecheckContext *self,
   struct CurrentGenericParams new_current_generic_params);
-
-static const CIParserMacroCall *
-get_macro_call__CIParser(CIParser *self, Usize macro_call_id);
-
-static void
-add_macro_call__CIParser(CIParser *self, CIParserMacroCall *macro_call);
 
 static inline void
 init_function_to_visit_waiting_list__CIParser(CIParser *self, String *name);
@@ -176,7 +171,8 @@ is_recursive_union__CIParser(const CIParser *self, const String *name);
 static inline bool
 is_recursive_struct__CIParser(const CIParser *self, const String *name);
 
-static String *
+/// @return Rc<String*>* (&)
+static Rc *
 generate_name_error__CIParser();
 
 /// @param called_generic_params const CIGenericParams*? (&)
@@ -251,330 +247,6 @@ unwrap_implicit_ptr_data_type__CIParser(
   const CIGenericParams *called_generic_params,
   const CIGenericParams *decl_generic_params);
 
-/// @brief lhs + rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_add_expr__CIParser(CIParser *self,
-                           CIExpr *lhs,
-                           CIExpr *rhs,
-                           bool is_partial);
-
-/// @brief lhs - rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_sub_expr__CIParser(CIParser *self,
-                           CIExpr *lhs,
-                           CIExpr *rhs,
-                           bool is_partial);
-
-/// @brief lhs * rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_mul_expr__CIParser(CIParser *self,
-                           CIExpr *lhs,
-                           CIExpr *rhs,
-                           bool is_partial);
-
-/// @brief lhs / rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_div_expr__CIParser(CIParser *self,
-                           CIExpr *lhs,
-                           CIExpr *rhs,
-                           bool is_partial);
-
-/// @brief lhs % rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_mod_expr__CIParser(CIParser *self,
-                           CIExpr *lhs,
-                           CIExpr *rhs,
-                           bool is_partial);
-
-/// @brief lhs & rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_bit_and_expr__CIParser(CIParser *self,
-                               CIExpr *lhs,
-                               CIExpr *rhs,
-                               bool is_partial);
-
-/// @brief lhs | rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_bit_or_expr__CIParser(CIParser *self,
-                              CIExpr *lhs,
-                              CIExpr *rhs,
-                              bool is_partial);
-
-/// @brief lhs ^ rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_bit_xor_expr__CIParser(CIParser *self,
-                               CIExpr *lhs,
-                               CIExpr *rhs,
-                               bool is_partial);
-
-/// @brief lhs << rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_bit_lshift_expr__CIParser(CIParser *self,
-                                  CIExpr *lhs,
-                                  CIExpr *rhs,
-                                  bool is_partial);
-
-/// @brief lhs >> rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_bit_rshift_expr__CIParser(CIParser *self,
-                                  CIExpr *lhs,
-                                  CIExpr *rhs,
-                                  bool is_partial);
-
-/// @brief lhs && rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_logical_and_expr__CIParser(CIParser *self,
-                                   CIExpr *lhs,
-                                   CIExpr *rhs,
-                                   bool is_partial);
-
-/// @brief lhs || rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_logical_or_expr__CIParser(CIParser *self,
-                                  CIExpr *lhs,
-                                  CIExpr *rhs,
-                                  bool is_partial);
-
-/// @brief lhs == rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_eq_expr__CIParser(CIParser *self,
-                          CIExpr *lhs,
-                          CIExpr *rhs,
-                          bool is_partial);
-
-/// @brief lhs != rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_ne_expr__CIParser(CIParser *self,
-                          CIExpr *lhs,
-                          CIExpr *rhs,
-                          bool is_partial);
-
-/// @brief lhs < rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_lt_expr__CIParser(CIParser *self,
-                          CIExpr *lhs,
-                          CIExpr *rhs,
-                          bool is_partial);
-
-/// @brief lhs <= rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_le_expr__CIParser(CIParser *self,
-                          CIExpr *lhs,
-                          CIExpr *rhs,
-                          bool is_partial);
-
-/// @brief lhs > rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_gt_expr__CIParser(CIParser *self,
-                          CIExpr *lhs,
-                          CIExpr *rhs,
-                          bool is_partial);
-
-/// @brief lhs >= rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_ge_expr__CIParser(CIParser *self,
-                          CIExpr *lhs,
-                          CIExpr *rhs,
-                          bool is_partial);
-
-/// @brief Resolve: ++rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_pre_increment_expr__CIParser(CIParser *self,
-                                     CIExpr *rhs,
-                                     bool is_partial);
-
-/// @brief Resolve: --rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_pre_decrement_expr__CIParser(CIParser *self,
-                                     CIExpr *rhs,
-                                     bool is_partial);
-
-/// @brief Resolve: rhs++
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_post_increment_expr__CIParser(CIParser *self,
-                                      CIExpr *rhs,
-                                      bool is_partial);
-
-/// @brief Resolve: rhs--
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_post_decrement_expr__CIParser(CIParser *self,
-                                      CIExpr *rhs,
-                                      bool is_partial);
-
-/// @brief Resolve: +rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_positive_expr__CIParser(CIParser *self, CIExpr *rhs, bool is_partial);
-
-/// @brief Resolve: -rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_negative_expr__CIParser(CIParser *self, CIExpr *rhs, bool is_partial);
-
-/// @brief Resolve: ~rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_bit_not_expr__CIParser(CIParser *self, CIExpr *rhs, bool is_partial);
-
-/// @brief Resolve: !rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_not_expr__CIParser(CIParser *self, CIExpr *rhs, bool is_partial);
-
-/// @brief Resolve: *rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_dereference__CIParser(CIParser *self, CIExpr *rhs, bool is_partial);
-
-/// @brief Resolve: &rhs
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_ref__CIParser(CIParser *self, CIExpr *rhs, bool is_partial);
-
-/// @brief Resolve unary expresssion
-static CIExpr *
-resolve_unary_expr__CIParser(CIParser *self, CIExpr *expr, bool is_partial);
-
-struct DataTypeInfoSize
-{
-    Usize size;
-    bool is_incomplete;
-};
-
-static Usize
-calculate_enum_size__CIParser(CIParser *self, CIDecl *enum_decl);
-
-/// @param enum_name const String* (&)
-static struct DataTypeInfoSize
-resolve_enum_size__CIParser(CIParser *self, const String *enum_name);
-
-/// @param fields const Vec<CIDeclStructField*>* (&)
-static Usize
-calculate_struct_size__CIParser(CIParser *self, const Vec *fields);
-
-/// @param struct_data_type const CIDataType* (&)
-static struct DataTypeInfoSize
-resolve_struct_size__CIParser(CIParser *self,
-                              const CIDataType *struct_data_type);
-
-/// @param fields const Vec<CIDeclStructField*>* (&)
-static Usize
-calculate_union_size__CIParser(CIParser *self, const Vec *fields);
-
-/// @param union_data_type const CIDataType* (&)
-static struct DataTypeInfoSize
-resolve_union_size__CIParser(CIParser *self, const CIDataType *union_data_type);
-
-/// @param data_type const CIDataType* (&)
-/// @return If the function returns 0, this means that the size could not be
-/// resolved.
-static Usize
-resolve_data_type_size__CIParser(CIParser *self, const CIDataType *data_type);
-
-static CIExpr *
-resolve_sizeof_expr__CIParser(CIParser *self, const CIExpr *expr);
-
-struct DataTypeInfoAlignment
-{
-    Usize alignment;
-    bool is_incomplete;
-};
-
-static inline Usize
-calculate_enum_alignment__CIParser(CIParser *self, CIDecl *enum_decl);
-
-static struct DataTypeInfoAlignment
-resolve_enum_alignment__CIParser(CIParser *self, const String *enum_name);
-
-/// @param fields const Vec<CIDeclStructField*>* (&)
-static Usize
-calculate_struct_or_union_alignment__CIParser(CIParser *self,
-                                              const Vec *fields);
-
-/// @param data_type const CIDataType* (&)
-static struct DataTypeInfoAlignment
-resolve_struct_or_union_alignment__CIParser(
-  CIParser *self,
-  const CIDataType *data_type,
-  CIDecl *(*search)(const CIParser *self,
-                    const String *name,
-                    CIGenericParams *called_generic_params));
-
-/// @param struct_data_type const CIDataType* (&)
-static inline struct DataTypeInfoAlignment
-resolve_struct_alignment__CIParser(CIParser *self,
-                                   const CIDataType *struct_data_type);
-
-/// @param union_data_type const CIDataType* (&)
-static inline struct DataTypeInfoAlignment
-resolve_union_alignment__CIParser(CIParser *self,
-                                  const CIDataType *union_data_type);
-
-static Usize
-resolve_data_type_alignment__CIParser(CIParser *self,
-                                      const CIDataType *data_type);
-
-static CIExpr *
-resolve_alignof_expr__CIParser(CIParser *self, const CIExpr *expr);
-
-/// @brief Resolve (can be partially) expression at compile time.
-/// @note For the moment, this function is only used to solve expressions in the
-/// preprocessor.
-/// @param is_partial This makes it possible to have expressions that are not
-/// resolvable at compile time.
-static CIExpr *
-resolve_expr__CIParser(CIParser *self, CIExpr *expr, bool is_partial);
-
 static void
 resolve_function_visit_waiting_list__CIParser(CIParser *self);
 
@@ -590,74 +262,6 @@ resolve_struct_visit_waiting_list__CIParser(CIParser *self);
 static void
 resolve_visit_waiting_list__CIParser(CIParser *self);
 
-/// @brief Move to next conditional preprocessor.
-static void
-next_conditional_preprocessor__CIParser(CIParser *self, CIToken **next_token);
-
-/// @brief Determine if the expression is true.
-static bool
-check_if_resolved_expr_is_true__CIParser(CIParser *self, CIExpr *expr);
-
-/// @brief Determine which branch of conditional preprocessor to jump in.
-/// @return the next token after a preprocessor conditional, if its condition is
-/// met, otherwise returns NULL.
-static CIToken *
-select_conditional_preprocessor__CIParser(CIParser *self, CIToken *next_token);
-
-/// @brief In the case that the macro parameter we have for another macro will
-/// never be used, we need to free the associated macro ID from memory.
-static void
-clean_unused_macro_param_in_macro_call__CIParser(CIParser *self,
-                                                 CIToken *current_token,
-                                                 bool is_used);
-
-static void
-parse_target__CIParser(CIParser *self,
-                       CIToken **current_token,
-                       CITokens *content,
-                       enum CITokenKind target,
-                       bool macro_param_is_used);
-
-static void
-parse_tokens_in_macro_call_param__CIParser(CIParser *self,
-                                           CIToken **current_token,
-                                           CITokens *content,
-                                           bool is_variadic,
-                                           bool is_used);
-
-static CIParserMacroCallParam *
-parse_macro_call_param__CIParser(CIParser *self,
-                                 CIToken **current_token,
-                                 bool is_variadic,
-                                 bool is_used);
-
-/// @param macro_param_variadic Index of the first variadic macro param. If the
-/// macro has no variadic parameter, the value `-1` is assigned.
-/// @param define const CIResultDefine* (&)
-/// @see `get_variadic_param_index__CITokenPreprocessorDefine` function in
-/// `include/core/cc/ci/token.h`
-static void
-parse_macro_call_params__CIParser(CIParser *self,
-                                  CIToken **current_token,
-                                  Isize macro_param_variadic,
-                                  Usize macro_params_length,
-                                  const CIResultDefine *define);
-
-static void
-push_macro_call_id_to_macro_param__CIParser(CIParser *self,
-                                            CIToken *first,
-                                            CIToken *last,
-                                            Usize macro_call_id);
-
-static CIToken *
-jump_in_macro_call__CIParser(CIParser *self, CIToken *next_token);
-
-/// @brief Jump into token block such as macro call, conditional preprocessor,
-/// etc.
-/// @return the token where we are after the jump.
-static CIToken *
-jump_in_token_block__CIParser(CIParser *self, CIToken *next_token);
-
 static void
 set_current_token__CIParser(CIParser *self, CIToken *next_token);
 
@@ -669,12 +273,6 @@ check_standard__CIParser(CIParser *self, CIToken *token);
 /// @brief Advance to one token on the current iterator.
 static void
 next_token__CIParser(CIParser *self);
-
-static bool
-next_token_must_continue_to_iter__CIParser(CIParser *self, CIToken *next_token);
-
-static inline void
-init__CIParser(CIParser *self);
 
 static inline void
 set_current_scope__CIParser(CIParser *self);
@@ -895,6 +493,7 @@ generate_function_gen__CIParser(CIParser *self,
                                 CIGenericParams *called_generic_params);
 
 /// @brief Generate struct, union or typedef gen.
+/// @param name String* (&)
 static void
 generate_type_gen__CIParser(CIParser *self,
                             enum CIDeclKind kind,
@@ -904,16 +503,19 @@ generate_type_gen__CIParser(CIParser *self,
                             CIDecl *(*search_decl)(const CIResultFile *,
                                                    const String *));
 
+/// @param struct_name String* (&)
 static inline void
 generate_struct_gen__CIParser(CIParser *self,
                               String *struct_name,
                               CIGenericParams *called_generic_params);
 
+/// @param union_name String* (&)
 static inline void
 generate_union_gen__CIParser(CIParser *self,
                              String *union_name,
                              CIGenericParams *called_generic_params);
 
+/// @param typedef_name_ref String* (&)
 static inline void
 generate_typedef_gen__CIParser(CIParser *self,
                                String *typedef_name_ref,
@@ -930,6 +532,7 @@ static CIDataType *
 parse_post_data_type__CIParser(CIParser *self, CIDataType *data_type);
 
 /// @brief Parse variable name (name + data type).
+/// @param name_ref Rc<String*>* (&)* (&)
 ///
 /// @example field, variable, parameter
 ///
@@ -952,7 +555,7 @@ parse_post_data_type__CIParser(CIParser *self, CIDataType *data_type);
 static void
 parse_variable_name_and_data_type__CIParser(CIParser *self,
                                             CIDataType **data_type_ref,
-                                            String **name_ref,
+                                            Rc **name_ref,
                                             bool name_is_required);
 
 static void
@@ -1017,8 +620,9 @@ static Vec *
 parse_enum_variants__CIParser(CIParser *self);
 
 /// @brief Parse enum declaration.
+/// @param name Rc<String*>* (&)
 static CIDecl *
-parse_enum__CIParser(CIParser *self, int storage_class_flag, String *name);
+parse_enum__CIParser(CIParser *self, int storage_class_flag, Rc *name);
 
 /// @brief Parse function params.
 /// @param parent_function_scope CIScope*? (&)
@@ -1043,18 +647,16 @@ static CIGenericParams *
 parse_generic_params__CIParser(CIParser *self);
 
 /// @brief Parser function call.
+/// @param identifier Rc<String*>* (&)
 static CIExpr *
 parse_function_call__CIParser(CIParser *self,
-                              String *identifier,
+                              Rc *identifier,
                               CIGenericParams *generic_params);
 
 /// @brief Parse literal expression.
 /// @brief @return CIExpr*?
 static CIExpr *
 parse_literal_expr__CIParser(CIParser *self);
-
-static String *
-perform_stringification__CIParser(CIParser *self);
 
 /// @brief Parse primary expression.
 /// @return CIExpr*?
@@ -1137,17 +739,6 @@ infer_expr_unary_data_type__CIParser(
   const CIGenericParams *called_generic_params,
   const CIGenericParams *decl_generic_params);
 
-/// @param current_scope_id const CIScopeID*? (&)
-/// @param called_generic_params const CIGenericParams*? (&)
-/// @param decl_generic_params const CIGenericParams*? (&)
-/// @return CIDataType*
-static CIDataType *
-infer_expr_data_type__CIParser(const CIParser *self,
-                               const CIExpr *expr,
-                               const CIScopeID *current_scope_id,
-                               const CIGenericParams *called_generic_params,
-                               const CIGenericParams *decl_generic_params);
-
 /// @param called_generic_params CIGenericParams*? (&)
 /// @return CIDecl*? (&)
 static CIDecl *
@@ -1157,37 +748,12 @@ search_decl__CIParser(const CIParser *self,
                       CIDecl *(*search_decl)(const CIResultFile *self,
                                              const String *name));
 
-/// @return CIDecl*? (&)
-static inline CIDecl *
-search_enum__CIParser(const CIParser *self, const String *name);
-
 /// @param called_generic_params CIGenericParams*? (&)
 /// @return CIDecl*? (&)
 static inline CIDecl *
 search_function__CIParser(const CIParser *self,
                           const String *name,
                           CIGenericParams *called_generic_params);
-
-/// @param called_generic_params CIGenericParams*? (&)
-/// @return CIDecl*? (&)
-static inline CIDecl *
-search_struct__CIParser(const CIParser *self,
-                        const String *name,
-                        CIGenericParams *called_generic_params);
-
-/// @param called_generic_params CIGenericParams*? (&)
-/// @return CIDecl*? (&)
-static inline CIDecl *
-search_typedef__CIParser(const CIParser *self,
-                         const String *name,
-                         CIGenericParams *called_generic_params);
-
-/// @param called_generic_params CIGenericParams*? (&)
-/// @return CIDecl*? (&)
-static inline CIDecl *
-search_union__CIParser(const CIParser *self,
-                       const String *name,
-                       CIGenericParams *called_generic_params);
 
 /// @brief Search generalizable declaration from the given name, if
 /// gen_decl_generic_params is NULL otherwise, it serializes the given
@@ -1525,6 +1091,7 @@ typecheck_for_stmt__CIParser(const CIParser *self,
                              const CIStmtFor *for_,
                              struct CITypecheckContext *typecheck_ctx);
 
+/// @param goto_ const String* (&)
 static void
 typecheck_goto_stmt__CIParser(const CIParser *self,
                               const String *goto_,
@@ -1621,12 +1188,13 @@ parse_function_body_item__CIParser(CIParser *self,
 /// "storage_class_flag" variable contains the storage class "typedef", this
 /// function will parse and return a typedef declaration, but if it doesn't, it
 /// will parse and return a function declaration.
+/// @param name Rc<String*>* (&)
 /// @param typedef_generic_params CIGenericParams*?
 static CIDecl *
 parse_function__CIParser(CIParser *self,
                          int storage_class_flag,
                          CIDataType *return_data_type,
-                         String *name,
+                         Rc *name,
                          CIGenericParams *generic_params,
                          Vec *attributes);
 
@@ -1640,10 +1208,11 @@ static Vec *
 parse_struct_or_union_fields__CIParser(CIParser *self);
 
 /// @brief Parse struct declaration.
+/// @param name Rc<String*>* (&)
 static CIDecl *
 parse_struct__CIParser(CIParser *self,
                        int storage_class_flag,
-                       String *name,
+                       Rc *name,
                        CIGenericParams *generic_params);
 
 /// @brief Parse typedef declaration.
@@ -1657,10 +1226,11 @@ parse_typedef__CIParser(CIParser *self,
                         CIGenericParams *generic_params);
 
 /// @brief Parse union declaration.
+/// @param name Rc<String*>* (&)
 static CIDecl *
 parse_union__CIParser(CIParser *self,
                       int storage_class_flag,
-                      String *name,
+                      Rc *name,
                       CIGenericParams *generic_params);
 
 static inline bool
@@ -1676,12 +1246,12 @@ check_for_initialization_expr__CIParser(CIParser *self,
                                         CIExpr *expr);
 
 /// @brief Parse variable declaration.
-/// @param name String*? (&)
+/// @param name Rc<String*>*? (&)
 static CIDecl *
 parse_variable__CIParser(CIParser *self,
                          int storage_class_flag,
                          CIDataType *data_type,
-                         String *name,
+                         Rc *name,
                          bool no_expr,
                          bool is_local);
 
@@ -1696,53 +1266,6 @@ parse_variable_list__CIParser(CIParser *self,
                               int storage_class_flag,
                               CIDataType *data_type,
                               CIGenericParams *typedef_generic_params);
-
-/// @brief Resolve `#embed` preprocessor.
-static void
-resolve_preprocessor_embed__CIParser(CIParser *self,
-                                     CIToken *preprocessor_embed_token);
-
-/// @brief Resolve `#error` preprocessor.
-static void
-resolve_preprocessor_error__CIParser(CIParser *self,
-                                     CIToken *preprocessor_error_token);
-
-static bool
-load_include__CIParser(CIParser *self,
-                       CIToken *preprocessor_include_token,
-                       const String *current_dir,
-                       const String *include_path);
-
-/// @brief Resolve `#include` preprocessor.
-static void
-resolve_preprocessor_include__CIParser(CIParser *self,
-                                       CIToken *preprocessor_include_token);
-
-/// @brief Resolve `#line` preprocessor.
-static inline bool
-resolve_preprocessor_line__CIParser(CIParser *self,
-                                    CIToken *preprocessor_line_token);
-
-/// @brief Resolve `#pragma` preprocessor.
-static bool
-resolve_preprocessor_pragma__CIParser(CIParser *self,
-                                      CIToken *preprocessor_pragma_token);
-
-/// @brief Resolve `#undef` preprocessor.
-static inline void
-resolve_preprocessor_undef__CIParser(CIParser *self,
-                                     CIToken *preprocessor_undef_token);
-
-/// @brief Resolve `#warning` preprocessor.
-static void
-resolve_preprocessor_warning__CIParser(CIParser *self,
-                                       CIToken *preprocessor_warning_token);
-
-/// @brief Resolve preprocessor (not conditional preprocessor).
-/// @return Return true if a preprocessor has been resolved, otherwise return
-/// false.
-static bool
-resolve_preprocessor__CIParser(CIParser *self, CIToken *next_token);
 
 static CIDecl *
 parse_label__CIParser(CIParser *self);
@@ -1800,7 +1323,7 @@ parse_storage_class_specifiers__CIParser(CIParser *self,
 // `name_error_count` and store all `name_error` in the `names_error` vector, as
 // declaration strucutures (CIDeclVariable, CIDeclFunction, ...), are not
 // supposed to own the name (in other words not to be able to free it).
-static Vec *names_error = NULL; // Vec<String*>*
+static Vec *names_error = NULL; // Vec<Rc<String*>*>*
 static Usize name_error_count = 0;
 // The `data_type_as_expression` variable is used to keep the `DataType`
 // pointer, when in `parse_decl__CIParser`, when `in_function_body` is true is
@@ -1916,19 +1439,6 @@ static const enum CIAttributeStandardKind
       CI_ATTRIBUTE_STANDARD_KIND_REPRODUCIBLE
   };
 
-#define ENABLE_NEXT_TOKEN_WITH_CHECK() next_token_with_check = true;
-#define DISABLE_NEXT_TOKEN_WITH_CHECK() next_token_with_check = false;
-
-// Enable the ability to jump into macro, macro param, etc.
-//
-// This variable is used when you don't want the parser to jump into token
-// blocks, e.g. for stringification.
-static bool next_token_with_check = true;
-
-// <TOKEN> ## <TOKEN>
-// ^^^^^^^
-static CIToken *lhs_merged_id_token = NULL; // CIToken*? (&)
-
 CONSTRUCTOR(struct CurrentGenericParams,
             CurrentGenericParams,
             CIGenericParams *called,
@@ -1971,26 +1481,6 @@ set_current_generic_params__CITypecheckContext(
     self->current_generic_params = new_current_generic_params;
 
     return old_current_generic_params;
-}
-
-const CIParserMacroCall *
-get_macro_call__CIParser(CIParser *self, Usize macro_call_id)
-{
-    ASSERT(macro_call_id < self->macros_call->len);
-
-    return get__Vec(self->macros_call, macro_call_id);
-}
-
-void
-add_macro_call__CIParser(CIParser *self, CIParserMacroCall *macro_call)
-{
-    ASSERT(macro_call);
-
-    if (self->macros_call->len < CI_MACROS_CALL_MAX_SIZE) {
-        push__Vec(self->macros_call, macro_call);
-    } else {
-        FAILED("the macro call stack overflow");
-    }
 }
 
 #define INIT_X_TO_WAIT_TO_VISIT(hm)                      \
@@ -2206,102 +1696,7 @@ DESTRUCTOR(CIParserVisitWaitingList, const CIParserVisitWaitingList *self)
     FREE(HashMap, self->structs);
 }
 
-CONSTRUCTOR(CIParserMacroCallParam *, CIParserMacroCallParam, CITokens content)
-{
-    CIParserMacroCallParam *self = lily_malloc(sizeof(CIParserMacroCallParam));
-
-    self->content = content;
-    self->next = NULL;
-
-    return self;
-}
-
-DESTRUCTOR(CIParserMacroCallParam, CIParserMacroCallParam *self)
-{
-    // Restore the real next token(s) by removing EOT.
-    CIToken *eot_token =
-      remove_when_match__CITokens(&self->content, self->content.last);
-
-    ASSERT(eot_token);
-    ASSERT(eot_token->kind == CI_TOKEN_KIND_EOT);
-
-    FREE(CIToken, eot_token);
-    lily_free(self);
-}
-
-void
-add__CIParserMacroCallParams(CIParserMacroCallParams *self,
-                             CIParserMacroCallParam *param)
-{
-    if (!self->first) {
-        self->first = param;
-        self->last = param;
-
-        return;
-    }
-
-    self->last->next = param;
-    self->last = self->last->next;
-    ++self->len;
-}
-
-CIParserMacroCallParam *
-get__CIParserMacroCallParams(const CIParserMacroCallParams *self, Usize index)
-{
-    CIParserMacroCallParam *param = self->first;
-
-    for (Usize i = 0; i < index; ++i) {
-        param = param->next;
-    }
-
-    ASSERT(param);
-
-    return param;
-}
-
-DESTRUCTOR(CIParserMacroCallParams, const CIParserMacroCallParams *self)
-{
-    CIParserMacroCallParam *current = self->first;
-
-    while (current) {
-        CIParserMacroCallParam *prev = current;
-
-        current = current->next;
-
-        FREE(CIParserMacroCallParam, prev);
-    }
-}
-
-CONSTRUCTOR(CIParserMacroCall *, CIParserMacroCall)
-{
-    CIParserMacroCall *self = lily_malloc(sizeof(CIParserMacroCall));
-
-    self->params = NEW(CIParserMacroCallParams);
-    self->is_empty = false;
-
-    return self;
-}
-
-VARIANT_CONSTRUCTOR(CIParserMacroCall *, CIParserMacroCall, is_empty)
-{
-    CIParserMacroCall *self = lily_malloc(sizeof(CIParserMacroCall));
-
-    // self->params = <undefined>
-    self->is_empty = true;
-
-    return self;
-}
-
-DESTRUCTOR(CIParserMacroCall, CIParserMacroCall *self)
-{
-    if (!self->is_empty) {
-        FREE(CIParserMacroCallParams, &self->params);
-    }
-
-    lily_free(self);
-}
-
-CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner)
+CONSTRUCTOR(CIParser, CIParser, CIResultFile *file)
 {
     if (!names_error) {
         names_error = NEW(Vec);
@@ -2314,42 +1709,28 @@ CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner)
     CIParserSpan current_span = default__CIParserSpan();
 
     return (CIParser){ .file = file,
-                       .scanner = scanner,
                        .count_error = &file->file_analysis->count_error,
                        .count_warning = &file->file_analysis->count_warning,
-                       .tokens = &scanner->tokens,
-                       .current_token = scanner->tokens.first,
-                       .previous_token = scanner->tokens.first,
-                       .current_span = current_span,
-                       .previous_span = current_span,
-                       .macros_call = NEW(Vec),
-                       .visit_waiting_list = NEW(CIParserVisitWaitingList) };
-}
-
-CIParser
-from_tokens__CIParser(CIResultFile *file, const CITokens *content)
-{
-    return (CIParser){ .file = file,
-                       .scanner = NULL,
-                       .count_error = &file->file_analysis->count_error,
-                       .count_warning = &file->file_analysis->count_warning,
-                       .tokens = content,
+                       .resolved_tokens = NULL,
+                       .resolved_tokens_count = 0,
                        .current_token = NULL,
                        .previous_token = NULL,
-                       .macros_call = NEW(Vec),
+                       .current_span = current_span,
+                       .previous_span = current_span,
                        .visit_waiting_list = NEW(CIParserVisitWaitingList) };
 }
 
-String *
+Rc *
 generate_name_error__CIParser()
 {
     ASSERT(names_error);
 
     String *name_error = format__String("%__error__{zu}", name_error_count++);
+    Rc *rc_name_error = NEW(Rc, name_error);
 
-    push__Vec(names_error, name_error);
+    push__Vec(names_error, rc_name_error);
 
-    return name_error;
+    return rc_name_error;
 }
 
 bool
@@ -2520,10 +1901,10 @@ unwrap_implicit_ptr_data_type__CIParser(
 
     switch (data_type->kind) {
         case CI_DATA_TYPE_KIND_TYPEDEF: {
-            CIDecl *decl =
-              search_typedef__CIParser(self,
-                                       data_type->typedef_.name,
-                                       data_type->typedef_.generic_params);
+            CIDecl *decl = search_typedef__CIParser(
+              self,
+              GET_PTR_RC(String, data_type->typedef_.name),
+              data_type->typedef_.generic_params);
             CIDataType *typedef_data_type =
               (CIDataType *)get_typedef_data_type__CIDecl(decl);
 
@@ -2545,2037 +1926,6 @@ unwrap_implicit_ptr_data_type__CIParser(
         default:
             UNREACHABLE("this kind of data type is not expected, expected "
                         "pointer compatible data type");
-    }
-}
-
-// +, -, *, /
-#define RESOLVE_BASIC_BINARY_ARITHMETIC_EXPR(op, binary_kind)                  \
-    ASSERT(lhs &&rhs);                                                         \
-                                                                               \
-    if (lhs->kind == CI_EXPR_KIND_LITERAL &&                                   \
-        rhs->kind == CI_EXPR_KIND_LITERAL) {                                   \
-        switch (lhs->literal.kind) {                                           \
-            case CI_EXPR_LITERAL_KIND_BOOL:                                    \
-                switch (rhs->literal.kind) {                                   \
-                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            signed_int,                                        \
-                            lhs->literal.bool_ op rhs->literal.bool_));        \
-                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            signed_int,                                        \
-                            lhs->literal.bool_ op rhs->literal.char_));        \
-                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            float,                                             \
-                            lhs->literal.bool_ op rhs->literal.float_));       \
-                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            signed_int,                                        \
-                            lhs->literal.bool_ op rhs->literal.signed_int));   \
-                    case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
-                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            unsigned_int,                                      \
-                            lhs->literal.bool_ op rhs->literal.unsigned_int)); \
-                    default:                                                   \
-                        UNREACHABLE("unknown variant");                        \
-                }                                                              \
-            case CI_EXPR_LITERAL_KIND_CHAR:                                    \
-                switch (rhs->literal.kind) {                                   \
-                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            signed_int,                                        \
-                            lhs->literal.char_ op rhs->literal.bool_));        \
-                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            signed_int,                                        \
-                            lhs->literal.char_ op rhs->literal.char_));        \
-                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            float,                                             \
-                            lhs->literal.char_ op rhs->literal.float_));       \
-                    case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
-                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            signed_int,                                        \
-                            lhs->literal.char_ op rhs->literal.signed_int));   \
-                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            unsigned_int,                                      \
-                            lhs->literal.char_ op rhs->literal.unsigned_int)); \
-                    default:                                                   \
-                        UNREACHABLE("unknown variant");                        \
-                }                                                              \
-            case CI_EXPR_LITERAL_KIND_FLOAT:                                   \
-                switch (rhs->literal.kind) {                                   \
-                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            float,                                             \
-                            lhs->literal.float_ op rhs->literal.bool_));       \
-                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            float,                                             \
-                            lhs->literal.float_ op rhs->literal.char_));       \
-                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            float,                                             \
-                            lhs->literal.float_ op rhs->literal.float_));      \
-                    case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
-                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            float,                                             \
-                            lhs->literal.float_ op rhs->literal.signed_int));  \
-                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(CIExprLiteral,                           \
-                                      float,                                   \
-                                      lhs->literal.float_ op                   \
-                                        rhs->literal.unsigned_int));           \
-                    default:                                                   \
-                        UNREACHABLE("unknown variant");                        \
-                }                                                              \
-            case CI_EXPR_LITERAL_KIND_SIGNED_INT:                              \
-                switch (rhs->literal.kind) {                                   \
-                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            signed_int,                                        \
-                            lhs->literal.signed_int op rhs->literal.bool_));   \
-                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            signed_int,                                        \
-                            lhs->literal.signed_int op rhs->literal.char_));   \
-                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            float,                                             \
-                            lhs->literal.signed_int op rhs->literal.float_));  \
-                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(CIExprLiteral,                           \
-                                      signed_int,                              \
-                                      lhs->literal.signed_int op               \
-                                        rhs->literal.signed_int));             \
-                    case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
-                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(CIExprLiteral,                           \
-                                      signed_int,                              \
-                                      lhs->literal.signed_int op               \
-                                        rhs->literal.unsigned_int));           \
-                    default:                                                   \
-                        UNREACHABLE("unknown variant");                        \
-                }                                                              \
-            case CI_EXPR_LITERAL_KIND_STRING:                                  \
-                FAILED("this operation is unsure at compile-time");            \
-            case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                            \
-                switch (rhs->literal.kind) {                                   \
-                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            unsigned_int,                                      \
-                            lhs->literal.unsigned_int op rhs->literal.bool_)); \
-                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            unsigned_int,                                      \
-                            lhs->literal.unsigned_int op rhs->literal.char_)); \
-                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(CIExprLiteral,                           \
-                                      float,                                   \
-                                      lhs->literal.unsigned_int op             \
-                                        rhs->literal.float_));                 \
-                    case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
-                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(CIExprLiteral,                           \
-                                      unsigned_int,                            \
-                                      lhs->literal.unsigned_int op             \
-                                        rhs->literal.signed_int));             \
-                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(CIExprLiteral,                           \
-                                      unsigned_int,                            \
-                                      lhs->literal.unsigned_int op             \
-                                        rhs->literal.unsigned_int));           \
-                    default:                                                   \
-                        UNREACHABLE("unknown variant");                        \
-                }                                                              \
-        }                                                                      \
-    } else {                                                                   \
-        if (!is_partial) {                                                     \
-            FAILED("these expressions are not resolvable at compile-time");    \
-        }                                                                      \
-    }                                                                          \
-    return NEW_VARIANT(                                                        \
-      CIExpr,                                                                  \
-      binary,                                                                  \
-      NEW(CIExprBinary, binary_kind, ref__CIExpr(lhs), ref__CIExpr(rhs)));
-
-CIExpr *
-resolve_add_expr__CIParser(CIParser *self,
-                           CIExpr *lhs,
-                           CIExpr *rhs,
-                           bool is_partial)
-{
-    RESOLVE_BASIC_BINARY_ARITHMETIC_EXPR(+, CI_EXPR_BINARY_KIND_ADD);
-}
-
-CIExpr *
-resolve_sub_expr__CIParser(CIParser *self,
-                           CIExpr *lhs,
-                           CIExpr *rhs,
-                           bool is_partial)
-{
-    RESOLVE_BASIC_BINARY_ARITHMETIC_EXPR(-, CI_EXPR_BINARY_KIND_SUB);
-}
-
-CIExpr *
-resolve_mul_expr__CIParser(CIParser *self,
-                           CIExpr *lhs,
-                           CIExpr *rhs,
-                           bool is_partial)
-{
-    RESOLVE_BASIC_BINARY_ARITHMETIC_EXPR(*, CI_EXPR_BINARY_KIND_MUL);
-}
-
-CIExpr *
-resolve_div_expr__CIParser(CIParser *self,
-                           CIExpr *lhs,
-                           CIExpr *rhs,
-                           bool is_partial)
-{
-    RESOLVE_BASIC_BINARY_ARITHMETIC_EXPR(/, CI_EXPR_BINARY_KIND_DIV);
-}
-
-// &, |, ^, <<, >>
-// Also %
-#define RESOLVE_BASIC_BINARY_BIT_EXPR(op, binary_kind)                         \
-    ASSERT(lhs &&rhs);                                                         \
-                                                                               \
-    if (lhs->kind == CI_EXPR_KIND_LITERAL &&                                   \
-        rhs->kind == CI_EXPR_KIND_LITERAL) {                                   \
-        switch (lhs->literal.kind) {                                           \
-            case CI_EXPR_LITERAL_KIND_BOOL:                                    \
-                switch (rhs->literal.kind) {                                   \
-                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            signed_int,                                        \
-                            lhs->literal.bool_ op rhs->literal.bool_));        \
-                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            signed_int,                                        \
-                            lhs->literal.bool_ op rhs->literal.char_));        \
-                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        FAILED("cannot perform this operation with "           \
-                               "no-castable to int types");                    \
-                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            signed_int,                                        \
-                            lhs->literal.bool_ op rhs->literal.signed_int));   \
-                    case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
-                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            unsigned_int,                                      \
-                            lhs->literal.bool_ op rhs->literal.unsigned_int)); \
-                    default:                                                   \
-                        UNREACHABLE("unknown variant");                        \
-                }                                                              \
-            case CI_EXPR_LITERAL_KIND_CHAR:                                    \
-                switch (rhs->literal.kind) {                                   \
-                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            signed_int,                                        \
-                            lhs->literal.char_ op rhs->literal.bool_));        \
-                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            signed_int,                                        \
-                            lhs->literal.char_ op rhs->literal.char_));        \
-                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        FAILED("cannot perform this operation with "           \
-                               "no-castable to int types");                    \
-                    case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
-                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            signed_int,                                        \
-                            lhs->literal.char_ op rhs->literal.signed_int));   \
-                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            unsigned_int,                                      \
-                            lhs->literal.char_ op rhs->literal.unsigned_int)); \
-                    default:                                                   \
-                        UNREACHABLE("unknown variant");                        \
-                }                                                              \
-            case CI_EXPR_LITERAL_KIND_FLOAT:                                   \
-                FAILED("cannot perform this operation with no-castable "       \
-                       "to int types");                                        \
-            case CI_EXPR_LITERAL_KIND_SIGNED_INT:                              \
-                switch (rhs->literal.kind) {                                   \
-                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            signed_int,                                        \
-                            lhs->literal.signed_int op rhs->literal.bool_));   \
-                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            signed_int,                                        \
-                            lhs->literal.signed_int op rhs->literal.char_));   \
-                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        FAILED("cannot perform this operation with "           \
-                               "no-castable to int types");                    \
-                    case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
-                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(CIExprLiteral,                           \
-                                      signed_int,                              \
-                                      lhs->literal.signed_int op               \
-                                        rhs->literal.signed_int));             \
-                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(CIExprLiteral,                           \
-                                      unsigned_int,                            \
-                                      lhs->literal.signed_int op               \
-                                        rhs->literal.unsigned_int));           \
-                    default:                                                   \
-                        UNREACHABLE("unknown variant");                        \
-                }                                                              \
-            case CI_EXPR_LITERAL_KIND_STRING:                                  \
-                FAILED("this operation is unsure at compile-time");            \
-            case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                            \
-                switch (rhs->literal.kind) {                                   \
-                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            unsigned_int,                                      \
-                            lhs->literal.unsigned_int op rhs->literal.bool_)); \
-                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            unsigned_int,                                      \
-                            lhs->literal.unsigned_int op rhs->literal.char_)); \
-                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        FAILED("cannot perform this operation with "           \
-                               "no-castable to int types");                    \
-                    case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
-                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(CIExprLiteral,                           \
-                                      unsigned_int,                            \
-                                      lhs->literal.unsigned_int op             \
-                                        rhs->literal.signed_int));             \
-                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(CIExprLiteral,                           \
-                                      unsigned_int,                            \
-                                      lhs->literal.unsigned_int op             \
-                                        rhs->literal.unsigned_int));           \
-                    default:                                                   \
-                        UNREACHABLE("unknown variant");                        \
-                }                                                              \
-        }                                                                      \
-    } else {                                                                   \
-        if (!is_partial) {                                                     \
-            FAILED("these expressions are not resolvable at compile-time");    \
-        }                                                                      \
-    }                                                                          \
-                                                                               \
-    return NEW_VARIANT(                                                        \
-      CIExpr,                                                                  \
-      binary,                                                                  \
-      NEW(CIExprBinary, binary_kind, ref__CIExpr(lhs), ref__CIExpr(rhs)));
-
-CIExpr *
-resolve_mod_expr__CIParser(CIParser *self,
-                           CIExpr *lhs,
-                           CIExpr *rhs,
-                           bool is_partial)
-{
-    RESOLVE_BASIC_BINARY_BIT_EXPR(%, CI_EXPR_BINARY_KIND_MOD);
-}
-
-CIExpr *
-resolve_bit_and_expr__CIParser(CIParser *self,
-                               CIExpr *lhs,
-                               CIExpr *rhs,
-                               bool is_partial)
-{
-    RESOLVE_BASIC_BINARY_BIT_EXPR(&, CI_EXPR_BINARY_KIND_BIT_AND);
-}
-
-CIExpr *
-resolve_bit_or_expr__CIParser(CIParser *self,
-                              CIExpr *lhs,
-                              CIExpr *rhs,
-                              bool is_partial)
-{
-    RESOLVE_BASIC_BINARY_BIT_EXPR(|, CI_EXPR_BINARY_KIND_BIT_OR);
-}
-
-CIExpr *
-resolve_bit_xor_expr__CIParser(CIParser *self,
-                               CIExpr *lhs,
-                               CIExpr *rhs,
-                               bool is_partial)
-{
-    RESOLVE_BASIC_BINARY_BIT_EXPR(^, CI_EXPR_BINARY_KIND_BIT_XOR);
-}
-
-CIExpr *
-resolve_bit_lshift_expr__CIParser(CIParser *self,
-                                  CIExpr *lhs,
-                                  CIExpr *rhs,
-                                  bool is_partial)
-{
-    RESOLVE_BASIC_BINARY_BIT_EXPR(<<, CI_EXPR_BINARY_KIND_BIT_LSHIFT);
-}
-
-CIExpr *
-resolve_bit_rshift_expr__CIParser(CIParser *self,
-                                  CIExpr *lhs,
-                                  CIExpr *rhs,
-                                  bool is_partial)
-{
-    RESOLVE_BASIC_BINARY_BIT_EXPR(>>, CI_EXPR_BINARY_KIND_BIT_RSHIFT);
-}
-
-// &&, ||
-#define RESOLVE_BASIC_BINARY_LOGICAL_EXPR(op, binary_kind)                     \
-    ASSERT(lhs &&rhs);                                                         \
-                                                                               \
-    if (lhs->kind == CI_EXPR_KIND_LITERAL &&                                   \
-        rhs->kind == CI_EXPR_KIND_LITERAL) {                                   \
-        switch (lhs->literal.kind) {                                           \
-            case CI_EXPR_LITERAL_KIND_BOOL:                                    \
-                switch (rhs->literal.kind) {                                   \
-                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.bool_ op rhs->literal.bool_));        \
-                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.bool_ op rhs->literal.char_));        \
-                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        FAILED("cannot perform this operation with "           \
-                               "no-castable to int types");                    \
-                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.bool_ op rhs->literal.signed_int));   \
-                    case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
-                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.bool_ op rhs->literal.unsigned_int)); \
-                    default:                                                   \
-                        UNREACHABLE("unknown variant");                        \
-                }                                                              \
-            case CI_EXPR_LITERAL_KIND_CHAR:                                    \
-                switch (rhs->literal.kind) {                                   \
-                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.char_ op rhs->literal.bool_));        \
-                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.char_ op rhs->literal.char_));        \
-                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        FAILED("cannot perform this operation with "           \
-                               "no-castable to int types");                    \
-                    case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
-                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.char_ op rhs->literal.signed_int));   \
-                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.char_ op rhs->literal.unsigned_int)); \
-                    default:                                                   \
-                        UNREACHABLE("unknown variant");                        \
-                }                                                              \
-            case CI_EXPR_LITERAL_KIND_FLOAT:                                   \
-                FAILED("cannot perform this operation with no-castable "       \
-                       "to int types");                                        \
-            case CI_EXPR_LITERAL_KIND_SIGNED_INT:                              \
-                switch (rhs->literal.kind) {                                   \
-                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.signed_int op rhs->literal.bool_));   \
-                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.signed_int op rhs->literal.char_));   \
-                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        FAILED("cannot perform this operation with "           \
-                               "no-castable to int types");                    \
-                    case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
-                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(CIExprLiteral,                           \
-                                      bool,                                    \
-                                      lhs->literal.signed_int op               \
-                                        rhs->literal.signed_int));             \
-                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(CIExprLiteral,                           \
-                                      bool,                                    \
-                                      lhs->literal.signed_int op               \
-                                        rhs->literal.unsigned_int));           \
-                    default:                                                   \
-                        UNREACHABLE("unknown variant");                        \
-                }                                                              \
-            case CI_EXPR_LITERAL_KIND_STRING:                                  \
-                FAILED("this operation is unsure at compile-time");            \
-            case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                            \
-                switch (rhs->literal.kind) {                                   \
-                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.unsigned_int op rhs->literal.bool_)); \
-                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.unsigned_int op rhs->literal.char_)); \
-                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        FAILED("cannot perform this operation with "           \
-                               "no-castable to int types");                    \
-                    case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
-                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(CIExprLiteral,                           \
-                                      bool,                                    \
-                                      lhs->literal.unsigned_int op             \
-                                        rhs->literal.signed_int));             \
-                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(CIExprLiteral,                           \
-                                      bool,                                    \
-                                      lhs->literal.unsigned_int op             \
-                                        rhs->literal.unsigned_int));           \
-                    default:                                                   \
-                        UNREACHABLE("unknown variant");                        \
-                }                                                              \
-        }                                                                      \
-    } else {                                                                   \
-        if (!is_partial) {                                                     \
-            FAILED("these expressions are not resolvable at compile-time");    \
-        }                                                                      \
-    }                                                                          \
-                                                                               \
-    return NEW_VARIANT(                                                        \
-      CIExpr,                                                                  \
-      binary,                                                                  \
-      NEW(CIExprBinary, binary_kind, ref__CIExpr(lhs), ref__CIExpr(rhs)));
-
-CIExpr *
-resolve_logical_and_expr__CIParser(CIParser *self,
-                                   CIExpr *lhs,
-                                   CIExpr *rhs,
-                                   bool is_partial)
-{
-    RESOLVE_BASIC_BINARY_LOGICAL_EXPR(&&, CI_EXPR_BINARY_KIND_AND);
-}
-
-CIExpr *
-resolve_logical_or_expr__CIParser(CIParser *self,
-                                  CIExpr *lhs,
-                                  CIExpr *rhs,
-                                  bool is_partial)
-{
-    RESOLVE_BASIC_BINARY_LOGICAL_EXPR(||, CI_EXPR_BINARY_KIND_OR);
-}
-
-#define RESOLVE_BASIC_BINARY_COMPARISON_EXPR(op, binary_kind)                  \
-    ASSERT(lhs &&rhs);                                                         \
-                                                                               \
-    if (lhs->kind == CI_EXPR_KIND_LITERAL &&                                   \
-        rhs->kind == CI_EXPR_KIND_LITERAL) {                                   \
-        switch (lhs->literal.kind) {                                           \
-            case CI_EXPR_LITERAL_KIND_BOOL:                                    \
-                switch (rhs->literal.kind) {                                   \
-                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.bool_ op rhs->literal.bool_));        \
-                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.bool_ op rhs->literal.char_));        \
-                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.bool_ op rhs->literal.float_));       \
-                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.bool_ op rhs->literal.signed_int));   \
-                    case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
-                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.bool_ op rhs->literal.unsigned_int)); \
-                    default:                                                   \
-                        UNREACHABLE("unknown variant");                        \
-                }                                                              \
-            case CI_EXPR_LITERAL_KIND_CHAR:                                    \
-                switch (rhs->literal.kind) {                                   \
-                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.char_ op rhs->literal.bool_));        \
-                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.char_ op rhs->literal.char_));        \
-                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.char_ op rhs->literal.float_));       \
-                    case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
-                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.char_ op rhs->literal.signed_int));   \
-                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.char_ op rhs->literal.unsigned_int)); \
-                    default:                                                   \
-                        UNREACHABLE("unknown variant");                        \
-                }                                                              \
-            case CI_EXPR_LITERAL_KIND_FLOAT:                                   \
-                switch (rhs->literal.kind) {                                   \
-                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.float_ op rhs->literal.bool_));       \
-                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.float_ op rhs->literal.char_));       \
-                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.float_ op rhs->literal.float_));      \
-                    case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
-                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.float_ op rhs->literal.signed_int));  \
-                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(CIExprLiteral,                           \
-                                      bool,                                    \
-                                      lhs->literal.float_ op                   \
-                                        rhs->literal.unsigned_int));           \
-                    default:                                                   \
-                        UNREACHABLE("unknown variant");                        \
-                }                                                              \
-            case CI_EXPR_LITERAL_KIND_SIGNED_INT:                              \
-                switch (rhs->literal.kind) {                                   \
-                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.signed_int op rhs->literal.bool_));   \
-                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.signed_int op rhs->literal.char_));   \
-                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.signed_int op rhs->literal.float_));  \
-                    case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
-                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(CIExprLiteral,                           \
-                                      bool,                                    \
-                                      lhs->literal.signed_int op               \
-                                        rhs->literal.signed_int));             \
-                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(CIExprLiteral,                           \
-                                      bool,                                    \
-                                      lhs->literal.signed_int op               \
-                                        rhs->literal.unsigned_int));           \
-                    default:                                                   \
-                        UNREACHABLE("unknown variant");                        \
-                }                                                              \
-            case CI_EXPR_LITERAL_KIND_STRING:                                  \
-                FAILED("this operation is unsure at compile-time");            \
-            case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                            \
-                switch (rhs->literal.kind) {                                   \
-                    case CI_EXPR_LITERAL_KIND_BOOL:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.unsigned_int op rhs->literal.bool_)); \
-                    case CI_EXPR_LITERAL_KIND_CHAR:                            \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(                                         \
-                            CIExprLiteral,                                     \
-                            bool,                                              \
-                            lhs->literal.unsigned_int op rhs->literal.char_)); \
-                    case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(CIExprLiteral,                           \
-                                      bool,                                    \
-                                      lhs->literal.unsigned_int op             \
-                                        rhs->literal.float_));                 \
-                    case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
-                    case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(CIExprLiteral,                           \
-                                      bool,                                    \
-                                      lhs->literal.unsigned_int op             \
-                                        rhs->literal.signed_int));             \
-                    case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
-                        return NEW_VARIANT(                                    \
-                          CIExpr,                                              \
-                          literal,                                             \
-                          NEW_VARIANT(CIExprLiteral,                           \
-                                      bool,                                    \
-                                      lhs->literal.unsigned_int op             \
-                                        rhs->literal.unsigned_int));           \
-                    default:                                                   \
-                        UNREACHABLE("unknown variant");                        \
-                }                                                              \
-        }                                                                      \
-    } else {                                                                   \
-        if (!is_partial) {                                                     \
-            FAILED("these expressions are not resolvable at "                  \
-                   "compile-time");                                            \
-        }                                                                      \
-    }                                                                          \
-                                                                               \
-    return NEW_VARIANT(                                                        \
-      CIExpr,                                                                  \
-      binary,                                                                  \
-      NEW(CIExprBinary, binary_kind, ref__CIExpr(lhs), ref__CIExpr(rhs)));
-
-CIExpr *
-resolve_eq_expr__CIParser(CIParser *self,
-                          CIExpr *lhs,
-                          CIExpr *rhs,
-                          bool is_partial)
-{
-    RESOLVE_BASIC_BINARY_COMPARISON_EXPR(==, CI_EXPR_BINARY_KIND_EQ);
-}
-
-CIExpr *
-resolve_ne_expr__CIParser(CIParser *self,
-                          CIExpr *lhs,
-                          CIExpr *rhs,
-                          bool is_partial)
-{
-    RESOLVE_BASIC_BINARY_COMPARISON_EXPR(!=, CI_EXPR_BINARY_KIND_NE);
-}
-
-CIExpr *
-resolve_lt_expr__CIParser(CIParser *self,
-                          CIExpr *lhs,
-                          CIExpr *rhs,
-                          bool is_partial)
-{
-    RESOLVE_BASIC_BINARY_COMPARISON_EXPR(<, CI_EXPR_BINARY_KIND_LESS);
-}
-
-CIExpr *
-resolve_le_expr__CIParser(CIParser *self,
-                          CIExpr *lhs,
-                          CIExpr *rhs,
-                          bool is_partial)
-{
-    RESOLVE_BASIC_BINARY_COMPARISON_EXPR(<=, CI_EXPR_BINARY_KIND_LESS_EQ);
-}
-
-CIExpr *
-resolve_gt_expr__CIParser(CIParser *self,
-                          CIExpr *lhs,
-                          CIExpr *rhs,
-                          bool is_partial)
-{
-    RESOLVE_BASIC_BINARY_COMPARISON_EXPR(>, CI_EXPR_BINARY_KIND_GREATER);
-}
-
-CIExpr *
-resolve_ge_expr__CIParser(CIParser *self,
-                          CIExpr *lhs,
-                          CIExpr *rhs,
-                          bool is_partial)
-{
-    RESOLVE_BASIC_BINARY_COMPARISON_EXPR(>=, CI_EXPR_BINARY_KIND_GREATER_EQ);
-}
-
-#define RESOLVE_BASIC_ARITHMETIC_UNARY_EXPR(op, unary_kind)                    \
-    ASSERT(rhs);                                                               \
-                                                                               \
-    if (rhs->kind == CI_EXPR_KIND_LITERAL) {                                   \
-        switch (rhs->literal.kind) {                                           \
-            case CI_EXPR_LITERAL_KIND_BOOL:                                    \
-                return NEW_VARIANT(CIExpr,                                     \
-                                   literal,                                    \
-                                   NEW_VARIANT(CIExprLiteral,                  \
-                                               signed_int,                     \
-                                               op(Isize) rhs->literal.bool_)); \
-            case CI_EXPR_LITERAL_KIND_CHAR:                                    \
-                return NEW_VARIANT(                                            \
-                  CIExpr,                                                      \
-                  literal,                                                     \
-                  NEW_VARIANT(CIExprLiteral, char, op rhs->literal.char_));    \
-            case CI_EXPR_LITERAL_KIND_FLOAT:                                   \
-                if (unary_kind == CI_EXPR_UNARY_KIND_BIT_NOT) {                \
-                    FAILED("~ operation is not expected for float");           \
-                }                                                              \
-                                                                               \
-                return NEW_VARIANT(                                            \
-                  CIExpr,                                                      \
-                  literal,                                                     \
-                  NEW_VARIANT(                                                 \
-                    CIExprLiteral, float, op(Isize) rhs->literal.float_));     \
-            case CI_EXPR_LITERAL_KIND_SIGNED_INT:                              \
-                return NEW_VARIANT(CIExpr,                                     \
-                                   literal,                                    \
-                                   NEW_VARIANT(CIExprLiteral,                  \
-                                               signed_int,                     \
-                                               op rhs->literal.signed_int));   \
-            case CI_EXPR_LITERAL_KIND_STRING:                                  \
-                FAILED("this kind of operation is not expected for string");   \
-            case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                            \
-                return NEW_VARIANT(CIExpr,                                     \
-                                   literal,                                    \
-                                   NEW_VARIANT(CIExprLiteral,                  \
-                                               unsigned_int,                   \
-                                               op rhs->literal.unsigned_int)); \
-            default:                                                           \
-                UNREACHABLE("unknown variant");                                \
-        }                                                                      \
-    }                                                                          \
-    return NEW_VARIANT(                                                        \
-      CIExpr, unary, NEW(CIExprUnary, unary_kind, ref__CIExpr(rhs)));
-
-CIExpr *
-resolve_pre_increment_expr__CIParser(CIParser *self,
-                                     CIExpr *rhs,
-                                     bool is_partial)
-{
-    FAILED("++rhs cannot be resolved at preprocessor-time (compile-time)");
-}
-
-CIExpr *
-resolve_pre_decrement_expr__CIParser(CIParser *self,
-                                     CIExpr *rhs,
-                                     bool is_partial)
-{
-    FAILED("--rhs cannot be resolved at preprocessor-time (compile-time)");
-}
-
-CIExpr *
-resolve_post_increment_expr__CIParser(CIParser *self,
-                                      CIExpr *rhs,
-                                      bool is_partial)
-{
-    FAILED("rhs++ cannot be resolved at preprocessor-time (compile-time)");
-}
-
-CIExpr *
-resolve_post_decrement_expr__CIParser(CIParser *self,
-                                      CIExpr *rhs,
-                                      bool is_partial)
-{
-    FAILED("rhs-- cannot be resolved at preprocessor-time (compile-time)");
-}
-
-CIExpr *
-resolve_positive_expr__CIParser(CIParser *self, CIExpr *rhs, bool is_partial)
-{
-    RESOLVE_BASIC_ARITHMETIC_UNARY_EXPR(+, CI_EXPR_UNARY_KIND_POSITIVE);
-}
-
-CIExpr *
-resolve_negative_expr__CIParser(CIParser *self, CIExpr *rhs, bool is_partial)
-{
-    RESOLVE_BASIC_ARITHMETIC_UNARY_EXPR(-, CI_EXPR_UNARY_KIND_NEGATIVE);
-}
-
-CIExpr *
-resolve_bit_not_expr__CIParser(CIParser *self, CIExpr *rhs, bool is_partial)
-{
-    RESOLVE_BASIC_ARITHMETIC_UNARY_EXPR(~, CI_EXPR_UNARY_KIND_BIT_NOT);
-}
-
-CIExpr *
-resolve_not_expr__CIParser(CIParser *self, CIExpr *rhs, bool is_partial)
-{
-    ASSERT(rhs);
-
-    switch (rhs->kind) {
-        case CI_EXPR_KIND_LITERAL:
-            switch (rhs->literal.kind) {
-                case CI_EXPR_LITERAL_KIND_BOOL:
-                    return NEW_VARIANT(
-                      CIExpr,
-                      literal,
-                      NEW_VARIANT(CIExprLiteral, bool, !rhs->literal.bool_));
-                case CI_EXPR_LITERAL_KIND_CHAR:
-                    return NEW_VARIANT(
-                      CIExpr,
-                      literal,
-                      NEW_VARIANT(CIExprLiteral, char, !rhs->literal.char_));
-                case CI_EXPR_LITERAL_KIND_FLOAT:
-                    return NEW_VARIANT(
-                      CIExpr,
-                      literal,
-                      NEW_VARIANT(CIExprLiteral, float, !rhs->literal.float_));
-                case CI_EXPR_LITERAL_KIND_SIGNED_INT:
-                    return NEW_VARIANT(CIExpr,
-                                       literal,
-                                       NEW_VARIANT(CIExprLiteral,
-                                                   signed_int,
-                                                   !rhs->literal.signed_int));
-                case CI_EXPR_LITERAL_KIND_STRING:
-                    goto default_expr_case;
-                case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:
-                    return NEW_VARIANT(CIExpr,
-                                       literal,
-                                       NEW_VARIANT(CIExprLiteral,
-                                                   unsigned_int,
-                                                   !rhs->literal.unsigned_int));
-                default:
-                    UNREACHABLE(
-                      "this kind of literal is not expected with `!`");
-            }
-        default:
-        default_expr_case:
-            if (!is_partial) {
-                FAILED("this expression are not resolvable at compile-time");
-            }
-    }
-
-    return NEW_VARIANT(
-      CIExpr,
-      unary,
-      NEW(CIExprUnary, CI_EXPR_UNARY_KIND_NOT, ref__CIExpr(rhs)));
-}
-
-CIExpr *
-resolve_dereference__CIParser(CIParser *self, CIExpr *rhs, bool is_partial)
-{
-    // The referencing operator doesn't seem to be resolvable at the moment.
-    return NEW_VARIANT(
-      CIExpr,
-      unary,
-      NEW(CIExprUnary, CI_EXPR_UNARY_KIND_DEREFERENCE, ref__CIExpr(rhs)));
-}
-
-CIExpr *
-resolve_ref__CIParser(CIParser *self, CIExpr *rhs, bool is_partial)
-{
-    FAILED("&rhs cannot be resolved at preprocessor-time (compile-time)");
-}
-
-CIExpr *
-resolve_unary_expr__CIParser(CIParser *self, CIExpr *expr, bool is_partial)
-{
-    CIExpr *rhs = resolve_expr__CIParser(self, expr->unary.expr, is_partial);
-    CIExpr *res = NULL;
-
-    switch (expr->unary.kind) {
-        case CI_EXPR_UNARY_KIND_PRE_INCREMENT:
-            res = resolve_pre_increment_expr__CIParser(self, rhs, is_partial);
-
-            break;
-        case CI_EXPR_UNARY_KIND_PRE_DECREMENT:
-            res = resolve_pre_decrement_expr__CIParser(self, rhs, is_partial);
-
-            break;
-        case CI_EXPR_UNARY_KIND_POST_INCREMENT:
-            res = resolve_post_increment_expr__CIParser(self, rhs, is_partial);
-
-            break;
-        case CI_EXPR_UNARY_KIND_POST_DECREMENT:
-            res = resolve_post_decrement_expr__CIParser(self, rhs, is_partial);
-
-            break;
-        case CI_EXPR_UNARY_KIND_POSITIVE:
-            res = resolve_positive_expr__CIParser(self, rhs, is_partial);
-
-            break;
-        case CI_EXPR_UNARY_KIND_NEGATIVE:
-            res = resolve_negative_expr__CIParser(self, rhs, is_partial);
-
-            break;
-        case CI_EXPR_UNARY_KIND_BIT_NOT:
-            res = resolve_bit_not_expr__CIParser(self, rhs, is_partial);
-
-            break;
-        case CI_EXPR_UNARY_KIND_NOT:
-            res = resolve_not_expr__CIParser(self, rhs, is_partial);
-
-            break;
-        case CI_EXPR_UNARY_KIND_DEREFERENCE:
-            res = resolve_dereference__CIParser(self, rhs, is_partial);
-
-            break;
-        case CI_EXPR_UNARY_KIND_REF:
-            res = resolve_ref__CIParser(self, rhs, is_partial);
-
-            break;
-        default:
-            UNREACHABLE("unknown variant");
-    }
-
-    FREE(CIExpr, rhs);
-
-    return res;
-}
-
-Usize
-calculate_enum_size__CIParser(CIParser *self, CIDecl *enum_decl)
-{
-    return enum_decl->enum_.data_type ? resolve_data_type_size__CIParser(
-                                          self, enum_decl->enum_.data_type)
-                                      : sizeof(int);
-}
-
-struct DataTypeInfoSize
-resolve_enum_size__CIParser(CIParser *self, const String *enum_name)
-{
-    CIDecl *decl = search_enum__CIParser(self, enum_name);
-    Usize enum_size = 0;
-
-    if (decl) {
-        enum_size = get_size__CIDecl(decl);
-
-        if (enum_size == 0) {
-            enum_size = calculate_enum_size__CIParser(self, decl);
-
-            fill_size__CIDecl(decl, enum_size);
-        }
-    }
-
-    return (struct DataTypeInfoSize){ .size = enum_size,
-                                      .is_incomplete = decl };
-}
-
-Usize
-calculate_struct_size__CIParser(CIParser *self, const Vec *fields)
-{
-    ASSERT(!has_generic__CIDeclStructField(fields));
-
-    Usize total_size = 0;
-    Usize max_alignment = 0;
-
-    for (Usize i = 0; i < fields->len; ++i) {
-        const CIDeclStructField *field = get__Vec(fields, i);
-        Usize field_alignment =
-          resolve_data_type_alignment__CIParser(self, field->data_type);
-
-        // NOTE: We skip this case, as it means that the alignment could not be
-        // resolved.
-        if (field_alignment == 0) {
-            continue;
-        }
-
-        if (max_alignment < field_alignment) {
-            max_alignment = field_alignment;
-        }
-
-        if (total_size % field_alignment != 0) {
-            total_size += field_alignment - (total_size % field_alignment);
-        }
-
-        total_size += resolve_data_type_size__CIParser(self, field->data_type);
-    }
-
-    if (total_size % max_alignment != 0) {
-        total_size += max_alignment - (total_size % max_alignment);
-    }
-
-    return total_size;
-}
-
-struct DataTypeInfoSize
-resolve_struct_size__CIParser(CIParser *self,
-                              const CIDataType *struct_data_type)
-{
-    Vec *struct_fields = struct_data_type->struct_.fields;
-    CIDecl *decl =
-      !struct_fields
-        ? search_struct__CIParser(self,
-                                  struct_data_type->struct_.name,
-                                  struct_data_type->struct_.generic_params)
-        : NULL;
-    Usize struct_size = 0;
-
-    if (decl) {
-        struct_size = get_size__CIDecl(decl);
-        struct_fields =
-          struct_size == 0 ? (Vec *)get_fields__CIDecl(decl) : NULL;
-    }
-
-    if (struct_fields) {
-        struct_size = calculate_struct_size__CIParser(self, struct_fields);
-
-        fill_size__CIDecl(decl, struct_size);
-    }
-
-    return (struct DataTypeInfoSize){ .size = struct_size,
-                                      .is_incomplete = decl || struct_fields };
-}
-
-Usize
-calculate_union_size__CIParser(CIParser *self, const Vec *fields)
-{
-    Usize max_size = 0;
-
-    for (Usize i = 0; i < fields->len; ++i) {
-        const CIDeclStructField *field = get__Vec(fields, i);
-        Usize field_size =
-          resolve_data_type_size__CIParser(self, field->data_type);
-
-        if (field_size > max_size) {
-            max_size = field_size;
-        }
-    }
-
-    return max_size;
-}
-
-struct DataTypeInfoSize
-resolve_union_size__CIParser(CIParser *self, const CIDataType *union_data_type)
-{
-    Vec *union_fields = union_data_type->union_.fields;
-    CIDecl *decl =
-      !union_fields
-        ? search_union__CIParser(self,
-                                 union_data_type->union_.name,
-                                 union_data_type->union_.generic_params)
-        : NULL;
-    Usize union_size = 0;
-
-    if (decl) {
-        union_size = get_size__CIDecl(decl);
-        union_fields = union_size == 0 ? (Vec *)get_fields__CIDecl(decl) : NULL;
-    }
-
-    if (union_fields) {
-        union_size = calculate_union_size__CIParser(self, union_fields);
-
-        fill_size__CIDecl(decl, union_size);
-    }
-
-    return (struct DataTypeInfoSize){ .size = union_size,
-                                      .is_incomplete = decl || union_fields };
-}
-
-Usize
-resolve_data_type_size__CIParser(CIParser *self, const CIDataType *data_type)
-{
-    // NOTE: This part of the code is clearly not adapted to have a transpiler
-    // option for any architecture or OS.
-    switch (data_type->kind) {
-        case CI_DATA_TYPE_KIND_ANY:
-            FAILED("cannot resolve size of any data type");
-        case CI_DATA_TYPE_KIND_ARRAY:
-            ASSERT(data_type->array.kind == CI_DATA_TYPE_ARRAY_KIND_SIZED);
-
-            return resolve_data_type_size__CIParser(
-                     self, data_type->array.data_type) *
-                   data_type->array.size;
-        case CI_DATA_TYPE_KIND_BOOL:
-            return sizeof(bool);
-        case CI_DATA_TYPE_KIND_BUILTIN: {
-            const CIBuiltin *builtin = get_ref__CIBuiltin();
-            const CIBuiltinType *builtin_type =
-              get_builtin_type__CIBuiltin(builtin, data_type->builtin);
-
-            ASSERT(builtin_type);
-
-            return builtin_type->size;
-        }
-        case CI_DATA_TYPE_KIND_CHAR:
-            return sizeof(char);
-        case CI_DATA_TYPE_KIND_DOUBLE:
-            return sizeof(double);
-        case CI_DATA_TYPE_KIND_DOUBLE__COMPLEX:
-            return sizeof(double _Complex);
-        case CI_DATA_TYPE_KIND_DOUBLE__IMAGINARY:
-            TODO("get double imaginary size");
-        case CI_DATA_TYPE_KIND__DECIMAL32:
-            return sizeof(int32_t);
-        case CI_DATA_TYPE_KIND__DECIMAL64:
-            return sizeof(int64_t);
-        case CI_DATA_TYPE_KIND__DECIMAL128:
-            return sizeof(__int128);
-        case CI_DATA_TYPE_KIND_ENUM: {
-            ASSERT(data_type->enum_);
-
-            struct DataTypeInfoSize enum_size_info =
-              resolve_enum_size__CIParser(self, data_type->enum_);
-
-            if (enum_size_info.is_incomplete) {
-                FAILED("enum type is incomplete");
-            }
-
-            return enum_size_info.size;
-        }
-        case CI_DATA_TYPE_KIND_FLOAT:
-            return sizeof(float);
-        case CI_DATA_TYPE_KIND_FLOAT__COMPLEX:
-            return sizeof(float _Complex);
-        case CI_DATA_TYPE_KIND_FLOAT__IMAGINARY:
-            TODO("get float imaginary size");
-        case CI_DATA_TYPE_KIND_FUNCTION:
-            // NOTE: sizeof(int(int)) == sizeof(int(int, int, int)) ==
-            // sizeof(int(int, int, ...)) A function passed by value, will
-            // always have the same size.
-            return sizeof(int(int));
-        case CI_DATA_TYPE_KIND_GENERIC:
-            return 0; // At this point, we have no idea about the size of this
-                      // type.
-        case CI_DATA_TYPE_KIND_INT:
-            return sizeof(int);
-        case CI_DATA_TYPE_KIND_LONG_DOUBLE:
-            return sizeof(long double);
-        case CI_DATA_TYPE_KIND_LONG_DOUBLE__COMPLEX:
-            return sizeof(long double _Complex);
-        case CI_DATA_TYPE_KIND_LONG_DOUBLE__IMAGINARY:
-            TODO("get long double imaginary size");
-        case CI_DATA_TYPE_KIND_LONG_INT:
-            return sizeof(long int);
-        case CI_DATA_TYPE_KIND_LONG_LONG_INT:
-            return sizeof(long long int);
-        case CI_DATA_TYPE_KIND_PTR:
-            return sizeof(void *);
-        case CI_DATA_TYPE_KIND_SHORT_INT:
-            return sizeof(short int);
-        case CI_DATA_TYPE_KIND_SIGNED_CHAR:
-            return sizeof(signed char);
-        case CI_DATA_TYPE_KIND_STRUCT: {
-            struct DataTypeInfoSize struct_size_info =
-              resolve_struct_size__CIParser(self, data_type);
-
-            if (struct_size_info.is_incomplete) {
-                FAILED("struct type is incomplete");
-            }
-
-            return struct_size_info.size;
-        }
-        case CI_DATA_TYPE_KIND_TYPEDEF: {
-            const CIDecl *decl =
-              search_typedef__CIParser(self,
-                                       data_type->typedef_.name,
-                                       data_type->typedef_.generic_params);
-
-            if (decl) {
-                return resolve_data_type_size__CIParser(
-                  self, get_typedef_data_type__CIDecl(decl));
-            }
-
-            FAILED("typedef type is incomplete");
-        }
-        case CI_DATA_TYPE_KIND_TYPE_INFO:
-            FAILED("cannot resolve size of type info data type");
-        case CI_DATA_TYPE_KIND_UNSIGNED_INT:
-            return sizeof(unsigned int);
-        case CI_DATA_TYPE_KIND_UNSIGNED_CHAR:
-            return sizeof(unsigned char);
-        case CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT:
-            return sizeof(unsigned long int);
-        case CI_DATA_TYPE_KIND_UNSIGNED_LONG_LONG_INT:
-            return sizeof(unsigned long long int);
-        case CI_DATA_TYPE_KIND_UNSIGNED_SHORT_INT:
-            return sizeof(unsigned short int);
-        case CI_DATA_TYPE_KIND_UNION: {
-            struct DataTypeInfoSize union_size_info =
-              resolve_union_size__CIParser(self, data_type);
-
-            if (union_size_info.is_incomplete) {
-                FAILED("union type is incomplete");
-            }
-
-            return union_size_info.size;
-        }
-        case CI_DATA_TYPE_KIND_VOID:
-            return sizeof(void);
-        default:
-            UNREACHABLE("unknown variant");
-    }
-}
-
-CIExpr *
-resolve_sizeof_expr__CIParser(CIParser *self, const CIExpr *expr)
-{
-    ASSERT(expr->kind == CI_EXPR_KIND_SIZEOF);
-
-    switch (expr->kind) {
-        case CI_EXPR_KIND_DATA_TYPE:
-            return NEW_VARIANT(CIExpr,
-                               literal,
-                               NEW_VARIANT(CIExprLiteral,
-                                           unsigned_int,
-                                           resolve_data_type_size__CIParser(
-                                             self, expr->sizeof_->data_type)));
-        default: {
-            ASSERT(current_scope);
-
-            // NOTE: This function is used only to resolve expression in
-            // preprocessor, so in this situation it's impossible to have
-            // generic cases.
-            CIDataType *expr_data_type = infer_expr_data_type__CIParser(
-              self, expr, current_scope->scope_id, NULL, NULL);
-            CIExpr *res =
-              NEW_VARIANT(CIExpr,
-                          literal,
-                          NEW_VARIANT(CIExprLiteral,
-                                      unsigned_int,
-                                      resolve_data_type_size__CIParser(
-                                        self, expr_data_type)));
-
-            FREE(CIDataType, expr_data_type);
-
-            return res;
-        }
-    }
-}
-
-Usize
-calculate_enum_alignment__CIParser(CIParser *self, CIDecl *enum_decl)
-{
-    return enum_decl->enum_.data_type ? resolve_data_type_alignment__CIParser(
-                                          self, enum_decl->enum_.data_type)
-                                      : alignof(int);
-}
-
-struct DataTypeInfoAlignment
-resolve_enum_alignment__CIParser(CIParser *self, const String *enum_name)
-{
-    CIDecl *decl = search_enum__CIParser(self, enum_name);
-    Usize enum_alignment = 0;
-
-    if (decl) {
-        enum_alignment = get_alignment__CIDecl(decl);
-
-        if (enum_alignment == 0) {
-            enum_alignment = calculate_enum_alignment__CIParser(self, decl);
-
-            fill_alignment__CIDecl(decl, enum_alignment);
-        }
-    }
-
-    return (struct DataTypeInfoAlignment){ .alignment = enum_alignment,
-                                           .is_incomplete = decl };
-}
-
-Usize
-calculate_struct_or_union_alignment__CIParser(CIParser *self, const Vec *fields)
-{
-    Usize max_alignment = 0;
-
-    for (Usize i = 0; i < fields->len; ++i) {
-        const CIDeclStructField *field = get__Vec(fields, i);
-        Usize field_alignment =
-          resolve_data_type_alignment__CIParser(self, field->data_type);
-
-        if (field_alignment > max_alignment) {
-            max_alignment = field_alignment;
-        }
-    }
-
-    return max_alignment;
-}
-
-struct DataTypeInfoAlignment
-resolve_struct_or_union_alignment__CIParser(
-  CIParser *self,
-  const CIDataType *data_type,
-  CIDecl *(*search)(const CIParser *self,
-                    const String *name,
-                    CIGenericParams *called_generic_params))
-{
-    Vec *fields = data_type->struct_.fields;
-    CIDecl *decl = !fields ? search(self,
-                                    data_type->struct_.name,
-                                    data_type->struct_.generic_params)
-                           : NULL;
-    Usize alignment = 0;
-
-    if (decl) {
-        alignment = get_alignment__CIDecl(decl);
-        fields = alignment == 0 ? (Vec *)get_fields__CIDecl(decl) : NULL;
-    }
-
-    if (fields) {
-        alignment = calculate_struct_or_union_alignment__CIParser(self, fields);
-
-        fill_alignment__CIDecl(decl, alignment);
-    }
-
-    return (struct DataTypeInfoAlignment){ .alignment = alignment,
-                                           .is_incomplete = decl || fields };
-}
-
-struct DataTypeInfoAlignment
-resolve_struct_alignment__CIParser(CIParser *self,
-                                   const CIDataType *struct_data_type)
-{
-    return resolve_struct_or_union_alignment__CIParser(
-      self, struct_data_type, &search_struct__CIParser);
-}
-
-struct DataTypeInfoAlignment
-resolve_union_alignment__CIParser(CIParser *self,
-                                  const CIDataType *union_data_type)
-{
-    return resolve_struct_or_union_alignment__CIParser(
-      self, union_data_type, &search_union__CIParser);
-}
-
-Usize
-resolve_data_type_alignment__CIParser(CIParser *self,
-                                      const CIDataType *data_type)
-{
-    // NOTE: This part of the code is clearly not adapted to have a transpiler
-    // option for any architecture or OS.
-    switch (data_type->kind) {
-        case CI_DATA_TYPE_KIND_ANY:
-            UNREACHABLE("cannot resolve the size of any data type");
-        case CI_DATA_TYPE_KIND_ARRAY:
-            ASSERT(data_type->array.kind == CI_DATA_TYPE_ARRAY_KIND_SIZED);
-
-            return resolve_data_type_alignment__CIParser(
-                     self, data_type->array.data_type) *
-                   data_type->array.size;
-        case CI_DATA_TYPE_KIND_BOOL:
-            return alignof(bool);
-        case CI_DATA_TYPE_KIND_BUILTIN: {
-            const CIBuiltin *builtin = get_ref__CIBuiltin();
-            const CIBuiltinType *builtin_type =
-              get_builtin_type__CIBuiltin(builtin, data_type->builtin);
-
-            ASSERT(builtin_type);
-
-            return builtin_type->alignment;
-        }
-        case CI_DATA_TYPE_KIND_CHAR:
-            return alignof(char);
-        case CI_DATA_TYPE_KIND_DOUBLE:
-            return alignof(double);
-        case CI_DATA_TYPE_KIND_DOUBLE__COMPLEX:
-            return alignof(double _Complex);
-        case CI_DATA_TYPE_KIND_DOUBLE__IMAGINARY:
-            TODO("get double imaginary alignment");
-        case CI_DATA_TYPE_KIND__DECIMAL32:
-            return alignof(int32_t);
-        case CI_DATA_TYPE_KIND__DECIMAL64:
-            return alignof(int64_t);
-        case CI_DATA_TYPE_KIND__DECIMAL128:
-            return alignof(__int128);
-        case CI_DATA_TYPE_KIND_ENUM: {
-            ASSERT(data_type->enum_);
-
-            struct DataTypeInfoAlignment enum_alignment_info =
-              resolve_enum_alignment__CIParser(self, data_type->enum_);
-
-            if (enum_alignment_info.is_incomplete) {
-                FAILED("enum type is incomplete");
-            }
-
-            return enum_alignment_info.alignment;
-        }
-        case CI_DATA_TYPE_KIND_FLOAT:
-            return alignof(float);
-        case CI_DATA_TYPE_KIND_FLOAT__COMPLEX:
-            return alignof(float _Complex);
-        case CI_DATA_TYPE_KIND_FLOAT__IMAGINARY:
-            TODO("get float imaginary alignment");
-        case CI_DATA_TYPE_KIND_FUNCTION:
-            return alignof(int(int));
-        case CI_DATA_TYPE_KIND_GENERIC:
-            return 0; // At this point, we have no idea about the alignment of
-                      // this
-        case CI_DATA_TYPE_KIND_INT:
-            return alignof(int);
-        case CI_DATA_TYPE_KIND_LONG_DOUBLE:
-            return alignof(long double);
-        case CI_DATA_TYPE_KIND_LONG_DOUBLE__COMPLEX:
-            return alignof(long double _Complex);
-        case CI_DATA_TYPE_KIND_LONG_DOUBLE__IMAGINARY:
-            TODO("get long double imaginary alignment");
-        case CI_DATA_TYPE_KIND_LONG_INT:
-            return alignof(long int);
-        case CI_DATA_TYPE_KIND_LONG_LONG_INT:
-            return alignof(long long int);
-        case CI_DATA_TYPE_KIND_PTR:
-            return alignof(void *);
-        case CI_DATA_TYPE_KIND_SHORT_INT:
-            return alignof(short int);
-        case CI_DATA_TYPE_KIND_SIGNED_CHAR:
-            return alignof(signed char);
-        case CI_DATA_TYPE_KIND_STRUCT: {
-            struct DataTypeInfoAlignment struct_alignment_info =
-              resolve_struct_alignment__CIParser(self, data_type);
-
-            if (struct_alignment_info.is_incomplete) {
-                FAILED("struct type is incomplete");
-            }
-
-            return struct_alignment_info.alignment;
-        }
-        case CI_DATA_TYPE_KIND_TYPEDEF: {
-            CIDecl *decl =
-              search_typedef__CIParser(self,
-                                       data_type->typedef_.name,
-                                       data_type->typedef_.generic_params);
-
-            if (decl) {
-                return resolve_data_type_alignment__CIParser(
-                  self, get_typedef_data_type__CIDecl(decl));
-            }
-
-            FAILED("type of typedef is incomplete");
-        }
-        case CI_DATA_TYPE_KIND_TYPE_INFO:
-            FAILED("cannot resolve the size of type info data type");
-        case CI_DATA_TYPE_KIND_UNSIGNED_INT:
-            return alignof(unsigned int);
-        case CI_DATA_TYPE_KIND_UNSIGNED_CHAR:
-            return alignof(unsigned char);
-        case CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT:
-            return alignof(unsigned long int);
-        case CI_DATA_TYPE_KIND_UNSIGNED_LONG_LONG_INT:
-            return alignof(unsigned long long int);
-        case CI_DATA_TYPE_KIND_UNSIGNED_SHORT_INT:
-            return alignof(unsigned short int);
-        case CI_DATA_TYPE_KIND_UNION: {
-            struct DataTypeInfoAlignment union_alignment_info =
-              resolve_union_alignment__CIParser(self, data_type);
-
-            if (union_alignment_info.is_incomplete) {
-                FAILED("union type is incomplete");
-            }
-
-            return union_alignment_info.alignment;
-        }
-        case CI_DATA_TYPE_KIND_VOID:
-            return alignof(void);
-        default:
-            UNREACHABLE("unknown variant");
-    }
-}
-
-CIExpr *
-resolve_alignof_expr__CIParser(CIParser *self, const CIExpr *expr)
-{
-    ASSERT(expr->kind == CI_EXPR_KIND_ALIGNOF);
-
-    CIDataType *expr_data_type = infer_expr_data_type__CIParser(
-      self, expr->alignof_, current_scope->scope_id, NULL, NULL);
-
-    CIExpr *res = NEW_VARIANT(CIExpr,
-                              literal,
-                              NEW_VARIANT(CIExprLiteral,
-                                          unsigned_int,
-                                          resolve_data_type_alignment__CIParser(
-                                            self, expr->alignof_->data_type)));
-
-    FREE(CIDataType, expr_data_type);
-
-    return res;
-}
-
-CIExpr *
-resolve_expr__CIParser(CIParser *self, CIExpr *expr, bool is_partial)
-{
-    ASSERT(expr);
-
-    switch (expr->kind) {
-        case CI_EXPR_KIND_ALIGNOF:
-            return resolve_alignof_expr__CIParser(self, expr);
-        case CI_EXPR_KIND_ARRAY_ACCESS:
-            TODO("array access");
-        case CI_EXPR_KIND_BINARY: {
-            switch (expr->binary.kind) {
-                case CI_EXPR_BINARY_KIND_ASSIGN:
-                case CI_EXPR_BINARY_KIND_ASSIGN_ADD:
-                case CI_EXPR_BINARY_KIND_ASSIGN_SUB:
-                case CI_EXPR_BINARY_KIND_ASSIGN_MUL:
-                case CI_EXPR_BINARY_KIND_ASSIGN_DIV:
-                case CI_EXPR_BINARY_KIND_ASSIGN_MOD:
-                case CI_EXPR_BINARY_KIND_ASSIGN_BIT_AND:
-                case CI_EXPR_BINARY_KIND_ASSIGN_BIT_OR:
-                case CI_EXPR_BINARY_KIND_ASSIGN_XOR:
-                case CI_EXPR_BINARY_KIND_ASSIGN_BIT_LSHIFT:
-                case CI_EXPR_BINARY_KIND_ASSIGN_BIT_RSHIFT:
-                case CI_EXPR_BINARY_KIND_DOT:
-                case CI_EXPR_BINARY_KIND_ARROW:
-                    if (!is_partial) {
-                        FAILED("cannot resolve assigns binary expression");
-                    }
-
-                    return ref__CIExpr(expr);
-                default:
-                    break;
-            }
-
-            CIExpr *lhs =
-              resolve_expr__CIParser(self, expr->binary.left, is_partial);
-
-            switch (expr->binary.kind) {
-                case CI_EXPR_BINARY_KIND_AND:
-                    if (!check_if_resolved_expr_is_true__CIParser(self, lhs)) {
-                        return lhs;
-                    }
-
-                    break;
-                case CI_EXPR_BINARY_KIND_OR:
-                    if (check_if_resolved_expr_is_true__CIParser(self, lhs)) {
-                        return lhs;
-                    }
-
-                    break;
-                default:
-                    break;
-            }
-
-            CIExpr *rhs =
-              resolve_expr__CIParser(self, expr->binary.right, is_partial);
-            CIExpr *res = NULL;
-
-            switch (expr->binary.kind) {
-                case CI_EXPR_BINARY_KIND_ADD:
-                    res =
-                      resolve_add_expr__CIParser(self, lhs, rhs, is_partial);
-
-                    break;
-                case CI_EXPR_BINARY_KIND_SUB:
-                    res =
-                      resolve_sub_expr__CIParser(self, lhs, rhs, is_partial);
-
-                    break;
-                case CI_EXPR_BINARY_KIND_MUL:
-                    res =
-                      resolve_mul_expr__CIParser(self, lhs, rhs, is_partial);
-
-                    break;
-                case CI_EXPR_BINARY_KIND_DIV:
-                    res =
-                      resolve_div_expr__CIParser(self, lhs, rhs, is_partial);
-
-                    break;
-                case CI_EXPR_BINARY_KIND_MOD:
-                    res =
-                      resolve_mod_expr__CIParser(self, lhs, rhs, is_partial);
-
-                    break;
-                case CI_EXPR_BINARY_KIND_BIT_AND:
-                    res = resolve_bit_and_expr__CIParser(
-                      self, lhs, rhs, is_partial);
-
-                    break;
-                case CI_EXPR_BINARY_KIND_BIT_OR:
-                    res =
-                      resolve_bit_or_expr__CIParser(self, lhs, rhs, is_partial);
-
-                    break;
-                case CI_EXPR_BINARY_KIND_BIT_XOR:
-                    res = resolve_bit_xor_expr__CIParser(
-                      self, lhs, rhs, is_partial);
-
-                    break;
-                case CI_EXPR_BINARY_KIND_BIT_LSHIFT:
-                    res = resolve_bit_lshift_expr__CIParser(
-                      self, lhs, rhs, is_partial);
-
-                    break;
-                case CI_EXPR_BINARY_KIND_BIT_RSHIFT:
-                    res = resolve_bit_rshift_expr__CIParser(
-                      self, lhs, rhs, is_partial);
-
-                    break;
-                case CI_EXPR_BINARY_KIND_AND:
-                    res = resolve_logical_and_expr__CIParser(
-                      self, lhs, rhs, is_partial);
-
-                    break;
-                case CI_EXPR_BINARY_KIND_OR:
-                    res = resolve_logical_or_expr__CIParser(
-                      self, lhs, rhs, is_partial);
-
-                    break;
-                case CI_EXPR_BINARY_KIND_EQ:
-                    res = resolve_eq_expr__CIParser(self, lhs, rhs, is_partial);
-
-                    break;
-                case CI_EXPR_BINARY_KIND_NE:
-                    res = resolve_ne_expr__CIParser(self, lhs, rhs, is_partial);
-
-                    break;
-                case CI_EXPR_BINARY_KIND_LESS:
-                    res = resolve_lt_expr__CIParser(self, lhs, rhs, is_partial);
-
-                    break;
-                case CI_EXPR_BINARY_KIND_LESS_EQ:
-                    res = resolve_le_expr__CIParser(self, lhs, rhs, is_partial);
-
-                    break;
-                case CI_EXPR_BINARY_KIND_GREATER:
-                    res = resolve_gt_expr__CIParser(self, lhs, rhs, is_partial);
-
-                    break;
-                case CI_EXPR_BINARY_KIND_GREATER_EQ:
-                    res = resolve_ge_expr__CIParser(self, lhs, rhs, is_partial);
-
-                    break;
-                default:
-                    UNREACHABLE("unknown binary kind");
-            }
-
-            FREE(CIExpr, lhs);
-            FREE(CIExpr, rhs);
-
-            return res;
-        }
-        case CI_EXPR_KIND_CAST:
-            TODO("resolve cast");
-        case CI_EXPR_KIND_DATA_TYPE:
-            return ref__CIExpr(expr);
-        case CI_EXPR_KIND_GROUPING:
-            return resolve_expr__CIParser(self, expr->grouping, is_partial);
-        case CI_EXPR_KIND_IDENTIFIER:
-            // NOTE: Return 0 by default if the preprocessor encounters an
-            // identifier, since this means that the macro named with this
-            // identifier has not been defined.
-            return NEW_VARIANT(
-              CIExpr, literal, NEW_VARIANT(CIExprLiteral, signed_int, 0));
-        case CI_EXPR_KIND_LITERAL:
-            return ref__CIExpr(expr);
-        case CI_EXPR_KIND_NULLPTR:
-            return ref__CIExpr(expr);
-        case CI_EXPR_KIND_SIZEOF:
-            return resolve_sizeof_expr__CIParser(self, expr);
-        case CI_EXPR_KIND_STRUCT_CALL:
-            TODO("resolve struct");
-        case CI_EXPR_KIND_TERNARY: {
-            CIExpr *resolved_cond =
-              resolve_expr__CIParser(self, expr->ternary.cond, is_partial);
-
-            if (check_if_resolved_expr_is_true__CIParser(self, resolved_cond)) {
-                FREE(CIExpr, resolved_cond);
-
-                return resolve_expr__CIParser(
-                  self, expr->ternary.if_, is_partial);
-            }
-
-            FREE(CIExpr, resolved_cond);
-
-            return resolve_expr__CIParser(
-              self, expr->ternary.else_, is_partial);
-        }
-        case CI_EXPR_KIND_UNARY:
-            return resolve_unary_expr__CIParser(self, expr, is_partial);
-        default:
-            UNREACHABLE("unknown variant");
     }
 }
 
@@ -4633,624 +1983,6 @@ resolve_visit_waiting_list__CIParser(CIParser *self)
 }
 
 void
-next_conditional_preprocessor__CIParser(CIParser *self, CIToken **next_token)
-{
-    CIToken *current = *next_token;
-
-    // Move onto the next conditional preprocessor.
-    while (current->kind != CI_TOKEN_KIND_EOT) {
-        check_standard__CIParser(self, current);
-
-        if (is_conditional_preprocessor__CITokenKind(current->kind) &&
-            current->kind != CI_TOKEN_KIND_PREPROCESSOR_IF &&
-            current->kind != CI_TOKEN_KIND_PREPROCESSOR_IFDEF &&
-            current->kind != CI_TOKEN_KIND_PREPROCESSOR_IFNDEF) {
-            return;
-        }
-
-        *next_token = (*next_token)->next;
-        current = *next_token;
-    }
-}
-
-bool
-check_if_resolved_expr_is_true__CIParser(CIParser *self, CIExpr *expr)
-{
-    ASSERT(expr);
-
-    switch (expr->kind) {
-        case CI_EXPR_KIND_LITERAL:
-            switch (expr->literal.kind) {
-                case CI_EXPR_LITERAL_KIND_BOOL:
-                    return expr->literal.bool_;
-                case CI_EXPR_LITERAL_KIND_CHAR:
-                    return expr->literal.char_;
-                case CI_EXPR_LITERAL_KIND_FLOAT:
-                    return expr->literal.float_;
-                case CI_EXPR_LITERAL_KIND_SIGNED_INT:
-                    return expr->literal.signed_int;
-                case CI_EXPR_LITERAL_KIND_STRING:
-                    return expr->literal.string.value;
-                case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:
-                    return expr->literal.unsigned_int;
-                default:
-                    UNREACHABLE("unknown variant");
-            }
-        default:
-            return false;
-    }
-}
-
-CIToken *
-select_conditional_preprocessor__CIParser(CIParser *self, CIToken *next_token)
-{
-#define PREPROCESSOR_PARSE_EXPR(n)                          \
-    CIParser expr_parser =                                  \
-      from_tokens__CIParser(self->file, preprocessor_cond); \
-                                                            \
-    init__CIParser(&expr_parser);                           \
-                                                            \
-    CIExpr *n = parse_expr__CIParser(&expr_parser);         \
-                                                            \
-    if (!HAS_REACH_EOF(expr_parser.current_token)) {        \
-        FAILED("expected only one expression");             \
-    }                                                       \
-                                                            \
-    free_from_tokens_case__CIParser(&expr_parser);
-
-#define SELECT_IF_CONDITIONAL_PREPROCESSOR(k)                                \
-    {                                                                        \
-        CIToken *preprocessor = next_token;                                  \
-        CITokens *preprocessor_cond = &preprocessor->preprocessor_##k.cond;  \
-                                                                             \
-        PREPROCESSOR_PARSE_EXPR(cond);                                       \
-                                                                             \
-        CIExpr *resolved_cond = resolve_expr__CIParser(self, cond, false);   \
-                                                                             \
-        FREE(CIExpr, cond);                                                  \
-                                                                             \
-        next_token = preprocessor->preprocessor_##k.content.first;           \
-                                                                             \
-        if (check_if_resolved_expr_is_true__CIParser(self, resolved_cond)) { \
-            FREE(CIExpr, resolved_cond);                                     \
-                                                                             \
-            return next_token;                                               \
-        }                                                                    \
-                                                                             \
-        FREE(CIExpr, resolved_cond);                                         \
-                                                                             \
-        if (!HAS_REACH_EOT(next_token)) {                                    \
-            next_conditional_preprocessor__CIParser(self, &next_token);      \
-        }                                                                    \
-                                                                             \
-        return select_conditional_preprocessor__CIParser(self, next_token);  \
-    }
-
-// The `inverse` parameter is used for `#ifndef`, `#elifndef` cases, to
-// invert the condition.
-#define SELECT_IFDEF_CONDITIONAL_PREPROCESSOR(k, reverse)                   \
-    {                                                                       \
-        const CIResultDefine *is_def = get_define__CIResultFile(            \
-          self->file, next_token->preprocessor_##k.identifier);             \
-                                                                            \
-        next_token = next_token->preprocessor_##k.content.first;            \
-                                                                            \
-        if ((is_def && !reverse) || (!is_def && reverse)) {                 \
-            return next_token;                                              \
-        }                                                                   \
-                                                                            \
-        if (!HAS_REACH_EOT(next_token)) {                                   \
-            next_conditional_preprocessor__CIParser(self, &next_token);     \
-        }                                                                   \
-                                                                            \
-        return select_conditional_preprocessor__CIParser(self, next_token); \
-    }
-
-    if (next_token) {
-        switch (next_token->kind) {
-            case CI_TOKEN_KIND_PREPROCESSOR_IF:
-                SELECT_IF_CONDITIONAL_PREPROCESSOR(if);
-            case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
-                SELECT_IFDEF_CONDITIONAL_PREPROCESSOR(ifdef, false);
-            case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:
-                SELECT_IFDEF_CONDITIONAL_PREPROCESSOR(ifndef, true);
-            case CI_TOKEN_KIND_PREPROCESSOR_ELIF:
-                SELECT_IF_CONDITIONAL_PREPROCESSOR(elif);
-            case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:
-                SELECT_IFDEF_CONDITIONAL_PREPROCESSOR(elifdef, false);
-            case CI_TOKEN_KIND_PREPROCESSOR_ELIFNDEF:
-                SELECT_IFDEF_CONDITIONAL_PREPROCESSOR(elifndef, true);
-            case CI_TOKEN_KIND_PREPROCESSOR_ELSE:
-                return next_token->preprocessor_else.content.first;
-            default:
-                return NULL;
-        }
-    }
-
-    return NULL;
-
-#undef PREPROCESSOR_PARSE_EXPR
-#undef SELECT_IF_CONDITIONAL_PREPROCESSOR
-#undef SELECT_IFDEF_CONDITIONAL_PREPROCESSOR
-}
-
-void
-clean_unused_macro_param_in_macro_call__CIParser(CIParser *self,
-                                                 CIToken *current_token,
-                                                 bool is_used)
-{
-    ASSERT(current_token->kind == CI_TOKEN_KIND_MACRO_PARAM ||
-           current_token->kind == CI_TOKEN_KIND_MACRO_PARAM_VARIADIC);
-
-    if (!is_used) {
-        CITokenMacroCallId *macro_call_id =
-          pop__Stack(current_token->kind == CI_TOKEN_KIND_MACRO_PARAM
-                       ? current_token->macro_param.macro_call_ids
-                       : current_token->macro_param_variadic.macro_call_ids);
-
-        FREE(CITokenMacroCallId, macro_call_id);
-    }
-}
-
-void
-parse_target__CIParser(CIParser *self,
-                       CIToken **current_token,
-                       CITokens *content,
-                       enum CITokenKind target,
-                       bool macro_param_is_used)
-{
-#define NEXT(ct) ct = ct->kind != CI_TOKEN_KIND_EOF ? ct->next : ct
-#define PEEK(ct) ct->next
-#define EXPECT(ct, k)               \
-    if (ct->kind != k) {            \
-        FAILED("unexpected token"); \
-    }
-#define CURRENT(ct) ct
-
-    NEXT((*current_token));
-
-loop:
-    add__CITokens(content, CURRENT((*current_token)));
-
-    switch (CURRENT((*current_token))->kind) {
-        case CI_TOKEN_KIND_MACRO_PARAM:
-        case CI_TOKEN_KIND_MACRO_PARAM_VARIADIC:
-            clean_unused_macro_param_in_macro_call__CIParser(
-              self, CURRENT((*current_token)), macro_param_is_used);
-
-            goto loop;
-        case CI_TOKEN_KIND_LPAREN:
-            parse_target__CIParser(self,
-                                   current_token,
-                                   content,
-                                   CI_TOKEN_KIND_LPAREN,
-                                   macro_param_is_used);
-
-            goto loop;
-        case CI_TOKEN_KIND_LBRACE:
-            parse_target__CIParser(self,
-                                   current_token,
-                                   content,
-                                   CI_TOKEN_KIND_LBRACE,
-                                   macro_param_is_used);
-
-            goto loop;
-        case CI_TOKEN_KIND_LHOOK:
-            parse_target__CIParser(self,
-                                   current_token,
-                                   content,
-                                   CI_TOKEN_KIND_LHOOK,
-                                   macro_param_is_used);
-
-            goto loop;
-        case CI_TOKEN_KIND_RPAREN:
-        case CI_TOKEN_KIND_RBRACE:
-        case CI_TOKEN_KIND_RHOOK: {
-            static enum CITokenKind
-              match_target_with_current[CI_TOKEN_KIND_MAX] = {
-                  [CI_TOKEN_KIND_LPAREN] = CI_TOKEN_KIND_RPAREN,
-                  [CI_TOKEN_KIND_LBRACE] = CI_TOKEN_KIND_RBRACE,
-                  [CI_TOKEN_KIND_LHOOK] = CI_TOKEN_KIND_RHOOK
-              };
-
-            if (match_target_with_current[target] ==
-                CURRENT((*current_token))->kind) {
-                NEXT((*current_token));
-
-                return;
-            } else {
-                FAILED("`)`, `}` or `]` is not expected");
-            }
-
-            break;
-        }
-        default:
-            break;
-    }
-
-    NEXT((*current_token));
-
-    goto loop;
-}
-
-void
-parse_tokens_in_macro_call_param__CIParser(CIParser *self,
-                                           CIToken **current_token,
-                                           CITokens *content,
-                                           bool is_variadic,
-                                           bool is_used)
-{
-    // In cases where the macro parameter is not variadic, we want the parser to
-    // stop before the comma or the closing parenthesis. On the other hand, in
-    // cases where the macro parameter is variadic, we want the parser to stop
-    // only before the closing parenthesis.
-    while (
-      (CURRENT((*current_token))->kind != CI_TOKEN_KIND_COMMA || is_variadic) &&
-      CURRENT((*current_token))->kind != CI_TOKEN_KIND_RPAREN &&
-      CURRENT((*current_token))->kind != CI_TOKEN_KIND_EOF) {
-        add__CITokens(content, CURRENT((*current_token)));
-
-        if (CURRENT((*current_token))->kind == CI_TOKEN_KIND_LPAREN ||
-            CURRENT((*current_token))->kind == CI_TOKEN_KIND_LBRACE ||
-            CURRENT((*current_token))->kind == CI_TOKEN_KIND_LHOOK) {
-            parse_target__CIParser(self,
-                                   current_token,
-                                   content,
-                                   CURRENT((*current_token))->kind,
-                                   is_used);
-        } else {
-            switch ((CURRENT(*current_token))->kind) {
-                case CI_TOKEN_KIND_MACRO_PARAM:
-                case CI_TOKEN_KIND_MACRO_PARAM_VARIADIC:
-                    clean_unused_macro_param_in_macro_call__CIParser(
-                      self, CURRENT(*current_token), is_used);
-
-                    break;
-                default:
-                    break;
-            }
-
-            NEXT((*current_token));
-        }
-    }
-}
-
-CIParserMacroCallParam *
-parse_macro_call_param__CIParser(CIParser *self,
-                                 CIToken **current_token,
-                                 bool is_variadic,
-                                 bool is_used)
-{
-    CITokens content = NEW(CITokens);
-
-    parse_tokens_in_macro_call_param__CIParser(
-      self, current_token, &content, is_variadic, is_used);
-
-    ASSERT(insert_after_match__CITokens(
-      &content,
-      content.last,
-      NEW_VARIANT(CIToken,
-                  eot,
-                  default__Location(content.last->location.filename),
-                  NEW_VARIANT(CITokenEot, macro_param))));
-
-    return NEW(CIParserMacroCallParam, content);
-}
-
-void
-parse_macro_call_params__CIParser(CIParser *self,
-                                  CIToken **current_token,
-                                  Isize macro_param_variadic,
-                                  Usize macro_params_length,
-                                  const CIResultDefine *define)
-{
-    NEXT((*current_token)); // skip `(`
-
-    CIParserMacroCall *macro_call = NEW(CIParserMacroCall);
-    Usize macro_param_count = 0;
-
-    while (CURRENT((*current_token))->kind != CI_TOKEN_KIND_RPAREN &&
-           CURRENT((*current_token))->kind != CI_TOKEN_KIND_EOF) {
-        bool is_variadic = macro_param_variadic != -1 &&
-                           macro_param_count >= macro_param_variadic;
-
-        CIParserMacroCallParam *param = parse_macro_call_param__CIParser(
-          self,
-          current_token,
-          is_variadic,
-          is_variadic
-            ? CAST(CITokenPreprocessorDefineParam *,
-                   last__Vec(define->define->params))
-                ->is_used
-            : CAST(CITokenPreprocessorDefineParam *,
-                   get__Vec(define->define->params, macro_param_count))
-                ->is_used);
-
-        if (CURRENT((*current_token))->kind != CI_TOKEN_KIND_RPAREN) {
-            EXPECT((*current_token), CI_TOKEN_KIND_COMMA);
-            NEXT((*current_token));
-        }
-
-        add__CIParserMacroCallParams(&macro_call->params, param);
-
-        ++macro_param_count;
-    }
-
-    EXPECT((*current_token), CI_TOKEN_KIND_RPAREN);
-
-    if (macro_param_count != macro_params_length) {
-        FAILED("The count of the number of macro parameters does not "
-               "correspond to its declaration.");
-    }
-
-    add_macro_call__CIParser(self, macro_call);
-}
-
-void
-push_macro_call_id_to_macro_param__CIParser(CIParser *self,
-                                            CIToken *first,
-                                            CIToken *last,
-                                            Usize macro_call_id)
-{
-    CIToken *current = first;
-
-    while (current && current != last) {
-        switch (current->kind) {
-            case CI_TOKEN_KIND_MACRO_PARAM:
-                push__Stack(current->macro_param.macro_call_ids,
-                            NEW(CITokenMacroCallId, macro_call_id));
-
-                break;
-            case CI_TOKEN_KIND_MACRO_PARAM_VARIADIC:
-                push__Stack(current->macro_param_variadic.macro_call_ids,
-                            NEW(CITokenMacroCallId, macro_call_id));
-
-                break;
-            default:
-                break;
-        }
-
-        current = current->next;
-    }
-}
-
-CIToken *
-jump_in_macro_call__CIParser(CIParser *self, CIToken *next_token)
-{
-    const CIResultDefine *define =
-      get_define__CIResultFile(self->file, next_token->identifier);
-
-    if (define) {
-        Isize macro_param_variadic =
-          get_variadic_param_index__CITokenPreprocessorDefine(define->define);
-        Usize macro_params_length =
-          define->define->params ? define->define->params->len : 0;
-        CIToken *peeked = PEEK(next_token);
-
-        if (peeked) {
-            switch (peeked->kind) {
-                case CI_TOKEN_KIND_LPAREN:
-                    NEXT(next_token); // skip maco identifier
-                    parse_macro_call_params__CIParser(self,
-                                                      &next_token,
-                                                      macro_param_variadic,
-                                                      macro_params_length,
-                                                      define);
-
-                    break;
-                default:
-                    if (macro_params_length != 0) {
-                        FAILED("The count of the number of macro parameters "
-                               "does not "
-                               "correspond to its declaration.");
-                    }
-
-                    // Push empty macro call on the stack.
-                    add_macro_call__CIParser(
-                      self, NEW_VARIANT(CIParserMacroCall, is_empty));
-            }
-        }
-
-        ASSERT(define->define->tokens.last->kind == CI_TOKEN_KIND_EOT);
-        ASSERT(define->define->tokens.last->eot.ctx ==
-               CI_TOKEN_EOT_CONTEXT_MACRO_CALL);
-
-        // NOTE: We add the next token after the macro call,
-        // but it's okay to add it like that, because it's
-        // after a transition token and if the macro call is
-        // called several times the next token after EOT
-        // will be updated.
-        push__Stack(define->define->tokens.last->eot.macro_call, next_token);
-        push_macro_call_id_to_macro_param__CIParser(
-          self,
-          define->define->tokens.first,
-          define->define->tokens.last,
-          self->macros_call->len - 1);
-
-        return define->define->tokens.first;
-    }
-
-    return NULL;
-
-#undef NEXT
-#undef PEEK
-#undef EXPECT
-#undef CURRENT
-}
-
-CIToken *
-jump_in_token_block__CIParser(CIParser *self, CIToken *next_token)
-{
-    ASSERT(next_token);
-
-    switch (next_token->kind) {
-        case CI_TOKEN_KIND_PREPROCESSOR_ENDIF:
-            UNREACHABLE("#endif is not expected at this point");
-        case CI_TOKEN_KIND_PREPROCESSOR_DEFINE: {
-            CIResultDefine *define =
-              NEW(CIResultDefine,
-                  &next_token->preprocessor_define,
-                  NEW(CIFileID, self->file->entity.id, self->file->kind));
-
-            if (add_define__CIResultFile(self->file, define)) {
-                // TODO: check if the both macros are the same or raise an error
-
-                FREE(CIResultDefine, define);
-            }
-
-            break;
-        }
-        // TODO: merge two next cases.
-        case CI_TOKEN_KIND_MACRO_PARAM:
-        case CI_TOKEN_KIND_MACRO_PARAM_VARIADIC: {
-            CITokenMacroCallId *macro_call_id =
-              pop__Stack(next_token->kind == CI_TOKEN_KIND_MACRO_PARAM
-                           ? next_token->macro_param.macro_call_ids
-                           : next_token->macro_param_variadic.macro_call_ids);
-            const CIParserMacroCall *current_macro_call =
-              get_macro_call__CIParser(self, macro_call_id->id);
-
-            switch (next_token->kind) {
-                case CI_TOKEN_KIND_MACRO_PARAM: {
-                    CIParserMacroCallParam *param =
-                      get__CIParserMacroCallParams(&current_macro_call->params,
-                                                   next_token->macro_param.id);
-
-                    FREE(CITokenMacroCallId, macro_call_id);
-
-                    ASSERT(param->content.last->kind == CI_TOKEN_KIND_EOT);
-                    ASSERT(param->content.last->eot.ctx ==
-                           CI_TOKEN_EOT_CONTEXT_MACRO_PARAM);
-
-                    // NOTE: Save the `param->content.last->next`, to able to
-                    // restore after reach EOT.
-                    push__Stack(param->content.last->eot.macro_param,
-                                next_token);
-
-                    return param->content.first;
-                }
-                case CI_TOKEN_KIND_MACRO_PARAM_VARIADIC: {
-                    CIParserMacroCallParam *param =
-                      get_macro_param_variadic__CIParserMacroCallParams(
-                        &current_macro_call->params);
-
-                    FREE(CITokenMacroCallId, macro_call_id);
-
-                    if (param) {
-                        ASSERT(param->content.last->kind == CI_TOKEN_KIND_EOT);
-                        ASSERT(param->content.last->eot.ctx ==
-                               CI_TOKEN_EOT_CONTEXT_MACRO_PARAM);
-
-                        // NOTE: Save the `param->content.last->next`, to able
-                        // to restore after reach EOT.
-                        push__Stack(param->content.last->eot.macro_param,
-                                    next_token);
-
-                        return param->content.first;
-                    }
-
-                    return next_token->next;
-                }
-                default:
-                    UNREACHABLE("unknown variant");
-            }
-        }
-        case CI_TOKEN_KIND_IDENTIFIER:
-            return jump_in_macro_call__CIParser(self, next_token);
-        case CI_TOKEN_KIND_HASHTAG_HASHTAG: {
-            CIToken *pre_id = lhs_merged_id_token;
-
-            ASSERT(pre_id);
-
-            switch (pre_id->kind) {
-                case CI_TOKEN_KIND_IDENTIFIER:
-                    break;
-                default:
-                    FAILED("expected identifier");
-            }
-
-            next_token = next_token->next;
-
-            ASSERT(next_token);
-
-        loop:
-            switch (next_token->kind) {
-                case CI_TOKEN_KIND_IDENTIFIER: {
-                    CIToken *post_id = next_token;
-                    String *merged_id = format__String(
-                      "{S}{S}", pre_id->identifier, post_id->identifier);
-                    Location merged_location =
-                      NEW(Location,
-                          next_token->location.filename,
-                          next_token->location.start_line,
-                          post_id->location.end_line,
-                          next_token->location.start_column,
-                          post_id->location.end_column,
-                          next_token->location.start_position,
-                          post_id->location.end_position);
-                    CIToken *merged_token = NEW_VARIANT(
-                      CIToken, identifier, merged_location, merged_id);
-                    CIToken *eot = NEW_VARIANT(
-                      CIToken,
-                      eot,
-                      default__Location(next_token->location.filename),
-                      NEW(CITokenEot, CI_TOKEN_EOT_CONTEXT_MERGED_ID));
-
-                    merged_token->next = eot;
-                    // NOTE: We save the merged token pointer in EOT,
-                    // because we need to free it after use.
-                    eot->eot.merged_token = merged_token;
-                    eot->next = next_token;
-
-                    return merged_token;
-                }
-                case CI_TOKEN_KIND_LITERAL_CONSTANT_INT:
-                    TODO("merge digit");
-                case CI_TOKEN_KIND_MACRO_PARAM:
-                    next_token =
-                      jump_in_token_block__CIParser(self, next_token);
-
-                    goto loop;
-                default:
-                    FAILED("expected `pre_id`##`post_id`");
-            }
-        }
-        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC__:
-        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_VERSION__:
-        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_HOSTED__: {
-            char *standard_predefined_macro_s[CI_TOKEN_KIND_MAX] = {
-                [CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC__] = "__STDC__",
-                [CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_VERSION__] =
-                  "__STDC_VERSION__",
-                [CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_HOSTED__] =
-                  "__STDC_HOSTED__",
-            };
-
-            const CIResultDefine *def = get_define_from_str__CIResultFile(
-              self->file, standard_predefined_macro_s[next_token->kind]);
-
-            if (def) {
-                add_macro_call__CIParser(self, NEW(CIParserMacroCall));
-
-                def->define->tokens.last->next = next_token->next;
-
-                return def->define->tokens.first;
-            }
-
-            UNREACHABLE("standard predefined macro cannot be undefined");
-        }
-        case CI_TOKEN_KIND_PREPROCESSOR_IF:
-        case CI_TOKEN_KIND_PREPROCESSOR_IFDEF:
-        case CI_TOKEN_KIND_PREPROCESSOR_IFNDEF:
-            return select_conditional_preprocessor__CIParser(self, next_token);
-        default:
-            return NULL;
-    }
-
-    return NULL;
-}
-
-void
 set_current_token__CIParser(CIParser *self, CIToken *next_token)
 {
     self->previous_token =
@@ -5265,43 +1997,27 @@ set_current_token__CIParser(CIParser *self, CIToken *next_token)
 }
 
 void
-init__CIParser(CIParser *self)
+init__CIParser(CIParser *self, const CIResolvedTokens *resolved_tokens)
 {
-    ASSERT(self->tokens->first);
+    ASSERT(resolved_tokens);
+    ASSERT(count__CIResolvedTokens(resolved_tokens) > 0);
 
-    check_standard__CIParser(self, self->tokens->first);
+    CIToken *first_token = get__CIResolvedTokens(resolved_tokens, 0);
 
-    return next_token__CIParser(self);
+    check_standard__CIParser(self, first_token);
+
+    self->resolved_tokens = resolved_tokens;
+    self->current_token = first_token;
+    self->previous_token = self->current_token;
+    self->current_span = from_token__CIParserSpan(self->current_token);
+    self->previous_span = self->current_span;
+    ++self->resolved_tokens_count;
 }
 
 void
 set_current_scope__CIParser(CIParser *self)
 {
     current_scope = self->file->scope_base;
-}
-
-bool
-next_token_must_continue_to_iter__CIParser(CIParser *self, CIToken *next_token)
-{
-    switch (next_token->kind) {
-        case CI_TOKEN_KIND_EOT:
-        case CI_TOKEN_KIND_HASHTAG_HASHTAG:
-        case CI_TOKEN_KIND_MACRO_PARAM:
-        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC__:
-        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_VERSION__:
-        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___STDC_HOSTED__:
-            return true;
-        case CI_TOKEN_KIND_IDENTIFIER:
-            return get_define__CIResultFile(self->file,
-                                            next_token->identifier) ||
-                   next_token->next->kind == CI_TOKEN_KIND_HASHTAG_HASHTAG;
-        default:
-            if (is_preprocessor__CITokenKind(next_token->kind)) {
-                return true;
-            }
-
-            return false;
-    }
 }
 
 void
@@ -5417,134 +2133,30 @@ check_standard__CIParser(CIParser *self, CIToken *token)
 void
 next_token__CIParser(CIParser *self)
 {
-    CIToken *next_token = self->current_token;
+    if (self->resolved_tokens_count <
+        count__CIResolvedTokens(self->resolved_tokens)) {
+        CIToken *next_token = get__CIResolvedTokens(
+          self->resolved_tokens, self->resolved_tokens_count++);
 
-loop:
-    if (next_token) {
+        ASSERT(next_token);
+
         check_standard__CIParser(self, next_token);
-
-        switch (next_token->kind) {
-            case CI_TOKEN_KIND_EOF:
-                return set_current_token__CIParser(self, next_token);
-            case CI_TOKEN_KIND_EOT:
-                switch (next_token->eot.ctx) {
-                    case CI_TOKEN_EOT_CONTEXT_INCLUDE: {
-                        CIToken *preprocessor_include_token =
-                          next_token->eot.include;
-
-                        preprocessor_include_token->next = next_token->next;
-
-                        // Restore EOF.
-                        next_token->kind = CI_TOKEN_KIND_EOF;
-                        next_token->next = NULL;
-
-                        next_token = preprocessor_include_token;
-
-                        break;
-                    }
-                    case CI_TOKEN_EOT_CONTEXT_MACRO_CALL: {
-                        CIParserMacroCall *macro_call =
-                          pop__Vec(self->macros_call);
-
-                        FREE(CIParserMacroCall, macro_call);
-
-                        next_token = pop__Stack(next_token->eot.macro_call);
-
-                        break;
-                    }
-                    case CI_TOKEN_EOT_CONTEXT_MACRO_PARAM: {
-                        // NOTE: Restore the saved token in EOT.
-                        ASSERT(next_token->eot.macro_param);
-
-                        CIToken *eot_token = next_token;
-
-                        next_token = pop__Stack(eot_token->eot.macro_param);
-
-                        break;
-                    }
-                    case CI_TOKEN_EOT_CONTEXT_MERGED_ID: {
-                        CIToken *eot = next_token;
-
-                        next_token = next_token->next;
-
-                        ASSERT(eot->eot.merged_token);
-
-                        FREE(CIToken, eot->eot.merged_token);
-                        FREE(CIToken, eot);
-
-                        break;
-                    }
-                    case CI_TOKEN_EOT_CONTEXT_OTHER:
-                        break;
-                    case CI_TOKEN_EOT_CONTEXT_STRINGIFICATION:
-                        return;
-                    default:
-                        UNREACHABLE("unknown variant");
-                }
-
-                break;
-            default:
-                break;
-        }
+        set_current_token__CIParser(self, next_token);
     }
-
-    next_token = next_token ? next_token->next : self->tokens->first;
-
-check:
-    if (next_token_with_check) {
-        CIToken *original_token = next_token;
-
-        // Resolve preprocessor like #error, #warning, #embed, #include, ...
-        // (not conditional preprocessor).
-        //
-        // If we know that a preprocessor has been solved (when
-        // `resolve_preprocessor__CIParser(self)` == true), we want to move one
-        // token forward again, to skip it.
-        if (resolve_preprocessor__CIParser(self, next_token)) {
-            goto loop;
-        }
-
-        // Jump in token block such as #if, #ifdef, macro call, ...
-        {
-            CIToken *res = jump_in_token_block__CIParser(self, next_token);
-
-            if (res) {
-                next_token = res;
-            }
-        }
-
-        if (next_token_must_continue_to_iter__CIParser(self, next_token)) {
-            if (original_token != next_token &&
-                next_token->kind != CI_TOKEN_KIND_EOF) {
-                check_standard__CIParser(self, next_token);
-
-                goto check;
-            } else if (next_token->next && next_token->next->kind ==
-                                             CI_TOKEN_KIND_HASHTAG_HASHTAG) {
-                lhs_merged_id_token = next_token;
-            }
-
-            goto loop;
-        }
-    }
-
-    set_current_token__CIParser(self, next_token);
 }
 
 CIToken *
 peek_token__CIParser(CIParser *self, Usize n)
 {
-    CIToken *original_previous_token = self->previous_token;
-    CIToken *original_current_token = self->current_token;
-
-    while (n--) {
-        next_token__CIParser(self);
-    }
-
     CIToken *peeked = self->current_token;
+    Usize resolved_tokens_count = self->resolved_tokens_count;
+    Usize resolved_tokens_total_count =
+      count__CIResolvedTokens(self->resolved_tokens);
 
-    self->previous_token = original_previous_token;
-    self->current_token = original_current_token;
+    while (resolved_tokens_count < resolved_tokens_total_count && n--) {
+        peeked =
+          get__CIResolvedTokens(self->resolved_tokens, resolved_tokens_count++);
+    }
 
     return peeked;
 }
@@ -5618,9 +2230,9 @@ token_is_data_type__CIParser(CIParser *self, const CIToken *token)
 {
     switch (token->kind) {
         case CI_TOKEN_KIND_IDENTIFIER:
-            return search_typedef__CIResultFile(self->file,
-                                                token->identifier) ||
-                   is__CIBuiltinType(token->identifier);
+            return search_typedef__CIResultFile(
+                     self->file, GET_PTR_RC(String, token->identifier)) ||
+                   is__CIBuiltinType(GET_PTR_RC(String, token->identifier));
         case CI_TOKEN_KIND_AT: // TODO: check if the next token is an identifier
                                // (not needed for the moment)
         case CI_TOKEN_KIND_KEYWORD_BOOL:
@@ -5715,7 +2327,7 @@ substitute_generic__CIParser(const String *generic_name,
 
         switch (generic_param->kind) {
             case CI_DATA_TYPE_KIND_GENERIC:
-                if (!strcmp(generic_param->generic->buffer,
+                if (!strcmp(GET_PTR_RC(String, generic_param->generic)->buffer,
                             generic_name->buffer)) {
                     id = i;
                     goto exit_loop;
@@ -5868,7 +2480,9 @@ substitute_data_type__CIParser(CIDataType *data_type,
         }
         case CI_DATA_TYPE_KIND_GENERIC: {
             CIDataType *res_generic = substitute_generic__CIParser(
-              data_type->generic, generic_params, called_generic_params);
+              GET_PTR_RC(String, data_type->generic),
+              generic_params,
+              called_generic_params);
 
             if (res_generic) {
                 return ref__CIDataType(res_generic);
@@ -5972,7 +2586,7 @@ substitute_and_generate_from_data_type__CIParser(
             if (subs_data_type->struct_.name) {
                 generate_struct_gen__CIParser(
                   self,
-                  subs_data_type->struct_.name,
+                  GET_PTR_RC(String, subs_data_type->struct_.name),
                   subs_data_type->struct_.generic_params);
             }
 
@@ -5981,7 +2595,7 @@ substitute_and_generate_from_data_type__CIParser(
             if (subs_data_type->union_.name) {
                 generate_union_gen__CIParser(
                   self,
-                  subs_data_type->union_.name,
+                  GET_PTR_RC(String, subs_data_type->union_.name),
                   subs_data_type->union_.generic_params);
             }
 
@@ -5989,7 +2603,7 @@ substitute_and_generate_from_data_type__CIParser(
         case CI_DATA_TYPE_KIND_TYPEDEF:
             generate_typedef_gen__CIParser(
               self,
-              subs_data_type->typedef_.name,
+              GET_PTR_RC(String, subs_data_type->typedef_.name),
               subs_data_type->typedef_.generic_params);
 
             break;
@@ -6111,21 +2725,24 @@ visit_data_type__CIParser(CIParser *self,
             if (data_type->struct_.name) {
                 generate_struct_gen__CIParser(
                   self,
-                  data_type->struct_.name,
+                  GET_PTR_RC(String, data_type->struct_.name),
                   data_type->struct_.generic_params);
             }
 
             break;
         case CI_DATA_TYPE_KIND_TYPEDEF:
             generate_typedef_gen__CIParser(
-              self, data_type->typedef_.name, called_generic_params);
+              self,
+              GET_PTR_RC(String, data_type->typedef_.name),
+              called_generic_params);
 
             break;
         case CI_DATA_TYPE_KIND_UNION:
             if (data_type->union_.name) {
-                generate_union_gen__CIParser(self,
-                                             data_type->union_.name,
-                                             data_type->union_.generic_params);
+                generate_union_gen__CIParser(
+                  self,
+                  GET_PTR_RC(String, data_type->union_.name),
+                  data_type->union_.generic_params);
             }
 
             break;
@@ -6225,7 +2842,9 @@ visit_function_expr_function_call__CIParser(
   CIGenericParams *decl_generic_params)
 {
     generate_function_gen__CIParser(
-      self, function_call->identifier, function_call->generic_params);
+      self,
+      GET_PTR_RC(String, function_call->identifier),
+      function_call->generic_params);
 
     for (Usize i = 0; i < function_call->params->len; ++i) {
         visit_function_expr__CIParser(self,
@@ -6601,7 +3220,7 @@ generate_function_gen__CIParser(CIParser *self,
             add_item_to_visit_waiting_list__CIParser(
               self,
               function_decl->kind,
-              function_decl->function.name,
+              GET_PTR_RC(String, function_decl->function.name),
               called_generic_params);
         } else {
             String *serialized_called_function_name =
@@ -6820,11 +3439,11 @@ parse_data_type_contexts__CIParser(CIParser *self)
                     SIZED_STR_FROM_RAW("stack"),
                     SIZED_STR_FROM_RAW("trace")
                 };
-                int current_ctx =
-                  get_id__Search(self->current_token->identifier,
-                                 ctx_ids_s,
-                                 (const Int32 *)ctx_ids,
-                                 CTX_IDS_LEN);
+                int current_ctx = get_id__Search(
+                  GET_PTR_RC(String, self->current_token->identifier),
+                  ctx_ids_s,
+                  (const Int32 *)ctx_ids,
+                  CTX_IDS_LEN);
 
                 if (current_ctx == -1) {
                     FAILED("expected only !heap, !non_null, !stack or !trace "
@@ -6889,7 +3508,7 @@ exit:
 void
 parse_variable_name_and_data_type__CIParser(CIParser *self,
                                             CIDataType **data_type_ref,
-                                            String **name_ref,
+                                            Rc **name_ref,
                                             bool name_is_required)
 {
 #define PARSE_VARIABLE_NAME(block)                           \
@@ -6950,7 +3569,9 @@ loop:
                 return;
             }
 
-            CIExpr *resolved_expr = resolve_expr__CIParser(self, expr, false);
+            const CIResolverExpr resolver_expr =
+              NEW(CIResolverExpr, self, current_scope, false);
+            CIExpr *resolved_expr = run__CIResolverExpr(&resolver_expr, expr);
 
             Usize size = 0;
 
@@ -7352,16 +3973,17 @@ parse_pre_data_type__CIParser(CIParser *self)
 
     switch (self->previous_token->kind) {
         case CI_TOKEN_KIND_IDENTIFIER: {
-            if (is__CIBuiltinType(self->previous_token->identifier)) {
-                res = NEW_VARIANT(
-                  CIDataType,
-                  builtin,
-                  get_id__CIBuiltinType(self->previous_token->identifier));
+            if (is__CIBuiltinType(
+                  GET_PTR_RC(String, self->previous_token->identifier))) {
+                res = NEW_VARIANT(CIDataType,
+                                  builtin,
+                                  get_id__CIBuiltinType(GET_PTR_RC(
+                                    String, self->previous_token->identifier)));
 
                 break;
             }
 
-            String *name = self->previous_token->identifier;
+            Rc *name = self->previous_token->identifier; // Rc<String*>* (&)
             CIGenericParams *generic_params =
               parse_generic_params__CIParser(self);
 
@@ -7369,12 +3991,13 @@ parse_pre_data_type__CIParser(CIParser *self)
                               typedef,
                               NEW(CIDataTypeTypedef, name, generic_params));
 
-            generate_typedef_gen__CIParser(self, name, generic_params);
+            generate_typedef_gen__CIParser(
+              self, GET_PTR_RC(String, name), generic_params);
 
             break;
         }
         case CI_TOKEN_KIND_AT: {
-            String *generic = NULL;
+            Rc *generic = NULL; // Rc<String*>* (&)
 
             if (expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, true)) {
                 generic = self->previous_token->identifier;
@@ -7392,15 +4015,21 @@ parse_pre_data_type__CIParser(CIParser *self)
 
             break;
         case CI_TOKEN_KIND_KEYWORD_ENUM: {
-            String *name = NULL; // String* (&)
+            Rc *name = NULL; // Rc<String*>*? (&)
 
             // enum <name> ...;
             // enum <name> : ...;
             // enum <name> { ... } ...;
-            if (expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, true)) {
-                name = self->previous_token->identifier;
-            } else {
-                name = generate_name_error__CIParser();
+            // enum { ... } ...;
+            // NOTE: A enum can be anonymous.
+            switch (self->current_token->kind) {
+                case CI_TOKEN_KIND_IDENTIFIER:
+                    name = self->current_token->identifier;
+                    next_token__CIParser(self);
+
+                    break;
+                default:
+                    break;
             }
 
             res = NEW_VARIANT(CIDataType, enum, name);
@@ -7411,17 +4040,8 @@ parse_pre_data_type__CIParser(CIParser *self)
                 case CI_TOKEN_KIND_SEMICOLON: {
                     CIDecl *enum_decl =
                       parse_enum__CIParser(self, storage_class_flag, name);
-                    CIDecl *res = NULL;
 
-                    if ((res = (CIDecl *)add_enum__CIResultFile(self->file,
-                                                                enum_decl))) {
-                        // See `add_enum__CIResultFile` prototype.
-                        if (enum_decl != res) {
-                            FAILED("duplicate enum declaration");
-                        }
-
-                        FREE(CIDecl, enum_decl);
-                    }
+                    add_decl_to_scope__CIParser(self, &enum_decl, true);
 
                     break;
                 }
@@ -7434,7 +4054,7 @@ parse_pre_data_type__CIParser(CIParser *self)
         case CI_TOKEN_KIND_KEYWORD_STRUCT:
         case CI_TOKEN_KIND_KEYWORD_UNION: {
             enum CITokenKind previous_token_kind = self->previous_token->kind;
-            String *name = NULL; // String* (&)
+            Rc *name = NULL; // Rc<String*>*? (&)
 
             // struct <name><generic_params, ...> ...;
             // struct <name><generic_params, ...> { ... } ...;
@@ -7533,12 +4153,12 @@ parse_pre_data_type__CIParser(CIParser *self)
                     switch (previous_token_kind) {
                         case CI_TOKEN_KIND_KEYWORD_STRUCT:
                             generate_struct_gen__CIParser(
-                              self, name, generic_params);
+                              self, GET_PTR_RC(String, name), generic_params);
 
                             break;
                         case CI_TOKEN_KIND_KEYWORD_UNION:
                             generate_union_gen__CIParser(
-                              self, name, generic_params);
+                              self, GET_PTR_RC(String, name), generic_params);
 
                             break;
                         default:
@@ -7623,7 +4243,7 @@ parse_enum_variants__CIParser(CIParser *self)
 
     while (self->current_token->kind != CI_TOKEN_KIND_RBRACE &&
            self->current_token->kind != CI_TOKEN_KIND_EOF) {
-        String *name = NULL; // String* (&)
+        Rc *name = NULL; // Rc<String*>* (&)
 
         if (expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, true)) {
             name = self->previous_token->identifier;
@@ -7658,7 +4278,7 @@ parse_enum_variants__CIParser(CIParser *self)
 }
 
 CIDecl *
-parse_enum__CIParser(CIParser *self, int storage_class_flag, String *name)
+parse_enum__CIParser(CIParser *self, int storage_class_flag, Rc *name)
 {
     ASSERT(self->current_token->kind == CI_TOKEN_KIND_COLON ||
            self->current_token->kind == CI_TOKEN_KIND_LBRACE ||
@@ -7733,7 +4353,7 @@ parse_function_params__CIParser(CIParser *self, CIScope *parent_function_scope)
             }
             default: {
                 CIDataType *data_type = parse_data_type__CIParser(self);
-                String *name = NULL; // String*? (&)
+                Rc *name = NULL; // Rc<String*>*? (&)
 
                 parse_variable_name_and_data_type__CIParser(
                   self, &data_type, &name, false);
@@ -7832,7 +4452,7 @@ parse_generic_params__CIParser(CIParser *self)
 
 CIExpr *
 parse_function_call__CIParser(CIParser *self,
-                              String *identifier,
+                              Rc *identifier,
                               CIGenericParams *generic_params)
 {
     next_token__CIParser(self); // skip `(`
@@ -7854,15 +4474,17 @@ parse_function_call__CIParser(CIParser *self,
 
     expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
 
-    if (is__CIBuiltinFunction(identifier)) {
-        return NEW_VARIANT(CIExpr,
-                           function_call_builtin,
-                           NEW(CIExprFunctionCallBuiltin,
-                               get_id__CIBuiltinFunction(identifier),
-                               params));
+    if (is__CIBuiltinFunction(GET_PTR_RC(String, identifier))) {
+        return NEW_VARIANT(
+          CIExpr,
+          function_call_builtin,
+          NEW(CIExprFunctionCallBuiltin,
+              get_id__CIBuiltinFunction(GET_PTR_RC(String, identifier)),
+              params));
     }
 
-    generate_function_gen__CIParser(self, identifier, generic_params);
+    generate_function_gen__CIParser(
+      self, GET_PTR_RC(String, identifier), generic_params);
 
     return NEW_VARIANT(
       CIExpr,
@@ -7950,8 +4572,7 @@ parse_literal_expr__CIParser(CIParser *self)
               literal,
               NEW_VARIANT(CIExprLiteral,
                           string,
-                          self->previous_token->literal_constant_string,
-                          false));
+                          self->previous_token->literal_constant_string));
         default:
             UNREACHABLE("unexpected token");
     }
@@ -7972,7 +4593,7 @@ parse_struct_call__CIParser(CIParser *self)
             next_token__CIParser(self);
 
             if (expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, true)) {
-                push__Vec(path, self->previous_token->identifier);
+                push__Vec(path, ref__Rc(self->previous_token->identifier));
             }
         }
 
@@ -8021,99 +4642,6 @@ parse_array__CIParser(CIParser *self)
     expect__CIParser(self, CI_TOKEN_KIND_RBRACE, true);
 
     return NEW_VARIANT(CIExpr, array, NEW(CIExprArray, array));
-}
-
-String *
-perform_stringification__CIParser(CIParser *self)
-{
-    DISABLE_NEXT_TOKEN_WITH_CHECK();
-
-    String *res = NEW(String);
-
-    while (
-      self->current_token &&
-      !(self->current_token->kind == CI_TOKEN_KIND_EOT &&
-        self->current_token->eot.ctx == CI_TOKEN_EOT_CONTEXT_STRINGIFICATION)) {
-        String *s = NULL;
-
-        switch (self->current_token->kind) {
-            case CI_TOKEN_KIND_IDENTIFIER:
-                s = clone__String(self->current_token->identifier);
-
-                break;
-            case CI_TOKEN_KIND_LITERAL_CONSTANT_INT:
-                s = format__String(
-                  "{S}{s}",
-                  self->current_token->literal_constant_int.value,
-                  to_string__CITokenLiteralConstantIntSuffix(
-                    self->current_token->literal_constant_int.suffix));
-
-                break;
-            case CI_TOKEN_KIND_LITERAL_CONSTANT_FLOAT:
-                s = format__String(
-                  "{S}{s}",
-                  self->current_token->literal_constant_float.value,
-                  to_string__CITokenLiteralConstantFloatSuffix(
-                    self->current_token->literal_constant_float.suffix));
-
-                break;
-            case CI_TOKEN_KIND_LITERAL_CONSTANT_OCTAL:
-                s = format__String(
-                  "0o{S}{s}",
-                  self->current_token->literal_constant_octal.value,
-                  to_string__CITokenLiteralConstantIntSuffix(
-                    self->current_token->literal_constant_octal.suffix));
-
-                break;
-            case CI_TOKEN_KIND_LITERAL_CONSTANT_HEX:
-                s = format__String(
-                  "0x{S}{s}",
-                  self->current_token->literal_constant_hex.value,
-                  to_string__CITokenLiteralConstantIntSuffix(
-                    self->current_token->literal_constant_hex.suffix));
-
-                break;
-            case CI_TOKEN_KIND_LITERAL_CONSTANT_BIN:
-                s = format__String(
-                  "0b{S}{s}",
-                  self->current_token->literal_constant_hex.value,
-                  to_string__CITokenLiteralConstantIntSuffix(
-                    self->current_token->literal_constant_hex.suffix));
-
-                break;
-            case CI_TOKEN_KIND_LITERAL_CONSTANT_CHARACTER:
-                s = format__String(
-                  "{c}", self->current_token->literal_constant_character);
-
-                break;
-            case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
-                s = format__String(
-                  "\"{S}\"", self->current_token->literal_constant_string);
-
-                break;
-            case CI_TOKEN_KIND_EOT:
-                break;
-            default: {
-                s = to_string__CIToken(self->current_token);
-            }
-        }
-
-        if (s) {
-            APPEND_AND_FREE(res, s);
-            push__String(res, ' ');
-        }
-
-        next_token__CIParser(self);
-    }
-
-    pop__String(res); // Remove the extra space
-
-    self->previous_token = self->current_token;
-    self->current_token = self->current_token->next;
-
-    ENABLE_NEXT_TOKEN_WITH_CHECK();
-
-    return res;
 }
 
 CIExpr *
@@ -8181,17 +4709,6 @@ parse_primary_expr__CIParser(CIParser *self)
 
             break;
         }
-        case CI_TOKEN_KIND_HASHTAG: {
-            res =
-              NEW_VARIANT(CIExpr,
-                          literal,
-                          NEW_VARIANT(CIExprLiteral,
-                                      string,
-                                      perform_stringification__CIParser(self),
-                                      true));
-
-            break;
-        }
         case CI_TOKEN_KIND_KEYWORD_SIZEOF: {
             bool has_open_paren = false;
 
@@ -8221,7 +4738,7 @@ parse_primary_expr__CIParser(CIParser *self)
             return NULL;
         }
         case CI_TOKEN_KIND_IDENTIFIER: {
-            String *identifier = self->previous_token->identifier;
+            Rc *identifier = self->previous_token->identifier;
             CIGenericParams *generic_params =
               parse_generic_params__CIParser(self); // CIGenericParams*?
 
@@ -8329,22 +4846,6 @@ parse_primary_expr__CIParser(CIParser *self)
 
             break;
         }
-        case CI_TOKEN_KIND_MACRO_DEFINED: {
-            const CIResultDefine *is_def = get_define__CIResultFile(
-              self->file, self->previous_token->macro_defined);
-
-            if (is_def) {
-                res = NEW_VARIANT(
-                  CIExpr, literal, NEW_VARIANT(CIExprLiteral, bool, true));
-
-                break;
-            }
-
-            res = NEW_VARIANT(
-              CIExpr, literal, NEW_VARIANT(CIExprLiteral, bool, false));
-
-            break;
-        }
         case CI_TOKEN_KIND_KEYWORD_NULLPTR:
             return NEW(CIExpr, CI_EXPR_KIND_NULLPTR);
         case CI_TOKEN_KIND_BUILTIN_MACRO___HAS_FEATURE: {
@@ -8384,27 +4885,30 @@ parse_primary_expr__CIParser(CIParser *self)
         }
         // NOTE: Standard predefined macro cannot be redefined outside of
         // builtin file.
-        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__:
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__: {
+            Rc *date_rc =
+              NEW(Rc,
+                  clone__String(
+                    self->previous_token->standard_predefined_macro___date__));
+
             res = NEW_VARIANT(
-              CIExpr,
-              literal,
-              NEW_VARIANT(
-                CIExprLiteral,
-                string,
-                self->previous_token->standard_predefined_macro___date__,
-                false));
+              CIExpr, literal, NEW_VARIANT(CIExprLiteral, string, date_rc));
+
+            FREE_RC(String, date_rc);
 
             break;
-        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__:
-            res =
-              NEW_VARIANT(CIExpr,
-                          literal,
-                          NEW_VARIANT(CIExprLiteral,
-                                      string,
-                                      from__String(self->file->file_input.name),
-                                      true));
+        }
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__: {
+            Rc *file_rc = NEW(
+              Rc, from__String(self->file->file_input.name)); // Rc<String*>*
+
+            res = NEW_VARIANT(
+              CIExpr, literal, NEW_VARIANT(CIExprLiteral, string, file_rc));
+
+            FREE_RC(String, file_rc);
 
             break;
+        }
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__:
             res = NEW_VARIANT(CIExpr,
                               literal,
@@ -8413,17 +4917,20 @@ parse_primary_expr__CIParser(CIParser *self)
                                           self->previous_span.line));
 
             break;
-        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__:
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__: {
+            Rc *time_rc =
+              NEW(Rc,
+                  clone__String(
+                    self->previous_token
+                      ->standard_predefined_macro___time__)); // Rc<String*>*
+
             res = NEW_VARIANT(
-              CIExpr,
-              literal,
-              NEW_VARIANT(
-                CIExprLiteral,
-                string,
-                self->previous_token->standard_predefined_macro___time__,
-                false));
+              CIExpr, literal, NEW_VARIANT(CIExprLiteral, string, time_rc));
+
+            FREE_RC(String, time_rc);
 
             break;
+        }
         default:
             FAILED("unexpected token");
     }
@@ -8811,7 +5318,9 @@ infer_expr_access_data_type__CIParser(
                                 CIDataType *field_data_type =
                                   get__CIDeclStructField(
                                     current_fields,
-                                    expr_access->binary.left->identifier);
+                                    GET_PTR_RC(
+                                      String,
+                                      expr_access->binary.left->identifier));
 
                                 if (!field_data_type) {
                                     FAILED("the field doesn't exist");
@@ -8873,7 +5382,7 @@ infer_expr_access_data_type__CIParser(
                 }
 
                 current_infer_dt = get__CIDeclStructField(
-                  current_fields, expr_access->identifier);
+                  current_fields, GET_PTR_RC(String, expr_access->identifier));
 
                 goto exit;
             default:
@@ -8973,14 +5482,14 @@ infer_expr_literal_data_type__CIParser(const CIParser *self,
         case CI_EXPR_LITERAL_KIND_SIGNED_INT:
             return NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
         case CI_EXPR_LITERAL_KIND_STRING: {
-            CIDataType *string_dt =
-              NEW_VARIANT(CIDataType,
-                          array,
-                          NEW_VARIANT(CIDataTypeArray,
-                                      sized,
-                                      NEW(CIDataType, CI_DATA_TYPE_KIND_CHAR),
-                                      NULL,
-                                      literal->string.value->len));
+            CIDataType *string_dt = NEW_VARIANT(
+              CIDataType,
+              array,
+              NEW_VARIANT(CIDataTypeArray,
+                          sized,
+                          NEW(CIDataType, CI_DATA_TYPE_KIND_CHAR),
+                          NULL,
+                          GET_PTR_RC(String, literal->string)->len));
 
             set_context__CIDataType(string_dt, CI_DATA_TYPE_CONTEXT_STACK);
 
@@ -9201,7 +5710,7 @@ infer_expr_data_type__CIParser(const CIParser *self,
             CIDecl *function_decl =
               search_function_in_generic_context__CIParser(
                 self,
-                expr->function_call.identifier,
+                GET_PTR_RC(String, expr->function_call.identifier),
                 expr->function_call.generic_params,
                 called_generic_params,
                 decl_generic_params);
@@ -9236,7 +5745,9 @@ infer_expr_data_type__CIParser(const CIParser *self,
             ASSERT(local_current_scope);
 
             CIDecl *decl = search_identifier__CIResultFile(
-              self->file, local_current_scope, expr->identifier);
+              self->file,
+              local_current_scope,
+              GET_PTR_RC(String, expr->identifier));
 
             if (decl) {
                 switch (decl->kind) {
@@ -9527,7 +6038,7 @@ resolve_generic_data_type__CIParser(
 
     if (has_generic) {
         Isize generic_params_index = find_generic__CIGenericParams(
-          decl_generic_params, data_type->generic);
+          decl_generic_params, GET_PTR_RC(String, data_type->generic));
 
         if (generic_params_index == -1) {
             FAILED("generic params is not found");
@@ -9549,7 +6060,7 @@ resolve_struct_data_type__CIParser(const CIParser *self,
     if (data_type->struct_.name && data_type->struct_.generic_params) {
         CIDecl *struct_decl = search_struct_in_generic_context__CIParser(
           self,
-          data_type->struct_.name,
+          GET_PTR_RC(String, data_type->struct_.name),
           data_type->struct_.generic_params,
           called_generic_params,
           decl_generic_params);
@@ -9561,7 +6072,10 @@ resolve_struct_data_type__CIParser(const CIParser *self,
         return NEW_VARIANT(
           CIDataType,
           struct,
-          NEW(CIDataTypeStruct, struct_decl->struct_gen.name, NULL, NULL));
+          NEW(CIDataTypeStruct,
+              NEW(Rc, clone__String(struct_decl->struct_gen.name)),
+              NULL,
+              NULL));
     }
 
     return ref__CIDataType(data_type);
@@ -9578,7 +6092,7 @@ resolve_typedef_data_type__CIParser(
         case CI_DATA_TYPE_KIND_TYPEDEF: {
             CIDecl *typedef_decl = search_typedef_in_generic_context__CIParser(
               self,
-              data_type->typedef_.name,
+              GET_PTR_RC(String, data_type->typedef_.name),
               data_type->typedef_.generic_params,
               called_generic_params,
               decl_generic_params);
@@ -9614,7 +6128,7 @@ resolve_union_data_type__CIParser(const CIParser *self,
     if (data_type->union_.name && data_type->union_.generic_params) {
         CIDecl *union_decl = search_union_in_generic_context__CIParser(
           self,
-          data_type->union_.name,
+          GET_PTR_RC(String, data_type->union_.name),
           data_type->union_.generic_params,
           called_generic_params,
           decl_generic_params);
@@ -9626,7 +6140,10 @@ resolve_union_data_type__CIParser(const CIParser *self,
         return NEW_VARIANT(
           CIDataType,
           union,
-          NEW(CIDataTypeUnion, union_decl->union_gen.name, NULL, NULL));
+          NEW(CIDataTypeUnion,
+              NEW(Rc, clone__String(union_decl->union_gen.name)),
+              NULL,
+              NULL));
     }
 
     return ref__CIDataType(data_type);
@@ -9763,7 +6280,8 @@ typecheck_union_field__CIParser(const CIParser *self,
         CIDeclStructField *decl_field = get__Vec(decl_fields, i);
 
         if ((called_field->name &&
-             !strcmp(called_field->name->buffer, decl_field->name->buffer)) ||
+             !strcmp(GET_PTR_RC(String, called_field->name)->buffer,
+                     GET_PTR_RC(String, decl_field->name)->buffer)) ||
             !called_field->name) {
             if (perform_typecheck__CIParser(self,
                                             called_field->data_type,
@@ -10244,7 +6762,7 @@ typecheck_function_call_expr__CIParser(const CIParser *self,
 {
     CIDecl *function_decl = search_function_in_generic_context__CIParser(
       self,
-      function_call->identifier,
+      GET_PTR_RC(String, function_call->identifier),
       function_call->generic_params,
       typecheck_ctx->current_generic_params.called,
       typecheck_ctx->current_generic_params.decl);
@@ -10853,7 +7371,7 @@ typecheck_stmt__CIParser(const CIParser *self,
               self, &given_stmt->for_, typecheck_ctx);
         case CI_STMT_KIND_GOTO:
             return typecheck_goto_stmt__CIParser(
-              self, given_stmt->goto_, typecheck_ctx);
+              self, GET_PTR_RC(String, given_stmt->goto_), typecheck_ctx);
         case CI_STMT_KIND_IF:
             return typecheck_if_stmt__CIParser(
               self, &given_stmt->if_, typecheck_ctx);
@@ -10988,7 +7506,7 @@ parse_for_stmt__CIParser(CIParser *self, bool in_switch)
                 if (!is_for_init_clause__CIDeclFunctionItem(init_clause)) {
                     FAILED("expected valid for init-clause");
                 } else if (is_variable__CIDeclFunctionItem(init_clause) &&
-                           self->scanner->config->standard < CI_STANDARD_99) {
+                           self->file->config->standard < CI_STANDARD_99) {
                     FAILED("it is impossible to have a variable declaration in "
                            "an `init clause` before C99");
                 }
@@ -11300,7 +7818,7 @@ parse_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
         case CI_TOKEN_KIND_KEYWORD_FOR:
             return parse_for_stmt__CIParser(self, in_switch);
         case CI_TOKEN_KIND_KEYWORD_GOTO: {
-            String *label_identifier = NULL;
+            Rc *label_identifier = NULL;
 
             if (expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, true)) {
                 label_identifier = self->previous_token->identifier;
@@ -11475,11 +7993,12 @@ CIDecl *
 parse_function__CIParser(CIParser *self,
                          int storage_class_flag,
                          CIDataType *return_data_type,
-                         String *name,
+                         Rc *name,
                          CIGenericParams *generic_params,
                          Vec *attributes)
 {
-    init_function_to_visit_waiting_list__CIParser(self, name);
+    init_function_to_visit_waiting_list__CIParser(self,
+                                                  GET_PTR_RC(String, name));
 
     CIScope *parent_function_scope =
       add_scope__CIResultFile(self->file, current_scope->scope_id, true);
@@ -11511,7 +8030,7 @@ parse_function__CIParser(CIParser *self,
         case CI_TOKEN_KIND_LBRACE:
             if (HAS_TYPEDEF_STORAGE_CLASS_FLAG()) {
                 FAILED("not expected to have a body when typedef is passed");
-            } else if (is__CIBuiltinFunction(name)) {
+            } else if (is__CIBuiltinFunction(GET_PTR_RC(String, name))) {
                 FAILED("cannot redefine a builtin function");
             }
 
@@ -11554,7 +8073,7 @@ parse_fields__CIParser(CIParser *self)
     while (self->current_token->kind != CI_TOKEN_KIND_RBRACE &&
            self->current_token->kind != CI_TOKEN_KIND_EOF) {
         CIDataType *data_type = parse_data_type__CIParser(self);
-        String *name = NULL;
+        Rc *name = NULL;
 
         switch (data_type->kind) {
             case CI_DATA_TYPE_KIND_STRUCT:
@@ -11607,11 +8126,12 @@ parse_struct_or_union_fields__CIParser(CIParser *self)
 CIDecl *
 parse_struct__CIParser(CIParser *self,
                        int storage_class_flag,
-                       String *name,
+                       Rc *name,
                        CIGenericParams *generic_params)
 {
     if (name) {
-        init_struct_to_visit_waiting_list__CIParser(self, name);
+        init_struct_to_visit_waiting_list__CIParser(self,
+                                                    GET_PTR_RC(String, name));
     }
 
     Vec *fields = parse_struct_or_union_fields__CIParser(self);
@@ -11637,15 +8157,21 @@ parse_typedef__CIParser(CIParser *self,
     String *decl_name = get_name__CIDecl(aliased_decl);
     CIDecl *res = NULL;
 
-#define NEW_TYPEDEF(need_ref, dt)                            \
-    NEW_VARIANT(CIDecl,                                      \
-                typedef,                                     \
-                NEW(CIDeclTypedef,                           \
-                    decl_name,                               \
-                    generic_params &&need_ref                \
-                      ? ref__CIGenericParams(generic_params) \
-                      : generic_params,                      \
-                    dt))
+#define NEW_TYPEDEF(need_ref, dt)                                  \
+    ({                                                             \
+        Rc *_decl_name_rc = NEW(Rc, clone__String(decl_name));     \
+        CIDecl *_res =                                             \
+          NEW_VARIANT(CIDecl,                                      \
+                      typedef,                                     \
+                      NEW(CIDeclTypedef,                           \
+                          _decl_name_rc,                           \
+                          generic_params && need_ref               \
+                            ? ref__CIGenericParams(generic_params) \
+                            : generic_params,                      \
+                          dt));                                    \
+        FREE_RC(String, _decl_name_rc);                            \
+        _res;                                                      \
+    })
 
     switch (aliased_decl->kind) {
         case CI_DECL_KIND_VARIABLE:
@@ -11683,11 +8209,12 @@ parse_typedef__CIParser(CIParser *self,
 CIDecl *
 parse_union__CIParser(CIParser *self,
                       int storage_class_flag,
-                      String *name,
+                      Rc *name,
                       CIGenericParams *generic_params)
 {
     if (name) {
-        init_union_to_visit_waiting_list__CIParser(self, name);
+        init_union_to_visit_waiting_list__CIParser(self,
+                                                   GET_PTR_RC(String, name));
     }
 
     Vec *fields = parse_struct_or_union_fields__CIParser(self);
@@ -11746,7 +8273,7 @@ CIDecl *
 parse_variable__CIParser(CIParser *self,
                          int storage_class_flag,
                          CIDataType *data_type,
-                         String *name,
+                         Rc *name,
                          bool no_expr,
                          bool is_local)
 {
@@ -11839,7 +8366,7 @@ parse_variable_list__CIParser(CIParser *self,
 
         CIDataType *post_data_type =
           parse_post_data_type__CIParser(self, clone__CIDataType(data_type));
-        String *name = NULL;
+        Rc *name = NULL; // Rc<String*>*? (&)
 
         parse_variable_name_and_data_type__CIParser(
           self, &post_data_type, &name, true);
@@ -11880,200 +8407,13 @@ parse_variable_list__CIParser(CIParser *self,
              : current_var;
 }
 
-void
-resolve_preprocessor_embed__CIParser(CIParser *self,
-                                     CIToken *preprocessor_embed_token)
-{
-    TODO("resolve #embed preprocessor");
-}
-
-void
-resolve_preprocessor_error__CIParser(CIParser *self,
-                                     CIToken *preprocessor_error_token)
-{
-    emit__Diagnostic(
-      NEW_VARIANT(
-        Diagnostic,
-        simple_ci_error,
-        self->file->scanner.base.source.file,
-        &preprocessor_error_token->location,
-        NEW_VARIANT(CIError,
-                    preprocessor_error,
-                    preprocessor_error_token->preprocessor_error->buffer),
-        NULL,
-        NULL,
-        NULL),
-      self->count_error);
-}
-
-bool
-load_include__CIParser(CIParser *self,
-                       CIToken *preprocessor_include_token,
-                       const String *current_dir,
-                       const String *include_path)
-{
-    // current_dir + '/' + include_path
-    char *full_include_path = format("{S}/{S}", current_dir, include_path);
-
-    if (exists__File(full_include_path)) {
-        CIResultFile *header =
-          add_and_run_header__CIResult(self->file->entity.result,
-                                       self->file,
-                                       full_include_path,
-                                       self->file->entity.result->config);
-
-        // NOTE: The next token is the first token in the header, and the
-        // token following the last token in the header is the current next
-        // token (token after the preprocessor include).
-        //
-        // Before:
-        //
-        // ... -> INCLUDE
-        //
-        // After:
-        //
-        // ... -> INCLUDE -> HEADER_FIRST -> ... -> HEADER_LAST (EOT (old
-        // EOF)) -> INCLUDE
-        header->scanner.tokens.last->kind = CI_TOKEN_KIND_EOT;
-        header->scanner.tokens.last->eot.ctx = CI_TOKEN_EOT_CONTEXT_INCLUDE;
-        header->scanner.tokens.last->eot.include = preprocessor_include_token;
-        header->scanner.tokens.last->next = preprocessor_include_token->next;
-        preprocessor_include_token->next = header->scanner.tokens.first;
-
-        lily_free(full_include_path);
-
-        return true;
-    }
-
-    lily_free(full_include_path);
-
-    return false;
-}
-
-void
-resolve_preprocessor_include__CIParser(CIParser *self,
-                                       CIToken *preprocessor_include_token)
-{
-    const Vec *include_dirs = get_include_dirs__CIInclude();
-
-    for (Usize i = 0; i < include_dirs->len; ++i) {
-        const String *current_dir = get__Vec(include_dirs, i);
-
-        if (load_include__CIParser(
-              self,
-              preprocessor_include_token,
-              current_dir,
-              preprocessor_include_token->preprocessor_include.value)) {
-            return;
-        }
-    }
-
-    String *current_dir =
-      get_dir__File(preprocessor_include_token->location.filename);
-    bool load_include_res = load_include__CIParser(
-      self,
-      preprocessor_include_token,
-      current_dir,
-      preprocessor_include_token->preprocessor_include.value);
-
-    FREE(String, current_dir);
-
-    if (load_include_res) {
-        return;
-    }
-
-    FAILED("the include file is not found");
-}
-
-bool
-resolve_preprocessor_line__CIParser(CIParser *self,
-                                    CIToken *preprocessor_line_token)
-{
-    // NOTE: We cannot resolve the `#line` preprocessor in the case of a
-    // transpiler.
-    return false;
-}
-
-bool
-resolve_preprocessor_pragma__CIParser(CIParser *self,
-                                      CIToken *preprocessor_pragma_token)
-{
-    // NOTE: In the case of a `#pragma`, we can only solve `#pragma once`, but
-    // all other #pragma cases are not really possible to solve in the case of a
-    // transpiler.
-    TODO("resolve #pragma preprocessor");
-}
-
-void
-resolve_preprocessor_undef__CIParser(CIParser *self,
-                                     CIToken *preprocessor_undef_token)
-{
-    undef_define__CIResultFile(self->file,
-                               preprocessor_undef_token->preprocessor_undef);
-}
-
-void
-resolve_preprocessor_warning__CIParser(CIParser *self,
-                                       CIToken *preprocessor_warning_token)
-{
-    emit_warning__Diagnostic(
-      NEW_VARIANT(
-        Diagnostic,
-        simple_ci_warning,
-        self->file->scanner.base.source.file,
-        &preprocessor_warning_token->location,
-        NEW_VARIANT(CIWarning,
-                    preprocessor_warning,
-                    preprocessor_warning_token->preprocessor_warning->buffer),
-        NULL,
-        NULL,
-        NULL),
-      NULL,
-      self->count_warning);
-}
-
-bool
-resolve_preprocessor__CIParser(CIParser *self, CIToken *next_token)
-{
-    switch (next_token->kind) {
-        case CI_TOKEN_KIND_PREPROCESSOR_EMBED:
-            resolve_preprocessor_embed__CIParser(self, next_token);
-
-            break;
-        case CI_TOKEN_KIND_PREPROCESSOR_ERROR:
-            resolve_preprocessor_error__CIParser(self, next_token);
-
-            break;
-        case CI_TOKEN_KIND_PREPROCESSOR_INCLUDE:
-            resolve_preprocessor_include__CIParser(self, next_token);
-
-            break;
-        case CI_TOKEN_KIND_PREPROCESSOR_LINE:
-            return resolve_preprocessor_line__CIParser(self, next_token);
-        case CI_TOKEN_KIND_PREPROCESSOR_PRAGMA:
-            return resolve_preprocessor_pragma__CIParser(self, next_token);
-        case CI_TOKEN_KIND_PREPROCESSOR_UNDEF:
-            resolve_preprocessor_undef__CIParser(self, next_token);
-
-            break;
-        case CI_TOKEN_KIND_PREPROCESSOR_WARNING:
-            resolve_preprocessor_warning__CIParser(self, next_token);
-
-            break;
-        default:
-            return false;
-    }
-
-    return true;
-}
-
 CIDecl *
 parse_label__CIParser(CIParser *self)
 {
     if (in_function_body) {
         switch (self->current_token->kind) {
             case CI_TOKEN_KIND_IDENTIFIER: {
-                String *identifier = self->current_token->identifier;
+                Rc *identifier = self->current_token->identifier;
                 CIToken *peeked_token = peek_token__CIParser(self, 1);
 
                 if (peeked_token && peeked_token->kind == CI_TOKEN_KIND_COLON) {
@@ -12117,7 +8457,7 @@ parse_decl__CIParser(CIParser *self)
     switch (self->current_token->kind) {
         case CI_TOKEN_KIND_LPAREN:
         case CI_TOKEN_KIND_IDENTIFIER: {
-            String *name = NULL; // String*? (&)
+            Rc *name = NULL; // Rc<String*>*? (&)
 
             parse_variable_name_and_data_type__CIParser(
               self, &data_type, &name, false);
@@ -12302,7 +8642,7 @@ parse_attribute__CIParser(CIParser *self)
     switch (self->current_token->kind) {
         case CI_TOKEN_KIND_IDENTIFIER: {
             const String *attribute_identifier =
-              self->current_token->identifier;
+              GET_PTR_RC(String, self->current_token->identifier);
             const enum CIAttributeStandardKind attr_id =
               get_id__Search(attribute_identifier,
                              ci_standard_attributes,
@@ -12317,7 +8657,7 @@ parse_attribute__CIParser(CIParser *self)
                 case CI_ATTRIBUTE_STANDARD_KIND_NODISCARD: {
                     expect__CIParser(self, CI_TOKEN_KIND_LPAREN, true);
 
-                    String *reason = NULL;
+                    Rc *reason = NULL; // Rc<String*>*? (&)
 
                     switch (self->current_token->kind) {
                         case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
@@ -12326,7 +8666,7 @@ parse_attribute__CIParser(CIParser *self)
 
                             break;
                         default:
-                            break;
+                            FAILED("expected string value");
                     }
 
                     expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
@@ -12498,12 +8838,12 @@ parse_storage_class_specifiers__CIParser(CIParser *self,
 }
 
 void
-run__CIParser(CIParser *self)
+run__CIParser(CIParser *self, const CIResolvedTokens *resolved_tokens)
 {
     // Set the current scope.
     set_current_scope__CIParser(self);
     // Initialize the parser.
-    init__CIParser(self);
+    init__CIParser(self, resolved_tokens);
 
     while (self->current_token->kind != CI_TOKEN_KIND_EOF) {
         parse_decl__CIParser(self);
@@ -12511,26 +8851,23 @@ run__CIParser(CIParser *self)
 
     resolve_visit_waiting_list__CIParser(self);
 
+    if (*self->count_error > 0) {
+        exit(1);
+    }
+
 #ifdef ENV_DEBUG
     // TODO: Print debug
 #endif
 }
 
-void
-free_from_tokens_case__CIParser(const CIParser *self)
-{
-    FREE(Vec, self->macros_call);
-    FREE(CIParserVisitWaitingList, &self->visit_waiting_list);
-}
-
 DESTRUCTOR(CIParser, const CIParser *self)
 {
     if (names_error) {
-        FREE_BUFFER_ITEMS(names_error->buffer, names_error->len, String);
+        FREE_BUFFER_RC_ITEMS(names_error->buffer, names_error->len, String);
         FREE(Vec, names_error);
 
         names_error = NULL;
     }
 
-    free_from_tokens_case__CIParser(self);
+    FREE(CIParserVisitWaitingList, &self->visit_waiting_list);
 }

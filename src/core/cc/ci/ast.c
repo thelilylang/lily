@@ -68,13 +68,13 @@ static VARIANT_DESTRUCTOR(CIDataType, array, CIDataType *self);
 static inline VARIANT_DESTRUCTOR(CIDataType, builtin, CIDataType *self);
 
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_ENUM).
-static inline VARIANT_DESTRUCTOR(CIDataType, enum, CIDataType *self);
+static VARIANT_DESTRUCTOR(CIDataType, enum, CIDataType *self);
 
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_FUNCTION).
 static VARIANT_DESTRUCTOR(CIDataType, function, CIDataType *self);
 
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_GENERIC).
-static inline VARIANT_DESTRUCTOR(CIDataType, generic, CIDataType *self);
+static VARIANT_DESTRUCTOR(CIDataType, generic, CIDataType *self);
 
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_PTR).
 static VARIANT_DESTRUCTOR(CIDataType, ptr, CIDataType *self);
@@ -87,6 +87,20 @@ static VARIANT_DESTRUCTOR(CIDataType, typedef, CIDataType *self);
 
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_UNION).
 static VARIANT_DESTRUCTOR(CIDataType, union, CIDataType *self);
+
+/// @brief Free CIAttributeStandard type
+/// (CI_ATTRIBUTE_STANDARD_KIND_DEPRECATED).
+static VARIANT_DESTRUCTOR(CIAttributeStandard,
+                          deprecated,
+                          const CIAttributeStandard *self);
+
+/// @brief Free CIAttributeStandard type (CI_ATTRIBUTE_STANDARD_KIND_NODISCARD).
+static VARIANT_DESTRUCTOR(CIAttributeStandard,
+                          nodiscard,
+                          const CIAttributeStandard *self);
+
+/// @brief Free CIAttribute type (CI_ATTRIBUTE_KIND_STANDARD).
+static VARIANT_DESTRUCTOR(CIAttribute, standard, CIAttribute *self);
 
 /// @brief Free CIDeclFUnctionParam type (CI_DECL_FUNCTION_PARAM_KIND_NORMAL).
 static VARIANT_DESTRUCTOR(CIDeclFunctionParam,
@@ -111,7 +125,7 @@ static VARIANT_DESTRUCTOR(CIDecl, function, CIDecl *self);
 static VARIANT_DESTRUCTOR(CIDecl, function_gen, CIDecl *self);
 
 /// @brief Free CIDecl type (CI_DECL_KIND_LABEL).
-static inline VARIANT_DESTRUCTOR(CIDecl, label, CIDecl *self);
+static VARIANT_DESTRUCTOR(CIDecl, label, CIDecl *self);
 
 /// @brief Free CIDecl type (CI_DECL_KIND_STRUCT).
 static VARIANT_DESTRUCTOR(CIDecl, struct, CIDecl *self);
@@ -165,7 +179,7 @@ static VARIANT_DESTRUCTOR(CIExpr, function_call_builtin, CIExpr *self);
 static VARIANT_DESTRUCTOR(CIExpr, grouping, CIExpr *self);
 
 /// @brief Free CIExpr type (CI_EXPR_KIND_IDENTIFIER).
-static inline VARIANT_DESTRUCTOR(CIExpr, identifier, CIExpr *self);
+static VARIANT_DESTRUCTOR(CIExpr, identifier, CIExpr *self);
 
 /// @brief Free CIExpr type (CI_EXPR_KIND_LITERAL).
 static VARIANT_DESTRUCTOR(CIExpr, literal, CIExpr *self);
@@ -193,6 +207,9 @@ static inline VARIANT_DESTRUCTOR(CIStmt, do_while, const CIStmt *self);
 
 /// @brief Free CIStmt type (CI_STMT_KIND_FOR).
 static inline VARIANT_DESTRUCTOR(CIStmt, for, const CIStmt *self);
+
+/// @brief Free CIStmt type (CI_STMT_KIND_GOTO).
+static VARIANT_DESTRUCTOR(CIStmt, goto, const CIStmt *self);
 
 /// @brief Free CIStmt type (CI_STMT_KIND_IF).
 static inline VARIANT_DESTRUCTOR(CIStmt, if, const CIStmt *self);
@@ -461,7 +478,8 @@ find_generic__CIGenericParams(const CIGenericParams *self, String *name)
 
         switch (param->kind) {
             case CI_DATA_TYPE_KIND_GENERIC:
-                if (!strcmp(param->generic->buffer, name->buffer)) {
+                if (!strcmp(GET_PTR_RC(String, param->generic)->buffer,
+                            name->buffer)) {
                     return i;
                 }
 
@@ -733,27 +751,32 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeArray, const CIDataTypeArray *self)
                  "size = {zu} }",
                  to_string__Debug__CIDataTypeArrayKind(self->kind),
                  to_string__Debug__CIDataType(self->data_type),
-                 self->name ? self->name->buffer : "NULL",
+                 self->name ? GET_PTR_RC(String, self->name)->buffer : "NULL",
                  self->size)
              : format__String(
                  "CIDataTypeArray{{ kind = {s}, data_type = {Sr}, name = {s} }",
                  to_string__Debug__CIDataTypeArrayKind(self->kind),
                  to_string__Debug__CIDataType(self->data_type),
-                 self->name ? self->name->buffer : "NULL");
+                 self->name ? GET_PTR_RC(String, self->name)->buffer : "NULL");
 }
 #endif
 
 DESTRUCTOR(CIDataTypeArray, const CIDataTypeArray *self)
 {
     FREE(CIDataType, self->data_type);
+
+    if (self->name) {
+        FREE_RC(String, self->name);
+    }
 }
 
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIDataTypeFunction, const CIDataTypeFunction *self)
 {
-    String *res = format__String("CIDataTypeFunction{{ name = {s}, params =",
-                                 self->name ? self->name->buffer : "NULL");
+    String *res = format__String(
+      "CIDataTypeFunction{{ name = {s}, params =",
+      self->name ? GET_PTR_RC(String, self->name)->buffer : "NULL");
 
     if (self->params) {
         DEBUG_VEC_STRING(self->params, res, CIDeclFunctionParam);
@@ -778,6 +801,10 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeFunction, const CIDataTypeFunction *self)
 
 DESTRUCTOR(CIDataTypeFunction, const CIDataTypeFunction *self)
 {
+    if (self->name) {
+        FREE_RC(String, self->name);
+    }
+
     if (self->params) {
         FREE_BUFFER_ITEMS(
           self->params->buffer, self->params->len, CIDeclFunctionParam);
@@ -797,7 +824,7 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeStruct, const CIDataTypeStruct *self)
 {
     String *res = format__String(
       "CIDataTypeStruct{{ name = {s}, generic_params = {Sr}, fields =",
-      self->name ? self->name->buffer : "NULL",
+      self->name ? GET_PTR_RC(String, self->name)->buffer : "NULL",
       self->generic_params
         ? to_string__Debug__CIGenericParams(self->generic_params)
         : from__String("NULL"));
@@ -816,6 +843,10 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeStruct, const CIDataTypeStruct *self)
 
 DESTRUCTOR(CIDataTypeStruct, const CIDataTypeStruct *self)
 {
+    if (self->name) {
+        FREE_RC(String, self->name);
+    }
+
     if (self->generic_params) {
         FREE(CIGenericParams, self->generic_params);
     }
@@ -833,7 +864,7 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeTypedef, const CIDataTypeTypedef *self)
 {
     return format__String(
       "CIDataTypeTypedef{{ name = {S}, generic_params = {Sr} }",
-      self->name,
+      GET_PTR_RC(String, self->name),
       self->generic_params
         ? to_string__Debug__CIGenericParams(self->generic_params)
         : from__String("NULL"));
@@ -842,6 +873,8 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeTypedef, const CIDataTypeTypedef *self)
 
 DESTRUCTOR(CIDataTypeTypedef, const CIDataTypeTypedef *self)
 {
+    FREE_RC(String, self->name);
+
     if (self->generic_params) {
         FREE(CIGenericParams, self->generic_params);
     }
@@ -853,7 +886,7 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeUnion, const CIDataTypeUnion *self)
 {
     String *res = format__String(
       "CIDataTypeUnion{{ name = {s}, generic_params = {Sr}, fields =",
-      self->name ? self->name->buffer : "NULL",
+      self->name ? GET_PTR_RC(String, self->name)->buffer : "NULL",
       self->generic_params
         ? to_string__Debug__CIGenericParams(self->generic_params)
         : from__String("NULL"));
@@ -872,6 +905,10 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeUnion, const CIDataTypeUnion *self)
 
 DESTRUCTOR(CIDataTypeUnion, const CIDataTypeUnion *self)
 {
+    if (self->name) {
+        FREE_RC(String, self->name);
+    }
+
     if (self->generic_params) {
         FREE(CIGenericParams, self->generic_params);
     }
@@ -975,13 +1012,13 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, builtin, Usize builtin)
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, enum, String *enum_)
+VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, enum, Rc *enum_)
 {
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
     self->kind = CI_DATA_TYPE_KIND_ENUM;
     self->ref_count = 0;
-    self->enum_ = enum_;
+    self->enum_ = enum_ ? ref__Rc(enum_) : NULL;
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
 
@@ -1004,13 +1041,13 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, generic, String *generic)
+VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, generic, Rc *generic)
 {
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
     self->kind = CI_DATA_TYPE_KIND_GENERIC;
     self->ref_count = 0;
-    self->generic = generic;
+    self->generic = ref__Rc(generic);
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
 
@@ -1233,7 +1270,7 @@ serialize__CIDataType(const CIDataType *self, String *buffer)
 
 #define SERIALIZE_TYPE_WITH_GENERIC_PARAMS(ty)                                \
     {                                                                         \
-        push_str__String(buffer, ty.name->buffer);                            \
+        push_str__String(buffer, GET_PTR_RC(String, ty.name)->buffer);        \
                                                                               \
         if (ty.generic_params) {                                              \
             put_serialization_into_buffer__CIGenericParams(ty.generic_params, \
@@ -1263,7 +1300,7 @@ serialize__CIDataType(const CIDataType *self, String *buffer)
 
             break;
         case CI_DATA_TYPE_KIND_ENUM:
-            push_str__String(buffer, self->enum_->buffer);
+            push_str__String(buffer, GET_PTR_RC(String, self->enum_)->buffer);
 
             break;
         case CI_DATA_TYPE_KIND_FUNCTION:
@@ -1274,7 +1311,8 @@ serialize__CIDataType(const CIDataType *self, String *buffer)
         case CI_DATA_TYPE_KIND_GENERIC:
             SERIALIZE_FMT_PUSH_TO_BUFFER(
               "{zu}",
-              SERIALIZE_NAME(self->generic->buffer, self->generic->len));
+              SERIALIZE_NAME(GET_PTR_RC(String, self->generic)->buffer,
+                             GET_PTR_RC(String, self->generic)->len));
 
             break;
         case CI_DATA_TYPE_KIND_PTR:
@@ -1373,7 +1411,8 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
         case CI_DATA_TYPE_KIND_BUILTIN:
             return self->builtin == other->builtin;
         case CI_DATA_TYPE_KIND_ENUM:
-            return !strcmp(self->enum_->buffer, other->enum_->buffer);
+            return !strcmp(GET_PTR_RC(String, self->enum_)->buffer,
+                           GET_PTR_RC(String, other->enum_)->buffer);
         case CI_DATA_TYPE_KIND_FUNCTION:
             if (!(self->function.function_data_type &&
                   other->function.function_data_type) ||
@@ -1403,7 +1442,8 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
 
             return true;
         case CI_DATA_TYPE_KIND_GENERIC:
-            return !strcmp(self->generic->buffer, other->generic->buffer);
+            return !strcmp(GET_PTR_RC(String, self->generic)->buffer,
+                           GET_PTR_RC(String, other->generic)->buffer);
         case CI_DATA_TYPE_KIND_PTR:
             if (!self->ptr && !other->ptr) {
                 return true;
@@ -1425,8 +1465,8 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
             return eq__CIDeclStructField(self_fields, other_fields);
         }
         case CI_DATA_TYPE_KIND_TYPEDEF:
-            return !strcmp(self->typedef_.name->buffer,
-                           other->typedef_.name->buffer) &&
+            return !strcmp(GET_PTR_RC(String, self->typedef_.name)->buffer,
+                           GET_PTR_RC(String, other->typedef_.name)->buffer) &&
                    eq__CIGenericParams(self->typedef_.generic_params,
                                        other->typedef_.generic_params);
         case CI_DATA_TYPE_KIND_BOOL:
@@ -1566,13 +1606,16 @@ get_name__CIDataType(const CIDataType *self)
 {
     switch (self->kind) {
         case CI_DATA_TYPE_KIND_ENUM:
-            return self->enum_;
+            return self->enum_ ? GET_PTR_RC(String, self->enum_) : NULL;
         case CI_DATA_TYPE_KIND_STRUCT:
-            return self->struct_.name;
+            return self->struct_.name ? GET_PTR_RC(String, self->struct_.name)
+                                      : NULL;
         case CI_DATA_TYPE_KIND_TYPEDEF:
-            return self->typedef_.name;
+            return self->typedef_.name ? GET_PTR_RC(String, self->typedef_.name)
+                                       : NULL;
         case CI_DATA_TYPE_KIND_UNION:
-            return self->union_.name;
+            return self->union_.name ? GET_PTR_RC(String, self->union_.name)
+                                     : NULL;
         default:
             UNREACHABLE("cannot get name from data type");
     }
@@ -1640,7 +1683,7 @@ IMPL_FOR_DEBUG(to_string, CIDataType, const CIDataType *self)
               to_string__Debug__CIDataTypeKind(self->kind),
               to_string__Debug__CIDataTypeContext(self->ctx),
               to_string__Debug__CIDataTypeQualifier(self->qualifier),
-              self->enum_);
+              GET_PTR_RC(String, self->enum_));
         case CI_DATA_TYPE_KIND_FUNCTION:
             return format__String(
               "CIDataType{{ kind = {s}, ctx = {Sr}, qualifier = {Sr}, function "
@@ -1656,7 +1699,7 @@ IMPL_FOR_DEBUG(to_string, CIDataType, const CIDataType *self)
               to_string__Debug__CIDataTypeKind(self->kind),
               to_string__Debug__CIDataTypeContext(self->ctx),
               to_string__Debug__CIDataTypeQualifier(self->qualifier),
-              self->generic);
+              GET_PTR_RC(String, self->generic));
         case CI_DATA_TYPE_KIND_PTR:
             return format__String(
               "CIDataType{{ kind = {s}, ctx = {Sr}, qualifier = {Sr}, ptr = "
@@ -1713,6 +1756,10 @@ VARIANT_DESTRUCTOR(CIDataType, builtin, CIDataType *self)
 
 VARIANT_DESTRUCTOR(CIDataType, enum, CIDataType *self)
 {
+    if (self->enum_) {
+        FREE_RC(String, self->enum_);
+    }
+
     lily_free(self);
 }
 
@@ -1724,6 +1771,10 @@ VARIANT_DESTRUCTOR(CIDataType, function, CIDataType *self)
 
 VARIANT_DESTRUCTOR(CIDataType, generic, CIDataType *self)
 {
+    if (self->generic) {
+        FREE_RC(String, self->generic);
+    }
+
     lily_free(self);
 }
 
@@ -1847,12 +1898,12 @@ IMPL_FOR_DEBUG(to_string, CIAttributeStandard, const CIAttributeStandard *self)
             return format__String(
               "CIAttributeStandard{{ kind = {s}, deprecated = {S} }",
               to_string__Debug__CIAttributeStandardKind(self->kind),
-              self->deprecated);
+              GET_PTR_RC(String, self->deprecated));
         case CI_ATTRIBUTE_STANDARD_KIND_NODISCARD:
             return format__String(
               "CIAttributeStandard{{ kind = {s}, nodiscard = {S} }",
               to_string__Debug__CIAttributeStandardKind(self->kind),
-              self->nodiscard);
+              GET_PTR_RC(String, self->nodiscard));
         default:
             return format__String(
               "CIAttributeStandard{{ kind = {s} }",
@@ -1860,6 +1911,36 @@ IMPL_FOR_DEBUG(to_string, CIAttributeStandard, const CIAttributeStandard *self)
     }
 }
 #endif
+
+VARIANT_DESTRUCTOR(CIAttributeStandard,
+                   deprecated,
+                   const CIAttributeStandard *self)
+{
+    FREE_RC(String, self->deprecated);
+}
+
+VARIANT_DESTRUCTOR(CIAttributeStandard,
+                   nodiscard,
+                   const CIAttributeStandard *self)
+{
+    FREE_RC(String, self->nodiscard);
+}
+
+DESTRUCTOR(CIAttributeStandard, const CIAttributeStandard *self)
+{
+    switch (self->kind) {
+        case CI_ATTRIBUTE_STANDARD_KIND_DEPRECATED:
+            FREE_VARIANT(CIAttributeStandard, deprecated, self);
+
+            break;
+        case CI_ATTRIBUTE_STANDARD_KIND_NODISCARD:
+            FREE_VARIANT(CIAttributeStandard, nodiscard, self);
+
+            break;
+        default:
+            break;
+    }
+}
 
 VARIANT_CONSTRUCTOR(CIAttribute *,
                     CIAttribute,
@@ -1889,6 +1970,24 @@ IMPL_FOR_DEBUG(to_string, CIAttribute, const CIAttribute *self)
     }
 }
 #endif
+
+VARIANT_DESTRUCTOR(CIAttribute, standard, CIAttribute *self)
+{
+    FREE(CIAttributeStandard, &self->standard);
+    lily_free(self);
+}
+
+DESTRUCTOR(CIAttribute, CIAttribute *self)
+{
+    switch (self->kind) {
+        case CI_ATTRIBUTE_KIND_STANDARD:
+            FREE_VARIANT(CIAttribute, standard, self);
+
+            break;
+        default:
+            break;
+    }
+}
 
 String *
 to_string__CIStorageClass(int storage_class_flag, enum CIStandard standard)
@@ -2010,27 +2109,24 @@ IMPL_FOR_DEBUG(to_string,
 VARIANT_CONSTRUCTOR(CIDeclEnumVariant *,
                     CIDeclEnumVariant,
                     custom,
-                    String *name,
+                    Rc *name,
                     Isize value)
 {
     CIDeclEnumVariant *self = lily_malloc(sizeof(CIDeclEnumVariant));
 
     self->kind = CI_DECL_ENUM_VARIANT_KIND_CUSTOM;
-    self->name = name;
+    self->name = ref__Rc(name);
     self->value = value;
 
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIDeclEnumVariant *,
-                    CIDeclEnumVariant,
-                    default,
-                    String *name)
+VARIANT_CONSTRUCTOR(CIDeclEnumVariant *, CIDeclEnumVariant, default, Rc *name)
 {
     CIDeclEnumVariant *self = lily_malloc(sizeof(CIDeclEnumVariant));
 
     self->kind = CI_DECL_ENUM_VARIANT_KIND_DEFAULT;
-    self->name = name;
+    self->name = ref__Rc(name);
 
     return self;
 }
@@ -2045,24 +2141,31 @@ IMPL_FOR_DEBUG(to_string, CIDeclEnumVariant, const CIDeclEnumVariant *self)
             return format__String(
               "CIDeclEnumVariant{{ kind = {s}, name = {S}, value = {d} }",
               to_string__Debug__CIDeclEnumVariantKind(self->kind),
-              self->name,
+              GET_PTR_RC(String, self->name),
               self->value);
         case CI_DECL_ENUM_VARIANT_KIND_DEFAULT:
             return format__String(
               "CIDeclEnumVariant{{ kind = {s}, name = {S} }",
               to_string__Debug__CIDeclEnumVariantKind(self->kind),
-              self->name);
+              GET_PTR_RC(String, self->name));
         default:
             UNREACHABLE("unknown variant");
     }
 }
 #endif
 
+DESTRUCTOR(CIDeclEnumVariant, CIDeclEnumVariant *self)
+{
+    FREE_RC(String, self->name);
+    lily_free(self);
+}
+
 bool
 match_prototype__CIDeclEnum(const CIDeclEnum *self, const CIDeclEnum *other)
 {
     ASSERT(self->name && other->name);
-    ASSERT(!strcmp(self->name->buffer, other->name->buffer));
+    ASSERT(!strcmp(GET_PTR_RC(String, self->name)->buffer,
+                   GET_PTR_RC(String, other->name)->buffer));
     ASSERT(!self->variants && !other->variants);
 
     return (self->data_type && other->data_type &&
@@ -2074,8 +2177,8 @@ match_prototype__CIDeclEnum(const CIDeclEnum *self, const CIDeclEnum *other)
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclEnum, const CIDeclEnum *self)
 {
-    String *res =
-      format__String("CIDeclEnum{{ name = {S}, variants =", self->name);
+    String *res = format__String("CIDeclEnum{{ name = {S}, variants =",
+                                 GET_PTR_RC(String, self->name));
 
     if (self->variants) {
         DEBUG_VEC_STRING(self->variants, res, CIDeclEnumVariant);
@@ -2093,6 +2196,16 @@ IMPL_FOR_DEBUG(to_string, CIDeclEnum, const CIDeclEnum *self)
     return res;
 }
 #endif
+
+void
+free_as_prototype__CIDeclEnum(const CIDeclEnum *self)
+{
+    FREE_RC(String, self->name);
+
+    if (self->data_type) {
+        FREE(CIDataType, self->data_type);
+    }
+}
 
 DESTRUCTOR(CIDeclEnum, const CIDeclEnum *self)
 {
@@ -2125,13 +2238,13 @@ IMPL_FOR_DEBUG(to_string,
 VARIANT_CONSTRUCTOR(CIDeclFunctionParam *,
                     CIDeclFunctionParam,
                     normal,
-                    String *name,
+                    Rc *name,
                     CIDataType *data_type)
 {
     CIDeclFunctionParam *self = lily_malloc(sizeof(CIDeclFunctionParam));
 
     self->kind = CI_DECL_FUNCTION_PARAM_KIND_NORMAL;
-    self->name = name;
+    self->name = name ? ref__Rc(name) : NULL;
     self->data_type = data_type;
 
     return self;
@@ -2201,7 +2314,7 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunctionParam, const CIDeclFunctionParam *self)
             return format__String(
               "CIDeclFunctionParam{{ kind = {s}, name = {s}, data_type = {Sr}",
               to_string__Debug__CIDeclFunctionParamKind(self->kind),
-              self->name ? self->name->buffer : "NULL",
+              self->name ? GET_PTR_RC(String, self->name)->buffer : "NULL",
               to_string__Debug__CIDataType(self->data_type));
         case CI_DECL_FUNCTION_PARAM_KIND_VARIADIC:
             return format__String(
@@ -2216,6 +2329,10 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunctionParam, const CIDeclFunctionParam *self)
 
 VARIANT_DESTRUCTOR(CIDeclFunctionParam, normal, CIDeclFunctionParam *self)
 {
+    if (self->name) {
+        FREE_RC(String, self->name);
+    }
+
     FREE(CIDataType, self->data_type);
     lily_free(self);
 }
@@ -2279,7 +2396,7 @@ String *
 serialize_name__CIDeclFunction(const CIDeclFunction *self,
                                const CIGenericParams *called_generic_params)
 {
-    CI_SERIALIZE_NAME(self->name);
+    CI_SERIALIZE_NAME(GET_PTR_RC(String, self->name));
 }
 
 bool
@@ -2287,7 +2404,8 @@ match_prototype__CIDeclFunction(const CIDeclFunction *self,
                                 const CIDeclFunction *other)
 {
     ASSERT(self->name && other->name);
-    ASSERT(!strcmp(self->name->buffer, other->name->buffer));
+    ASSERT(!strcmp(GET_PTR_RC(String, self->name)->buffer,
+                   GET_PTR_RC(String, other->name)->buffer));
     // NOTE: Expected prototype
     ASSERT(!self->body && !other->body);
 
@@ -2302,7 +2420,7 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunction, const CIDeclFunction *self)
     String *res =
       format__String("CIDeclFunction{{ name = {S}, return_data_type = {Sr}, "
                      "generic_params = {Sr}, params =",
-                     self->name,
+                     GET_PTR_RC(String, self->name),
                      to_string__Debug__CIDataType(self->return_data_type),
                      self->generic_params
                        ? to_string__Debug__CIGenericParams(self->generic_params)
@@ -2340,6 +2458,7 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunction, const CIDeclFunction *self)
 void
 free_as_prototype__CIDeclFunction(const CIDeclFunction *self)
 {
+    FREE_RC(String, self->name);
     FREE(CIDataType, self->return_data_type);
 
     if (self->generic_params) {
@@ -2399,18 +2518,24 @@ DESTRUCTOR(CIDeclFunctionGen, const CIDeclFunctionGen *self)
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclLabel, const CIDeclLabel *self)
 {
-    return format__String("CIDeclLabel{{ name = {S} }", self->name);
+    return format__String("CIDeclLabel{{ name = {S} }",
+                          GET_PTR_RC(String, self->name));
 }
 #endif
 
+DESTRUCTOR(CIDeclLabel, const CIDeclLabel *self)
+{
+    FREE_RC(String, self->name);
+}
+
 CONSTRUCTOR(CIDeclStructField *,
             CIDeclStructField,
-            String *name,
+            Rc *name,
             CIDataType *data_type)
 {
     CIDeclStructField *self = lily_malloc(sizeof(CIDeclStructField));
 
-    self->name = name;
+    self->name = name ? ref__Rc(name) : NULL;
     self->data_type = data_type;
 
     return self;
@@ -2486,7 +2611,8 @@ get__CIDeclStructField(const Vec *self_fields, const String *field_name)
     for (Usize i = 0; i < self_fields->len; ++i) {
         CIDeclStructField *field = get__Vec(self_fields, i);
 
-        if (!strcmp(field->name->buffer, field_name->buffer)) {
+        if (!strcmp(GET_PTR_RC(String, field->name)->buffer,
+                    field_name->buffer)) {
             return field->data_type;
         }
     }
@@ -2513,13 +2639,18 @@ String *
 IMPL_FOR_DEBUG(to_string, CIDeclStructField, const CIDeclStructField *self)
 {
     return format__String("CIDeclStructField{{ name = {s}, data_type = {Sr} }",
-                          self->name ? self->name->buffer : "NULL",
+                          self->name ? GET_PTR_RC(String, self->name)->buffer
+                                     : "NULL",
                           to_string__Debug__CIDataType(self->data_type));
 }
 #endif
 
 DESTRUCTOR(CIDeclStructField, CIDeclStructField *self)
 {
+    if (self->name) {
+        FREE_RC(String, self->name);
+    }
+
     FREE(CIDataType, self->data_type);
     lily_free(self);
 }
@@ -2529,7 +2660,8 @@ match_prototype__CIDeclStruct(const CIDeclStruct *self,
                               const CIDeclStruct *other)
 {
     ASSERT(self->name && other->name);
-    ASSERT(!strcmp(self->name->buffer, other->name->buffer));
+    ASSERT(!strcmp(GET_PTR_RC(String, self->name)->buffer,
+                   GET_PTR_RC(String, other->name)->buffer));
     // NOTE: Expected prototype
     ASSERT(!self->fields && !other->fields);
 
@@ -2540,7 +2672,7 @@ String *
 serialize_name__CIDeclStruct(const CIDeclStruct *self,
                              const CIGenericParams *called_generic_params)
 {
-    CI_SERIALIZE_NAME(self->name);
+    CI_SERIALIZE_NAME(GET_PTR_RC(String, self->name));
 }
 
 #ifdef ENV_DEBUG
@@ -2548,8 +2680,8 @@ String *
 IMPL_FOR_DEBUG(to_string, CIDeclStruct, const CIDeclStruct *self)
 {
     String *res = format__String(
-      "CIDeclStruct{{ name = {S}, generic_params = {Sr}, fields =",
-      self->name,
+      "CIDeclStruct{{ name = {s}, generic_params = {Sr}, fields =",
+      self->name ? GET_PTR_RC(String, self->name)->buffer : "NULL",
       self->generic_params
         ? to_string__Debug__CIGenericParams(self->generic_params)
         : from__String("NULL"));
@@ -2574,6 +2706,10 @@ IMPL_FOR_DEBUG(to_string, CIDeclStruct, const CIDeclStruct *self)
 void
 free_as_prototype__CIDeclStruct(const CIDeclStruct *self)
 {
+    if (self->name) {
+        FREE_RC(String, self->name);
+    }
+
     if (self->generic_params) {
         FREE(CIGenericParams, self->generic_params);
     }
@@ -2641,7 +2777,8 @@ match_prototype__CIDeclTypedef(const CIDeclTypedef *self,
                                const CIDeclTypedef *other)
 {
     ASSERT(self->name && other->name);
-    ASSERT(!strcmp(self->name->buffer, other->name->buffer));
+    ASSERT(!strcmp(GET_PTR_RC(String, self->name)->buffer,
+                   GET_PTR_RC(String, other->name)->buffer));
     ASSERT(self->data_type && other->data_type);
 
     return eq__CIDataType(self->data_type, other->data_type) &&
@@ -2652,7 +2789,7 @@ String *
 serialize_name__CIDeclTypedef(const CIDeclTypedef *self,
                               const CIGenericParams *called_generic_params)
 {
-    CI_SERIALIZE_NAME(self->name);
+    CI_SERIALIZE_NAME(GET_PTR_RC(String, self->name));
 }
 
 #ifdef ENV_DEBUG
@@ -2662,7 +2799,7 @@ IMPL_FOR_DEBUG(to_string, CIDeclTypedef, const CIDeclTypedef *self)
     return format__String(
       "CIDeclTypedef{{ name = {S}, generic_params = {Sr}, data_type = {Sr}, "
       "size_info = {Sr} }",
-      self->name,
+      GET_PTR_RC(String, self->name),
       self->generic_params
         ? to_string__Debug__CIGenericParams(self->generic_params)
         : from__String("NULL"),
@@ -2674,6 +2811,8 @@ IMPL_FOR_DEBUG(to_string, CIDeclTypedef, const CIDeclTypedef *self)
 void
 free_as_prototype__CIDeclTypedef(const CIDeclTypedef *self)
 {
+    FREE_RC(String, self->name);
+
     if (self->generic_params) {
         FREE(CIGenericParams, self->generic_params);
     }
@@ -2713,7 +2852,8 @@ bool
 match_prototype__CIDeclUnion(const CIDeclUnion *self, const CIDeclUnion *other)
 {
     ASSERT(self->name && other->name);
-    ASSERT(!strcmp(self->name->buffer, other->name->buffer));
+    ASSERT(!strcmp(GET_PTR_RC(String, self->name)->buffer,
+                   GET_PTR_RC(String, other->name)->buffer));
     // NOTE: Expected prototype
     ASSERT(!self->fields && !other->fields);
 
@@ -2724,7 +2864,7 @@ String *
 serialize_name__CIDeclUnion(const CIDeclUnion *self,
                             const CIGenericParams *called_generic_params)
 {
-    CI_SERIALIZE_NAME(self->name);
+    CI_SERIALIZE_NAME(GET_PTR_RC(String, self->name));
 }
 
 #ifdef ENV_DEBUG
@@ -2733,7 +2873,7 @@ IMPL_FOR_DEBUG(to_string, CIDeclUnion, const CIDeclUnion *self)
 {
     String *res = format__String(
       "CIDeclUnion{{ name = {S}, generic_params = {Sr}, fields =",
-      self->name,
+      GET_PTR_RC(String, self->name),
       self->generic_params
         ? to_string__Debug__CIGenericParams(self->generic_params)
         : from__String("NULL"));
@@ -2758,6 +2898,10 @@ IMPL_FOR_DEBUG(to_string, CIDeclUnion, const CIDeclUnion *self)
 void
 free_as_prototype__CIDeclUnion(const CIDeclUnion *self)
 {
+    if (self->name) {
+        FREE_RC(String, self->name);
+    }
+
     if (self->generic_params) {
         FREE(CIGenericParams, self->generic_params);
     }
@@ -2828,7 +2972,7 @@ IMPL_FOR_DEBUG(to_string, CIDeclVariable, const CIDeclVariable *self)
         return format__String("CIDeclVariable{{ data_type = {Sr}, name = {S}, "
                               "expr = {Sr}, is_local = {b} }",
                               to_string__Debug__CIDataType(self->data_type),
-                              self->name,
+                              GET_PTR_RC(String, self->name),
                               to_string__Debug__CIExpr(self->expr),
                               self->is_local);
     }
@@ -2836,13 +2980,14 @@ IMPL_FOR_DEBUG(to_string, CIDeclVariable, const CIDeclVariable *self)
     return format__String("CIDeclVariable{{ data_type = {Sr}, name = {S}, expr "
                           "= NULL, is_local = {b} }",
                           to_string__Debug__CIDataType(self->data_type),
-                          self->name,
+                          GET_PTR_RC(String, self->name),
                           self->is_local);
 }
 #endif
 
 DESTRUCTOR(CIDeclVariable, const CIDeclVariable *self)
 {
+    FREE_RC(String, self->name);
     FREE(CIDataType, self->data_type);
 
     if (self->expr) {
@@ -3094,27 +3239,30 @@ get_name__CIDecl(const CIDecl *self)
 {
     switch (self->kind) {
         case CI_DECL_KIND_ENUM:
-            return self->enum_.name;
+            return self->enum_.name ? GET_PTR_RC(String, self->enum_.name)
+                                    : NULL;
         case CI_DECL_KIND_FUNCTION:
-            return self->function.name;
+            return GET_PTR_RC(String, self->function.name);
         case CI_DECL_KIND_FUNCTION_GEN:
             return self->function_gen.name;
         case CI_DECL_KIND_LABEL:
-            return self->label.name;
+            return GET_PTR_RC(String, self->label.name);
         case CI_DECL_KIND_STRUCT:
-            return self->struct_.name;
+            return self->struct_.name ? GET_PTR_RC(String, self->struct_.name)
+                                      : NULL;
         case CI_DECL_KIND_STRUCT_GEN:
             return self->struct_gen.name;
         case CI_DECL_KIND_TYPEDEF:
-            return self->typedef_.name;
+            return GET_PTR_RC(String, self->typedef_.name);
         case CI_DECL_KIND_TYPEDEF_GEN:
             return self->typedef_gen.name;
         case CI_DECL_KIND_UNION:
-            return self->union_.name;
+            return self->union_.name ? GET_PTR_RC(String, self->union_.name)
+                                     : NULL;
         case CI_DECL_KIND_UNION_GEN:
             return self->union_gen.name;
         case CI_DECL_KIND_VARIABLE:
-            return self->variable.name;
+            return GET_PTR_RC(String, self->variable.name);
         default:
             UNREACHABLE("unknown variant");
     }
@@ -3488,6 +3636,7 @@ VARIANT_DESTRUCTOR(CIDecl, function_gen, CIDecl *self)
 
 VARIANT_DESTRUCTOR(CIDecl, label, CIDecl *self)
 {
+    FREE(CIDeclLabel, &self->label);
     lily_free(self);
 }
 
@@ -3870,7 +4019,7 @@ IMPL_FOR_DEBUG(to_string, CIExprLiteral, const CIExprLiteral *self)
             return format__String(
               "CIExprLiteral{{ kind = {s}, string = {S} }",
               to_string__Debug__CIExprLiteralKind(self->kind),
-              self->string.value);
+              GET_PTR_RC(String, self->string));
         case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:
             return format__String(
               "CIExprLiteral{{ kind = {s}, unsigned_int = {zu} }",
@@ -3884,9 +4033,7 @@ IMPL_FOR_DEBUG(to_string, CIExprLiteral, const CIExprLiteral *self)
 
 VARIANT_DESTRUCTOR(CIExprLiteral, string, const CIExprLiteral *self)
 {
-    if (self->string.must_free) {
-        FREE(String, self->string.value);
-    }
+    FREE_RC(String, self->string);
 }
 
 DESTRUCTOR(CIExprLiteral, const CIExprLiteral *self)
@@ -4000,15 +4147,16 @@ String *
 serialize_name__CIExprFunctionCall(const CIExprFunctionCall *self,
                                    const CIGenericParams *called_generic_params)
 {
-    CI_SERIALIZE_NAME(self->identifier);
+    CI_SERIALIZE_NAME(GET_PTR_RC(String, self->identifier));
 }
 
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIExprFunctionCall, const CIExprFunctionCall *self)
 {
-    String *res = format__String(
-      "CIExprFunctionCall{{ identifier = {S}, params =", self->identifier);
+    String *res =
+      format__String("CIExprFunctionCall{{ identifier = {S}, params =",
+                     GET_PTR_RC(String, self->identifier));
 
     DEBUG_VEC_STRING(self->params, res, CIExpr);
 
@@ -4028,6 +4176,7 @@ IMPL_FOR_DEBUG(to_string, CIExprFunctionCall, const CIExprFunctionCall *self)
 
 DESTRUCTOR(CIExprFunctionCall, const CIExprFunctionCall *self)
 {
+    FREE_RC(String, self->identifier);
     FREE_BUFFER_ITEMS(self->params->buffer, self->params->len, CIExpr);
     FREE(Vec, self->params);
 
@@ -4081,7 +4230,8 @@ IMPL_FOR_DEBUG(to_string,
     String *res = format__String("CIExprStructFieldCall{{ path = {{ ");
 
     for (Usize i = 0; i < self->path->len; ++i) {
-        push_str__String(res, CAST(String *, get__Vec(self->path, i))->buffer);
+        push_str__String(
+          res, GET_PTR_RC(String, CAST(Rc *, get__Vec(self->path, i)))->buffer);
 
         if (i + 1 != self->path->len) {
             push_str__String(res, ", ");
@@ -4103,6 +4253,7 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(CIExprStructFieldCall, CIExprStructFieldCall *self)
 {
+    FREE_BUFFER_RC_ITEMS(self->path->buffer, self->path->len, String);
     FREE(Vec, self->path);
     FREE(CIExpr, self->value);
     lily_free(self);
@@ -4289,13 +4440,13 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, grouping, CIExpr *grouping)
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, identifier, String *identifier)
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, identifier, Rc *identifier)
 {
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
     self->kind = CI_EXPR_KIND_IDENTIFIER;
     self->ref_count = 0;
-    self->identifier = identifier;
+    self->identifier = ref__Rc(identifier);
 
     return self;
 }
@@ -4575,7 +4726,7 @@ IMPL_FOR_DEBUG(to_string, CIExpr, const CIExpr *self)
         case CI_EXPR_KIND_IDENTIFIER:
             return format__String("CIExpr{{ kind = {s}, identifier = {S} }",
                                   to_string__Debug__CIExprKind(self->kind),
-                                  self->identifier);
+                                  GET_PTR_RC(String, self->identifier));
         case CI_EXPR_KIND_LITERAL:
             return format__String(
               "CIExpr{{ kind = {s}, literal = {Sr} }",
@@ -4687,6 +4838,7 @@ VARIANT_DESTRUCTOR(CIExpr, grouping, CIExpr *self)
 
 VARIANT_DESTRUCTOR(CIExpr, identifier, CIExpr *self)
 {
+    FREE_RC(String, self->identifier);
     lily_free(self);
 }
 
@@ -5050,7 +5202,7 @@ IMPL_FOR_DEBUG(to_string, CIStmt, const CIStmt *self)
         case CI_STMT_KIND_GOTO:
             return format__String("CIStmt{{ kind = {s}, goto_ = {S} }",
                                   to_string__Debug__CIStmtKind(self->kind),
-                                  self->goto_);
+                                  GET_PTR_RC(String, self->goto_));
         case CI_STMT_KIND_IF:
             return format__String("CIStmt{{ kind = {s}, if_ = {Sr} }",
                                   to_string__Debug__CIStmtKind(self->kind),
@@ -5096,6 +5248,11 @@ VARIANT_DESTRUCTOR(CIStmt, for, const CIStmt *self)
     FREE(CIStmtFor, &self->for_);
 }
 
+VARIANT_DESTRUCTOR(CIStmt, goto, const CIStmt *self)
+{
+    FREE_RC(String, self->goto_);
+}
+
 VARIANT_DESTRUCTOR(CIStmt, if, const CIStmt *self)
 {
     FREE(CIStmtIf, &self->if_);
@@ -5127,7 +5284,6 @@ DESTRUCTOR(CIStmt, const CIStmt *self)
         case CI_STMT_KIND_BREAK:
         case CI_STMT_KIND_CONTINUE:
         case CI_STMT_KIND_DEFAULT:
-        case CI_STMT_KIND_GOTO:
             break;
         case CI_STMT_KIND_CASE:
             FREE_VARIANT(CIStmt, case, self);
@@ -5137,6 +5293,9 @@ DESTRUCTOR(CIStmt, const CIStmt *self)
             break;
         case CI_STMT_KIND_FOR:
             FREE_VARIANT(CIStmt, for, self);
+            break;
+        case CI_STMT_KIND_GOTO:
+            FREE_VARIANT(CIStmt, goto, self);
             break;
         case CI_STMT_KIND_IF:
             FREE_VARIANT(CIStmt, if, self);

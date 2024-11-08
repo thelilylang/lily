@@ -193,6 +193,7 @@ typedef struct CIResultFile
     CIResultFileAnalysis *file_analysis; // CIResultFileAnalysis*?
     CIScope *scope_base;                 // CIScope*? (&)
     CIResultFile *owner;                 // CIResultFile*? (&)
+    const CIProjectConfig *config;       // const CIProjectConfig* (&)
     CIResultEntity entity;
     CIScanner scanner;
 } CIResultFile;

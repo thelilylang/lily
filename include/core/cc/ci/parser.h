@@ -26,6 +26,7 @@
 #define LILY_CORE_CC_CI_PARSER_H
 
 #include <core/cc/ci/ast.h>
+#include <core/cc/ci/resolver.h>
 #include <core/cc/ci/scanner.h>
 
 typedef struct CIResultFile CIResultFile;
@@ -77,100 +78,6 @@ inline CONSTRUCTOR(CIParserVisitWaitingList, CIParserVisitWaitingList)
  */
 DESTRUCTOR(CIParserVisitWaitingList, const CIParserVisitWaitingList *self);
 
-typedef struct CIParserMacroCallParam
-{
-    // content.first: CIToken* (&)
-    // content.first...content.last: CIToken* (&)
-    // content.last: CIToken*
-    CITokens content;
-    struct CIParserMacroCallParam *next; // CIParserMacroCallParam*?
-} CIParserMacroCallParam;
-
-/**
- *
- * @brief Construct CIParserMacroCallParam type.
- */
-CONSTRUCTOR(CIParserMacroCallParam *, CIParserMacroCallParam, CITokens content);
-
-/**
- *
- * @brief Free CIParserMacroCallParam type.
- */
-DESTRUCTOR(CIParserMacroCallParam, CIParserMacroCallParam *self);
-
-typedef struct CIParserMacroCallParams
-{
-    CIParserMacroCallParam *first;
-    CIParserMacroCallParam *last; // CIParserMacroCallParam* (&)
-    Usize len;
-} CIParserMacroCallParams;
-
-/**
- *
- * @brief Construct CIParserMacroCallParams type.
- */
-inline CONSTRUCTOR(CIParserMacroCallParams, CIParserMacroCallParams)
-{
-    return (CIParserMacroCallParams){ .first = NULL, .last = NULL, .len = 0 };
-}
-
-/**
- *
- * @brief Add a param to params.
- */
-void
-add__CIParserMacroCallParams(CIParserMacroCallParams *self,
-                             CIParserMacroCallParam *param);
-
-/**
- *
- * @brief Get macro call param according the index.
- */
-CIParserMacroCallParam *
-get__CIParserMacroCallParams(const CIParserMacroCallParams *self, Usize index);
-
-/**
- *
- * @brief Get variadic macro call param.
- */
-inline CIParserMacroCallParam *
-get_macro_param_variadic__CIParserMacroCallParams(
-  const CIParserMacroCallParams *self)
-{
-    return self->last;
-}
-
-/**
- *
- * @brief Free CIParserMacroCallParams type.
- */
-DESTRUCTOR(CIParserMacroCallParams, const CIParserMacroCallParams *self);
-
-typedef struct CIParserMacroCall
-{
-    // Params of macro call
-    CIParserMacroCallParams params;
-    bool is_empty;
-} CIParserMacroCall;
-
-/**
- *
- * @brief Construct CIParserMacroCall type (is_empty=false).
- */
-CONSTRUCTOR(CIParserMacroCall *, CIParserMacroCall);
-
-/**
- *
- * @brief Construct CIParserMacroCall type (is_empty=true).
- */
-VARIANT_CONSTRUCTOR(CIParserMacroCall *, CIParserMacroCall, is_empty);
-
-/**
- *
- * @brief Free CIParserMacroCall type.
- */
-DESTRUCTOR(CIParserMacroCall, CIParserMacroCall *self);
-
 typedef struct CIParserSpan
 {
     Usize line;
@@ -209,16 +116,15 @@ default__CIParserSpan()
 
 typedef struct CIParser
 {
-    CIResultFile *file;       // CIResultFile* (&)
-    const CIScanner *scanner; // const CIScanner* (&)
-    Usize *count_error;       // Usize* (&)
-    Usize *count_warning;     // Usize* (&)
-    const CITokens *tokens;   // const CITokens* (&)
-    CIToken *current_token;   // CIToken* (&)
-    CIToken *previous_token;  // CIToken* (&)
+    CIResultFile *file;   // CIResultFile* (&)
+    Usize *count_error;   // Usize* (&)
+    Usize *count_warning; // Usize* (&)
+    Usize resolved_tokens_count;
+    const CIResolvedTokens *resolved_tokens; // const CIResolvedTokens*? (&)
+    CIToken *current_token;                  // CIToken*? (&)
+    CIToken *previous_token;                 // CIToken*? (&)
     CIParserSpan current_span;
     CIParserSpan previous_span;
-    Vec *macros_call; // Vec<CIParserMacroCall*>*
     CIParserVisitWaitingList visit_waiting_list;
 } CIParser;
 
@@ -226,21 +132,22 @@ typedef struct CIParser
  *
  * @brief Construct CIParser type.
  */
-CONSTRUCTOR(CIParser, CIParser, CIResultFile *file, const CIScanner *scanner);
+CONSTRUCTOR(CIParser, CIParser, CIResultFile *file);
 
 /**
  *
- * @brief Construct CIParser type from tokens.
+ * @brief Initialize the parser.
  */
-CIParser
-from_tokens__CIParser(CIResultFile *file, const CITokens *content);
+void
+init__CIParser(CIParser *self, const CIResolvedTokens *resolved_tokens);
 
 /**
  *
  * @brief Run the parser.
+ * @param resolved_tokens const CIResolvedTokens* (&)
  */
 void
-run__CIParser(CIParser *self);
+run__CIParser(CIParser *self, const CIResolvedTokens *resolved_tokens);
 
 /**
  *
@@ -293,10 +200,66 @@ substitute_data_type__CIParser(CIDataType *data_type,
 
 /**
  *
- * @brief Free CIParser type (from tokens case).
+ * @brief Infer data type of the given expression.
+ * @param current_scope_id const CIScopeID*? (&)
+ * @param called_generic_params const CIGenericParams*? (&)
+ * @param decl_generic_params const CIGenericParams*? (&)
+ * @return CIDataType*
  */
-void
-free_from_tokens_case__CIParser(const CIParser *self);
+CIDataType *
+infer_expr_data_type__CIParser(const CIParser *self,
+                               const CIExpr *expr,
+                               const CIScopeID *current_scope_id,
+                               const CIGenericParams *called_generic_params,
+                               const CIGenericParams *decl_generic_params);
+
+/**
+ *
+ * @return CIDecl*? (&)
+ */
+CIDecl *
+search_enum__CIParser(const CIParser *self, const String *name);
+
+/**
+ *
+ * @param called_generic_params CIGenericParams*? (&)
+ * @return CIDecl*? (&)
+ */
+CIDecl *
+search_struct__CIParser(const CIParser *self,
+                        const String *name,
+                        CIGenericParams *called_generic_params);
+
+/**
+ *
+ * @param called_generic_params CIGenericParams*? (&)
+ * @return CIDecl*? (&)
+ */
+CIDecl *
+search_typedef__CIParser(const CIParser *self,
+                         const String *name,
+                         CIGenericParams *called_generic_params);
+
+/**
+ *
+ * @param called_generic_params CIGenericParams*? (&)
+ * @return CIDecl*? (&)
+ */
+CIDecl *
+search_union__CIParser(const CIParser *self,
+                       const String *name,
+                       CIGenericParams *called_generic_params);
+
+/**
+ *
+ * @brief Check if the parser has reach end.
+ */
+inline bool
+has_reach_end__CIParser(CIParser *self)
+{
+    return self->resolved_tokens_count ==
+           count__CIResolvedTokens(self->resolved_tokens);
+}
 
 /**
  *

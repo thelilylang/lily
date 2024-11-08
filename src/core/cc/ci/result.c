@@ -28,6 +28,7 @@
 #include <base/macros.h>
 
 #include <core/cc/ci/file.h>
+#include <core/cc/ci/resolver.h>
 #include <core/cc/ci/result.h>
 
 #include <stdio.h>
@@ -144,7 +145,7 @@ CONSTRUCTOR(CIResultFileAnalysis *, CIResultFileAnalysis, CIResultFile *file)
         include_predefined__CIResultFile(file, file->entity.result->predefined);
     }
 
-    self->parser = NEW(CIParser, file, &file->scanner);
+    self->parser = NEW(CIParser, file);
 
     return self;
 }
@@ -179,6 +180,7 @@ CONSTRUCTOR(CIResultFile *,
     self->file_analysis = NULL;
     self->scope_base = NULL;
     self->owner = owner;
+    self->config = config;
     self->entity =
       NEW(CIResultEntity, id, result, entity_kind, filename_result);
     self->scanner =
@@ -734,8 +736,17 @@ search_identifier__CIResultFile(const CIResultFile *self,
 void
 run__CIResultFile(CIResultFile *self)
 {
+    CIResolver resolver = NEW(CIResolver,
+                              self,
+                              &self->scanner.tokens,
+                              &self->file_analysis->count_error,
+                              &self->file_analysis->count_warning);
+
     run__CIScanner(&self->scanner, false);
-    run__CIParser(&self->file_analysis->parser);
+    run__CIResolver(&resolver, NULL);
+    run__CIParser(&self->file_analysis->parser, resolver.resolved_tokens);
+
+    FREE(CIResolver, &resolver);
 }
 
 #define ADD_Xs_DECL(add_f, t, v, scope_base_hm, cond, ...)    \
@@ -1150,8 +1161,17 @@ run_file__CIResult(const CIResult *self,
 {
     CIResultFile *result_file =
       scan_file__CIResult(self, owner, file_parent, path, id);
+    CIResolver resolver = NEW(CIResolver,
+                              result_file,
+                              &result_file->scanner.tokens,
+                              &result_file->file_analysis->count_error,
+                              &result_file->file_analysis->count_warning);
 
-    run__CIParser(&result_file->file_analysis->parser);
+    run__CIResolver(&resolver, NULL);
+    run__CIParser(&result_file->file_analysis->parser,
+                  resolver.resolved_tokens);
+
+    FREE(CIResolver, &resolver);
 
     // if (file_parent) {
     //     include_content__CIResultFile(result_file, file_parent);

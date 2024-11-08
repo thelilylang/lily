@@ -65,6 +65,7 @@ format:
 	${CLANG_FORMAT} ./include/core/cc/ci/*.h
 	${CLANG_FORMAT} ./include/core/cc/ci/diagnostic/*.h
 	${CLANG_FORMAT} ./include/core/cc/ci/extensions/*.h
+	${CLANG_FORMAT} ./include/core/cc/ci/resolver/*.h
 	${CLANG_FORMAT} ./include/core/cc/diagnostic/*.h
 	${CLANG_FORMAT} ./include/core/cpp/diagnostic/*.h
 	${CLANG_FORMAT} ./include/core/lily/*.h
@@ -149,6 +150,7 @@ format:
 	${CLANG_FORMAT} ./src/core/cc/ci/*.c
 	${CLANG_FORMAT} ./src/core/cc/ci/diagnostic/*.c
 	${CLANG_FORMAT} ./src/core/cc/ci/extensions/*.c
+	${CLANG_FORMAT} ./src/core/cc/ci/resolver/*.c
 	${CLANG_FORMAT} ./src/core/cc/diagnostic/*.c
 	${CLANG_FORMAT} ./src/core/cc/*.c
 	${CLANG_FORMAT} ./src/core/cpp/diagnostic/*.c

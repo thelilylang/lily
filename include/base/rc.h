@@ -25,28 +25,44 @@
 #ifndef LILY_BASE_RC_H
 #define LILY_BASE_RC_H
 
-#define Rc(T)        \
-    struct           \
-    {                \
-        T *ptr;      \
-        Usize count; \
-    }
+#include <base/macros.h>
+#include <base/types.h>
 
-#define __new__Rc(T, value) { .ptr = value, .count = 0 }
-
-#define ref__Rc(self)   \
-    ({                  \
-        ++(self).count; \
-        self            \
-    })
-
-#define __free__Rc(T, self)     \
-    do {                        \
-        if ((self).count > 0) { \
-            --(self).count;     \
-            break;              \
-        }                       \
-        FREE(T, (self).ptr);    \
+#define FREE_RC(T, self)             \
+    do {                             \
+        if ((self)->ref_count > 0) { \
+            --(self)->ref_count;     \
+            break;                   \
+        }                            \
+                                     \
+        FREE(T, self->ptr);          \
+        lily_free((self));           \
     } while (0);
+
+#define GET_PTR_RC(T, self) ((T *)((self)->ptr))
+
+typedef struct Rc
+{
+    void *ptr;
+    Usize ref_count;
+} Rc;
+
+/**
+ *
+ * @brief Construct Rc type.
+ */
+CONSTRUCTOR(Rc *, Rc, void *ptr);
+
+/**
+ *
+ * @brief Increment the count of Rc type.
+ * @return Rc*
+ */
+inline Rc *
+ref__Rc(Rc *self)
+{
+    ++self->ref_count;
+    return self;
+}
 
 #endif // LILY_BASE_RC_H

@@ -72,6 +72,13 @@ set_predefined__CIScanner(CIScanner *self)
 
 /**
  *
+ * @brief Check if identifier is standard defined macro.
+ */
+bool
+is_standard_predefined_macro__CIScanner(const String *name);
+
+/**
+ *
  * @brief Run the scanner.
  */
 void

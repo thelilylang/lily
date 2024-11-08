@@ -27,6 +27,7 @@
 
 #include <base/alloc.h>
 #include <base/hash_map.h>
+#include <base/rc.h>
 #include <base/string.h>
 #include <base/types.h>
 #include <base/vec.h>
@@ -711,7 +712,7 @@ typedef struct CIDataTypeArray
     struct CIDataType *data_type;
     // NOTE: The only point in having a reference to the name of the variable,
     // parameter or field is when generating the C code.
-    String *name; // String*? (&)
+    Rc *name; // Rc<String*>*?
     union
     {
         Usize size;
@@ -721,34 +722,36 @@ typedef struct CIDataTypeArray
 /**
  *
  * @brief Construct CIDataTypeArray type (CI_DATA_TYPE_ARRAY_KIND_SIZED).
+ * @param name Rc<String*>*? (&)
  */
 inline VARIANT_CONSTRUCTOR(CIDataTypeArray,
                            CIDataTypeArray,
                            sized,
                            struct CIDataType *data_type,
-                           String *name,
+                           Rc *name,
                            Usize size)
 {
     return (CIDataTypeArray){ .kind = CI_DATA_TYPE_ARRAY_KIND_SIZED,
                               .data_type = data_type,
-                              .name = name,
+                              .name = name ? ref__Rc(name) : NULL,
                               .size = size };
 }
 
 /**
  *
  * @brief Construct CIDataTypeArray type (CI_DATA_TYPE_ARRAY_KIND_NONE).
+ * @param name Rc<String*>*? (&)
  */
 inline VARIANT_CONSTRUCTOR(CIDataTypeArray,
                            CIDataTypeArray,
                            none,
                            struct CIDataType *data_type,
-                           String *name)
+                           Rc *name)
 {
     return (CIDataTypeArray){
         .kind = CI_DATA_TYPE_ARRAY_KIND_NONE,
         .data_type = data_type,
-        .name = name,
+        .name = name ? ref__Rc(name) : NULL,
     };
 }
 
@@ -771,8 +774,8 @@ DESTRUCTOR(CIDataTypeArray, const CIDataTypeArray *self);
 // <return_data_type>(<function_data_type>)(<params>)
 typedef struct CIDataTypeFunction
 {
-    String *name; // String*? (&)
-    Vec *params;  // Vec<CIDeclFunctionParam*>*?
+    Rc *name;    // Rc<String*>*?
+    Vec *params; // Vec<CIDeclFunctionParam*>*?
     struct CIDataType *return_data_type;
     struct CIDataType *function_data_type; // struct CIDataType*?
 } CIDataTypeFunction;
@@ -780,15 +783,16 @@ typedef struct CIDataTypeFunction
 /**
  *
  * @brief Construct CIDataTypeFunction type.
+ * @param name Rc<String*>*? (&)
  */
 inline CONSTRUCTOR(CIDataTypeFunction,
                    CIDataTypeFunction,
-                   String *name,
+                   Rc *name,
                    Vec *params,
                    struct CIDataType *return_data_type,
                    struct CIDataType *function_data_type)
 {
-    return (CIDataTypeFunction){ .name = name,
+    return (CIDataTypeFunction){ .name = name ? ref__Rc(name) : NULL,
                                  .params = params,
                                  .return_data_type = return_data_type,
                                  .function_data_type = function_data_type };
@@ -812,7 +816,7 @@ DESTRUCTOR(CIDataTypeFunction, const CIDataTypeFunction *self);
 
 typedef struct CIDataTypeStruct
 {
-    String *name;                    // String*? (&)
+    Rc *name;                        // Rc<String*>*?
     CIGenericParams *generic_params; // CIGenericParams*?
     Vec *fields;                     // Vec<CIDeclStructField*>*?
 } CIDataTypeStruct;
@@ -820,14 +824,15 @@ typedef struct CIDataTypeStruct
 /**
  *
  * @brief Construct CIDataTypeStruct type.
+ * @param name Rc<String*>*? (&)
  */
 inline CONSTRUCTOR(CIDataTypeStruct,
                    CIDataTypeStruct,
-                   String *name,
+                   Rc *name,
                    CIGenericParams *generic_params,
                    Vec *fields)
 {
-    return (CIDataTypeStruct){ .name = name,
+    return (CIDataTypeStruct){ .name = name ? ref__Rc(name) : NULL,
                                .generic_params = generic_params,
                                .fields = fields };
 }
@@ -850,20 +855,21 @@ DESTRUCTOR(CIDataTypeStruct, const CIDataTypeStruct *self);
 
 typedef struct CIDataTypeTypedef
 {
-    String *name;                    // String* (&)
+    Rc *name;                        // Rc<String*>*
     CIGenericParams *generic_params; // CIGenericParams*?
 } CIDataTypeTypedef;
 
 /**
  *
  * @brief Construct CIDataTypeTypedef type.
+ * @param name Rc<String*>* (&)
  */
 inline CONSTRUCTOR(CIDataTypeTypedef,
                    CIDataTypeTypedef,
-                   String *name,
+                   Rc *name,
                    CIGenericParams *generic_params)
 {
-    return (CIDataTypeTypedef){ .name = name,
+    return (CIDataTypeTypedef){ .name = ref__Rc(name),
                                 .generic_params = generic_params };
 }
 
@@ -885,7 +891,7 @@ DESTRUCTOR(CIDataTypeTypedef, const CIDataTypeTypedef *self);
 
 typedef struct CIDataTypeUnion
 {
-    String *name;                    // String*? (&)
+    Rc *name;                        // Rc<String*>*?
     CIGenericParams *generic_params; // CIGenericParams*?
     Vec *fields;                     // Vec<CIDeclStructField*>*?
 } CIDataTypeUnion;
@@ -893,14 +899,15 @@ typedef struct CIDataTypeUnion
 /**
  *
  * @brief Construct CIDataTypeUnion type.
+ * @param name Rc<String*>*? (&)
  */
 inline CONSTRUCTOR(CIDataTypeUnion,
                    CIDataTypeUnion,
-                   String *name,
+                   Rc *name,
                    CIGenericParams *generic_params,
                    Vec *fields)
 {
-    return (CIDataTypeUnion){ .name = name,
+    return (CIDataTypeUnion){ .name = name ? ref__Rc(name) : NULL,
                               .generic_params = generic_params,
                               .fields = fields };
 }
@@ -959,9 +966,9 @@ typedef struct CIDataType
     {
         CIDataTypeArray array;
         Usize builtin; // id of the builtin
-        String *enum_; // String* (&)
+        Rc *enum_;     // Rc<String*>*?
         CIDataTypeFunction function;
-        String *generic;        // String* (&)
+        Rc *generic;            // Rc<String*>*
         struct CIDataType *ptr; // struct CIDataType*?
         CIDataTypeStruct struct_;
         CIDataTypeTypedef typedef_;
@@ -984,8 +991,9 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, builtin, Usize builtin);
 /**
  *
  * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_ENUM).
+ * @param enum_ Rc<String*>* (&)
  */
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, enum, String *enum_);
+VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, enum, Rc *enum_);
 
 /**
  *
@@ -999,8 +1007,9 @@ VARIANT_CONSTRUCTOR(CIDataType *,
 /**
  *
  * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_GENERIC).
+ * @param generic Rc<String*>* (&)
  */
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, generic, String *generic);
+VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, generic, Rc *generic);
 
 /**
  *
@@ -1244,8 +1253,8 @@ typedef struct CIAttributeStandard
     enum CIAttributeStandardKind kind;
     union
     {
-        String *deprecated; // String*? (&)
-        String *nodiscard;  // String*? (&)
+        Rc *deprecated; // Rc<String*>*?
+        Rc *nodiscard;  // Rc<String*>*?
     };
 } CIAttributeStandard;
 
@@ -1264,28 +1273,30 @@ inline CONSTRUCTOR(CIAttributeStandard,
  *
  * @brief Construct CIAttributeStandard type
  * (CI_ATTRIBUTE_STANDARD_KIND_DEPRECATED).
+ * @param deprecated Rc<String*>* (&)
  */
 inline VARIANT_CONSTRUCTOR(CIAttributeStandard,
                            CIAttributeStandard,
                            deprecated,
-                           String *deprecated)
+                           Rc *deprecated)
 {
     return (CIAttributeStandard){ .kind = CI_ATTRIBUTE_STANDARD_KIND_DEPRECATED,
-                                  .deprecated = deprecated };
+                                  .deprecated = ref__Rc(deprecated) };
 }
 
 /**
  *
  * @brief Construct CIAttributeStandard type
  * (CI_ATTRIBUTE_STANDARD_KIND_NODISCARD).
+ * @param nodiscard Rc<String*>* (&)
  */
 inline VARIANT_CONSTRUCTOR(CIAttributeStandard,
                            CIAttributeStandard,
                            nodiscard,
-                           String *nodiscard)
+                           Rc *nodiscard)
 {
     return (CIAttributeStandard){ .kind = CI_ATTRIBUTE_STANDARD_KIND_NODISCARD,
-                                  .nodiscard = nodiscard };
+                                  .nodiscard = ref__Rc(nodiscard) };
 }
 
 /**
@@ -1297,6 +1308,12 @@ inline VARIANT_CONSTRUCTOR(CIAttributeStandard,
 String *
 IMPL_FOR_DEBUG(to_string, CIAttributeStandard, const CIAttributeStandard *self);
 #endif
+
+/**
+ *
+ * @brief CIAttributeStandard type.
+ */
+DESTRUCTOR(CIAttributeStandard, const CIAttributeStandard *self);
 
 typedef struct CIAttribute
 {
@@ -1330,10 +1347,7 @@ IMPL_FOR_DEBUG(to_string, CIAttribute, const CIAttribute *self);
  *
  * @brief Free CIAttribute type.
  */
-inline DESTRUCTOR(CIAttribute, CIAttribute *self)
-{
-    lily_free(self);
-}
+DESTRUCTOR(CIAttribute, CIAttribute *self);
 
 enum CIStorageClass
 {
@@ -1413,7 +1427,7 @@ IMPL_FOR_DEBUG(to_string,
 typedef struct CIDeclEnumVariant
 {
     enum CIDeclEnumVariantKind kind;
-    String *name; // String* (&)
+    Rc *name; // Rc<String*>*
     union
     {
         Isize value;
@@ -1423,21 +1437,20 @@ typedef struct CIDeclEnumVariant
 /**
  *
  * @brief Construct CIDeclEnumVariant type (CI_DECL_ENUM_VARIANT_KIND_CUSTOM).
+ * @param name Rc<String*>* (&)
  */
 VARIANT_CONSTRUCTOR(CIDeclEnumVariant *,
                     CIDeclEnumVariant,
                     custom,
-                    String *name,
+                    Rc *name,
                     Isize value);
 
 /**
  *
  * @brief Construct CIDeclEnumVariant type (CI_DECL_ENUM_VARIANT_KIND_DEFAULT).
+ * @param name Rc<String*>* (&)
  */
-VARIANT_CONSTRUCTOR(CIDeclEnumVariant *,
-                    CIDeclEnumVariant,
-                    default,
-                    String *name);
+VARIANT_CONSTRUCTOR(CIDeclEnumVariant *, CIDeclEnumVariant, default, Rc *name);
 
 /**
  *
@@ -1453,14 +1466,11 @@ IMPL_FOR_DEBUG(to_string, CIDeclEnumVariant, const CIDeclEnumVariant *self);
  *
  * @brief Free CIDeclEnumVariant type.
  */
-inline DESTRUCTOR(CIDeclEnumVariant, CIDeclEnumVariant *self)
-{
-    lily_free(self);
-}
+DESTRUCTOR(CIDeclEnumVariant, CIDeclEnumVariant *self);
 
 typedef struct CIDeclEnum
 {
-    String *name;          // String* (&)
+    Rc *name;              // Rc<String*>*?
     Vec *variants;         // Vec<CIDeclEnumVariant*>*?
     CIDataType *data_type; // CIDataType*?
     CISizeInfo size_info;
@@ -1469,14 +1479,15 @@ typedef struct CIDeclEnum
 /**
  *
  * @brief Construct CIDeclEnum type.
+ * @param name Rc<String*>* (&)
  */
 inline CONSTRUCTOR(CIDeclEnum,
                    CIDeclEnum,
-                   String *name,
+                   Rc *name,
                    Vec *variants,
                    CIDataType *data_type)
 {
-    return (CIDeclEnum){ .name = name,
+    return (CIDeclEnum){ .name = name ? ref__Rc(name) : NULL,
                          .variants = variants,
                          .data_type = data_type,
                          .size_info = NEW(CISizeInfo) };
@@ -1503,13 +1514,8 @@ IMPL_FOR_DEBUG(to_string, CIDeclEnum, const CIDeclEnum *self);
  *
  * @brief Free CIDeclEnum type in prototype case.
  */
-inline void
-free_as_prototype__CIDeclEnum(const CIDeclEnum *self)
-{
-    if (self->data_type) {
-        FREE(CIDataType, self->data_type);
-    }
-}
+void
+free_as_prototype__CIDeclEnum(const CIDeclEnum *self);
 
 /**
  *
@@ -1538,7 +1544,7 @@ IMPL_FOR_DEBUG(to_string,
 typedef struct CIDeclFunctionParam
 {
     enum CIDeclFunctionParamKind kind;
-    String *name;          // String*? (&)
+    Rc *name;              // Rc<String*>*?
     CIDataType *data_type; // CIDataType*?
 } CIDeclFunctionParam;
 
@@ -1546,11 +1552,12 @@ typedef struct CIDeclFunctionParam
  *
  * @brief Construct CIDeclFunctionParam type
  * (CI_DECL_FUNCTION_PARAM_KIND_NORMAL).
+ * @param name Rc<String*>*? (&)
  */
 VARIANT_CONSTRUCTOR(CIDeclFunctionParam *,
                     CIDeclFunctionParam,
                     normal,
-                    String *name,
+                    Rc *name,
                     CIDataType *data_type);
 
 /**
@@ -1641,7 +1648,7 @@ DESTRUCTOR(CIDeclFunctionBody, CIDeclFunctionBody *self);
 // CIDeclFunction.
 typedef struct CIDeclFunction
 {
-    String *name; // String* (&)
+    Rc *name; // Rc<String*>*
     CIDataType *return_data_type;
     CIGenericParams *generic_params; // CIGenericParams*?
     Vec *params;                     // Vec<CIDeclFunctionParam*>*?
@@ -1655,14 +1662,14 @@ typedef struct CIDeclFunction
  */
 inline CONSTRUCTOR(CIDeclFunction,
                    CIDeclFunction,
-                   String *name,
+                   Rc *name,
                    CIDataType *return_data_type,
                    CIGenericParams *generic_params,
                    Vec *params,
                    CIDeclFunctionBody *body,
                    Vec *attributes)
 {
-    return (CIDeclFunction){ .name = name,
+    return (CIDeclFunction){ .name = ref__Rc(name),
                              .return_data_type = return_data_type,
                              .generic_params = generic_params,
                              .params = params,
@@ -1770,16 +1777,17 @@ DESTRUCTOR(CIDeclFunctionGen, const CIDeclFunctionGen *self);
 
 typedef struct CIDeclLabel
 {
-    String *name; // String* (&)
+    Rc *name; // Rc<String*>*
 } CIDeclLabel;
 
 /**
  *
  * @brief Construct CIDeclLabel type.
+ * @param name Rc<String*>* (&)
  */
-inline CONSTRUCTOR(CIDeclLabel, CIDeclLabel, String *name)
+inline CONSTRUCTOR(CIDeclLabel, CIDeclLabel, Rc *name)
 {
-    return (CIDeclLabel){ .name = name };
+    return (CIDeclLabel){ .name = ref__Rc(name) };
 }
 
 /**
@@ -1792,19 +1800,26 @@ String *
 IMPL_FOR_DEBUG(to_string, CIDeclLabel, const CIDeclLabel *self);
 #endif
 
+/**
+ *
+ * @brief Free CIDeclLabel type.
+ */
+DESTRUCTOR(CIDeclLabel, const CIDeclLabel *self);
+
 typedef struct CIDeclStructField
 {
-    String *name; // String* (&)
+    Rc *name; // Rc<String*>*?
     CIDataType *data_type;
 } CIDeclStructField;
 
 /**
  *
  * @brief Construct CIDeclStructField type.
+ * @param name Rc<String*>*? (&)
  */
 CONSTRUCTOR(CIDeclStructField *,
             CIDeclStructField,
-            String *name,
+            Rc *name,
             CIDataType *data_type);
 
 /**
@@ -1874,7 +1889,7 @@ DESTRUCTOR(CIDeclStructField, CIDeclStructField *self);
 
 typedef struct CIDeclStruct
 {
-    String *name;                    // String* (&)
+    Rc *name;                        // Rc<String*>*?
     CIGenericParams *generic_params; // CIGenericParams*?
     Vec *fields;                     // Vec<CIDeclStructField*>*?
     CISizeInfo size_info;
@@ -1883,14 +1898,15 @@ typedef struct CIDeclStruct
 /**
  *
  * @brief Construct CIDeclStruct type.
+ * @param name Rc<String*>* (&)
  */
 inline CONSTRUCTOR(CIDeclStruct,
                    CIDeclStruct,
-                   String *name,
+                   Rc *name,
                    CIGenericParams *generic_params,
                    Vec *fields)
 {
-    return (CIDeclStruct){ .name = name,
+    return (CIDeclStruct){ .name = name ? ref__Rc(name) : NULL,
                            .generic_params = generic_params,
                            .fields = fields,
                            .size_info = NEW(CISizeInfo) };
@@ -1998,7 +2014,7 @@ DESTRUCTOR(CIDeclStructGen, const CIDeclStructGen *self);
 
 typedef struct CIDeclTypedef
 {
-    String *name;                    // String* (&)
+    Rc *name;                        // Rc<String*>*
     CIGenericParams *generic_params; // CIGenericParams*?
     CIDataType *data_type;
     CISizeInfo size_info;
@@ -2007,14 +2023,15 @@ typedef struct CIDeclTypedef
 /**
  *
  * @brief Construct CIDeclTypedef type.
+ * @param name Rc<String*>* (&)
  */
 inline CONSTRUCTOR(CIDeclTypedef,
                    CIDeclTypedef,
-                   String *name,
+                   Rc *name,
                    CIGenericParams *generic_params,
                    CIDataType *data_type)
 {
-    return (CIDeclTypedef){ .name = name,
+    return (CIDeclTypedef){ .name = ref__Rc(name),
                             .generic_params = generic_params,
                             .data_type = data_type,
                             .size_info = NEW(CISizeInfo) };
@@ -2125,7 +2142,7 @@ DESTRUCTOR(CIDeclTypedefGen, const CIDeclTypedefGen *self);
 
 typedef struct CIDeclUnion
 {
-    String *name;                    // String* (&)
+    Rc *name;                        // Rc<String*>*?
     CIGenericParams *generic_params; // CIGenericParams*?
     Vec *fields;                     // Vec<CIDeclStructField*>*?
     CISizeInfo size_info;
@@ -2134,14 +2151,15 @@ typedef struct CIDeclUnion
 /**
  *
  * @brief Construct CIDeclUnion type.
+ * @param name Rc<String*>* (&)
  */
 inline CONSTRUCTOR(CIDeclUnion,
                    CIDeclUnion,
-                   String *name,
+                   Rc *name,
                    CIGenericParams *generic_params,
                    Vec *fields)
 {
-    return (CIDeclUnion){ .name = name,
+    return (CIDeclUnion){ .name = name ? ref__Rc(name) : NULL,
                           .generic_params = generic_params,
                           .fields = fields,
                           .size_info = NEW(CISizeInfo) };
@@ -2249,7 +2267,7 @@ DESTRUCTOR(CIDeclUnionGen, const CIDeclUnionGen *self);
 typedef struct CIDeclVariable
 {
     CIDataType *data_type;
-    String *name; // String* (&)
+    Rc *name;     // Rc<String*>*
     CIExpr *expr; // CIExpr*?
     bool is_local;
 } CIDeclVariable;
@@ -2257,17 +2275,19 @@ typedef struct CIDeclVariable
 /**
  *
  * @brief Construct CIDeclVariable type.
+ * @param name Rc<String*>* (&)
  */
 inline CONSTRUCTOR(CIDeclVariable,
                    CIDeclVariable,
                    CIDataType *data_type,
-                   String *name,
+                   Rc *name,
                    CIExpr *expr,
                    bool is_local)
 {
-    return (CIDeclVariable){
-        .data_type = data_type, .name = name, .expr = expr, .is_local = is_local
-    };
+    return (CIDeclVariable){ .data_type = data_type,
+                             .name = ref__Rc(name),
+                             .expr = expr,
+                             .is_local = is_local };
 }
 
 /**
@@ -2458,7 +2478,7 @@ ref__CIDecl(CIDecl *self)
 /**
  *
  * @brief Get name from declaration.
- * @return String* (&)
+ * @return String*? (&)
  */
 String *
 get_name__CIDecl(const CIDecl *self);
@@ -2762,11 +2782,7 @@ typedef struct CIExprLiteral
         char char_;
         double float_;
         Isize signed_int;
-        struct
-        {
-            String *value; // String* (&) | String*
-            bool must_free;
-        } string;
+        Rc *string; // Rc<String*>*
         Usize unsigned_int;
     };
 } CIExprLiteral;
@@ -2815,16 +2831,12 @@ inline VARIANT_CONSTRUCTOR(CIExprLiteral,
 /**
  *
  * @brief Construct CIExprLiteral type (CI_EXPR_LITERAL_KIND_STRING).
+ * @param string Rc<String*>* (&)
  */
-inline VARIANT_CONSTRUCTOR(CIExprLiteral,
-                           CIExprLiteral,
-                           string,
-                           String *value,
-                           bool must_free)
+inline VARIANT_CONSTRUCTOR(CIExprLiteral, CIExprLiteral, string, Rc *string)
 {
-    return (
-      CIExprLiteral){ .kind = CI_EXPR_LITERAL_KIND_STRING,
-                      .string = { .value = value, .must_free = must_free } };
+    return (CIExprLiteral){ .kind = CI_EXPR_LITERAL_KIND_STRING,
+                            .string = ref__Rc(string) };
 }
 
 /**
@@ -2990,7 +3002,7 @@ DESTRUCTOR(CIExprCast, const CIExprCast *self);
 
 typedef struct CIExprFunctionCall
 {
-    String *identifier;              // String* (&)
+    Rc *identifier;                  // Rc<String*>*
     Vec *params;                     // Vec<CIExpr*>*
     CIGenericParams *generic_params; // CIGenericParams*?
 } CIExprFunctionCall;
@@ -2998,14 +3010,15 @@ typedef struct CIExprFunctionCall
 /**
  *
  * @brief Construct CIExprFunctionCall type.
+ * @param identifier Rc<String*>* (&)
  */
 inline CONSTRUCTOR(CIExprFunctionCall,
                    CIExprFunctionCall,
-                   String *identifier,
+                   Rc *identifier,
                    Vec *params,
                    CIGenericParams *generic_params)
 {
-    return (CIExprFunctionCall){ .identifier = identifier,
+    return (CIExprFunctionCall){ .identifier = ref__Rc(identifier),
                                  .params = params,
                                  .generic_params = generic_params };
 }
@@ -3073,7 +3086,7 @@ DESTRUCTOR(CIExprFunctionCallBuiltin, const CIExprFunctionCallBuiltin *self);
 
 typedef struct CIExprStructFieldCall
 {
-    Vec *path; // Vec<String* (&)>*
+    Vec *path; // Vec<Rc<String*>*>*
     CIExpr *value;
 } CIExprStructFieldCall;
 
@@ -3179,7 +3192,7 @@ struct CIExpr
         CIExprFunctionCall function_call;
         CIExprFunctionCallBuiltin function_call_builtin;
         CIExpr *grouping;
-        String *identifier; // String* (&)
+        Rc *identifier; // Rc<String*>*
         CIExprLiteral literal;
         CIExpr *sizeof_;
         CIExprStructCall struct_call;
@@ -3260,8 +3273,9 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, grouping, CIExpr *grouping);
 /**
  *
  * @brief Construct CIExpr type (CI_EXPR_KIND_IDENTIFIER).
+ * @param identifier Rc<String*>* (&)
  */
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, identifier, String *identifier);
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, identifier, Rc *identifier);
 
 /**
  *
@@ -3649,7 +3663,7 @@ typedef struct CIStmt
         CIStmtSwitchCase case_;
         CIStmtDoWhile do_while;
         CIStmtFor for_;
-        String *goto_; // String* (&)
+        Rc *goto_; // Rc<String*>*
         CIStmtIf if_;
         CIExpr *return_; // CIExpr*?
         CIStmtSwitch switch_;
@@ -3723,10 +3737,11 @@ inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, for, CIStmtFor for_)
 /**
  *
  * @brief Construct CIStmt type (CI_STMT_KIND_GOTO).
+ * @param goto_ Rc<String*>* (&)
  */
-inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, goto, String *goto_)
+inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, goto, Rc *goto_)
 {
-    return (CIStmt){ .kind = CI_STMT_KIND_GOTO, .goto_ = goto_ };
+    return (CIStmt){ .kind = CI_STMT_KIND_GOTO, .goto_ = ref__Rc(goto_) };
 }
 
 /**

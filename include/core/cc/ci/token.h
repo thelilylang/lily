@@ -28,6 +28,7 @@
 #include <base/alloc.h>
 #include <base/macros.h>
 #include <base/new.h>
+#include <base/rc.h>
 #include <base/stack.h>
 #include <base/string.h>
 #include <base/vec.h>
@@ -1241,6 +1242,7 @@ typedef struct CIToken
     enum CITokenKind kind;
     Location location;
     struct CIToken *next; // struct CIToken*? (&)
+    Usize ref_count;
     union
     {
         String *attribute_deprecated; // String*?
@@ -1262,14 +1264,14 @@ typedef struct CIToken
         CITokenPreprocessorLine preprocessor_line;
         String *preprocessor_undef;
         String *preprocessor_warning;
-        String *identifier;
+        Rc *identifier; // Rc<String*>*
         CITokenLiteralConstantInt literal_constant_int;
         CITokenLiteralConstantFloat literal_constant_float;
         CITokenLiteralConstantInt literal_constant_octal;
         CITokenLiteralConstantInt literal_constant_hex;
         CITokenLiteralConstantInt literal_constant_bin;
         char literal_constant_character;
-        String *literal_constant_string;
+        Rc *literal_constant_string; // Rc<String*>*
         String *macro_defined;
         CITokenMacroParam macro_param;
         CITokenMacroParamVariadic macro_param_variadic;
@@ -1336,12 +1338,13 @@ VARIANT_CONSTRUCTOR(CIToken *,
 /**
  *
  * @brief Construct CIToken type (CI_TOKEN_KIND_IDENTIFIER).
+ * @param identifier Rc<String*>*
  */
 VARIANT_CONSTRUCTOR(CIToken *,
                     CIToken,
                     identifier,
                     Location location,
-                    String *identifier);
+                    Rc *identifier);
 
 /**
  *
@@ -1406,12 +1409,13 @@ VARIANT_CONSTRUCTOR(CIToken *,
 /**
  *
  * @brief Construct CIToken type (CI_TOKEN_KIND_LITERAL_CONSTANT_STRING).
+ * @param literal_constant_string Rc<String*>*
  */
 VARIANT_CONSTRUCTOR(CIToken *,
                     CIToken,
                     literal_constant_string,
                     Location location,
-                    String *literal_constant_string);
+                    Rc *literal_constant_string);
 
 /**
  *
@@ -1636,6 +1640,18 @@ is_conditional_preprocessor__CITokenKind(enum CITokenKind kind);
  */
 bool
 is_preprocessor__CITokenKind(enum CITokenKind kind);
+
+/**
+ *
+ * @brief Increment `ref_count`.
+ * @return CIToken*
+ */
+inline CIToken *
+ref__CIToken(CIToken *self)
+{
+    ++self->ref_count;
+    return self;
+}
 
 /**
  *
