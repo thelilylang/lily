@@ -4092,78 +4092,56 @@ parse_pre_data_type__CIParser(CIParser *self)
                     UNREACHABLE("unknown variant");
             }
 
-            switch (self->current_token->kind) {
-                case CI_TOKEN_KIND_LBRACE:
-                case CI_TOKEN_KIND_SEMICOLON:
-                    switch (previous_token_kind) {
-                        case CI_TOKEN_KIND_KEYWORD_STRUCT: {
-                            CIDecl *struct_decl = parse_struct__CIParser(
-                              self,
-                              storage_class_flag,
-                              name,
-                              generic_params
-                                ? ref__CIGenericParams(generic_params)
-                                : NULL);
+            switch (previous_token_kind) {
+                case CI_TOKEN_KIND_KEYWORD_STRUCT: {
+                    CIDecl *struct_decl = parse_struct__CIParser(
+                      self,
+                      CI_STORAGE_CLASS_NONE,
+                      name,
+                      generic_params ? ref__CIGenericParams(generic_params)
+                                     : NULL);
 
-                            if (add_decl_to_scope__CIParser(
-                                  self, &struct_decl, true)) {
-                                break;
-                            }
+                    if (add_decl_to_scope__CIParser(self, &struct_decl, true)) {
+                        generate_struct_gen__CIParser(
+                          self, GET_PTR_RC(String, name), generic_params);
 
-                            if (struct_decl->struct_.fields &&
-                                !struct_decl->struct_.name) {
-                                res->struct_.fields =
-                                  clone_fields__CIDeclStructField(
-                                    struct_decl->struct_.fields);
-                                FREE(CIDecl, struct_decl);
-                            }
+                        break;
+                    }
 
-                            break;
-                        }
-                        case CI_TOKEN_KIND_KEYWORD_UNION: {
-                            CIDecl *union_decl = parse_union__CIParser(
-                              self,
-                              storage_class_flag,
-                              name,
-                              generic_params
-                                ? ref__CIGenericParams(generic_params)
-                                : NULL);
-
-                            if (add_decl_to_scope__CIParser(
-                                  self, &union_decl, true)) {
-                                break;
-                            }
-
-                            if (union_decl->union_.fields &&
-                                !union_decl->union_.name) {
-                                res->union_.fields =
-                                  clone_fields__CIDeclStructField(
-                                    union_decl->union_.fields);
-                                FREE(CIDecl, union_decl);
-                            }
-
-                            break;
-                        }
-                        default:
-                            UNREACHABLE("unknown variant");
+                    if (struct_decl->struct_.fields &&
+                        !struct_decl->struct_.name) {
+                        res->struct_.fields = clone_fields__CIDeclStructField(
+                          struct_decl->struct_.fields);
+                        FREE(CIDecl, struct_decl);
                     }
 
                     break;
-                default:
-                    switch (previous_token_kind) {
-                        case CI_TOKEN_KIND_KEYWORD_STRUCT:
-                            generate_struct_gen__CIParser(
-                              self, GET_PTR_RC(String, name), generic_params);
+                }
+                case CI_TOKEN_KIND_KEYWORD_UNION: {
+                    CIDecl *union_decl = parse_union__CIParser(
+                      self,
+                      CI_STORAGE_CLASS_NONE,
+                      name,
+                      generic_params ? ref__CIGenericParams(generic_params)
+                                     : NULL);
 
-                            break;
-                        case CI_TOKEN_KIND_KEYWORD_UNION:
-                            generate_union_gen__CIParser(
-                              self, GET_PTR_RC(String, name), generic_params);
+                    if (add_decl_to_scope__CIParser(self, &union_decl, true)) {
+                        generate_union_gen__CIParser(
+                          self, GET_PTR_RC(String, name), generic_params);
 
-                            break;
-                        default:
-                            UNREACHABLE("this situation is impossible");
+                        break;
                     }
+
+                    if (union_decl->union_.fields && !union_decl->union_.name) {
+                        res->union_.fields = clone_fields__CIDeclStructField(
+                          union_decl->union_.fields);
+                        FREE(CIDecl, union_decl);
+                    }
+
+                    break;
+                }
+                default:
+                    UNREACHABLE("unknown variant");
             }
 
             break;
@@ -8109,9 +8087,6 @@ parse_fields__CIParser(CIParser *self)
 Vec *
 parse_struct_or_union_fields__CIParser(CIParser *self)
 {
-    ASSERT(self->current_token->kind == CI_TOKEN_KIND_LBRACE ||
-           self->current_token->kind == CI_TOKEN_KIND_SEMICOLON);
-
     switch (self->current_token->kind) {
         case CI_TOKEN_KIND_LBRACE:
             next_token__CIParser(self);
