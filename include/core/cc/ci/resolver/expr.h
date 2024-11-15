@@ -60,6 +60,13 @@ is_true__CIResolverExpr(CIExpr *expr);
 
 /**
  *
+ * @brief Convert resolved expression to literal integer value.
+ */
+Isize
+to_literal_integer_value__CIResolverExpr(CIExpr *expr);
+
+/**
+ *
  * @brief Resolve preprocessor condition.
  */
 CIExpr *
