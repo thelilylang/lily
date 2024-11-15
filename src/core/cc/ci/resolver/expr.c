@@ -265,6 +265,30 @@ is_true__CIResolverExpr(CIExpr *expr)
     }
 }
 
+Isize
+to_literal_integer_value__CIResolverExpr(CIExpr *expr)
+{
+    ASSERT(expr);
+
+    switch (expr->kind) {
+        case CI_EXPR_KIND_LITERAL:
+            switch (expr->literal.kind) {
+                case CI_EXPR_LITERAL_KIND_BOOL:
+                    return expr->literal.bool_;
+                case CI_EXPR_LITERAL_KIND_CHAR:
+                    return expr->literal.char_;
+                case CI_EXPR_LITERAL_KIND_SIGNED_INT:
+                    return expr->literal.signed_int;
+                case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:
+                    return expr->literal.unsigned_int;
+                default:
+                    FAILED("expected to have integer literal compatible value");
+            }
+        default:
+            FAILED("expected to have expression resolvable at compile-time");
+    }
+}
+
 // +, -, *, /
 #define RESOLVE_BASIC_BINARY_ARITHMETIC_EXPR(op, binary_kind)                  \
     ASSERT(lhs &&rhs);                                                         \

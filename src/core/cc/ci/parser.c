@@ -4230,12 +4230,38 @@ parse_enum_variants__CIParser(CIParser *self)
         }
 
         switch (self->current_token->kind) {
-            case CI_TOKEN_KIND_EQ:
+            case CI_TOKEN_KIND_EQ: {
                 next_token__CIParser(self);
 
-                TODO("parse expression");
+                CIExpr *custom_expr = parse_expr__CIParser(self);
+                CIResolverExpr resolver_expr =
+                  NEW(CIResolverExpr, self, current_scope, false);
+                CIExpr *resolved_custom_expr =
+                  run__CIResolverExpr(&resolver_expr, custom_expr);
+                Isize custom_value = 0;
+
+                // TODO: Support non-literal expression.
+                switch (custom_expr->kind) {
+                    case CI_EXPR_KIND_LITERAL:
+                        custom_value = to_literal_integer_value__CIResolverExpr(
+                          resolved_custom_expr);
+
+                        break;
+                    default:
+                        FAILED(
+                          "expected literal expression (passing a constant or "
+                          "enum variant is not yet supported).");
+                }
+
+                push__Vec(
+                  variants,
+                  NEW_VARIANT(CIDeclEnumVariant, custom, name, custom_value));
+
+                FREE(CIExpr, custom_expr);
+                FREE(CIExpr, resolved_custom_expr);
 
                 break;
+            }
             default:
                 push__Vec(variants,
                           NEW_VARIANT(CIDeclEnumVariant, default, name));
