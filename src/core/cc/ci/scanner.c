@@ -228,11 +228,6 @@ get_character__CIScanner(CIScanner *self, char previous);
 static String *
 scan_identifier__CIScanner(CIScanner *self);
 
-/// @brief Check if identifier is standard defined macro.
-static inline bool
-identifier_is_standard_predefined_macro__CIScanner(CIScanner *self,
-                                                   const String *name);
-
 /// @brief Scan identifier with peek_char function (without use
 /// next_char__CIScanner).
 static String *
@@ -1374,8 +1369,10 @@ scan_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
 
     switch (current_kind) {
         case CI_TOKEN_KIND_IDENTIFIER:
-            last_token = NEW_VARIANT(
-              CIToken, identifier, clone__Location(&self->base.location), id);
+            last_token = NEW_VARIANT(CIToken,
+                                     identifier,
+                                     clone__Location(&self->base.location),
+                                     NEW(Rc, id));
             break;
         default:
             CI_CHECK_STANDARD_SINCE(
@@ -1384,7 +1381,7 @@ scan_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
                     NEW_VARIANT(CIToken,
                                 identifier,
                                 clone__Location(&self->base.location),
-                                id);
+                                NEW(Rc, id));
               })
             else
             {
@@ -1411,7 +1408,8 @@ scan_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
                     if (param->is_variadic) {
                         has_variadic = true;
 
-                        if (!strcmp(last_token->identifier->buffer,
+                        if (!strcmp(GET_PTR_RC(String, last_token->identifier)
+                                      ->buffer,
                                     CI_VA_ARGS)) {
                             param->is_used = true;
 
@@ -1429,7 +1427,8 @@ scan_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
                         ASSERT(param->name);
 
                         if (!strcmp(param->name->buffer,
-                                    last_token->identifier->buffer)) {
+                                    GET_PTR_RC(String, last_token->identifier)
+                                      ->buffer)) {
                             param->is_used = true;
 
                             res = NEW_VARIANT(CIToken,
@@ -1446,7 +1445,8 @@ scan_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
                 }
 
                 if (!has_variadic && last_token &&
-                    !strcmp(last_token->identifier->buffer, CI_VA_ARGS)) {
+                    !strcmp(GET_PTR_RC(String, last_token->identifier)->buffer,
+                            CI_VA_ARGS)) {
                     FAILED("you cannot use `__VA_ARGS__` in macro which have "
                            "no variadic param");
                 }
@@ -1458,7 +1458,8 @@ scan_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
 
             if (is_in_prepro_cond__CIScannerContext(ctx)) {
                 // e.g. #if defined(...)
-                if (!strcmp(last_token->identifier->buffer, "defined")) {
+                if (!strcmp(GET_PTR_RC(String, last_token->identifier)->buffer,
+                            "defined")) {
                     String *defined_identifier = NULL;
                     bool has_open_paren = false;
 
@@ -1512,7 +1513,7 @@ scan_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
             {
                 enum CITokenKind standard_predefined_macro =
                   get_standard_predefined_macro__CIScanner(
-                    last_token->identifier);
+                    GET_PTR_RC(String, last_token->identifier));
 
                 switch (standard_predefined_macro) {
                     // Standard predefined macro case
@@ -1586,8 +1587,8 @@ scan_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
             // Check if it's a builtin macro
             // https://clang.llvm.org/docs/LanguageExtensions.html#builtin-macros
             {
-                enum CITokenKind builtin_macro =
-                  get_builtin_macro__CIScanner(last_token->identifier);
+                enum CITokenKind builtin_macro = get_builtin_macro__CIScanner(
+                  GET_PTR_RC(String, last_token->identifier));
 
                 switch (builtin_macro) {
                     case CI_TOKEN_KIND_BUILTIN_MACRO___HAS_FEATURE:
@@ -1946,8 +1947,7 @@ scan_identifier__CIScanner(CIScanner *self)
 }
 
 bool
-identifier_is_standard_predefined_macro__CIScanner(CIScanner *self,
-                                                   const String *name)
+is_standard_predefined_macro__CIScanner(const String *name)
 {
     return get_standard_predefined_macro__CIScanner(name) !=
            CI_TOKEN_KIND_IDENTIFIER;
@@ -2363,7 +2363,7 @@ scan_macro_name__CIScanner(CIScanner *self,
 
     String *name = scan_identifier__CIScanner(self);
 
-    if (identifier_is_standard_predefined_macro__CIScanner(self, name)) {
+    if (is_standard_predefined_macro__CIScanner(name)) {
         if (!(self->is_predefined ||
               preprocessor_ctx == CI_TOKEN_KIND_PREPROCESSOR_IFDEF)) {
             FAILED("not expected to undef or re-define standard predefined "
@@ -2397,10 +2397,11 @@ scan_define_preprocessor_params__CIScanner(CIScanner *self,
                     push__Vec(params,
                               NEW_VARIANT(CITokenPreprocessorDefineParam,
                                           normal,
-                                          param->identifier));
+                                          clone__String(GET_PTR_RC(
+                                            String, param->identifier))));
                     next_char__CIScanner(self);
 
-                    lily_free(param);
+                    FREE(CIToken, param);
 
                     goto skip_sep;
                 case CI_TOKEN_KIND_DOT_DOT_DOT:
@@ -2849,10 +2850,10 @@ scan_embed_preprocessor__CIScanner(CIScanner *self)
 
             switch (string_token->kind) {
                 case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
-                    preprocessor_embed_value =
-                      string_token->literal_constant_string;
+                    preprocessor_embed_value = clone__String(GET_PTR_RC(
+                      String, string_token->literal_constant_string));
 
-                    lily_free(string_token);
+                    FREE(CIToken, string_token);
 
                     break;
                 default:
@@ -2991,11 +2992,13 @@ scan_include_preprocessor__CIScanner(CIScanner *self)
             if (token_include_value) {
                 switch (token_include_value->kind) {
                     case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
-                        preprocessor_include_value =
-                          token_include_value->literal_constant_string;
+                        preprocessor_include_value = clone__String(GET_PTR_RC(
+                          String,
+                          token_include_value->literal_constant_string));
 
                         next_char__CIScanner(self);
-                        lily_free(token_include_value);
+
+                        FREE(CIToken, token_include_value);
 
                         break;
                     default:
@@ -3070,9 +3073,10 @@ scan_line_preprocessor__CIScanner(CIScanner *self)
                 if (token_filename) {
                     switch (token_filename->kind) {
                         case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
-                            filename = token_filename->literal_constant_string;
+                            filename = clone__String(GET_PTR_RC(
+                              String, token_filename->literal_constant_string));
 
-                            lily_free(token_filename);
+                            FREE(CIToken, token_filename);
 
                             break;
                         default:
@@ -3664,7 +3668,7 @@ get_token__CIScanner(CIScanner *self,
                           CIToken,
                           identifier,
                           clone__Location(&self->base.location),
-                          id);
+                          NEW(Rc, id));
                     }
                     default:
                         jump__CIScanner(self, id->len + 1);
@@ -3805,6 +3809,11 @@ get_token__CIScanner(CIScanner *self,
                 CIToken *token_id = scan_keyword__CIScanner(self, ctx);
 
                 if (token_id) {
+                    if (token_id->kind != CI_TOKEN_KIND_MACRO_PARAM &&
+                        token_id->kind != CI_TOKEN_KIND_MACRO_PARAM_VARIADIC) {
+                        FAILED("expected macro param after '#'");
+                    }
+
                     end__Location(&token_id->location,
                                   self->base.source.cursor.line,
                                   self->base.source.cursor.column,
@@ -4005,7 +4014,7 @@ get_token__CIScanner(CIScanner *self,
                 return NEW_VARIANT(CIToken,
                                    literal_constant_string,
                                    clone__Location(&self->base.location),
-                                   res);
+                                   NEW(Rc, res));
             }
 
             return NULL;

@@ -84,7 +84,7 @@
 #define PTR_SIZE sizeof(void *)
 #define DEFAULT_ALIGNMENT 0
 
-// Vec<T>
+// Vec<T*>*
 // FREE_BUFFER_ITEMS(buffer, len, type)
 // NOTE: Please do not add parentheses where parameters are passed, as this is a
 // critical macro and could cause bugs.
@@ -93,7 +93,16 @@
         __free__##t(b[x1]);            \
     }
 
-// Vec<Vec<T>>
+// Vec<Rc<T*>*>*
+// FREE_BUFFER_ITEMS(buffer, len, type)
+// NOTE: Please do not add parentheses where parameters are passed, as this is a
+// critical macro and could cause bugs.
+#define FREE_BUFFER_RC_ITEMS(b, l, t)  \
+    for (Usize x1 = 0; x1 < l; ++x1) { \
+        FREE_RC(t, CAST(Rc *, b[x1])); \
+    }
+
+// Vec<Vec<T*>*>*
 // FREE_BUFFER_ITEMS_2(buffer, len, type)
 // NOTE: Please do not add parentheses where parameters are passed, as this is a
 // critical macro and could cause bugs.

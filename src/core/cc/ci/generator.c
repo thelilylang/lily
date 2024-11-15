@@ -407,7 +407,8 @@ generate_attribute_standard__CIGenerator(
     switch (attribute_standard->kind) {
         case CI_ATTRIBUTE_STANDARD_KIND_DEPRECATED:
             write_String__CIGenerator(format__String(
-              "deprecated({S})", attribute_standard->deprecated));
+              "deprecated({S})",
+              GET_PTR_RC(String, attribute_standard->deprecated)));
 
             break;
         case CI_ATTRIBUTE_STANDARD_KIND_FALLTHROUGH:
@@ -419,8 +420,9 @@ generate_attribute_standard__CIGenerator(
 
             break;
         case CI_ATTRIBUTE_STANDARD_KIND_NODISCARD:
-            write_String__CIGenerator(
-              format__String("nodiscard({Sr})", attribute_standard->nodiscard));
+            write_String__CIGenerator(format__String(
+              "nodiscard({S})",
+              GET_PTR_RC(String, attribute_standard->nodiscard)));
 
             break;
         case CI_ATTRIBUTE_STANDARD_KIND_NORETURN:
@@ -509,20 +511,20 @@ generate_data_type__CIGenerator(CIDataType *data_type)
 
             switch (subs_data_type->array.kind) {
                 case CI_DATA_TYPE_ARRAY_KIND_NONE:
-                    write_String__CIGenerator(
-                      format__String(" {s}[]",
-                                     subs_data_type->array.name
-                                       ? subs_data_type->array.name->buffer
-                                       : ""));
+                    write_String__CIGenerator(format__String(
+                      " {s}[]",
+                      subs_data_type->array.name
+                        ? GET_PTR_RC(String, subs_data_type->array.name)->buffer
+                        : ""));
 
                     break;
                 case CI_DATA_TYPE_ARRAY_KIND_SIZED:
-                    write_String__CIGenerator(
-                      format__String(" {s}[{zu}]",
-                                     subs_data_type->array.name
-                                       ? subs_data_type->array.name->buffer
-                                       : "",
-                                     subs_data_type->array.size));
+                    write_String__CIGenerator(format__String(
+                      " {s}[{zu}]",
+                      subs_data_type->array.name
+                        ? GET_PTR_RC(String, subs_data_type->array.name)->buffer
+                        : "",
+                      subs_data_type->array.size));
 
                     break;
                 default:
@@ -577,8 +579,11 @@ generate_data_type__CIGenerator(CIDataType *data_type)
 
             break;
         case CI_DATA_TYPE_KIND_ENUM:
-            write_String__CIGenerator(
-              format__String("enum {S}", subs_data_type->enum_));
+            write_String__CIGenerator(format__String(
+              "enum {s}",
+              subs_data_type->enum_
+                ? GET_PTR_RC(String, subs_data_type->enum_)->buffer
+                : ""));
 
             break;
         case CI_DATA_TYPE_KIND_FLOAT:
@@ -605,7 +610,8 @@ generate_data_type__CIGenerator(CIDataType *data_type)
 
                 if (subs_data_type->function.name) {
                     write_str__CIGenerator(
-                      subs_data_type->function.name->buffer);
+                      GET_PTR_RC(String, subs_data_type->function.name)
+                        ->buffer);
                 }
 
                 write_str__CIGenerator(")");
@@ -614,7 +620,8 @@ generate_data_type__CIGenerator(CIDataType *data_type)
 
                 if (subs_data_type->function.name) {
                     write_str__CIGenerator(
-                      subs_data_type->function.name->buffer);
+                      GET_PTR_RC(String, subs_data_type->function.name)
+                        ->buffer);
                 }
             }
 
@@ -688,13 +695,14 @@ generate_data_type__CIGenerator(CIDataType *data_type)
         String *serialized_name =                                            \
           substitute_and_serialize_generic_params__CIGenerator(              \
             subs_data_type->dt_name.generic_params,                          \
-            subs_data_type->dt_name.name);                                   \
+            GET_PTR_RC(String, subs_data_type->dt_name.name));               \
                                                                              \
         write__CIGenerator(' ');                                             \
         write_String__CIGenerator(serialized_name);                          \
     } else if (subs_data_type->dt_name.name) {                               \
         write__CIGenerator(' ');                                             \
-        write_str__CIGenerator(subs_data_type->dt_name.name->buffer);        \
+        write_str__CIGenerator(                                              \
+          GET_PTR_RC(String, subs_data_type->dt_name.name)->buffer);         \
     }                                                                        \
                                                                              \
     if (subs_data_type->dt_name.fields) {                                    \
@@ -713,11 +721,12 @@ generate_data_type__CIGenerator(CIDataType *data_type)
                 String *serialized_name =
                   substitute_and_serialize_generic_params__CIGenerator(
                     subs_data_type->typedef_.generic_params,
-                    subs_data_type->typedef_.name);
+                    GET_PTR_RC(String, subs_data_type->typedef_.name));
 
                 write_String__CIGenerator(serialized_name);
             } else {
-                write_str__CIGenerator(subs_data_type->typedef_.name->buffer);
+                write_str__CIGenerator(
+                  GET_PTR_RC(String, subs_data_type->typedef_.name)->buffer);
             }
 
             break;
@@ -769,12 +778,15 @@ generate_enum_variant__CIGenerator(const CIDeclEnumVariant *enum_variant)
 {
     switch (enum_variant->kind) {
         case CI_DECL_ENUM_VARIANT_KIND_CUSTOM:
-            write_String__CIGenerator(format__String(
-              "{S} = {zi},\n", enum_variant->name, enum_variant->value));
+            write_String__CIGenerator(
+              format__String("{S} = {zi},\n",
+                             GET_PTR_RC(String, enum_variant->name),
+                             enum_variant->value));
 
             break;
         case CI_DECL_ENUM_VARIANT_KIND_DEFAULT:
-            write_str__CIGenerator(enum_variant->name->buffer);
+            write_str__CIGenerator(
+              GET_PTR_RC(String, enum_variant->name)->buffer);
             write_str__CIGenerator(",\n");
 
             break;
@@ -799,7 +811,8 @@ generate_enum_variants__CIGenerator(const Vec *enum_variants)
 void
 generate_enum_decl__CIGenerator(const CIDeclEnum *enum_)
 {
-    write_String__CIGenerator(format__String("enum {S}", enum_->name));
+    write_String__CIGenerator(
+      format__String("enum {S}", GET_PTR_RC(String, enum_->name)));
 
     if (enum_->data_type) {
         write_str__CIGenerator(" : ");
@@ -829,8 +842,8 @@ generate_function_params__CIGenerator(const Vec *params)
 
                     if (param->name &&
                         !has_name__CIDataType(param->data_type)) {
-                        write_String__CIGenerator(
-                          format__String(" {S}", param->name));
+                        write_String__CIGenerator(format__String(
+                          " {S}", GET_PTR_RC(String, param->name)));
                     }
 
                     break;
@@ -1163,7 +1176,7 @@ generate_function_literal_expr__CIGenerator(const CIExprLiteral *literal)
         case CI_EXPR_LITERAL_KIND_STRING:
             write__CIGenerator('\"');
             generate_function_literal_string_expr__CIGenerator(
-              literal->string.value);
+              GET_PTR_RC(String, literal->string));
             write__CIGenerator('\"');
 
             break;
@@ -1186,8 +1199,9 @@ generate_struct_call_expr__CIGenerator(const CIExprStructCall *struct_call)
         CIExprStructFieldCall *field = get__Vec(struct_call->fields, i);
 
         for (Usize j = 0; j < field->path->len; ++j) {
-            write_String__CIGenerator(
-              format__String(".{S}", get__Vec(field->path, j)));
+            write_String__CIGenerator(format__String(
+              ".{S}",
+              GET_PTR_RC(String, CAST(Rc *, get__Vec(field->path, j)))));
         }
 
         write_str__CIGenerator(" = ");
@@ -1224,9 +1238,11 @@ generate_function_call_expr__CIGenerator(
     if (function_call->generic_params) {
         write_String__CIGenerator(
           substitute_and_serialize_generic_params__CIGenerator(
-            function_call->generic_params, function_call->identifier));
+            function_call->generic_params,
+            GET_PTR_RC(String, function_call->identifier)));
     } else {
-        write_str__CIGenerator(function_call->identifier->buffer);
+        write_str__CIGenerator(
+          GET_PTR_RC(String, function_call->identifier)->buffer);
     }
 
     generate_function_call_params_expr__CIGenerator(function_call->params);
@@ -1298,7 +1314,8 @@ generate_function_expr__CIGenerator(const CIExpr *expr)
 
             break;
         case CI_EXPR_KIND_IDENTIFIER:
-            write_str__CIGenerator(expr->identifier->buffer);
+            write_str__CIGenerator(
+              GET_PTR_RC(String, expr->identifier)->buffer);
 
             break;
         case CI_EXPR_KIND_LITERAL:
@@ -1484,7 +1501,8 @@ generate_function_stmt__CIGenerator(const CIStmt *stmt)
 
             break;
         case CI_STMT_KIND_GOTO:
-            write_String__CIGenerator(format__String("goto {S};", stmt->goto_));
+            write_String__CIGenerator(
+              format__String("goto {S};", GET_PTR_RC(String, stmt->goto_)));
 
             break;
         case CI_STMT_KIND_IF:
@@ -1578,7 +1596,8 @@ generate_function_gen_decl__CIGenerator(const CIDeclFunctionGen *function_gen)
 void
 generate_label_decl__CIGenerator(const CIDeclLabel *label)
 {
-    write_String__CIGenerator(format__String("{S}:\n", label->name));
+    write_String__CIGenerator(
+      format__String("{S}:\n", GET_PTR_RC(String, label->name)));
 }
 
 void
@@ -1587,7 +1606,8 @@ generate_struct_field__CIGenerator(const CIDeclStructField *field)
     generate_data_type__CIGenerator(field->data_type);
 
     if (field->name && !has_name__CIDataType(field->data_type)) {
-        write_String__CIGenerator(format__String(" {S};\n", field->name));
+        write_String__CIGenerator(
+          format__String(" {S};\n", GET_PTR_RC(String, field->name)));
     } else {
         write_str__CIGenerator(";\n");
     }
@@ -1609,7 +1629,8 @@ generate_struct_fields__CIGenerator(const Vec *fields)
 void
 generate_struct_decl__CIGenerator(const CIDeclStruct *struct_)
 {
-    write_String__CIGenerator(format__String("struct {S} {{\n", struct_->name));
+    write_String__CIGenerator(
+      format__String("struct {S} {{\n", GET_PTR_RC(String, struct_->name)));
     generate_struct_fields__CIGenerator(struct_->fields);
     write_str__CIGenerator("}");
 }
@@ -1633,7 +1654,8 @@ generate_typedef_decl__CIGenerator(const CIDeclTypedef *typedef_)
     generate_data_type__CIGenerator(typedef_->data_type);
 
     if (!has_name__CIDataType(typedef_->data_type)) {
-        write_String__CIGenerator(format__String(" {S}", typedef_->name));
+        write_String__CIGenerator(
+          format__String(" {S}", GET_PTR_RC(String, typedef_->name)));
     }
 }
 
@@ -1655,7 +1677,8 @@ generate_typedef_gen_decl__CIGenerator(const CIDeclTypedefGen *typedef_gen)
 void
 generate_union_decl__CIGenerator(const CIDeclUnion *union_)
 {
-    write_String__CIGenerator(format__String("union {S} {{\n", union_->name));
+    write_String__CIGenerator(
+      format__String("union {S} {{\n", GET_PTR_RC(String, union_->name)));
     generate_struct_fields__CIGenerator(union_->fields);
     write_str__CIGenerator("}");
 }
@@ -1678,7 +1701,8 @@ generate_variable_decl__CIGenerator(const CIDeclVariable *variable)
     generate_data_type__CIGenerator(variable->data_type);
 
     if (!has_name__CIDataType(variable->data_type)) {
-        write_String__CIGenerator(format__String(" {S}", variable->name));
+        write_String__CIGenerator(
+          format__String(" {S}", GET_PTR_RC(String, variable->name)));
     }
 
     if (variable->expr) {
@@ -1760,7 +1784,8 @@ generate_decls__CIGenerator(const CIResultFile *file_result)
 void
 generate_enum_prototype__CIGenerator(const CIDeclEnum *enum_)
 {
-    write_String__CIGenerator(format__String("enum {S}", enum_->name));
+    write_String__CIGenerator(
+      format__String("enum {S}", GET_PTR_RC(String, enum_->name)));
 
     if (enum_->data_type) {
         write_str__CIGenerator(" : ");
@@ -1771,7 +1796,8 @@ generate_enum_prototype__CIGenerator(const CIDeclEnum *enum_)
 void
 generate_struct_prototype__CIGenerator(const CIDeclStruct *struct_)
 {
-    write_String__CIGenerator(format__String("struct {S}", struct_->name));
+    write_String__CIGenerator(
+      format__String("struct {S}", GET_PTR_RC(String, struct_->name)));
 }
 
 void
@@ -1783,7 +1809,8 @@ generate_struct_gen_prototype__CIGenerator(const CIDeclStructGen *struct_gen)
 void
 generate_union_prototype__CIGenerator(const CIDeclUnion *union_)
 {
-    write_String__CIGenerator(format__String("union {S}", union_->name));
+    write_String__CIGenerator(
+      format__String("union {S}", GET_PTR_RC(String, union_->name)));
 }
 
 void
@@ -1796,7 +1823,8 @@ void
 generate_function_prototype__CIGenerator(const CIDeclFunction *function)
 {
     generate_data_type__CIGenerator(function->return_data_type);
-    write_String__CIGenerator(format__String(" {S}", function->name));
+    write_String__CIGenerator(
+      format__String(" {S}", GET_PTR_RC(String, function->name)));
     generate_function_params__CIGenerator(function->params);
 }
 

@@ -22,20 +22,47 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_CC_CI_STD_TYPES_H
-#define LILY_CORE_CC_CI_STD_TYPES_H
+#ifndef LILY_CORE_CC_CI_PREPROCESSOR_CONDITION_RESOLVER_H
+#define LILY_CORE_CC_CI_PREPROCESSOR_CONDITION_RESOLVER_H
 
-#include <core/cc/ci/result.h>
+#include <core/cc/ci/ast.h>
+#include <core/cc/ci/parser.h>
+
+typedef struct CIResolverExpr
+{
+    const CIParser *parser; // const CIParser*? (&)
+    const CIScope *scope;   // const CIScope*? (&)
+    bool is_at_preprocessor_time;
+} CIResolverExpr;
 
 /**
  *
- * @brief Load standard type from defined macro in builtin file.
- *
- * @example
- *
- * #define __SIZE_TYPE__ long unsigned int
+ * @brief Construct CIResolverExpr type.
  */
-CIDataType *
-load_std_type__StdTypes(char *define);
+inline CONSTRUCTOR(CIResolverExpr,
+                   CIResolverExpr,
+                   const CIParser *parser,
+                   const CIScope *scope,
+                   bool is_at_preprocessor_time)
+{
+    return (CIResolverExpr){ .parser = parser,
+                             .scope = scope,
+                             .is_at_preprocessor_time =
+                               is_at_preprocessor_time };
+}
 
-#endif // LILY_CORE_CC_CI_STD_TYPES_H
+/**
+ *
+ * @brief Check if the expression is true.
+ */
+bool
+is_true__CIResolverExpr(CIExpr *expr);
+
+/**
+ *
+ * @brief Resolve preprocessor condition.
+ */
+CIExpr *
+run__CIResolverExpr(const CIResolverExpr *self, CIExpr *expr);
+
+#endif // LILY_CORE_CC_CI_PREPROCESSOR_CONDITION_RESOLVER_H

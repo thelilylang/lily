@@ -50,9 +50,10 @@ set(CI_SRC
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/parser.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/predefined.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/project_config.c
+    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/resolver.c
+    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/resolver/expr.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/result.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/scanner.c
-    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/std_types.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/token.c)
 
 # lily_core_cc_ci

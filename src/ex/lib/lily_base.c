@@ -43,6 +43,7 @@
 #include <base/optional.h>
 #include <base/ordered_hash_map.h>
 #include <base/path.h>
+#include <base/rc.h>
 #include <base/sized_array.h>
 #include <base/string.h>
 #include <base/test.h>
@@ -122,6 +123,10 @@ extern inline CONSTRUCTOR(OrderedHashMapIter,
 // <base/path.h>
 extern inline bool
 is_relative__Path(const char *path);
+
+// <base/rc.h>
+extern inline Rc *
+ref__Rc(Rc *self);
 
 // <base/sized_array.h>
 extern inline SizedArray *
