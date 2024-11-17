@@ -1755,8 +1755,6 @@ to_string__CIToken(CIToken *self)
             return from__String("double");
         case CI_TOKEN_KIND_KEYWORD_ELSE:
             return from__String("else");
-        case CI_TOKEN_KIND_KEYWORD_ELSE_IF:
-            return from__String("else if");
         case CI_TOKEN_KIND_KEYWORD_ENUM:
             return from__String("enum");
         case CI_TOKEN_KIND_KEYWORD_EXTERN:

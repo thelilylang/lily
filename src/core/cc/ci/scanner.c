@@ -513,8 +513,6 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                        .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_ELSE] = { .since = CI_STANDARD_NONE,
                                      .until = CI_STANDARD_NONE },
-    [CI_TOKEN_KIND_KEYWORD_ELSE_IF] = { .since = CI_STANDARD_NONE,
-                                        .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_ENUM] = { .since = CI_STANDARD_NONE,
                                      .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_EXTERN] = { .since = CI_STANDARD_NONE,

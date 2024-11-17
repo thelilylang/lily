@@ -40,7 +40,7 @@
 typedef struct CIResultFile CIResultFile;
 struct CIToken;
 
-#define CI_N_KEYWORD 64
+#define CI_N_KEYWORD (CI_TOKEN_KIND_KEYWORD_MAX - CI_TOKEN_KIND_KEYWORD_MIN - 1)
 
 #define CI_N_ATTRIBUTE 8
 
@@ -176,6 +176,10 @@ enum CITokenKind
     CI_TOKEN_KIND_HAT_EQ,
     CI_TOKEN_KIND_IDENTIFIER,
     CI_TOKEN_KIND_INTERROGATION,
+
+    // NOTE: Never add a keyword before this variant.
+    CI_TOKEN_KIND_KEYWORD_MIN,
+
     CI_TOKEN_KIND_KEYWORD_ALIGNAS,
     CI_TOKEN_KIND_KEYWORD_ALIGNOF,
     CI_TOKEN_KIND_KEYWORD_ASM,
@@ -191,7 +195,6 @@ enum CITokenKind
     CI_TOKEN_KIND_KEYWORD_DO,
     CI_TOKEN_KIND_KEYWORD_DOUBLE,
     CI_TOKEN_KIND_KEYWORD_ELSE,
-    CI_TOKEN_KIND_KEYWORD_ELSE_IF,
     CI_TOKEN_KIND_KEYWORD_ENUM,
     CI_TOKEN_KIND_KEYWORD_EXTERN,
     CI_TOKEN_KIND_KEYWORD_FALSE,
@@ -243,6 +246,10 @@ enum CITokenKind
     // See https://gcc.gnu.org/onlinedocs/gcc/Restricted-Pointers.html
     CI_TOKEN_KIND_KEYWORD___RESTRICT,
     CI_TOKEN_KIND_KEYWORD___RESTRICT__,
+
+    // NOTE: Never add a keyword after this variant.
+    CI_TOKEN_KIND_KEYWORD_MAX,
+
     CI_TOKEN_KIND_LBRACE,
     CI_TOKEN_KIND_LHOOK,
     CI_TOKEN_KIND_LPAREN,
