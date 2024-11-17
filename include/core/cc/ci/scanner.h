@@ -79,6 +79,13 @@ is_standard_predefined_macro__CIScanner(const String *name);
 
 /**
  *
+ * @brief Get keyword from id.
+ */
+enum CITokenKind
+get_keyword__CIScanner(const String *id);
+
+/**
+ *
  * @brief Run the scanner.
  */
 void
