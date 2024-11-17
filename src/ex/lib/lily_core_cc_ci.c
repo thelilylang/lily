@@ -515,6 +515,11 @@ replace__CIResolvedTokens(CIResolvedTokens *self, Usize index, CIToken *token);
 extern inline CIToken *
 remove__CIResolvedTokens(CIResolvedTokens *self, Usize index);
 
+extern inline void
+insert_after__CIResolvedTokens(const CIResolvedTokens *self,
+                               CIToken *token,
+                               Usize index);
+
 extern inline Usize
 count__CIResolvedTokens(const CIResolvedTokens *self);
 

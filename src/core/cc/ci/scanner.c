@@ -185,10 +185,6 @@ get_standard_predefined_macro__CIScanner(const String *id);
 static enum CITokenKind
 get_preprocessor__CIScanner(const String *id);
 
-/// @brief Get keyword from id.
-static enum CITokenKind
-get_keyword__CIScanner(const String *id);
-
 /// @brief Standardize keyword.
 ///
 /// @example

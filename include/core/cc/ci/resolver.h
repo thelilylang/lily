@@ -95,6 +95,18 @@ remove__CIResolvedTokens(CIResolvedTokens *self, Usize index)
 
 /**
  *
+ * @brief Insert item after the given index in the `content` field.
+ */
+inline void
+insert_after__CIResolvedTokens(const CIResolvedTokens *self,
+                               CIToken *token,
+                               Usize index)
+{
+    return insert_after__Vec(self->content, token, index);
+}
+
+/**
+ *
  * @brief Get the number of resolved tokens.
  */
 inline Usize
@@ -112,6 +124,15 @@ count__CIResolvedTokens(const CIResolvedTokens *self)
 void
 merge__CIResolvedTokens(const CIResolvedTokens *self,
                         const CIResolvedTokens *other);
+
+/**
+ *
+ * @brief Insert many items after the given index.
+ */
+void
+insert_after_many__CIResolvedTokens(const CIResolvedTokens *self,
+                                    const CIResolvedTokens *other,
+                                    Usize index);
 
 /**
  *
@@ -256,6 +277,9 @@ typedef struct CIResolver
     Usize *count_warning;              // Usize* (&)
     CIResolverMacroCall *macro_call;   // CIResolverMacroCall*?
     Usize count_merged_id;
+    // This field allows the resolver to determine whether the identifiers it
+    // receives are keywords or not.
+    bool look_for_keyword;
 } CIResolver;
 
 /**
@@ -277,7 +301,8 @@ inline CONSTRUCTOR(CIResolver,
                          .count_error = count_error,
                          .count_warning = count_warning,
                          .macro_call = NULL,
-                         .count_merged_id = 0 };
+                         .count_merged_id = 0,
+                         .look_for_keyword = false };
 }
 
 /**

@@ -46,6 +46,9 @@ set_current_token__CIResolver(CIResolver *self, CIToken *token);
 static inline void
 set_macro_call__CIResolver(CIResolver *self, CIResolverMacroCall *macro_call);
 
+static inline void
+set_look_for_keyword__CIResolver(CIResolver *self, bool look_for_keyword);
+
 static void
 parse_macro_call_target__CIResolver(CIResolver *self,
                                     enum CITokenKind target,
@@ -80,6 +83,9 @@ static void
 resolve_macro_call__CIResolver(CIResolver *self,
                                CIToken *identifier_token,
                                const CIResultDefine *define);
+
+static void
+resolve_identifier__CIResolver(CIResolver *self, CIToken *identifier_token);
 
 static inline bool
 is_macro_defined__CIResolver(CIResolver *self, String *macro_name);
@@ -242,6 +248,17 @@ merge__CIResolvedTokens(const CIResolvedTokens *self,
 }
 
 void
+insert_after_many__CIResolvedTokens(const CIResolvedTokens *self,
+                                    const CIResolvedTokens *other,
+                                    Usize index)
+{
+    for (Usize i = 0; i < count__CIResolvedTokens(other); ++i) {
+        insert_after__CIResolvedTokens(
+          self, ref__CIToken(get__CIResolvedTokens(other, i)), index + i);
+    }
+}
+
+void
 pop_if_eof__CIResolvedTokens(const CIResolvedTokens *self)
 {
     if (count__CIResolvedTokens(self) > 0) {
@@ -393,6 +410,12 @@ set_macro_call__CIResolver(CIResolver *self, CIResolverMacroCall *macro_call)
     ASSERT(macro_call);
 
     self->macro_call = macro_call;
+}
+
+void
+set_look_for_keyword__CIResolver(CIResolver *self, bool look_for_keyword)
+{
+    self->look_for_keyword = look_for_keyword;
 }
 
 void
@@ -625,6 +648,29 @@ resolve_macro_call__CIResolver(CIResolver *self,
 #undef PEEK
 #undef EXPECT
 #undef CURRENT
+}
+
+void
+resolve_identifier__CIResolver(CIResolver *self, CIToken *identifier_token)
+{
+    if (self->look_for_keyword) {
+        enum CITokenKind new_token_kind = get_keyword__CIScanner(
+          GET_PTR_RC(String, identifier_token->identifier));
+
+        if (new_token_kind != CI_TOKEN_KIND_IDENTIFIER) {
+            return add_resolved_token__CIResolver(
+              self, NEW(CIToken, new_token_kind, identifier_token->location));
+        }
+    }
+
+    const CIResultDefine *define = NULL;
+
+    if ((define = get_define__CIResultFile(
+           self->file, GET_PTR_RC(String, identifier_token->identifier)))) {
+        return resolve_macro_call__CIResolver(self, identifier_token, define);
+    }
+
+    add_resolved_token__CIResolver(self, ref__CIToken(identifier_token));
 }
 
 bool
@@ -1255,16 +1301,22 @@ perform_merged_id__CIResolver(CIResolver *self,
         case CI_TOKEN_KIND_IDENTIFIER:
             return NEW_VARIANT(
               CIToken, identifier, new_token_location, NEW(Rc, merged_id));
+#define NEW_INTEGER_TOKEN(k)                                   \
+    NEW_VARIANT(CIToken,                                       \
+                literal_constant_##k,                          \
+                new_token_location,                            \
+                NEW(CITokenLiteralConstantInt,                 \
+                    CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_NONE, \
+                    merged_id));
+
         case CI_TOKEN_KIND_LITERAL_CONSTANT_BIN:
+            return NEW_INTEGER_TOKEN(bin);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_INT:
+            return NEW_INTEGER_TOKEN(int);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_HEX:
+            return NEW_INTEGER_TOKEN(hex);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_OCTAL:
-            return NEW_VARIANT(CIToken,
-                               literal_constant_bin,
-                               new_token_location,
-                               NEW(CITokenLiteralConstantInt,
-                                   CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_NONE,
-                                   merged_id));
+            return NEW_INTEGER_TOKEN(octal);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_FLOAT:
             return NEW_VARIANT(CIToken,
                                literal_constant_float,
@@ -1275,6 +1327,8 @@ perform_merged_id__CIResolver(CIResolver *self,
         default:
             UNREACHABLE("unknown variant");
     }
+
+#undef NEW_INTEGER_TOKEN
 }
 
 void
@@ -1321,8 +1375,37 @@ resolve_merged_id__CIResolver(CIResolver *self)
                                       last_token_index + 1));
 
         if (--self->count_merged_id == 0) {
-            // TODO: Try to promote the identifier in keyword.
+            CITokens identifier_resolver_tokens = NEW(CITokens);
+            Location eof_location = clone__Location(&new_token_location);
+
+            start__Location(&eof_location,
+                            eof_location.end_line,
+                            eof_location.end_column,
+                            new_token_location.end_position);
+
+            CIToken *eof_token = NEW(CIToken, CI_TOKEN_KIND_EOF, eof_location);
+
+            add__CITokens(&identifier_resolver_tokens, new_token);
+            add__CITokens(&identifier_resolver_tokens, eof_token);
+
+            RESOLVE_TOKENS(
+              &identifier_resolver_tokens,
+              NULL,
+              { set_look_for_keyword__CIResolver(&_resolver, true); },
+              {
+                  pop_if_eof__CIResolvedTokens(_resolver.resolved_tokens);
+                  insert_after_many__CIResolvedTokens(self->resolved_tokens,
+                                                      _resolver.resolved_tokens,
+                                                      last_token_index);
+              });
+
+            FREE(CIToken, eof_token);
+
+            new_token->next = NULL;
         }
+
+        FREE(CIToken,
+             remove__CIResolvedTokens(self->resolved_tokens, last_token_index));
 
         return;
     }
@@ -1334,18 +1417,8 @@ void
 resolve_token__CIResolver(CIResolver *self)
 {
     switch (self->current_token->kind) {
-        case CI_TOKEN_KIND_IDENTIFIER: {
-            const CIResultDefine *define = NULL;
-
-            if ((define = get_define__CIResultFile(
-                   self->file,
-                   GET_PTR_RC(String, self->current_token->identifier)))) {
-                return resolve_macro_call__CIResolver(
-                  self, self->current_token, define);
-            }
-
-            goto add_resolved_token;
-        }
+        case CI_TOKEN_KIND_IDENTIFIER:
+            return resolve_identifier__CIResolver(self, self->current_token);
         case CI_TOKEN_KIND_MACRO_DEFINED:
             return resolve_macro_defined__CIResolver(self, self->current_token);
         case CI_TOKEN_KIND_MACRO_PARAM:
@@ -1394,7 +1467,6 @@ resolve_token__CIResolver(CIResolver *self)
             // NOTE: We don't add this kind of token to `resolved_tokens` field.
             return;
         default:
-        add_resolved_token:
             add_resolved_token__CIResolver(self,
                                            ref__CIToken(self->current_token));
     }
