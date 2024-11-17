@@ -776,23 +776,10 @@ generate_data_type__CIGenerator(CIDataType *data_type)
 void
 generate_enum_variant__CIGenerator(const CIDeclEnumVariant *enum_variant)
 {
-    switch (enum_variant->kind) {
-        case CI_DECL_ENUM_VARIANT_KIND_CUSTOM:
-            write_String__CIGenerator(
-              format__String("{S} = {zi},\n",
-                             GET_PTR_RC(String, enum_variant->name),
-                             enum_variant->value));
-
-            break;
-        case CI_DECL_ENUM_VARIANT_KIND_DEFAULT:
-            write_str__CIGenerator(
-              GET_PTR_RC(String, enum_variant->name)->buffer);
-            write_str__CIGenerator(",\n");
-
-            break;
-        default:
-            UNREACHABLE("unknown variant");
-    }
+    write_String__CIGenerator(
+      format__String("{S} = {zi},\n",
+                     GET_PTR_RC(String, enum_variant->name),
+                     enum_variant->value));
 }
 
 void
@@ -1724,6 +1711,9 @@ generate_decl__CIGenerator(const CIDecl *decl)
                 generate_enum_decl__CIGenerator(&decl->enum_);
 
                 break;
+            case CI_DECL_KIND_ENUM_VARIANT:
+                // NOTE: We don't want to generate enum variant here.
+                return;
             case CI_DECL_KIND_FUNCTION:
                 return generate_function_decl__CIGenerator(&decl->function);
             case CI_DECL_KIND_FUNCTION_GEN:
@@ -1852,6 +1842,9 @@ generate_decl_prototype__CIGenerator(const CIDecl *decl)
                 generate_enum_prototype__CIGenerator(&decl->enum_);
 
                 break;
+            case CI_DECL_KIND_ENUM_VARIANT:
+                // NOTE: We don't want to generate enum variant here.
+                return;
             case CI_DECL_KIND_FUNCTION:
                 generate_function_prototype__CIGenerator(&decl->function);
 

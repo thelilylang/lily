@@ -110,6 +110,27 @@ inline DESTRUCTOR(CIEnumID, CIEnumID *self)
     lily_free(self);
 }
 
+typedef struct CIEnumVariantID
+{
+    CIFileID file_id;
+    Usize id;
+} CIEnumVariantID;
+
+/**
+ *
+ * @brief Construct CIEnumVariantID type.
+ */
+CONSTRUCTOR(CIEnumVariantID *, CIEnumVariantID, CIFileID file_id, Usize id);
+
+/**
+ *
+ * @brief Free CIEnumVariantID type.
+ */
+inline DESTRUCTOR(CIEnumVariantID, CIEnumVariantID *self)
+{
+    lily_free(self);
+}
+
 typedef struct CIFunctionID
 {
     CIFileID file_id;
@@ -251,13 +272,14 @@ typedef struct CIScope
     CIScopeID *parent; // CIScopeID*? (&)
     CIScopeID *scope_id;
     bool is_block;
-    HashMap *enums;     // HashMap<CIEnumID*>*
-    HashMap *functions; // HashMap<CIFunctionID*>*
-    HashMap *labels;    // HashMap<CILabelID*>*
-    HashMap *structs;   // HashMap<CIStructID*>*
-    HashMap *typedefs;  // HashMap<CITypedefID*>*
-    HashMap *unions;    // HashMap<CIUnionID*>*
-    HashMap *variables; // HashMap<CIVariableID*>*
+    HashMap *enums;         // HashMap<CIEnumID*>*
+    HashMap *enum_variants; // HashMap<CIEnumVariantID*>*
+    HashMap *functions;     // HashMap<CIFunctionID*>*
+    HashMap *labels;        // HashMap<CILabelID*>*
+    HashMap *structs;       // HashMap<CIStructID*>*
+    HashMap *typedefs;      // HashMap<CITypedefID*>*
+    HashMap *unions;        // HashMap<CIUnionID*>*
+    HashMap *variables;     // HashMap<CIVariableID*>*
 } CIScope;
 
 /**
@@ -284,6 +306,20 @@ add_enum__CIScope(const CIScope *self,
                   Usize id)
 {
     ADD_IN_SCOPE(CIEnumID, self->enums, id);
+}
+
+/**
+ *
+ * @brief Add enum enum to the scope.
+ * @return CIEnumVariantID*? (&)
+ */
+inline const CIEnumVariantID *
+add_enum_variant__CIScope(const CIScope *self,
+                          const String *name,
+                          CIFileID file_id,
+                          Usize id)
+{
+    ADD_IN_SCOPE(CIEnumVariantID, self->enum_variants, id);
 }
 
 /**
@@ -383,6 +419,17 @@ inline const CIEnumID *
 search_enum__CIScope(const CIScope *self, const String *name)
 {
     SEARCH_IN_SCOPE(self->enums);
+}
+
+/**
+ *
+ * @brief Search enum variant to the scope.
+ * @return CIEnumVariantID*? (&)
+ */
+inline const CIEnumVariantID *
+search_enum_variant__CIScope(const CIScope *self, const String *name)
+{
+    SEARCH_IN_SCOPE(self->enum_variants);
 }
 
 /**
@@ -1383,13 +1430,14 @@ IMPL_FOR_DEBUG(to_string, CIStorageClass, int storage_class_flag);
 enum CIDeclKind
 {
     CI_DECL_KIND_ENUM = 1 << 0,
-    CI_DECL_KIND_FUNCTION = 1 << 1,
-    CI_DECL_KIND_LABEL = 1 << 2,
-    CI_DECL_KIND_STRUCT = 1 << 3,
-    CI_DECL_KIND_TYPEDEF = 1 << 4,
-    CI_DECL_KIND_UNION = 1 << 5,
-    CI_DECL_KIND_VARIABLE = 1 << 6,
-#define CI_DECL_KIND_GEN (1 << 7)
+    CI_DECL_KIND_ENUM_VARIANT = 1 << 1,
+    CI_DECL_KIND_FUNCTION = 1 << 2,
+    CI_DECL_KIND_LABEL = 1 << 3,
+    CI_DECL_KIND_STRUCT = 1 << 4,
+    CI_DECL_KIND_TYPEDEF = 1 << 5,
+    CI_DECL_KIND_UNION = 1 << 6,
+    CI_DECL_KIND_VARIABLE = 1 << 7,
+#define CI_DECL_KIND_GEN (1 << 8)
     CI_DECL_KIND_FUNCTION_GEN = CI_DECL_KIND_FUNCTION | CI_DECL_KIND_GEN,
     CI_DECL_KIND_STRUCT_GEN = CI_DECL_KIND_STRUCT | CI_DECL_KIND_GEN,
     CI_DECL_KIND_TYPEDEF_GEN = CI_DECL_KIND_TYPEDEF | CI_DECL_KIND_GEN,
@@ -1406,51 +1454,18 @@ char *
 IMPL_FOR_DEBUG(to_string, CIDeclKind, enum CIDeclKind self);
 #endif
 
-enum CIDeclEnumVariantKind
-{
-    CI_DECL_ENUM_VARIANT_KIND_DEFAULT,
-    CI_DECL_ENUM_VARIANT_KIND_CUSTOM
-};
-
-/**
- *
- * @brief Convert CIDeclEnumVariantKind in string.
- * @note This function is only used to debug.
- */
-#ifdef ENV_DEBUG
-char *
-IMPL_FOR_DEBUG(to_string,
-               CIDeclEnumVariantKind,
-               enum CIDeclEnumVariantKind self);
-#endif
-
 typedef struct CIDeclEnumVariant
 {
-    enum CIDeclEnumVariantKind kind;
     Rc *name; // Rc<String*>*
-    union
-    {
-        Isize value;
-    };
+    Isize value;
 } CIDeclEnumVariant;
 
 /**
  *
- * @brief Construct CIDeclEnumVariant type (CI_DECL_ENUM_VARIANT_KIND_CUSTOM).
+ * @brief Construct CIDeclEnumVariant type.
  * @param name Rc<String*>* (&)
  */
-VARIANT_CONSTRUCTOR(CIDeclEnumVariant *,
-                    CIDeclEnumVariant,
-                    custom,
-                    Rc *name,
-                    Isize value);
-
-/**
- *
- * @brief Construct CIDeclEnumVariant type (CI_DECL_ENUM_VARIANT_KIND_DEFAULT).
- * @param name Rc<String*>* (&)
- */
-VARIANT_CONSTRUCTOR(CIDeclEnumVariant *, CIDeclEnumVariant, default, Rc *name);
+CONSTRUCTOR(CIDeclEnumVariant *, CIDeclEnumVariant, Rc *name, Isize value);
 
 /**
  *
@@ -2314,10 +2329,8 @@ typedef struct CIDecl
     Usize ref_count;
     union
     {
-        // typedef <dt> <typedef_name>;
-        // NOTE: alias don't include struct, enum and union data type.
-        CIDataType *alias;
         CIDeclEnum enum_;
+        CIDeclEnumVariant *enum_variant; // CIDeclEnumVariant* (&)
         CIDeclFunction function;
         CIDeclFunctionGen function_gen;
         CIDeclLabel label;
@@ -2341,6 +2354,16 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     int storage_class_flag,
                     bool is_prototype,
                     CIDeclEnum enum_);
+
+/**
+ *
+ * @brief Construct CIDecl type (CI_DECL_KIND_ENUM_VARIANT).
+ */
+VARIANT_CONSTRUCTOR(CIDecl *,
+                    CIDecl,
+                    enum_variant,
+                    int storage_class_flag,
+                    CIDeclEnumVariant *enum_variant);
 
 /**
  *

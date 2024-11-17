@@ -135,6 +135,7 @@ typedef struct CIResultEntity
     Usize id;
     const CIResult *result;  // const CIResult* (&)
     Vec *enums;              // Vec<CIDecl*>*
+    Vec *enum_variants;      // Vec<CIDecl*>*
     Vec *functions;          // Vec<CIDecl*>*
     Vec *labels;             // Vec<CIDecl*>*
     Vec *structs;            // Vec<CIDecl*>*
@@ -160,6 +161,7 @@ inline CONSTRUCTOR(CIResultEntity,
     return (CIResultEntity){ .id = id,
                              .result = result,
                              .enums = NEW(Vec),
+                             .enum_variants = NEW(Vec),
                              .functions = NEW(Vec),
                              .labels = NEW(Vec),
                              .structs = NEW(Vec),
@@ -339,6 +341,17 @@ add_enum__CIResultFile(const CIResultFile *self, CIDecl *enum_);
 
 /**
  *
+ * @brief Add enum variant declaration to enum_variants field. If the
+ * enumeration variant name is already declared, the enumeration variant found
+ * will be returned, but if it's a valid redeclaration. Finally, if the addition
+ * is successful, a NULL pointer is returned.
+ * @return const CIDecl*? (&)
+ */
+const CIDecl *
+add_enum_variant__CIResultFile(const CIResultFile *self, CIDecl *enum_variant);
+
+/**
+ *
  * @brief Add function declaration to functions field. If the function name is
  * already declared, the function found will be returned, but if it's a valid
  * redeclaration, for example in the case of prototypes, the `CIDecl` pointer
@@ -431,6 +444,14 @@ get_enum_from_id__CIResultFile(const CIResultFile *self,
 
 /**
  *
+ * @brief Get enum variant declaration from id.
+ */
+CIDecl *
+get_enum_variant_from_id__CIResultFile(const CIResultFile *self,
+                                       const CIEnumVariantID *enum_variant_id);
+
+/**
+ *
  * @brief Get function declaration from id.
  */
 CIDecl *
@@ -483,6 +504,13 @@ get_variable_from_id__CIResultFile(const CIResultFile *self,
  */
 CIDecl *
 search_enum__CIResultFile(const CIResultFile *self, const String *name);
+
+/**
+ *
+ * @brief Search enum variant declaration in enums map.
+ */
+CIDecl *
+search_enum_variant__CIResultFile(const CIResultFile *self, const String *name);
 
 /**
  *

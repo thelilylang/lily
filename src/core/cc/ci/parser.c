@@ -4218,6 +4218,7 @@ Vec *
 parse_enum_variants__CIParser(CIParser *self)
 {
     Vec *variants = NEW(Vec); // Vec<CIDeclEnumVariant*>*
+    Isize precedent_value = -1;
 
     while (self->current_token->kind != CI_TOKEN_KIND_RBRACE &&
            self->current_token->kind != CI_TOKEN_KIND_EOF) {
@@ -4228,6 +4229,8 @@ parse_enum_variants__CIParser(CIParser *self)
         } else {
             name = generate_name_error__CIParser();
         }
+
+        CIDeclEnumVariant *variant = NULL;
 
         switch (self->current_token->kind) {
             case CI_TOKEN_KIND_EQ: {
@@ -4240,8 +4243,7 @@ parse_enum_variants__CIParser(CIParser *self)
                   run__CIResolverExpr(&resolver_expr, custom_expr);
                 Isize custom_value = 0;
 
-                // TODO: Support non-literal expression.
-                switch (custom_expr->kind) {
+                switch (resolved_custom_expr->kind) {
                     case CI_EXPR_KIND_LITERAL:
                         custom_value = to_literal_integer_value__CIResolverExpr(
                           resolved_custom_expr);
@@ -4253,9 +4255,10 @@ parse_enum_variants__CIParser(CIParser *self)
                           "enum variant is not yet supported).");
                 }
 
-                push__Vec(
-                  variants,
-                  NEW_VARIANT(CIDeclEnumVariant, custom, name, custom_value));
+                precedent_value = custom_value;
+                variant = NEW(CIDeclEnumVariant, name, custom_value);
+
+                push__Vec(variants, variant);
 
                 FREE(CIExpr, custom_expr);
                 FREE(CIExpr, resolved_custom_expr);
@@ -4263,8 +4266,16 @@ parse_enum_variants__CIParser(CIParser *self)
                 break;
             }
             default:
-                push__Vec(variants,
-                          NEW_VARIANT(CIDeclEnumVariant, default, name));
+                variant = NEW(CIDeclEnumVariant, name, ++precedent_value);
+
+                push__Vec(variants, variant);
+        }
+
+        {
+            CIDecl *variant_decl =
+              NEW_VARIANT(CIDecl, enum_variant, CI_STORAGE_CLASS_NONE, variant);
+
+            add_decl_to_scope__CIParser(self, &variant_decl, true);
         }
 
         if (self->current_token->kind != CI_TOKEN_KIND_RBRACE) {
@@ -8540,6 +8551,18 @@ add_decl_to_scope__CIParser(CIParser *self, CIDecl **decl_ref, bool must_free)
                 // See `add_enum__CIResultFile` prototype.
                 if (decl != res) {
                     FAILED("enum is already defined");
+                }
+
+                goto free;
+            }
+
+            goto exit;
+        case CI_DECL_KIND_ENUM_VARIANT:
+            if ((res = (CIDecl *)add_enum_variant__CIResultFile(self->file,
+                                                                decl))) {
+                // See `add_enum_variant__CIResultFile` prototype.
+                if (decl != res) {
+                    FAILED("enum variant is already defined");
                 }
 
                 goto free;

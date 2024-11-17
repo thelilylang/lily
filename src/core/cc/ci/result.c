@@ -90,6 +90,9 @@ reset__CIResultEntity(CIResultEntity *self)
     FREE(Vec, self->decls);                                                   \
     FREE_BUFFER_ITEMS(self->enums->buffer, self->enums->len, CIDecl);         \
     FREE(Vec, self->enums);                                                   \
+    FREE_BUFFER_ITEMS(                                                        \
+      self->enum_variants->buffer, self->enum_variants->len, CIDecl);         \
+    FREE(Vec, self->enum_variants);                                           \
     FREE_BUFFER_ITEMS(self->functions->buffer, self->functions->len, CIDecl); \
     FREE(Vec, self->functions);                                               \
     FREE_BUFFER_ITEMS(self->labels->buffer, self->labels->len, CIDecl);       \
@@ -107,6 +110,7 @@ reset__CIResultEntity(CIResultEntity *self)
 
     self->decls = NEW(Vec);
     self->enums = NEW(Vec);
+    self->enum_variants = NEW(Vec);
     self->functions = NEW(Vec);
     self->labels = NEW(Vec);
     self->structs = NEW(Vec);
@@ -358,9 +362,12 @@ update_prototype__CIResult(CIDecl *prototype, CIDecl *decl)
         CHECK_FOR_SYMBOL_REDEFINITION_DECL_WITH_SCOPE(       \
           name, search_label__CIResultFile, scope, decl);    \
     } else if (decl->kind & CI_DECL_KIND_FUNCTION ||         \
-               decl->kind & CI_DECL_KIND_VARIABLE) {         \
+               decl->kind & CI_DECL_KIND_VARIABLE ||         \
+               decl->kind & CI_DECL_KIND_ENUM_VARIANT) {     \
         CHECK_FOR_SYMBOL_REDEFINITION_DECL(                  \
           name, search_function__CIResultFile, decl);        \
+        CHECK_FOR_SYMBOL_REDEFINITION_DECL(                  \
+          name, search_enum_variant__CIResultFile, decl);    \
         CHECK_FOR_SYMBOL_REDEFINITION_DECL_WITH_SCOPE(       \
           name, search_variable__CIResultFile, scope, decl); \
     } else {                                                 \
@@ -418,6 +425,21 @@ add_enum__CIResultFile(const CIResultFile *self, CIDecl *enum_)
                  self->file_analysis->entity->enums->len),
                self->file_analysis->entity->enums,
                add_enum__CIResultFile(self->owner, ref__CIDecl(enum_)));
+}
+
+const CIDecl *
+add_enum_variant__CIResultFile(const CIResultFile *self, CIDecl *enum_variant)
+{
+    ADD_X_DECL(
+      enum_variant,
+      self->file_analysis->scope_base,
+      add_enum_variant__CIScope(
+        self->file_analysis->scope_base,
+        name,
+        NEW(CIFileID, self->file_analysis->entity->id, self->kind),
+        self->file_analysis->entity->enum_variants->len),
+      self->file_analysis->entity->enum_variants,
+      add_enum_variant__CIResultFile(self->owner, ref__CIDecl(enum_variant)));
 }
 
 const CIDecl *
@@ -536,6 +558,14 @@ get_enum_from_id__CIResultFile(const CIResultFile *self,
 }
 
 CIDecl *
+get_enum_variant_from_id__CIResultFile(const CIResultFile *self,
+                                       const CIEnumVariantID *enum_variant_id)
+{
+    GET_DECL_FROM_ID__CI_RESULT_FILE(self->file_analysis->entity->enum_variants,
+                                     enum_variant_id->id);
+}
+
+CIDecl *
 get_function_from_id__CIResultFile(const CIResultFile *self,
                                    const CIFunctionID *function_id)
 {
@@ -606,6 +636,14 @@ search_enum__CIResultFile(const CIResultFile *self, const String *name)
 {
     SEARCH_DECL__CI_RESULT_FILE(
       CIEnumID, search_enum__CIScope, get_enum_from_id__CIResultFile);
+}
+
+CIDecl *
+search_enum_variant__CIResultFile(const CIResultFile *self, const String *name)
+{
+    SEARCH_DECL__CI_RESULT_FILE(CIEnumVariantID,
+                                search_enum_variant__CIScope,
+                                get_enum_variant_from_id__CIResultFile);
 }
 
 CIDecl *
@@ -721,6 +759,7 @@ search_identifier__CIResultFile(const CIResultFile *self,
 {
     CIDecl *variable = search_variable__CIResultFile(self, scope, name);
     CIDecl *function = search_function__CIResultFile(self, name);
+    CIDecl *enum_variant = search_enum_variant__CIResultFile(self, name);
 
     if (variable) {
         if (variable->variable.is_local) {
@@ -728,6 +767,8 @@ search_identifier__CIResultFile(const CIResultFile *self,
         }
     } else if (function) {
         return function;
+    } else if (enum_variant) {
+        return enum_variant;
     }
 
     return NULL;
@@ -772,6 +813,19 @@ add_enums__CIResultFile(const CIResultFile *self, const CIResultFile *other)
                 CIEnumID,
                 other->entity.enums,
                 other->scope_base->enums,
+                true,
+                self,
+                ref__CIDecl(decl));
+}
+
+void
+add_enum_variants__CIResultFile(const CIResultFile *self,
+                                const CIResultFile *other)
+{
+    ADD_Xs_DECL(add_enum_variant__CIResultFile,
+                CIEnumVariantID,
+                other->entity.enum_variants,
+                other->scope_base->enum_variants,
                 true,
                 self,
                 ref__CIDecl(decl));
@@ -849,6 +903,7 @@ void
 merge_content__CIResultFile(const CIResultFile *self, CIResultFile *other)
 {
     add_enums__CIResultFile(self, other);
+    add_enum_variants__CIResultFile(self, other);
     add_functions__CIResultFile(self, other);
     add_structs__CIResultFile(self, other);
     add_unions__CIResultFile(self, other);

@@ -49,6 +49,8 @@ eq__CIFileID(const CIFileID *self, const CIFileID *other);
 
 extern inline DESTRUCTOR(CIEnumID, CIEnumID *self);
 
+extern inline DESTRUCTOR(CIEnumVariantID, CIEnumVariantID *self);
+
 extern inline DESTRUCTOR(CIFunctionID, CIFunctionID *self);
 
 extern inline DESTRUCTOR(CILabelID, CILabelID *self);
@@ -66,6 +68,12 @@ add_enum__CIScope(const CIScope *self,
                   const String *name,
                   CIFileID file_id,
                   Usize id);
+
+extern inline const CIEnumVariantID *
+add_enum_variant__CIScope(const CIScope *self,
+                          const String *name,
+                          CIFileID file_id,
+                          Usize id);
 
 extern inline const CIFunctionID *
 add_function__CIScope(const CIScope *self,
@@ -107,6 +115,9 @@ add_variable__CIScope(const CIScope *self,
 
 extern inline const CIEnumID *
 search_enum__CIScope(const CIScope *self, const String *name);
+
+extern inline const CIEnumVariantID *
+search_enum_variant__CIScope(const CIScope *self, const String *name);
 
 extern inline const CIFunctionID *
 search_function__CIScope(const CIScope *self, const String *name);
