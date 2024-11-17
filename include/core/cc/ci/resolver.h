@@ -276,7 +276,6 @@ typedef struct CIResolver
     Usize *count_error;                // Usize* (&)
     Usize *count_warning;              // Usize* (&)
     CIResolverMacroCall *macro_call;   // CIResolverMacroCall*?
-    Usize count_merged_id;
     // This field allows the resolver to determine whether the identifiers it
     // receives are keywords or not.
     bool look_for_keyword;
@@ -301,7 +300,6 @@ inline CONSTRUCTOR(CIResolver,
                          .count_error = count_error,
                          .count_warning = count_warning,
                          .macro_call = NULL,
-                         .count_merged_id = 0,
                          .look_for_keyword = false };
 }
 

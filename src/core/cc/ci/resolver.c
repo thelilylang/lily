@@ -199,6 +199,15 @@ perform_merged_id__CIResolver(CIResolver *self,
                               Location new_token_location);
 
 static void
+resolve_merged_id_left_or_right__CIResolver(CIResolver *self);
+
+static inline void
+resolve_merged_id_left__CIResolver(CIResolver *self);
+
+static void
+resolve_merged_id_right__CIResolver(CIResolver *self);
+
+static void
 resolve_merged_id__CIResolver(CIResolver *self);
 
 /// @brief Resolve token such as preprocessor, <id>##<id2>, ...
@@ -1347,16 +1356,49 @@ perform_merged_id__CIResolver(CIResolver *self,
 }
 
 void
+resolve_merged_id_left_or_right__CIResolver(CIResolver *self)
+{
+    switch (self->current_token->kind) {
+        case CI_TOKEN_KIND_MACRO_PARAM:
+            return resolve_macro_param__CIResolver(self, self->current_token);
+        case CI_TOKEN_KIND_MACRO_PARAM_VARIADIC:
+            return resolve_macro_param_variadic__CIResolver(
+              self, self->current_token);
+        default:
+            return add_resolved_token__CIResolver(
+              self, ref__CIToken(self->current_token));
+    }
+}
+
+void
+resolve_merged_id_left__CIResolver(CIResolver *self)
+{
+    return resolve_merged_id_left_or_right__CIResolver(self);
+}
+
+void
+resolve_merged_id_right__CIResolver(CIResolver *self)
+{
+    if (self->current_token->next &&
+        self->current_token->next->kind == CI_TOKEN_KIND_HASHTAG_HASHTAG) {
+        return resolve_merged_id__CIResolver(self);
+    }
+
+    resolve_merged_id_left_or_right__CIResolver(self);
+}
+
+void
 resolve_merged_id__CIResolver(CIResolver *self)
 {
+    resolve_merged_id_left__CIResolver(self);
+    next_token__CIResolver(self);
+
     if (count__CIResolvedTokens(self->resolved_tokens) > 0) {
         Usize last_token_index =
           count__CIResolvedTokens(self->resolved_tokens) - 1;
 
-        ++self->count_merged_id;
-
         next_token__CIResolver(self);
-        resolve_token__CIResolver(self);
+        resolve_merged_id_right__CIResolver(self);
 
         CIToken *merged_id_lhs =
           get__CIResolvedTokens(self->resolved_tokens, last_token_index);
@@ -1389,7 +1431,7 @@ resolve_merged_id__CIResolver(CIResolver *self)
              remove__CIResolvedTokens(self->resolved_tokens,
                                       last_token_index + 1));
 
-        if (--self->count_merged_id == 0) {
+        {
             CITokens identifier_resolver_tokens = NEW(CITokens);
             Location eof_location = clone__Location(&new_token_location);
 
@@ -1433,6 +1475,11 @@ resolve_merged_id__CIResolver(CIResolver *self)
 void
 resolve_token__CIResolver(CIResolver *self)
 {
+    if (self->current_token->next &&
+        self->current_token->next->kind == CI_TOKEN_KIND_HASHTAG_HASHTAG) {
+        return resolve_merged_id__CIResolver(self);
+    }
+
     switch (self->current_token->kind) {
         case CI_TOKEN_KIND_IDENTIFIER:
             return resolve_identifier__CIResolver(self, self->current_token);
@@ -1474,8 +1521,6 @@ resolve_token__CIResolver(CIResolver *self)
               self, self->current_token);
         case CI_TOKEN_KIND_HASHTAG:
             return resolve_stringification__CIResolver(self);
-        case CI_TOKEN_KIND_HASHTAG_HASHTAG:
-            return resolve_merged_id__CIResolver(self);
         case CI_TOKEN_KIND_EOT:
         case CI_TOKEN_KIND_PREPROCESSOR_ELIF:
         case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:
