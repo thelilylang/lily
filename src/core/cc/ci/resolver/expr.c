@@ -26,6 +26,7 @@
 
 #include <core/cc/ci/builtin.h>
 #include <core/cc/ci/resolver/expr.h>
+#include <core/cc/ci/result.h>
 
 #include <stdio.h>
 
@@ -150,6 +151,13 @@ resolve_gt_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs);
 /// @brief lhs >= rhs
 static CIExpr *
 resolve_ge_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs);
+
+static CIExpr *
+determine_enum_variant_value__CIResolver(const CIResolverExpr *self,
+                                         CIDecl *enum_variant_decl);
+
+static CIExpr *
+resolve_identifier__CIResolver(const CIResolverExpr *self, CIExpr *identifier);
 
 static Usize
 calculate_enum_size__CIResolverExpr(const CIResolverExpr *self,
@@ -1524,6 +1532,44 @@ resolve_ge_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
     RESOLVE_BASIC_BINARY_COMPARISON_EXPR(>=, CI_EXPR_BINARY_KIND_GREATER_EQ);
 }
 
+CIExpr *
+determine_enum_variant_value__CIResolver(const CIResolverExpr *self,
+                                         CIDecl *enum_variant_decl)
+{
+    return NEW_VARIANT(CIExpr,
+                       literal,
+                       NEW_VARIANT(CIExprLiteral,
+                                   signed_int,
+                                   enum_variant_decl->enum_variant->value));
+}
+
+CIExpr *
+resolve_identifier__CIResolver(const CIResolverExpr *self, CIExpr *identifier)
+{
+    if (self->is_at_preprocessor_time) {
+        // NOTE: Return 0 by default if the preprocessor encounters an
+        // identifier, since this means that the macro named with this
+        // identifier has not been defined.
+        return NEW_VARIANT(
+          CIExpr, literal, NEW_VARIANT(CIExprLiteral, signed_int, 0));
+    }
+
+    ASSERT(self->parser && self->scope);
+
+    CIDecl *identifier_decl = search_identifier__CIResultFile(
+      self->parser->file,
+      self->scope,
+      GET_PTR_RC(String, identifier->identifier));
+
+    switch (identifier_decl->kind) {
+        case CI_DECL_KIND_ENUM_VARIANT:
+            return determine_enum_variant_value__CIResolver(self,
+                                                            identifier_decl);
+        default:
+            FAILED("cannot use non-comptime value");
+    }
+}
+
 Usize
 calculate_enum_size__CIResolverExpr(const CIResolverExpr *self,
                                     CIDecl *enum_decl)
@@ -2194,15 +2240,7 @@ run__CIResolverExpr(const CIResolverExpr *self, CIExpr *expr)
         case CI_EXPR_KIND_GROUPING:
             return run__CIResolverExpr(self, expr->grouping);
         case CI_EXPR_KIND_IDENTIFIER:
-            if (self->is_at_preprocessor_time) {
-                // NOTE: Return 0 by default if the preprocessor encounters an
-                // identifier, since this means that the macro named with this
-                // identifier has not been defined.
-                return NEW_VARIANT(
-                  CIExpr, literal, NEW_VARIANT(CIExprLiteral, signed_int, 0));
-            }
-
-            TODO("resolve identifier");
+            return resolve_identifier__CIResolver(self, expr);
         case CI_EXPR_KIND_LITERAL:
             return ref__CIExpr(expr);
         case CI_EXPR_KIND_NULLPTR:

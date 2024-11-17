@@ -118,6 +118,9 @@ get_size_info__CIDecl(const CIDecl *self);
 /// @brief Free CIDecl type (CI_DECL_KIND_ENUM).
 static VARIANT_DESTRUCTOR(CIDecl, enum, CIDecl *self);
 
+/// @brief Free CIDecl type (CI_DECL_KIND_ENUM_VARIANT).
+static inline VARIANT_DESTRUCTOR(CIDecl, enum_variant, CIDecl *self);
+
 /// @brief Free CIDecl type (CI_DECL_KIND_FUNCTION).
 static VARIANT_DESTRUCTOR(CIDecl, function, CIDecl *self);
 
@@ -289,6 +292,16 @@ CONSTRUCTOR(CIEnumID *, CIEnumID, CIFileID file_id, Usize id)
     return self;
 }
 
+CONSTRUCTOR(CIEnumVariantID *, CIEnumVariantID, CIFileID file_id, Usize id)
+{
+    CIEnumVariantID *self = lily_malloc(sizeof(CIEnumVariantID));
+
+    self->file_id = file_id;
+    self->id = id;
+
+    return self;
+}
+
 CONSTRUCTOR(CIStructID *, CIStructID, CIFileID file_id, Usize id)
 {
     CIStructID *self = lily_malloc(sizeof(CIStructID));
@@ -367,6 +380,7 @@ CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, Usize id, bool is_block)
     self->scope_id = NEW(CIScopeID, id);
     self->is_block = is_block;
     self->enums = NEW(HashMap);
+    self->enum_variants = NEW(HashMap);
     self->functions = NEW(HashMap);
     self->labels = NEW(HashMap);
     self->structs = NEW(HashMap);
@@ -383,6 +397,9 @@ DESTRUCTOR(CIScope, CIScope *self)
 
     FREE_HASHMAP_VALUES(self->enums, CIEnumID);
     FREE(HashMap, self->enums);
+
+    FREE_HASHMAP_VALUES(self->enum_variants, CIEnumVariantID);
+    FREE(HashMap, self->enum_variants);
 
     FREE_HASHMAP_VALUES(self->functions, CIFunctionID);
     FREE(HashMap, self->functions);
@@ -2089,44 +2106,12 @@ IMPL_FOR_DEBUG(to_string, CIDeclKind, enum CIDeclKind self)
 }
 #endif
 
-#ifdef ENV_DEBUG
-char *
-IMPL_FOR_DEBUG(to_string,
-               CIDeclEnumVariantKind,
-               enum CIDeclEnumVariantKind self)
-{
-    switch (self) {
-        case CI_DECL_ENUM_VARIANT_KIND_CUSTOM:
-            return "CI_DECL_ENUM_VARIANT_KIND_CUSTOM";
-        case CI_DECL_ENUM_VARIANT_KIND_DEFAULT:
-            return "CI_DECL_ENUM_VARIANT_KIND_DEFAULT";
-        default:
-            UNREACHABLE("unknown variant");
-    }
-}
-#endif
-
-VARIANT_CONSTRUCTOR(CIDeclEnumVariant *,
-                    CIDeclEnumVariant,
-                    custom,
-                    Rc *name,
-                    Isize value)
+CONSTRUCTOR(CIDeclEnumVariant *, CIDeclEnumVariant, Rc *name, Isize value)
 {
     CIDeclEnumVariant *self = lily_malloc(sizeof(CIDeclEnumVariant));
 
-    self->kind = CI_DECL_ENUM_VARIANT_KIND_CUSTOM;
     self->name = ref__Rc(name);
     self->value = value;
-
-    return self;
-}
-
-VARIANT_CONSTRUCTOR(CIDeclEnumVariant *, CIDeclEnumVariant, default, Rc *name)
-{
-    CIDeclEnumVariant *self = lily_malloc(sizeof(CIDeclEnumVariant));
-
-    self->kind = CI_DECL_ENUM_VARIANT_KIND_DEFAULT;
-    self->name = ref__Rc(name);
 
     return self;
 }
@@ -2135,22 +2120,9 @@ VARIANT_CONSTRUCTOR(CIDeclEnumVariant *, CIDeclEnumVariant, default, Rc *name)
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclEnumVariant, const CIDeclEnumVariant *self)
 {
-    switch (self->kind) {
-        case CI_DECL_ENUM_VARIANT_KIND_CUSTOM:
-            // TODO: change {d} format specifier.
-            return format__String(
-              "CIDeclEnumVariant{{ kind = {s}, name = {S}, value = {d} }",
-              to_string__Debug__CIDeclEnumVariantKind(self->kind),
-              GET_PTR_RC(String, self->name),
-              self->value);
-        case CI_DECL_ENUM_VARIANT_KIND_DEFAULT:
-            return format__String(
-              "CIDeclEnumVariant{{ kind = {s}, name = {S} }",
-              to_string__Debug__CIDeclEnumVariantKind(self->kind),
-              GET_PTR_RC(String, self->name));
-        default:
-            UNREACHABLE("unknown variant");
-    }
+    return format__String("CIDeclEnumVariant{{ name = {S}, value = {zi} }",
+                          GET_PTR_RC(String, self->name),
+                          self->value);
 }
 #endif
 
@@ -3015,6 +2987,23 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
+                    enum_variant,
+                    int storage_class_flag,
+                    CIDeclEnumVariant *enum_variant)
+{
+    CIDecl *self = lily_malloc(sizeof(CIDecl));
+
+    self->kind = CI_DECL_KIND_ENUM_VARIANT;
+    self->storage_class_flag = storage_class_flag;
+    self->is_prototype = false;
+    self->ref_count = 0;
+    self->enum_variant = enum_variant;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIDecl *,
+                    CIDecl,
                     function,
                     int storage_class_flag,
                     bool is_prototype,
@@ -3241,6 +3230,8 @@ get_name__CIDecl(const CIDecl *self)
         case CI_DECL_KIND_ENUM:
             return self->enum_.name ? GET_PTR_RC(String, self->enum_.name)
                                     : NULL;
+        case CI_DECL_KIND_ENUM_VARIANT:
+            return GET_PTR_RC(String, self->enum_variant->name);
         case CI_DECL_KIND_FUNCTION:
             return GET_PTR_RC(String, self->function.name);
         case CI_DECL_KIND_FUNCTION_GEN:
@@ -3277,6 +3268,7 @@ has_generic__CIDecl(const CIDecl *self)
         case CI_DECL_KIND_FUNCTION_GEN:
             return has_generic__CIDeclFunctionGen(&self->function_gen);
         case CI_DECL_KIND_ENUM:
+        case CI_DECL_KIND_ENUM_VARIANT:
         case CI_DECL_KIND_LABEL:
         case CI_DECL_KIND_VARIABLE:
             return false;
@@ -3622,6 +3614,11 @@ VARIANT_DESTRUCTOR(CIDecl, enum, CIDecl *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(CIDecl, enum_variant, CIDecl *self)
+{
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(CIDecl, function, CIDecl *self)
 {
     FREE(CIDeclFunction, &self->function);
@@ -3692,6 +3689,9 @@ DESTRUCTOR(CIDecl, CIDecl *self)
     switch (self->kind) {
         case CI_DECL_KIND_ENUM:
             FREE_VARIANT(CIDecl, enum, self);
+            break;
+        case CI_DECL_KIND_ENUM_VARIANT:
+            FREE_VARIANT(CIDecl, enum_variant, self);
             break;
         case CI_DECL_KIND_FUNCTION:
             FREE_VARIANT(CIDecl, function, self);
