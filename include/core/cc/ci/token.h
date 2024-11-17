@@ -1650,6 +1650,16 @@ is_preprocessor__CITokenKind(enum CITokenKind kind);
 
 /**
  *
+ * @brief Check if the given token kind is a keyword.
+ */
+inline bool
+is_keyword__CITokenKind(enum CITokenKind kind)
+{
+    return kind > CI_TOKEN_KIND_KEYWORD_MIN && kind < CI_TOKEN_KIND_KEYWORD_MAX;
+}
+
+/**
+ *
  * @brief Increment `ref_count`.
  * @return CIToken*
  */

@@ -732,6 +732,9 @@ extern inline CONSTRUCTOR(CITokenMacroParamVariadic, CITokenMacroParamVariadic);
 extern inline DESTRUCTOR(CITokenMacroParamVariadic,
                          const CITokenMacroParamVariadic *self);
 
+extern inline bool
+is_keyword__CITokenKind(enum CITokenKind kind);
+
 extern inline CIToken *
 ref__CIToken(CIToken *self);
 
