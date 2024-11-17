@@ -1139,6 +1139,9 @@ parse_for_stmt__CIParser(CIParser *self, bool in_switch);
 static CIStmtIfBranch *
 parse_if_branch__CIParser(CIParser *self, bool in_loop, bool in_switch);
 
+static bool
+has_else_if__CIParser(CIParser *self);
+
 static CIDeclFunctionItem *
 parse_if_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch);
 
@@ -7636,6 +7639,18 @@ parse_if_branch__CIParser(CIParser *self, bool in_loop, bool in_switch)
     return NEW(CIStmtIfBranch, cond, body);
 }
 
+bool
+has_else_if__CIParser(CIParser *self)
+{
+    if (self->current_token->kind == CI_TOKEN_KIND_KEYWORD_ELSE) {
+        CIToken *peeked = peek_token__CIParser(self, 1);
+
+        return peeked && peeked->kind == CI_TOKEN_KIND_KEYWORD_IF;
+    }
+
+    return false;
+}
+
 CIDeclFunctionItem *
 parse_if_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
 {
@@ -7647,17 +7662,17 @@ parse_if_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
         return NULL;
     }
 
-    if (self->current_token->kind == CI_TOKEN_KIND_KEYWORD_ELSE_IF) {
-        else_ifs = NEW(Vec);
-    }
-
-    for (; self->current_token->kind == CI_TOKEN_KIND_KEYWORD_ELSE_IF;) {
-        next_token__CIParser(self);
+    for (; has_else_if__CIParser(self);) {
+        jump__CIParser(self, 2);
 
         CIStmtIfBranch *else_if =
           parse_if_branch__CIParser(self, in_loop, in_switch);
 
         if (else_if) {
+            if (!else_ifs) {
+                else_ifs = NEW(Vec);
+            }
+
             push__Vec(else_ifs, else_if);
         }
     }
