@@ -181,14 +181,16 @@ perform_stringification__CIResolver(CIResolver *self,
 static void
 resolve_stringification__CIResolver(CIResolver *self);
 
-/// @return String* (&)
+/// @return String*
 static String *
 get_merged_id_lhs_content__CIResolver(CIResolver *self, CIToken *lhs);
 
-/// @return String* (&)
+/// @return String*
 static String *
 get_merged_id_rhs_content__CIResolver(CIResolver *self, CIToken *rhs);
 
+/// @param merged_id_lhs_content String* (&)
+/// @param merged_id_rhs_content String* (&)
 static CIToken *
 perform_merged_id__CIResolver(CIResolver *self,
                               CIToken *merged_id_lhs,
@@ -1255,18 +1257,22 @@ get_merged_id_lhs_content__CIResolver(CIResolver *self, CIToken *lhs)
     // TODO: Need to manage keyword.
     switch (lhs->kind) {
         case CI_TOKEN_KIND_IDENTIFIER:
-            return GET_PTR_RC(String, lhs->identifier);
+            return clone__String(GET_PTR_RC(String, lhs->identifier));
         case CI_TOKEN_KIND_LITERAL_CONSTANT_BIN:
-            return lhs->literal_constant_bin.value;
+            return clone__String(lhs->literal_constant_bin.value);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_FLOAT:
-            return lhs->literal_constant_float.value;
+            return clone__String(lhs->literal_constant_float.value);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_INT:
-            return lhs->literal_constant_int.value;
+            return clone__String(lhs->literal_constant_int.value);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_HEX:
-            return lhs->literal_constant_hex.value;
+            return clone__String(lhs->literal_constant_hex.value);
         case CI_TOKEN_KIND_LITERAL_CONSTANT_OCTAL:
-            return lhs->literal_constant_octal.value;
+            return clone__String(lhs->literal_constant_octal.value);
         default:
+            if (is_keyword__CITokenKind(lhs->kind)) {
+                return to_string__CIToken(lhs);
+            }
+
             FAILED("not expected to be lhs of `##`");
     }
 }
@@ -1277,10 +1283,14 @@ get_merged_id_rhs_content__CIResolver(CIResolver *self, CIToken *rhs)
     // TODO: Need to manage keyword.
     switch (rhs->kind) {
         case CI_TOKEN_KIND_IDENTIFIER:
-            return GET_PTR_RC(String, rhs->identifier);
+            return clone__String(GET_PTR_RC(String, rhs->identifier));
         case CI_TOKEN_KIND_LITERAL_CONSTANT_INT:
-            return rhs->literal_constant_int.value;
+            return clone__String(rhs->literal_constant_int.value);
         default:
+            if (is_keyword__CITokenKind(rhs->kind)) {
+                return to_string__CIToken(rhs);
+            }
+
             FAILED("not expected to be rhs of `##`");
     }
 }
@@ -1299,6 +1309,7 @@ perform_merged_id__CIResolver(CIResolver *self,
 
     switch (merged_id_lhs->kind) {
         case CI_TOKEN_KIND_IDENTIFIER:
+        identifier_case:
             return NEW_VARIANT(
               CIToken, identifier, new_token_location, NEW(Rc, merged_id));
 #define NEW_INTEGER_TOKEN(k)                                   \
@@ -1325,6 +1336,10 @@ perform_merged_id__CIResolver(CIResolver *self,
                                    CI_TOKEN_LITERAL_CONSTANT_FLOAT_SUFFIX_NONE,
                                    merged_id));
         default:
+            if (is_keyword__CITokenKind(merged_id_lhs->kind)) {
+                goto identifier_case;
+            }
+
             UNREACHABLE("unknown variant");
     }
 
@@ -1406,6 +1421,8 @@ resolve_merged_id__CIResolver(CIResolver *self)
 
         FREE(CIToken,
              remove__CIResolvedTokens(self->resolved_tokens, last_token_index));
+        FREE(String, lhs_content);
+        FREE(String, rhs_content);
 
         return;
     }
