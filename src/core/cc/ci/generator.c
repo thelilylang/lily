@@ -1594,10 +1594,14 @@ generate_struct_field__CIGenerator(const CIDeclStructField *field)
 
     if (field->name && !has_name__CIDataType(field->data_type)) {
         write_String__CIGenerator(
-          format__String(" {S};\n", GET_PTR_RC(String, field->name)));
-    } else {
-        write_str__CIGenerator(";\n");
+          format__String(" {S}", GET_PTR_RC(String, field->name)));
     }
+
+    if (field->bit != 0) {
+        write_String__CIGenerator(format__String(" : {zu}", field->bit));
+    }
+
+    write_str__CIGenerator(";\n");
 }
 
 void
