@@ -4048,7 +4048,7 @@ parse_pre_data_type__CIParser(CIParser *self)
                 case CI_TOKEN_KIND_LBRACE:
                 case CI_TOKEN_KIND_SEMICOLON: {
                     CIDecl *enum_decl =
-                      parse_enum__CIParser(self, storage_class_flag, name);
+                      parse_enum__CIParser(self, CI_STORAGE_CLASS_NONE, name);
 
                     add_decl_to_scope__CIParser(self, &enum_decl, true);
 
