@@ -2146,8 +2146,6 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_KEYWORD_DOUBLE";
         case CI_TOKEN_KIND_KEYWORD_ELSE:
             return "CI_TOKEN_KIND_KEYWORD_ELSE";
-        case CI_TOKEN_KIND_KEYWORD_ELSE_IF:
-            return "CI_TOKEN_KIND_KEYWORD_ELSE_IF";
         case CI_TOKEN_KIND_KEYWORD_ENUM:
             return "CI_TOKEN_KIND_KEYWORD_ENUM";
         case CI_TOKEN_KIND_KEYWORD_EXTERN:

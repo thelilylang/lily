@@ -1825,6 +1825,7 @@ typedef struct CIDeclStructField
 {
     Rc *name; // Rc<String*>*?
     CIDataType *data_type;
+    Uint8 bit;
 } CIDeclStructField;
 
 /**
@@ -1835,7 +1836,8 @@ typedef struct CIDeclStructField
 CONSTRUCTOR(CIDeclStructField *,
             CIDeclStructField,
             Rc *name,
-            CIDataType *data_type);
+            CIDataType *data_type,
+            Uint8 bit);
 
 /**
  *

@@ -2510,37 +2510,40 @@ substitute_data_type__CIParser(CIDataType *data_type,
             break;
         }
         case CI_DATA_TYPE_KIND_STRUCT: {
-#define SUBSTITUTE_STRUCT_OR_UNION(decl_name, decl_ty, variant)                \
-    if (data_type->decl_name.generic_params || data_type->decl_name.fields) {  \
-        Vec *subs_fields = NULL;                                               \
-                                                                               \
-        if (data_type->decl_name.fields) {                                     \
-            subs_fields = NEW(Vec);                                            \
-                                                                               \
-            for (Usize i = 0; i < data_type->decl_name.fields->len; ++i) {     \
-                CIDeclStructField *field =                                     \
-                  get__Vec(data_type->decl_name.fields, i);                    \
-                CIDataType *subs_field_dt = substitute_data_type__CIParser(    \
-                  field->data_type, generic_params, called_generic_params);    \
-                                                                               \
-                push__Vec(subs_fields,                                         \
-                          NEW(CIDeclStructField, field->name, subs_field_dt)); \
-            }                                                                  \
-        }                                                                      \
-                                                                               \
-        res = NEW_VARIANT(CIDataType,                                          \
-                          variant,                                             \
-                          NEW(decl_ty,                                         \
-                              data_type->decl_name.name,                       \
-                              substitute_generic_params__CIParser(             \
-                                data_type->decl_name.generic_params,           \
-                                generic_params,                                \
-                                called_generic_params),                        \
-                              subs_fields));                                   \
-                                                                               \
-        break;                                                                 \
-    }                                                                          \
-                                                                               \
+#define SUBSTITUTE_STRUCT_OR_UNION(decl_name, decl_ty, variant)               \
+    if (data_type->decl_name.generic_params || data_type->decl_name.fields) { \
+        Vec *subs_fields = NULL;                                              \
+                                                                              \
+        if (data_type->decl_name.fields) {                                    \
+            subs_fields = NEW(Vec);                                           \
+                                                                              \
+            for (Usize i = 0; i < data_type->decl_name.fields->len; ++i) {    \
+                CIDeclStructField *field =                                    \
+                  get__Vec(data_type->decl_name.fields, i);                   \
+                CIDataType *subs_field_dt = substitute_data_type__CIParser(   \
+                  field->data_type, generic_params, called_generic_params);   \
+                                                                              \
+                push__Vec(subs_fields,                                        \
+                          NEW(CIDeclStructField,                              \
+                              field->name,                                    \
+                              subs_field_dt,                                  \
+                              field->bit));                                   \
+            }                                                                 \
+        }                                                                     \
+                                                                              \
+        res = NEW_VARIANT(CIDataType,                                         \
+                          variant,                                            \
+                          NEW(decl_ty,                                        \
+                              data_type->decl_name.name,                      \
+                              substitute_generic_params__CIParser(            \
+                                data_type->decl_name.generic_params,          \
+                                generic_params,                               \
+                                called_generic_params),                       \
+                              subs_fields));                                  \
+                                                                              \
+        break;                                                                \
+    }                                                                         \
+                                                                              \
     return ref__CIDataType(data_type);
 
             SUBSTITUTE_STRUCT_OR_UNION(struct_, CIDataTypeStruct, struct);
@@ -2640,7 +2643,10 @@ visit_struct_or_union__CIParser(CIParser *self,
 
             if (subs_data_type) {
                 push__Vec(gen_fields,
-                          NEW(CIDeclStructField, field->name, subs_data_type));
+                          NEW(CIDeclStructField,
+                              field->name,
+                              subs_data_type,
+                              field->bit));
             }
         }
 
@@ -5600,7 +5606,7 @@ infer_expr_data_type__CIParser(const CIParser *self,
                     CIDataType *expr_dt = get__Vec(fields, i);
 
                     replace__Vec(
-                      fields, i, NEW(CIDeclStructField, NULL, expr_dt));
+                      fields, i, NEW(CIDeclStructField, NULL, expr_dt, 0));
                 }
 
                 return NEW_VARIANT(CIDataType,
@@ -5827,7 +5833,8 @@ infer_expr_data_type__CIParser(const CIParser *self,
                                                      field->value,
                                                      current_scope_id,
                                                      called_generic_params,
-                                                     decl_generic_params)));
+                                                     decl_generic_params),
+                      0));
             }
 
             return NEW_VARIANT(
@@ -8124,11 +8131,39 @@ parse_fields__CIParser(CIParser *self)
         parse_variable_name_and_data_type__CIParser(
           self, &data_type, &name, false);
 
+        Uint8 bit = 0;
+
+        switch (self->current_token->kind) {
+            case CI_TOKEN_KIND_COLON: {
+                next_token__CIParser(self);
+
+                CIExpr *bit_expr = parse_expr__CIParser(self);
+                CIResolverExpr bit_expr_resolver =
+                  NEW(CIResolverExpr, self, current_scope, false);
+                CIExpr *resolved_bit_expr =
+                  run__CIResolverExpr(&bit_expr_resolver, bit_expr);
+
+                // TODO: Check that the bit field value does not
+                // overflow/underflow.
+                bit =
+                  to_literal_integer_value__CIResolverExpr(resolved_bit_expr);
+
+                if (bit < 0) {
+                    FAILED("bit field cannot be negative");
+                }
+
+                FREE(CIExpr, bit_expr);
+                FREE(CIExpr, resolved_bit_expr);
+
+                break;
+            }
+            default:
+                break;
+        }
+
         expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
 
-        // TODO: parse bits set
-
-        push__Vec(fields, NEW(CIDeclStructField, name, data_type));
+        push__Vec(fields, NEW(CIDeclStructField, name, data_type, bit));
     }
 
     expect__CIParser(self, CI_TOKEN_KIND_RBRACE, true);
