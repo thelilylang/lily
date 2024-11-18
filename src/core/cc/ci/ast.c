@@ -2503,12 +2503,14 @@ DESTRUCTOR(CIDeclLabel, const CIDeclLabel *self)
 CONSTRUCTOR(CIDeclStructField *,
             CIDeclStructField,
             Rc *name,
-            CIDataType *data_type)
+            CIDataType *data_type,
+            Uint8 bit)
 {
     CIDeclStructField *self = lily_malloc(sizeof(CIDeclStructField));
 
     self->name = name ? ref__Rc(name) : NULL;
     self->data_type = data_type;
+    self->bit = bit;
 
     return self;
 }
@@ -2516,8 +2518,10 @@ CONSTRUCTOR(CIDeclStructField *,
 CIDeclStructField *
 clone__CIDeclStructField(CIDeclStructField *self)
 {
-    return NEW(
-      CIDeclStructField, self->name, clone__CIDataType(self->data_type));
+    return NEW(CIDeclStructField,
+               self->name,
+               clone__CIDataType(self->data_type),
+               self->bit);
 }
 
 Vec *
@@ -2600,7 +2604,7 @@ build_fields_from_data_type__CIDeclStructField(CIDataType *data_type,
 
     for (Usize i = 0; i < nb_fields; ++i) {
         push__Vec(fields,
-                  NEW(CIDeclStructField, NULL, ref__CIDataType(data_type)));
+                  NEW(CIDeclStructField, NULL, ref__CIDataType(data_type), 0));
     }
 
     return fields;
@@ -2610,10 +2614,11 @@ build_fields_from_data_type__CIDeclStructField(CIDataType *data_type,
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclStructField, const CIDeclStructField *self)
 {
-    return format__String("CIDeclStructField{{ name = {s}, data_type = {Sr} }",
-                          self->name ? GET_PTR_RC(String, self->name)->buffer
-                                     : "NULL",
-                          to_string__Debug__CIDataType(self->data_type));
+    return format__String(
+      "CIDeclStructField{{ name = {s}, data_type = {Sr}, bit = {zu} }",
+      self->name ? GET_PTR_RC(String, self->name)->buffer : "NULL",
+      to_string__Debug__CIDataType(self->data_type),
+      self->bit);
 }
 #endif
 
