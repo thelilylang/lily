@@ -34,9 +34,42 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/// @brief This function update prototype, according the declaration.
+/// @param new_enum_decl CIDecl*
 static void
-update_prototype__CIResult(CIDecl *prototype, CIDecl *decl);
+replace_enum_from_id__CIResultFile(const CIResultFile *self,
+                                   const CIEnumID *enum_id,
+                                   CIDecl *new_enum_decl);
+
+/// @param new_enum_variant_decl CIDecl*
+static void
+replace_enum_variant_from_id__CIResultFile(
+  const CIResultFile *self,
+  const CIEnumVariantID *enum_variant_id,
+  CIDecl *new_enum_variant_decl);
+
+/// @param new_function_decl CIDecl*
+static void
+replace_function_from_id__CIResultFile(const CIResultFile *self,
+                                       const CIFunctionID *function_id,
+                                       CIDecl *new_function_decl);
+
+/// @param new_struct_decl CIDecl*
+static void
+replace_struct_from_id__CIResultFile(const CIResultFile *self,
+                                     const CIStructID *struct_id,
+                                     CIDecl *new_struct_decl);
+
+/// @param new_typedef_decl CIDecl*
+static void
+replace_typedef_from_id__CIResultFile(const CIResultFile *self,
+                                      const CITypedefID *typedef_id,
+                                      CIDecl *new_typedef_decl);
+
+/// @param new_union_decl CIDecl*
+static void
+replace_union_from_id__CIResultFile(const CIResultFile *self,
+                                    const CIUnionID *union_id,
+                                    CIDecl *new_union_decl);
 
 /// @param path char* (&)
 static void
@@ -289,62 +322,28 @@ add_include__CIResultFile(const CIResultFile *self)
 {
 }
 
-void
-update_prototype__CIResult(CIDecl *prototype, CIDecl *decl)
-{
-    ASSERT(prototype->kind == decl->kind);
-    ASSERT(prototype->is_prototype && !decl->is_prototype);
-
-    switch (prototype->kind) {
-        case CI_DECL_KIND_ENUM:
-            prototype->enum_.variants = decl->enum_.variants;
-            decl->enum_.variants = NULL;
-
-            break;
-        case CI_DECL_KIND_FUNCTION:
-            prototype->function.body = decl->function.body;
-
-            break;
-        case CI_DECL_KIND_STRUCT:
-            prototype->struct_.fields = decl->struct_.fields;
-            decl->struct_.fields = NULL;
-
-            break;
-        case CI_DECL_KIND_TYPEDEF:
-            break;
-        case CI_DECL_KIND_UNION:
-            prototype->union_.fields = decl->union_.fields;
-            decl->union_.fields = NULL;
-
-            break;
-        case CI_DECL_KIND_VARIABLE:
-            UNREACHABLE("prototype variable is impossible");
-        default:
-            UNREACHABLE("the gens variants are not expected");
-    }
-
-    prototype->is_prototype = false;
-}
-
-#define CHECK_FOR_SYMBOL_REDEFINITION_DECL(name, search, decl)                \
-    {                                                                         \
-        CIDecl *is_exist = search(self, name);                                \
-                                                                              \
-        if (is_exist) {                                                       \
-            /* Manage prototype update */                                     \
-            if (!decl->is_prototype) {                                        \
-                if (is_exist->is_prototype && is_exist->kind == decl->kind) { \
-                    update_prototype__CIResult(is_exist, decl);               \
-                                                                              \
-                    return decl;                                              \
-                }                                                             \
-                                                                              \
-                return is_exist;                                              \
-            } else {                                                          \
-                /* No need to update anything in this case. */                \
-                return decl;                                                  \
-            }                                                                 \
-        }                                                                     \
+#define CHECK_FOR_SYMBOL_REDEFINITION_DECL(name, search, replace, decl, scope) \
+    {                                                                          \
+        CIDecl *is_exist = search##__CIResultFile(self, name);                 \
+                                                                               \
+        if (is_exist) {                                                        \
+            /* Manage prototype update */                                      \
+            if (!decl->is_prototype) {                                         \
+                if (is_exist->is_prototype && is_exist->kind == decl->kind) {  \
+                    push__Vec(self->entity.decls, ref__CIDecl(decl));          \
+                    replace(self,                                              \
+                            search##__CIScope(scope, name),                    \
+                            ref__CIDecl(decl));                                \
+                                                                               \
+                    return decl;                                               \
+                }                                                              \
+                                                                               \
+                return is_exist;                                               \
+            } else {                                                           \
+                /* No need to update anything in this case. */                 \
+                return decl;                                                   \
+            }                                                                  \
+        }                                                                      \
     }
 
 #define CHECK_FOR_SYMBOL_REDEFINITION_DECL_WITH_SCOPE( \
@@ -365,26 +364,50 @@ update_prototype__CIResult(CIDecl *prototype, CIDecl *decl)
                decl->kind & CI_DECL_KIND_VARIABLE ||         \
                decl->kind & CI_DECL_KIND_ENUM_VARIANT) {     \
         CHECK_FOR_SYMBOL_REDEFINITION_DECL(                  \
-          name, search_function__CIResultFile, decl);        \
+          name,                                              \
+          search_function,                                   \
+          replace_function_from_id__CIResultFile,            \
+          decl,                                              \
+          scope);                                            \
         CHECK_FOR_SYMBOL_REDEFINITION_DECL(                  \
-          name, search_enum_variant__CIResultFile, decl);    \
+          name,                                              \
+          search_enum_variant,                               \
+          replace_enum_variant_from_id__CIResultFile,        \
+          decl,                                              \
+          scope);                                            \
         CHECK_FOR_SYMBOL_REDEFINITION_DECL_WITH_SCOPE(       \
           name, search_variable__CIResultFile, scope, decl); \
     } else {                                                 \
         if (!(decl->kind & CI_DECL_KIND_TYPEDEF)) {          \
             CHECK_FOR_SYMBOL_REDEFINITION_DECL(              \
-              name, search_enum__CIResultFile, decl);        \
+              name,                                          \
+              search_enum,                                   \
+              replace_enum_from_id__CIResultFile,            \
+              decl,                                          \
+              scope);                                        \
             CHECK_FOR_SYMBOL_REDEFINITION_DECL(              \
-              name, search_struct__CIResultFile, decl);      \
+              name,                                          \
+              search_struct,                                 \
+              replace_struct_from_id__CIResultFile,          \
+              decl,                                          \
+              scope);                                        \
             CHECK_FOR_SYMBOL_REDEFINITION_DECL(              \
-              name, search_union__CIResultFile, decl);       \
+              name,                                          \
+              search_union,                                  \
+              replace_union_from_id__CIResultFile,           \
+              decl,                                          \
+              scope);                                        \
         }                                                    \
                                                              \
         if (!(decl->kind & CI_DECL_KIND_ENUM ||              \
               decl->kind & CI_DECL_KIND_STRUCT ||            \
               decl->kind & CI_DECL_KIND_UNION)) {            \
             CHECK_FOR_SYMBOL_REDEFINITION_DECL(              \
-              name, search_typedef__CIResultFile, decl);     \
+              name,                                          \
+              search_typedef,                                \
+              replace_typedef_from_id__CIResultFile,         \
+              decl,                                          \
+              scope);                                        \
         }                                                    \
     }
 
@@ -532,6 +555,69 @@ add_variable__CIResultFile(const CIResultFile *self,
                self->file_analysis->entity->variables,
                add_variable__CIResultFile(
                  self->owner, self->owner->scope_base, ref__CIDecl(variable)));
+}
+
+#define REPLACE_DECL_FROM_ID__CI_RESULT_FILE(vec, i, new_decl) \
+    {                                                          \
+        ASSERT(i);                                             \
+        CIDecl *decl = get__Vec(vec, i->id);                   \
+        FREE(CIDecl, decl);                                    \
+        replace__Vec(vec, i->id, new_decl);                    \
+    }
+
+void
+replace_enum_from_id__CIResultFile(const CIResultFile *self,
+                                   const CIEnumID *enum_id,
+                                   CIDecl *new_enum_decl)
+{
+    REPLACE_DECL_FROM_ID__CI_RESULT_FILE(
+      self->entity.enums, enum_id, new_enum_decl);
+}
+
+void
+replace_enum_variant_from_id__CIResultFile(
+  const CIResultFile *self,
+  const CIEnumVariantID *enum_variant_id,
+  CIDecl *new_enum_variant_decl)
+{
+    REPLACE_DECL_FROM_ID__CI_RESULT_FILE(
+      self->entity.enum_variants, enum_variant_id, new_enum_variant_decl);
+}
+
+void
+replace_function_from_id__CIResultFile(const CIResultFile *self,
+                                       const CIFunctionID *function_id,
+                                       CIDecl *new_function_decl)
+{
+    REPLACE_DECL_FROM_ID__CI_RESULT_FILE(
+      self->entity.functions, function_id, new_function_decl);
+}
+
+void
+replace_struct_from_id__CIResultFile(const CIResultFile *self,
+                                     const CIStructID *struct_id,
+                                     CIDecl *new_struct_decl)
+{
+    REPLACE_DECL_FROM_ID__CI_RESULT_FILE(
+      self->entity.structs, struct_id, new_struct_decl);
+}
+
+void
+replace_typedef_from_id__CIResultFile(const CIResultFile *self,
+                                      const CITypedefID *typedef_id,
+                                      CIDecl *new_typedef_decl)
+{
+    REPLACE_DECL_FROM_ID__CI_RESULT_FILE(
+      self->entity.typedefs, typedef_id, new_typedef_decl);
+}
+
+void
+replace_union_from_id__CIResultFile(const CIResultFile *self,
+                                    const CIUnionID *union_id,
+                                    CIDecl *new_union_decl)
+{
+    REPLACE_DECL_FROM_ID__CI_RESULT_FILE(
+      self->entity.unions, union_id, new_union_decl);
 }
 
 #define GET_DECL_FROM_ID__CI_RESULT_FILE(vec, id) return get__Vec(vec, id);

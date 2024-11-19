@@ -216,7 +216,7 @@ static void
 generate_decl__CIGenerator(const CIDecl *decl);
 
 static void
-generate_decls__CIGenerator(const CIResultFile *file_result);
+generate_global_decls__CIGenerator(const CIResultFile *file_result);
 
 static void
 generate_enum_prototype__CIGenerator(const CIDeclEnum *enum_);
@@ -239,12 +239,6 @@ generate_function_prototype__CIGenerator(const CIDeclFunction *function);
 static void
 generate_function_gen_prototype__CIGenerator(
   const CIDeclFunctionGen *function_gen);
-
-static void
-generate_decl_prototype__CIGenerator(const CIDecl *decl);
-
-static void
-generate_decls_prototype__CIGenerator(const CIResultFile *file_result);
 
 static const CIResult *result_ref = NULL; // CIResult* (&)
 
@@ -1709,9 +1703,18 @@ generate_variable_decl__CIGenerator(const CIDeclVariable *variable)
 void
 generate_decl__CIGenerator(const CIDecl *decl)
 {
-    if (!has_generic__CIDecl(decl) && !decl->is_prototype) {
+    if (!has_generic__CIDecl(decl)) {
+        generate_attributes_by_decl__CIGenerator(decl);
+        generate_storage_class__CIGenerator(&decl->storage_class_flag);
+
         switch (decl->kind) {
             case CI_DECL_KIND_ENUM:
+                if (decl->is_prototype) {
+                    generate_enum_prototype__CIGenerator(&decl->enum_);
+
+                    break;
+                }
+
                 generate_enum_decl__CIGenerator(&decl->enum_);
 
                 break;
@@ -1719,31 +1722,75 @@ generate_decl__CIGenerator(const CIDecl *decl)
                 // NOTE: We don't want to generate enum variant here.
                 return;
             case CI_DECL_KIND_FUNCTION:
+                if (decl->is_prototype) {
+                    generate_function_prototype__CIGenerator(&decl->function);
+
+                    break;
+                }
+
                 return generate_function_decl__CIGenerator(&decl->function);
             case CI_DECL_KIND_FUNCTION_GEN:
+                if (decl->is_prototype) {
+                    generate_function_gen_prototype__CIGenerator(
+                      &decl->function_gen);
+
+                    break;
+                }
+
                 return generate_function_gen_decl__CIGenerator(
                   &decl->function_gen);
             case CI_DECL_KIND_LABEL:
                 return generate_label_decl__CIGenerator(&decl->label);
             case CI_DECL_KIND_STRUCT:
+                if (decl->is_prototype) {
+                    generate_struct_prototype__CIGenerator(&decl->struct_);
+
+                    break;
+                }
+
                 generate_struct_decl__CIGenerator(&decl->struct_);
 
                 break;
             case CI_DECL_KIND_STRUCT_GEN:
+                if (decl->is_prototype) {
+                    generate_struct_gen_prototype__CIGenerator(
+                      &decl->struct_gen);
+
+                    break;
+                }
+
                 generate_struct_gen_decl__CIGenerator(&decl->struct_gen);
 
                 break;
+            case CI_DECL_KIND_TYPEDEF:
+                generate_typedef_decl__CIGenerator(&decl->typedef_);
+
+                break;
+            case CI_DECL_KIND_TYPEDEF_GEN:
+                generate_typedef_gen_decl__CIGenerator(&decl->typedef_gen);
+
+                break;
             case CI_DECL_KIND_UNION:
+                if (decl->is_prototype) {
+                    generate_union_prototype__CIGenerator(&decl->union_);
+
+                    break;
+                }
+
                 generate_union_decl__CIGenerator(&decl->union_);
 
                 break;
             case CI_DECL_KIND_UNION_GEN:
+                if (decl->is_prototype) {
+                    generate_union_gen_prototype__CIGenerator(&decl->union_gen);
+
+                    break;
+                }
+
                 generate_union_gen_decl__CIGenerator(&decl->union_gen);
 
                 break;
             case CI_DECL_KIND_VARIABLE:
-                generate_storage_class__CIGenerator(&decl->storage_class_flag);
-
                 return generate_variable_decl__CIGenerator(&decl->variable);
             default:
                 UNREACHABLE("unknown variant");
@@ -1754,7 +1801,7 @@ generate_decl__CIGenerator(const CIDecl *decl)
 }
 
 void
-generate_decls__CIGenerator(const CIResultFile *file_result)
+generate_global_decls__CIGenerator(const CIResultFile *file_result)
 {
     CIDecl *decl = NULL;
     VecIter iter_decl = NEW(VecIter, file_result->entity.decls);
@@ -1835,85 +1882,6 @@ generate_function_gen_prototype__CIGenerator(
 }
 
 void
-generate_decl_prototype__CIGenerator(const CIDecl *decl)
-{
-    if (!has_generic__CIDecl(decl)) {
-        generate_attributes_by_decl__CIGenerator(decl);
-        generate_storage_class__CIGenerator(&decl->storage_class_flag);
-
-        switch (decl->kind) {
-            case CI_DECL_KIND_ENUM:
-                generate_enum_prototype__CIGenerator(&decl->enum_);
-
-                break;
-            case CI_DECL_KIND_ENUM_VARIANT:
-                // NOTE: We don't want to generate enum variant here.
-                return;
-            case CI_DECL_KIND_FUNCTION:
-                generate_function_prototype__CIGenerator(&decl->function);
-
-                break;
-            case CI_DECL_KIND_FUNCTION_GEN:
-                generate_function_gen_prototype__CIGenerator(
-                  &decl->function_gen);
-
-                break;
-            case CI_DECL_KIND_STRUCT:
-                generate_struct_prototype__CIGenerator(&decl->struct_);
-
-                break;
-            case CI_DECL_KIND_STRUCT_GEN:
-                generate_struct_gen_prototype__CIGenerator(&decl->struct_gen);
-
-                break;
-            case CI_DECL_KIND_TYPEDEF:
-                generate_typedef_decl__CIGenerator(&decl->typedef_);
-
-                break;
-            case CI_DECL_KIND_TYPEDEF_GEN:
-                generate_typedef_gen_decl__CIGenerator(&decl->typedef_gen);
-
-                break;
-            case CI_DECL_KIND_UNION:
-                generate_union_prototype__CIGenerator(&decl->union_);
-
-                break;
-            case CI_DECL_KIND_UNION_GEN:
-                generate_union_gen_prototype__CIGenerator(&decl->union_gen);
-
-                break;
-            default:
-                UNREACHABLE("this situation is impossible");
-        }
-
-        write_str__CIGenerator(";\n");
-    }
-}
-
-void
-generate_decls_prototype__CIGenerator(const CIResultFile *file_result)
-{
-    CIDecl *decl = NULL;
-    VecIter iter_decl = NEW(VecIter, file_result->entity.decls);
-
-    while ((decl = next__VecIter(&iter_decl))) {
-        switch (decl->kind) {
-            case CI_DECL_KIND_LABEL:
-                UNREACHABLE("It is impossible to have a label declaration in "
-                            "the global decls vector");
-            case CI_DECL_KIND_VARIABLE:
-                // NOTE: We cannot define a prototype for this kind of
-                // declaration.
-                break;
-            default:
-                generate_decl_prototype__CIGenerator(decl);
-        }
-    }
-
-    write_str__CIGenerator("\n");
-}
-
-void
 run_file__CIGenerator(const CIResultFile *file_result)
 {
     current_result_content = NEW(String);
@@ -1930,8 +1898,7 @@ run_file__CIGenerator(const CIResultFile *file_result)
     String *path_result = format__String(
       "{S}/{S}", dir_result, file_result->entity.filename_result);
 
-    generate_decls_prototype__CIGenerator(file_result);
-    generate_decls__CIGenerator(file_result);
+    generate_global_decls__CIGenerator(file_result);
     create_recursive_dir__Dir(dir_result->buffer,
                               DIR_MODE_RWXU | DIR_MODE_RWXG | DIR_MODE_RWXO);
     write_file__File(path_result->buffer, current_result_content->buffer);
