@@ -11,3 +11,5 @@
 /bin
 /lib/local/include
 /html
+/out.ci
+/out.lily
