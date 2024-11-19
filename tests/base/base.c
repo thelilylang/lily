@@ -13,6 +13,7 @@
 #include "str.c"
 #include "string.c"
 #include "vec.c"
+#include "vec_bit.c"
 
 #include <base/test.h>
 
@@ -109,5 +110,10 @@ main()
               CALL_CASE(vec_slice));
     ADD_SUITE(
       2, vec_iter, CALL_CASE(vec_iter_next), CALL_CASE(vec_iter_current));
+    ADD_SUITE(3,
+              vec_bit,
+              CALL_CASE(vec_bit_add),
+              CALL_CASE(vec_bit_has),
+              CALL_CASE(vec_bit_remove));
     RUN_TEST();
 }
