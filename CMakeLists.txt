@@ -343,6 +343,7 @@ set(BASE_SRC
     ${CMAKE_SOURCE_DIR}/src/base/tree.c
     ${CMAKE_SOURCE_DIR}/src/base/tree_map.c
     ${CMAKE_SOURCE_DIR}/src/base/vec.c
+    ${CMAKE_SOURCE_DIR}/src/base/vec_bit.c
     ${CMAKE_SOURCE_DIR}/src/base/yaml.c)
 
 add_library(lily_base STATIC ${BASE_SRC}
