@@ -1077,37 +1077,4 @@ if(LILY_DEBUG)
   target_include_directories(test_core_parser PRIVATE ${LILY_INCLUDE})
 
   add_test(NAME test_core_parser COMMAND test_core_parser)
-
-  add_executable(bench_buffer ${CMAKE_SOURCE_DIR}/benchmarks/base/buffer.c
-                              ${CMAKE_SOURCE_DIR}/src/ex/bin/bench_buffer.c)
-  target_link_libraries(bench_buffer PRIVATE lily_base)
-  target_include_directories(bench_buffer PRIVATE ${LILY_INCLUDE})
-
-  add_executable(bench_vec ${CMAKE_SOURCE_DIR}/benchmarks/base/vec.c
-                           ${CMAKE_SOURCE_DIR}/src/ex/bin/bench_vec.c)
-  target_link_libraries(bench_vec PRIVATE lily_base)
-  target_include_directories(bench_vec PRIVATE ${LILY_INCLUDE})
-
-  add_executable(bench_string ${CMAKE_SOURCE_DIR}/benchmarks/base/string.c
-                              ${CMAKE_SOURCE_DIR}/src/ex/bin/bench_string.c)
-  target_link_libraries(bench_string PRIVATE lily_base)
-  target_include_directories(bench_string PRIVATE ${LILY_INCLUDE})
-
-  add_executable(bench_hash_map ${CMAKE_SOURCE_DIR}/benchmarks/base/hash_map.c
-                                ${CMAKE_SOURCE_DIR}/src/ex/bin/bench_hash_map.c)
-  target_link_libraries(bench_hash_map PRIVATE lily_base)
-  target_include_directories(bench_hash_map PRIVATE ${LILY_INCLUDE})
-
-  add_executable(
-    bench_global_allocator
-    ${CMAKE_SOURCE_DIR}/benchmarks/base/memory/global.c
-    ${CMAKE_SOURCE_DIR}/src/ex/bin/bench_global_allocator.c)
-  target_link_libraries(bench_global_allocator PRIVATE lily_base)
-  target_include_directories(bench_global_allocator PRIVATE ${LILY_INCLUDE})
-
-  add_executable(
-    bench_page_allocator ${CMAKE_SOURCE_DIR}/benchmarks/base/memory/page.c
-                         ${CMAKE_SOURCE_DIR}/src/ex/bin/bench_page_allocator.c)
-  target_link_libraries(bench_page_allocator PRIVATE lily_base)
-  target_include_directories(bench_page_allocator PRIVATE ${LILY_INCLUDE})
 endif()
