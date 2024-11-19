@@ -1901,7 +1901,9 @@ run_file__CIGenerator(const CIResultFile *file_result)
     generate_global_decls__CIGenerator(file_result);
     create_recursive_dir__Dir(dir_result->buffer,
                               DIR_MODE_RWXU | DIR_MODE_RWXG | DIR_MODE_RWXO);
-    write_file__File(path_result->buffer, current_result_content->buffer);
+    write_file__File(path_result->buffer,
+                     current_result_content->buffer,
+                     current_result_content->len);
 
     FREE(String, current_result_content);
     FREE(String, dir_result);
