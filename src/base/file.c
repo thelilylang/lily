@@ -286,14 +286,14 @@ read_file_in_cwd__File(const char *filename)
 
 #ifdef LILY_WINDOWS_OS
 void
-write_file__File(const char *path, const char *content)
+write_file__File(const char *path, const char *content, Usize size)
 {
     // TODO: create a function to write on a file on Windows.
     return;
 }
 #else
 void
-write_file__File(const char *path, const char *content)
+write_file__File(const char *path, const char *content, Usize size)
 {
     FILE *file = fopen(path, "w");
 
@@ -302,7 +302,10 @@ write_file__File(const char *path, const char *content)
         exit(1);
     }
 
-    fprintf(file, "%s", content);
+    if (fwrite(content, size, 1, file) != 1) {
+        printf("\x1b[31merror\x1b[0m: could not write file: `%s`\n", path);
+        exit(1);
+    }
 
     fclose(file);
 }
