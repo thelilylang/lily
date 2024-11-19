@@ -205,7 +205,6 @@ format:
 	${CLANG_FORMAT} ./src/core/shared/target/*.c
 	${CLANG_FORMAT} ./src/ex/bin/*.c
 	${CLANG_FORMAT} ./src/ex/lib/*.c
-	${CLANG_FORMAT} ./benchmarks/base/*.c
 	${CLANG_FORMAT} ./tests/base/*.c
 	${CLANG_FORMAT} ./tests/base/memory/*.c
 	${CLANG_FORMAT} ./tests/core/lily/parser/*.c
