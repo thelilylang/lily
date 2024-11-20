@@ -252,11 +252,18 @@ read_file__File(const char *path)
 
     __stat__(path, &st);
 
-    Usize size = st.st_size + 1;
-    char *content = lily_malloc(size);
+    Usize content_len = st.st_size;
+    Usize content_n = content_len + 1;
+    char *content = lily_malloc(content_n);
 
-    memset(content, 0, size);
-    fread(content, size, 1, file);
+    memset(content, 0, content_n);
+
+    Usize res = fread(content, sizeof(char), content_n, file);
+
+    if (res != content_len) {
+        printf("\x1b[31merror\x1b[0m: could not read file: `%s`\n", path);
+        exit(1);
+    }
 
     ASSERT(feof(file));
 
@@ -286,14 +293,14 @@ read_file_in_cwd__File(const char *filename)
 
 #ifdef LILY_WINDOWS_OS
 void
-write_file__File(const char *path, const char *content, Usize size)
+write_file__File(const char *path, const char *content, Usize content_len)
 {
     // TODO: create a function to write on a file on Windows.
     return;
 }
 #else
 void
-write_file__File(const char *path, const char *content, Usize size)
+write_file__File(const char *path, const char *content, Usize content_len)
 {
     FILE *file = fopen(path, "w");
 
@@ -302,7 +309,9 @@ write_file__File(const char *path, const char *content, Usize size)
         exit(1);
     }
 
-    if (fwrite(content, size, 1, file) != 1) {
+    Usize res = fwrite(content, sizeof(char), content_len, file);
+
+    if (res != content_len) {
         printf("\x1b[31merror\x1b[0m: could not write file: `%s`\n", path);
         exit(1);
     }
