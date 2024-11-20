@@ -684,13 +684,43 @@ perform_implicit_cast_on_array__CIParser(const CIParser *self,
 /// @param data_type_access CIDataType* (&)
 /// @param called_generic_params const CIGenericParams*? (&)
 /// @param decl_generic_params const CIGenericParams*? (&)
-/// @return CIDataType* (&)
+/// @return CIDataType*
 static CIDataType *
 resolve_data_type_access__CIParser(const CIParser *self,
                                    CIDataType *data_type_access,
                                    enum CIExprBinaryKind binary_kind,
                                    const CIGenericParams *called_generic_params,
                                    const CIGenericParams *decl_generic_params);
+
+/// @param current_infer_dt CIDataType*?* (&)
+static void
+infer_expr_access_data_type_array_access__CIParser(
+  const CIParser *self,
+  const CIExpr *expr_access,
+  const Vec *fields,
+  CIDataType **current_infer_dt,
+  const CIScopeID *current_scope_id,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params);
+
+/// @param current_expr_access CIExpr* (&)* (&)
+/// @param current_fields Vec<CIDeclStructField*>* (&)* (&)
+/// @param current_infer_dt CIDataType*?* (&)
+static void
+infer_expr_access_data_type_arrow_or_dot__CIParser(
+  const CIParser *self,
+  CIExpr **current_expr_access,
+  Vec **current_fields,
+  CIDataType **current_infer_dt,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params);
+
+/// @param current_infer_dt CIDataType*?* (&)
+static void
+infer_expr_access_data_type_identifier__CIParser(const CIParser *self,
+                                                 const CIExpr *expr_access,
+                                                 const Vec *fields,
+                                                 CIDataType **current_infer_dt);
 
 /// @param fields const Vec<CIDeclStructField*>* (&)
 /// @param called_generic_params const CIGenericParams*? (&)
@@ -892,7 +922,7 @@ resolve_union_data_type__CIParser(const CIParser *self,
 
 /// @param called_generic_params const CIGenericParams*? (&)
 /// @param decl_generic_params const CIGenericParams*? (&)
-/// @return const CIDataType* (&)
+/// @return CIDataType*
 static CIDataType *
 resolve_data_type__CIParser(const CIParser *self,
                             CIDataType *data_type,
@@ -5271,7 +5301,7 @@ resolve_data_type_access__CIParser(const CIParser *self,
                 FAILED("expected struct or union data type");
             }
 
-            return struct_or_union_dt;
+            return ref__CIDataType(struct_or_union_dt);
         case CI_EXPR_BINARY_KIND_DOT:
             if (!is_struct_or_union_data_type__CIParser((CIParser *)self,
                                                         data_type_access,
@@ -5280,10 +5310,116 @@ resolve_data_type_access__CIParser(const CIParser *self,
                 FAILED("expected struct or union data type");
             }
 
-            return data_type_access;
+            return ref__CIDataType(data_type_access);
         default:
             UNREACHABLE("expected arrow or dot binary expression");
     }
+}
+
+void
+infer_expr_access_data_type_array_access__CIParser(
+  const CIParser *self,
+  const CIExpr *expr_access,
+  const Vec *fields,
+  CIDataType **current_infer_dt,
+  const CIScopeID *current_scope_id,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params)
+{
+    CIDataType *array_dt =
+      infer_expr_access_data_type__CIParser(self,
+                                            expr_access->array_access.array,
+                                            fields,
+                                            current_scope_id,
+                                            called_generic_params,
+                                            decl_generic_params);
+
+    if (*current_infer_dt) {
+        FREE(CIDataType, *current_infer_dt);
+    }
+
+    if (is_ptr_data_type__CIParser((CIParser *)self,
+                                   array_dt,
+                                   called_generic_params,
+                                   decl_generic_params)) {
+        *current_infer_dt = ref__CIDataType(
+          unwrap_implicit_ptr_data_type__CIParser((CIParser *)self,
+                                                  array_dt,
+                                                  called_generic_params,
+                                                  decl_generic_params));
+    } else {
+        *current_infer_dt = NULL;
+        FAILED("expected array or pointer");
+    }
+
+    FREE(CIDataType, array_dt);
+}
+
+void
+infer_expr_access_data_type_arrow_or_dot__CIParser(
+  const CIParser *self,
+  CIExpr **current_expr_access,
+  Vec **current_fields,
+  CIDataType **current_infer_dt,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params)
+{
+    ASSERT((*current_expr_access)->binary.left->kind ==
+           CI_EXPR_KIND_IDENTIFIER);
+
+    infer_expr_access_data_type_identifier__CIParser(
+      self,
+      (*current_expr_access)->binary.left,
+      *current_fields,
+      current_infer_dt);
+
+    CIDataType *resolved_field_data_type = resolve_data_type__CIParser(
+      self, *current_infer_dt, called_generic_params, decl_generic_params);
+    CIDataType *resolved_access_data_type =
+      resolve_data_type_access__CIParser(self,
+                                         resolved_field_data_type,
+                                         (*current_expr_access)->binary.kind,
+                                         called_generic_params,
+                                         decl_generic_params);
+
+    FREE(CIDataType, resolved_field_data_type);
+
+    if (*current_infer_dt) {
+        FREE(CIDataType, *current_infer_dt);
+    }
+
+    *current_infer_dt = resolved_access_data_type;
+
+    if (is_struct_or_union_data_type__CIParser((CIParser *)self,
+                                               *current_infer_dt,
+                                               called_generic_params,
+                                               decl_generic_params)) {
+        *current_fields = (Vec *)get_fields_from_data_type__CIParser(
+          self, *current_infer_dt, called_generic_params, decl_generic_params);
+    }
+
+    *current_expr_access = (*current_expr_access)->binary.right;
+}
+
+void
+infer_expr_access_data_type_identifier__CIParser(const CIParser *self,
+                                                 const CIExpr *expr_access,
+                                                 const Vec *fields,
+                                                 CIDataType **current_infer_dt)
+{
+    if (*current_infer_dt) {
+        FREE(CIDataType, *current_infer_dt);
+    }
+
+    CIDataType *field_data_type = get__CIDeclStructField(
+      fields, GET_PTR_RC(String, expr_access->identifier));
+
+    if (!field_data_type) {
+        FAILED("the field is not found");
+    }
+
+    *current_infer_dt =
+      field_data_type ? ref__CIDataType(field_data_type) : NULL;
 }
 
 CIDataType *
@@ -5295,118 +5431,44 @@ infer_expr_access_data_type__CIParser(
   const CIGenericParams *called_generic_params,
   const CIGenericParams *decl_generic_params)
 {
+    CIExpr *current_expr_access = (CIExpr *)expr_access;
     Vec *current_fields = (Vec *)fields;
-    CIDataType *current_infer_dt = NULL;
+    CIDataType *current_infer_dt = NULL; // CIDataType*?
 
     while (true) {
-        switch (expr_access->kind) {
-            case CI_EXPR_KIND_ARRAY_ACCESS: {
-                CIDataType *array_dt = infer_expr_access_data_type__CIParser(
+        switch (current_expr_access->kind) {
+            case CI_EXPR_KIND_ARRAY_ACCESS:
+                infer_expr_access_data_type_array_access__CIParser(
                   self,
-                  expr_access->array_access.array,
-                  fields,
+                  current_expr_access,
+                  current_fields,
+                  &current_infer_dt,
                   current_scope_id,
                   called_generic_params,
                   decl_generic_params);
 
-                if (current_infer_dt) {
-                    FREE(CIDataType, current_infer_dt);
-                }
-
-                // NOTE: Lower the `array_dt` count before assigning it.
-                ASSERT(array_dt->ref_count >= 1);
-                FREE(CIDataType, array_dt);
-
-                if (is_ptr_data_type__CIParser((CIParser *)self,
-                                               array_dt,
-                                               called_generic_params,
-                                               decl_generic_params)) {
-                    current_infer_dt = unwrap_implicit_ptr_data_type__CIParser(
-                      (CIParser *)self,
-                      array_dt,
-                      called_generic_params,
-                      decl_generic_params);
-                } else {
-                    current_infer_dt = NULL;
-                    FAILED("expected array or pointer");
-                }
-
                 goto exit;
-            }
             case CI_EXPR_KIND_BINARY:
                 switch (expr_access->binary.kind) {
                     case CI_EXPR_BINARY_KIND_ARROW:
-                    case CI_EXPR_BINARY_KIND_DOT: {
-                        switch (expr_access->binary.left->kind) {
-                            case CI_EXPR_KIND_IDENTIFIER: {
-                                CIDataType *field_data_type =
-                                  get__CIDeclStructField(
-                                    current_fields,
-                                    GET_PTR_RC(
-                                      String,
-                                      expr_access->binary.left->identifier));
-
-                                if (!field_data_type) {
-                                    FAILED("the field doesn't exist");
-                                }
-
-                                CIDataType *resolved_field_data_type =
-                                  resolve_data_type__CIParser(
-                                    self,
-                                    field_data_type,
-                                    called_generic_params,
-                                    decl_generic_params);
-                                CIDataType *resolved_access_data_type =
-                                  resolve_data_type_access__CIParser(
-                                    self,
-                                    resolved_field_data_type,
-                                    expr_access->binary.kind,
-                                    called_generic_params,
-                                    decl_generic_params);
-
-                                FREE(CIDataType, resolved_field_data_type);
-
-                                if (current_infer_dt) {
-                                    FREE(CIDataType, current_infer_dt);
-                                }
-
-                                current_infer_dt = resolved_access_data_type;
-
-                                if (is_struct_or_union_data_type__CIParser(
-                                      (CIParser *)self,
-                                      current_infer_dt,
-                                      called_generic_params,
-                                      decl_generic_params)) {
-                                    current_fields = (Vec *)
-                                      get_fields_from_data_type__CIParser(
-                                        self,
-                                        current_infer_dt,
-                                        called_generic_params,
-                                        decl_generic_params);
-
-                                    continue;
-                                }
-
-                                continue;
-                            }
-                            default:
-                                FAILED("expected identifier");
-                        }
+                    case CI_EXPR_BINARY_KIND_DOT:
+                        infer_expr_access_data_type_arrow_or_dot__CIParser(
+                          self,
+                          &current_expr_access,
+                          &current_fields,
+                          &current_infer_dt,
+                          called_generic_params,
+                          decl_generic_params);
 
                         break;
-                    }
                     default:
                         goto exit;
                 }
 
                 break;
             case CI_EXPR_KIND_IDENTIFIER:
-                if (current_infer_dt) {
-                    FREE(CIDataType, current_infer_dt);
-                }
-
-                current_infer_dt = get__CIDeclStructField(
-                  current_fields, GET_PTR_RC(String, expr_access->identifier));
+                infer_expr_access_data_type_identifier__CIParser(
+                  self, current_expr_access, current_fields, &current_infer_dt);
 
                 goto exit;
             default:
@@ -5419,7 +5481,7 @@ exit:
         FAILED("there are something wrong during the inference of path");
     }
 
-    return ref__CIDataType(current_infer_dt);
+    return current_infer_dt;
 }
 
 CIDataType *
@@ -5447,6 +5509,7 @@ infer_expr_dot_binary_access_data_type__CIParser(
       self, struct_or_union_dt, called_generic_params, decl_generic_params);
 
     FREE(CIDataType, left_dt);
+    FREE(CIDataType, resolved_left_dt);
     FREE(CIDataType, struct_or_union_dt);
 
     return infer_expr_access_data_type__CIParser(self,
@@ -5482,6 +5545,7 @@ infer_expr_arrow_binary_access_data_type__CIParser(
       self, struct_or_union_dt, called_generic_params, decl_generic_params);
 
     FREE(CIDataType, left_dt);
+    FREE(CIDataType, resolved_left_dt);
     FREE(CIDataType, struct_or_union_dt);
 
     return infer_expr_access_data_type__CIParser(self,
@@ -6094,13 +6158,13 @@ resolve_struct_data_type__CIParser(const CIParser *self,
             FAILED("struct is not found");
         }
 
-        return NEW_VARIANT(
-          CIDataType,
-          struct,
-          NEW(CIDataTypeStruct,
-              NEW(Rc, clone__String(struct_decl->struct_gen.name)),
-              NULL,
-              NULL));
+        Rc *struct_name = NEW(Rc, clone__String(struct_decl->struct_gen.name));
+        CIDataType *res = NEW_VARIANT(
+          CIDataType, struct, NEW(CIDataTypeStruct, struct_name, NULL, NULL));
+
+        FREE_RC(String, struct_name);
+
+        return res;
     }
 
     return ref__CIDataType(data_type);
@@ -6162,13 +6226,13 @@ resolve_union_data_type__CIParser(const CIParser *self,
             FAILED("union declaration is not found");
         }
 
-        return NEW_VARIANT(
-          CIDataType,
-          union,
-          NEW(CIDataTypeUnion,
-              NEW(Rc, clone__String(union_decl->union_gen.name)),
-              NULL,
-              NULL));
+        Rc *union_name = NEW(Rc, clone__String(union_decl->union_gen.name));
+        CIDataType *res = NEW_VARIANT(
+          CIDataType, union, NEW(CIDataTypeUnion, union_name, NULL, NULL));
+
+        FREE_RC(String, union_name);
+
+        return res;
     }
 
     return ref__CIDataType(data_type);
