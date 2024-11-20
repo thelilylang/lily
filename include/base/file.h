@@ -106,7 +106,7 @@ read_file_in_cwd__File(const char *filename);
  * @brief Write content on a file.
  */
 void
-write_file__File(const char *path, const char *content, Usize size);
+write_file__File(const char *path, const char *content, Usize content_len);
 
 /**
  *
