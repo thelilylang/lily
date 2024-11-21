@@ -1061,6 +1061,18 @@ typecheck_unary_expr__CIParser(const CIParser *self,
                                const CIExprUnary *unary,
                                struct CITypecheckContext *typecheck_ctx);
 
+static void
+validate_non_null_expr__CIParser(const CIParser *self,
+                                 const CIExpr *given_expr,
+                                 struct CITypecheckContext *typecheck_ctx);
+
+static void
+validate_expr_according_data_type_context__CIParser(
+  const CIParser *self,
+  const CIDataType *expected_data_type,
+  const CIExpr *given_expr,
+  struct CITypecheckContext *typecheck_ctx);
+
 /// @param called_generic_params const CIGenericParams*? (&)
 /// @param decl_generic_params const CIGenericParams*? (&)
 static void
@@ -7022,6 +7034,37 @@ typecheck_ternary_expr__CIParser(const CIParser *self,
 }
 
 void
+validate_non_null_expr__CIParser(const CIParser *self,
+                                 const CIExpr *given_expr,
+                                 struct CITypecheckContext *typecheck_ctx)
+{
+    CIScope *scope = get_scope_from_id__CIResultFile(
+      self->file, typecheck_ctx->current_scope_id);
+    CIResolverExpr given_expr_resolver =
+      NEW(CIResolverExpr, self, scope, false);
+    CIExpr *resolved_given_expr =
+      run__CIResolverExpr(&given_expr_resolver, (CIExpr *)given_expr);
+
+    if (is_null__CIResolverExpr(resolved_given_expr)) {
+        FAILED("expected non null expression");
+    }
+
+    FREE(CIExpr, resolved_given_expr);
+}
+
+void
+validate_expr_according_data_type_context__CIParser(
+  const CIParser *self,
+  const CIDataType *expected_data_type,
+  const CIExpr *given_expr,
+  struct CITypecheckContext *typecheck_ctx)
+{
+    if (expected_data_type->ctx & CI_DATA_TYPE_CONTEXT_NON_NULL) {
+        validate_non_null_expr__CIParser(self, given_expr, typecheck_ctx);
+    }
+}
+
+void
 typecheck_expr__CIParser(const CIParser *self,
                          CIDataType *expected_data_type,
                          const CIExpr *given_expr,
@@ -7094,6 +7137,8 @@ typecheck_expr__CIParser(const CIParser *self,
 
     ASSERT(given_expr_dt);
 
+    validate_expr_according_data_type_context__CIParser(
+      self, expected_data_type, given_expr, typecheck_ctx);
     perform_typecheck__CIParser(
       self, expected_data_type, given_expr_dt, false, typecheck_ctx);
 

@@ -273,6 +273,34 @@ is_true__CIResolverExpr(CIExpr *expr)
     }
 }
 
+bool
+is_null__CIResolverExpr(CIExpr *expr)
+{
+    ASSERT(expr);
+
+    switch (expr->kind) {
+        case CI_EXPR_KIND_LITERAL:
+            switch (expr->literal.kind) {
+                case CI_EXPR_LITERAL_KIND_BOOL:
+                    return !expr->literal.bool_;
+                case CI_EXPR_LITERAL_KIND_CHAR:
+                    return expr->literal.char_ == 0;
+                case CI_EXPR_LITERAL_KIND_SIGNED_INT:
+                    return expr->literal.signed_int == 0;
+                case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:
+                    return expr->literal.unsigned_int == 0;
+                default:
+                    return false;
+            }
+        case CI_EXPR_KIND_CAST:
+            return is_null__CIResolverExpr(expr->cast.expr);
+        case CI_EXPR_KIND_NULLPTR:
+            return true;
+        default:
+            return false;
+    }
+}
+
 Isize
 to_literal_integer_value__CIResolverExpr(CIExpr *expr)
 {
@@ -2234,7 +2262,11 @@ run__CIResolverExpr(const CIResolverExpr *self, CIExpr *expr)
             return res;
         }
         case CI_EXPR_KIND_CAST:
-            TODO("resolve cast");
+            if (self->is_at_preprocessor_time) {
+                FAILED("cannot resolve cast at preprocessor time");
+            }
+
+            return run__CIResolverExpr(self, expr->cast.expr);
         case CI_EXPR_KIND_DATA_TYPE:
             return ref__CIExpr(expr);
         case CI_EXPR_KIND_GROUPING:

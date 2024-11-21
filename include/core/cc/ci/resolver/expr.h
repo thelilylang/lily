@@ -60,6 +60,13 @@ is_true__CIResolverExpr(CIExpr *expr);
 
 /**
  *
+ * @brief Check if the expression is NULL.
+ */
+bool
+is_null__CIResolverExpr(CIExpr *expr);
+
+/**
+ *
  * @brief Convert resolved expression to literal integer value.
  */
 Isize
