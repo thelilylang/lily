@@ -620,6 +620,10 @@ resolve_macro_call__CIResolver(CIResolver *self,
 
         switch (peeked->kind) {
             case CI_TOKEN_KIND_LPAREN:
+                if (!define->define->params) {
+                    goto empty_macro_call;
+                }
+
                 NEXT(next_token); // skip maco identifier
                 macro_call =
                   parse_macro_call_params__CIResolver(self,
@@ -630,6 +634,7 @@ resolve_macro_call__CIResolver(CIResolver *self,
 
                 break;
             default:
+            empty_macro_call:
                 if (macro_params_length != 0) {
                     FAILED("The count of the number of macro parameters "
                            "does not "
