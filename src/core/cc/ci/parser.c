@@ -8218,8 +8218,14 @@ parse_fields__CIParser(CIParser *self)
 
     while (self->current_token->kind != CI_TOKEN_KIND_RBRACE &&
            self->current_token->kind != CI_TOKEN_KIND_EOF) {
-        CIDataType *data_type = parse_data_type__CIParser(self);
+        RESET_DATA_TYPE_QUALIFIER_FLAG();
+
+        CIDataType *pre_data_type = parse_pre_data_type__CIParser(self);
+
+    loop: {
         Rc *name = NULL;
+        CIDataType *data_type =
+          parse_post_data_type__CIParser(self, ref__CIDataType(pre_data_type));
 
         switch (data_type->kind) {
             case CI_DATA_TYPE_KIND_STRUCT:
@@ -8270,9 +8276,23 @@ parse_fields__CIParser(CIParser *self)
                 break;
         }
 
-        expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
-
         push__Vec(fields, NEW(CIDeclStructField, name, data_type, bit));
+
+        switch (self->current_token->kind) {
+            case CI_TOKEN_KIND_COMMA:
+                next_token__CIParser(self);
+
+                goto loop;
+            case CI_TOKEN_KIND_SEMICOLON:
+                FREE(CIDataType, pre_data_type);
+
+                next_token__CIParser(self);
+
+                break;
+            default:
+                FAILED("expected `,` or `;`");
+        }
+    }
     }
 
     expect__CIParser(self, CI_TOKEN_KIND_RBRACE, true);
