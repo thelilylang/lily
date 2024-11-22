@@ -2482,6 +2482,8 @@ scan_preprocessor_content__CIScanner(CIScanner *self,
 #define DEFAULT_FILTER_TOKEN(token, ctx)                                       \
     /* NOTE: This switch case should be left in first position. */             \
     case CI_TOKEN_KIND_COMMENT_BLOCK:                                          \
+    /* FIXME: Maybe keep comment doc on some conditions. */                    \
+    case CI_TOKEN_KIND_COMMENT_DOC:                                            \
     /* FIXME: This case has been added temporarily to skip the GNU attribute   \
      * token, as it is not yet supported. */                                   \
     case CI_TOKEN_KIND_GNU_ATTRIBUTE:                                          \
