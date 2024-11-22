@@ -1,5 +1,50 @@
 # Changelog
 
+## 0.7.0 - 2024-11-21
+
+### Added
+
+- Scan GNU attribute [#648](https://github.com/thelilylang/lily/pull/648)
+- Add support to `__restrict` and `__restrict__` extension [#651](https://github.com/thelilylang/lily/pull/651)
+- Add `__extension__` keyword support [#656](https://github.com/thelilylang/lily/pull/656)
+- Write a preprocessor resolver [#659](https://github.com/thelilylang/lily/pull/659)
+- Parse custom expression of enum variant [#661](https://github.com/thelilylang/lily/pull/661)
+- Resolve indirect macro call [#663](https://github.com/thelilylang/lily/pull/663)
+- Add the ability to merge keyword [#665](https://github.com/thelilylang/lily/pull/665)
+- Parse bit field [#667](https://github.com/thelilylang/lily/pull/667)
+- Generate bit field [#669](https://github.com/thelilylang/lily/pull/669)
+- Add VecBit type [#671](https://github.com/thelilylang/lily/pull/671)
+- Add `out.ci` and `out.lily` to `.gitignore` [#673](https://github.com/thelilylang/lily/pull/673)
+- Validate non null expression [#678](https://github.com/thelilylang/lily/pull/678)
+
+### Changed
+
+- Improve scan of `__attribute__((x))` [#649](https://github.com/thelilylang/lily/pull/649)
+- Move scan of multi keywords in the parser [#652](https://github.com/thelilylang/lily/pull/652)
+- Disable Clang and GCC features [#658](https://github.com/thelilylang/lily/pull/658)
+- Improve the resolution of custom value of enum variant [#662](https://github.com/thelilylang/lily/pull/662)
+- Stop to give storage class to enum declaration [#668](https://github.com/thelilylang/lily/pull/668)
+- Use fwrite instead of fprintf [#672](https://github.com/thelilylang/lily/pull/672)
+- Let the OS store `stdio.h` and `stdlib.h` [#677](https://github.com/thelilylang/lily/pull/677)
+
+### Fixed
+
+- Fix case with paren inside `__attribute__` [#650](https://github.com/thelilylang/lily/pull/650)
+- Fix some issues with preprocessor [#653](https://github.com/thelilylang/lily/pull/653)
+- Fix bad parsing of dot and arrow access [#654](https://github.com/thelilylang/lily/pull/654)
+- Fix leak when macro param is passed to unused macro param [#655](https://github.com/thelilylang/lily/pull/655)
+- Fix infinite loop while parse post data type [#657](https://github.com/thelilylang/lily/pull/657)
+- Fix bug on direct declaration of struct/union in typedef declaration [#660](https://github.com/thelilylang/lily/pull/660)
+- Fix else if statement [#664](https://github.com/thelilylang/lily/pull/664)
+- Limit the resolution of left or right token of `##` [#666](https://github.com/thelilylang/lily/pull/666)
+- Fix bad order of declaration generation [#670](https://github.com/thelilylang/lily/pull/670)
+- Fix few leaks during typechecking of path access [#675](https://github.com/thelilylang/lily/pull/675)
+- Fix write file regression [#676](https://github.com/thelilylang/lily/pull/676)
+
+### Removed
+
+- Remove `benchmarks` directory [#674](https://github.com/thelilylang/lily/pull/674)
+
 ## 0.6.0 - 2024-10-22
 
 ### Added
