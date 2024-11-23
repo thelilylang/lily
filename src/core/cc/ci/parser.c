@@ -4763,7 +4763,11 @@ parse_primary_expr__CIParser(CIParser *self)
 
                 expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
 
+                ENABLE_ALLOW_INITIALIZATION();
+
                 CIExpr *expr = parse_expr__CIParser(self);
+
+                DISABLE_ALLOW_INITIALIZATION();
 
                 if (!data_type || !expr) {
                     if (data_type) {
