@@ -818,6 +818,45 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeArray, const CIDataTypeArray *self);
  */
 DESTRUCTOR(CIDataTypeArray, const CIDataTypeArray *self);
 
+typedef struct CIDataTypeEnum
+{
+    Rc *name;              // Rc<String*>*?
+    Vec *variants;         // Vec<CIDeclEnumVariant*>*?
+    CIDataType *data_type; // CIDataType*?
+} CIDataTypeEnum;
+
+/**
+ *
+ * @brief Construct CIDataTypeEnum type.
+ * @param name Rc<String*>*? (&)
+ */
+inline CONSTRUCTOR(CIDataTypeEnum,
+                   CIDataTypeEnum,
+                   Rc *name,
+                   Vec *variants,
+                   CIDataType *data_type)
+{
+    return (CIDataTypeEnum){ .name = name ? ref__Rc(name) : NULL,
+                             .variants = variants,
+                             .data_type = data_type };
+}
+
+/**
+ *
+ * @brief Convert CIDataTypeEnum in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDataTypeEnum, const CIDataTypeEnum *self);
+#endif
+
+/**
+ *
+ * @brief Free CIDataTypeEnum type.
+ */
+DESTRUCTOR(CIDataTypeEnum, const CIDataTypeEnum *self);
+
 // <return_data_type>(<function_data_type>)(<params>)
 typedef struct CIDataTypeFunction
 {
@@ -1013,7 +1052,7 @@ typedef struct CIDataType
     {
         CIDataTypeArray array;
         Usize builtin; // id of the builtin
-        Rc *enum_;     // Rc<String*>*?
+        CIDataTypeEnum enum_;
         CIDataTypeFunction function;
         Rc *generic;            // Rc<String*>*
         struct CIDataType *ptr; // struct CIDataType*?
@@ -1038,9 +1077,8 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, builtin, Usize builtin);
 /**
  *
  * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_ENUM).
- * @param enum_ Rc<String*>* (&)
  */
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, enum, Rc *enum_);
+VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, enum, CIDataTypeEnum enum_);
 
 /**
  *
@@ -1466,6 +1504,29 @@ typedef struct CIDeclEnumVariant
  * @param name Rc<String*>* (&)
  */
 CONSTRUCTOR(CIDeclEnumVariant *, CIDeclEnumVariant, Rc *name, Isize value);
+
+/**
+ *
+ * @brief Clone CIDeclEnumVariant type.
+ */
+CIDeclEnumVariant *
+clone__CIDeclEnumVariant(CIDeclEnumVariant *self);
+
+/**
+ *
+ * @brief Clone variants Vector containing CIDeclEnumVariant.
+ */
+Vec *
+clone_variants__CIDeclEnumVariant(Vec *variants);
+
+/**
+ *
+ * @brief Compare vectors of variants.
+ * @param self_variants const Vec<CIDeclEnumVariant*>* (&)
+ * @param other_variants const Vec<CIDeclEnumVariant*>* (&)
+ */
+bool
+eq__CIDeclEnumVariant(const Vec *self_variants, const Vec *other_variants);
 
 /**
  *

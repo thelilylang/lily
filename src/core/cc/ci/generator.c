@@ -96,7 +96,13 @@ generate_data_type_qualifier__CIGenerator(const int *data_type_qualifier);
 static void
 generate_data_type__CIGenerator(CIDataType *data_type);
 
+/// @param name String*? (&)
+/// @param data_type CIDataType*? (&)
+/// @param variants Vec<CIDeclEnumVariant*>*? (&)
 static void
+generate_enum__CIGenerator(String *name, CIDataType *data_type, Vec *variants);
+
+static inline void
 generate_enum_decl__CIGenerator(const CIDeclEnum *enum_);
 
 static void
@@ -191,7 +197,12 @@ generate_struct_field__CIGenerator(const CIDeclStructField *field);
 static void
 generate_struct_fields__CIGenerator(const Vec *fields);
 
+/// @param name String*? (&)
+/// @param fields Vec<CIDeclStructField*>*? (&)
 static void
+generate_struct__CIGenerator(String *name, Vec *fields);
+
+static inline void
 generate_struct_decl__CIGenerator(const CIDeclStruct *struct_);
 
 static void
@@ -203,7 +214,12 @@ generate_typedef_decl__CIGenerator(const CIDeclTypedef *typedef_);
 static void
 generate_typedef_gen_decl__CIGenerator(const CIDeclTypedefGen *typedef_gen);
 
+/// @param name String*? (&)
+/// @param fields Vec<CIDeclStructField*>*? (&)
 static void
+generate_union__CIGenerator(String *name, Vec *fields);
+
+static inline void
 generate_union_decl__CIGenerator(const CIDeclUnion *union_);
 
 static void
@@ -573,11 +589,11 @@ generate_data_type__CIGenerator(CIDataType *data_type)
 
             break;
         case CI_DATA_TYPE_KIND_ENUM:
-            write_String__CIGenerator(format__String(
-              "enum {s}",
-              subs_data_type->enum_
-                ? GET_PTR_RC(String, subs_data_type->enum_)->buffer
-                : ""));
+            generate_enum__CIGenerator(
+              data_type->enum_.name ? GET_PTR_RC(String, data_type->enum_.name)
+                                    : NULL,
+              data_type->enum_.data_type,
+              data_type->enum_.variants);
 
             break;
         case CI_DATA_TYPE_KIND_FLOAT:
@@ -677,36 +693,31 @@ generate_data_type__CIGenerator(CIDataType *data_type)
 
             break;
         case CI_DATA_TYPE_KIND_STRUCT: {
-#define GENERATE_STRUCT_OR_UNION_DT(dt_name, s)                              \
-    write_str__CIGenerator(s);                                               \
-                                                                             \
-    if (subs_data_type->dt_name.generic_params) {                            \
-        /* NOTE: Normally you can't declare a anonymous struct/union with    \
-        generic parameters. This possibility is rejected in the              \
-        parser. */                                                           \
-        ASSERT(subs_data_type->dt_name.name);                                \
-                                                                             \
-        String *serialized_name =                                            \
-          substitute_and_serialize_generic_params__CIGenerator(              \
-            subs_data_type->dt_name.generic_params,                          \
-            GET_PTR_RC(String, subs_data_type->dt_name.name));               \
-                                                                             \
-        write__CIGenerator(' ');                                             \
-        write_String__CIGenerator(serialized_name);                          \
-    } else if (subs_data_type->dt_name.name) {                               \
-        write__CIGenerator(' ');                                             \
-        write_str__CIGenerator(                                              \
-          GET_PTR_RC(String, subs_data_type->dt_name.name)->buffer);         \
-    }                                                                        \
-                                                                             \
-    if (subs_data_type->dt_name.fields) {                                    \
-        write_str__CIGenerator(" {\n");                                      \
-        generate_struct_fields__CIGenerator(subs_data_type->dt_name.fields); \
-        write_tab__CIGenerator();                                            \
-        write_str__CIGenerator("}");                                         \
+#define GENERATE_STRUCT_OR_UNION_DT(dt_name)                                  \
+    if (subs_data_type->dt_name##_.generic_params) {                          \
+        /* NOTE: Normally you can't declare a anonymous struct/union with     \
+        generic parameters. This possibility is rejected in the               \
+        parser. */                                                            \
+        ASSERT(subs_data_type->dt_name##_.name);                              \
+                                                                              \
+        String *serialized_name =                                             \
+          substitute_and_serialize_generic_params__CIGenerator(               \
+            subs_data_type->dt_name##_.generic_params,                        \
+            GET_PTR_RC(String, subs_data_type->dt_name##_.name));             \
+                                                                              \
+        generate_##dt_name##__CIGenerator(serialized_name,                    \
+                                          subs_data_type->dt_name##_.fields); \
+                                                                              \
+        FREE(String, serialized_name);                                        \
+    } else {                                                                  \
+        generate_##dt_name##__CIGenerator(                                    \
+          subs_data_type->dt_name##_.name                                     \
+            ? GET_PTR_RC(String, subs_data_type->dt_name##_.name)             \
+            : NULL,                                                           \
+          subs_data_type->dt_name##_.fields);                                 \
     }
 
-            GENERATE_STRUCT_OR_UNION_DT(struct_, "struct");
+            GENERATE_STRUCT_OR_UNION_DT(struct);
 
             break;
         }
@@ -747,7 +758,7 @@ generate_data_type__CIGenerator(CIDataType *data_type)
 
             break;
         case CI_DATA_TYPE_KIND_UNION: {
-            GENERATE_STRUCT_OR_UNION_DT(union_, "union");
+            GENERATE_STRUCT_OR_UNION_DT(union);
 
             break;
         }
@@ -790,20 +801,30 @@ generate_enum_variants__CIGenerator(const Vec *enum_variants)
 }
 
 void
-generate_enum_decl__CIGenerator(const CIDeclEnum *enum_)
+generate_enum__CIGenerator(String *name, CIDataType *data_type, Vec *variants)
 {
     write_String__CIGenerator(
-      format__String("enum {S}", GET_PTR_RC(String, enum_->name)));
+      format__String("enum{s}{s}", name ? " " : "", name ? name->buffer : ""));
 
-    if (enum_->data_type) {
+    if (data_type) {
         write_str__CIGenerator(" : ");
-        generate_data_type__CIGenerator(enum_->data_type);
+        generate_data_type__CIGenerator(data_type);
     }
 
-    write_str__CIGenerator(" {\n");
+    if (variants) {
+        write_str__CIGenerator(" {\n");
+        generate_enum_variants__CIGenerator(variants);
+        write_str__CIGenerator("}");
+    }
+}
 
-    generate_enum_variants__CIGenerator(enum_->variants);
-    write_str__CIGenerator("}");
+void
+generate_enum_decl__CIGenerator(const CIDeclEnum *enum_)
+{
+    generate_enum__CIGenerator(enum_->name ? GET_PTR_RC(String, enum_->name)
+                                           : NULL,
+                               enum_->data_type,
+                               enum_->variants);
 }
 
 void
@@ -1612,12 +1633,24 @@ generate_struct_fields__CIGenerator(const Vec *fields)
 }
 
 void
+generate_struct__CIGenerator(String *name, Vec *fields)
+{
+    write_String__CIGenerator(format__String(
+      "struct{s}{s}", name ? " " : "", name ? name->buffer : ""));
+
+    if (fields) {
+        write_str__CIGenerator(" {\n");
+        generate_struct_fields__CIGenerator(fields);
+        write_str__CIGenerator("}");
+    }
+}
+
+void
 generate_struct_decl__CIGenerator(const CIDeclStruct *struct_)
 {
-    write_String__CIGenerator(
-      format__String("struct {S} {{\n", GET_PTR_RC(String, struct_->name)));
-    generate_struct_fields__CIGenerator(struct_->fields);
-    write_str__CIGenerator("}");
+    generate_struct__CIGenerator(
+      struct_->name ? GET_PTR_RC(String, struct_->name) : NULL,
+      struct_->fields);
 }
 
 void
@@ -1625,10 +1658,7 @@ generate_struct_gen_decl__CIGenerator(const CIDeclStructGen *struct_gen)
 {
     SET_CURRENT_GENERIC_PARAMS(struct_gen->struct_->generic_params,
                                struct_gen->called_generic_params);
-    write_String__CIGenerator(
-      format__String("struct {S} {{\n", struct_gen->name));
-    generate_struct_fields__CIGenerator(struct_gen->fields);
-    write_str__CIGenerator("}");
+    generate_struct__CIGenerator(struct_gen->name, struct_gen->fields);
     RESET_CURRENT_GENERIC_PARAMS();
 }
 
@@ -1660,12 +1690,23 @@ generate_typedef_gen_decl__CIGenerator(const CIDeclTypedefGen *typedef_gen)
 }
 
 void
-generate_union_decl__CIGenerator(const CIDeclUnion *union_)
+generate_union__CIGenerator(String *name, Vec *fields)
 {
     write_String__CIGenerator(
-      format__String("union {S} {{\n", GET_PTR_RC(String, union_->name)));
-    generate_struct_fields__CIGenerator(union_->fields);
-    write_str__CIGenerator("}");
+      format__String("union{s}{s}", name ? " " : "", name ? name->buffer : ""));
+
+    if (fields) {
+        write_str__CIGenerator(" {\n");
+        generate_struct_fields__CIGenerator(fields);
+        write_str__CIGenerator("}");
+    }
+}
+
+void
+generate_union_decl__CIGenerator(const CIDeclUnion *union_)
+{
+    generate_union__CIGenerator(
+      union_->name ? GET_PTR_RC(String, union_->name) : NULL, union_->fields);
 }
 
 void
@@ -1673,10 +1714,7 @@ generate_union_gen_decl__CIGenerator(const CIDeclUnionGen *union_gen)
 {
     SET_CURRENT_GENERIC_PARAMS(union_gen->union_->generic_params,
                                union_gen->called_generic_params);
-    write_String__CIGenerator(
-      format__String("union {S} {{\n", union_gen->name));
-    generate_struct_fields__CIGenerator(union_gen->fields);
-    write_str__CIGenerator("}");
+    generate_union__CIGenerator(union_gen->name, union_gen->fields);
     RESET_CURRENT_GENERIC_PARAMS();
 }
 

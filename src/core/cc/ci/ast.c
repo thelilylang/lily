@@ -789,6 +789,49 @@ DESTRUCTOR(CIDataTypeArray, const CIDataTypeArray *self)
 
 #ifdef ENV_DEBUG
 String *
+IMPL_FOR_DEBUG(to_string, CIDataTypeEnum, const CIDataTypeEnum *self)
+{
+    String *res = format__String(
+      "CIDataTypeEnum{{ name = {s}, variants =",
+      self->name ? GET_PTR_RC(String, self->name)->buffer : "NULL");
+
+    if (self->variants) {
+        DEBUG_VEC_STRING(self->variants, res, CIDeclEnumVariant);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    {
+        String *s =
+          format__String(", data_type = {Sr} }",
+                         to_string__Debug__CIDataType(self->data_type));
+
+        APPEND_AND_FREE(res, s);
+    }
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CIDataTypeEnum, const CIDataTypeEnum *self)
+{
+    if (self->name) {
+        FREE_RC(String, self->name);
+    }
+
+    if (self->variants) {
+        FREE_BUFFER_ITEMS(
+          self->variants->buffer, self->variants->len, CIDeclEnumVariant);
+        FREE(Vec, self->variants);
+    }
+
+    if (self->data_type) {
+        FREE(CIDataType, self->data_type);
+    }
+}
+
+#ifdef ENV_DEBUG
+String *
 IMPL_FOR_DEBUG(to_string, CIDataTypeFunction, const CIDataTypeFunction *self)
 {
     String *res = format__String(
@@ -1029,13 +1072,13 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, builtin, Usize builtin)
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, enum, Rc *enum_)
+VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, enum, CIDataTypeEnum enum_)
 {
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
     self->kind = CI_DATA_TYPE_KIND_ENUM;
     self->ref_count = 0;
-    self->enum_ = enum_ ? ref__Rc(enum_) : NULL;
+    self->enum_ = enum_;
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
 
@@ -1176,10 +1219,30 @@ clone__CIDataType(const CIDataType *self)
             res = NEW_VARIANT(CIDataType, builtin, self->builtin);
 
             break;
-        case CI_DATA_TYPE_KIND_ENUM:
-            res = NEW_VARIANT(CIDataType, enum, self->enum_);
+        case CI_DATA_TYPE_KIND_ENUM: {
+            Vec *variants = NULL;
+
+            if (self->enum_.variants) {
+                variants = NEW(Vec);
+
+                for (Usize i = 0; i < self->enum_.variants->len; ++i) {
+                    push__Vec(variants,
+                              clone__CIDeclEnumVariant(
+                                get__Vec(self->enum_.variants, i)));
+                }
+            }
+
+            res = NEW_VARIANT(CIDataType,
+                              enum,
+                              NEW(CIDataTypeEnum,
+                                  self->enum_.name,
+                                  variants,
+                                  self->enum_.data_type
+                                    ? clone__CIDataType(self->enum_.data_type)
+                                    : NULL));
 
             break;
+        }
         case CI_DATA_TYPE_KIND_FUNCTION: {
             Vec *params = NEW(Vec); // Vec<CIDataType*>*
 
@@ -1317,7 +1380,8 @@ serialize__CIDataType(const CIDataType *self, String *buffer)
 
             break;
         case CI_DATA_TYPE_KIND_ENUM:
-            push_str__String(buffer, GET_PTR_RC(String, self->enum_)->buffer);
+            push_str__String(buffer,
+                             GET_PTR_RC(String, self->enum_.name)->buffer);
 
             break;
         case CI_DATA_TYPE_KIND_FUNCTION:
@@ -1427,9 +1491,20 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
             }
         case CI_DATA_TYPE_KIND_BUILTIN:
             return self->builtin == other->builtin;
-        case CI_DATA_TYPE_KIND_ENUM:
-            return !strcmp(GET_PTR_RC(String, self->enum_)->buffer,
-                           GET_PTR_RC(String, other->enum_)->buffer);
+        case CI_DATA_TYPE_KIND_ENUM: {
+            if ((!self->enum_.variants || !other->enum_.variants) ||
+                self->enum_.variants->len != other->enum_.variants->len) {
+                return !self->enum_.variants && !other->enum_.variants &&
+                           self->enum_.name && other->enum_.name
+                         ? !strcmp(
+                             GET_PTR_RC(String, self->enum_.name)->buffer,
+                             GET_PTR_RC(String, other->enum_.name)->buffer)
+                         : false;
+            }
+
+            return eq__CIDeclEnumVariant(self->enum_.variants,
+                                         other->enum_.variants);
+        }
         case CI_DATA_TYPE_KIND_FUNCTION:
             if (!(self->function.function_data_type &&
                   other->function.function_data_type) ||
@@ -1476,7 +1551,12 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
 
             if ((!self_fields || !other_fields) ||
                 self_fields->len != other_fields->len) {
-                return false;
+                const String *self_name = get_name__CIDataType(self);
+                const String *other_name = get_name__CIDataType(other);
+
+                return !self_fields && !other_fields && self_name && other_name
+                         ? !strcmp(self_name->buffer, other_name->buffer)
+                         : false;
             }
 
             return eq__CIDeclStructField(self_fields, other_fields);
@@ -1623,7 +1703,8 @@ get_name__CIDataType(const CIDataType *self)
 {
     switch (self->kind) {
         case CI_DATA_TYPE_KIND_ENUM:
-            return self->enum_ ? GET_PTR_RC(String, self->enum_) : NULL;
+            return self->enum_.name ? GET_PTR_RC(String, self->enum_.name)
+                                    : NULL;
         case CI_DATA_TYPE_KIND_STRUCT:
             return self->struct_.name ? GET_PTR_RC(String, self->struct_.name)
                                       : NULL;
@@ -1696,11 +1777,11 @@ IMPL_FOR_DEBUG(to_string, CIDataType, const CIDataType *self)
         case CI_DATA_TYPE_KIND_ENUM:
             return format__String(
               "CIDataType{{ kind = {s}, ctx = {Sr}, qualifier = {Sr}, enum = "
-              "{S} }",
+              "{Sr} }",
               to_string__Debug__CIDataTypeKind(self->kind),
               to_string__Debug__CIDataTypeContext(self->ctx),
               to_string__Debug__CIDataTypeQualifier(self->qualifier),
-              GET_PTR_RC(String, self->enum_));
+              to_string__Debug__CIDataTypeEnum(&self->enum_));
         case CI_DATA_TYPE_KIND_FUNCTION:
             return format__String(
               "CIDataType{{ kind = {s}, ctx = {Sr}, qualifier = {Sr}, function "
@@ -1773,10 +1854,7 @@ VARIANT_DESTRUCTOR(CIDataType, builtin, CIDataType *self)
 
 VARIANT_DESTRUCTOR(CIDataType, enum, CIDataType *self)
 {
-    if (self->enum_) {
-        FREE_RC(String, self->enum_);
-    }
-
+    FREE(CIDataTypeEnum, &self->enum_);
     lily_free(self);
 }
 
@@ -2116,6 +2194,45 @@ CONSTRUCTOR(CIDeclEnumVariant *, CIDeclEnumVariant, Rc *name, Isize value)
     return self;
 }
 
+CIDeclEnumVariant *
+clone__CIDeclEnumVariant(CIDeclEnumVariant *self)
+{
+    return NEW(CIDeclEnumVariant, self->name, self->value);
+}
+
+Vec *
+clone_variants__CIDeclEnumVariant(Vec *variants)
+{
+    Vec *res = NEW(Vec);
+
+    for (Usize i = 0; i < variants->len; ++i) {
+        push__Vec(res, clone__CIDeclEnumVariant(get__Vec(variants, i)));
+    }
+
+    return res;
+}
+
+bool
+eq__CIDeclEnumVariant(const Vec *self_variants, const Vec *other_variants)
+{
+    if (self_variants->len != other_variants->len) {
+        return false;
+    }
+
+    for (Usize i = 0; i < self_variants->len; ++i) {
+        CIDeclEnumVariant *self_variant = get__Vec(self_variants, i);
+        CIDeclEnumVariant *other_variant = get__Vec(other_variants, i);
+
+        if (strcmp(GET_PTR_RC(String, self_variant->name)->buffer,
+                   GET_PTR_RC(String, other_variant->name)->buffer) ||
+            self_variant->value != other_variant->value) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclEnumVariant, const CIDeclEnumVariant *self)
@@ -2172,7 +2289,9 @@ IMPL_FOR_DEBUG(to_string, CIDeclEnum, const CIDeclEnum *self)
 void
 free_as_prototype__CIDeclEnum(const CIDeclEnum *self)
 {
-    FREE_RC(String, self->name);
+    if (self->name) {
+        FREE_RC(String, self->name);
+    }
 
     if (self->data_type) {
         FREE(CIDataType, self->data_type);

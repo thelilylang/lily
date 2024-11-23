@@ -713,17 +713,22 @@ resolve_data_type_alignment__CIResolverExpr(const CIResolverExpr *self,
         case CI_DATA_TYPE_KIND__DECIMAL128:
             return alignof(__int128);
         case CI_DATA_TYPE_KIND_ENUM: {
-            ASSERT(data_type->enum_);
+            if (data_type->enum_.name) {
+                struct DataTypeInfoAlignment enum_alignment_info =
+                  resolve_enum_alignment__CIResolverExpr(
+                    self, GET_PTR_RC(String, data_type->enum_.name));
 
-            struct DataTypeInfoAlignment enum_alignment_info =
-              resolve_enum_alignment__CIResolverExpr(
-                self, GET_PTR_RC(String, data_type->enum_));
+                if (enum_alignment_info.is_incomplete) {
+                    FAILED("enum type is incomplete");
+                }
 
-            if (enum_alignment_info.is_incomplete) {
-                FAILED("enum type is incomplete");
+                return enum_alignment_info.alignment;
             }
 
-            return enum_alignment_info.alignment;
+            return data_type->enum_.data_type
+                     ? resolve_data_type_alignment__CIResolverExpr(
+                         self, data_type->enum_.data_type)
+                     : alignof(int);
         }
         case CI_DATA_TYPE_KIND_FLOAT:
             return alignof(float);
@@ -1785,17 +1790,22 @@ resolve_data_type_size__CIResolverExpr(const CIResolverExpr *self,
         case CI_DATA_TYPE_KIND__DECIMAL128:
             return sizeof(__int128);
         case CI_DATA_TYPE_KIND_ENUM: {
-            ASSERT(data_type->enum_);
+            if (data_type->enum_.name) {
+                struct DataTypeInfoSize enum_size_info =
+                  resolve_enum_size__CIResolverExpr(
+                    self, GET_PTR_RC(String, data_type->enum_.name));
 
-            struct DataTypeInfoSize enum_size_info =
-              resolve_enum_size__CIResolverExpr(
-                self, GET_PTR_RC(String, data_type->enum_));
+                if (enum_size_info.is_incomplete) {
+                    FAILED("enum type is incomplete");
+                }
 
-            if (enum_size_info.is_incomplete) {
-                FAILED("enum type is incomplete");
+                return enum_size_info.size;
             }
 
-            return enum_size_info.size;
+            return data_type->enum_.data_type
+                     ? resolve_data_type_size__CIResolverExpr(
+                         self, data_type->enum_.data_type)
+                     : sizeof(int);
         }
         case CI_DATA_TYPE_KIND_FLOAT:
             return sizeof(float);
