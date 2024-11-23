@@ -159,6 +159,18 @@ extern inline VARIANT_CONSTRUCTOR(CIDataTypeArray,
                                   struct CIDataType *data_type,
                                   Rc *name);
 
+extern inline CONSTRUCTOR(CIDataTypeEnum,
+                          CIDataTypeEnum,
+                          Rc *name,
+                          Vec *variants,
+                          CIDataType *data_type);
+
+extern inline CONSTRUCTOR(CIDeclEnum,
+                          CIDeclEnum,
+                          Rc *name,
+                          Vec *variants,
+                          CIDataType *data_type);
+
 extern inline CONSTRUCTOR(CIDataTypeFunction,
                           CIDataTypeFunction,
                           Rc *name,

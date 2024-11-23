@@ -4083,7 +4083,8 @@ parse_pre_data_type__CIParser(CIParser *self)
                     break;
             }
 
-            res = NEW_VARIANT(CIDataType, enum, name);
+            res = NEW_VARIANT(
+              CIDataType, enum, NEW(CIDataTypeEnum, name, NULL, NULL));
 
             switch (self->current_token->kind) {
                 case CI_TOKEN_KIND_COLON:
@@ -4092,7 +4093,23 @@ parse_pre_data_type__CIParser(CIParser *self)
                     CIDecl *enum_decl =
                       parse_enum__CIParser(self, CI_STORAGE_CLASS_NONE, name);
 
-                    add_decl_to_scope__CIParser(self, &enum_decl, true);
+                    if (add_decl_to_scope__CIParser(self, &enum_decl, true)) {
+                        break;
+                    }
+
+                    if (!enum_decl->enum_.name) {
+                        res->enum_.variants =
+                          enum_decl->enum_.variants
+                            ? clone_variants__CIDeclEnumVariant(
+                                enum_decl->enum_.variants)
+                            : NULL;
+                        res->enum_.data_type =
+                          enum_decl->enum_.data_type
+                            ? ref__CIDataType(enum_decl->enum_.data_type)
+                            : NULL;
+
+                        FREE(CIDecl, enum_decl);
+                    }
 
                     break;
                 }
@@ -8224,8 +8241,8 @@ parse_fields__CIParser(CIParser *self)
 
     loop: {
         Rc *name = NULL;
-        CIDataType *data_type =
-          parse_post_data_type__CIParser(self, ref__CIDataType(pre_data_type));
+        CIDataType *data_type = parse_post_data_type__CIParser(
+          self, clone__CIDataType(pre_data_type));
 
         switch (data_type->kind) {
             case CI_DATA_TYPE_KIND_STRUCT:
