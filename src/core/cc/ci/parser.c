@@ -4760,6 +4760,14 @@ parse_primary_expr__CIParser(CIParser *self)
         case CI_TOKEN_KIND_LPAREN: {
             if (is_data_type__CIParser(self)) {
                 CIDataType *data_type = parse_data_type__CIParser(self);
+                Rc *name = NULL; // Rc<String*>*?
+
+                parse_variable_name_and_data_type__CIParser(
+                  self, &data_type, &name, false);
+
+                if (name) {
+                    FAILED("name is not expected here");
+                }
 
                 expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
 
