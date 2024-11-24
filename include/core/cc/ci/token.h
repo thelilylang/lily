@@ -329,10 +329,7 @@ enum CITokenKind
 
 enum CITokenEotContext
 {
-    CI_TOKEN_EOT_CONTEXT_INCLUDE,
-    CI_TOKEN_EOT_CONTEXT_MACRO_PARAM,
-    CI_TOKEN_EOT_CONTEXT_MACRO_CALL,
-    CI_TOKEN_EOT_CONTEXT_MERGED_ID,
+    CI_TOKEN_EOT_CONTEXT_DEFINE,          // #define ...
     CI_TOKEN_EOT_CONTEXT_STRINGIFICATION, // #<token>
     CI_TOKEN_EOT_CONTEXT_OTHER
 };
@@ -340,21 +337,6 @@ enum CITokenEotContext
 typedef struct CITokenEot
 {
     enum CITokenEotContext ctx;
-    union
-    {
-        // Save the token before connecting it to the included tokens.
-        //
-        // include -> <tokens_of_the_include> -> ...
-        // ^^^^^^^
-        struct CIToken *include; // struct CIToken* (&)
-        // Result of: `id`##`id2`
-        struct CIToken *merged_token; // struct CIToken*
-        // This represents the token to restore after reaching the EOT token in
-        // the context of a macro parameter
-        // (CI_TOKEN_EOT_CONTEXT_KIND_MACRO_PARAM).
-        Stack *macro_param; // Stack<struct CIToken* (&)>*
-        Stack *macro_call;  // Stack<struct CIToken* (&)>*
-    };
 } CITokenEot;
 
 /**
@@ -378,34 +360,13 @@ inline CONSTRUCTOR(CITokenEot, CITokenEot, enum CITokenEotContext ctx)
 
 /**
  *
- * @brief Construct CITokenEot type (CI_TOKEN_EOT_CONTEXT_MACRO_CALL).
- */
-inline VARIANT_CONSTRUCTOR(CITokenEot, CITokenEot, macro_call)
-{
-    return (CITokenEot){ .ctx = CI_TOKEN_EOT_CONTEXT_MACRO_CALL,
-                         .macro_call = NEW(Stack, CI_MACROS_CALL_MAX_SIZE) };
-}
-
-/**
- *
- * @brief Construct CITokenEot type (CI_TOKEN_EOT_CONTEXT_MACRO_PARAM).
- */
-inline VARIANT_CONSTRUCTOR(CITokenEot, CITokenEot, macro_param)
-{
-    return (CITokenEot){ .ctx = CI_TOKEN_EOT_CONTEXT_MACRO_PARAM,
-                         .macro_param = NEW(Stack, CI_MACROS_CALL_MAX_SIZE) };
-}
-
-/**
- *
  * @brief Check if is eot break.
  */
 inline bool
 is_eot_break__CITokenEot(const CITokenEot *self)
 {
-    return self->ctx == CI_TOKEN_EOT_CONTEXT_MACRO_CALL ||
-           self->ctx == CI_TOKEN_EOT_CONTEXT_OTHER ||
-           self->ctx == CI_TOKEN_EOT_CONTEXT_INCLUDE;
+    return self->ctx == CI_TOKEN_EOT_CONTEXT_DEFINE ||
+           self->ctx == CI_TOKEN_EOT_CONTEXT_OTHER;
 }
 
 /**
@@ -417,12 +378,6 @@ is_eot_break__CITokenEot(const CITokenEot *self)
 String *
 IMPL_FOR_DEBUG(to_string, CITokenEot, const CITokenEot *self);
 #endif
-
-/**
- *
- * @brief Free CITokenEot type.
- */
-DESTRUCTOR(CITokenEot, const CITokenEot *self);
 
 typedef struct CITokenGNUAttribute
 {
