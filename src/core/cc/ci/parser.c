@@ -178,6 +178,14 @@ generate_name_error__CIParser();
 /// @param called_generic_params const CIGenericParams*? (&)
 /// @param decl_generic_params const CIGenericParams*? (&)
 static bool
+is_array_data_type__CIParser(CIParser *self,
+                             CIDataType *data_type,
+                             const CIGenericParams *called_generic_params,
+                             const CIGenericParams *decl_generic_params);
+
+/// @param called_generic_params const CIGenericParams*? (&)
+/// @param decl_generic_params const CIGenericParams*? (&)
+static bool
 is_integer_data_type__CIParser(CIParser *self,
                                CIDataType *data_type,
                                bool allow_implicit_cast,
@@ -1016,6 +1024,47 @@ typecheck_decl__CIParser(const CIParser *self,
                          const CIDecl *decl,
                          struct CITypecheckContext *typecheck_ctx);
 
+static bool
+typecheck_binary_integer_compatible_expr__CIParser(
+  const CIParser *self,
+  CIDataType *left_dt,
+  CIDataType *right_dt,
+  struct CITypecheckContext *typecheck_ctx);
+
+static bool
+typecheck_binary_integer_or_float_compatible_expr__CIParser(
+  const CIParser *self,
+  CIDataType *left_dt,
+  CIDataType *right_dt,
+  struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_binary_arithmetic_expr__CIParser(
+  const CIParser *self,
+  CIDataType *left_dt,
+  CIDataType *right_dt,
+  struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_binary_bit_expr__CIParser(const CIParser *self,
+                                    CIDataType *left_dt,
+                                    CIDataType *right_dt,
+                                    struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_binary_logical_expr__CIParser(
+  const CIParser *self,
+  CIDataType *left_dt,
+  CIDataType *right_dt,
+  struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_binary_comparison_expr__CIParser(
+  const CIParser *self,
+  CIDataType *left_dt,
+  CIDataType *right_dt,
+  struct CITypecheckContext *typecheck_ctx);
+
 static void
 typecheck_binary_expr__CIParser(const CIParser *self,
                                 const CIExprBinary *binary,
@@ -1776,6 +1825,30 @@ generate_name_error__CIParser()
     push__Vec(names_error, rc_name_error);
 
     return rc_name_error;
+}
+
+bool
+is_array_data_type__CIParser(CIParser *self,
+                             CIDataType *data_type,
+                             const CIGenericParams *called_generic_params,
+                             const CIGenericParams *decl_generic_params)
+{
+    switch (data_type->kind) {
+        case CI_DATA_TYPE_KIND_ARRAY:
+            return true;
+        case CI_DATA_TYPE_KIND_TYPEDEF: {
+            CIDataType *resolved_dt = resolve_typedef_data_type__CIParser(
+              self, data_type, called_generic_params, decl_generic_params);
+            bool res = is_array_data_type__CIParser(
+              self, resolved_dt, called_generic_params, decl_generic_params);
+
+            FREE(CIDataType, resolved_dt);
+
+            return res;
+        }
+        default:
+            return false;
+    }
 }
 
 bool
@@ -6782,13 +6855,187 @@ typecheck_decl__CIParser(const CIParser *self,
     }
 }
 
+bool
+typecheck_binary_integer_compatible_expr__CIParser(
+  const CIParser *self,
+  CIDataType *left_dt,
+  CIDataType *right_dt,
+  struct CITypecheckContext *typecheck_ctx)
+{
+    return is_integer_data_type__CIParser(
+             (CIParser *)self,
+             left_dt,
+             true,
+             typecheck_ctx->current_generic_params.called,
+             typecheck_ctx->current_generic_params.decl) &&
+           is_integer_data_type__CIParser(
+             (CIParser *)self,
+             right_dt,
+             true,
+             typecheck_ctx->current_generic_params.called,
+             typecheck_ctx->current_generic_params.decl);
+}
+
+bool
+typecheck_binary_integer_or_float_compatible_expr__CIParser(
+  const CIParser *self,
+  CIDataType *left_dt,
+  CIDataType *right_dt,
+  struct CITypecheckContext *typecheck_ctx)
+{
+    return (is_integer_data_type__CIParser(
+              (CIParser *)self,
+              left_dt,
+              true,
+              typecheck_ctx->current_generic_params.called,
+              typecheck_ctx->current_generic_params.decl) ||
+            is_float_data_type__CIParser(
+              (CIParser *)self,
+              left_dt,
+              typecheck_ctx->current_generic_params.called,
+              typecheck_ctx->current_generic_params.decl)) &&
+           (is_integer_data_type__CIParser(
+              (CIParser *)self,
+              right_dt,
+              true,
+              typecheck_ctx->current_generic_params.called,
+              typecheck_ctx->current_generic_params.decl) ||
+            is_float_data_type__CIParser(
+              (CIParser *)self,
+              right_dt,
+              typecheck_ctx->current_generic_params.called,
+              typecheck_ctx->current_generic_params.decl));
+}
+
+void
+typecheck_binary_arithmetic_expr__CIParser(
+  const CIParser *self,
+  CIDataType *left_dt,
+  CIDataType *right_dt,
+  struct CITypecheckContext *typecheck_ctx)
+{
+    if (!typecheck_binary_integer_or_float_compatible_expr__CIParser(
+          self, left_dt, right_dt, typecheck_ctx)) {
+        FAILED("expected integer or float compatible data type for arithmetic "
+               "operation");
+    }
+}
+
+void
+typecheck_binary_bit_expr__CIParser(const CIParser *self,
+                                    CIDataType *left_dt,
+                                    CIDataType *right_dt,
+                                    struct CITypecheckContext *typecheck_ctx)
+{
+    if (!typecheck_binary_integer_compatible_expr__CIParser(
+          self, left_dt, right_dt, typecheck_ctx)) {
+        FAILED("expected integer compatible data type for bit operation");
+    }
+}
+
+void
+typecheck_binary_logical_expr__CIParser(
+  const CIParser *self,
+  CIDataType *left_dt,
+  CIDataType *right_dt,
+  struct CITypecheckContext *typecheck_ctx)
+{
+    if (!typecheck_binary_integer_compatible_expr__CIParser(
+          self, left_dt, right_dt, typecheck_ctx)) {
+        FAILED("expected integer compatible data type for logical operation");
+    }
+}
+
+void
+typecheck_binary_comparison_expr__CIParser(
+  const CIParser *self,
+  CIDataType *left_dt,
+  CIDataType *right_dt,
+  struct CITypecheckContext *typecheck_ctx)
+{
+    if (!typecheck_binary_integer_or_float_compatible_expr__CIParser(
+          self, left_dt, right_dt, typecheck_ctx)) {
+        FAILED("expected integer or float compatible data type for comparison "
+               "operation");
+    }
+}
+
 void
 typecheck_binary_expr__CIParser(const CIParser *self,
                                 const CIExprBinary *binary,
                                 struct CITypecheckContext *typecheck_ctx)
 {
+    CIDataType *left_dt = infer_expr_data_type__CIParser(
+      self,
+      binary->left,
+      typecheck_ctx->current_scope_id,
+      typecheck_ctx->current_generic_params.called,
+      typecheck_ctx->current_generic_params.decl);
+    CIDataType *right_dt = infer_expr_data_type__CIParser(
+      self,
+      binary->right,
+      typecheck_ctx->current_scope_id,
+      typecheck_ctx->current_generic_params.called,
+      typecheck_ctx->current_generic_params.called);
+
+    switch (binary->kind) {
+        case CI_EXPR_BINARY_KIND_ASSIGN_ADD:
+        case CI_EXPR_BINARY_KIND_ASSIGN_SUB:
+        case CI_EXPR_BINARY_KIND_ASSIGN_MUL:
+        case CI_EXPR_BINARY_KIND_ASSIGN_DIV:
+        case CI_EXPR_BINARY_KIND_ADD:
+        case CI_EXPR_BINARY_KIND_SUB:
+        case CI_EXPR_BINARY_KIND_MUL:
+        case CI_EXPR_BINARY_KIND_DIV:
+            typecheck_binary_arithmetic_expr__CIParser(
+              self, left_dt, right_dt, typecheck_ctx);
+
+            break;
+        case CI_EXPR_BINARY_KIND_ASSIGN_MOD:
+        case CI_EXPR_BINARY_KIND_ASSIGN_BIT_AND:
+        case CI_EXPR_BINARY_KIND_ASSIGN_BIT_OR:
+        case CI_EXPR_BINARY_KIND_ASSIGN_XOR:
+        case CI_EXPR_BINARY_KIND_ASSIGN_BIT_LSHIFT:
+        case CI_EXPR_BINARY_KIND_ASSIGN_BIT_RSHIFT:
+        case CI_EXPR_BINARY_KIND_MOD:
+        case CI_EXPR_BINARY_KIND_BIT_AND:
+        case CI_EXPR_BINARY_KIND_BIT_OR:
+        case CI_EXPR_BINARY_KIND_BIT_XOR:
+        case CI_EXPR_BINARY_KIND_BIT_LSHIFT:
+        case CI_EXPR_BINARY_KIND_BIT_RSHIFT:
+            typecheck_binary_bit_expr__CIParser(
+              self, left_dt, right_dt, typecheck_ctx);
+
+            break;
+        case CI_EXPR_BINARY_KIND_AND:
+        case CI_EXPR_BINARY_KIND_OR:
+            typecheck_binary_logical_expr__CIParser(
+              self, left_dt, right_dt, typecheck_ctx);
+
+            break;
+        case CI_EXPR_BINARY_KIND_EQ:
+        case CI_EXPR_BINARY_KIND_NE:
+        case CI_EXPR_BINARY_KIND_LESS:
+        case CI_EXPR_BINARY_KIND_GREATER:
+        case CI_EXPR_BINARY_KIND_LESS_EQ:
+        case CI_EXPR_BINARY_KIND_GREATER_EQ:
+            typecheck_binary_comparison_expr__CIParser(
+              self, left_dt, right_dt, typecheck_ctx);
+
+            break;
+        default:
+            break;
+    }
+
     switch (binary->kind) {
         case CI_EXPR_BINARY_KIND_ASSIGN:
+            if (is_array_data_type__CIParser(
+                  (CIParser *)self,
+                  left_dt,
+                  typecheck_ctx->current_generic_params.called,
+                  typecheck_ctx->current_generic_params.decl)) {
+                FAILED("cannot assign expression to array data type");
+            }
         case CI_EXPR_BINARY_KIND_ASSIGN_ADD:
         case CI_EXPR_BINARY_KIND_ASSIGN_SUB:
         case CI_EXPR_BINARY_KIND_ASSIGN_MUL:
@@ -6798,31 +7045,17 @@ typecheck_binary_expr__CIParser(const CIParser *self,
         case CI_EXPR_BINARY_KIND_ASSIGN_BIT_OR:
         case CI_EXPR_BINARY_KIND_ASSIGN_XOR:
         case CI_EXPR_BINARY_KIND_ASSIGN_BIT_LSHIFT:
-        case CI_EXPR_BINARY_KIND_ASSIGN_BIT_RSHIFT: {
-            CIDataType *left_dt = infer_expr_data_type__CIParser(
-              self,
-              binary->left,
-              typecheck_ctx->current_scope_id,
-              typecheck_ctx->current_generic_params.called,
-              typecheck_ctx->current_generic_params.decl);
-            CIDataType *right_dt = infer_expr_data_type__CIParser(
-              self,
-              binary->right,
-              typecheck_ctx->current_scope_id,
-              typecheck_ctx->current_generic_params.called,
-              typecheck_ctx->current_generic_params.called);
-
+        case CI_EXPR_BINARY_KIND_ASSIGN_BIT_RSHIFT:
             perform_typecheck__CIParser(
               self, left_dt, right_dt, false, typecheck_ctx);
 
-            FREE(CIDataType, left_dt);
-            FREE(CIDataType, right_dt);
-
             break;
-        }
         default:
             break;
     }
+
+    FREE(CIDataType, left_dt);
+    FREE(CIDataType, right_dt);
 }
 
 void
