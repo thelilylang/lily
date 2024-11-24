@@ -649,10 +649,6 @@ is_empty__CITokens(const CITokens *self);
 
 extern inline CONSTRUCTOR(CITokenEot, CITokenEot, enum CITokenEotContext ctx);
 
-extern inline VARIANT_CONSTRUCTOR(CITokenEot, CITokenEot, macro_call);
-
-extern inline VARIANT_CONSTRUCTOR(CITokenEot, CITokenEot, macro_param);
-
 extern inline bool
 is_eot_break__CITokenEot(const CITokenEot *self);
 

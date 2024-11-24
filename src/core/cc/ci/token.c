@@ -36,16 +36,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Free CITokenEot type (CI_TOKEN_EOT_CONTEXT_MACRO_CALL).
-static inline VARIANT_DESTRUCTOR(CITokenEot,
-                                 macro_call,
-                                 const CITokenEot *self);
-
-// Free CITokenEot type (CI_TOKEN_EOT_CONTEXT_MACRO_PARAM).
-static inline VARIANT_DESTRUCTOR(CITokenEot,
-                                 macro_param,
-                                 const CITokenEot *self);
-
 // Free CIToken type (CI_TOKEN_KIND_ATTRIBUTE_DEPRECATED).
 static VARIANT_DESTRUCTOR(CIToken, attribute_deprecated, CIToken *self);
 
@@ -56,7 +46,7 @@ static VARIANT_DESTRUCTOR(CIToken, attribute_nodiscard, CIToken *self);
 static VARIANT_DESTRUCTOR(CIToken, comment_doc, CIToken *self);
 
 // Free CIToken type (CI_TOKEN_KIND_EOT).
-static VARIANT_DESTRUCTOR(CIToken, eot, CIToken *self);
+static inline VARIANT_DESTRUCTOR(CIToken, eot, CIToken *self);
 
 // Free CIToken type (CI_TOKEN_KIND_GNU_ATTRIBUTE).
 static VARIANT_DESTRUCTOR(CIToken, gnu_attribute, CIToken *self);
@@ -352,14 +342,8 @@ char *
 IMPL_FOR_DEBUG(to_string, CITokenEotContext, enum CITokenEotContext self)
 {
     switch (self) {
-        case CI_TOKEN_EOT_CONTEXT_INCLUDE:
-            return "CI_TOKEN_EOT_CONTEXT_INCLUDE";
-        case CI_TOKEN_EOT_CONTEXT_MACRO_PARAM:
-            return "CI_TOKEN_EOT_CONTEXT_MACRO_PARAM";
-        case CI_TOKEN_EOT_CONTEXT_MACRO_CALL:
-            return "CI_TOKEN_EOT_CONTEXT_MACRO_CALL";
-        case CI_TOKEN_EOT_CONTEXT_MERGED_ID:
-            return "CI_TOKEN_EOT_CONTEXT_MERGED_ID";
+        case CI_TOKEN_EOT_CONTEXT_DEFINE:
+            return "CI_TOKEN_EOT_CONTEXT_DEFINE";
         case CI_TOKEN_EOT_CONTEXT_STRINGIFICATION:
             return "CI_TOKEN_EOT_CONTEXT_STRINGIFICATION";
         case CI_TOKEN_EOT_CONTEXT_OTHER:
@@ -376,36 +360,10 @@ IMPL_FOR_DEBUG(to_string, CITokenEot, const CITokenEot *self)
 {
     // NOTE: Other struct fields will always be NULL after the scanner.
     return format__String(
-      "CITokenEot{{ ctx = {s}, ... }",
+      "CITokenEot{{ ctx = {s} }",
       CALL_DEBUG_IMPL(to_string, CITokenEotContext, self->ctx));
 }
 #endif
-
-VARIANT_DESTRUCTOR(CITokenEot, macro_call, const CITokenEot *self)
-{
-    FREE(Stack, self->macro_call);
-}
-
-VARIANT_DESTRUCTOR(CITokenEot, macro_param, const CITokenEot *self)
-{
-    FREE(Stack, self->macro_param);
-}
-
-DESTRUCTOR(CITokenEot, const CITokenEot *self)
-{
-    switch (self->ctx) {
-        case CI_TOKEN_EOT_CONTEXT_MACRO_CALL:
-            FREE_VARIANT(CITokenEot, macro_call, self);
-
-            break;
-        case CI_TOKEN_EOT_CONTEXT_MACRO_PARAM:
-            FREE_VARIANT(CITokenEot, macro_param, self);
-
-            break;
-        default:
-            break;
-    }
-}
 
 CONSTRUCTOR(CITokenGNUAttribute, CITokenGNUAttribute, CITokens content)
 {
@@ -2666,7 +2624,6 @@ VARIANT_DESTRUCTOR(CIToken, comment_doc, CIToken *self)
 
 VARIANT_DESTRUCTOR(CIToken, eot, CIToken *self)
 {
-    FREE(CITokenEot, &self->eot);
     lily_free(self);
 }
 

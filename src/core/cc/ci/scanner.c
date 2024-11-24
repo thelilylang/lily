@@ -2538,7 +2538,7 @@ exit:
             break;
         case CI_SCANNER_CONTEXT_LOCATION_MACRO:
             add_eot_token__CIScanner(
-              self, &ctx, NEW_VARIANT(CITokenEot, macro_call));
+              self, &ctx, NEW(CITokenEot, CI_TOKEN_EOT_CONTEXT_DEFINE));
 
             break;
         default:
