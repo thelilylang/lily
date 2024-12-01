@@ -22,44 +22,4 @@
  * SOFTWARE.
  */
 
-#include <base/macros.h>
-
-#include <command/ci/ci.h>
-
-#include <core/cc/ci/builtin.h>
-#include <core/cc/ci/generator.h>
-#include <core/cc/ci/include.h>
-#include <core/cc/ci/parser.h>
-#include <core/cc/ci/project_config.h>
-#include <core/cc/ci/result.h>
-#include <core/cc/ci/scanner.h>
-#include <core/cc/ci/visitor.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-
-void
-run__CI(const CIConfig *config)
-{
-    if (config->mode != CI_CONFIG_MODE_NONE) {
-        TODO("implement --mode option");
-    }
-
-    CIBuiltin builtin = NEW(CIBuiltin);
-    CIProjectConfig project_config =
-      config->file ? parse_cli__CIProjectConfig(config)
-                   : parse_yaml__CIProjectConfig(config->path);
-    CIResult result = NEW(CIResult, &project_config, &builtin);
-    CIVisitor visitor = NEW(CIVisitor, &result);
-
-    set__CIBuiltin(&builtin);
-    build__CIResult(&result);
-    run__CIVisitor(&visitor);
-    run__CIGenerator(&result);
-
-    FREE(CIResult, &result);
-    FREE(CIBuiltin, &builtin);
-    FREE(CIProjectConfig, &project_config);
-
-    destroy__CIInclude();
-}
+#include <core/cc/ci/state_checker.h>

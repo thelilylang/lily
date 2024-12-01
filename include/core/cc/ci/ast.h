@@ -267,6 +267,37 @@ inline DESTRUCTOR(CIVariableID, CIVariableID *self)
     lily_free(self);
 }
 
+enum CIStateCheckerKind : Uint64
+{
+    CI_STATE_CHECKER_KIND_NONE = 0,
+    CI_STATE_CHECKER_KIND_HEAP = 1 << 0,
+    CI_STATE_CHECKER_KIND_NON_NULL = 1 << 1,
+    CI_STATE_CHECKER_KIND_STACK = 1 << 2,
+    CI_STATE_CHECKER_KIND_TRACE = 1 << 3,
+    CI_STATE_CHECKER_KIND_BORROWED = 1 << 4,
+};
+
+typedef struct CIStateCheckerItem
+{
+    Uint64 state;
+    CIVariableID *variable_id; // CIVariableID* (&)
+} CIStateCheckerItem;
+
+/**
+ *
+ * @brief Construct CIStateCheckerItem type.
+ */
+CONSTRUCTOR(CIStateCheckerItem *,
+            CIStateCheckerItem,
+            Uint64 state,
+            CIVariableID *variable_id);
+
+/**
+ *
+ * @brief Free CIStateCheckerItem type.
+ */
+DESTRUCTOR(CIStateCheckerItem, CIStateCheckerItem *self);
+
 typedef struct CIScope
 {
     CIScopeID *parent; // CIScopeID*? (&)
@@ -280,6 +311,7 @@ typedef struct CIScope
     HashMap *typedefs;      // HashMap<CITypedefID*>*
     HashMap *unions;        // HashMap<CIUnionID*>*
     HashMap *variables;     // HashMap<CIVariableID*>*
+    HashMap *states;        // HashMap<CIStateCheckerItem*>*
 } CIScope;
 
 /**
@@ -2655,6 +2687,16 @@ is_local__CIDecl(const CIDecl *self);
  */
 const Vec *
 get_function_params__CIDecl(const CIDecl *self);
+
+/**
+ *
+ * @brief Check if the declaration is a prototype.
+ */
+inline bool
+is_prototype__CIDecl(CIDecl *self)
+{
+    return self->is_prototype && !is_typedef__CIDecl(self);
+}
 
 /**
  *

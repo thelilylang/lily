@@ -310,27 +310,6 @@ substitute_data_type__CIGenerator(CIDataType *data_type)
 }
 
 void
-run__CIGenerator(const CIResult *result)
-{
-    OrderedHashMapIter iter_libs = NEW(OrderedHashMapIter, result->libs);
-    OrderedHashMapIter iter_bins = NEW(OrderedHashMapIter, result->bins);
-    CIResultLib *current_lib = NULL;
-    CIResultBin *current_bin = NULL;
-
-    set_result_ref__CIGenerator(result);
-
-    while ((current_lib = next__OrderedHashMapIter(&iter_libs))) {
-        run_file__CIGenerator(current_lib->file);
-    }
-
-    while ((current_bin = next__OrderedHashMapIter(&iter_bins))) {
-        run_file__CIGenerator(current_bin->file);
-    }
-
-    unset_result_ref__CIGenerator();
-}
-
-void
 write__CIGenerator(char c)
 {
     push__String(current_result_content, c);
@@ -1946,4 +1925,26 @@ run_file__CIGenerator(const CIResultFile *file_result)
     FREE(String, current_result_content);
     FREE(String, dir_result);
     FREE(String, path_result);
+}
+
+void
+run__CIGenerator(const CIResult *result)
+{
+    // TODO: Merge that code in one step with the visitor
+    OrderedHashMapIter iter_libs = NEW(OrderedHashMapIter, result->libs);
+    OrderedHashMapIter iter_bins = NEW(OrderedHashMapIter, result->bins);
+    CIResultLib *current_lib = NULL;
+    CIResultBin *current_bin = NULL;
+
+    set_result_ref__CIGenerator(result);
+
+    while ((current_lib = next__OrderedHashMapIter(&iter_libs))) {
+        run_file__CIGenerator(current_lib->file);
+    }
+
+    while ((current_bin = next__OrderedHashMapIter(&iter_bins))) {
+        run_file__CIGenerator(current_bin->file);
+    }
+
+    unset_result_ref__CIGenerator();
 }

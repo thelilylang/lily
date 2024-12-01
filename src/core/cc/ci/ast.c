@@ -372,6 +372,24 @@ CONSTRUCTOR(CIVariableID *,
     return self;
 }
 
+CONSTRUCTOR(CIStateCheckerItem *,
+            CIStateCheckerItem,
+            Uint64 state,
+            CIVariableID *variable_id)
+{
+    CIStateCheckerItem *self = lily_malloc(sizeof(CIStateCheckerItem));
+
+    self->state = state;
+    self->variable_id = variable_id;
+
+    return self;
+}
+
+DESTRUCTOR(CIStateCheckerItem, CIStateCheckerItem *self)
+{
+    lily_free(self);
+}
+
 CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, Usize id, bool is_block)
 {
     CIScope *self = lily_malloc(sizeof(CIScope));
@@ -387,6 +405,7 @@ CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, Usize id, bool is_block)
     self->typedefs = NEW(HashMap);
     self->unions = NEW(HashMap);
     self->variables = NEW(HashMap);
+    self->states = NEW(HashMap);
 
     return self;
 }
@@ -418,6 +437,9 @@ DESTRUCTOR(CIScope, CIScope *self)
 
     FREE_HASHMAP_VALUES(self->variables, CIVariableID);
     FREE(HashMap, self->variables);
+
+    FREE_HASHMAP_VALUES(self->states, CIStateCheckerItem);
+    FREE(HashMap, self->states);
 
     lily_free(self);
 }

@@ -54,7 +54,9 @@ set(CI_SRC
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/resolver/expr.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/result.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/scanner.c
-    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/token.c)
+    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/state_checker.c
+    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/token.c
+    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/visitor.c)
 
 # lily_core_cc_ci
 add_library(lily_core_cc_ci STATIC ${CI_SRC})

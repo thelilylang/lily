@@ -34,6 +34,7 @@
 #include <core/cc/ci/result.h>
 #include <core/cc/ci/scanner.h>
 #include <core/cc/ci/token.h>
+#include <core/cc/ci/visitor.h>
 
 #include "lily_base.c"
 #include "lily_core_cc_ci_diagnostic.c"
@@ -315,11 +316,20 @@ extern inline CONSTRUCTOR(CIDeclVariable,
                           CIExpr *expr,
                           bool is_local);
 
+extern inline void
+set_is_recursive__CIDecl(CIDecl *self);
+
+extern inline bool
+is_recursive__CIDecl(CIDecl *self);
+
 extern inline CIDecl *
 ref__CIDecl(CIDecl *self);
 
 extern inline bool
 is_typedef__CIDecl(CIDecl *self);
+
+extern inline bool
+is_prototype__CIDecl(CIDecl *self);
 
 extern inline CONSTRUCTOR(CIExprArray, CIExprArray, Vec *array);
 
@@ -745,5 +755,8 @@ is_keyword__CITokenKind(enum CITokenKind kind);
 
 extern inline CIToken *
 ref__CIToken(CIToken *self);
+
+// <core/cc/ci/visitor.h>
+extern inline CONSTRUCTOR(CIVisitor, CIVisitor, const CIResult *result);
 
 #endif // LILY_EX_LIB_LILY_CORE_CC_CI_C

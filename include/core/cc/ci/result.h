@@ -427,6 +427,25 @@ add_variable__CIResultFile(const CIResultFile *self,
                            CIDecl *variable);
 
 /**
+ * @brief Add declaration to scope. If the declaration addition succeeds, the
+ * function returns a NULL pointer, otherwise it returns the pointer to the
+ * declaration that conflicts with the declaration we previously tried to add.
+ * @param must_free Free the value associated with "decl_ref", if the addition
+ * fails.
+ * @return const CIDecl*? (&)
+ * @note If the passed declaration has no name (e.g. anonymous struct, enum or
+ * union), the function will return a NULL pointer by default, as if the
+ * addition had actually taken place, but obviously the function won't try to
+ * add this declaration to the scope.
+ */
+const CIDecl *
+add_decl_to_scope__CIResultFile(const CIResultFile *self,
+                                CIDecl **decl_ref,
+                                const CIScope *scope,
+                                bool must_free,
+                                bool in_function_body);
+
+/**
  *
  * @brief Get scope from id.
  */

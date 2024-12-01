@@ -557,6 +557,127 @@ add_variable__CIResultFile(const CIResultFile *self,
                  self->owner, self->owner->scope_base, ref__CIDecl(variable)));
 }
 
+const CIDecl *
+add_decl_to_scope__CIResultFile(const CIResultFile *self,
+                                CIDecl **decl_ref,
+                                const CIScope *scope,
+                                bool must_free,
+                                bool in_function_body)
+{
+    CIDecl *decl = *decl_ref;
+    CIDecl *res = NULL;
+
+    ASSERT(decl);
+
+    switch (decl->kind) {
+        case CI_DECL_KIND_ENUM:
+            if ((res = (CIDecl *)add_enum__CIResultFile(self, decl))) {
+                // See `add_enum__CIResultFile` prototype.
+                if (decl != res) {
+                    FAILED("enum is already defined");
+                }
+
+                goto free;
+            }
+
+            goto exit;
+        case CI_DECL_KIND_ENUM_VARIANT:
+            if ((res = (CIDecl *)add_enum_variant__CIResultFile(self, decl))) {
+                // See `add_enum_variant__CIResultFile` prototype.
+                if (decl != res) {
+                    FAILED("enum variant is already defined");
+                }
+
+                goto free;
+            }
+
+            goto exit;
+        case CI_DECL_KIND_FUNCTION:
+        case CI_DECL_KIND_FUNCTION_GEN:
+            if ((res = (CIDecl *)add_function__CIResultFile(self, decl))) {
+                // See `add_function__CIResultFile` prototype.
+                if (decl != res) {
+                    FAILED("function is already defined");
+                }
+
+                goto free;
+            }
+
+            goto exit;
+        case CI_DECL_KIND_LABEL:
+            if ((res = (CIDecl *)add_label__CIResultFile(
+                   self, scope, ref__CIDecl(decl)))) {
+                // See `add_label__CIResultFile` prototype.
+                if (decl != res) {
+                    FAILED("label is already defined");
+                }
+
+                goto free;
+            }
+
+            goto exit;
+        case CI_DECL_KIND_STRUCT:
+        case CI_DECL_KIND_STRUCT_GEN:
+            if ((res = (CIDecl *)add_struct__CIResultFile(self, decl))) {
+                // See `add_struct__CIResultFile` prototype.
+                if (decl != res) {
+                    FAILED("struct is already defined");
+                }
+
+                goto free;
+            }
+
+            goto exit;
+        case CI_DECL_KIND_TYPEDEF:
+        case CI_DECL_KIND_TYPEDEF_GEN:
+            if ((res = (CIDecl *)add_typedef__CIResultFile(self, decl))) {
+                // See `add_typedef__CIResultFile` prototype.
+                if (decl != res) {
+                    FAILED("typedef is already defined");
+                }
+
+                goto free;
+            }
+
+            goto exit;
+        case CI_DECL_KIND_UNION:
+        case CI_DECL_KIND_UNION_GEN:
+            if ((res = (CIDecl *)add_union__CIResultFile(self, decl))) {
+                // See `add_union__CIResultFile` prototype.
+                if (decl != res) {
+                    FAILED("union is already defined");
+                }
+
+                goto free;
+            }
+
+            goto exit;
+        case CI_DECL_KIND_VARIABLE:
+            if ((res = (CIDecl *)add_variable__CIResultFile(
+                   self, scope, in_function_body ? ref__CIDecl(decl) : decl))) {
+                // See `add_variable__CIResultFile` prototype.
+                if (decl != res) {
+                    FAILED("variable is already defined");
+                }
+
+                goto free;
+            }
+
+            goto exit;
+        default:
+            UNREACHABLE("impossible situation");
+    }
+
+free:
+    if (must_free) {
+        FREE(CIDecl, decl);
+        *decl_ref = NULL;
+    }
+
+exit:
+    return res;
+}
+
 #define REPLACE_DECL_FROM_ID__CI_RESULT_FILE(vec, i, new_decl) \
     {                                                          \
         ASSERT(i);                                             \
