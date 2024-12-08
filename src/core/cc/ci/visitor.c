@@ -26,6 +26,7 @@
 #include <base/vec.h>
 
 #include <core/cc/ci/ast.h>
+#include <core/cc/ci/typecheck.h>
 #include <core/cc/ci/visitor.h>
 
 inline bool
@@ -74,7 +75,10 @@ substitute_and_generate_from_data_type__CIVisitor(
   CIGenericParams *generic_params,
   CIGenericParams *called_generic_params);
 
+/// @brief If the struct or union is not generic, this function will return
+/// NULL.
 /// @return the generated fields.
+/// @return Vec<CIDataType*>*?
 static Vec *
 visit_struct_or_union__CIVisitor(CIVisitor *self,
                                  const CIDecl *decl,
@@ -84,8 +88,10 @@ static void
 visit_non_generic_struct_or_union__CIVisitor(CIVisitor *self,
                                              const CIDecl *decl);
 
+/// @brief If the typedef is not generic, this function will return NULL.
 /// @return the generated data type.
 /// e.g. typedef <data_type> <name>;
+/// @return CIDataType*?
 static CIDataType *
 visit_typedef__CIVisitor(CIVisitor *self,
                          const CIDecl *decl,
@@ -258,7 +264,7 @@ static inline void
 unset_file__CIVisitor(CIVisitor *self);
 
 static void
-visit_decls__CIVisitor(CIVisitor *self);
+visit_global_decls__CIVisitor(CIVisitor *self);
 
 static void
 run_file__CIVisitor(CIVisitor *self, const CIResultFile *file);
@@ -323,12 +329,6 @@ generate_function_gen__CIVisitor(CIVisitor *self,
                   self->current_scope,
                   true,
                   is_in_function_body__CIVisitor(self));
-
-                if (function_gen_decl) {
-                    // TODO: Re-write typecheck in separate step.
-                    /* typecheck_function_gen__CIParser(self,
-                     * function_gen_decl); */
-                }
             }
         }
     }
@@ -387,43 +387,61 @@ generate_type_gen__CIVisitor(CIVisitor *self,
                         Vec *fields = visit_struct_or_union__CIVisitor(
                           self, decl, called_generic_params);
 
-                        decl_gen = NEW_VARIANT(
-                          CIDecl,
-                          struct_gen,
-                          decl,
-                          ref__CIGenericParams(called_generic_params),
-                          serialized_called_decl_name,
-                          fields);
+                        if (fields) {
+                            decl_gen = NEW_VARIANT(
+                              CIDecl,
+                              struct_gen,
+                              decl,
+                              ref__CIGenericParams(called_generic_params),
+                              serialized_called_decl_name,
+                              fields);
 
-                        break;
+                            break;
+                        }
+
+                        FREE(String, serialized_called_decl_name);
+
+                        return;
                     }
                     case CI_DECL_KIND_TYPEDEF: {
                         CIDataType *data_type = visit_typedef__CIVisitor(
                           self, decl, called_generic_params);
 
-                        decl_gen = NEW_VARIANT(
-                          CIDecl,
-                          typedef_gen,
-                          decl,
-                          ref__CIGenericParams(called_generic_params),
-                          serialized_called_decl_name,
-                          data_type);
+                        if (data_type) {
+                            decl_gen = NEW_VARIANT(
+                              CIDecl,
+                              typedef_gen,
+                              decl,
+                              ref__CIGenericParams(called_generic_params),
+                              serialized_called_decl_name,
+                              data_type);
 
-                        break;
+                            break;
+                        }
+
+                        FREE(String, serialized_called_decl_name);
+
+                        return;
                     }
                     case CI_DECL_KIND_UNION: {
                         Vec *fields = visit_struct_or_union__CIVisitor(
                           self, decl, called_generic_params);
 
-                        decl_gen = NEW_VARIANT(
-                          CIDecl,
-                          union_gen,
-                          decl,
-                          ref__CIGenericParams(called_generic_params),
-                          serialized_called_decl_name,
-                          fields);
+                        if (fields) {
+                            decl_gen = NEW_VARIANT(
+                              CIDecl,
+                              union_gen,
+                              decl,
+                              ref__CIGenericParams(called_generic_params),
+                              serialized_called_decl_name,
+                              fields);
 
-                        break;
+                            break;
+                        }
+
+                        FREE(String, serialized_called_decl_name);
+
+                        return;
                     }
                     default:
                         UNREACHABLE("this kind of variant is not expected");
@@ -526,8 +544,6 @@ substitute_and_generate_from_data_type__CIVisitor(
 
     generate_from_data_type__CIVisitor(self, subs_data_type);
 
-    FREE(CIDataType, subs_data_type);
-
     return subs_data_type;
 }
 
@@ -597,11 +613,13 @@ visit_typedef__CIVisitor(CIVisitor *self,
 {
     ASSERT(decl->kind == CI_DECL_KIND_TYPEDEF);
 
-    return substitute_and_generate_from_data_type__CIVisitor(
-      self,
-      decl->typedef_.data_type,
-      decl->typedef_.generic_params,
-      called_generic_params);
+    return has_generic__CIDecl(decl)
+             ? substitute_and_generate_from_data_type__CIVisitor(
+                 self,
+                 decl->typedef_.data_type,
+                 decl->typedef_.generic_params,
+                 called_generic_params)
+             : NULL;
 }
 
 void
@@ -712,8 +730,13 @@ visit_variable__CIVisitor(CIVisitor *self,
                                decl->variable.data_type,
                                called_generic_params,
                                decl_generic_params);
-    visit_function_expr__CIVisitor(
-      self, decl->variable.expr, called_generic_params, decl_generic_params);
+
+    if (decl->variable.expr) {
+        visit_function_expr__CIVisitor(self,
+                                       decl->variable.expr,
+                                       called_generic_params,
+                                       decl_generic_params);
+    }
 }
 
 void
@@ -799,10 +822,12 @@ visit_function_expr_function_call__CIVisitor(
   CIGenericParams *called_generic_params,
   CIGenericParams *decl_generic_params)
 {
-    generate_function_gen__CIVisitor(
-      self,
-      GET_PTR_RC(String, function_call->identifier),
-      function_call->generic_params);
+    if (function_call->generic_params) {
+        generate_function_gen__CIVisitor(
+          self,
+          GET_PTR_RC(String, function_call->identifier),
+          function_call->generic_params);
+    }
 
     for (Usize i = 0; i < function_call->params->len; ++i) {
         visit_function_expr__CIVisitor(self,
@@ -1236,7 +1261,7 @@ unset_file__CIVisitor(CIVisitor *self)
 }
 
 void
-visit_decls__CIVisitor(CIVisitor *self)
+visit_global_decls__CIVisitor(CIVisitor *self)
 {
     CIDecl *decl = NULL;
     VecIter iter_decl = NEW(VecIter, self->file->entity.decls);
@@ -1250,7 +1275,7 @@ void
 run_file__CIVisitor(CIVisitor *self, const CIResultFile *file)
 {
     set_file__CIVisitor(self, file);
-    visit_decls__CIVisitor(self);
+    visit_global_decls__CIVisitor(self);
     unset_file__CIVisitor(self);
 }
 

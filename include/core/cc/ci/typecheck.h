@@ -22,47 +22,33 @@
  * SOFTWARE.
  */
 
-#include <base/macros.h>
+#ifndef LILY_CORE_CC_CI_TYPECHECK_H
+#define LILY_CORE_CC_CI_TYPECHECK_H
 
-#include <command/ci/ci.h>
-
-#include <core/cc/ci/builtin.h>
-#include <core/cc/ci/generator.h>
-#include <core/cc/ci/include.h>
-#include <core/cc/ci/parser.h>
-#include <core/cc/ci/project_config.h>
 #include <core/cc/ci/result.h>
-#include <core/cc/ci/scanner.h>
-#include <core/cc/ci/typecheck.h>
-#include <core/cc/ci/visitor.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-
-void
-run__CI(const CIConfig *config)
+typedef struct CITypecheck
 {
-    if (config->mode != CI_CONFIG_MODE_NONE) {
-        TODO("implement --mode option");
-    }
+    const CIResult *result;       // const CIResult* (&)
+    const CIResultFile *file;     // const CIResultFile*? (&)
+    const CIScope *current_scope; // const CIScope*? (&)
+} CITypecheck;
 
-    CIBuiltin builtin = NEW(CIBuiltin);
-    CIProjectConfig project_config =
-      config->file ? parse_cli__CIProjectConfig(config)
-                   : parse_yaml__CIProjectConfig(config->path);
-    CIResult result = NEW(CIResult, &project_config, &builtin);
-    CIVisitor visitor = NEW(CIVisitor, &result);
-    CITypecheck typecheck = NEW(CITypecheck, &result);
-
-    set__CIBuiltin(&builtin);
-    build__CIResult(&result);
-    run__CIVisitor(&visitor);
-    run__CITypecheck(&typecheck);
-    run__CIGenerator(&result);
-
-    FREE(CIResult, &result);
-    FREE(CIBuiltin, &builtin);
-    FREE(CIProjectConfig, &project_config);
-
-    destroy__CIInclude();
+/**
+ *
+ * @brief Construct CITypecheck type.
+ */
+inline CONSTRUCTOR(CITypecheck, CITypecheck, const CIResult *result)
+{
+    return (
+      CITypecheck){ .result = result, .file = NULL, .current_scope = NULL };
 }
+
+/**
+ *
+ * @brief Run the typecheck.
+ */
+void
+run__CITypecheck(CITypecheck *self);
+
+#endif // LILY_CORE_CC_CI_TYPECHECK_H

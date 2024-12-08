@@ -31,53 +31,6 @@
 
 typedef struct CIResultFile CIResultFile;
 
-typedef struct CIParserVisitWaitingListItem
-{
-    String *name;             // String* (&)
-    Vec *generic_params_list; // Vec<CIGenericParams* (&)>*?
-} CIParserVisitWaitingListItem;
-
-/**
- *
- * @brief Construct CIParserVisitWaitingListItem type.
- */
-CONSTRUCTOR(CIParserVisitWaitingListItem *,
-            CIParserVisitWaitingListItem,
-            String *name,
-            Vec *generic_params_list);
-
-/**
- *
- * @brief Free CIParserVisitWaitingListItem type.
- */
-DESTRUCTOR(CIParserVisitWaitingListItem, CIParserVisitWaitingListItem *self);
-
-typedef struct CIParserVisitWaitingList
-{
-    HashMap *functions; // HashMap<CIParserVisitWaitingListItem*>*
-    HashMap *typedefs;  // HashMap<CIParserVisitWaitingListItem*>*
-    HashMap *unions;    // HashMap<CIParserVisitWaitingListItem*>*
-    HashMap *structs;   // HashMap<CIParserVisitWaitingListItem*>*
-} CIParserVisitWaitingList;
-
-/**
- *
- * @brief Construct CIParserVisitWaitingList type.
- */
-inline CONSTRUCTOR(CIParserVisitWaitingList, CIParserVisitWaitingList)
-{
-    return (CIParserVisitWaitingList){ .functions = NEW(HashMap),
-                                       .typedefs = NEW(HashMap),
-                                       .unions = NEW(HashMap),
-                                       .structs = NEW(HashMap) };
-}
-
-/**
- *
- * @brief Free CIParserVisitWaitingList type.
- */
-DESTRUCTOR(CIParserVisitWaitingList, const CIParserVisitWaitingList *self);
-
 typedef struct CIParserSpan
 {
     Usize line;
@@ -125,7 +78,6 @@ typedef struct CIParser
     CIToken *previous_token;                 // CIToken*? (&)
     CIParserSpan current_span;
     CIParserSpan previous_span;
-    CIParserVisitWaitingList visit_waiting_list;
 } CIParser;
 
 /**
@@ -197,21 +149,6 @@ CIDataType *
 substitute_data_type__CIParser(CIDataType *data_type,
                                CIGenericParams *generic_params,
                                CIGenericParams *called_generic_params);
-
-/**
- *
- * @brief Infer data type of the given expression.
- * @param current_scope_id const CIScopeID*? (&)
- * @param called_generic_params const CIGenericParams*? (&)
- * @param decl_generic_params const CIGenericParams*? (&)
- * @return CIDataType*
- */
-CIDataType *
-infer_expr_data_type__CIParser(const CIParser *self,
-                               const CIExpr *expr,
-                               const CIScopeID *current_scope_id,
-                               const CIGenericParams *called_generic_params,
-                               const CIGenericParams *decl_generic_params);
 
 /**
  *

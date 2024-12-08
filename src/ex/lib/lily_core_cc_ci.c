@@ -34,6 +34,7 @@
 #include <core/cc/ci/result.h>
 #include <core/cc/ci/scanner.h>
 #include <core/cc/ci/token.h>
+#include <core/cc/ci/typecheck.h>
 #include <core/cc/ci/visitor.h>
 
 #include "lily_base.c"
@@ -508,8 +509,6 @@ extern inline VARIANT_CONSTRUCTOR(CIProjectConfig,
                                   Vec *bins);
 
 // <core/cc/ci/parser.h>
-extern inline CONSTRUCTOR(CIParserVisitWaitingList, CIParserVisitWaitingList);
-
 extern inline CONSTRUCTOR(CIParserSpan, CIParserSpan, Usize line, Usize column);
 
 extern inline CIParserSpan
@@ -755,6 +754,9 @@ is_keyword__CITokenKind(enum CITokenKind kind);
 
 extern inline CIToken *
 ref__CIToken(CIToken *self);
+
+// <core/cc/ci/typecheck.h>
+extern inline CONSTRUCTOR(CITypecheck, CITypecheck, const CIResult *result);
 
 // <core/cc/ci/visitor.h>
 extern inline CONSTRUCTOR(CIVisitor, CIVisitor, const CIResult *result);

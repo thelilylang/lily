@@ -71,6 +71,37 @@ replace_union_from_id__CIResultFile(const CIResultFile *self,
                                     const CIUnionID *union_id,
                                     CIDecl *new_union_decl);
 
+/**
+ *
+ * @brief Search generalizable declaration from the given name, if
+ * gen_decl_generic_params is NULL otherwise, it serializes the given
+ * name and searches declaration with this serialized name.
+ * @param gen_decl_generic_params CIGenericParams*? (&)
+ * @param called_generic_params CIGenericParams*? (&)
+ * @param decl_generic_params CIGenericParams*? (&)
+ * @return CIDecl*? (&)
+ *
+ * @example of use:
+ *
+ * @T get.[@T](@T x) {
+ *   return x;
+ * }
+ *
+ * @T get2.[@T](@T x) {
+ *   return get.[@T](x);
+ * //       ^^^^^^^^^^^ need to search this declaration with this function:
+ * //                   `search_decl_in_generic_context__CIParser`.
+ * }
+ */
+static CIDecl *
+search_decl_in_generic_context__CIResultFile(
+  const CIResultFile *self,
+  const String *name,
+  CIGenericParams *gen_decl_generic_params,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params,
+  CIDecl *(*search_decl)(const CIResultFile *self, const String *name));
+
 /// @param path char* (&)
 static void
 add_and_run_lib_file__CIResult(const CIResult *self,
@@ -981,6 +1012,115 @@ search_identifier__CIResultFile(const CIResultFile *self,
     return NULL;
 }
 
+CIDecl *
+search_decl_in_generic_context__CIResultFile(
+  const CIResultFile *self,
+  const String *name,
+  CIGenericParams *gen_decl_generic_params,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params,
+  CIDecl *(*search_decl)(const CIResultFile *self, const String *name))
+{
+    CIDecl *base_decl = search_decl(self, name);
+
+    if (!base_decl) {
+        FAILED("declaration is not found");
+    }
+
+    if (gen_decl_generic_params &&
+        ((called_generic_params && decl_generic_params) ||
+         !has_generic__CIGenericParams(gen_decl_generic_params))) {
+        CIGenericParams *substituted_generic_params =
+          substitute_generic_params__CIParser(gen_decl_generic_params,
+                                              decl_generic_params,
+                                              called_generic_params);
+
+        ASSERT(substituted_generic_params);
+
+        String *serialized_name =
+          serialize_name__CIGenericParams(substituted_generic_params, name);
+        CIDecl *decl = search_decl(self, serialized_name);
+
+        ASSERT(decl);
+        ASSERT(decl->kind & CI_DECL_KIND_GEN);
+
+        FREE(String, serialized_name);
+        FREE(CIGenericParams, substituted_generic_params);
+
+        return decl;
+    }
+
+    return base_decl;
+}
+
+CIDecl *
+search_function_in_generic_context__CIResultFile(
+  const CIResultFile *self,
+  const String *name,
+  CIGenericParams *function_generic_params,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params)
+{
+    return search_decl_in_generic_context__CIResultFile(
+      self,
+      name,
+      function_generic_params,
+      called_generic_params,
+      decl_generic_params,
+      &search_function__CIResultFile);
+}
+
+CIDecl *
+search_struct_in_generic_context__CIResultFile(
+  const CIResultFile *self,
+  const String *name,
+  CIGenericParams *struct_generic_params,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params)
+{
+    return search_decl_in_generic_context__CIResultFile(
+      self,
+      name,
+      struct_generic_params,
+      called_generic_params,
+      decl_generic_params,
+      &search_struct__CIResultFile);
+}
+
+CIDecl *
+search_typedef_in_generic_context__CIResultFile(
+  const CIResultFile *self,
+  const String *name,
+  CIGenericParams *typedef_generic_params,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params)
+{
+    return search_decl_in_generic_context__CIResultFile(
+      self,
+      name,
+      typedef_generic_params,
+      called_generic_params,
+      decl_generic_params,
+      &search_typedef__CIResultFile);
+}
+
+CIDecl *
+search_union_in_generic_context__CIResultFile(
+  const CIResultFile *self,
+  const String *name,
+  CIGenericParams *union_generic_params,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params)
+{
+    return search_decl_in_generic_context__CIResultFile(
+      self,
+      name,
+      union_generic_params,
+      called_generic_params,
+      decl_generic_params,
+      &search_union__CIResultFile);
+}
+
 void
 run__CIResultFile(CIResultFile *self)
 {
@@ -1525,6 +1665,26 @@ build__CIResult(CIResult *self)
 
     for (Usize i = 0; i < self->config->bins->len; ++i) {
         add_and_run_bin__CIResult(self, get__Vec(self->config->bins, i));
+    }
+}
+
+void
+pass_through_result__CIResult(const CIResult *self,
+                              void (*run)(const CIResultFile *file,
+                                          void *other_args),
+                              void *other_args)
+{
+    OrderedHashMapIter iter_libs = NEW(OrderedHashMapIter, self->libs);
+    OrderedHashMapIter iter_bins = NEW(OrderedHashMapIter, self->bins);
+    CIResultLib *current_lib = NULL;
+    CIResultBin *current_bin = NULL;
+
+    while ((current_lib = next__OrderedHashMapIter(&iter_libs))) {
+        run(current_lib->file, other_args);
+    }
+
+    while ((current_bin = next__OrderedHashMapIter(&iter_bins))) {
+        run(current_bin->file, other_args);
     }
 }
 
