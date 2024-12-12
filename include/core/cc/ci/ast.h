@@ -2700,6 +2700,13 @@ is_prototype__CIDecl(CIDecl *self)
 
 /**
  *
+ * @brief Set body to a function.
+ */
+void
+set_function_body__CIDecl(CIDecl *self, CIDeclFunctionBody *body);
+
+/**
+ *
  * @brief Convert CIDecl in String.
  * @note This function is only used to debug.
  */

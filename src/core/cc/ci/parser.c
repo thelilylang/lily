@@ -132,6 +132,13 @@ parse_data_type_contexts__CIParser(CIParser *self);
 static CIDataType *
 parse_post_data_type__CIParser(CIParser *self, CIDataType *data_type);
 
+static inline const CIDecl *
+add_decl_to_scope__CIParser(const CIParser *self,
+                            CIDecl **decl_ref,
+                            const CIScope *scope,
+                            bool must_free,
+                            bool in_function_body);
+
 /// @brief Parse variable name (name + data type).
 /// @param name_ref Rc<String*>* (&)* (&)
 ///
@@ -1295,6 +1302,17 @@ exit:
     return data_type;
 }
 
+const CIDecl *
+add_decl_to_scope__CIParser(const CIParser *self,
+                            CIDecl **decl_ref,
+                            const CIScope *scope,
+                            bool must_free,
+                            bool in_function_body)
+{
+    return add_decl_to_scope__CIResultFile(
+      self->file, decl_ref, scope, must_free, in_function_body);
+}
+
 void
 parse_variable_name_and_data_type__CIParser(CIParser *self,
                                             CIDataType **data_type_ref,
@@ -1801,11 +1819,11 @@ parse_pre_data_type__CIParser(CIParser *self)
                     CIDecl *enum_decl =
                       parse_enum__CIParser(self, CI_STORAGE_CLASS_NONE, name);
 
-                    if (add_decl_to_scope__CIResultFile(self->file,
-                                                        &enum_decl,
-                                                        current_scope,
-                                                        true,
-                                                        in_function_body)) {
+                    if (add_decl_to_scope__CIParser(self,
+                                                    &enum_decl,
+                                                    current_scope,
+                                                    true,
+                                                    in_function_body)) {
                         break;
                     }
 
@@ -1881,11 +1899,11 @@ parse_pre_data_type__CIParser(CIParser *self)
                       generic_params ? ref__CIGenericParams(generic_params)
                                      : NULL);
 
-                    if (add_decl_to_scope__CIResultFile(self->file,
-                                                        &struct_decl,
-                                                        current_scope,
-                                                        true,
-                                                        in_function_body)) {
+                    if (add_decl_to_scope__CIParser(self,
+                                                    &struct_decl,
+                                                    current_scope,
+                                                    true,
+                                                    in_function_body)) {
                         break;
                     }
 
@@ -1906,11 +1924,11 @@ parse_pre_data_type__CIParser(CIParser *self)
                       generic_params ? ref__CIGenericParams(generic_params)
                                      : NULL);
 
-                    if (add_decl_to_scope__CIResultFile(self->file,
-                                                        &union_decl,
-                                                        current_scope,
-                                                        true,
-                                                        in_function_body)) {
+                    if (add_decl_to_scope__CIParser(self,
+                                                    &union_decl,
+                                                    current_scope,
+                                                    true,
+                                                    in_function_body)) {
                         break;
                     }
 
@@ -2056,8 +2074,8 @@ parse_enum_variants__CIParser(CIParser *self)
             CIDecl *variant_decl =
               NEW_VARIANT(CIDecl, enum_variant, CI_STORAGE_CLASS_NONE, variant);
 
-            add_decl_to_scope__CIResultFile(
-              self->file, &variant_decl, current_scope, true, false);
+            add_decl_to_scope__CIParser(
+              self, &variant_decl, current_scope, true, false);
         }
 
         if (self->current_token->kind != CI_TOKEN_KIND_RBRACE) {
@@ -3661,13 +3679,7 @@ parse_function__CIParser(CIParser *self,
       add_scope__CIResultFile(self->file, current_scope->scope_id, true);
     Vec *params = parse_function_params__CIParser(
       self, parent_function_scope); // Vec<CIDeclFunctionParam*>*?
-    CIDecl *res = NULL;
-
-    switch (self->current_token->kind) {
-        case CI_TOKEN_KIND_SEMICOLON:
-            next_token__CIParser(self);
-
-            res = NEW_VARIANT(CIDecl,
+    CIDecl *res = NEW_VARIANT(CIDecl,
                               function,
                               storage_class_flag,
                               true,
@@ -3679,9 +3691,16 @@ parse_function__CIParser(CIParser *self,
                                   NULL,
                                   attributes));
 
+    switch (self->current_token->kind) {
+        case CI_TOKEN_KIND_SEMICOLON:
+            next_token__CIParser(self);
+
             if (HAS_TYPEDEF_STORAGE_CLASS_FLAG()) {
                 return parse_typedef__CIParser(self, res, generic_params);
             }
+
+            add_decl_to_scope__CIParser(
+              self, &res, current_scope, true, in_function_body);
 
             break;
         case CI_TOKEN_KIND_LBRACE:
@@ -3691,6 +3710,9 @@ parse_function__CIParser(CIParser *self,
                 FAILED("cannot redefine a builtin function");
             }
 
+            add_decl_to_scope__CIParser(
+              self, &res, current_scope, true, in_function_body);
+
             next_token__CIParser(self);
 
             SET_IN_FUNCTION_BODY();
@@ -3698,19 +3720,13 @@ parse_function__CIParser(CIParser *self,
             CIDeclFunctionBody *body = parse_function_body__CIParser(
               self, false, false, &parent_function_scope);
 
-            UNSET_IN_FUNCTION_BODY();
+            if (res) {
+                set_function_body__CIDecl(res, body);
+            } else {
+                FREE(CIDeclFunctionBody, body);
+            }
 
-            res = NEW_VARIANT(CIDecl,
-                              function,
-                              storage_class_flag,
-                              false,
-                              NEW(CIDeclFunction,
-                                  name,
-                                  return_data_type,
-                                  generic_params,
-                                  params,
-                                  body,
-                                  attributes));
+            UNSET_IN_FUNCTION_BODY();
 
             break;
         default:
@@ -4036,17 +4052,11 @@ parse_variable_list__CIParser(CIParser *self,
                 // "parse_typedef__CIParser"
                 current_var = NULL;
 
-                add_decl_to_scope__CIResultFile(self->file,
-                                                &typedef_decl,
-                                                current_scope,
-                                                true,
-                                                in_function_body);
+                add_decl_to_scope__CIParser(
+                  self, &typedef_decl, current_scope, true, in_function_body);
             } else {
-                add_decl_to_scope__CIResultFile(self->file,
-                                                &current_var,
-                                                current_scope,
-                                                true,
-                                                in_function_body);
+                add_decl_to_scope__CIParser(
+                  self, &current_var, current_scope, true, in_function_body);
 
                 // Push to the current body of the function the current
                 // variable.
@@ -4184,14 +4194,12 @@ parse_decl__CIParser(CIParser *self)
 
                     break;
                 case CI_TOKEN_KIND_LPAREN:
-                    res = parse_function__CIParser(self,
-                                                   storage_class_flag,
-                                                   data_type,
-                                                   name,
-                                                   generic_params,
-                                                   attributes);
-
-                    goto exit;
+                    return parse_function__CIParser(self,
+                                                    storage_class_flag,
+                                                    data_type,
+                                                    name,
+                                                    generic_params,
+                                                    attributes);
                 default:
                     if (!in_function_body) {
                         FAILED("expected `=`, `;`, `(`");
@@ -4217,8 +4225,8 @@ parse_decl__CIParser(CIParser *self)
 
 exit:
     if (res) {
-        add_decl_to_scope__CIResultFile(
-          self->file, &res, current_scope, true, in_function_body);
+        add_decl_to_scope__CIParser(
+          self, &res, current_scope, true, in_function_body);
     }
 
     return res;
