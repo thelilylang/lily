@@ -3607,7 +3607,7 @@ set_function_body__CIDecl(CIDecl *self, CIDeclFunctionBody *body)
 {
     ASSERT(self->kind == CI_DECL_KIND_FUNCTION);
 
-    self->is_prototype = true;
+    self->is_prototype = false;
     self->function.body = body;
 }
 
