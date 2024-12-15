@@ -31,6 +31,12 @@ static void
 start_session__CIGeneratorContent(CIGeneratorContent *self,
                                   CIScope *current_scope);
 
+static void
+end_session__CIGeneratorContent(CIGeneratorContent *self);
+
+static void
+end_session_by_cascade__CIGeneratorContent(CIGeneratorContent *self);
+
 /// @param parent_scope CIScope* (&)* (&)
 static void
 set_new_scope__CIGeneratorContent(CIGeneratorContent *self,
@@ -41,6 +47,12 @@ set_new_scope__CIGeneratorContent(CIGeneratorContent *self,
 static void
 restore_scope__CIGeneratorContent(CIGeneratorContent *self, CIScope *scope);
 
+static inline void
+set_must_inherit__CIGeneratorContent(CIGeneratorContent *self);
+
+static inline void
+unset_must_inherit__CIGeneratorContent(CIGeneratorContent *self);
+
 static void
 set_current_generic_params__CIGeneratorContent(
   CIGeneratorContent *self,
@@ -49,9 +61,6 @@ set_current_generic_params__CIGeneratorContent(
 
 static void
 reset_current_generic_params__CIGeneratorContent(CIGeneratorContent *self);
-
-static void
-end_session__CIGeneratorContent(CIGeneratorContent *self);
 
 static inline void
 write__CIGeneratorContent(CIGeneratorContent *self, char c);
@@ -80,12 +89,30 @@ static inline void
 unset_write_semicolon__CIGeneratorContent(CIGeneratorContent *self);
 
 static inline void
+start_session_with_default_scope__CIGenerator(CIGenerator *self);
+
+static inline void
+end_session__CIGenerator(CIGenerator *self);
+
+static inline void
+end_session_by_cascade__CIGenerator(CIGenerator *self);
+
+static void
+end_session_by_decl__CIGenerator(CIGenerator *self, const CIDecl *decl);
+
+static inline void
 set_new_scope__CIGenerator(CIGenerator *self,
                            CIScope **parent_scope,
                            CIScopeID *new_scope_id);
 
 static inline void
 restore_scope__CIGenerator(CIGenerator *self, CIScope *scope);
+
+static inline void
+set_must_inherit__CIGenerator(CIGenerator *self);
+
+static inline void
+unset_must_inherit__CIGenerator(CIGenerator *self);
 
 static inline void
 set_current_generic_params__CIGenerator(CIGenerator *self,
@@ -384,11 +411,12 @@ CONSTRUCTOR(CIGeneratorContentSession *,
       lily_malloc(sizeof(CIGeneratorContentSession));
 
     self->buffer = NEW(String);
-    self->tab_count = 0;
-    self->current_generic_params = NULL;
-    self->current_called_generic_params = NULL;
-    self->write_semicolon = true;
-    self->current_scope = current_scope;
+    self->must_inherit = false;
+    self->inherit_props.current_generic_params = NULL;
+    self->inherit_props.current_called_generic_params = NULL;
+    self->inherit_props.tab_count = 0;
+    self->inherit_props.write_semicolon = true;
+    self->inherit_props.current_scope = current_scope;
 
     return self;
 }
@@ -403,52 +431,16 @@ void
 start_session__CIGeneratorContent(CIGeneratorContent *self,
                                   CIScope *current_scope)
 {
-    self->last_session = NEW(CIGeneratorContentSession, current_scope);
+    CIGeneratorContentSession *new_session =
+      NEW(CIGeneratorContentSession, current_scope);
+
+    if (self->last_session && self->last_session->must_inherit) {
+        new_session->inherit_props = self->last_session->inherit_props;
+    }
+
+    self->last_session = new_session;
 
     push__Vec(self->sessions, self->last_session);
-}
-
-void
-set_new_scope__CIGeneratorContent(CIGeneratorContent *self,
-                                  CIScope **parent_scope,
-                                  CIScopeID *new_scope_id,
-                                  const CIResultFile *file)
-{
-    ASSERT(self->last_session);
-
-    *parent_scope = self->last_session->current_scope;
-
-    self->last_session->current_scope =
-      get_scope_from_id__CIResultFile(file, new_scope_id);
-}
-
-void
-restore_scope__CIGeneratorContent(CIGeneratorContent *self, CIScope *scope)
-{
-    ASSERT(self->last_session);
-
-    self->last_session->current_scope = scope;
-}
-
-void
-set_current_generic_params__CIGeneratorContent(
-  CIGeneratorContent *self,
-  CIGenericParams *generic_params,
-  CIGenericParams *called_generic_params)
-{
-    ASSERT(self->last_session);
-
-    self->last_session->current_generic_params = generic_params;
-    self->last_session->current_called_generic_params = called_generic_params;
-}
-
-void
-reset_current_generic_params__CIGeneratorContent(CIGeneratorContent *self)
-{
-    ASSERT(self->last_session);
-
-    self->last_session->current_generic_params = NULL;
-    self->last_session->current_called_generic_params = NULL;
 }
 
 void
@@ -464,6 +456,116 @@ end_session__CIGeneratorContent(CIGeneratorContent *self)
 }
 
 void
+end_session_by_cascade__CIGeneratorContent(CIGeneratorContent *self)
+{
+    ASSERT(self->last_session);
+
+    CIGeneratorContentSession *next_session =
+      self->sessions->len > 1
+        ? safe_get__Vec(self->sessions, self->sessions->len - 2)
+        : NULL;
+
+    append__String(next_session ? next_session->buffer : self->final,
+                   self->last_session->buffer);
+
+    FREE(CIGeneratorContentSession, pop__Vec(self->sessions));
+
+    self->last_session = next_session;
+}
+
+void
+set_new_scope__CIGeneratorContent(CIGeneratorContent *self,
+                                  CIScope **parent_scope,
+                                  CIScopeID *new_scope_id,
+                                  const CIResultFile *file)
+{
+    ASSERT(self->last_session);
+
+    *parent_scope = self->last_session->inherit_props.current_scope;
+
+    self->last_session->inherit_props.current_scope =
+      get_scope_from_id__CIResultFile(file, new_scope_id);
+}
+
+void
+restore_scope__CIGeneratorContent(CIGeneratorContent *self, CIScope *scope)
+{
+    ASSERT(self->last_session);
+
+    self->last_session->inherit_props.current_scope = scope;
+}
+
+void
+set_must_inherit__CIGeneratorContent(CIGeneratorContent *self)
+{
+    ASSERT(self->last_session);
+
+    self->last_session->must_inherit = true;
+}
+
+void
+unset_must_inherit__CIGeneratorContent(CIGeneratorContent *self)
+{
+    ASSERT(self->last_session);
+
+    self->last_session->must_inherit = false;
+}
+
+void
+set_current_generic_params__CIGeneratorContent(
+  CIGeneratorContent *self,
+  CIGenericParams *generic_params,
+  CIGenericParams *called_generic_params)
+{
+    ASSERT(self->last_session);
+
+    self->last_session->inherit_props.current_generic_params = generic_params;
+    self->last_session->inherit_props.current_called_generic_params =
+      called_generic_params;
+}
+
+void
+reset_current_generic_params__CIGeneratorContent(CIGeneratorContent *self)
+{
+    ASSERT(self->last_session);
+
+    self->last_session->inherit_props.current_generic_params = NULL;
+    self->last_session->inherit_props.current_called_generic_params = NULL;
+}
+
+void
+start_session_with_default_scope__CIGenerator(CIGenerator *self)
+{
+    start_session__CIGeneratorContent(
+      &self->content,
+      self->content.last_session
+        ? self->content.last_session->inherit_props.current_scope
+        : self->file->scope_base);
+}
+
+void
+end_session__CIGenerator(CIGenerator *self)
+{
+    end_session__CIGeneratorContent(&self->content);
+}
+
+void
+end_session_by_cascade__CIGenerator(CIGenerator *self)
+{
+    end_session_by_cascade__CIGeneratorContent(&self->content);
+}
+
+void
+end_session_by_decl__CIGenerator(CIGenerator *self, const CIDecl *decl)
+{
+    if (is_local__CIDecl(decl)) {
+        end_session_by_cascade__CIGenerator(self);
+    } else {
+        end_session__CIGenerator(self);
+    }
+}
+
+void
 set_new_scope__CIGenerator(CIGenerator *self,
                            CIScope **parent_scope,
                            CIScopeID *new_scope_id)
@@ -476,6 +578,18 @@ void
 restore_scope__CIGenerator(CIGenerator *self, CIScope *scope)
 {
     return restore_scope__CIGeneratorContent(&self->content, scope);
+}
+
+void
+set_must_inherit__CIGenerator(CIGenerator *self)
+{
+    set_must_inherit__CIGeneratorContent(&self->content);
+}
+
+void
+unset_must_inherit__CIGenerator(CIGenerator *self)
+{
+    unset_must_inherit__CIGeneratorContent(&self->content);
 }
 
 void
@@ -506,7 +620,7 @@ write_tab__CIGeneratorContent(CIGeneratorContent *self)
     ASSERT(self->last_session);
 
     write_String__CIGeneratorContent(
-      self, repeat__String("\t", self->last_session->tab_count));
+      self, repeat__String("\t", self->last_session->inherit_props.tab_count));
 }
 
 void
@@ -514,7 +628,7 @@ inc_tab_count__CIGeneratorContent(CIGeneratorContent *self)
 {
     ASSERT(self->last_session);
 
-    ++self->last_session->tab_count;
+    ++self->last_session->inherit_props.tab_count;
 }
 
 void
@@ -522,7 +636,7 @@ dec_tab_count__CIGeneratorContent(CIGeneratorContent *self)
 {
     ASSERT(self->last_session);
 
-    --self->last_session->tab_count;
+    --self->last_session->inherit_props.tab_count;
 }
 
 void
@@ -530,7 +644,7 @@ set_write_semicolon__CIGeneratorContent(CIGeneratorContent *self)
 {
     ASSERT(self->last_session);
 
-    self->last_session->write_semicolon = true;
+    self->last_session->inherit_props.write_semicolon = true;
 }
 
 void
@@ -538,7 +652,7 @@ unset_write_semicolon__CIGeneratorContent(CIGeneratorContent *self)
 {
     ASSERT(self->last_session);
 
-    self->last_session->write_semicolon = false;
+    self->last_session->inherit_props.write_semicolon = false;
 }
 
 DESTRUCTOR(CIGeneratorContent, const CIGeneratorContent *self)
@@ -622,14 +736,17 @@ substitute_and_serialize_generic_params__CIGenerator(
     ASSERT(name);
 
     if (has_generic__CIGenericParams(unresolved_generic_params)) {
-        ASSERT(self->content.last_session->current_generic_params);
-        ASSERT(self->content.last_session->current_called_generic_params);
+        ASSERT(
+          self->content.last_session->inherit_props.current_generic_params);
+        ASSERT(self->content.last_session->inherit_props
+                 .current_called_generic_params);
 
         CIGenericParams *resolved_generic_params =
           substitute_generic_params__CIParser(
             unresolved_generic_params,
-            self->content.last_session->current_generic_params,
-            self->content.last_session->current_called_generic_params);
+            self->content.last_session->inherit_props.current_generic_params,
+            self->content.last_session->inherit_props
+              .current_called_generic_params);
 
         ASSERT(resolved_generic_params);
 
@@ -657,8 +774,8 @@ substitute_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type)
 {
     return substitute_data_type__CIParser(
       data_type,
-      self->content.last_session->current_generic_params,
-      self->content.last_session->current_called_generic_params);
+      self->content.last_session->inherit_props.current_generic_params,
+      self->content.last_session->inherit_props.current_called_generic_params);
 }
 
 void
@@ -666,8 +783,9 @@ generate_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type)
 {
     CIDataType *subs_data_type = NULL;
 
-    if (self->content.last_session->current_generic_params &&
-        self->content.last_session->current_called_generic_params) {
+    if (self->content.last_session->inherit_props.current_generic_params &&
+        self->content.last_session->inherit_props
+          .current_called_generic_params) {
         subs_data_type = substitute_data_type__CIGenerator(self, data_type);
     } else {
         subs_data_type = ref__CIDataType(data_type);
@@ -1063,7 +1181,9 @@ Usize
 get_decl_id_from_decl__CIGenerator(CIGenerator *self, const CIDecl *decl)
 {
     return get_decl_id_from_decl__CIScope(
-      self->content.last_session->current_scope, self->file, decl);
+      self->content.last_session->inherit_props.current_scope,
+      self->file,
+      decl);
 }
 
 void
@@ -1887,13 +2007,15 @@ generate_function_body_item__CIGenerator(CIGenerator *self,
 {
     switch (item->kind) {
         case CI_DECL_FUNCTION_ITEM_KIND_DECL:
+            set_must_inherit__CIGenerator(self);
             generate_decl__CIGenerator(self, item->decl);
+            unset_must_inherit__CIGenerator(self);
 
             break;
         case CI_DECL_FUNCTION_ITEM_KIND_EXPR:
             generate_function_expr__CIGenerator(self, item->expr);
 
-            if (self->content.last_session->write_semicolon) {
+            if (self->content.last_session->inherit_props.write_semicolon) {
                 write_str__CIGenerator(self, ";\n");
             }
 
@@ -2159,7 +2281,7 @@ generate_variable_decl__CIGenerator(CIGenerator *self,
         generate_function_expr__CIGenerator(self, variable->expr);
     }
 
-    if (self->content.last_session->write_semicolon) {
+    if (self->content.last_session->inherit_props.write_semicolon) {
         write_str__CIGenerator(self, ";\n");
     }
 }
@@ -2168,16 +2290,18 @@ void
 generate_decl__CIGenerator(CIGenerator *self, const CIDecl *decl)
 {
     if (!has_generic__CIDecl(decl)) {
+        start_session_with_default_scope__CIGenerator(self);
+
         Usize decl_id = get_decl_id_from_decl__CIGenerator(self, decl);
 
         if (has__VecBit(self->generated_decls, decl_id)) {
-            return;
+            goto end_session;
         }
 
         add__VecBit(self->generated_decls, decl_id);
 
         if (is_prototype__CIDecl((CIDecl *)decl)) {
-            return;
+            goto end_session;
         }
 
         switch (decl->kind) {
@@ -2187,15 +2311,20 @@ generate_decl__CIGenerator(CIGenerator *self, const CIDecl *decl)
                 break;
             case CI_DECL_KIND_ENUM_VARIANT:
                 // NOTE: We don't want to generate enum variant here.
-                return;
+                goto end_session;
             case CI_DECL_KIND_FUNCTION:
-                return generate_function_decl__CIGenerator(self,
-                                                           &decl->function);
+                generate_function_decl__CIGenerator(self, &decl->function);
+
+                goto end_session;
             case CI_DECL_KIND_FUNCTION_GEN:
-                return generate_function_gen_decl__CIGenerator(
-                  self, &decl->function_gen);
+                generate_function_gen_decl__CIGenerator(self,
+                                                        &decl->function_gen);
+
+                goto end_session;
             case CI_DECL_KIND_LABEL:
-                return generate_label_decl__CIGenerator(self, &decl->label);
+                generate_label_decl__CIGenerator(self, &decl->label);
+
+                goto end_session;
             case CI_DECL_KIND_STRUCT:
                 generate_struct_decl__CIGenerator(self, &decl->struct_);
 
@@ -2207,7 +2336,7 @@ generate_decl__CIGenerator(CIGenerator *self, const CIDecl *decl)
             case CI_DECL_KIND_TYPEDEF:
             case CI_DECL_KIND_TYPEDEF_GEN:
                 // NOTE: We don't want to generate typedef here.
-                return;
+                goto end_session;
             case CI_DECL_KIND_UNION:
                 generate_union_decl__CIGenerator(self, &decl->union_);
 
@@ -2219,14 +2348,17 @@ generate_decl__CIGenerator(CIGenerator *self, const CIDecl *decl)
             case CI_DECL_KIND_VARIABLE:
                 generate_storage_class__CIGenerator(self,
                                                     &decl->storage_class_flag);
+                generate_variable_decl__CIGenerator(self, &decl->variable);
 
-                return generate_variable_decl__CIGenerator(self,
-                                                           &decl->variable);
+                goto end_session;
             default:
                 UNREACHABLE("unknown variant");
         }
 
         write_str__CIGenerator(self, ";\n");
+
+    end_session:
+        end_session_by_decl__CIGenerator(self, decl);
     }
 }
 
@@ -2234,6 +2366,7 @@ void
 generate_decl_prototype__CIGenerator(CIGenerator *self, const CIDecl *decl)
 {
     if (!has_generic__CIDecl(decl) && can_have_prototype__CIDecl(decl)) {
+        start_session_with_default_scope__CIGenerator(self);
         generate_attributes_by_decl__CIGenerator(self, decl);
         generate_storage_class__CIGenerator(self, &decl->storage_class_flag);
 
@@ -2287,6 +2420,7 @@ generate_decl_prototype__CIGenerator(CIGenerator *self, const CIDecl *decl)
         }
 
         write_str__CIGenerator(self, ";\n");
+        end_session_by_decl__CIGenerator(self, decl);
     }
 }
 
@@ -2333,10 +2467,8 @@ run_file__CIGenerator(CIGenerator *self)
     String *path_result =
       format__String("{S}/{S}", dir_result, self->file->entity.filename_result);
 
-    start_session__CIGeneratorContent(&self->content, self->file->scope_base);
     generate_global_decls_prototype__CIGenerator(self);
     generate_global_decls__CIGenerator(self);
-    end_session__CIGeneratorContent(&self->content);
 
     create_recursive_dir__Dir(dir_result->buffer,
                               DIR_MODE_RWXU | DIR_MODE_RWXG | DIR_MODE_RWXO);

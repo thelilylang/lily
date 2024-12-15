@@ -32,11 +32,15 @@
 typedef struct CIGeneratorContentSession
 {
     String *buffer;
-    Usize tab_count;
-    CIGenericParams *current_generic_params;        // CIGenericParams*? (&)
-    CIGenericParams *current_called_generic_params; // CIGenericParams*? (&)
-    bool write_semicolon;
-    CIScope *current_scope; // CIScope* (&)
+    bool must_inherit;
+    struct
+    {
+        CIGenericParams *current_generic_params;        // CIGenericParams*? (&)
+        CIGenericParams *current_called_generic_params; // CIGenericParams*? (&)
+        Usize tab_count;
+        bool write_semicolon;
+        CIScope *current_scope; // CIScope* (&)
+    } inherit_props;
 } CIGeneratorContentSession;
 
 /**
