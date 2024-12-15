@@ -1574,6 +1574,7 @@ typedef struct CIDeclEnumVariant
 {
     Rc *name; // Rc<String*>*
     Isize value;
+    Usize ref_count;
 } CIDeclEnumVariant;
 
 /**
@@ -1605,6 +1606,18 @@ clone_variants__CIDeclEnumVariant(Vec *variants);
  */
 bool
 eq__CIDeclEnumVariant(const Vec *self_variants, const Vec *other_variants);
+
+/**
+ *
+ * @brief Increment `ref_count`.
+ * @return CIDeclEnumVariant*
+ */
+inline CIDeclEnumVariant *
+ref__CIDeclEnumVariant(CIDeclEnumVariant *self)
+{
+    ++self->ref_count;
+    return self;
+}
 
 /**
  *
@@ -2471,7 +2484,7 @@ typedef struct CIDecl
     union
     {
         CIDeclEnum enum_;
-        CIDeclEnumVariant *enum_variant; // CIDeclEnumVariant* (&)
+        CIDeclEnumVariant *enum_variant;
         CIDeclFunction function;
         CIDeclFunctionGen function_gen;
         CIDeclLabel label;

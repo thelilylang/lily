@@ -2071,8 +2071,10 @@ parse_enum_variants__CIParser(CIParser *self)
         }
 
         {
-            CIDecl *variant_decl =
-              NEW_VARIANT(CIDecl, enum_variant, CI_STORAGE_CLASS_NONE, variant);
+            CIDecl *variant_decl = NEW_VARIANT(CIDecl,
+                                               enum_variant,
+                                               CI_STORAGE_CLASS_NONE,
+                                               ref__CIDeclEnumVariant(variant));
 
             add_decl_to_scope__CIParser(
               self, &variant_decl, current_scope, true, false);

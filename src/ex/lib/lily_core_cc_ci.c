@@ -241,6 +241,9 @@ extern inline CONSTRUCTOR(CIDeclEnum,
 extern inline bool
 is_variable__CIDeclFunctionItem(const CIDeclFunctionItem *self);
 
+extern inline CIDeclEnumVariant *
+ref__CIDeclEnumVariant(CIDeclEnumVariant *self);
+
 extern inline void
 add__CIDeclFunctionBody(CIDeclFunctionBody *self, CIDeclFunctionItem *item);
 

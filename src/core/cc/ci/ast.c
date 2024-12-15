@@ -120,7 +120,7 @@ get_size_info__CIDecl(const CIDecl *self);
 static VARIANT_DESTRUCTOR(CIDecl, enum, CIDecl *self);
 
 /// @brief Free CIDecl type (CI_DECL_KIND_ENUM_VARIANT).
-static inline VARIANT_DESTRUCTOR(CIDecl, enum_variant, CIDecl *self);
+static VARIANT_DESTRUCTOR(CIDecl, enum_variant, CIDecl *self);
 
 /// @brief Free CIDecl type (CI_DECL_KIND_FUNCTION).
 static VARIANT_DESTRUCTOR(CIDecl, function, CIDecl *self);
@@ -2333,6 +2333,7 @@ CONSTRUCTOR(CIDeclEnumVariant *, CIDeclEnumVariant, Rc *name, Isize value)
 
     self->name = ref__Rc(name);
     self->value = value;
+    self->ref_count = 0;
 
     return self;
 }
@@ -2388,6 +2389,11 @@ IMPL_FOR_DEBUG(to_string, CIDeclEnumVariant, const CIDeclEnumVariant *self)
 
 DESTRUCTOR(CIDeclEnumVariant, CIDeclEnumVariant *self)
 {
+    if (self->ref_count > 0) {
+        --self->ref_count;
+        return;
+    }
+
     FREE_RC(String, self->name);
     lily_free(self);
 }
@@ -3892,6 +3898,7 @@ VARIANT_DESTRUCTOR(CIDecl, enum, CIDecl *self)
 
 VARIANT_DESTRUCTOR(CIDecl, enum_variant, CIDecl *self)
 {
+    FREE(CIDeclEnumVariant, self->enum_variant);
     lily_free(self);
 }
 
