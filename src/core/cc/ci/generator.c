@@ -163,6 +163,33 @@ generate_data_type_qualifier__CIGenerator(CIGenerator *self,
 static CIDataType *
 substitute_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type);
 
+/// @param name const String*? (&)
+static void
+search_decl_and_generate_base__CIGenerator(
+  CIGenerator *self,
+  const String *name,
+  CIDecl *(*search)(const CIResultFile *self, const String *name));
+
+/// @param name const String*? (&)
+static inline void
+search_enum_decl_and_generate__CIGenerator(CIGenerator *self,
+                                           const String *name);
+
+/// @param name const String*? (&)
+static inline void
+search_struct_decl_and_generate__CIGenerator(CIGenerator *self,
+                                             const String *name);
+
+/// @param name const String*? (&)
+static inline void
+search_union_decl_and_generate__CIGenerator(CIGenerator *self,
+                                            const String *name);
+
+/// @param name const String*? (&)
+static inline void
+search_typedef_decl_and_generate__CIGenerator(CIGenerator *self,
+                                              const String *name);
+
 static void
 generate_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type);
 
@@ -779,6 +806,53 @@ substitute_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type)
 }
 
 void
+search_decl_and_generate_base__CIGenerator(
+  CIGenerator *self,
+  const String *name,
+  CIDecl *(*search)(const CIResultFile *self, const String *name))
+{
+    if (name) {
+        CIDecl *decl = search(self->file, name);
+
+        ASSERT(decl);
+
+        generate_decl__CIGenerator(self, decl);
+    }
+}
+
+void
+search_enum_decl_and_generate__CIGenerator(CIGenerator *self,
+                                           const String *name)
+{
+    search_decl_and_generate_base__CIGenerator(
+      self, name, &search_enum__CIResultFile);
+}
+
+void
+search_struct_decl_and_generate__CIGenerator(CIGenerator *self,
+                                             const String *name)
+{
+    search_decl_and_generate_base__CIGenerator(
+      self, name, &search_struct__CIResultFile);
+}
+
+void
+search_union_decl_and_generate__CIGenerator(CIGenerator *self,
+                                            const String *name)
+{
+    search_decl_and_generate_base__CIGenerator(
+      self, name, &search_union__CIResultFile);
+}
+
+void
+search_typedef_decl_and_generate__CIGenerator(CIGenerator *self,
+                                              const String *name)
+{
+    search_decl_and_generate_base__CIGenerator(
+      self, name, &search_typedef__CIResultFile);
+}
+
+void
 generate_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type)
 {
     CIDataType *subs_data_type = NULL;
@@ -873,15 +947,22 @@ generate_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type)
             write_str__CIGenerator(self, "_Decimal128");
 
             break;
-        case CI_DATA_TYPE_KIND_ENUM:
+        case CI_DATA_TYPE_KIND_ENUM: {
+            search_enum_decl_and_generate__CIGenerator(
+              self,
+              subs_data_type->enum_.name
+                ? GET_PTR_RC(String, subs_data_type->enum_.name)
+                : NULL);
             generate_enum__CIGenerator(
               self,
-              data_type->enum_.name ? GET_PTR_RC(String, data_type->enum_.name)
-                                    : NULL,
-              data_type->enum_.data_type,
-              data_type->enum_.variants);
+              subs_data_type->enum_.name
+                ? GET_PTR_RC(String, subs_data_type->enum_.name)
+                : NULL,
+              subs_data_type->enum_.data_type,
+              subs_data_type->enum_.variants);
 
             break;
+        }
         case CI_DATA_TYPE_KIND_FLOAT:
             write_str__CIGenerator(self, "float");
 
@@ -981,30 +1062,34 @@ generate_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type)
 
             break;
         case CI_DATA_TYPE_KIND_STRUCT: {
-#define GENERATE_STRUCT_OR_UNION_DT(dt_name)                              \
-    if (subs_data_type->dt_name##_.generic_params) {                      \
-        /* NOTE: Normally you can't declare a anonymous struct/union with \
-        generic parameters. This possibility is rejected in the           \
-        parser. */                                                        \
-        ASSERT(subs_data_type->dt_name##_.name);                          \
-                                                                          \
-        String *serialized_name =                                         \
-          substitute_and_serialize_generic_params__CIGenerator(           \
-            self,                                                         \
-            subs_data_type->dt_name##_.generic_params,                    \
-            GET_PTR_RC(String, subs_data_type->dt_name##_.name));         \
-                                                                          \
-        generate_##dt_name##__CIGenerator(                                \
-          self, serialized_name, subs_data_type->dt_name##_.fields);      \
-                                                                          \
-        FREE(String, serialized_name);                                    \
-    } else {                                                              \
-        generate_##dt_name##__CIGenerator(                                \
-          self,                                                           \
-          subs_data_type->dt_name##_.name                                 \
-            ? GET_PTR_RC(String, subs_data_type->dt_name##_.name)         \
-            : NULL,                                                       \
-          subs_data_type->dt_name##_.fields);                             \
+#define GENERATE_STRUCT_OR_UNION_DT(dt_name)                                  \
+    if (subs_data_type->dt_name##_.generic_params) {                          \
+        /* NOTE: Normally you can't declare a anonymous struct/union with     \
+        generic parameters. This possibility is rejected in the               \
+        parser. */                                                            \
+        ASSERT(subs_data_type->dt_name##_.name);                              \
+                                                                              \
+        String *serialized_name =                                             \
+          substitute_and_serialize_generic_params__CIGenerator(               \
+            self,                                                             \
+            subs_data_type->dt_name##_.generic_params,                        \
+            GET_PTR_RC(String, subs_data_type->dt_name##_.name));             \
+                                                                              \
+        search_##dt_name##_decl_and_generate__CIGenerator(self,               \
+                                                          serialized_name);   \
+        generate_##dt_name##__CIGenerator(                                    \
+          self, serialized_name, subs_data_type->dt_name##_.fields);          \
+                                                                              \
+        FREE(String, serialized_name);                                        \
+    } else {                                                                  \
+        String *struct_name =                                                 \
+          subs_data_type->dt_name##_.name                                     \
+            ? GET_PTR_RC(String, subs_data_type->dt_name##_.name)             \
+            : NULL;                                                           \
+                                                                              \
+        search_##dt_name##_decl_and_generate__CIGenerator(self, struct_name); \
+        generate_##dt_name##__CIGenerator(                                    \
+          self, struct_name, subs_data_type->dt_name##_.fields);              \
     }
 
             GENERATE_STRUCT_OR_UNION_DT(struct);
@@ -1019,11 +1104,16 @@ generate_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type)
                     subs_data_type->typedef_.generic_params,
                     GET_PTR_RC(String, subs_data_type->typedef_.name));
 
+                search_typedef_decl_and_generate__CIGenerator(self,
+                                                              serialized_name);
                 write_String__CIGenerator(self, serialized_name);
             } else {
-                write_str__CIGenerator(
-                  self,
-                  GET_PTR_RC(String, subs_data_type->typedef_.name)->buffer);
+                String *typedef_name =
+                  GET_PTR_RC(String, subs_data_type->typedef_.name);
+
+                search_typedef_decl_and_generate__CIGenerator(self,
+                                                              typedef_name);
+                write_str__CIGenerator(self, typedef_name->buffer);
             }
 
             break;
@@ -2334,9 +2424,14 @@ generate_decl__CIGenerator(CIGenerator *self, const CIDecl *decl)
 
                 break;
             case CI_DECL_KIND_TYPEDEF:
+                generate_typedef_decl__CIGenerator(self, &decl->typedef_);
+
+                break;
             case CI_DECL_KIND_TYPEDEF_GEN:
-                // NOTE: We don't want to generate typedef here.
-                goto end_session;
+                generate_typedef_gen_decl__CIGenerator(self,
+                                                       &decl->typedef_gen);
+
+                break;
             case CI_DECL_KIND_UNION:
                 generate_union_decl__CIGenerator(self, &decl->union_);
 
@@ -2398,14 +2493,9 @@ generate_decl_prototype__CIGenerator(CIGenerator *self, const CIDecl *decl)
 
                 break;
             case CI_DECL_KIND_TYPEDEF:
-                generate_typedef_decl__CIGenerator(self, &decl->typedef_);
-
-                break;
             case CI_DECL_KIND_TYPEDEF_GEN:
-                generate_typedef_gen_decl__CIGenerator(self,
-                                                       &decl->typedef_gen);
-
-                break;
+                // NOTE: We don't want to generate typedef here.
+                goto end_session;
             case CI_DECL_KIND_UNION:
                 generate_union_prototype__CIGenerator(self, &decl->union_);
 
@@ -2420,6 +2510,8 @@ generate_decl_prototype__CIGenerator(CIGenerator *self, const CIDecl *decl)
         }
 
         write_str__CIGenerator(self, ";\n");
+
+    end_session:
         end_session_by_decl__CIGenerator(self, decl);
     }
 }
