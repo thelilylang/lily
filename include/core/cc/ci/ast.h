@@ -2753,6 +2753,18 @@ set_function_body__CIDecl(CIDecl *self, CIDeclFunctionBody *body);
 
 /**
  *
+ * @brief Check if the declaration can have prototype.
+ */
+inline bool
+can_have_prototype__CIDecl(const CIDecl *self)
+{
+    return self->kind != CI_DECL_KIND_ENUM_VARIANT &&
+           self->kind != CI_DECL_KIND_LABEL &&
+           self->kind != CI_DECL_KIND_VARIABLE;
+}
+
+/**
+ *
  * @brief Convert CIDecl in String.
  * @note This function is only used to debug.
  */

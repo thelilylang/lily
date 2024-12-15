@@ -341,6 +341,9 @@ is_typedef__CIDecl(CIDecl *self);
 extern inline bool
 is_prototype__CIDecl(CIDecl *self);
 
+extern inline bool
+can_have_prototype__CIDecl(const CIDecl *self);
+
 extern inline CONSTRUCTOR(CIExprArray, CIExprArray, Vec *array);
 
 extern inline CONSTRUCTOR(CIExprArrayAccess,

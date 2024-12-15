@@ -362,7 +362,13 @@ static void
 generate_decl__CIGenerator(CIGenerator *self, const CIDecl *decl);
 
 static void
+generate_decl_prototype__CIGenerator(CIGenerator *self, const CIDecl *decl);
+
+static void
 generate_global_decls__CIGenerator(CIGenerator *self);
+
+static void
+generate_global_decls_prototype__CIGenerator(CIGenerator *self);
 
 static void
 run_file__CIGenerator(CIGenerator *self);
@@ -2170,17 +2176,12 @@ generate_decl__CIGenerator(CIGenerator *self, const CIDecl *decl)
 
         add__VecBit(self->generated_decls, decl_id);
 
-        generate_attributes_by_decl__CIGenerator(self, decl);
-        generate_storage_class__CIGenerator(self, &decl->storage_class_flag);
+        if (is_prototype__CIDecl((CIDecl *)decl)) {
+            return;
+        }
 
         switch (decl->kind) {
             case CI_DECL_KIND_ENUM:
-                if (decl->is_prototype) {
-                    generate_enum_prototype__CIGenerator(self, &decl->enum_);
-
-                    break;
-                }
-
                 generate_enum_decl__CIGenerator(self, &decl->enum_);
 
                 break;
@@ -2188,47 +2189,79 @@ generate_decl__CIGenerator(CIGenerator *self, const CIDecl *decl)
                 // NOTE: We don't want to generate enum variant here.
                 return;
             case CI_DECL_KIND_FUNCTION:
-                if (decl->is_prototype) {
-                    generate_function_prototype__CIGenerator(self,
-                                                             &decl->function);
-
-                    break;
-                }
-
                 return generate_function_decl__CIGenerator(self,
                                                            &decl->function);
             case CI_DECL_KIND_FUNCTION_GEN:
-                if (decl->is_prototype) {
-                    generate_function_gen_prototype__CIGenerator(
-                      self, &decl->function_gen);
-
-                    break;
-                }
-
                 return generate_function_gen_decl__CIGenerator(
                   self, &decl->function_gen);
             case CI_DECL_KIND_LABEL:
                 return generate_label_decl__CIGenerator(self, &decl->label);
             case CI_DECL_KIND_STRUCT:
-                if (decl->is_prototype) {
-                    generate_struct_prototype__CIGenerator(self,
-                                                           &decl->struct_);
-
-                    break;
-                }
-
                 generate_struct_decl__CIGenerator(self, &decl->struct_);
 
                 break;
             case CI_DECL_KIND_STRUCT_GEN:
-                if (decl->is_prototype) {
-                    generate_struct_gen_prototype__CIGenerator(
-                      self, &decl->struct_gen);
-
-                    break;
-                }
-
                 generate_struct_gen_decl__CIGenerator(self, &decl->struct_gen);
+
+                break;
+            case CI_DECL_KIND_TYPEDEF:
+            case CI_DECL_KIND_TYPEDEF_GEN:
+                // NOTE: We don't want to generate typedef here.
+                return;
+            case CI_DECL_KIND_UNION:
+                generate_union_decl__CIGenerator(self, &decl->union_);
+
+                break;
+            case CI_DECL_KIND_UNION_GEN:
+                generate_union_gen_decl__CIGenerator(self, &decl->union_gen);
+
+                break;
+            case CI_DECL_KIND_VARIABLE:
+                generate_storage_class__CIGenerator(self,
+                                                    &decl->storage_class_flag);
+
+                return generate_variable_decl__CIGenerator(self,
+                                                           &decl->variable);
+            default:
+                UNREACHABLE("unknown variant");
+        }
+
+        write_str__CIGenerator(self, ";\n");
+    }
+}
+
+void
+generate_decl_prototype__CIGenerator(CIGenerator *self, const CIDecl *decl)
+{
+    if (!has_generic__CIDecl(decl) && can_have_prototype__CIDecl(decl)) {
+        generate_attributes_by_decl__CIGenerator(self, decl);
+        generate_storage_class__CIGenerator(self, &decl->storage_class_flag);
+
+        switch (decl->kind) {
+            case CI_DECL_KIND_ENUM:
+                generate_enum_prototype__CIGenerator(self, &decl->enum_);
+
+                break;
+            case CI_DECL_KIND_ENUM_VARIANT:
+            case CI_DECL_KIND_LABEL:
+            case CI_DECL_KIND_VARIABLE:
+                UNREACHABLE("those declarations can't have prototype");
+            case CI_DECL_KIND_FUNCTION:
+                generate_function_prototype__CIGenerator(self, &decl->function);
+
+                break;
+            case CI_DECL_KIND_FUNCTION_GEN:
+                generate_function_gen_prototype__CIGenerator(
+                  self, &decl->function_gen);
+
+                break;
+            case CI_DECL_KIND_STRUCT:
+                generate_struct_prototype__CIGenerator(self, &decl->struct_);
+
+                break;
+            case CI_DECL_KIND_STRUCT_GEN:
+                generate_struct_gen_prototype__CIGenerator(self,
+                                                           &decl->struct_gen);
 
                 break;
             case CI_DECL_KIND_TYPEDEF:
@@ -2241,29 +2274,14 @@ generate_decl__CIGenerator(CIGenerator *self, const CIDecl *decl)
 
                 break;
             case CI_DECL_KIND_UNION:
-                if (decl->is_prototype) {
-                    generate_union_prototype__CIGenerator(self, &decl->union_);
-
-                    break;
-                }
-
-                generate_union_decl__CIGenerator(self, &decl->union_);
+                generate_union_prototype__CIGenerator(self, &decl->union_);
 
                 break;
             case CI_DECL_KIND_UNION_GEN:
-                if (decl->is_prototype) {
-                    generate_union_gen_prototype__CIGenerator(self,
-                                                              &decl->union_gen);
-
-                    break;
-                }
-
-                generate_union_gen_decl__CIGenerator(self, &decl->union_gen);
+                generate_union_gen_prototype__CIGenerator(self,
+                                                          &decl->union_gen);
 
                 break;
-            case CI_DECL_KIND_VARIABLE:
-                return generate_variable_decl__CIGenerator(self,
-                                                           &decl->variable);
             default:
                 UNREACHABLE("unknown variant");
         }
@@ -2276,9 +2294,9 @@ void
 generate_global_decls__CIGenerator(CIGenerator *self)
 {
     CIDecl *decl = NULL;
-    VecIter iter_decl = NEW(VecIter, self->file->entity.decls);
+    VecIter iter_decls = NEW(VecIter, self->file->entity.decls);
 
-    while ((decl = next__VecIter(&iter_decl))) {
+    while ((decl = next__VecIter(&iter_decls))) {
         switch (decl->kind) {
             case CI_DECL_KIND_VARIABLE:
                 // The expression `!decl->variable.is_local` is used to prevent
@@ -2295,6 +2313,17 @@ generate_global_decls__CIGenerator(CIGenerator *self)
 }
 
 void
+generate_global_decls_prototype__CIGenerator(CIGenerator *self)
+{
+    CIDecl *decl = NULL;
+    VecIter iter_decls = NEW(VecIter, self->file->entity.decls);
+
+    while ((decl = next__VecIter(&iter_decls))) {
+        generate_decl_prototype__CIGenerator(self, decl);
+    }
+}
+
+void
 run_file__CIGenerator(CIGenerator *self)
 {
     // TODO: Add a possibly to the user to "create its custom output director"
@@ -2305,6 +2334,7 @@ run_file__CIGenerator(CIGenerator *self)
       format__String("{S}/{S}", dir_result, self->file->entity.filename_result);
 
     start_session__CIGeneratorContent(&self->content, self->file->scope_base);
+    generate_global_decls_prototype__CIGenerator(self);
     generate_global_decls__CIGenerator(self);
     end_session__CIGeneratorContent(&self->content);
 
