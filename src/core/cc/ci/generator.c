@@ -2532,6 +2532,8 @@ generate_global_decls__CIGenerator(CIGenerator *self)
                 }
 
                 break;
+            case CI_DECL_KIND_LABEL:
+                break;
             default:
                 generate_decl__CIGenerator(self, decl);
         }

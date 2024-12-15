@@ -440,7 +440,9 @@ get_decl_id_from_decl__CIScope(const CIScope *self,
 {
     const String *name = get_name__CIDecl(decl);
 
-    for (; self; self = get_scope_from_id__CIResultFile(file, self->parent)) {
+    for (; self; self = self->parent
+                          ? get_scope_from_id__CIResultFile(file, self->parent)
+                          : NULL) {
         switch (decl->kind) {
             case CI_DECL_KIND_ENUM: {
                 const CIEnumID *enum_id = search_enum__CIScope(self, name);
