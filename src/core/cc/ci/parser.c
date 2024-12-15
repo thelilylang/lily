@@ -4196,12 +4196,18 @@ parse_decl__CIParser(CIParser *self)
 
                     break;
                 case CI_TOKEN_KIND_LPAREN:
-                    return parse_function__CIParser(self,
-                                                    storage_class_flag,
-                                                    data_type,
-                                                    name,
-                                                    generic_params,
-                                                    attributes);
+                    res = parse_function__CIParser(self,
+                                                   storage_class_flag,
+                                                   data_type,
+                                                   name,
+                                                   generic_params,
+                                                   attributes);
+
+                    if (res && res->kind == CI_DECL_KIND_FUNCTION) {
+                        return res;
+                    }
+
+                    goto exit;
                 default:
                     if (!in_function_body) {
                         FAILED("expected `=`, `;`, `(`");
