@@ -34,38 +34,38 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/// @param new_enum_decl CIDecl*
+/// @param new_enum_decl CIDecl* (&)
 static void
 replace_enum_from_id__CIResultFile(const CIResultFile *self,
                                    const CIEnumID *enum_id,
                                    CIDecl *new_enum_decl);
 
-/// @param new_enum_variant_decl CIDecl*
+/// @param new_enum_variant_decl CIDecl* (&)
 static void
 replace_enum_variant_from_id__CIResultFile(
   const CIResultFile *self,
   const CIEnumVariantID *enum_variant_id,
   CIDecl *new_enum_variant_decl);
 
-/// @param new_function_decl CIDecl*
+/// @param new_function_decl CIDecl* (&)
 static void
 replace_function_from_id__CIResultFile(const CIResultFile *self,
                                        const CIFunctionID *function_id,
                                        CIDecl *new_function_decl);
 
-/// @param new_struct_decl CIDecl*
+/// @param new_struct_decl CIDecl* (&)
 static void
 replace_struct_from_id__CIResultFile(const CIResultFile *self,
                                      const CIStructID *struct_id,
                                      CIDecl *new_struct_decl);
 
-/// @param new_typedef_decl CIDecl*
+/// @param new_typedef_decl CIDecl* (&)
 static void
 replace_typedef_from_id__CIResultFile(const CIResultFile *self,
                                       const CITypedefID *typedef_id,
                                       CIDecl *new_typedef_decl);
 
-/// @param new_union_decl CIDecl*
+/// @param new_union_decl CIDecl* (&)
 static void
 replace_union_from_id__CIResultFile(const CIResultFile *self,
                                     const CIUnionID *union_id,
@@ -361,10 +361,7 @@ add_include__CIResultFile(const CIResultFile *self)
             /* Manage prototype update */                                      \
             if (!decl->is_prototype) {                                         \
                 if (is_exist->is_prototype && is_exist->kind == decl->kind) {  \
-                    push__Vec(self->entity.decls, ref__CIDecl(decl));          \
-                    replace(self,                                              \
-                            search##__CIScope(scope, name),                    \
-                            ref__CIDecl(decl));                                \
+                    replace(self, search##__CIScope(scope, name), decl);       \
                                                                                \
                     return decl;                                               \
                 }                                                              \
@@ -710,12 +707,17 @@ exit:
     return res;
 }
 
-#define REPLACE_DECL_FROM_ID__CI_RESULT_FILE(vec, i, new_decl) \
-    {                                                          \
-        ASSERT(i);                                             \
-        CIDecl *decl = get__Vec(vec, i->id);                   \
-        FREE(CIDecl, decl);                                    \
-        replace__Vec(vec, i->id, new_decl);                    \
+#define REPLACE_DECL_FROM_ID__CI_RESULT_FILE(vec, i, new_decl)               \
+    {                                                                        \
+        ASSERT(i);                                                           \
+                                                                             \
+        CIDecl *decl = get__Vec(vec, i->id);                                 \
+        FREE(CIDecl, decl);                                                  \
+        replace__Vec(vec, i->id, ref__CIDecl(new_decl));                     \
+                                                                             \
+        CIDecl *decl_from_decls = get__Vec(self->entity.decls, i->decl_id);  \
+        FREE(CIDecl, decl_from_decls);                                       \
+        replace__Vec(self->entity.decls, i->decl_id, ref__CIDecl(new_decl)); \
     }
 
 void
