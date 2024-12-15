@@ -29,6 +29,7 @@
 
 #include <core/cc/ci/ast.h>
 #include <core/cc/ci/builtin.h>
+#include <core/cc/ci/result.h>
 #include <core/cc/ci/token.h>
 
 #include <stdio.h>
@@ -282,52 +283,69 @@ CONSTRUCTOR(CIScopeID *, CIScopeID, Usize id)
     return self;
 }
 
-CONSTRUCTOR(CIEnumID *, CIEnumID, CIFileID file_id, Usize id)
+CONSTRUCTOR(CIEnumID *, CIEnumID, CIFileID file_id, Usize id, Usize decl_id)
 {
     CIEnumID *self = lily_malloc(sizeof(CIEnumID));
 
     self->file_id = file_id;
     self->id = id;
+    self->decl_id = decl_id;
 
     return self;
 }
 
-CONSTRUCTOR(CIEnumVariantID *, CIEnumVariantID, CIFileID file_id, Usize id)
+CONSTRUCTOR(CIEnumVariantID *,
+            CIEnumVariantID,
+            CIFileID file_id,
+            Usize id,
+            Usize decl_id)
 {
     CIEnumVariantID *self = lily_malloc(sizeof(CIEnumVariantID));
 
     self->file_id = file_id;
     self->id = id;
+    self->decl_id = decl_id;
 
     return self;
 }
 
-CONSTRUCTOR(CIStructID *, CIStructID, CIFileID file_id, Usize id)
+CONSTRUCTOR(CIStructID *, CIStructID, CIFileID file_id, Usize id, Usize decl_id)
 {
     CIStructID *self = lily_malloc(sizeof(CIStructID));
 
     self->file_id = file_id;
     self->id = id;
+    self->decl_id = decl_id;
 
     return self;
 }
 
-CONSTRUCTOR(CITypedefID *, CITypedefID, CIFileID file_id, Usize id)
+CONSTRUCTOR(CITypedefID *,
+            CITypedefID,
+            CIFileID file_id,
+            Usize id,
+            Usize decl_id)
 {
     CITypedefID *self = lily_malloc(sizeof(CITypedefID));
 
     self->file_id = file_id;
     self->id = id;
+    self->decl_id = decl_id;
 
     return self;
 }
 
-CONSTRUCTOR(CIFunctionID *, CIFunctionID, CIFileID file_id, Usize id)
+CONSTRUCTOR(CIFunctionID *,
+            CIFunctionID,
+            CIFileID file_id,
+            Usize id,
+            Usize decl_id)
 {
     CIFunctionID *self = lily_malloc(sizeof(CIFunctionID));
 
     self->file_id = file_id;
     self->id = id;
+    self->decl_id = decl_id;
 
     return self;
 }
@@ -336,23 +354,26 @@ CONSTRUCTOR(CILabelID *,
             CILabelID,
             CIFileID file_id,
             CIScopeID scope_id,
-            Usize id)
+            Usize id,
+            Usize decl_id)
 {
     CILabelID *self = lily_malloc(sizeof(CILabelID));
 
     self->file_id = file_id;
     self->scope_id = scope_id;
     self->id = id;
+    self->decl_id = decl_id;
 
     return self;
 }
 
-CONSTRUCTOR(CIUnionID *, CIUnionID, CIFileID file_id, Usize id)
+CONSTRUCTOR(CIUnionID *, CIUnionID, CIFileID file_id, Usize id, Usize decl_id)
 {
     CIUnionID *self = lily_malloc(sizeof(CIUnionID));
 
     self->file_id = file_id;
     self->id = id;
+    self->decl_id = decl_id;
 
     return self;
 }
@@ -361,13 +382,15 @@ CONSTRUCTOR(CIVariableID *,
             CIVariableID,
             CIFileID file_id,
             CIScopeID scope_id,
-            Usize id)
+            Usize id,
+            Usize decl_id)
 {
     CIVariableID *self = lily_malloc(sizeof(CIVariableID));
 
     self->file_id = file_id;
     self->scope_id = scope_id;
     self->id = id;
+    self->decl_id = decl_id;
 
     return self;
 }
@@ -408,6 +431,104 @@ CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, Usize id, bool is_block)
     self->states = NEW(HashMap);
 
     return self;
+}
+
+Usize
+get_decl_id_from_decl__CIScope(const CIScope *self,
+                               const CIResultFile *file,
+                               const CIDecl *decl)
+{
+    const String *name = get_name__CIDecl(decl);
+
+    for (; self; self = get_scope_from_id__CIResultFile(file, self->parent)) {
+        switch (decl->kind) {
+            case CI_DECL_KIND_ENUM: {
+                const CIEnumID *enum_id = search_enum__CIScope(self, name);
+
+                if (enum_id) {
+                    return enum_id->decl_id;
+                }
+
+                continue;
+            }
+            case CI_DECL_KIND_ENUM_VARIANT: {
+                const CIEnumVariantID *enum_variant_id =
+                  search_enum_variant__CIScope(self, name);
+
+                if (enum_variant_id) {
+                    return enum_variant_id->decl_id;
+                }
+
+                continue;
+            }
+            case CI_DECL_KIND_FUNCTION:
+            case CI_DECL_KIND_FUNCTION_GEN: {
+                const CIFunctionID *function_id =
+                  search_function__CIScope(self, name);
+
+                if (function_id) {
+                    return function_id->decl_id;
+                }
+
+                continue;
+            }
+            case CI_DECL_KIND_LABEL: {
+                const CILabelID *label_id = search_label__CIScope(self, name);
+
+                if (label_id) {
+                    return label_id->decl_id;
+                }
+
+                continue;
+            }
+            case CI_DECL_KIND_STRUCT:
+            case CI_DECL_KIND_STRUCT_GEN: {
+                const CIStructID *struct_id =
+                  search_struct__CIScope(self, name);
+
+                if (struct_id) {
+                    return struct_id->decl_id;
+                }
+
+                continue;
+            }
+            case CI_DECL_KIND_TYPEDEF:
+            case CI_DECL_KIND_TYPEDEF_GEN: {
+                const CITypedefID *typedef_id =
+                  search_typedef__CIScope(self, name);
+
+                if (typedef_id) {
+                    return typedef_id->decl_id;
+                }
+
+                continue;
+            }
+            case CI_DECL_KIND_UNION:
+            case CI_DECL_KIND_UNION_GEN: {
+                const CIUnionID *union_id = search_union__CIScope(self, name);
+
+                if (union_id) {
+                    return union_id->decl_id;
+                }
+
+                continue;
+            }
+            case CI_DECL_KIND_VARIABLE: {
+                const CIVariableID *variable_id =
+                  search_variable__CIScope(self, name);
+
+                if (variable_id) {
+                    return variable_id->decl_id;
+                }
+
+                continue;
+            }
+            default:
+                UNREACHABLE("unknown variant");
+        }
+    }
+
+    UNREACHABLE("cannot found this declaration in any scopes");
 }
 
 DESTRUCTOR(CIScope, CIScope *self)

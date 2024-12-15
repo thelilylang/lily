@@ -27,6 +27,7 @@
 
 #include <core/cc/ci/ast.h>
 #include <core/cc/ci/file.h>
+#include <core/cc/ci/generator.h>
 #include <core/cc/ci/parser.h>
 #include <core/cc/ci/project_config.h>
 #include <core/cc/ci/resolver.h>
@@ -69,51 +70,59 @@ extern inline const CIEnumID *
 add_enum__CIScope(const CIScope *self,
                   const String *name,
                   CIFileID file_id,
-                  Usize id);
+                  Usize id,
+                  Usize decl_id);
 
 extern inline const CIEnumVariantID *
 add_enum_variant__CIScope(const CIScope *self,
                           const String *name,
                           CIFileID file_id,
-                          Usize id);
+                          Usize id,
+                          Usize decl_id);
 
 extern inline const CIFunctionID *
 add_function__CIScope(const CIScope *self,
                       const String *name,
                       CIFileID file_id,
-                      Usize id);
+                      Usize id,
+                      Usize decl_id);
 
 extern inline const CILabelID *
 add_label__CIScope(const CIScope *self,
                    const String *name,
                    CIScopeID scope_id,
                    CIFileID file_id,
-                   Usize id);
+                   Usize id,
+                   Usize decl_id);
 
 extern inline const CIStructID *
 add_struct__CIScope(const CIScope *self,
                     const String *name,
                     CIFileID file_id,
-                    Usize id);
+                    Usize id,
+                    Usize decl_id);
 
 extern inline const CITypedefID *
 add_typedef__CIScope(const CIScope *self,
                      const String *name,
                      CIFileID file_id,
-                     Usize id);
+                     Usize id,
+                     Usize decl_id);
 
 extern inline const CIUnionID *
 add_union__CIScope(const CIScope *self,
                    const String *name,
                    CIFileID file_id,
-                   Usize id);
+                   Usize id,
+                   Usize decl_id);
 
 extern inline const CIVariableID *
 add_variable__CIScope(const CIScope *self,
                       const String *name,
                       CIScopeID scope_id,
                       CIFileID file_id,
-                      Usize id);
+                      Usize id,
+                      Usize decl_id);
 
 extern inline const CIEnumID *
 search_enum__CIScope(const CIScope *self, const String *name);
@@ -477,6 +486,11 @@ is_header__CIFile(const char *filename);
 
 extern inline bool
 is_source__CIFile(const char *filename);
+
+// <core/cc/ci/generator.h>
+extern inline CONSTRUCTOR(CIGeneratorContent, CIGeneratorContent);
+
+extern inline CONSTRUCTOR(CIGenerator, CIGenerator, const CIResultFile *file);
 
 // <core/cc/ci/project_config.h>
 extern inline CONSTRUCTOR(CIProjectConfigCompiler,
