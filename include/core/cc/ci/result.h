@@ -427,6 +427,25 @@ add_variable__CIResultFile(const CIResultFile *self,
                            CIDecl *variable);
 
 /**
+ * @brief Add declaration to scope. If the declaration addition succeeds, the
+ * function returns a NULL pointer, otherwise it returns the pointer to the
+ * declaration that conflicts with the declaration we previously tried to add.
+ * @param must_free Free the value associated with "decl_ref", if the addition
+ * fails.
+ * @return const CIDecl*? (&)
+ * @note If the passed declaration has no name (e.g. anonymous struct, enum or
+ * union), the function will return a NULL pointer by default, as if the
+ * addition had actually taken place, but obviously the function won't try to
+ * add this declaration to the scope.
+ */
+const CIDecl *
+add_decl_to_scope__CIResultFile(const CIResultFile *self,
+                                CIDecl **decl_ref,
+                                const CIScope *scope,
+                                bool must_free,
+                                bool in_function_body);
+
+/**
  *
  * @brief Get scope from id.
  */
@@ -567,12 +586,75 @@ search_data_type__CIResultFile(const CIResultFile *self, const String *name);
 
 /**
  *
- * @brief Search identifier declaration in decls map.
+ * @brief Search function from the given name, if function_generic_params is
+ * NULL otherwise, it serializes the given name and searches generic function
+ * with this serialized name.
+ * @param function_generic_params CIGenericParams*? (&)
+ * @param called_generic_params CIGenericParams*? (&)
+ * @param decl_generic_params CIGenericParams*? (&)
+ * @return CIDecl*? (&)
  */
 CIDecl *
-search_identifier__CIResultFile(const CIResultFile *self,
-                                const CIScope *scope,
-                                const String *name);
+search_function_in_generic_context__CIResultFile(
+  const CIResultFile *self,
+  const String *name,
+  CIGenericParams *function_generic_params,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params);
+
+/**
+ *
+ * @brief Search struct from the given name, if struct_generic_params is NULL
+ * otherwise, it serializes the given name and searches generic struct with
+ * this serialized name.
+ * @param struct_generic_params CIGenericParams*? (&)
+ * @param called_generic_params CIGenericParams*? (&)
+ * @param decl_generic_params CIGenericParams*? (&)
+ * @return CIDecl*? (&)
+ */
+CIDecl *
+search_struct_in_generic_context__CIResultFile(
+  const CIResultFile *self,
+  const String *name,
+  CIGenericParams *struct_generic_params,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params);
+
+/**
+ *
+ * @brief Search typedef from the given name, if typedef_generic_params is NULL
+ * otherwise, it serializes the given name and searches generic typedef with
+ * this serialized name.
+ * @param typedef_generic_params CIGenericParams*? (&)
+ * @param called_generic_params CIGenericParams*? (&)
+ * @param decl_generic_params CIGenericParams*? (&)
+ * @return CIDecl*? (&)
+ */
+CIDecl *
+search_typedef_in_generic_context__CIResultFile(
+  const CIResultFile *self,
+  const String *name,
+  CIGenericParams *typedef_generic_params,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params);
+
+/**
+ *
+ * @brief Search union from the given name, if union_generic_params is NULL
+ * otherwise, it serializes the given name and searches generic union with this
+ * serialized name.
+ * @param union_generic_params CIGenericParams*? (&)
+ * @param called_generic_params CIGenericParams*? (&)
+ * @param decl_generic_params CIGenericParams*? (&)
+ * @return CIDecl*? (&)
+ */
+CIDecl *
+search_union_in_generic_context__CIResultFile(
+  const CIResultFile *self,
+  const String *name,
+  CIGenericParams *union_generic_params,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params);
 
 /**
  *
@@ -875,6 +957,16 @@ add_and_run_header__CIResult(const CIResult *self,
  */
 void
 build__CIResult(CIResult *self);
+
+/**
+ *
+ * @brief Pass through bins and libraries.
+ */
+void
+pass_through_result__CIResult(const CIResult *self,
+                              void (*run)(const CIResultFile *file,
+                                          void *other_args),
+                              void *other_args);
 
 /**
  *

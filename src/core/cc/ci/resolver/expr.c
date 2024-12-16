@@ -25,6 +25,7 @@
 #include <base/assert.h>
 
 #include <core/cc/ci/builtin.h>
+#include <core/cc/ci/infer.h>
 #include <core/cc/ci/resolver/expr.h>
 #include <core/cc/ci/result.h>
 
@@ -822,8 +823,8 @@ resolve_alignof_expr__CIResolverExpr(const CIResolverExpr *self,
     ASSERT(self->scope);
     ASSERT(expr->kind == CI_EXPR_KIND_ALIGNOF);
 
-    CIDataType *expr_data_type = infer_expr_data_type__CIParser(
-      self->parser, expr->alignof_, self->scope->scope_id, NULL, NULL);
+    CIDataType *expr_data_type = infer_expr_data_type__CIInfer(
+      self->parser->file, expr->alignof_, self->scope->scope_id, NULL, NULL);
 
     CIExpr *res =
       NEW_VARIANT(CIExpr,
@@ -1589,10 +1590,12 @@ resolve_identifier__CIResolver(const CIResolverExpr *self, CIExpr *identifier)
 
     ASSERT(self->parser && self->scope);
 
-    CIDecl *identifier_decl = search_identifier__CIResultFile(
-      self->parser->file,
-      self->scope,
-      GET_PTR_RC(String, identifier->identifier));
+    CIDecl *identifier_decl = get_decl__CIExprIdentifierID(
+      &identifier->identifier.id, self->parser->file);
+
+    if (!identifier_decl) {
+        FAILED("identifier is not found");
+    }
 
     switch (identifier_decl->kind) {
         case CI_DECL_KIND_ENUM_VARIANT:
@@ -1916,8 +1919,8 @@ resolve_sizeof_expr__CIResolverExpr(const CIResolverExpr *self,
             // NOTE: This function is used only to resolve expression in
             // preprocessor, so in this situation it's impossible to have
             // generic cases.
-            CIDataType *expr_data_type = infer_expr_data_type__CIParser(
-              self->parser, expr, self->scope->scope_id, NULL, NULL);
+            CIDataType *expr_data_type = infer_expr_data_type__CIInfer(
+              self->parser->file, expr, self->scope->scope_id, NULL, NULL);
             CIExpr *res =
               NEW_VARIANT(CIExpr,
                           literal,

@@ -34,42 +34,73 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/// @param new_enum_decl CIDecl*
+/// @param new_enum_decl CIDecl* (&)
 static void
 replace_enum_from_id__CIResultFile(const CIResultFile *self,
                                    const CIEnumID *enum_id,
                                    CIDecl *new_enum_decl);
 
-/// @param new_enum_variant_decl CIDecl*
+/// @param new_enum_variant_decl CIDecl* (&)
 static void
 replace_enum_variant_from_id__CIResultFile(
   const CIResultFile *self,
   const CIEnumVariantID *enum_variant_id,
   CIDecl *new_enum_variant_decl);
 
-/// @param new_function_decl CIDecl*
+/// @param new_function_decl CIDecl* (&)
 static void
 replace_function_from_id__CIResultFile(const CIResultFile *self,
                                        const CIFunctionID *function_id,
                                        CIDecl *new_function_decl);
 
-/// @param new_struct_decl CIDecl*
+/// @param new_struct_decl CIDecl* (&)
 static void
 replace_struct_from_id__CIResultFile(const CIResultFile *self,
                                      const CIStructID *struct_id,
                                      CIDecl *new_struct_decl);
 
-/// @param new_typedef_decl CIDecl*
+/// @param new_typedef_decl CIDecl* (&)
 static void
 replace_typedef_from_id__CIResultFile(const CIResultFile *self,
                                       const CITypedefID *typedef_id,
                                       CIDecl *new_typedef_decl);
 
-/// @param new_union_decl CIDecl*
+/// @param new_union_decl CIDecl* (&)
 static void
 replace_union_from_id__CIResultFile(const CIResultFile *self,
                                     const CIUnionID *union_id,
                                     CIDecl *new_union_decl);
+
+/**
+ *
+ * @brief Search generalizable declaration from the given name, if
+ * gen_decl_generic_params is NULL otherwise, it serializes the given
+ * name and searches declaration with this serialized name.
+ * @param gen_decl_generic_params CIGenericParams*? (&)
+ * @param called_generic_params CIGenericParams*? (&)
+ * @param decl_generic_params CIGenericParams*? (&)
+ * @return CIDecl*? (&)
+ *
+ * @example of use:
+ *
+ * @T get.[@T](@T x) {
+ *   return x;
+ * }
+ *
+ * @T get2.[@T](@T x) {
+ *   return get.[@T](x);
+ * //       ^^^^^^^^^^^ need to search this declaration with this function:
+ * //                   `search_decl_in_generic_context__CIParser`.
+ * }
+ */
+static CIDecl *
+search_decl_in_generic_context__CIResultFile(
+  const CIResultFile *self,
+  const String *name,
+  CIGenericParams *gen_decl_generic_params,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params,
+  CIDecl *(*search_decl)(const CIResultFile *self, const String *name));
 
 /// @param path char* (&)
 static void
@@ -330,10 +361,7 @@ add_include__CIResultFile(const CIResultFile *self)
             /* Manage prototype update */                                      \
             if (!decl->is_prototype) {                                         \
                 if (is_exist->is_prototype && is_exist->kind == decl->kind) {  \
-                    push__Vec(self->entity.decls, ref__CIDecl(decl));          \
-                    replace(self,                                              \
-                            search##__CIScope(scope, name),                    \
-                            ref__CIDecl(decl));                                \
+                    replace(self, search##__CIScope(scope, name), decl);       \
                                                                                \
                     return decl;                                               \
                 }                                                              \
@@ -411,30 +439,23 @@ add_include__CIResultFile(const CIResultFile *self)
         }                                                    \
     }
 
-#define ADD_X_DECL(X, scope, add_scope, v, add_to_owner)                      \
-    const String *name = get_name__CIDecl(X);                                 \
-                                                                              \
-    if (!name) {                                                              \
-        return NULL;                                                          \
-    }                                                                         \
-                                                                              \
-    CHECK_FOR_SYMBOL_REDEFINITION(name, scope, X);                            \
-                                                                              \
-    if (add_scope) {                                                          \
-        return X;                                                             \
-    }                                                                         \
-                                                                              \
-    push__Vec(v, X);                                                          \
-                                                                              \
-    if (!is_local__CIDecl(X)) {                                               \
-        push__Vec(self->file_analysis->entity->decls, ref__CIDecl(X));        \
-    }                                                                         \
-                                                                              \
-    return self->owner &&                                                     \
-               (X->kind != CI_DECL_KIND_VARIABLE || !X->variable.is_local) && \
-               X->kind != CI_DECL_KIND_LABEL                                  \
-             ? add_to_owner                                                   \
-             : NULL;
+#define ADD_X_DECL(X, scope, add_scope, v, add_to_owner)           \
+    const String *name = get_name__CIDecl(X);                      \
+                                                                   \
+    if (!name) {                                                   \
+        return NULL;                                               \
+    }                                                              \
+                                                                   \
+    CHECK_FOR_SYMBOL_REDEFINITION(name, scope, X);                 \
+                                                                   \
+    if (add_scope) {                                               \
+        return X;                                                  \
+    }                                                              \
+                                                                   \
+    push__Vec(v, X);                                               \
+    push__Vec(self->file_analysis->entity->decls, ref__CIDecl(X)); \
+                                                                   \
+    return self->owner ? add_to_owner : NULL;
 
 const CIDecl *
 add_enum__CIResultFile(const CIResultFile *self, CIDecl *enum_)
@@ -445,7 +466,8 @@ add_enum__CIResultFile(const CIResultFile *self, CIDecl *enum_)
                  self->file_analysis->scope_base,
                  name,
                  NEW(CIFileID, self->file_analysis->entity->id, self->kind),
-                 self->file_analysis->entity->enums->len),
+                 self->file_analysis->entity->enums->len,
+                 self->file_analysis->entity->decls->len),
                self->file_analysis->entity->enums,
                add_enum__CIResultFile(self->owner, ref__CIDecl(enum_)));
 }
@@ -460,7 +482,8 @@ add_enum_variant__CIResultFile(const CIResultFile *self, CIDecl *enum_variant)
         self->file_analysis->scope_base,
         name,
         NEW(CIFileID, self->file_analysis->entity->id, self->kind),
-        self->file_analysis->entity->enum_variants->len),
+        self->file_analysis->entity->enum_variants->len,
+        self->file_analysis->entity->decls->len),
       self->file_analysis->entity->enum_variants,
       add_enum_variant__CIResultFile(self->owner, ref__CIDecl(enum_variant)));
 }
@@ -474,7 +497,8 @@ add_function__CIResultFile(const CIResultFile *self, CIDecl *function)
                  self->file_analysis->scope_base,
                  name,
                  NEW(CIFileID, self->file_analysis->entity->id, self->kind),
-                 self->file_analysis->entity->functions->len),
+                 self->file_analysis->entity->functions->len,
+                 self->file_analysis->entity->decls->len),
                self->file_analysis->entity->functions,
                add_function__CIResultFile(self->owner, ref__CIDecl(function)));
 }
@@ -491,7 +515,8 @@ add_label__CIResultFile(const CIResultFile *self,
                  name,
                  *scope->scope_id,
                  NEW(CIFileID, self->file_analysis->entity->id, self->kind),
-                 self->file_analysis->entity->labels->len),
+                 self->file_analysis->entity->labels->len,
+                 self->file_analysis->entity->decls->len),
                self->file_analysis->entity->labels,
                add_label__CIResultFile(
                  self->owner, self->owner->scope_base, ref__CIDecl(label)));
@@ -506,7 +531,8 @@ add_struct__CIResultFile(const CIResultFile *self, CIDecl *struct_)
                  self->file_analysis->scope_base,
                  name,
                  NEW(CIFileID, self->file_analysis->entity->id, self->kind),
-                 self->file_analysis->entity->structs->len),
+                 self->file_analysis->entity->structs->len,
+                 self->file_analysis->entity->decls->len),
                self->file_analysis->entity->structs,
                add_struct__CIResultFile(self->owner, ref__CIDecl(struct_)));
 }
@@ -520,7 +546,8 @@ add_typedef__CIResultFile(const CIResultFile *self, CIDecl *typedef_)
                  self->file_analysis->scope_base,
                  name,
                  NEW(CIFileID, self->file_analysis->entity->id, self->kind),
-                 self->file_analysis->entity->typedefs->len),
+                 self->file_analysis->entity->typedefs->len,
+                 self->file_analysis->entity->decls->len),
                self->file_analysis->entity->typedefs,
                add_typedef__CIResultFile(self->owner, ref__CIDecl(typedef_)));
 }
@@ -534,7 +561,8 @@ add_union__CIResultFile(const CIResultFile *self, CIDecl *union_)
                  self->file_analysis->scope_base,
                  name,
                  NEW(CIFileID, self->file_analysis->entity->id, self->kind),
-                 self->file_analysis->entity->unions->len),
+                 self->file_analysis->entity->unions->len,
+                 self->file_analysis->entity->decls->len),
                self->file_analysis->entity->unions,
                add_union__CIResultFile(self->owner, ref__CIDecl(union_)));
 }
@@ -551,18 +579,145 @@ add_variable__CIResultFile(const CIResultFile *self,
                  name,
                  *scope->scope_id,
                  NEW(CIFileID, self->file_analysis->entity->id, self->kind),
-                 self->file_analysis->entity->variables->len),
+                 self->file_analysis->entity->variables->len,
+                 self->file_analysis->entity->decls->len),
                self->file_analysis->entity->variables,
                add_variable__CIResultFile(
                  self->owner, self->owner->scope_base, ref__CIDecl(variable)));
 }
 
-#define REPLACE_DECL_FROM_ID__CI_RESULT_FILE(vec, i, new_decl) \
-    {                                                          \
-        ASSERT(i);                                             \
-        CIDecl *decl = get__Vec(vec, i->id);                   \
-        FREE(CIDecl, decl);                                    \
-        replace__Vec(vec, i->id, new_decl);                    \
+const CIDecl *
+add_decl_to_scope__CIResultFile(const CIResultFile *self,
+                                CIDecl **decl_ref,
+                                const CIScope *scope,
+                                bool must_free,
+                                bool in_function_body)
+{
+    CIDecl *decl = *decl_ref;
+    CIDecl *res = NULL;
+
+    ASSERT(decl);
+
+    switch (decl->kind) {
+        case CI_DECL_KIND_ENUM:
+            if ((res = (CIDecl *)add_enum__CIResultFile(self, decl))) {
+                // See `add_enum__CIResultFile` prototype.
+                if (decl != res) {
+                    FAILED("enum is already defined");
+                }
+
+                goto free;
+            }
+
+            goto exit;
+        case CI_DECL_KIND_ENUM_VARIANT:
+            if ((res = (CIDecl *)add_enum_variant__CIResultFile(self, decl))) {
+                // See `add_enum_variant__CIResultFile` prototype.
+                if (decl != res) {
+                    FAILED("enum variant is already defined");
+                }
+
+                goto free;
+            }
+
+            goto exit;
+        case CI_DECL_KIND_FUNCTION:
+        case CI_DECL_KIND_FUNCTION_GEN:
+            if ((res = (CIDecl *)add_function__CIResultFile(self, decl))) {
+                // See `add_function__CIResultFile` prototype.
+                if (decl != res) {
+                    FAILED("function is already defined");
+                }
+
+                goto free;
+            }
+
+            goto exit;
+        case CI_DECL_KIND_LABEL:
+            if ((res = (CIDecl *)add_label__CIResultFile(
+                   self, scope, ref__CIDecl(decl)))) {
+                // See `add_label__CIResultFile` prototype.
+                if (decl != res) {
+                    FAILED("label is already defined");
+                }
+
+                goto free;
+            }
+
+            goto exit;
+        case CI_DECL_KIND_STRUCT:
+        case CI_DECL_KIND_STRUCT_GEN:
+            if ((res = (CIDecl *)add_struct__CIResultFile(self, decl))) {
+                // See `add_struct__CIResultFile` prototype.
+                if (decl != res) {
+                    FAILED("struct is already defined");
+                }
+
+                goto free;
+            }
+
+            goto exit;
+        case CI_DECL_KIND_TYPEDEF:
+        case CI_DECL_KIND_TYPEDEF_GEN:
+            if ((res = (CIDecl *)add_typedef__CIResultFile(self, decl))) {
+                // See `add_typedef__CIResultFile` prototype.
+                if (decl != res) {
+                    FAILED("typedef is already defined");
+                }
+
+                goto free;
+            }
+
+            goto exit;
+        case CI_DECL_KIND_UNION:
+        case CI_DECL_KIND_UNION_GEN:
+            if ((res = (CIDecl *)add_union__CIResultFile(self, decl))) {
+                // See `add_union__CIResultFile` prototype.
+                if (decl != res) {
+                    FAILED("union is already defined");
+                }
+
+                goto free;
+            }
+
+            goto exit;
+        case CI_DECL_KIND_VARIABLE:
+            if ((res = (CIDecl *)add_variable__CIResultFile(
+                   self, scope, in_function_body ? ref__CIDecl(decl) : decl))) {
+                // See `add_variable__CIResultFile` prototype.
+                if (decl != res) {
+                    FAILED("variable is already defined");
+                }
+
+                goto free;
+            }
+
+            goto exit;
+        default:
+            UNREACHABLE("impossible situation");
+    }
+
+free:
+    if (must_free) {
+        FREE(CIDecl, decl);
+        *decl_ref = NULL;
+    }
+
+exit:
+    return res;
+}
+
+#define REPLACE_DECL_FROM_ID__CI_RESULT_FILE(vec, i, new_decl)               \
+    {                                                                        \
+        ASSERT(i);                                                           \
+                                                                             \
+        CIDecl *decl = get__Vec(vec, i->id);                                 \
+        FREE(CIDecl, decl);                                                  \
+        replace__Vec(vec, i->id, ref__CIDecl(new_decl));                     \
+                                                                             \
+        CIDecl *decl_from_decls = get__Vec(self->entity.decls, i->decl_id);  \
+        FREE(CIDecl, decl_from_decls);                                       \
+        replace__Vec(self->entity.decls, i->decl_id, ref__CIDecl(new_decl)); \
     }
 
 void
@@ -839,25 +994,112 @@ search_data_type__CIResultFile(const CIResultFile *self, const String *name)
 }
 
 CIDecl *
-search_identifier__CIResultFile(const CIResultFile *self,
-                                const CIScope *scope,
-                                const String *name)
+search_decl_in_generic_context__CIResultFile(
+  const CIResultFile *self,
+  const String *name,
+  CIGenericParams *gen_decl_generic_params,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params,
+  CIDecl *(*search_decl)(const CIResultFile *self, const String *name))
 {
-    CIDecl *variable = search_variable__CIResultFile(self, scope, name);
-    CIDecl *function = search_function__CIResultFile(self, name);
-    CIDecl *enum_variant = search_enum_variant__CIResultFile(self, name);
+    CIDecl *base_decl = search_decl(self, name);
 
-    if (variable) {
-        if (variable->variable.is_local) {
-            return variable;
-        }
-    } else if (function) {
-        return function;
-    } else if (enum_variant) {
-        return enum_variant;
+    if (!base_decl) {
+        FAILED("declaration is not found");
     }
 
-    return NULL;
+    if (gen_decl_generic_params &&
+        ((called_generic_params && decl_generic_params) ||
+         !has_generic__CIGenericParams(gen_decl_generic_params))) {
+        CIGenericParams *substituted_generic_params =
+          substitute_generic_params__CIParser(gen_decl_generic_params,
+                                              decl_generic_params,
+                                              called_generic_params);
+
+        ASSERT(substituted_generic_params);
+
+        String *serialized_name =
+          serialize_name__CIGenericParams(substituted_generic_params, name);
+        CIDecl *decl = search_decl(self, serialized_name);
+
+        ASSERT(decl);
+        ASSERT(decl->kind & CI_DECL_KIND_GEN);
+
+        FREE(String, serialized_name);
+        FREE(CIGenericParams, substituted_generic_params);
+
+        return decl;
+    }
+
+    return base_decl;
+}
+
+CIDecl *
+search_function_in_generic_context__CIResultFile(
+  const CIResultFile *self,
+  const String *name,
+  CIGenericParams *function_generic_params,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params)
+{
+    return search_decl_in_generic_context__CIResultFile(
+      self,
+      name,
+      function_generic_params,
+      called_generic_params,
+      decl_generic_params,
+      &search_function__CIResultFile);
+}
+
+CIDecl *
+search_struct_in_generic_context__CIResultFile(
+  const CIResultFile *self,
+  const String *name,
+  CIGenericParams *struct_generic_params,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params)
+{
+    return search_decl_in_generic_context__CIResultFile(
+      self,
+      name,
+      struct_generic_params,
+      called_generic_params,
+      decl_generic_params,
+      &search_struct__CIResultFile);
+}
+
+CIDecl *
+search_typedef_in_generic_context__CIResultFile(
+  const CIResultFile *self,
+  const String *name,
+  CIGenericParams *typedef_generic_params,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params)
+{
+    return search_decl_in_generic_context__CIResultFile(
+      self,
+      name,
+      typedef_generic_params,
+      called_generic_params,
+      decl_generic_params,
+      &search_typedef__CIResultFile);
+}
+
+CIDecl *
+search_union_in_generic_context__CIResultFile(
+  const CIResultFile *self,
+  const String *name,
+  CIGenericParams *union_generic_params,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params)
+{
+    return search_decl_in_generic_context__CIResultFile(
+      self,
+      name,
+      union_generic_params,
+      called_generic_params,
+      decl_generic_params,
+      &search_union__CIResultFile);
 }
 
 void
@@ -1404,6 +1646,26 @@ build__CIResult(CIResult *self)
 
     for (Usize i = 0; i < self->config->bins->len; ++i) {
         add_and_run_bin__CIResult(self, get__Vec(self->config->bins, i));
+    }
+}
+
+void
+pass_through_result__CIResult(const CIResult *self,
+                              void (*run)(const CIResultFile *file,
+                                          void *other_args),
+                              void *other_args)
+{
+    OrderedHashMapIter iter_libs = NEW(OrderedHashMapIter, self->libs);
+    OrderedHashMapIter iter_bins = NEW(OrderedHashMapIter, self->bins);
+    CIResultLib *current_lib = NULL;
+    CIResultBin *current_bin = NULL;
+
+    while ((current_lib = next__OrderedHashMapIter(&iter_libs))) {
+        run(current_lib->file, other_args);
+    }
+
+    while ((current_bin = next__OrderedHashMapIter(&iter_bins))) {
+        run(current_bin->file, other_args);
     }
 }
 

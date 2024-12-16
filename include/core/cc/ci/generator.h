@@ -25,7 +25,79 @@
 #ifndef LILY_CORE_CC_CI_GENERATOR_H
 #define LILY_CORE_CC_CI_GENERATOR_H
 
+#include <base/vec_bit.h>
+
 #include <core/cc/ci/result.h>
+
+typedef struct CIGeneratorContentSession
+{
+    String *buffer;
+    bool must_inherit;
+    struct
+    {
+        CIGenericParams *current_generic_params;        // CIGenericParams*? (&)
+        CIGenericParams *current_called_generic_params; // CIGenericParams*? (&)
+        Usize tab_count;
+        bool write_semicolon;
+        CIScope *current_scope; // CIScope* (&)
+    } inherit_props;
+} CIGeneratorContentSession;
+
+/**
+ *
+ * @brief Construct CIGeneratorContentSession type.
+ */
+CONSTRUCTOR(CIGeneratorContentSession *,
+            CIGeneratorContentSession,
+            CIScope *current_scope);
+
+/**
+ *
+ * @brief Free CIGeneratorContentSession type.
+ */
+DESTRUCTOR(CIGeneratorContentSession, CIGeneratorContentSession *self);
+
+typedef struct CIGeneratorContent
+{
+    String *final;
+    Vec *sessions;                           // Vec<CIGeneratorContentSession*>*
+    CIGeneratorContentSession *last_session; // CIGeneratorContentSession*? (&)
+} CIGeneratorContent;
+
+/**
+ *
+ * @brief Construct CIGeneratorContent type.
+ */
+inline CONSTRUCTOR(CIGeneratorContent, CIGeneratorContent)
+{
+    return (CIGeneratorContent){ .final = NEW(String),
+                                 .sessions = NEW(Vec),
+                                 .last_session = NULL };
+}
+
+/**
+ *
+ * @brief Free CIGeneratorContent type.
+ */
+DESTRUCTOR(CIGeneratorContent, const CIGeneratorContent *self);
+
+typedef struct CIGenerator
+{
+    const CIResultFile *file; // const CIResultFile* (&)
+    CIGeneratorContent content;
+    VecBit *generated_decls;
+} CIGenerator;
+
+/**
+ *
+ * @brief Construct CIGenerator type.
+ */
+inline CONSTRUCTOR(CIGenerator, CIGenerator, const CIResultFile *file)
+{
+    return (CIGenerator){ .file = file,
+                          .content = NEW(CIGeneratorContent),
+                          .generated_decls = NEW(VecBit) };
+}
 
 /**
  *
@@ -33,5 +105,11 @@
  */
 void
 run__CIGenerator(const CIResult *result);
+
+/**
+ *
+ * @brief Free CIGenerator type.
+ */
+DESTRUCTOR(CIGenerator, const CIGenerator *self);
 
 #endif // LILY_CORE_CC_CI_GENERATOR_H

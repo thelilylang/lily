@@ -29,6 +29,7 @@
 
 #include <core/cc/ci/ast.h>
 #include <core/cc/ci/builtin.h>
+#include <core/cc/ci/result.h>
 #include <core/cc/ci/token.h>
 
 #include <stdio.h>
@@ -119,7 +120,7 @@ get_size_info__CIDecl(const CIDecl *self);
 static VARIANT_DESTRUCTOR(CIDecl, enum, CIDecl *self);
 
 /// @brief Free CIDecl type (CI_DECL_KIND_ENUM_VARIANT).
-static inline VARIANT_DESTRUCTOR(CIDecl, enum_variant, CIDecl *self);
+static VARIANT_DESTRUCTOR(CIDecl, enum_variant, CIDecl *self);
 
 /// @brief Free CIDecl type (CI_DECL_KIND_FUNCTION).
 static VARIANT_DESTRUCTOR(CIDecl, function, CIDecl *self);
@@ -282,52 +283,69 @@ CONSTRUCTOR(CIScopeID *, CIScopeID, Usize id)
     return self;
 }
 
-CONSTRUCTOR(CIEnumID *, CIEnumID, CIFileID file_id, Usize id)
+CONSTRUCTOR(CIEnumID *, CIEnumID, CIFileID file_id, Usize id, Usize decl_id)
 {
     CIEnumID *self = lily_malloc(sizeof(CIEnumID));
 
     self->file_id = file_id;
     self->id = id;
+    self->decl_id = decl_id;
 
     return self;
 }
 
-CONSTRUCTOR(CIEnumVariantID *, CIEnumVariantID, CIFileID file_id, Usize id)
+CONSTRUCTOR(CIEnumVariantID *,
+            CIEnumVariantID,
+            CIFileID file_id,
+            Usize id,
+            Usize decl_id)
 {
     CIEnumVariantID *self = lily_malloc(sizeof(CIEnumVariantID));
 
     self->file_id = file_id;
     self->id = id;
+    self->decl_id = decl_id;
 
     return self;
 }
 
-CONSTRUCTOR(CIStructID *, CIStructID, CIFileID file_id, Usize id)
+CONSTRUCTOR(CIStructID *, CIStructID, CIFileID file_id, Usize id, Usize decl_id)
 {
     CIStructID *self = lily_malloc(sizeof(CIStructID));
 
     self->file_id = file_id;
     self->id = id;
+    self->decl_id = decl_id;
 
     return self;
 }
 
-CONSTRUCTOR(CITypedefID *, CITypedefID, CIFileID file_id, Usize id)
+CONSTRUCTOR(CITypedefID *,
+            CITypedefID,
+            CIFileID file_id,
+            Usize id,
+            Usize decl_id)
 {
     CITypedefID *self = lily_malloc(sizeof(CITypedefID));
 
     self->file_id = file_id;
     self->id = id;
+    self->decl_id = decl_id;
 
     return self;
 }
 
-CONSTRUCTOR(CIFunctionID *, CIFunctionID, CIFileID file_id, Usize id)
+CONSTRUCTOR(CIFunctionID *,
+            CIFunctionID,
+            CIFileID file_id,
+            Usize id,
+            Usize decl_id)
 {
     CIFunctionID *self = lily_malloc(sizeof(CIFunctionID));
 
     self->file_id = file_id;
     self->id = id;
+    self->decl_id = decl_id;
 
     return self;
 }
@@ -336,23 +354,26 @@ CONSTRUCTOR(CILabelID *,
             CILabelID,
             CIFileID file_id,
             CIScopeID scope_id,
-            Usize id)
+            Usize id,
+            Usize decl_id)
 {
     CILabelID *self = lily_malloc(sizeof(CILabelID));
 
     self->file_id = file_id;
     self->scope_id = scope_id;
     self->id = id;
+    self->decl_id = decl_id;
 
     return self;
 }
 
-CONSTRUCTOR(CIUnionID *, CIUnionID, CIFileID file_id, Usize id)
+CONSTRUCTOR(CIUnionID *, CIUnionID, CIFileID file_id, Usize id, Usize decl_id)
 {
     CIUnionID *self = lily_malloc(sizeof(CIUnionID));
 
     self->file_id = file_id;
     self->id = id;
+    self->decl_id = decl_id;
 
     return self;
 }
@@ -361,15 +382,35 @@ CONSTRUCTOR(CIVariableID *,
             CIVariableID,
             CIFileID file_id,
             CIScopeID scope_id,
-            Usize id)
+            Usize id,
+            Usize decl_id)
 {
     CIVariableID *self = lily_malloc(sizeof(CIVariableID));
 
     self->file_id = file_id;
     self->scope_id = scope_id;
     self->id = id;
+    self->decl_id = decl_id;
 
     return self;
+}
+
+CONSTRUCTOR(CIStateCheckerItem *,
+            CIStateCheckerItem,
+            Uint64 state,
+            CIVariableID *variable_id)
+{
+    CIStateCheckerItem *self = lily_malloc(sizeof(CIStateCheckerItem));
+
+    self->state = state;
+    self->variable_id = variable_id;
+
+    return self;
+}
+
+DESTRUCTOR(CIStateCheckerItem, CIStateCheckerItem *self)
+{
+    lily_free(self);
 }
 
 CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, Usize id, bool is_block)
@@ -387,8 +428,109 @@ CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, Usize id, bool is_block)
     self->typedefs = NEW(HashMap);
     self->unions = NEW(HashMap);
     self->variables = NEW(HashMap);
+    self->states = NEW(HashMap);
 
     return self;
+}
+
+Usize
+get_decl_id_from_decl__CIScope(const CIScope *self,
+                               const CIResultFile *file,
+                               const CIDecl *decl)
+{
+    const String *name = get_name__CIDecl(decl);
+
+    for (; self; self = self->parent
+                          ? get_scope_from_id__CIResultFile(file, self->parent)
+                          : NULL) {
+        switch (decl->kind) {
+            case CI_DECL_KIND_ENUM: {
+                const CIEnumID *enum_id = search_enum__CIScope(self, name);
+
+                if (enum_id) {
+                    return enum_id->decl_id;
+                }
+
+                continue;
+            }
+            case CI_DECL_KIND_ENUM_VARIANT: {
+                const CIEnumVariantID *enum_variant_id =
+                  search_enum_variant__CIScope(self, name);
+
+                if (enum_variant_id) {
+                    return enum_variant_id->decl_id;
+                }
+
+                continue;
+            }
+            case CI_DECL_KIND_FUNCTION:
+            case CI_DECL_KIND_FUNCTION_GEN: {
+                const CIFunctionID *function_id =
+                  search_function__CIScope(self, name);
+
+                if (function_id) {
+                    return function_id->decl_id;
+                }
+
+                continue;
+            }
+            case CI_DECL_KIND_LABEL: {
+                const CILabelID *label_id = search_label__CIScope(self, name);
+
+                if (label_id) {
+                    return label_id->decl_id;
+                }
+
+                continue;
+            }
+            case CI_DECL_KIND_STRUCT:
+            case CI_DECL_KIND_STRUCT_GEN: {
+                const CIStructID *struct_id =
+                  search_struct__CIScope(self, name);
+
+                if (struct_id) {
+                    return struct_id->decl_id;
+                }
+
+                continue;
+            }
+            case CI_DECL_KIND_TYPEDEF:
+            case CI_DECL_KIND_TYPEDEF_GEN: {
+                const CITypedefID *typedef_id =
+                  search_typedef__CIScope(self, name);
+
+                if (typedef_id) {
+                    return typedef_id->decl_id;
+                }
+
+                continue;
+            }
+            case CI_DECL_KIND_UNION:
+            case CI_DECL_KIND_UNION_GEN: {
+                const CIUnionID *union_id = search_union__CIScope(self, name);
+
+                if (union_id) {
+                    return union_id->decl_id;
+                }
+
+                continue;
+            }
+            case CI_DECL_KIND_VARIABLE: {
+                const CIVariableID *variable_id =
+                  search_variable__CIScope(self, name);
+
+                if (variable_id) {
+                    return variable_id->decl_id;
+                }
+
+                continue;
+            }
+            default:
+                UNREACHABLE("unknown variant");
+        }
+    }
+
+    UNREACHABLE("cannot found this declaration in any scopes");
 }
 
 DESTRUCTOR(CIScope, CIScope *self)
@@ -418,6 +560,9 @@ DESTRUCTOR(CIScope, CIScope *self)
 
     FREE_HASHMAP_VALUES(self->variables, CIVariableID);
     FREE(HashMap, self->variables);
+
+    FREE_HASHMAP_VALUES(self->states, CIStateCheckerItem);
+    FREE(HashMap, self->states);
 
     lily_free(self);
 }
@@ -1343,6 +1488,10 @@ clone__CIDataType(const CIDataType *self)
     return res;
 }
 
+// FIXME: With the technique currently used for type serialization, there is a
+// risk of name collision. A simple way of reducing this risk would be to
+// generate a random hash each time the program is run, and use it as a prefix
+// for serialization.
 void
 serialize__CIDataType(const CIDataType *self, String *buffer)
 {
@@ -2190,6 +2339,7 @@ CONSTRUCTOR(CIDeclEnumVariant *, CIDeclEnumVariant, Rc *name, Isize value)
 
     self->name = ref__Rc(name);
     self->value = value;
+    self->ref_count = 0;
 
     return self;
 }
@@ -2245,6 +2395,11 @@ IMPL_FOR_DEBUG(to_string, CIDeclEnumVariant, const CIDeclEnumVariant *self)
 
 DESTRUCTOR(CIDeclEnumVariant, CIDeclEnumVariant *self)
 {
+    if (self->ref_count > 0) {
+        --self->ref_count;
+        return;
+    }
+
     FREE_RC(String, self->name);
     lily_free(self);
 }
@@ -3580,6 +3735,15 @@ get_function_params__CIDecl(const CIDecl *self)
     }
 }
 
+void
+set_function_body__CIDecl(CIDecl *self, CIDeclFunctionBody *body)
+{
+    ASSERT(self->kind == CI_DECL_KIND_FUNCTION);
+
+    self->is_prototype = false;
+    self->function.body = body;
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIDecl, const CIDecl *self)
@@ -3740,6 +3904,7 @@ VARIANT_DESTRUCTOR(CIDecl, enum, CIDecl *self)
 
 VARIANT_DESTRUCTOR(CIDecl, enum_variant, CIDecl *self)
 {
+    FREE(CIDeclEnumVariant, self->enum_variant);
     lily_free(self);
 }
 
@@ -4332,6 +4497,133 @@ DESTRUCTOR(CIExprFunctionCallBuiltin, const CIExprFunctionCallBuiltin *self)
     FREE(Vec, self->params);
 }
 
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               CIExprIdentifierIDKind,
+               enum CIExprIdentifierIDKind self)
+{
+    switch (self) {
+        case CI_EXPR_IDENTIFIER_ID_KIND_NONE:
+            return "CI_EXPR_IDENTIFIER_ID_KIND_NONE";
+        case CI_EXPR_IDENTIFIER_ID_KIND_ENUM_VARIANT:
+            return "CI_EXPR_IDENTIFIER_ID_KIND_ENUM_VARIANT";
+        case CI_EXPR_IDENTIFIER_ID_KIND_FUNCTION:
+            return "CI_EXPR_IDENTIFIER_ID_KIND_FUNCTION";
+        case CI_EXPR_IDENTIFIER_ID_KIND_LABEL:
+            return "CI_EXPR_IDENTIFIER_ID_KIND_LABEL";
+        case CI_EXPR_IDENTIFIER_ID_KIND_VARIABLE:
+            return "CI_EXPR_IDENTIFIER_ID_KIND_VARIABLE";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+CIExprIdentifierID
+search_identifier__CIExprIdentifierID(const String *name,
+                                      const CIResultFile *file,
+                                      CIScope *scope)
+{
+    static const void *(*search_functions[])(
+      const CIScope *,
+      const String *) = { (const void *(*)(const CIScope *, const String *)) &
+                            search_enum_variant__CIScope,
+                          (const void *(*)(const CIScope *, const String *)) &
+                            search_function__CIScope,
+                          (const void *(*)(const CIScope *, const String *)) &
+                            search_label__CIScope,
+                          (const void *(*)(const CIScope *, const String *)) &
+                            search_variable__CIScope };
+    static CIExprIdentifierID (*constructor_functions[])(const void *) = {
+        (CIExprIdentifierID(*)(const void *)) &
+          VARIANT_CONSTRUCTOR_NAME(CIExprIdentifierID, enum_variant),
+        (CIExprIdentifierID(*)(const void *)) &
+          VARIANT_CONSTRUCTOR_NAME(CIExprIdentifierID, function),
+        (CIExprIdentifierID(*)(const void *)) &
+          VARIANT_CONSTRUCTOR_NAME(CIExprIdentifierID, label),
+        (CIExprIdentifierID(*)(const void *)) &
+          VARIANT_CONSTRUCTOR_NAME(CIExprIdentifierID, variable),
+    };
+
+    for (; scope; scope = scope->parent ? get_scope_from_id__CIResultFile(
+                                            file, scope->parent)
+                                        : NULL) {
+        for (Usize i = 0; i < LEN(search_functions, *search_functions); ++i) {
+            const void *res_id = search_functions[i](scope, name);
+
+            if (res_id) {
+                return constructor_functions[i](res_id);
+            }
+        }
+    }
+
+    return NEW_VARIANT(CIExprIdentifierID, none);
+}
+
+CIDecl *
+get_decl__CIExprIdentifierID(const CIExprIdentifierID *self,
+                             const CIResultFile *file)
+{
+    switch (self->kind) {
+        case CI_EXPR_IDENTIFIER_ID_KIND_ENUM_VARIANT: {
+            CIDecl *enum_variant_decl =
+              get_enum_variant_from_id__CIResultFile(file, self->enum_variant);
+
+            ASSERT(enum_variant_decl);
+
+            return enum_variant_decl;
+        }
+        case CI_EXPR_IDENTIFIER_ID_KIND_FUNCTION: {
+            CIDecl *function_decl =
+              get_function_from_id__CIResultFile(file, self->function);
+
+            ASSERT(function_decl);
+
+            return function_decl;
+        }
+        case CI_EXPR_IDENTIFIER_ID_KIND_LABEL: {
+            CIDecl *label_decl =
+              get_label_from_id__CIResultFile(file, self->label);
+
+            ASSERT(label_decl);
+
+            return label_decl;
+        }
+        case CI_EXPR_IDENTIFIER_ID_KIND_VARIABLE: {
+            CIDecl *variable_decl =
+              get_variable_from_id__CIResultFile(file, self->variable);
+
+            ASSERT(variable_decl);
+
+            return variable_decl;
+        }
+        case CI_EXPR_IDENTIFIER_ID_KIND_NONE:
+            return NULL;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIExprIdentifierID, const CIExprIdentifierID *self)
+{
+    return format__String("CIExprIdentifierID{{ kind = {s}, ... }",
+                          to_string__Debug__CIExprIdentifierIDKind(self->kind));
+}
+#endif
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIExprIdentifier, const CIExprIdentifier *self)
+{
+    return format__String("CIExprIdentifier{{ value = {S}, id = {Sr} }",
+                          GET_PTR_RC(String, self->value),
+                          to_string__Debug__CIExprIdentifierID(&self->id));
+}
+#endif
+
 CONSTRUCTOR(CIExprStructFieldCall *,
             CIExprStructFieldCall,
             Vec *path,
@@ -4564,13 +4856,13 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, grouping, CIExpr *grouping)
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, identifier, Rc *identifier)
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, identifier, CIExprIdentifier identifier)
 {
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
     self->kind = CI_EXPR_KIND_IDENTIFIER;
     self->ref_count = 0;
-    self->identifier = ref__Rc(identifier);
+    self->identifier = identifier;
 
     return self;
 }
@@ -4848,9 +5140,10 @@ IMPL_FOR_DEBUG(to_string, CIExpr, const CIExpr *self)
                                   to_string__Debug__CIExprKind(self->kind),
                                   to_string__Debug__CIExpr(self->grouping));
         case CI_EXPR_KIND_IDENTIFIER:
-            return format__String("CIExpr{{ kind = {s}, identifier = {S} }",
-                                  to_string__Debug__CIExprKind(self->kind),
-                                  GET_PTR_RC(String, self->identifier));
+            return format__String(
+              "CIExpr{{ kind = {s}, identifier = {Sr} }",
+              to_string__Debug__CIExprKind(self->kind),
+              to_string__Debug__CIExprIdentifier(&self->identifier));
         case CI_EXPR_KIND_LITERAL:
             return format__String(
               "CIExpr{{ kind = {s}, literal = {Sr} }",
@@ -4962,7 +5255,7 @@ VARIANT_DESTRUCTOR(CIExpr, grouping, CIExpr *self)
 
 VARIANT_DESTRUCTOR(CIExpr, identifier, CIExpr *self)
 {
-    FREE_RC(String, self->identifier);
+    FREE(CIExprIdentifier, &self->identifier);
     lily_free(self);
 }
 

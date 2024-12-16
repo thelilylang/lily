@@ -118,11 +118,18 @@
 #define CONSTRUCTOR(type, name, ...) type __new__##name(__VA_ARGS__)
 #define DESTRUCTOR(name, ...) void __free__##name(__VA_ARGS__)
 
+#define CONSTRUCTOR_NAME(name) __new__##name
+#define DESTRUCTOR_NAME(name) __free__##name
+
 #define VARIANT_CONSTRUCTOR(type, name, variant, ...) \
     type __new__##name##__##variant(__VA_ARGS__)
 
 #define VARIANT_DESTRUCTOR(name, variant, ...) \
     void __free__##name##__##variant(__VA_ARGS__)
+
+#define VARIANT_CONSTRUCTOR_NAME(name, variant) __new__##name##__##variant
+
+#define VARIANT_DESTRUCTOR_NAME(name, variant) __free__##name##__##variant
 
 #define ARRAY(...) { __VA_ARGS__ }
 #define LEN(arr, item) (((int)sizeof(arr) / sizeof(item)))

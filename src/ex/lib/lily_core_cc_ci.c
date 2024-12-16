@@ -27,6 +27,7 @@
 
 #include <core/cc/ci/ast.h>
 #include <core/cc/ci/file.h>
+#include <core/cc/ci/generator.h>
 #include <core/cc/ci/parser.h>
 #include <core/cc/ci/project_config.h>
 #include <core/cc/ci/resolver.h>
@@ -34,6 +35,8 @@
 #include <core/cc/ci/result.h>
 #include <core/cc/ci/scanner.h>
 #include <core/cc/ci/token.h>
+#include <core/cc/ci/typecheck.h>
+#include <core/cc/ci/visitor.h>
 
 #include "lily_base.c"
 #include "lily_core_cc_ci_diagnostic.c"
@@ -67,51 +70,59 @@ extern inline const CIEnumID *
 add_enum__CIScope(const CIScope *self,
                   const String *name,
                   CIFileID file_id,
-                  Usize id);
+                  Usize id,
+                  Usize decl_id);
 
 extern inline const CIEnumVariantID *
 add_enum_variant__CIScope(const CIScope *self,
                           const String *name,
                           CIFileID file_id,
-                          Usize id);
+                          Usize id,
+                          Usize decl_id);
 
 extern inline const CIFunctionID *
 add_function__CIScope(const CIScope *self,
                       const String *name,
                       CIFileID file_id,
-                      Usize id);
+                      Usize id,
+                      Usize decl_id);
 
 extern inline const CILabelID *
 add_label__CIScope(const CIScope *self,
                    const String *name,
                    CIScopeID scope_id,
                    CIFileID file_id,
-                   Usize id);
+                   Usize id,
+                   Usize decl_id);
 
 extern inline const CIStructID *
 add_struct__CIScope(const CIScope *self,
                     const String *name,
                     CIFileID file_id,
-                    Usize id);
+                    Usize id,
+                    Usize decl_id);
 
 extern inline const CITypedefID *
 add_typedef__CIScope(const CIScope *self,
                      const String *name,
                      CIFileID file_id,
-                     Usize id);
+                     Usize id,
+                     Usize decl_id);
 
 extern inline const CIUnionID *
 add_union__CIScope(const CIScope *self,
                    const String *name,
                    CIFileID file_id,
-                   Usize id);
+                   Usize id,
+                   Usize decl_id);
 
 extern inline const CIVariableID *
 add_variable__CIScope(const CIScope *self,
                       const String *name,
                       CIScopeID scope_id,
                       CIFileID file_id,
-                      Usize id);
+                      Usize id,
+                      Usize decl_id);
 
 extern inline const CIEnumID *
 search_enum__CIScope(const CIScope *self, const String *name);
@@ -230,6 +241,9 @@ extern inline CONSTRUCTOR(CIDeclEnum,
 extern inline bool
 is_variable__CIDeclFunctionItem(const CIDeclFunctionItem *self);
 
+extern inline CIDeclEnumVariant *
+ref__CIDeclEnumVariant(CIDeclEnumVariant *self);
+
 extern inline void
 add__CIDeclFunctionBody(CIDeclFunctionBody *self, CIDeclFunctionItem *item);
 
@@ -315,11 +329,23 @@ extern inline CONSTRUCTOR(CIDeclVariable,
                           CIExpr *expr,
                           bool is_local);
 
+extern inline void
+set_is_recursive__CIDecl(CIDecl *self);
+
+extern inline bool
+is_recursive__CIDecl(CIDecl *self);
+
 extern inline CIDecl *
 ref__CIDecl(CIDecl *self);
 
 extern inline bool
 is_typedef__CIDecl(CIDecl *self);
+
+extern inline bool
+is_prototype__CIDecl(CIDecl *self);
+
+extern inline bool
+can_have_prototype__CIDecl(const CIDecl *self);
 
 extern inline CONSTRUCTOR(CIExprArray, CIExprArray, Vec *array);
 
@@ -390,6 +416,35 @@ extern inline CONSTRUCTOR(CIExprFunctionCallBuiltin,
                           CIExprFunctionCallBuiltin,
                           Usize id,
                           Vec *params);
+
+extern inline VARIANT_CONSTRUCTOR(CIExprIdentifierID, CIExprIdentifierID, none);
+
+extern inline VARIANT_CONSTRUCTOR(CIExprIdentifierID,
+                                  CIExprIdentifierID,
+                                  enum_variant,
+                                  const CIEnumVariantID *enum_variant);
+
+extern inline VARIANT_CONSTRUCTOR(CIExprIdentifierID,
+                                  CIExprIdentifierID,
+                                  function,
+                                  const CIFunctionID *function);
+
+extern inline VARIANT_CONSTRUCTOR(CIExprIdentifierID,
+                                  CIExprIdentifierID,
+                                  label,
+                                  const CILabelID *label);
+
+extern inline VARIANT_CONSTRUCTOR(CIExprIdentifierID,
+                                  CIExprIdentifierID,
+                                  variable,
+                                  const CIVariableID *variable);
+
+extern inline CONSTRUCTOR(CIExprIdentifier,
+                          CIExprIdentifier,
+                          Rc *value,
+                          CIExprIdentifierID id);
+
+extern inline DESTRUCTOR(CIExprIdentifier, const CIExprIdentifier *self);
 
 extern inline CIExpr *
 ref__CIExpr(CIExpr *self);
@@ -467,6 +522,11 @@ is_header__CIFile(const char *filename);
 extern inline bool
 is_source__CIFile(const char *filename);
 
+// <core/cc/ci/generator.h>
+extern inline CONSTRUCTOR(CIGeneratorContent, CIGeneratorContent);
+
+extern inline CONSTRUCTOR(CIGenerator, CIGenerator, const CIResultFile *file);
+
 // <core/cc/ci/project_config.h>
 extern inline CONSTRUCTOR(CIProjectConfigCompiler,
                           CIProjectConfigCompiler,
@@ -498,8 +558,6 @@ extern inline VARIANT_CONSTRUCTOR(CIProjectConfig,
                                   Vec *bins);
 
 // <core/cc/ci/parser.h>
-extern inline CONSTRUCTOR(CIParserVisitWaitingList, CIParserVisitWaitingList);
-
 extern inline CONSTRUCTOR(CIParserSpan, CIParserSpan, Usize line, Usize column);
 
 extern inline CIParserSpan
@@ -745,5 +803,11 @@ is_keyword__CITokenKind(enum CITokenKind kind);
 
 extern inline CIToken *
 ref__CIToken(CIToken *self);
+
+// <core/cc/ci/typecheck.h>
+extern inline CONSTRUCTOR(CITypecheck, CITypecheck, const CIResult *result);
+
+// <core/cc/ci/visitor.h>
+extern inline CONSTRUCTOR(CIVisitor, CIVisitor, const CIResult *result);
 
 #endif // LILY_EX_LIB_LILY_CORE_CC_CI_C

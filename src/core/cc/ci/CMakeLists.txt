@@ -47,14 +47,20 @@ set(CI_SRC
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/features.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/generator.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/include.c
+    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/infer.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/parser.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/predefined.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/project_config.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/resolver.c
+    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/resolver/data_type.c
+    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/resolver/data_type_access.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/resolver/expr.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/result.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/scanner.c
-    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/token.c)
+    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/state_checker.c
+    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/token.c
+    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/typecheck.c
+    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/visitor.c)
 
 # lily_core_cc_ci
 add_library(lily_core_cc_ci STATIC ${CI_SRC})

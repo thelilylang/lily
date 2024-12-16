@@ -22,47 +22,25 @@
  * SOFTWARE.
  */
 
-#include <base/macros.h>
+#ifndef LILY_CORE_CC_CI_INFER_H
+#define LILY_CORE_CC_CI_INFER_H
 
-#include <command/ci/ci.h>
-
-#include <core/cc/ci/builtin.h>
-#include <core/cc/ci/generator.h>
-#include <core/cc/ci/include.h>
-#include <core/cc/ci/parser.h>
-#include <core/cc/ci/project_config.h>
+#include <core/cc/ci/ast.h>
 #include <core/cc/ci/result.h>
-#include <core/cc/ci/scanner.h>
-#include <core/cc/ci/typecheck.h>
-#include <core/cc/ci/visitor.h>
 
-#include <stdio.h>
-#include <stdlib.h>
+/**
+ *
+ * @brief Infer data type of the given expression.
+ * @param current_scope_id const CIScopeID*? (&)
+ * @param called_generic_params const CIGenericParams*? (&)
+ * @param decl_generic_params const CIGenericParams*? (&)
+ * @return CIDataType*
+ */
+CIDataType *
+infer_expr_data_type__CIInfer(const CIResultFile *file,
+                              const CIExpr *expr,
+                              const CIScopeID *current_scope_id,
+                              const CIGenericParams *called_generic_params,
+                              const CIGenericParams *decl_generic_params);
 
-void
-run__CI(const CIConfig *config)
-{
-    if (config->mode != CI_CONFIG_MODE_NONE) {
-        TODO("implement --mode option");
-    }
-
-    CIBuiltin builtin = NEW(CIBuiltin);
-    CIProjectConfig project_config =
-      config->file ? parse_cli__CIProjectConfig(config)
-                   : parse_yaml__CIProjectConfig(config->path);
-    CIResult result = NEW(CIResult, &project_config, &builtin);
-    CIVisitor visitor = NEW(CIVisitor, &result);
-    CITypecheck typecheck = NEW(CITypecheck, &result);
-
-    set__CIBuiltin(&builtin);
-    build__CIResult(&result);
-    run__CIVisitor(&visitor);
-    run__CITypecheck(&typecheck);
-    run__CIGenerator(&result);
-
-    FREE(CIResult, &result);
-    FREE(CIBuiltin, &builtin);
-    FREE(CIProjectConfig, &project_config);
-
-    destroy__CIInclude();
-}
+#endif // LILY_CORE_CC_CI_INFER_H

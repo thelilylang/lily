@@ -36,10 +36,12 @@
 
 #define MAX_CI_EXPR_PRECEDENCE 100
 
+typedef struct CIResultFile CIResultFile;
 typedef struct CIToken CIToken;
 typedef struct CIExpr CIExpr;
 typedef struct CIDataType CIDataType;
 typedef struct CIDeclFunctionItem CIDeclFunctionItem;
+typedef struct CIDecl CIDecl;
 
 typedef struct CIScopeID
 {
@@ -93,13 +95,14 @@ typedef struct CIEnumID
 {
     CIFileID file_id;
     Usize id;
+    Usize decl_id;
 } CIEnumID;
 
 /**
  *
  * @brief Construct CIEnumID type.
  */
-CONSTRUCTOR(CIEnumID *, CIEnumID, CIFileID file_id, Usize id);
+CONSTRUCTOR(CIEnumID *, CIEnumID, CIFileID file_id, Usize id, Usize decl_id);
 
 /**
  *
@@ -114,13 +117,18 @@ typedef struct CIEnumVariantID
 {
     CIFileID file_id;
     Usize id;
+    Usize decl_id;
 } CIEnumVariantID;
 
 /**
  *
  * @brief Construct CIEnumVariantID type.
  */
-CONSTRUCTOR(CIEnumVariantID *, CIEnumVariantID, CIFileID file_id, Usize id);
+CONSTRUCTOR(CIEnumVariantID *,
+            CIEnumVariantID,
+            CIFileID file_id,
+            Usize id,
+            Usize decl_id);
 
 /**
  *
@@ -135,13 +143,18 @@ typedef struct CIFunctionID
 {
     CIFileID file_id;
     Usize id;
+    Usize decl_id;
 } CIFunctionID;
 
 /**
  *
  * @brief Construct CIFunctionID type.
  */
-CONSTRUCTOR(CIFunctionID *, CIFunctionID, CIFileID file_id, Usize id);
+CONSTRUCTOR(CIFunctionID *,
+            CIFunctionID,
+            CIFileID file_id,
+            Usize id,
+            Usize decl_id);
 
 /**
  *
@@ -157,6 +170,7 @@ typedef struct CILabelID
     CIFileID file_id;
     CIScopeID scope_id;
     Usize id;
+    Usize decl_id;
 } CILabelID;
 
 /**
@@ -167,7 +181,8 @@ CONSTRUCTOR(CILabelID *,
             CILabelID,
             CIFileID file_id,
             CIScopeID scope_id,
-            Usize id);
+            Usize id,
+            Usize decl_id);
 
 /**
  *
@@ -182,13 +197,18 @@ typedef struct CIStructID
 {
     CIFileID file_id;
     Usize id;
+    Usize decl_id;
 } CIStructID;
 
 /**
  *
  * @brief Construct CIStructID type.
  */
-CONSTRUCTOR(CIStructID *, CIStructID, CIFileID file_id, Usize id);
+CONSTRUCTOR(CIStructID *,
+            CIStructID,
+            CIFileID file_id,
+            Usize id,
+            Usize decl_id);
 
 /**
  *
@@ -203,13 +223,18 @@ typedef struct CITypedefID
 {
     CIFileID file_id;
     Usize id;
+    Usize decl_id;
 } CITypedefID;
 
 /**
  *
  * @brief Construct CITypedefID type.
  */
-CONSTRUCTOR(CITypedefID *, CITypedefID, CIFileID file_id, Usize id);
+CONSTRUCTOR(CITypedefID *,
+            CITypedefID,
+            CIFileID file_id,
+            Usize id,
+            Usize decl_id);
 
 /**
  *
@@ -224,13 +249,14 @@ typedef struct CIUnionID
 {
     CIFileID file_id;
     Usize id;
+    Usize decl_id;
 } CIUnionID;
 
 /**
  *
  * @brief Construct CIUnionID type.
  */
-CONSTRUCTOR(CIUnionID *, CIUnionID, CIFileID file_id, Usize id);
+CONSTRUCTOR(CIUnionID *, CIUnionID, CIFileID file_id, Usize id, Usize decl_id);
 
 /**
  *
@@ -246,6 +272,7 @@ typedef struct CIVariableID
     CIFileID file_id;
     CIScopeID scope_id;
     Usize id;
+    Usize decl_id;
 } CIVariableID;
 
 /**
@@ -256,7 +283,8 @@ CONSTRUCTOR(CIVariableID *,
             CIVariableID,
             CIFileID file_id,
             CIScopeID scope_id,
-            Usize id);
+            Usize id,
+            Usize decl_id);
 
 /**
  *
@@ -266,6 +294,37 @@ inline DESTRUCTOR(CIVariableID, CIVariableID *self)
 {
     lily_free(self);
 }
+
+enum CIStateCheckerKind : Uint64
+{
+    CI_STATE_CHECKER_KIND_NONE = 0,
+    CI_STATE_CHECKER_KIND_HEAP = 1 << 0,
+    CI_STATE_CHECKER_KIND_NON_NULL = 1 << 1,
+    CI_STATE_CHECKER_KIND_STACK = 1 << 2,
+    CI_STATE_CHECKER_KIND_TRACE = 1 << 3,
+    CI_STATE_CHECKER_KIND_BORROWED = 1 << 4,
+};
+
+typedef struct CIStateCheckerItem
+{
+    Uint64 state;
+    CIVariableID *variable_id; // CIVariableID* (&)
+} CIStateCheckerItem;
+
+/**
+ *
+ * @brief Construct CIStateCheckerItem type.
+ */
+CONSTRUCTOR(CIStateCheckerItem *,
+            CIStateCheckerItem,
+            Uint64 state,
+            CIVariableID *variable_id);
+
+/**
+ *
+ * @brief Free CIStateCheckerItem type.
+ */
+DESTRUCTOR(CIStateCheckerItem, CIStateCheckerItem *self);
 
 typedef struct CIScope
 {
@@ -280,6 +339,7 @@ typedef struct CIScope
     HashMap *typedefs;      // HashMap<CITypedefID*>*
     HashMap *unions;        // HashMap<CIUnionID*>*
     HashMap *variables;     // HashMap<CIVariableID*>*
+    HashMap *states;        // HashMap<CIStateCheckerItem*>*
 } CIScope;
 
 /**
@@ -288,124 +348,133 @@ typedef struct CIScope
  */
 CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, Usize id, bool is_block);
 
-#define ADD_IN_SCOPE(ty, hm, id) \
-    return insert__HashMap(hm, name->buffer, NEW(ty, file_id, id));
+#define ADD_IN_SCOPE(ty, hm, id, decl_id) \
+    return insert__HashMap(hm, name->buffer, NEW(ty, file_id, id, decl_id));
 
-#define ADD_VARIABLE_IN_SCOPE(ty, scope_id, hm, id) \
-    return insert__HashMap(hm, name->buffer, NEW(ty, file_id, scope_id, id));
+#define ADD_VARIABLE_IN_SCOPE(ty, scope_id, hm, id, decl_id) \
+    return insert__HashMap(                                  \
+      hm, name->buffer, NEW(ty, file_id, scope_id, id, decl_id));
 
 /**
  *
  * @brief Add enum to the scope.
- * @return CIEnumID*? (&)
+ * @return const CIEnumID*? (&)
  */
 inline const CIEnumID *
 add_enum__CIScope(const CIScope *self,
                   const String *name,
                   CIFileID file_id,
-                  Usize id)
+                  Usize id,
+                  Usize decl_id)
 {
-    ADD_IN_SCOPE(CIEnumID, self->enums, id);
+    ADD_IN_SCOPE(CIEnumID, self->enums, id, decl_id);
 }
 
 /**
  *
  * @brief Add enum enum to the scope.
- * @return CIEnumVariantID*? (&)
+ * @return const CIEnumVariantID*? (&)
  */
 inline const CIEnumVariantID *
 add_enum_variant__CIScope(const CIScope *self,
                           const String *name,
                           CIFileID file_id,
-                          Usize id)
+                          Usize id,
+                          Usize decl_id)
 {
-    ADD_IN_SCOPE(CIEnumVariantID, self->enum_variants, id);
+    ADD_IN_SCOPE(CIEnumVariantID, self->enum_variants, id, decl_id);
 }
 
 /**
  *
  * @brief Add function to the scope.
- * @return CIFunctionID*? (&)
+ * @return const CIFunctionID*? (&)
  */
 inline const CIFunctionID *
 add_function__CIScope(const CIScope *self,
                       const String *name,
                       CIFileID file_id,
-                      Usize id)
+                      Usize id,
+                      Usize decl_id)
 {
-    ADD_IN_SCOPE(CIFunctionID, self->functions, id);
+    ADD_IN_SCOPE(CIFunctionID, self->functions, id, decl_id);
 }
 
 /**
  *
  * @brief Add label to the scope.
- * @return CILabelID*? (&)
+ * @return const CILabelID*? (&)
  */
 inline const CILabelID *
 add_label__CIScope(const CIScope *self,
                    const String *name,
                    CIScopeID scope_id,
                    CIFileID file_id,
-                   Usize id)
+                   Usize id,
+                   Usize decl_id)
 {
-    ADD_VARIABLE_IN_SCOPE(CILabelID, scope_id, self->labels, id);
+    ADD_VARIABLE_IN_SCOPE(CILabelID, scope_id, self->labels, id, decl_id);
 }
 
 /**
  *
  * @brief Add struct to the scope.
- * @return CIStructID*? (&)
+ * @return const CIStructID*? (&)
  */
 inline const CIStructID *
 add_struct__CIScope(const CIScope *self,
                     const String *name,
                     CIFileID file_id,
-                    Usize id)
+                    Usize id,
+                    Usize decl_id)
 {
-    ADD_IN_SCOPE(CIStructID, self->structs, id);
+    ADD_IN_SCOPE(CIStructID, self->structs, id, decl_id);
 }
 
 /**
  *
  * @brief Add typedef to the scope.
- * @return CITypedefID*? (&)
+ * @return const CITypedefID*? (&)
  */
 inline const CITypedefID *
 add_typedef__CIScope(const CIScope *self,
                      const String *name,
                      CIFileID file_id,
-                     Usize id)
+                     Usize id,
+                     Usize decl_id)
 {
-    ADD_IN_SCOPE(CITypedefID, self->typedefs, id);
+    ADD_IN_SCOPE(CITypedefID, self->typedefs, id, decl_id);
 }
 
 /**
  *
  * @brief Add union to the scope.
- * @return CIUnionID*? (&)
+ * @return const CIUnionID*? (&)
  */
 inline const CIUnionID *
 add_union__CIScope(const CIScope *self,
                    const String *name,
                    CIFileID file_id,
-                   Usize id)
+                   Usize id,
+                   Usize decl_id)
 {
-    ADD_IN_SCOPE(CIUnionID, self->unions, id);
+    ADD_IN_SCOPE(CIUnionID, self->unions, id, decl_id);
 }
 
 /**
  *
  * @brief Add variable to the scope.
- * @return CIVariableID*? (&)
+ * @return const CIVariableID*? (&)
  */
 inline const CIVariableID *
 add_variable__CIScope(const CIScope *self,
                       const String *name,
                       CIScopeID scope_id,
                       CIFileID file_id,
-                      Usize id)
+                      Usize id,
+                      Usize decl_id)
 {
-    ADD_VARIABLE_IN_SCOPE(CIVariableID, scope_id, self->variables, id);
+    ADD_VARIABLE_IN_SCOPE(CIVariableID, scope_id, self->variables, id, decl_id);
 }
 
 #define SEARCH_IN_SCOPE(hm) return get__HashMap(hm, name->buffer);
@@ -413,7 +482,7 @@ add_variable__CIScope(const CIScope *self,
 /**
  *
  * @brief Search enum to the scope.
- * @return CIEnumID*? (&)
+ * @return const CIEnumID*? (&)
  */
 inline const CIEnumID *
 search_enum__CIScope(const CIScope *self, const String *name)
@@ -424,7 +493,7 @@ search_enum__CIScope(const CIScope *self, const String *name)
 /**
  *
  * @brief Search enum variant to the scope.
- * @return CIEnumVariantID*? (&)
+ * @return const CIEnumVariantID*? (&)
  */
 inline const CIEnumVariantID *
 search_enum_variant__CIScope(const CIScope *self, const String *name)
@@ -435,7 +504,7 @@ search_enum_variant__CIScope(const CIScope *self, const String *name)
 /**
  *
  * @brief Search function to the scope.
- * @return CIFunctionID*? (&)
+ * @return const CIFunctionID*? (&)
  */
 inline const CIFunctionID *
 search_function__CIScope(const CIScope *self, const String *name)
@@ -446,7 +515,7 @@ search_function__CIScope(const CIScope *self, const String *name)
 /**
  *
  * @brief Search label to the scope.
- * @return CILabelID*? (&)
+ * @return const CILabelID*? (&)
  */
 inline const CILabelID *
 search_label__CIScope(const CIScope *self, const String *name)
@@ -457,7 +526,7 @@ search_label__CIScope(const CIScope *self, const String *name)
 /**
  *
  * @brief Search struct to the scope.
- * @return CIStructID*? (&)
+ * @return const CIStructID*? (&)
  */
 inline const CIStructID *
 search_struct__CIScope(const CIScope *self, const String *name)
@@ -468,7 +537,7 @@ search_struct__CIScope(const CIScope *self, const String *name)
 /**
  *
  * @brief Search typedef to the scope.
- * @return CITypedefID*? (&)
+ * @return const CITypedefID*? (&)
  */
 inline const CITypedefID *
 search_typedef__CIScope(const CIScope *self, const String *name)
@@ -479,7 +548,7 @@ search_typedef__CIScope(const CIScope *self, const String *name)
 /**
  *
  * @brief Search union to the scope.
- * @return CIUnionID*? (&)
+ * @return const CIUnionID*? (&)
  */
 inline const CIUnionID *
 search_union__CIScope(const CIScope *self, const String *name)
@@ -490,13 +559,22 @@ search_union__CIScope(const CIScope *self, const String *name)
 /**
  *
  * @brief Search variable to the scope.
- * @return CIVariableID*? (&)
+ * @return const CIVariableID*? (&)
  */
 inline const CIVariableID *
 search_variable__CIScope(const CIScope *self, const String *name)
 {
     SEARCH_IN_SCOPE(self->variables);
 }
+
+/**
+ *
+ * @brief Get declaration ID from decl.
+ */
+Usize
+get_decl_id_from_decl__CIScope(const CIScope *self,
+                               const CIResultFile *file,
+                               const CIDecl *decl);
 
 /**
  *
@@ -1496,6 +1574,7 @@ typedef struct CIDeclEnumVariant
 {
     Rc *name; // Rc<String*>*
     Isize value;
+    Usize ref_count;
 } CIDeclEnumVariant;
 
 /**
@@ -1527,6 +1606,18 @@ clone_variants__CIDeclEnumVariant(Vec *variants);
  */
 bool
 eq__CIDeclEnumVariant(const Vec *self_variants, const Vec *other_variants);
+
+/**
+ *
+ * @brief Increment `ref_count`.
+ * @return CIDeclEnumVariant*
+ */
+inline CIDeclEnumVariant *
+ref__CIDeclEnumVariant(CIDeclEnumVariant *self)
+{
+    ++self->ref_count;
+    return self;
+}
 
 /**
  *
@@ -2393,7 +2484,7 @@ typedef struct CIDecl
     union
     {
         CIDeclEnum enum_;
-        CIDeclEnumVariant *enum_variant; // CIDeclEnumVariant* (&)
+        CIDeclEnumVariant *enum_variant;
         CIDeclFunction function;
         CIDeclFunctionGen function_gen;
         CIDeclLabel label;
@@ -2655,6 +2746,35 @@ is_local__CIDecl(const CIDecl *self);
  */
 const Vec *
 get_function_params__CIDecl(const CIDecl *self);
+
+/**
+ *
+ * @brief Check if the declaration is a prototype.
+ */
+inline bool
+is_prototype__CIDecl(CIDecl *self)
+{
+    return self->is_prototype && !is_typedef__CIDecl(self);
+}
+
+/**
+ *
+ * @brief Set body to a function.
+ */
+void
+set_function_body__CIDecl(CIDecl *self, CIDeclFunctionBody *body);
+
+/**
+ *
+ * @brief Check if the declaration can have prototype.
+ */
+inline bool
+can_have_prototype__CIDecl(const CIDecl *self)
+{
+    return self->kind != CI_DECL_KIND_ENUM_VARIANT &&
+           self->kind != CI_DECL_KIND_LABEL &&
+           self->kind != CI_DECL_KIND_VARIABLE;
+}
 
 /**
  *
@@ -3170,6 +3290,171 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(CIExprFunctionCallBuiltin, const CIExprFunctionCallBuiltin *self);
 
+enum CIExprIdentifierIDKind
+{
+    CI_EXPR_IDENTIFIER_ID_KIND_NONE = 0,
+    CI_EXPR_IDENTIFIER_ID_KIND_ENUM_VARIANT,
+    CI_EXPR_IDENTIFIER_ID_KIND_FUNCTION,
+    CI_EXPR_IDENTIFIER_ID_KIND_LABEL,
+    CI_EXPR_IDENTIFIER_ID_KIND_VARIABLE,
+};
+
+/**
+ *
+ * @brief Convert CIExprIdentifierIDKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               CIExprIdentifierIDKind,
+               enum CIExprIdentifierIDKind self);
+#endif
+
+typedef struct CIExprIdentifierID
+{
+    enum CIExprIdentifierIDKind kind;
+    union
+    {
+        const CIEnumVariantID *enum_variant; // const CIEnumVariantID* (&)
+        const CIFunctionID *function;        // const CIFunctionID* (&)
+        const CILabelID *label;              // const CILabelID* (&)
+        const CIVariableID *variable;        // const CIVariableID* (&)
+    };
+} CIExprIdentifierID;
+
+/**
+ *
+ * @brief Construct CIExprIdentifierID
+ * (CI_EXPR_IDENTIFIER_ID_KIND_NONE).
+ */
+inline VARIANT_CONSTRUCTOR(CIExprIdentifierID, CIExprIdentifierID, none)
+{
+    return (CIExprIdentifierID){ .kind = CI_EXPR_IDENTIFIER_ID_KIND_NONE };
+}
+
+/**
+ *
+ * @brief Construct CIExprIdentifierID
+ * (CI_EXPR_IDENTIFIER_ID_KIND_ENUM_VARIANT).
+ */
+inline VARIANT_CONSTRUCTOR(CIExprIdentifierID,
+                           CIExprIdentifierID,
+                           enum_variant,
+                           const CIEnumVariantID *enum_variant)
+{
+    return (CIExprIdentifierID){ .kind =
+                                   CI_EXPR_IDENTIFIER_ID_KIND_ENUM_VARIANT,
+                                 .enum_variant = enum_variant };
+}
+
+/**
+ *
+ * @brief Construct CIExprIdentifierID (CI_EXPR_IDENTIFIER_ID_KIND_FUNCTION).
+ */
+inline VARIANT_CONSTRUCTOR(CIExprIdentifierID,
+                           CIExprIdentifierID,
+                           function,
+                           const CIFunctionID *function)
+{
+    return (CIExprIdentifierID){ .kind = CI_EXPR_IDENTIFIER_ID_KIND_FUNCTION,
+                                 .function = function };
+}
+
+/**
+ *
+ * @brief Construct CIExprIdentifierID (CI_EXPR_IDENTIFIER_ID_KIND_FUNCTION).
+ */
+inline VARIANT_CONSTRUCTOR(CIExprIdentifierID,
+                           CIExprIdentifierID,
+                           label,
+                           const CILabelID *label)
+{
+    return (CIExprIdentifierID){ .kind = CI_EXPR_IDENTIFIER_ID_KIND_LABEL,
+                                 .label = label };
+}
+
+/**
+ *
+ * @brief Construct CIExprIdentifierID (CI_EXPR_IDENTIFIER_ID_KIND_VARIABLE).
+ */
+inline VARIANT_CONSTRUCTOR(CIExprIdentifierID,
+                           CIExprIdentifierID,
+                           variable,
+                           const CIVariableID *variable)
+{
+    return (CIExprIdentifierID){ .kind = CI_EXPR_IDENTIFIER_ID_KIND_VARIABLE,
+                                 .variable = variable };
+}
+
+/**
+ *
+ * @brief Search identifier and return CIExprIdentifierID.
+ * @param file const CIResultFile* (&)
+ * @param scope CIScope* (&)
+ */
+CIExprIdentifierID
+search_identifier__CIExprIdentifierID(const String *name,
+                                      const CIResultFile *file,
+                                      CIScope *scope);
+
+/**
+ *
+ * @brief Get declaration from CIExprIdentifierID type.
+ * @return CIDecl*? (&)
+ */
+CIDecl *
+get_decl__CIExprIdentifierID(const CIExprIdentifierID *self,
+                             const CIResultFile *file);
+
+/**
+ *
+ * @rief Convert CIExprIdentifierID in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIExprIdentifierID, const CIExprIdentifierID *self);
+#endif
+
+typedef struct CIExprIdentifier
+{
+    Rc *value; // Rc<String*>*
+    CIExprIdentifierID id;
+} CIExprIdentifier;
+
+/**
+ *
+ * @brief Construct CIExprIdentifier type.
+ * @param value Rc<String*>* (&)
+ */
+inline CONSTRUCTOR(CIExprIdentifier,
+                   CIExprIdentifier,
+                   Rc *value,
+                   CIExprIdentifierID id)
+{
+    return (CIExprIdentifier){ .value = ref__Rc(value), .id = id };
+}
+
+/**
+ *
+ * @brief Convert CIExprIdentifier in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIExprIdentifier, const CIExprIdentifier *self);
+#endif
+
+/**
+ *
+ * @brief Free CIExprIdentifier type.
+ */
+inline DESTRUCTOR(CIExprIdentifier, const CIExprIdentifier *self)
+{
+    FREE_RC(String, self->value);
+}
+
 typedef struct CIExprStructFieldCall
 {
     Vec *path; // Vec<Rc<String*>*>*
@@ -3278,7 +3563,7 @@ struct CIExpr
         CIExprFunctionCall function_call;
         CIExprFunctionCallBuiltin function_call_builtin;
         CIExpr *grouping;
-        Rc *identifier; // Rc<String*>*
+        CIExprIdentifier identifier;
         CIExprLiteral literal;
         CIExpr *sizeof_;
         CIExprStructCall struct_call;
@@ -3359,9 +3644,8 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, grouping, CIExpr *grouping);
 /**
  *
  * @brief Construct CIExpr type (CI_EXPR_KIND_IDENTIFIER).
- * @param identifier Rc<String*>* (&)
  */
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, identifier, Rc *identifier);
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, identifier, CIExprIdentifier identifier);
 
 /**
  *
