@@ -35,7 +35,9 @@ is_in_function_body__CIVisitor(CIVisitor *self);
 static void
 generate_function_gen__CIVisitor(CIVisitor *self,
                                  String *function_name,
-                                 CIGenericParams *called_generic_params);
+                                 CIGenericParams *unresolved_generic_params,
+                                 CIGenericParams *called_generic_params,
+                                 CIGenericParams *decl_generic_params);
 
 /// @brief Generate struct, union or typedef gen.
 /// @param name String* (&)
@@ -280,7 +282,9 @@ is_in_function_body__CIVisitor(CIVisitor *self)
 void
 generate_function_gen__CIVisitor(CIVisitor *self,
                                  String *function_name,
-                                 CIGenericParams *called_generic_params)
+                                 CIGenericParams *unresolved_generic_params,
+                                 CIGenericParams *called_generic_params,
+                                 CIGenericParams *decl_generic_params)
 {
     const CIDecl *function_decl =
       search_function__CIResultFile(self->file, function_name);
@@ -290,15 +294,20 @@ generate_function_gen__CIVisitor(CIVisitor *self,
     }
 
     // Generate gen function declaration
-    if (called_generic_params &&
-        !has_generic__CIGenericParams(called_generic_params)) {
+    if (unresolved_generic_params) {
         if (function_decl->is_prototype) {
             FAILED("expected to have the definition of the declaration at this "
                    "point");
         } else {
+            CIGenericParams *resolved_generic_params =
+              has_generic__CIGenericParams(unresolved_generic_params)
+                ? substitute_generic_params__CIParser(unresolved_generic_params,
+                                                      decl_generic_params,
+                                                      called_generic_params)
+                : ref__CIGenericParams(unresolved_generic_params);
             String *serialized_called_function_name =
               serialize_name__CIDeclFunction(&function_decl->function,
-                                             called_generic_params);
+                                             resolved_generic_params);
             const CIDecl *function_gen = search_function__CIResultFile(
               self->file, serialized_called_function_name);
 
@@ -307,16 +316,16 @@ generate_function_gen__CIVisitor(CIVisitor *self,
                   substitute_data_type__CIParser(
                     function_decl->function.return_data_type,
                     function_decl->function.generic_params,
-                    called_generic_params);
+                    resolved_generic_params);
 
                 visit_function__CIVisitor(
-                  self, function_decl, called_generic_params);
+                  self, function_decl, resolved_generic_params);
 
                 CIDecl *function_gen_decl =
                   NEW_VARIANT(CIDecl,
                               function_gen,
                               (CIDecl *)function_decl,
-                              ref__CIGenericParams(called_generic_params),
+                              ref__CIGenericParams(resolved_generic_params),
                               serialized_called_function_name,
                               subs_return_data_type ? subs_return_data_type
                                                     : ref__CIDataType(
@@ -330,6 +339,8 @@ generate_function_gen__CIVisitor(CIVisitor *self,
                   true,
                   is_in_function_body__CIVisitor(self));
             }
+
+            FREE(CIGenericParams, resolved_generic_params);
         }
     }
 }
@@ -826,7 +837,9 @@ visit_function_expr_function_call__CIVisitor(
         generate_function_gen__CIVisitor(
           self,
           GET_PTR_RC(String, function_call->identifier),
-          function_call->generic_params);
+          function_call->generic_params,
+          called_generic_params,
+          decl_generic_params);
     }
 
     for (Usize i = 0; i < function_call->params->len; ++i) {
