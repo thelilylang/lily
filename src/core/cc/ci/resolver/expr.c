@@ -1590,10 +1590,12 @@ resolve_identifier__CIResolver(const CIResolverExpr *self, CIExpr *identifier)
 
     ASSERT(self->parser && self->scope);
 
-    CIDecl *identifier_decl = search_identifier__CIResultFile(
-      self->parser->file,
-      self->scope,
-      GET_PTR_RC(String, identifier->identifier));
+    CIDecl *identifier_decl = get_decl__CIExprIdentifierID(
+      &identifier->identifier.id, self->parser->file);
+
+    if (!identifier_decl) {
+        FAILED("identifier is not found");
+    }
 
     switch (identifier_decl->kind) {
         case CI_DECL_KIND_ENUM_VARIANT:

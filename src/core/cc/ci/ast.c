@@ -4497,6 +4497,133 @@ DESTRUCTOR(CIExprFunctionCallBuiltin, const CIExprFunctionCallBuiltin *self)
     FREE(Vec, self->params);
 }
 
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               CIExprIdentifierIDKind,
+               enum CIExprIdentifierIDKind self)
+{
+    switch (self) {
+        case CI_EXPR_IDENTIFIER_ID_KIND_NONE:
+            return "CI_EXPR_IDENTIFIER_ID_KIND_NONE";
+        case CI_EXPR_IDENTIFIER_ID_KIND_ENUM_VARIANT:
+            return "CI_EXPR_IDENTIFIER_ID_KIND_ENUM_VARIANT";
+        case CI_EXPR_IDENTIFIER_ID_KIND_FUNCTION:
+            return "CI_EXPR_IDENTIFIER_ID_KIND_FUNCTION";
+        case CI_EXPR_IDENTIFIER_ID_KIND_LABEL:
+            return "CI_EXPR_IDENTIFIER_ID_KIND_LABEL";
+        case CI_EXPR_IDENTIFIER_ID_KIND_VARIABLE:
+            return "CI_EXPR_IDENTIFIER_ID_KIND_VARIABLE";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+CIExprIdentifierID
+search_identifier__CIExprIdentifierID(const String *name,
+                                      const CIResultFile *file,
+                                      CIScope *scope)
+{
+    static const void *(*search_functions[])(
+      const CIScope *,
+      const String *) = { (const void *(*)(const CIScope *, const String *)) &
+                            search_enum_variant__CIScope,
+                          (const void *(*)(const CIScope *, const String *)) &
+                            search_function__CIScope,
+                          (const void *(*)(const CIScope *, const String *)) &
+                            search_label__CIScope,
+                          (const void *(*)(const CIScope *, const String *)) &
+                            search_variable__CIScope };
+    static CIExprIdentifierID (*constructor_functions[])(const void *) = {
+        (CIExprIdentifierID(*)(const void *)) &
+          VARIANT_CONSTRUCTOR_NAME(CIExprIdentifierID, enum_variant),
+        (CIExprIdentifierID(*)(const void *)) &
+          VARIANT_CONSTRUCTOR_NAME(CIExprIdentifierID, function),
+        (CIExprIdentifierID(*)(const void *)) &
+          VARIANT_CONSTRUCTOR_NAME(CIExprIdentifierID, label),
+        (CIExprIdentifierID(*)(const void *)) &
+          VARIANT_CONSTRUCTOR_NAME(CIExprIdentifierID, variable),
+    };
+
+    for (; scope; scope = scope->parent ? get_scope_from_id__CIResultFile(
+                                            file, scope->parent)
+                                        : NULL) {
+        for (Usize i = 0; i < LEN(search_functions, *search_functions); ++i) {
+            const void *res_id = search_functions[i](scope, name);
+
+            if (res_id) {
+                return constructor_functions[i](res_id);
+            }
+        }
+    }
+
+    return NEW_VARIANT(CIExprIdentifierID, none);
+}
+
+CIDecl *
+get_decl__CIExprIdentifierID(const CIExprIdentifierID *self,
+                             const CIResultFile *file)
+{
+    switch (self->kind) {
+        case CI_EXPR_IDENTIFIER_ID_KIND_ENUM_VARIANT: {
+            CIDecl *enum_variant_decl =
+              get_enum_variant_from_id__CIResultFile(file, self->enum_variant);
+
+            ASSERT(enum_variant_decl);
+
+            return enum_variant_decl;
+        }
+        case CI_EXPR_IDENTIFIER_ID_KIND_FUNCTION: {
+            CIDecl *function_decl =
+              get_function_from_id__CIResultFile(file, self->function);
+
+            ASSERT(function_decl);
+
+            return function_decl;
+        }
+        case CI_EXPR_IDENTIFIER_ID_KIND_LABEL: {
+            CIDecl *label_decl =
+              get_label_from_id__CIResultFile(file, self->label);
+
+            ASSERT(label_decl);
+
+            return label_decl;
+        }
+        case CI_EXPR_IDENTIFIER_ID_KIND_VARIABLE: {
+            CIDecl *variable_decl =
+              get_variable_from_id__CIResultFile(file, self->variable);
+
+            ASSERT(variable_decl);
+
+            return variable_decl;
+        }
+        case CI_EXPR_IDENTIFIER_ID_KIND_NONE:
+            return NULL;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIExprIdentifierID, const CIExprIdentifierID *self)
+{
+    return format__String("CIExprIdentifierID{{ kind = {s}, ... }",
+                          to_string__Debug__CIExprIdentifierIDKind(self->kind));
+}
+#endif
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIExprIdentifier, const CIExprIdentifier *self)
+{
+    return format__String("CIExprIdentifier{{ value = {S}, id = {Sr} }",
+                          GET_PTR_RC(String, self->value),
+                          to_string__Debug__CIExprIdentifierID(&self->id));
+}
+#endif
+
 CONSTRUCTOR(CIExprStructFieldCall *,
             CIExprStructFieldCall,
             Vec *path,
@@ -4729,13 +4856,13 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, grouping, CIExpr *grouping)
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, identifier, Rc *identifier)
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, identifier, CIExprIdentifier identifier)
 {
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
     self->kind = CI_EXPR_KIND_IDENTIFIER;
     self->ref_count = 0;
-    self->identifier = ref__Rc(identifier);
+    self->identifier = identifier;
 
     return self;
 }
@@ -5013,9 +5140,10 @@ IMPL_FOR_DEBUG(to_string, CIExpr, const CIExpr *self)
                                   to_string__Debug__CIExprKind(self->kind),
                                   to_string__Debug__CIExpr(self->grouping));
         case CI_EXPR_KIND_IDENTIFIER:
-            return format__String("CIExpr{{ kind = {s}, identifier = {S} }",
-                                  to_string__Debug__CIExprKind(self->kind),
-                                  GET_PTR_RC(String, self->identifier));
+            return format__String(
+              "CIExpr{{ kind = {s}, identifier = {Sr} }",
+              to_string__Debug__CIExprKind(self->kind),
+              to_string__Debug__CIExprIdentifier(&self->identifier));
         case CI_EXPR_KIND_LITERAL:
             return format__String(
               "CIExpr{{ kind = {s}, literal = {Sr} }",
@@ -5127,7 +5255,7 @@ VARIANT_DESTRUCTOR(CIExpr, grouping, CIExpr *self)
 
 VARIANT_DESTRUCTOR(CIExpr, identifier, CIExpr *self)
 {
-    FREE_RC(String, self->identifier);
+    FREE(CIExprIdentifier, &self->identifier);
     lily_free(self);
 }
 

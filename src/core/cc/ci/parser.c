@@ -2557,7 +2557,11 @@ parse_primary_expr__CIParser(CIParser *self)
             return NULL;
         }
         case CI_TOKEN_KIND_IDENTIFIER: {
+            ASSERT(current_scope);
+
             Rc *identifier = self->previous_token->identifier;
+            CIExprIdentifierID id = search_identifier__CIExprIdentifierID(
+              GET_PTR_RC(String, identifier), self->file, current_scope);
             CIGenericParams *generic_params =
               parse_generic_params__CIParser(self); // CIGenericParams*?
 
@@ -2570,7 +2574,9 @@ parse_primary_expr__CIParser(CIParser *self)
                 case CI_TOKEN_KIND_LBRACE:
                     TODO("parse struct call");
                 default:
-                    res = NEW_VARIANT(CIExpr, identifier, identifier);
+                    res = NEW_VARIANT(CIExpr,
+                                      identifier,
+                                      NEW(CIExprIdentifier, identifier, id));
             }
 
             break;

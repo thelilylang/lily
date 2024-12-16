@@ -417,6 +417,35 @@ extern inline CONSTRUCTOR(CIExprFunctionCallBuiltin,
                           Usize id,
                           Vec *params);
 
+extern inline VARIANT_CONSTRUCTOR(CIExprIdentifierID, CIExprIdentifierID, none);
+
+extern inline VARIANT_CONSTRUCTOR(CIExprIdentifierID,
+                                  CIExprIdentifierID,
+                                  enum_variant,
+                                  const CIEnumVariantID *enum_variant);
+
+extern inline VARIANT_CONSTRUCTOR(CIExprIdentifierID,
+                                  CIExprIdentifierID,
+                                  function,
+                                  const CIFunctionID *function);
+
+extern inline VARIANT_CONSTRUCTOR(CIExprIdentifierID,
+                                  CIExprIdentifierID,
+                                  label,
+                                  const CILabelID *label);
+
+extern inline VARIANT_CONSTRUCTOR(CIExprIdentifierID,
+                                  CIExprIdentifierID,
+                                  variable,
+                                  const CIVariableID *variable);
+
+extern inline CONSTRUCTOR(CIExprIdentifier,
+                          CIExprIdentifier,
+                          Rc *value,
+                          CIExprIdentifierID id);
+
+extern inline DESTRUCTOR(CIExprIdentifier, const CIExprIdentifier *self);
+
 extern inline CIExpr *
 ref__CIExpr(CIExpr *self);
 

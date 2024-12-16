@@ -220,7 +220,7 @@ infer_expr_access_data_type_identifier__CIInfer(const CIResultFile *file,
     }
 
     CIDataType *field_data_type = get__CIDeclStructField(
-      fields, GET_PTR_RC(String, expr_access->identifier));
+      fields, GET_PTR_RC(String, expr_access->identifier.value));
 
     if (!field_data_type) {
         FAILED("the field is not found");
@@ -622,52 +622,84 @@ infer_expr_data_type__CIInfer(const CIResultFile *file,
                                                  current_scope_id,
                                                  called_generic_params,
                                                  decl_generic_params);
-        case CI_EXPR_KIND_IDENTIFIER: {
-            CIScope *local_current_scope =
-              get_scope_from_id__CIResultFile(file, current_scope_id);
+        case CI_EXPR_KIND_IDENTIFIER:
+            switch (expr->identifier.id.kind) {
+                // NOTE: In the case that the identifier was not found in the
+                // parser, the only case that could not be found in the parser
+                // is the label.
+                //
+                // e.g.
+                //
+                // goto b;
+                //
+                // b: {}
+                case CI_EXPR_IDENTIFIER_ID_KIND_NONE: {
+                    CIScope *local_current_scope =
+                      get_scope_from_id__CIResultFile(file, current_scope_id);
 
-            ASSERT(local_current_scope);
+                    ASSERT(local_current_scope);
 
-            CIDecl *decl = search_identifier__CIResultFile(
-              file, local_current_scope, GET_PTR_RC(String, expr->identifier));
+                    const CILabelID *label = search_label__CIScope(
+                      local_current_scope,
+                      GET_PTR_RC(String, expr->identifier.value));
 
-            if (decl) {
-                switch (decl->kind) {
-                    case CI_DECL_KIND_FUNCTION: {
-                        // TODO: Call generic function is not yet implemented
-                        CIDataType *function_return_data_type =
-                          (CIDataType *)get_return_data_type__CIDecl(decl);
-                        CIDataType *resolved_function_return_data_type =
-                          run__CIResolverDataType(file,
-                                                  function_return_data_type,
-                                                  called_generic_params,
-                                                  decl_generic_params);
-                        const Vec *function_params =
-                          get_function_params__CIDecl(decl);
-                        // NOTE: Maybe use ref count instead of.
-                        Vec *cloned_function_params =
-                          function_params
-                            ? clone_params__CIDeclFunctionParam(function_params)
-                            : NULL;
+                    if (label) {
+                        ((CIExpr *)expr)->identifier.id =
+                          NEW_VARIANT(CIExprIdentifierID, label, label);
 
-                        return NEW_VARIANT(
-                          CIDataType,
-                          function,
-                          NEW(CIDataTypeFunction,
-                              NULL,
-                              cloned_function_params,
-                              resolved_function_return_data_type,
-                              NULL));
+                        goto label;
                     }
-                    case CI_DECL_KIND_VARIABLE:
-                        return ref__CIDataType(decl->variable.data_type);
-                    default:
-                        UNREACHABLE("this declaration is not expected");
-                }
-            }
 
-            FAILED("cannot infer on unknown identifier");
-        }
+                    FAILED("cannot infer on unknown identifier");
+
+                    break;
+                }
+                case CI_EXPR_IDENTIFIER_ID_KIND_ENUM_VARIANT:
+                    TODO("enum variant");
+                case CI_EXPR_IDENTIFIER_ID_KIND_FUNCTION: {
+                    // TODO: Call generic function is not yet implemented
+                    CIDecl *decl = get_function_from_id__CIResultFile(
+                      file, expr->identifier.id.function);
+
+                    ASSERT(decl);
+
+                    CIDataType *function_return_data_type =
+                      (CIDataType *)get_return_data_type__CIDecl(decl);
+                    CIDataType *resolved_function_return_data_type =
+                      run__CIResolverDataType(file,
+                                              function_return_data_type,
+                                              called_generic_params,
+                                              decl_generic_params);
+                    const Vec *function_params =
+                      get_function_params__CIDecl(decl);
+                    // NOTE: Maybe use ref count instead of.
+                    Vec *cloned_function_params =
+                      function_params
+                        ? clone_params__CIDeclFunctionParam(function_params)
+                        : NULL;
+
+                    return NEW_VARIANT(CIDataType,
+                                       function,
+                                       NEW(CIDataTypeFunction,
+                                           NULL,
+                                           cloned_function_params,
+                                           resolved_function_return_data_type,
+                                           NULL));
+                }
+                case CI_EXPR_IDENTIFIER_ID_KIND_LABEL:
+                label:
+                    TODO("label");
+                case CI_EXPR_IDENTIFIER_ID_KIND_VARIABLE: {
+                    CIDecl *decl = get_variable_from_id__CIResultFile(
+                      file, expr->identifier.id.variable);
+
+                    ASSERT(decl);
+
+                    return ref__CIDataType(decl->variable.data_type);
+                }
+                default:
+                    UNREACHABLE("unknown variant");
+            }
         case CI_EXPR_KIND_LITERAL:
             return infer_expr_literal_data_type__CIInfer(file, &expr->literal);
         case CI_EXPR_KIND_NULLPTR:

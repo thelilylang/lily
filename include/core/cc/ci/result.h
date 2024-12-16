@@ -586,15 +586,6 @@ search_data_type__CIResultFile(const CIResultFile *self, const String *name);
 
 /**
  *
- * @brief Search identifier declaration in decls map.
- */
-CIDecl *
-search_identifier__CIResultFile(const CIResultFile *self,
-                                const CIScope *scope,
-                                const String *name);
-
-/**
- *
  * @brief Search function from the given name, if function_generic_params is
  * NULL otherwise, it serializes the given name and searches generic function
  * with this serialized name.

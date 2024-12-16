@@ -358,7 +358,7 @@ CONSTRUCTOR(CIScope *, CIScope, CIScopeID *parent, Usize id, bool is_block);
 /**
  *
  * @brief Add enum to the scope.
- * @return CIEnumID*? (&)
+ * @return const CIEnumID*? (&)
  */
 inline const CIEnumID *
 add_enum__CIScope(const CIScope *self,
@@ -373,7 +373,7 @@ add_enum__CIScope(const CIScope *self,
 /**
  *
  * @brief Add enum enum to the scope.
- * @return CIEnumVariantID*? (&)
+ * @return const CIEnumVariantID*? (&)
  */
 inline const CIEnumVariantID *
 add_enum_variant__CIScope(const CIScope *self,
@@ -388,7 +388,7 @@ add_enum_variant__CIScope(const CIScope *self,
 /**
  *
  * @brief Add function to the scope.
- * @return CIFunctionID*? (&)
+ * @return const CIFunctionID*? (&)
  */
 inline const CIFunctionID *
 add_function__CIScope(const CIScope *self,
@@ -403,7 +403,7 @@ add_function__CIScope(const CIScope *self,
 /**
  *
  * @brief Add label to the scope.
- * @return CILabelID*? (&)
+ * @return const CILabelID*? (&)
  */
 inline const CILabelID *
 add_label__CIScope(const CIScope *self,
@@ -419,7 +419,7 @@ add_label__CIScope(const CIScope *self,
 /**
  *
  * @brief Add struct to the scope.
- * @return CIStructID*? (&)
+ * @return const CIStructID*? (&)
  */
 inline const CIStructID *
 add_struct__CIScope(const CIScope *self,
@@ -434,7 +434,7 @@ add_struct__CIScope(const CIScope *self,
 /**
  *
  * @brief Add typedef to the scope.
- * @return CITypedefID*? (&)
+ * @return const CITypedefID*? (&)
  */
 inline const CITypedefID *
 add_typedef__CIScope(const CIScope *self,
@@ -449,7 +449,7 @@ add_typedef__CIScope(const CIScope *self,
 /**
  *
  * @brief Add union to the scope.
- * @return CIUnionID*? (&)
+ * @return const CIUnionID*? (&)
  */
 inline const CIUnionID *
 add_union__CIScope(const CIScope *self,
@@ -464,7 +464,7 @@ add_union__CIScope(const CIScope *self,
 /**
  *
  * @brief Add variable to the scope.
- * @return CIVariableID*? (&)
+ * @return const CIVariableID*? (&)
  */
 inline const CIVariableID *
 add_variable__CIScope(const CIScope *self,
@@ -482,7 +482,7 @@ add_variable__CIScope(const CIScope *self,
 /**
  *
  * @brief Search enum to the scope.
- * @return CIEnumID*? (&)
+ * @return const CIEnumID*? (&)
  */
 inline const CIEnumID *
 search_enum__CIScope(const CIScope *self, const String *name)
@@ -493,7 +493,7 @@ search_enum__CIScope(const CIScope *self, const String *name)
 /**
  *
  * @brief Search enum variant to the scope.
- * @return CIEnumVariantID*? (&)
+ * @return const CIEnumVariantID*? (&)
  */
 inline const CIEnumVariantID *
 search_enum_variant__CIScope(const CIScope *self, const String *name)
@@ -504,7 +504,7 @@ search_enum_variant__CIScope(const CIScope *self, const String *name)
 /**
  *
  * @brief Search function to the scope.
- * @return CIFunctionID*? (&)
+ * @return const CIFunctionID*? (&)
  */
 inline const CIFunctionID *
 search_function__CIScope(const CIScope *self, const String *name)
@@ -515,7 +515,7 @@ search_function__CIScope(const CIScope *self, const String *name)
 /**
  *
  * @brief Search label to the scope.
- * @return CILabelID*? (&)
+ * @return const CILabelID*? (&)
  */
 inline const CILabelID *
 search_label__CIScope(const CIScope *self, const String *name)
@@ -526,7 +526,7 @@ search_label__CIScope(const CIScope *self, const String *name)
 /**
  *
  * @brief Search struct to the scope.
- * @return CIStructID*? (&)
+ * @return const CIStructID*? (&)
  */
 inline const CIStructID *
 search_struct__CIScope(const CIScope *self, const String *name)
@@ -537,7 +537,7 @@ search_struct__CIScope(const CIScope *self, const String *name)
 /**
  *
  * @brief Search typedef to the scope.
- * @return CITypedefID*? (&)
+ * @return const CITypedefID*? (&)
  */
 inline const CITypedefID *
 search_typedef__CIScope(const CIScope *self, const String *name)
@@ -548,7 +548,7 @@ search_typedef__CIScope(const CIScope *self, const String *name)
 /**
  *
  * @brief Search union to the scope.
- * @return CIUnionID*? (&)
+ * @return const CIUnionID*? (&)
  */
 inline const CIUnionID *
 search_union__CIScope(const CIScope *self, const String *name)
@@ -559,7 +559,7 @@ search_union__CIScope(const CIScope *self, const String *name)
 /**
  *
  * @brief Search variable to the scope.
- * @return CIVariableID*? (&)
+ * @return const CIVariableID*? (&)
  */
 inline const CIVariableID *
 search_variable__CIScope(const CIScope *self, const String *name)
@@ -3290,6 +3290,171 @@ IMPL_FOR_DEBUG(to_string,
  */
 DESTRUCTOR(CIExprFunctionCallBuiltin, const CIExprFunctionCallBuiltin *self);
 
+enum CIExprIdentifierIDKind
+{
+    CI_EXPR_IDENTIFIER_ID_KIND_NONE = 0,
+    CI_EXPR_IDENTIFIER_ID_KIND_ENUM_VARIANT,
+    CI_EXPR_IDENTIFIER_ID_KIND_FUNCTION,
+    CI_EXPR_IDENTIFIER_ID_KIND_LABEL,
+    CI_EXPR_IDENTIFIER_ID_KIND_VARIABLE,
+};
+
+/**
+ *
+ * @brief Convert CIExprIdentifierIDKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               CIExprIdentifierIDKind,
+               enum CIExprIdentifierIDKind self);
+#endif
+
+typedef struct CIExprIdentifierID
+{
+    enum CIExprIdentifierIDKind kind;
+    union
+    {
+        const CIEnumVariantID *enum_variant; // const CIEnumVariantID* (&)
+        const CIFunctionID *function;        // const CIFunctionID* (&)
+        const CILabelID *label;              // const CILabelID* (&)
+        const CIVariableID *variable;        // const CIVariableID* (&)
+    };
+} CIExprIdentifierID;
+
+/**
+ *
+ * @brief Construct CIExprIdentifierID
+ * (CI_EXPR_IDENTIFIER_ID_KIND_NONE).
+ */
+inline VARIANT_CONSTRUCTOR(CIExprIdentifierID, CIExprIdentifierID, none)
+{
+    return (CIExprIdentifierID){ .kind = CI_EXPR_IDENTIFIER_ID_KIND_NONE };
+}
+
+/**
+ *
+ * @brief Construct CIExprIdentifierID
+ * (CI_EXPR_IDENTIFIER_ID_KIND_ENUM_VARIANT).
+ */
+inline VARIANT_CONSTRUCTOR(CIExprIdentifierID,
+                           CIExprIdentifierID,
+                           enum_variant,
+                           const CIEnumVariantID *enum_variant)
+{
+    return (CIExprIdentifierID){ .kind =
+                                   CI_EXPR_IDENTIFIER_ID_KIND_ENUM_VARIANT,
+                                 .enum_variant = enum_variant };
+}
+
+/**
+ *
+ * @brief Construct CIExprIdentifierID (CI_EXPR_IDENTIFIER_ID_KIND_FUNCTION).
+ */
+inline VARIANT_CONSTRUCTOR(CIExprIdentifierID,
+                           CIExprIdentifierID,
+                           function,
+                           const CIFunctionID *function)
+{
+    return (CIExprIdentifierID){ .kind = CI_EXPR_IDENTIFIER_ID_KIND_FUNCTION,
+                                 .function = function };
+}
+
+/**
+ *
+ * @brief Construct CIExprIdentifierID (CI_EXPR_IDENTIFIER_ID_KIND_FUNCTION).
+ */
+inline VARIANT_CONSTRUCTOR(CIExprIdentifierID,
+                           CIExprIdentifierID,
+                           label,
+                           const CILabelID *label)
+{
+    return (CIExprIdentifierID){ .kind = CI_EXPR_IDENTIFIER_ID_KIND_LABEL,
+                                 .label = label };
+}
+
+/**
+ *
+ * @brief Construct CIExprIdentifierID (CI_EXPR_IDENTIFIER_ID_KIND_VARIABLE).
+ */
+inline VARIANT_CONSTRUCTOR(CIExprIdentifierID,
+                           CIExprIdentifierID,
+                           variable,
+                           const CIVariableID *variable)
+{
+    return (CIExprIdentifierID){ .kind = CI_EXPR_IDENTIFIER_ID_KIND_VARIABLE,
+                                 .variable = variable };
+}
+
+/**
+ *
+ * @brief Search identifier and return CIExprIdentifierID.
+ * @param file const CIResultFile* (&)
+ * @param scope CIScope* (&)
+ */
+CIExprIdentifierID
+search_identifier__CIExprIdentifierID(const String *name,
+                                      const CIResultFile *file,
+                                      CIScope *scope);
+
+/**
+ *
+ * @brief Get declaration from CIExprIdentifierID type.
+ * @return CIDecl*? (&)
+ */
+CIDecl *
+get_decl__CIExprIdentifierID(const CIExprIdentifierID *self,
+                             const CIResultFile *file);
+
+/**
+ *
+ * @rief Convert CIExprIdentifierID in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIExprIdentifierID, const CIExprIdentifierID *self);
+#endif
+
+typedef struct CIExprIdentifier
+{
+    Rc *value; // Rc<String*>*
+    CIExprIdentifierID id;
+} CIExprIdentifier;
+
+/**
+ *
+ * @brief Construct CIExprIdentifier type.
+ * @param value Rc<String*>* (&)
+ */
+inline CONSTRUCTOR(CIExprIdentifier,
+                   CIExprIdentifier,
+                   Rc *value,
+                   CIExprIdentifierID id)
+{
+    return (CIExprIdentifier){ .value = ref__Rc(value), .id = id };
+}
+
+/**
+ *
+ * @brief Convert CIExprIdentifier in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIExprIdentifier, const CIExprIdentifier *self);
+#endif
+
+/**
+ *
+ * @brief Free CIExprIdentifier type.
+ */
+inline DESTRUCTOR(CIExprIdentifier, const CIExprIdentifier *self)
+{
+    FREE_RC(String, self->value);
+}
+
 typedef struct CIExprStructFieldCall
 {
     Vec *path; // Vec<Rc<String*>*>*
@@ -3398,7 +3563,7 @@ struct CIExpr
         CIExprFunctionCall function_call;
         CIExprFunctionCallBuiltin function_call_builtin;
         CIExpr *grouping;
-        Rc *identifier; // Rc<String*>*
+        CIExprIdentifier identifier;
         CIExprLiteral literal;
         CIExpr *sizeof_;
         CIExprStructCall struct_call;
@@ -3479,9 +3644,8 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, grouping, CIExpr *grouping);
 /**
  *
  * @brief Construct CIExpr type (CI_EXPR_KIND_IDENTIFIER).
- * @param identifier Rc<String*>* (&)
  */
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, identifier, Rc *identifier);
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, identifier, CIExprIdentifier identifier);
 
 /**
  *

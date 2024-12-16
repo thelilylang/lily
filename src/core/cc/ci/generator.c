@@ -1864,7 +1864,7 @@ generate_function_expr__CIGenerator(CIGenerator *self, const CIExpr *expr)
             break;
         case CI_EXPR_KIND_IDENTIFIER:
             write_str__CIGenerator(
-              self, GET_PTR_RC(String, expr->identifier)->buffer);
+              self, GET_PTR_RC(String, expr->identifier.value)->buffer);
 
             break;
         case CI_EXPR_KIND_LITERAL:

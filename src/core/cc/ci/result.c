@@ -994,28 +994,6 @@ search_data_type__CIResultFile(const CIResultFile *self, const String *name)
 }
 
 CIDecl *
-search_identifier__CIResultFile(const CIResultFile *self,
-                                const CIScope *scope,
-                                const String *name)
-{
-    CIDecl *variable = search_variable__CIResultFile(self, scope, name);
-    CIDecl *function = search_function__CIResultFile(self, name);
-    CIDecl *enum_variant = search_enum_variant__CIResultFile(self, name);
-
-    if (variable) {
-        if (variable->variable.is_local) {
-            return variable;
-        }
-    } else if (function) {
-        return function;
-    } else if (enum_variant) {
-        return enum_variant;
-    }
-
-    return NULL;
-}
-
-CIDecl *
 search_decl_in_generic_context__CIResultFile(
   const CIResultFile *self,
   const String *name,
