@@ -414,6 +414,15 @@ typecheck_enum_decl__CITypecheck(CITypecheck *self,
                                  CIDecl *enum_decl,
                                  struct CITypecheckContext *typecheck_ctx)
 {
+    if (enum_decl->enum_.data_type &&
+        !is_integer_data_type__CIResolverDataType(
+          self->file,
+          enum_decl->enum_.data_type,
+          false,
+          typecheck_ctx->current_generic_params.called,
+          typecheck_ctx->current_generic_params.decl)) {
+        FAILED("expected integer data type");
+    }
 }
 
 bool
