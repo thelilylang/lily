@@ -1488,6 +1488,10 @@ clone__CIDataType(const CIDataType *self)
     return res;
 }
 
+// FIXME: With the technique currently used for type serialization, there is a
+// risk of name collision. A simple way of reducing this risk would be to
+// generate a random hash each time the program is run, and use it as a prefix
+// for serialization.
 void
 serialize__CIDataType(const CIDataType *self, String *buffer)
 {
