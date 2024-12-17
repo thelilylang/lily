@@ -34,17 +34,17 @@
 
 __BEGIN_DECLS
 
-extern void *memcpy(void * /* restrict */ s1, const void * /* restrict */ s2, size_t n);
+extern void *memcpy(void *__restrict s1, const void *__restrict s2, size_t n);
 extern void *memmove(void *s1, const void *s2, size_t n);
-extern char *strcpy(char * /* restrict */ s1, const char * /* restrict */ s2);
-extern char *strncpy(char * /* restrict */ s1, const char * /* restrict */ s2, size_t n);
-extern char *strcat(char * /* restrict */ s1, const char * /* restrict */ s2);
-extern char *strncat(char * /* restrict */ s1, const char * /* restrict */ s2, size_t n);
+extern char *strcpy(char *__restrict s1, const char *__restrict s2);
+extern char *strncpy(char *__restrict s1, const char *__restrict s2, size_t n);
+extern char *strcat(char *__restrict s1, const char *__restrict s2);
+extern char *strncat(char *__restrict s1, const char *__restrict s2, size_t n);
 extern int memcmp(const void *s1, const void *s2, size_t n);
 extern int strcmp(const char *s1, const char *s2);
 extern int strcoll(const char *s1, const char *s2);
 extern int strncmp(const char *s1, const char *s2, size_t n);
-extern size_t strxfrm(char * /* restrict */ s1, const char * /* restrict */ s2, size_t n);
+extern size_t strxfrm(char *__restrict s1, const char *__restrict s2, size_t n);
 extern void *memchr(const void *s, int c, size_t n);
 extern char *strchr(const char *s, int c);
 extern size_t strcspn(const char *s1, const char *s2);
@@ -52,7 +52,7 @@ extern char *strpbrk(const char *s1, const char *s2);
 extern char *strrchr(const char *s, int c);
 extern size_t strspn(const char *s1, const char *s2);
 extern char *strstr(const char *s1, const char *s2);
-extern char *strok(char * /* restrict */ s1, const char * /* restrict */ s2);
+extern char *strok(char *__restrict s1, const char *__restrict s2);
 extern void *memset(void *s, int c, size_t n);
 extern char *strerror(int errnum);
 extern size_t strlen(const char *s);
