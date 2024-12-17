@@ -2571,8 +2571,6 @@ parse_primary_expr__CIParser(CIParser *self)
                       self, identifier, generic_params);
 
                     break;
-                case CI_TOKEN_KIND_LBRACE:
-                    TODO("parse struct call");
                 default:
                     res = NEW_VARIANT(CIExpr,
                                       identifier,
