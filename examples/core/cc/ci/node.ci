@@ -1,0 +1,25 @@
+#include <stddef.h>
+#include <stdio.h>
+
+typedef struct Node.[@T] {
+	@T value;
+	struct Node.[@T] *next;
+} Node.[@T];
+
+Node.[@T] new_node.[@T](@T value) {
+	return (Node.[@T]){
+		.value = value,
+		.next = NULL
+	};
+}
+
+int main() {
+	Node.[int] first = new_node.[int](1);
+	Node.[int] second = new_node.[int](2);
+	Node.[int] third = new_node.[int](3);
+
+	first.next = &second;
+	first.next->next = &third;
+
+	printf("First = %d, Second = %d, Third = %d\n", first.value, first.next->value, first.next->next->value);
+}
