@@ -485,27 +485,54 @@ run__CIResolverDataType(const CIResultFile *file,
                         const CIGenericParams *called_generic_params,
                         const CIGenericParams *decl_generic_params)
 {
-    switch (data_type->kind) {
-        case CI_DATA_TYPE_KIND_GENERIC:
-            return resolve_generic_data_type__CIResolverDataType(
-              file, data_type, called_generic_params, decl_generic_params);
-        case CI_DATA_TYPE_KIND_STRUCT:
-            return resolve_struct_data_type__CIResolverDataType(
-              file, data_type, called_generic_params, decl_generic_params);
-        case CI_DATA_TYPE_KIND_TYPEDEF:
-            return resolve_typedef_data_type__CIResolverDataType(
-              file, data_type, called_generic_params, decl_generic_params);
-        case CI_DATA_TYPE_KIND_UNION:
-            return resolve_union_data_type__CIResolverDataType(
-              file, data_type, called_generic_params, decl_generic_params);
-        case CI_DATA_TYPE_KIND_PTR:
-            return NEW_VARIANT(CIDataType,
-                               ptr,
-                               run__CIResolverDataType(file,
-                                                       data_type->ptr,
-                                                       called_generic_params,
-                                                       decl_generic_params));
-        default:
-            return ref__CIDataType(data_type);
+    CIDataType *res = ref__CIDataType(data_type);
+    CIDataType *prev_res = NULL;
+
+    while (true) {
+        prev_res = res;
+
+        switch (res->kind) {
+            case CI_DATA_TYPE_KIND_GENERIC:
+                res = resolve_generic_data_type__CIResolverDataType(
+                  file, res, called_generic_params, decl_generic_params);
+
+                goto exit;
+            case CI_DATA_TYPE_KIND_STRUCT:
+                res = resolve_struct_data_type__CIResolverDataType(
+                  file, res, called_generic_params, decl_generic_params);
+
+                goto exit;
+            case CI_DATA_TYPE_KIND_TYPEDEF:
+                res = resolve_typedef_data_type__CIResolverDataType(
+                  file, res, called_generic_params, decl_generic_params);
+
+                break;
+            case CI_DATA_TYPE_KIND_UNION:
+                res = resolve_union_data_type__CIResolverDataType(
+                  file, res, called_generic_params, decl_generic_params);
+
+                goto exit;
+            case CI_DATA_TYPE_KIND_PTR:
+                res = NEW_VARIANT(CIDataType,
+                                  ptr,
+                                  run__CIResolverDataType(file,
+                                                          res->ptr,
+                                                          called_generic_params,
+                                                          decl_generic_params));
+
+                goto exit;
+            default:
+                res = ref__CIDataType(res);
+
+                goto exit;
+        }
+
+        FREE(CIDataType, prev_res);
+        prev_res = NULL;
     }
+
+exit:
+    FREE(CIDataType, prev_res);
+
+    return res;
 }
