@@ -870,9 +870,9 @@ token_is_data_type__CIParser(CIParser *self, const CIToken *token)
 {
     switch (token->kind) {
         case CI_TOKEN_KIND_IDENTIFIER:
-            return search_typedef__CIResultFile(
-                     self->file, GET_PTR_RC(String, token->identifier)) ||
-                   is__CIBuiltinType(GET_PTR_RC(String, token->identifier));
+            return is__CIBuiltinType(GET_PTR_RC(String, token->identifier)) ||
+                   search_typedef__CIResultFile(
+                     self->file, GET_PTR_RC(String, token->identifier));
         case CI_TOKEN_KIND_AT: // TODO: check if the next token is an identifier
                                // (not needed for the moment)
         case CI_TOKEN_KIND_KEYWORD_BOOL:
@@ -1761,6 +1761,11 @@ parse_pre_data_type__CIParser(CIParser *self)
                                     String, self->previous_token->identifier)));
 
                 break;
+            } else if (!search_typedef__CIResultFile(
+                         self->file,
+                         GET_PTR_RC(String,
+                                    self->previous_token->identifier))) {
+                FAILED("expected type");
             }
 
             Rc *name = self->previous_token->identifier; // Rc<String*>* (&)
@@ -2394,17 +2399,21 @@ parse_struct_call__CIParser(CIParser *self)
 
     while (self->current_token->kind != CI_TOKEN_KIND_RBRACE &&
            self->current_token->kind != CI_TOKEN_KIND_EOF) {
-        Vec *path = NEW(Vec);
+        Vec *path = NULL; // Vec<Rc<String*>*>*?
 
-        while (self->current_token->kind == CI_TOKEN_KIND_DOT) {
-            next_token__CIParser(self);
+        if (self->current_token->kind == CI_TOKEN_KIND_DOT) {
+            path = NEW(Vec);
 
-            if (expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, true)) {
-                push__Vec(path, ref__Rc(self->previous_token->identifier));
+            while (self->current_token->kind == CI_TOKEN_KIND_DOT) {
+                next_token__CIParser(self);
+
+                if (expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, true)) {
+                    push__Vec(path, ref__Rc(self->previous_token->identifier));
+                }
             }
-        }
 
-        expect__CIParser(self, CI_TOKEN_KIND_EQ, true);
+            expect__CIParser(self, CI_TOKEN_KIND_EQ, true);
+        }
 
         CIExpr *value = parse_expr__CIParser(self);
 

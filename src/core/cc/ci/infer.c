@@ -113,6 +113,30 @@ infer_expr_unary_data_type__CIInfer(
   const CIGenericParams *called_generic_params,
   const CIGenericParams *decl_generic_params);
 
+/// @brief Get field to fields.
+/// @param fields const Vec<CIDeclStructField*>* (&)
+/// @param path const Vec<Rc<String*>*>* (&)
+/// @param called_generic_params const CIGenericParams*? (&)
+/// @param decl_generic_params const CIGenericParams*? (&)
+/// @return CIDeclStructField*? (&)
+static void
+add_field__CIInfer(const CIResultFile *file,
+                   Vec *fields,
+                   const Vec *path,
+                   CIDataType *data_type,
+                   const CIGenericParams *called_generic_params,
+                   const CIGenericParams *decl_generic_params);
+
+/// @param called_generic_params const CIGenericParams*? (&)
+/// @param decl_generic_params const CIGenericParams*? (&)
+static CIDataType *
+infer_expr_struct_call_data_type__CIInfer(
+  const CIResultFile *file,
+  const CIExprStructCall *struct_call,
+  const CIScopeID *current_scope_id,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params);
+
 CIDataType *
 perform_implicit_cast_on_array__CIInfer(const CIResultFile *file,
                                         CIDataType *data_type)
@@ -400,6 +424,82 @@ infer_expr_literal_data_type__CIInfer(const CIResultFile *file,
     }
 }
 
+void
+add_field__CIInfer(const CIResultFile *file,
+                   Vec *fields,
+                   const Vec *path,
+                   CIDataType *data_type,
+                   const CIGenericParams *called_generic_params,
+                   const CIGenericParams *decl_generic_params)
+{
+    for (Usize i = 0; i < path->len; ++i) {
+        Rc *path_part = get__Vec(path, i); // Rc<String*>* (&)
+        CIDeclStructField *field =
+          get_field_from_name__CIDeclStructField(fields, path_part, file);
+
+        if (field) {
+            Vec *current_fields =
+              (Vec *)get_fields__CIDataType(field->data_type);
+
+            if (i + 1 == path->len) {
+                FAILED("field is already defined");
+            } else if (!current_fields) {
+                FAILED("expected struct or union");
+            }
+
+            fields = current_fields;
+        } else {
+            if (i + 1 == path->len) {
+                push__Vec(fields,
+                          NEW(CIDeclStructField, path_part, data_type, 0));
+            } else {
+                Vec *current_fields = NEW(Vec);
+
+                push__Vec(
+                  fields,
+                  NEW(CIDeclStructField,
+                      path_part,
+                      NEW_VARIANT(
+                        CIDataType,
+                        struct,
+                        NEW(CIDataTypeStruct, NULL, NULL, current_fields)),
+                      0));
+
+                fields = current_fields;
+            }
+        }
+    }
+}
+
+CIDataType *
+infer_expr_struct_call_data_type__CIInfer(
+  const CIResultFile *file,
+  const CIExprStructCall *struct_call,
+  const CIScopeID *current_scope_id,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params)
+{
+    Vec *fields = NEW(Vec); // Vec<CIDeclStructField*>*
+
+    for (Usize i = 0; i < struct_call->fields->len; ++i) {
+        CIExprStructFieldCall *field = get__Vec(struct_call->fields, i);
+
+        add_field__CIInfer(file,
+                           fields,
+                           field->path,
+                           infer_expr_data_type__CIInfer(file,
+                                                         field->value,
+                                                         current_scope_id,
+                                                         called_generic_params,
+                                                         decl_generic_params),
+                           called_generic_params,
+                           decl_generic_params);
+    }
+
+    return NEW_VARIANT(
+      CIDataType, struct, NEW(CIDataTypeStruct, NULL, NULL, fields));
+}
+
 CIDataType *
 infer_expr_unary_data_type__CIInfer(
   const CIResultFile *file,
@@ -655,7 +755,8 @@ infer_expr_data_type__CIInfer(const CIResultFile *file,
                     break;
                 }
                 case CI_EXPR_IDENTIFIER_ID_KIND_ENUM_VARIANT:
-                    TODO("enum variant");
+                    // TODO: Get the data type set to enumeration if there is
+                    return NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
                 case CI_EXPR_IDENTIFIER_ID_KIND_FUNCTION: {
                     // TODO: Call generic function is not yet implemented
                     CIDecl *decl = get_function_from_id__CIResultFile(
@@ -708,28 +809,13 @@ infer_expr_data_type__CIInfer(const CIResultFile *file,
             // FIXME: Get the size_t data type for 32 bits.
             return NEW(CIDataType,
                        CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT); // size_t
-        case CI_EXPR_KIND_STRUCT_CALL: {
-            Vec *fields = NEW(Vec); // Vec<CIDeclStructField*>*
-
-            for (Usize i = 0; i < expr->struct_call.fields->len; ++i) {
-                CIExprStructFieldCall *field =
-                  get__Vec(expr->struct_call.fields, i);
-
-                push__Vec(
-                  fields,
-                  NEW(CIDeclStructField,
-                      NULL,
-                      infer_expr_data_type__CIInfer(file,
-                                                    field->value,
-                                                    current_scope_id,
-                                                    called_generic_params,
-                                                    decl_generic_params),
-                      0));
-            }
-
-            return NEW_VARIANT(
-              CIDataType, struct, NEW(CIDataTypeStruct, NULL, NULL, fields));
-        }
+        case CI_EXPR_KIND_STRUCT_CALL:
+            return infer_expr_struct_call_data_type__CIInfer(
+              file,
+              &expr->struct_call,
+              current_scope_id,
+              called_generic_params,
+              decl_generic_params);
         case CI_EXPR_KIND_TERNARY:
             // NOTE: We only need to infer one condition branch.
             return infer_expr_data_type__CIInfer(file,

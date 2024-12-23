@@ -2033,12 +2033,24 @@ get__CIDeclStructField(const Vec *self_fields, const String *field_name);
 /**
  *
  * @brief Build fields vector (Vec<CIDeclStructField*>*), from data type.
- * @param CIDataType* (&)
+ * @param data_type CIDataType* (&)
  * @return Vec<CIDeclStructField*>*
  */
 Vec *
 build_fields_from_data_type__CIDeclStructField(CIDataType *data_type,
                                                Usize nb_fields);
+
+/**
+ *
+ * @brief Get field from name, from one struct.
+ * @param fields const Vec<CIDeclStructField*>* (&)
+ * @param name Rc<String*>* (&)
+ * @return CIDeclStructField*? (&)
+ */
+CIDeclStructField *
+get_field_from_name__CIDeclStructField(const Vec *fields,
+                                       const Rc *name,
+                                       const CIResultFile *file);
 
 /**
  *
@@ -3457,7 +3469,7 @@ inline DESTRUCTOR(CIExprIdentifier, const CIExprIdentifier *self)
 
 typedef struct CIExprStructFieldCall
 {
-    Vec *path; // Vec<Rc<String*>*>*
+    Vec *path; // Vec<Rc<String*>*>*?
     CIExpr *value;
 } CIExprStructFieldCall;
 

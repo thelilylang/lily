@@ -81,13 +81,40 @@ typecheck_enum_decl__CITypecheck(CITypecheck *self,
                                  CIDecl *enum_decl,
                                  struct CITypecheckContext *typecheck_ctx);
 
+enum CITypecheckAnonymousFieldsResponse
+{
+    CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_FIELD_NOT_FOUND,
+    CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_OK,
+    CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_ERROR,
+};
+
+/// @param anonymous_fields const Vec<CIDeclStructField*>* (&)
+/// @param left_fields const Vec<CIDeclStructField*>* (&)
+static enum CITypecheckAnonymousFieldsResponse
+typecheck_anonymous_fields_by_name__CITypecheck(
+  const CITypecheck *self,
+  const Vec *anonymous_fields,
+  const Vec *left_fields,
+  struct CITypecheckContext *typecheck_ctx);
+
+/// @brief Typecheck the struct fields by name.
 /// @param left_fields const Vec<CIDeclStructField*>* (&)
 /// @param right_fields const Vec<CIDeclStructField*>* (&)
 static bool
-typecheck_struct_field__CITypecheck(const CITypecheck *self,
-                                    const Vec *left_fields,
-                                    const Vec *right_fields,
-                                    struct CITypecheckContext *typecheck_ctx);
+typecheck_struct_fields_by_name__CITypecheck(
+  const CITypecheck *self,
+  const Vec *left_fields,
+  const Vec *right_fields,
+  struct CITypecheckContext *typecheck_ctx);
+
+/// @brief Typecheck the struct fields in order of declaration.
+/// @param left_fields const Vec<CIDeclStructField*>* (&)
+/// @param right_fields const Vec<CIDeclStructField*>* (&)
+static bool
+typecheck_struct_fields__CITypecheck(const CITypecheck *self,
+                                     const Vec *left_fields,
+                                     const Vec *right_fields,
+                                     struct CITypecheckContext *typecheck_ctx);
 
 /// @param left_fields const Vec<CIDeclStructField*>* (&)
 /// @param right_fields const Vec<CIDeclStructField*>* (&)
@@ -223,6 +250,13 @@ static void
 typecheck_function_call_builtin_expr__CITypecheck(
   const CITypecheck *self,
   const CIExprFunctionCallBuiltin *function_call_builtin,
+  struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_struct_call_expr__CITypecheck(
+  const CITypecheck *self,
+  const CIDataType *expected_data_type,
+  const CIExprStructCall *struct_call,
   struct CITypecheckContext *typecheck_ctx);
 
 static void
@@ -425,11 +459,114 @@ typecheck_enum_decl__CITypecheck(CITypecheck *self,
     }
 }
 
+enum CITypecheckAnonymousFieldsResponse
+typecheck_anonymous_fields_by_name__CITypecheck(
+  const CITypecheck *self,
+  const Vec *anonymous_fields,
+  const Vec *left_fields,
+  struct CITypecheckContext *typecheck_ctx)
+{
+    ASSERT(anonymous_fields);
+
+    for (Usize i = 0; i < anonymous_fields->len; ++i) {
+        CIDeclStructField *field_from_anonymous_fields =
+          get__Vec(anonymous_fields, i);
+
+        if (field_from_anonymous_fields->name) {
+            CIDeclStructField *matched_field =
+              get_field_from_name__CIDeclStructField(
+                left_fields, field_from_anonymous_fields->name, self->file);
+
+            if (matched_field) {
+                if (perform_typecheck__CITypecheck(
+                      self,
+                      field_from_anonymous_fields->data_type,
+                      matched_field->data_type,
+                      false,
+                      typecheck_ctx)) {
+                    return CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_OK;
+                }
+
+                return CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_ERROR;
+            }
+
+            continue;
+        }
+
+        const Vec *child_anonymous_fields =
+          get_fields__CIDataType(field_from_anonymous_fields->data_type);
+
+        switch (typecheck_anonymous_fields_by_name__CITypecheck(
+          self, child_anonymous_fields, left_fields, typecheck_ctx)) {
+            case CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_FIELD_NOT_FOUND:
+                continue;
+            case CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_OK:
+                return CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_OK;
+            case CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_ERROR:
+                return CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_ERROR;
+            default:
+                UNREACHABLE("unknown variant");
+        }
+    }
+
+    return CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_FIELD_NOT_FOUND;
+}
+
 bool
-typecheck_struct_field__CITypecheck(const CITypecheck *self,
-                                    const Vec *left_fields,
-                                    const Vec *right_fields,
-                                    struct CITypecheckContext *typecheck_ctx)
+typecheck_struct_fields_by_name__CITypecheck(
+  const CITypecheck *self,
+  const Vec *left_fields,
+  const Vec *right_fields,
+  struct CITypecheckContext *typecheck_ctx)
+{
+    if (left_fields->len != right_fields->len) {
+        return false;
+    }
+
+    for (Usize i = 0; i < right_fields->len; ++i) {
+        CIDeclStructField *right_field = get__Vec(right_fields, i);
+
+        if (right_field->name) {
+            CIDeclStructField *matched_field =
+              get_field_from_name__CIDeclStructField(
+                left_fields, right_field->name, self->file);
+
+            if (matched_field) {
+                if (!perform_typecheck__CITypecheck(self,
+                                                    matched_field->data_type,
+                                                    right_field->data_type,
+                                                    false,
+                                                    typecheck_ctx)) {
+                    return false;
+                }
+            }
+
+            continue;
+        }
+
+        const Vec *anonymous_fields =
+          get_fields__CIDataType(right_field->data_type);
+
+        switch (typecheck_anonymous_fields_by_name__CITypecheck(
+          self, anonymous_fields, left_fields, typecheck_ctx)) {
+            case CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_FIELD_NOT_FOUND:
+            case CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_OK:
+                continue;
+            case CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_ERROR:
+                return false;
+            default:
+                UNREACHABLE("unknown variant");
+        }
+    }
+
+    return true;
+}
+
+bool
+typecheck_struct_fields__CITypecheck(const CITypecheck *self,
+                                     const Vec *left_fields,
+                                     const Vec *right_fields,
+                                     struct CITypecheckContext *typecheck_ctx)
 {
     if (left_fields->len != right_fields->len) {
         return false;
@@ -504,7 +641,7 @@ is_valid_implicit_cast_from_array_to_struct__CITypecheck(
       typecheck_ctx->current_generic_params.decl);
     Vec *fields_from_array_dt = build_fields_from_data_type__CIDeclStructField(
       array_dt->array.data_type, array_dt->array.size);
-    bool is_valid_struct_field = typecheck_struct_field__CITypecheck(
+    bool is_valid_struct_field = typecheck_struct_fields__CITypecheck(
       self, struct_dt_fields, fields_from_array_dt, typecheck_ctx);
 
     FREE_BUFFER_ITEMS(fields_from_array_dt->buffer,
@@ -732,7 +869,7 @@ is_valid_implicit_cast__CITypecheck(const CITypecheck *self,
                     if (left_fields && right_fields) {
                         switch (left->kind) {
                             case CI_DATA_TYPE_KIND_STRUCT:
-                                return typecheck_struct_field__CITypecheck(
+                                return typecheck_struct_fields_by_name__CITypecheck(
                                   self,
                                   left_fields,
                                   right_fields,
@@ -761,6 +898,13 @@ is_valid_implicit_cast__CITypecheck(const CITypecheck *self,
             }
 
             return false;
+        case CI_DATA_TYPE_KIND_ENUM:
+            return is_integer_data_type__CIResolverDataType(
+              self->file,
+              right,
+              true,
+              typecheck_ctx->current_generic_params.called,
+              typecheck_ctx->current_generic_params.decl);
         default:
             return false;
     }
@@ -1143,6 +1287,20 @@ typecheck_function_call_builtin_expr__CITypecheck(
 }
 
 void
+typecheck_struct_call_expr__CITypecheck(
+  const CITypecheck *self,
+  const CIDataType *expected_data_type,
+  const CIExprStructCall *struct_call,
+  struct CITypecheckContext *typecheck_ctx)
+{
+    for (Usize i = 0; i < struct_call->fields->len; ++i) {
+        CIExprStructFieldCall *field_call = get__Vec(struct_call->fields, i);
+    }
+
+    TODO("struct call");
+}
+
+void
 typecheck_ternary_expr__CITypecheck(const CITypecheck *self,
                                     const CIExprTernary *ternary,
                                     struct CITypecheckContext *typecheck_ctx)
@@ -1300,6 +1458,13 @@ typecheck_expr__CITypecheck(const CITypecheck *self,
         case CI_EXPR_KIND_GROUPING:
             typecheck_expr__CITypecheck(
               self, expected_data_type, given_expr->grouping, typecheck_ctx);
+
+            break;
+        case CI_EXPR_KIND_STRUCT_CALL:
+            typecheck_struct_call_expr__CITypecheck(self,
+                                                    expected_data_type,
+                                                    &given_expr->struct_call,
+                                                    typecheck_ctx);
 
             break;
         case CI_EXPR_KIND_TERNARY:

@@ -34,6 +34,7 @@
 #include <core/cc/ci/resolver/expr.h>
 #include <core/cc/ci/result.h>
 #include <core/cc/ci/scanner.h>
+#include <core/cc/ci/state_checker.h>
 #include <core/cc/ci/token.h>
 #include <core/cc/ci/typecheck.h>
 #include <core/cc/ci/visitor.h>
@@ -698,6 +699,30 @@ is_in_prepro_if__CIScannerContext(const CIScannerContext *self);
 
 extern inline bool
 is_in_prepro_else__CIScannerContext(const CIScannerContext *self);
+
+// <core/cc/ci/state_checker.h>
+extern inline CONSTRUCTOR(CIStateCheckerState,
+                          CIStateCheckerState,
+                          Usize flags);
+
+extern inline void
+increment_copy__CIStateCheckerState(CIStateCheckerState *self);
+
+extern inline void
+decrement_copy__CIStateCheckerState(CIStateCheckerState *self);
+
+extern inline CONSTRUCTOR(CIStateCheckerValueStruct,
+                          CIStateCheckerValueStruct,
+                          HashMap *values);
+
+extern inline CONSTRUCTOR(CIStateCheckerValueVariable,
+                          CIStateCheckerValueVariable,
+                          const String *name,
+                          CIStateCheckerState state);
+
+extern inline CONSTRUCTOR(CIStateChecker,
+                          CIStateChecker,
+                          const CIResult *result);
 
 // <core/cc/ci/token.h>
 extern inline CONSTRUCTOR(CITokens, CITokens);

@@ -261,6 +261,19 @@ visit_function_body__CIVisitor(CIVisitor *self,
                                CIGenericParams *called_generic_params,
                                CIGenericParams *decl_generic_params);
 
+/// @param called_generic_params CIGenericParams*? (&)
+static void
+visit_function_return_data_type__CIVisitor(
+  CIVisitor *self,
+  const CIDecl *decl,
+  CIGenericParams *called_generic_params);
+
+/// @param called_generic_params CIGenericParams*? (&)
+static void
+visit_function_params__CIVisitor(CIVisitor *self,
+                                 const CIDecl *decl,
+                                 CIGenericParams *called_generic_params);
+
 static void
 visit_function__CIVisitor(CIVisitor *self,
                           const CIDecl *decl,
@@ -284,6 +297,10 @@ visit_global_decls__CIVisitor(CIVisitor *self);
 
 static void
 run_file__CIVisitor(CIVisitor *self, const CIResultFile *file);
+
+/// @param other_args void* (CIVisitor*)
+static void
+handler__CIVisitor(const CIResultFile *file, void *other_args);
 
 bool
 is_in_function_body__CIVisitor(CIVisitor *self)
@@ -1260,12 +1277,48 @@ visit_function_body__CIVisitor(CIVisitor *self,
 }
 
 void
+visit_function_return_data_type__CIVisitor(
+  CIVisitor *self,
+  const CIDecl *decl,
+  CIGenericParams *called_generic_params)
+{
+    const CIDataType *return_data_type = get_return_data_type__CIDecl(decl);
+    CIGenericParams *decl_generic_params = get_generic_params__CIDecl(decl);
+
+    visit_data_type__CIVisitor(
+      self, return_data_type, called_generic_params, decl_generic_params);
+}
+
+void
+visit_function_params__CIVisitor(CIVisitor *self,
+                                 const CIDecl *decl,
+                                 CIGenericParams *called_generic_params)
+{
+    const Vec *params = get_function_params__CIDecl(decl);
+    CIGenericParams *decl_generic_params = get_generic_params__CIDecl(decl);
+
+    if (params) {
+        for (Usize i = 0; i < params->len; ++i) {
+            const CIDeclFunctionParam *param = get__Vec(params, i);
+
+            visit_data_type__CIVisitor(self,
+                                       param->data_type,
+                                       called_generic_params,
+                                       decl_generic_params);
+        }
+    }
+}
+
+void
 visit_function__CIVisitor(CIVisitor *self,
                           const CIDecl *decl,
                           CIGenericParams *called_generic_params)
 {
     ASSERT(decl->kind == CI_DECL_KIND_FUNCTION);
 
+    visit_function_return_data_type__CIVisitor(
+      self, decl, called_generic_params);
+    visit_function_params__CIVisitor(self, decl, called_generic_params);
     visit_function_body__CIVisitor(self,
                                    decl->function.body,
                                    called_generic_params,
@@ -1277,6 +1330,8 @@ visit_non_generic_function__CIVisitor(CIVisitor *self, const CIDecl *decl)
 {
     ASSERT(decl->kind == CI_DECL_KIND_FUNCTION);
 
+    visit_function_return_data_type__CIVisitor(self, decl, NULL);
+    visit_function_params__CIVisitor(self, decl, NULL);
     visit_function_body__CIVisitor(self, decl->function.body, NULL, NULL);
 }
 
@@ -1350,19 +1405,15 @@ run_file__CIVisitor(CIVisitor *self, const CIResultFile *file)
 }
 
 void
+handler__CIVisitor(const CIResultFile *file, void *other_args)
+{
+    CIVisitor *self = (CIVisitor *)other_args;
+
+    run_file__CIVisitor(self, file);
+}
+
+void
 run__CIVisitor(CIVisitor *self)
 {
-    // TODO: Merge that code in one step with the generator
-    OrderedHashMapIter iter_libs = NEW(OrderedHashMapIter, self->result->libs);
-    OrderedHashMapIter iter_bins = NEW(OrderedHashMapIter, self->result->bins);
-    CIResultLib *current_lib = NULL;
-    CIResultBin *current_bin = NULL;
-
-    while ((current_lib = next__OrderedHashMapIter(&iter_libs))) {
-        run_file__CIVisitor(self, current_lib->file);
-    }
-
-    while ((current_bin = next__OrderedHashMapIter(&iter_bins))) {
-        run_file__CIVisitor(self, current_bin->file);
-    }
+    pass_through_result__CIResult(self->result, &handler__CIVisitor, self);
 }

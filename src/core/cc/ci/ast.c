@@ -947,9 +947,10 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeEnum, const CIDataTypeEnum *self)
     }
 
     {
-        String *s =
-          format__String(", data_type = {Sr} }",
-                         to_string__Debug__CIDataType(self->data_type));
+        String *s = format__String(
+          ", data_type = {Sr} }",
+          self->data_type ? to_string__Debug__CIDataType(self->data_type)
+                          : from__String("NULL"));
 
         APPEND_AND_FREE(res, s);
     }
@@ -2884,6 +2885,41 @@ build_fields_from_data_type__CIDeclStructField(CIDataType *data_type,
     return fields;
 }
 
+CIDeclStructField *
+get_field_from_name__CIDeclStructField(const Vec *fields,
+                                       const Rc *name,
+                                       const CIResultFile *file)
+{
+    ASSERT(name);
+
+    char *name_buffer = GET_PTR_RC(String, name)->buffer; // char* (&)
+
+    for (Usize i = 0; i < fields->len; ++i) {
+        CIDeclStructField *field = get__Vec(fields, i);
+
+        if (field->name) {
+            if (!strcmp(name_buffer, GET_PTR_RC(String, field->name)->buffer)) {
+                return field;
+            }
+
+            continue;
+        }
+
+        const Vec *data_type_fields = get_fields__CIDataType(field->data_type);
+
+        ASSERT(data_type_fields);
+
+        CIDeclStructField *res =
+          get_field_from_name__CIDeclStructField(data_type_fields, name, file);
+
+        if (res) {
+            return res;
+        }
+    }
+
+    return NULL;
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclStructField, const CIDeclStructField *self)
@@ -4643,18 +4679,25 @@ IMPL_FOR_DEBUG(to_string,
                CIExprStructFieldCall,
                const CIExprStructFieldCall *self)
 {
-    String *res = format__String("CIExprStructFieldCall{{ path = {{ ");
+    String *res = format__String("CIExprStructFieldCall{{ path =");
 
-    for (Usize i = 0; i < self->path->len; ++i) {
-        push_str__String(
-          res, GET_PTR_RC(String, CAST(Rc *, get__Vec(self->path, i)))->buffer);
+    if (self->path) {
+        push_str__String(res, "{ ");
 
-        if (i + 1 != self->path->len) {
-            push_str__String(res, ", ");
+        for (Usize i = 0; i < self->path->len; ++i) {
+            push_str__String(
+              res,
+              GET_PTR_RC(String, CAST(Rc *, get__Vec(self->path, i)))->buffer);
+
+            if (i + 1 != self->path->len) {
+                push_str__String(res, ", ");
+            }
         }
-    }
 
-    push_str__String(res, " }");
+        push_str__String(res, " }");
+    } else {
+        push_str__String(res, " NULL");
+    }
 
     {
         String *s = format__String(", value = {Sr} }",
@@ -4669,8 +4712,11 @@ IMPL_FOR_DEBUG(to_string,
 
 DESTRUCTOR(CIExprStructFieldCall, CIExprStructFieldCall *self)
 {
-    FREE_BUFFER_RC_ITEMS(self->path->buffer, self->path->len, String);
-    FREE(Vec, self->path);
+    if (self->path) {
+        FREE_BUFFER_RC_ITEMS(self->path->buffer, self->path->len, String);
+        FREE(Vec, self->path);
+    }
+
     FREE(CIExpr, self->value);
     lily_free(self);
 }

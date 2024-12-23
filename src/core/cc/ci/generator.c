@@ -428,7 +428,8 @@ static void
 run_file__CIGenerator(CIGenerator *self);
 
 static void
-handler__CIGenerator(const CIResultFile *file, void *other_args);
+handler__CIGenerator(const CIResultFile *file,
+                     [[maybe_unused]] void *other_args);
 
 CONSTRUCTOR(CIGeneratorContentSession *,
             CIGeneratorContentSession,
@@ -1721,15 +1722,18 @@ generate_function_struct_call_expr__CIGenerator(
     for (Usize i = 0; i < struct_call->fields->len; ++i) {
         CIExprStructFieldCall *field = get__Vec(struct_call->fields, i);
 
-        for (Usize j = 0; j < field->path->len; ++j) {
-            write_String__CIGenerator(
-              self,
-              format__String(
-                ".{S}",
-                GET_PTR_RC(String, CAST(Rc *, get__Vec(field->path, j)))));
+        if (field->path) {
+            for (Usize j = 0; j < field->path->len; ++j) {
+                write_String__CIGenerator(
+                  self,
+                  format__String(
+                    ".{S}",
+                    GET_PTR_RC(String, CAST(Rc *, get__Vec(field->path, j)))));
+            }
+
+            write_str__CIGenerator(self, " = ");
         }
 
-        write_str__CIGenerator(self, " = ");
         generate_function_expr__CIGenerator(self, field->value);
 
         if (i + 1 != struct_call->fields->len) {
