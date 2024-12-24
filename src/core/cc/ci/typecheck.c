@@ -81,87 +81,6 @@ typecheck_enum_decl__CITypecheck(CITypecheck *self,
                                  CIDecl *enum_decl,
                                  struct CITypecheckContext *typecheck_ctx);
 
-enum CITypecheckAnonymousFieldsResponse
-{
-    CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_FIELD_NOT_FOUND,
-    CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_OK,
-    CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_ERROR,
-};
-
-/// @param anonymous_fields const Vec<CIDeclStructField*>* (&)
-/// @param left_fields const Vec<CIDeclStructField*>* (&)
-static enum CITypecheckAnonymousFieldsResponse
-typecheck_anonymous_fields_by_name__CITypecheck(
-  const CITypecheck *self,
-  const Vec *anonymous_fields,
-  const Vec *left_fields,
-  struct CITypecheckContext *typecheck_ctx);
-
-/// @brief Typecheck the struct fields by name.
-/// @param left_fields const Vec<CIDeclStructField*>* (&)
-/// @param right_fields const Vec<CIDeclStructField*>* (&)
-static bool
-typecheck_struct_fields_by_name__CITypecheck(
-  const CITypecheck *self,
-  const Vec *left_fields,
-  const Vec *right_fields,
-  struct CITypecheckContext *typecheck_ctx);
-
-/// @brief Typecheck the struct fields in order of declaration.
-/// @param left_fields const Vec<CIDeclStructField*>* (&)
-/// @param right_fields const Vec<CIDeclStructField*>* (&)
-static bool
-typecheck_struct_fields__CITypecheck(const CITypecheck *self,
-                                     const Vec *left_fields,
-                                     const Vec *right_fields,
-                                     struct CITypecheckContext *typecheck_ctx);
-
-/// @param left_fields const Vec<CIDeclStructField*>* (&)
-/// @param right_fields const Vec<CIDeclStructField*>* (&)
-static bool
-typecheck_union_field__CITypecheck(const CITypecheck *self,
-                                   const Vec *decl_fields,
-                                   const Vec *called_fields,
-                                   struct CITypecheckContext *typecheck_ctx);
-
-/// @note This is a very specific case, but it allows you to manage
-/// the situation where you declare a struct with an array
-/// initializer, and all the fields in the struct are of the same
-/// type.
-///
-/// @example
-///
-/// struct X {
-/// 	int x;
-/// 	int y;
-/// 	int z;
-/// };
-///
-/// struct X x = { 1, 2, 3 };
-/// ^^^^^^^^     ^^^^^^^^^^^
-/// |                      |
-/// inferred as struct     inferred as array
-static bool
-is_valid_implicit_cast_from_array_to_struct__CITypecheck(
-  const CITypecheck *self,
-  CIDataType *array_dt,
-  CIDataType *struct_dt,
-  struct CITypecheckContext *typecheck_ctx);
-
-static bool
-is_valid_implicit_cast_from_array_to_union__CITypecheck(
-  const CITypecheck *self,
-  CIDataType *array_dt,
-  CIDataType *union_dt,
-  struct CITypecheckContext *typecheck_ctx);
-
-static bool
-is_valid_implicit_cast_from_struct_to_union__CITypecheck(
-  const CITypecheck *self,
-  CIDataType *struct_dt,
-  CIDataType *union_dt,
-  struct CITypecheckContext *typecheck_ctx);
-
 static bool
 is_valid_implicit_cast__CITypecheck(const CITypecheck *self,
                                     CIDataType *left,
@@ -174,6 +93,40 @@ perform_typecheck__CITypecheck(const CITypecheck *self,
                                CIDataType *given_data_type,
                                bool can_try,
                                struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_array_access_expr__CITypecheck(
+  const CITypecheck *self,
+  CIDataType *expected_data_type,
+  const CIExprArrayAccess *array_access_expr,
+  struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_array_expr_for_union_dt__CITypecheck(
+  const CITypecheck *self,
+  CIDataType *expected_data_type,
+  const CIExprArray *array_expr,
+  struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_array_expr_for_struct_dt__CITypecheck(
+  const CITypecheck *self,
+  CIDataType *expected_data_type,
+  const CIExprArray *array_expr,
+  struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_array_expr_for_array_dt__CITypecheck(
+  const CITypecheck *self,
+  CIDataType *expected_data_type,
+  const CIExprArray *array_expr,
+  struct CITypecheckContext *typecheck_ctx);
+
+static void
+typecheck_array_expr__CITypecheck(const CITypecheck *self,
+                                  CIDataType *expected_data_type,
+                                  const CIExprArray *array,
+                                  struct CITypecheckContext *typecheck_ctx);
 
 static bool
 typecheck_binary_integer_compatible_expr__CITypecheck(
@@ -459,251 +412,6 @@ typecheck_enum_decl__CITypecheck(CITypecheck *self,
     }
 }
 
-enum CITypecheckAnonymousFieldsResponse
-typecheck_anonymous_fields_by_name__CITypecheck(
-  const CITypecheck *self,
-  const Vec *anonymous_fields,
-  const Vec *left_fields,
-  struct CITypecheckContext *typecheck_ctx)
-{
-    ASSERT(anonymous_fields);
-
-    for (Usize i = 0; i < anonymous_fields->len; ++i) {
-        CIDeclStructField *field_from_anonymous_fields =
-          get__Vec(anonymous_fields, i);
-
-        if (field_from_anonymous_fields->name) {
-            CIDeclStructField *matched_field =
-              get_field_from_name__CIDeclStructField(
-                left_fields, field_from_anonymous_fields->name, self->file);
-
-            if (matched_field) {
-                if (perform_typecheck__CITypecheck(
-                      self,
-                      field_from_anonymous_fields->data_type,
-                      matched_field->data_type,
-                      false,
-                      typecheck_ctx)) {
-                    return CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_OK;
-                }
-
-                return CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_ERROR;
-            }
-
-            continue;
-        }
-
-        const Vec *child_anonymous_fields =
-          get_fields__CIDataType(field_from_anonymous_fields->data_type);
-
-        switch (typecheck_anonymous_fields_by_name__CITypecheck(
-          self, child_anonymous_fields, left_fields, typecheck_ctx)) {
-            case CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_FIELD_NOT_FOUND:
-                continue;
-            case CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_OK:
-                return CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_OK;
-            case CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_ERROR:
-                return CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_ERROR;
-            default:
-                UNREACHABLE("unknown variant");
-        }
-    }
-
-    return CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_FIELD_NOT_FOUND;
-}
-
-bool
-typecheck_struct_fields_by_name__CITypecheck(
-  const CITypecheck *self,
-  const Vec *left_fields,
-  const Vec *right_fields,
-  struct CITypecheckContext *typecheck_ctx)
-{
-    if (left_fields->len != right_fields->len) {
-        return false;
-    }
-
-    for (Usize i = 0; i < right_fields->len; ++i) {
-        CIDeclStructField *right_field = get__Vec(right_fields, i);
-
-        if (right_field->name) {
-            CIDeclStructField *matched_field =
-              get_field_from_name__CIDeclStructField(
-                left_fields, right_field->name, self->file);
-
-            if (matched_field) {
-                if (!perform_typecheck__CITypecheck(self,
-                                                    matched_field->data_type,
-                                                    right_field->data_type,
-                                                    false,
-                                                    typecheck_ctx)) {
-                    return false;
-                }
-            }
-
-            continue;
-        }
-
-        const Vec *anonymous_fields =
-          get_fields__CIDataType(right_field->data_type);
-
-        switch (typecheck_anonymous_fields_by_name__CITypecheck(
-          self, anonymous_fields, left_fields, typecheck_ctx)) {
-            case CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_FIELD_NOT_FOUND:
-            case CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_OK:
-                continue;
-            case CI_TYPECHECK_ANONYMOUS_FIELDS_RESPONSE_ERROR:
-                return false;
-            default:
-                UNREACHABLE("unknown variant");
-        }
-    }
-
-    return true;
-}
-
-bool
-typecheck_struct_fields__CITypecheck(const CITypecheck *self,
-                                     const Vec *left_fields,
-                                     const Vec *right_fields,
-                                     struct CITypecheckContext *typecheck_ctx)
-{
-    if (left_fields->len != right_fields->len) {
-        return false;
-    }
-
-    for (Usize i = 0; i < left_fields->len; ++i) {
-        CIDeclStructField *left_field = get__Vec(left_fields, i);
-        CIDeclStructField *right_field = get__Vec(right_fields, i);
-
-        if (!perform_typecheck__CITypecheck(self,
-                                            left_field->data_type,
-                                            right_field->data_type,
-                                            false,
-                                            typecheck_ctx)) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-bool
-typecheck_union_field__CITypecheck(const CITypecheck *self,
-                                   const Vec *decl_fields,
-                                   const Vec *called_fields,
-                                   struct CITypecheckContext *typecheck_ctx)
-{
-    if (called_fields->len > 1) {
-        FAILED("expected one or zero field for a union initializer");
-    } else if (called_fields->len == 0) {
-        return true;
-    }
-
-    CIDeclStructField *called_field = last__Vec(called_fields);
-
-    for (Usize i = 0; i < decl_fields->len; ++i) {
-        CIDeclStructField *decl_field = get__Vec(decl_fields, i);
-
-        if ((called_field->name &&
-             !strcmp(GET_PTR_RC(String, called_field->name)->buffer,
-                     GET_PTR_RC(String, decl_field->name)->buffer)) ||
-            !called_field->name) {
-            if (perform_typecheck__CITypecheck(self,
-                                               called_field->data_type,
-                                               decl_field->data_type,
-                                               true,
-                                               typecheck_ctx)) {
-                return true;
-            }
-        }
-    }
-
-    FAILED("the data type of the given field in the union don't match with any "
-           "fields of the union");
-
-    return false;
-}
-
-bool
-is_valid_implicit_cast_from_array_to_struct__CITypecheck(
-  const CITypecheck *self,
-  CIDataType *array_dt,
-  CIDataType *struct_dt,
-  struct CITypecheckContext *typecheck_ctx)
-{
-    ASSERT(is_sized_array__CIDataType(array_dt));
-
-    const Vec *struct_dt_fields = get_fields_from_data_type__CIResolverDataType(
-      self->file,
-      struct_dt,
-      typecheck_ctx->current_generic_params.called,
-      typecheck_ctx->current_generic_params.decl);
-    Vec *fields_from_array_dt = build_fields_from_data_type__CIDeclStructField(
-      array_dt->array.data_type, array_dt->array.size);
-    bool is_valid_struct_field = typecheck_struct_fields__CITypecheck(
-      self, struct_dt_fields, fields_from_array_dt, typecheck_ctx);
-
-    FREE_BUFFER_ITEMS(fields_from_array_dt->buffer,
-                      fields_from_array_dt->len,
-                      CIDeclStructField);
-    FREE(Vec, fields_from_array_dt);
-
-    return is_valid_struct_field;
-}
-
-bool
-is_valid_implicit_cast_from_array_to_union__CITypecheck(
-  const CITypecheck *self,
-  CIDataType *array_dt,
-  CIDataType *union_dt,
-  struct CITypecheckContext *typecheck_ctx)
-{
-    ASSERT(is_sized_array__CIDataType(array_dt));
-
-    const Vec *union_dt_fields = get_fields_from_data_type__CIResolverDataType(
-      self->file,
-      union_dt,
-      typecheck_ctx->current_generic_params.called,
-      typecheck_ctx->current_generic_params.decl);
-    Vec *fields_from_array_dt = build_fields_from_data_type__CIDeclStructField(
-      array_dt->array.data_type, 1);
-    bool is_valid_union_field = typecheck_union_field__CITypecheck(
-      self, union_dt_fields, fields_from_array_dt, typecheck_ctx);
-
-    FREE_BUFFER_ITEMS(fields_from_array_dt->buffer,
-                      fields_from_array_dt->len,
-                      CIDeclStructField);
-    FREE(Vec, fields_from_array_dt);
-
-    return is_valid_union_field;
-}
-
-bool
-is_valid_implicit_cast_from_struct_to_union__CITypecheck(
-  const CITypecheck *self,
-  CIDataType *struct_dt,
-  CIDataType *union_dt,
-  struct CITypecheckContext *typecheck_ctx)
-{
-    const Vec *struct_fields = get_fields_from_data_type__CIResolverDataType(
-      self->file,
-      struct_dt,
-      typecheck_ctx->current_generic_params.called,
-      typecheck_ctx->current_generic_params.decl);
-    const Vec *union_fields = get_fields_from_data_type__CIResolverDataType(
-      self->file,
-      union_dt,
-      typecheck_ctx->current_generic_params.called,
-      typecheck_ctx->current_generic_params.decl);
-
-    ASSERT(struct_fields);
-    ASSERT(union_fields);
-
-    return typecheck_union_field__CITypecheck(
-      self, union_fields, struct_fields, typecheck_ctx);
-}
-
 bool
 is_valid_implicit_cast__CITypecheck(const CITypecheck *self,
                                     CIDataType *left,
@@ -766,19 +474,6 @@ is_valid_implicit_cast__CITypecheck(const CITypecheck *self,
               "impossible to get typedef at this point (already resolved)");
         case CI_DATA_TYPE_KIND_ARRAY:
         case CI_DATA_TYPE_KIND_PTR:
-            if (is_sized_array__CIDataType(right)) {
-                switch (left->kind) {
-                    case CI_DATA_TYPE_KIND_STRUCT:
-                        return is_valid_implicit_cast_from_array_to_struct__CITypecheck(
-                          self, right, left, typecheck_ctx);
-                    case CI_DATA_TYPE_KIND_UNION:
-                        return is_valid_implicit_cast_from_array_to_union__CITypecheck(
-                          self, right, left, typecheck_ctx);
-                    default:
-                        break;
-                }
-            }
-
             // In this case, we check whether the pointers being compared are
             // compatible. For example, we check whether a `void*` is compatible
             // with an `int*`.
@@ -824,77 +519,6 @@ is_valid_implicit_cast__CITypecheck(const CITypecheck *self,
                   typecheck_ctx->current_generic_params.called,
                   typecheck_ctx->current_generic_params.decl)) {
                 return true;
-            }
-
-            return false;
-        case CI_DATA_TYPE_KIND_STRUCT:
-        case CI_DATA_TYPE_KIND_UNION:
-            if (is_sized_array__CIDataType(left)) {
-                return is_valid_implicit_cast_from_array_to_struct__CITypecheck(
-                  self, left, right, typecheck_ctx);
-            } else if ((left->kind == CI_DATA_TYPE_KIND_STRUCT &&
-                        right->kind == CI_DATA_TYPE_KIND_STRUCT) ||
-                       (left->kind == CI_DATA_TYPE_KIND_UNION &&
-                        right->kind == CI_DATA_TYPE_KIND_UNION)) {
-                String *left_name = get_name__CIDataType(left);
-                String *right_name = get_name__CIDataType(right);
-
-                if (left_name && right_name) {
-                    return !strcmp(left_name->buffer, right_name->buffer);
-                }
-
-                const Vec *unresolved_left_fields =
-                  get_fields__CIDataType(left);
-                const Vec *unresolved_right_fields =
-                  get_fields__CIDataType(right);
-
-                // NOTE: We perform a check if one or both fields are NULL, as
-                // the `eq__CIDataType` function returns a false, because at the
-                // point of this function, we can't perform a through check
-                // (search structure).
-                if (!unresolved_left_fields || !unresolved_right_fields) {
-                    const Vec *left_fields =
-                      get_fields_from_data_type__CIResolverDataType(
-                        self->file,
-                        left,
-                        typecheck_ctx->current_generic_params.called,
-                        typecheck_ctx->current_generic_params.decl);
-                    const Vec *right_fields =
-                      get_fields_from_data_type__CIResolverDataType(
-                        self->file,
-                        right,
-                        typecheck_ctx->current_generic_params.called,
-                        typecheck_ctx->current_generic_params.decl);
-
-                    if (left_fields && right_fields) {
-                        switch (left->kind) {
-                            case CI_DATA_TYPE_KIND_STRUCT:
-                                return typecheck_struct_fields_by_name__CITypecheck(
-                                  self,
-                                  left_fields,
-                                  right_fields,
-                                  typecheck_ctx);
-                            case CI_DATA_TYPE_KIND_UNION:
-                                return typecheck_union_field__CITypecheck(
-                                  self,
-                                  left_fields,
-                                  right_fields,
-                                  typecheck_ctx);
-                            default:
-                                UNREACHABLE("unknown variant in this case")
-                        }
-                    }
-                }
-
-                return false;
-            } else if (left->kind == CI_DATA_TYPE_KIND_STRUCT &&
-                       right->kind == CI_DATA_TYPE_KIND_UNION) {
-                return is_valid_implicit_cast_from_struct_to_union__CITypecheck(
-                  self, left, right, typecheck_ctx);
-            } else if (left->kind == CI_DATA_TYPE_KIND_UNION &&
-                       right->kind == CI_DATA_TYPE_KIND_STRUCT) {
-                return is_valid_implicit_cast_from_struct_to_union__CITypecheck(
-                  self, right, left, typecheck_ctx);
             }
 
             return false;
@@ -953,6 +577,173 @@ perform_typecheck__CITypecheck(const CITypecheck *self,
     FREE(CIDataType, resolved_given_data_type);
 
     return true;
+}
+
+void
+typecheck_array_access_expr__CITypecheck(
+  const CITypecheck *self,
+  CIDataType *expected_data_type,
+  const CIExprArrayAccess *array_access_expr,
+  struct CITypecheckContext *typecheck_ctx)
+{
+    CIDataType *expected_array_expr_dt = infer_expr_data_type__CIInfer(
+      self->file,
+      array_access_expr->array,
+      typecheck_ctx->current_scope_id,
+      typecheck_ctx->current_generic_params.called,
+      typecheck_ctx->current_generic_params.decl);
+
+    if (!is_array_data_type__CIResolverDataType(
+          self->file,
+          expected_array_expr_dt,
+          true,
+          typecheck_ctx->current_generic_params.called,
+          typecheck_ctx->current_generic_params.decl)) {
+        FAILED("expected array compatible data type");
+    }
+
+    typecheck_expr__CITypecheck(
+      self, expected_array_expr_dt, array_access_expr->array, typecheck_ctx);
+
+    CIDataType *expected_access_expr_dt =
+      NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
+
+    typecheck_expr__CITypecheck(
+      self, expected_access_expr_dt, array_access_expr->access, typecheck_ctx);
+
+    FREE(CIDataType, expected_access_expr_dt);
+    FREE(CIDataType, expected_array_expr_dt);
+}
+
+void
+typecheck_array_expr_for_union_dt__CITypecheck(
+  const CITypecheck *self,
+  CIDataType *expected_data_type,
+  const CIExprArray *array_expr,
+  struct CITypecheckContext *typecheck_ctx)
+{
+    if (array_expr->array->len > 1) {
+        FAILED("expected only one element at time for union");
+    }
+
+    const CIDeclStructFields *fields =
+      get_fields_from_data_type__CIResolverDataType(
+        self->file,
+        expected_data_type,
+        typecheck_ctx->current_generic_params.called,
+        typecheck_ctx->current_generic_params
+          .decl); // Vec<CIDeclStructField*>*? (&)
+
+    ASSERT(fields);
+
+    CIDeclStructField *first_field =
+      get_first_named_member__CIDeclStructFields(fields);
+
+    if (!first_field) {
+        FAILED("the union doesn't have any fields");
+    }
+
+    CIExpr *first_expr = safe_get__Vec(array_expr->array, 0);
+
+    if (first_expr) {
+        CIDataType *first_field_dt =
+          build_data_type__CIDeclStructField(first_field);
+
+        typecheck_expr__CITypecheck(
+          self, first_field_dt, first_expr, typecheck_ctx);
+
+        FREE(CIDataType, first_field_dt);
+    }
+}
+
+void
+typecheck_array_expr_for_struct_dt__CITypecheck(
+  const CITypecheck *self,
+  CIDataType *expected_data_type,
+  const CIExprArray *array_expr,
+  struct CITypecheckContext *typecheck_ctx)
+{
+    const CIDeclStructFields *fields =
+      get_fields_from_data_type__CIResolverDataType(
+        self->file,
+        expected_data_type,
+        typecheck_ctx->current_generic_params.called,
+        typecheck_ctx->current_generic_params.decl);
+    CIDeclStructField *current_field =
+      get_first_member__CIDeclStructFields(fields);
+
+    ASSERT(fields);
+
+    for (Usize i = 0; i < array_expr->array->len; ++i,
+               current_field = get_next_member__CIDeclStructField(
+                 current_field)) {
+        CIExpr *expr = get__Vec(array_expr->array, i);
+
+        if (!current_field) {
+            FAILED("excess elements in struct initializer");
+        }
+
+        CIDataType *current_field_dt =
+          build_data_type__CIDeclStructField(current_field);
+
+        typecheck_expr__CITypecheck(
+          self, current_field_dt, expr, typecheck_ctx);
+
+        FREE(CIDataType, current_field_dt);
+    }
+}
+
+void
+typecheck_array_expr_for_array_dt__CITypecheck(
+  const CITypecheck *self,
+  CIDataType *expected_data_type,
+  const CIExprArray *array_expr,
+  struct CITypecheckContext *typecheck_ctx)
+{
+    for (Usize i = 0; i < array_expr->array->len; ++i) {
+        typecheck_expr__CITypecheck(self,
+                                    expected_data_type,
+                                    get__Vec(array_expr->array, i),
+                                    typecheck_ctx);
+    }
+}
+
+void
+typecheck_array_expr__CITypecheck(const CITypecheck *self,
+                                  CIDataType *expected_data_type,
+                                  const CIExprArray *array,
+                                  struct CITypecheckContext *typecheck_ctx)
+{
+    CIDataType *resolved_expected_data_type =
+      run__CIResolverDataType(self->file,
+                              expected_data_type,
+                              typecheck_ctx->current_generic_params.called,
+                              typecheck_ctx->current_generic_params.decl);
+
+    switch (resolved_expected_data_type->kind) {
+        case CI_DATA_TYPE_KIND_ARRAY:
+            typecheck_array_expr_for_array_dt__CITypecheck(
+              self,
+              resolved_expected_data_type->array.data_type,
+              array,
+              typecheck_ctx);
+
+            break;
+        case CI_DATA_TYPE_KIND_STRUCT:
+            typecheck_array_expr_for_struct_dt__CITypecheck(
+              self, resolved_expected_data_type, array, typecheck_ctx);
+
+            break;
+        case CI_DATA_TYPE_KIND_UNION:
+            typecheck_array_expr_for_union_dt__CITypecheck(
+              self, resolved_expected_data_type, array, typecheck_ctx);
+
+            break;
+        default:
+            FAILED("invalid data type");
+    }
+
+    FREE(CIDataType, resolved_expected_data_type);
 }
 
 bool
@@ -1132,6 +923,7 @@ typecheck_binary_expr__CITypecheck(const CITypecheck *self,
             if (is_array_data_type__CIResolverDataType(
                   self->file,
                   left_dt,
+                  false,
                   typecheck_ctx->current_generic_params.called,
                   typecheck_ctx->current_generic_params.decl)) {
                 FAILED("cannot assign expression to array data type");
@@ -1293,11 +1085,45 @@ typecheck_struct_call_expr__CITypecheck(
   const CIExprStructCall *struct_call,
   struct CITypecheckContext *typecheck_ctx)
 {
-    for (Usize i = 0; i < struct_call->fields->len; ++i) {
-        CIExprStructFieldCall *field_call = get__Vec(struct_call->fields, i);
+    const CIDeclStructFields *fields =
+      get_fields_from_data_type__CIResolverDataType(
+        self->file,
+        expected_data_type,
+        typecheck_ctx->current_generic_params.called,
+        typecheck_ctx->current_generic_params.decl);
+
+    if (!fields) {
+        FAILED("expected struct or union data type as return type");
     }
 
-    TODO("struct call");
+    CIDeclStructField *prev_decl_field = NULL; // CIDeclStructField*? (&)
+
+    for (Usize i = 0; i < struct_call->fields->len; ++i) {
+        CIExprStructFieldCall *field_call = get__Vec(struct_call->fields, i);
+        CIDeclStructField *decl_field =
+          field_call->path ? get_field_from_path__CIDeclStructFields(
+                               fields,
+                               field_call->path,
+                               self->file,
+                               typecheck_ctx->current_generic_params.called,
+                               typecheck_ctx->current_generic_params.decl)
+          : prev_decl_field ? prev_decl_field->next
+                            : get_first_member__CIDeclStructFields(fields);
+
+        if (!decl_field) {
+            FAILED("unknown field access");
+        }
+
+        CIDataType *decl_field_dt =
+          build_data_type__CIDeclStructField(decl_field);
+
+        typecheck_expr__CITypecheck(
+          self, decl_field_dt, field_call->value, typecheck_ctx);
+
+        FREE(CIDataType, decl_field_dt);
+
+        prev_decl_field = decl_field;
+    }
 }
 
 void
@@ -1423,6 +1249,23 @@ typecheck_expr__CITypecheck(const CITypecheck *self,
 
     // Typecheck expression content.
     switch (given_expr->kind) {
+        case CI_EXPR_KIND_ALIGNOF:
+        case CI_EXPR_KIND_IDENTIFIER:
+        case CI_EXPR_KIND_LITERAL:
+        case CI_EXPR_KIND_NULLPTR:
+        case CI_EXPR_KIND_SIZEOF:
+            // NOTE: No typecheck to perform
+            break;
+        case CI_EXPR_KIND_ARRAY:
+            return typecheck_array_expr__CITypecheck(
+              self, expected_data_type, &given_expr->array, typecheck_ctx);
+        case CI_EXPR_KIND_ARRAY_ACCESS:
+            typecheck_array_access_expr__CITypecheck(self,
+                                                     expected_data_type,
+                                                     &given_expr->array_access,
+                                                     typecheck_ctx);
+
+            break;
         case CI_EXPR_KIND_BINARY:
             typecheck_binary_expr__CITypecheck(
               self, &given_expr->binary, typecheck_ctx);
@@ -1461,12 +1304,11 @@ typecheck_expr__CITypecheck(const CITypecheck *self,
 
             break;
         case CI_EXPR_KIND_STRUCT_CALL:
-            typecheck_struct_call_expr__CITypecheck(self,
-                                                    expected_data_type,
-                                                    &given_expr->struct_call,
-                                                    typecheck_ctx);
-
-            break;
+            return typecheck_struct_call_expr__CITypecheck(
+              self,
+              expected_data_type,
+              &given_expr->struct_call,
+              typecheck_ctx);
         case CI_EXPR_KIND_TERNARY:
             typecheck_ternary_expr__CITypecheck(
               self, &given_expr->ternary, typecheck_ctx);
@@ -1478,7 +1320,7 @@ typecheck_expr__CITypecheck(const CITypecheck *self,
 
             break;
         default:
-            break;
+            UNREACHABLE("unknown variant");
     }
 
     CIDataType *given_expr_dt = infer_expr_data_type__CIInfer(

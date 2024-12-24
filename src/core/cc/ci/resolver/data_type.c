@@ -86,17 +86,24 @@ bool
 is_array_data_type__CIResolverDataType(
   const CIResultFile *file,
   CIDataType *data_type,
+  bool allow_implicit_cast,
   const CIGenericParams *called_generic_params,
   const CIGenericParams *decl_generic_params)
 {
     switch (data_type->kind) {
         case CI_DATA_TYPE_KIND_ARRAY:
             return true;
+        case CI_DATA_TYPE_KIND_PTR:
+            return allow_implicit_cast;
         case CI_DATA_TYPE_KIND_TYPEDEF: {
             CIDataType *resolved_dt = run__CIResolverDataType(
               file, data_type, called_generic_params, decl_generic_params);
-            bool res = is_array_data_type__CIResolverDataType(
-              file, resolved_dt, called_generic_params, decl_generic_params);
+            bool res =
+              is_array_data_type__CIResolverDataType(file,
+                                                     resolved_dt,
+                                                     allow_implicit_cast,
+                                                     called_generic_params,
+                                                     decl_generic_params);
 
             FREE(CIDataType, resolved_dt);
 
@@ -556,22 +563,24 @@ resolve_union_data_type__CIResolverDataType(
     return ref__CIDataType(data_type);
 }
 
-const Vec *
+const CIDeclStructFields *
 get_fields_from_data_type__CIResolverDataType(
   const CIResultFile *file,
   const CIDataType *data_type,
   const CIGenericParams *called_generic_params,
   const CIGenericParams *decl_generic_params)
 {
-    ASSERT(data_type->kind == CI_DATA_TYPE_KIND_STRUCT ||
-           data_type->kind == CI_DATA_TYPE_KIND_UNION);
-
-    const Vec *dt_fields = get_fields__CIDataType(data_type);
+    const CIDeclStructFields *dt_fields = get_fields__CIDataType(data_type);
 
     if (dt_fields) {
         return dt_fields;
     }
 
+    CIDataType *resolved_data_type =
+      run__CIResolverDataType(file,
+                              (CIDataType *)data_type,
+                              called_generic_params,
+                              decl_generic_params);
     String *name = get_name__CIDataType(data_type);
     CIGenericParams *data_type_generic_params =
       (CIGenericParams *)get_generic_params__CIDataType(data_type);
@@ -579,7 +588,7 @@ get_fields_from_data_type__CIResolverDataType(
 
     ASSERT(name);
 
-    switch (data_type->kind) {
+    switch (resolved_data_type->kind) {
         case CI_DATA_TYPE_KIND_TYPEDEF:
             UNREACHABLE("data type is resolved at this point");
         case CI_DATA_TYPE_KIND_STRUCT:
@@ -607,6 +616,8 @@ get_fields_from_data_type__CIResolverDataType(
     if (!decl) {
         FAILED("struct or union is not found");
     }
+
+    FREE(CIDataType, resolved_data_type);
 
     return get_fields__CIDecl(decl);
 }

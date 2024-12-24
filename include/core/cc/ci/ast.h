@@ -27,6 +27,7 @@
 
 #include <base/alloc.h>
 #include <base/hash_map.h>
+#include <base/ordered_hash_map.h>
 #include <base/rc.h>
 #include <base/string.h>
 #include <base/types.h>
@@ -726,6 +727,360 @@ IMPL_FOR_DEBUG(to_string, CIGenericParams, const CIGenericParams *self);
  */
 DESTRUCTOR(CIGenericParams, CIGenericParams *self);
 
+typedef struct CIDeclStructFields
+{
+    struct CIDeclStructField *first; // struct CIDeclStructField*?
+    struct CIDeclStructField *last;  // struct CIDeclStructField*? (&)
+    OrderedHashMap *members; // OrderedHashMap<struct CIDeclStructField* (&)>*
+    Usize ref_count;
+} CIDeclStructFields;
+
+/**
+ *
+ * @brief Construct CIDeclStructFields type.
+ */
+CONSTRUCTOR(CIDeclStructFields *, CIDeclStructFields);
+
+/**
+ *
+ * @brief Add field.
+ * @param rev struct CIDeclStructField* (&)
+ * @return If the function returns true, the field has been added successfully,
+ * otherwise it is duplicated.
+ */
+bool
+add__CIDeclStructFields(CIDeclStructFields *self,
+                        struct CIDeclStructField *field,
+                        struct CIDeclStructField *prev);
+
+/**
+ *
+ * @brief Clone CIDeclStructFields type.
+ */
+CIDeclStructFields *
+clone__CIDeclStructFields(CIDeclStructFields *self);
+
+/**
+ *
+ * @brief Increment `ref_count`.
+ * @param fields CIDeclStructFields*
+ */
+inline CIDeclStructFields *
+ref__CIDeclStructFields(CIDeclStructFields *self)
+{
+    ++self->ref_count;
+    return self;
+}
+
+/**
+ *
+ * @brief Get field from path.
+ * @param path const Vec<Rc<String*>*>* (&)
+ * @param called_generic_params const CIGenericParams* (&)
+ * @param decl_generic_params const CIGenericParams* (&)
+ * @return struct CIDeclStructField*? (&)
+ */
+struct CIDeclStructField *
+get_field_from_path__CIDeclStructFields(
+  const CIDeclStructFields *self,
+  const Vec *path,
+  const CIResultFile *file,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params);
+
+/**
+ *
+ * @brief Get field from name.
+ * @param fields const Vec<CIDeclStructField*>* (&)
+ * @param name Rc<String*>* (&)
+ * @return struct CIDeclStructField*? (&)
+ */
+inline struct CIDeclStructField *
+get_field_from_name__CIDeclStructFields(const CIDeclStructFields *self,
+                                        const Rc *name)
+{
+    return get__OrderedHashMap(self->members, GET_PTR_RC(String, name)->buffer);
+}
+
+/**
+ *
+ * @brief Check if one of fields have generic data type.
+ */
+bool
+has_generic__CIDeclStructFields(const CIDeclStructFields *self);
+
+/**
+ *
+ * @brief Check if the both CIDeclStructFields are equal.
+ */
+bool
+eq__CIDeclStructFields(const CIDeclStructFields *self,
+                       const CIDeclStructFields *other);
+
+/**
+ *
+ * @brief Get first named member
+ * @return struct CIDeclStructField*? (&)
+ */
+struct CIDeclStructField *
+get_first_named_member__CIDeclStructFields(const CIDeclStructFields *self);
+
+/**
+ *
+ * @brief Get first member.
+ * @return struct CIDeclStructField*? (&)
+ */
+struct CIDeclStructField *
+get_first_member__CIDeclStructFields(const CIDeclStructFields *self);
+
+/**
+ *
+ * @brief Convert CIDeclStructFields in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclStructFields, const CIDeclStructFields *self);
+#endif
+
+/**
+ *
+ * @brief Free CIDeclStructFields type.
+ * @param CIDeclStructFields* (&)
+ */
+DESTRUCTOR(CIDeclStructFields, CIDeclStructFields *self);
+
+enum CIDeclStructFieldKind
+{
+    CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_STRUCT, // struct { ... };
+    CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_UNION,  // union { ... };
+    CI_DECL_STRUCT_FIELD_KIND_NAMED_STRUCT,     // struct { ... } <name>;
+    CI_DECL_STRUCT_FIELD_KIND_NAMED_UNION,      // union { ... } <name>;
+    CI_DECL_STRUCT_FIELD_KIND_MEMBER,
+};
+
+/**
+ *
+ * @brief Convert CIDeclStructFieldKind in string.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               CIDeclStructFieldKind,
+               enum CIDeclStructFieldKind self);
+#endif
+
+typedef struct CIDeclStructFieldMember
+{
+    CIDataType *data_type;
+    Uint8 bit;
+} CIDeclStructFieldMember;
+
+/**
+ *
+ * @brief Construct CIDeclStructFieldMember type.
+ */
+inline CONSTRUCTOR(CIDeclStructFieldMember,
+                   CIDeclStructFieldMember,
+                   CIDataType *data_type,
+                   Uint8 bit)
+{
+    return (CIDeclStructFieldMember){ .data_type = data_type, .bit = bit };
+}
+
+/**
+ *
+ * @brief Check if the both CIDeclStructFieldMember are equal.
+ */
+bool
+eq__CIDeclStructFieldMember(const CIDeclStructFieldMember *self,
+                            const CIDeclStructFieldMember *other);
+
+/**
+ *
+ * @brief Convert CIDeclStructFieldMember in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CIDeclStructFieldMember,
+               const CIDeclStructFieldMember *self);
+#endif
+
+/**
+ *
+ * @brief Free CIDeclStructFieldMember type.
+ */
+DESTRUCTOR(CIDeclStructFieldMember, const CIDeclStructFieldMember *self);
+
+typedef struct CIDeclStructField
+{
+    Rc *name; // Rc<String*>*?
+    enum CIDeclStructFieldKind kind;
+    Usize ref_count;
+    struct CIDeclStructField *parent; // struct CIDeclStructField*? (&)
+    struct CIDeclStructField *next;   // struct CIDeclStructField*?
+    struct CIDeclStructField *prev;   // struct CIDeclStructField*? (&)
+    union
+    {
+        OrderedHashMap *named_struct; // OrderedHashMap<CIDeclStructField* (&)>*
+        OrderedHashMap *named_union;  // OrderedHashMap<CIDeclStructField* (&)>*
+        CIDeclStructFieldMember member;
+    };
+} CIDeclStructField;
+
+/**
+ *
+ * @brief Construct CIDeclStructField type
+ * (CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_STRUCT).
+ */
+VARIANT_CONSTRUCTOR(CIDeclStructField *,
+                    CIDeclStructField,
+                    anonymous_struct,
+                    struct CIDeclStructField *parent,
+                    struct CIDeclStructField *prev);
+
+/**
+ *
+ * @brief Construct CIDeclStructField type
+ * (CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_UNION).
+ */
+VARIANT_CONSTRUCTOR(CIDeclStructField *,
+                    CIDeclStructField,
+                    anonymous_union,
+                    struct CIDeclStructField *parent,
+                    struct CIDeclStructField *prev);
+
+/**
+ *
+ * @brief Construct CIDeclStructField type
+ * (CI_DECL_STRUCT_FIELD_KIND_NAMED_STRUCT).
+ * @param name Rc<String*>* (&)
+ */
+VARIANT_CONSTRUCTOR(CIDeclStructField *,
+                    CIDeclStructField,
+                    named_struct,
+                    Rc *name,
+                    struct CIDeclStructField *parent,
+                    struct CIDeclStructField *prev);
+
+/**
+ *
+ * @brief Construct CIDeclStructField type
+ * (CI_DECL_STRUCT_FIELD_KIND_NAMED_UNION).
+ * @param name Rc<String*>* (&)
+ */
+VARIANT_CONSTRUCTOR(CIDeclStructField *,
+                    CIDeclStructField,
+                    named_union,
+                    Rc *name,
+                    struct CIDeclStructField *parent,
+                    struct CIDeclStructField *prev);
+
+/**
+ *
+ * @brief Construct CIDeclStructField type (CI_DECL_STRUCT_FIELD_KIND_MEMBER).
+ * @param name Rc<String*>* (&)
+ */
+VARIANT_CONSTRUCTOR(CIDeclStructField *,
+                    CIDeclStructField,
+                    member,
+                    Rc *name,
+                    struct CIDeclStructField *parent,
+                    struct CIDeclStructField *prev,
+                    CIDeclStructFieldMember member);
+
+/**
+ *
+ * @brief Increment `ref_count` field.
+ */
+inline CIDeclStructField *
+ref__CIDeclStructField(CIDeclStructField *self)
+{
+    ++self->ref_count;
+    return self;
+}
+
+/**
+ *
+ * @brief Get members OrderedHashMap from field.
+ * @return OrderedHashMap<CIDeclStructField* (&)>*? (&)
+ */
+const OrderedHashMap *
+get_members__CIDeclStructField(const CIDeclStructField *self);
+
+/**
+ *
+ * @brief Clone CIDeclStructField type.
+ */
+CIDeclStructField *
+clone__CIDeclStructField(CIDeclStructField *self);
+
+/**
+ *
+ * @brief Compare vectors of fields (only data types).
+ * @param self const CIDeclStructField* (&)
+ * @param other const CIDeclStructField* (&)
+ */
+bool
+eq__CIDeclStructField(const CIDeclStructField *self,
+                      const CIDeclStructField *other);
+
+/**
+ *
+ * @brief Build data type from the given field.
+ */
+CIDataType *
+build_data_type__CIDeclStructField(const CIDeclStructField *self);
+
+/**
+ *
+ * @brief Check if `self` is the child of `parent`.
+ */
+bool
+has_parent_by_addr__CIDeclStructField(const CIDeclStructField *self,
+                                      const CIDeclStructField *parent);
+
+/**
+ *
+ * @brief Get next field with no parent.
+ * @return CIDeclStructField*? (&)
+ */
+CIDeclStructField *
+get_next_field_with_no_parent__CIDeclStructField(const CIDeclStructField *self);
+
+/**
+ *
+ * @brief Get bit from field.
+ */
+Usize
+get_bit__CIDeclStructField(const CIDeclStructField *self);
+
+/**
+ *
+ * @brief Get next member field.
+ */
+CIDeclStructField *
+get_next_member__CIDeclStructField(const CIDeclStructField *self);
+
+/**
+ *
+ * @brief Convert CIDeclStructField in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclStructField, const CIDeclStructField *self);
+#endif
+
+/**
+ *
+ * @brief Free CIDeclStructField type.
+ */
+DESTRUCTOR(CIDeclStructField, CIDeclStructField *self);
+
 enum CIDataTypeContext
 {
     CI_DATA_TYPE_CONTEXT_NONE = 0,
@@ -982,7 +1337,7 @@ typedef struct CIDataTypeStruct
 {
     Rc *name;                        // Rc<String*>*?
     CIGenericParams *generic_params; // CIGenericParams*?
-    Vec *fields;                     // Vec<CIDeclStructField*>*?
+    CIDeclStructFields *fields;      // CIDeclStructFields*?
 } CIDataTypeStruct;
 
 /**
@@ -994,7 +1349,7 @@ inline CONSTRUCTOR(CIDataTypeStruct,
                    CIDataTypeStruct,
                    Rc *name,
                    CIGenericParams *generic_params,
-                   Vec *fields)
+                   CIDeclStructFields *fields)
 {
     return (CIDataTypeStruct){ .name = name ? ref__Rc(name) : NULL,
                                .generic_params = generic_params,
@@ -1057,7 +1412,7 @@ typedef struct CIDataTypeUnion
 {
     Rc *name;                        // Rc<String*>*?
     CIGenericParams *generic_params; // CIGenericParams*?
-    Vec *fields;                     // Vec<CIDeclStructField*>*?
+    CIDeclStructFields *fields;      // CIDeclStructFields*?
 } CIDataTypeUnion;
 
 /**
@@ -1069,7 +1424,7 @@ inline CONSTRUCTOR(CIDataTypeUnion,
                    CIDataTypeUnion,
                    Rc *name,
                    CIGenericParams *generic_params,
-                   Vec *fields)
+                   CIDeclStructFields *fields)
 {
     return (CIDataTypeUnion){ .name = name ? ref__Rc(name) : NULL,
                               .generic_params = generic_params,
@@ -1301,8 +1656,9 @@ has_name__CIDataType(const CIDataType *self);
 /**
  *
  * @brief Get fields from data type.
+ * @return CIDeclStructFields*? (&)
  */
-const Vec *
+const CIDeclStructFields *
 get_fields__CIDataType(const CIDataType *self);
 
 /**
@@ -1973,106 +2329,11 @@ IMPL_FOR_DEBUG(to_string, CIDeclLabel, const CIDeclLabel *self);
  */
 DESTRUCTOR(CIDeclLabel, const CIDeclLabel *self);
 
-typedef struct CIDeclStructField
-{
-    Rc *name; // Rc<String*>*?
-    CIDataType *data_type;
-    Uint8 bit;
-} CIDeclStructField;
-
-/**
- *
- * @brief Construct CIDeclStructField type.
- * @param name Rc<String*>*? (&)
- */
-CONSTRUCTOR(CIDeclStructField *,
-            CIDeclStructField,
-            Rc *name,
-            CIDataType *data_type,
-            Uint8 bit);
-
-/**
- *
- * @brief Clone CIDeclStructField type.
- */
-CIDeclStructField *
-clone__CIDeclStructField(CIDeclStructField *self);
-
-/**
- *
- * @brief Clone fields Vector containing CIDeclStructField.
- */
-Vec *
-clone_fields__CIDeclStructField(Vec *fields);
-
-/**
- *
- * @brief Compare vectors of fields (only data types).
- * @param self_fields const Vec<CIDeclStructField*>* (&)
- * @param other_fields const Vec<CIDeclStructField*>* (&)
- */
-bool
-eq__CIDeclStructField(const Vec *self_fields, const Vec *other_fields);
-
-/**
- *
- * @brief Check if one of fields have generic data type.
- */
-bool
-has_generic__CIDeclStructField(const Vec *self_fields);
-
-/**
- *
- * @brief Get field from the given name.
- * @param field_name const String* (&)
- * @return CIDataType*? (&)
- */
-CIDataType *
-get__CIDeclStructField(const Vec *self_fields, const String *field_name);
-
-/**
- *
- * @brief Build fields vector (Vec<CIDeclStructField*>*), from data type.
- * @param data_type CIDataType* (&)
- * @return Vec<CIDeclStructField*>*
- */
-Vec *
-build_fields_from_data_type__CIDeclStructField(CIDataType *data_type,
-                                               Usize nb_fields);
-
-/**
- *
- * @brief Get field from name, from one struct.
- * @param fields const Vec<CIDeclStructField*>* (&)
- * @param name Rc<String*>* (&)
- * @return CIDeclStructField*? (&)
- */
-CIDeclStructField *
-get_field_from_name__CIDeclStructField(const Vec *fields,
-                                       const Rc *name,
-                                       const CIResultFile *file);
-
-/**
- *
- * @brief Convert CIDeclStructField in String.
- * @note This function is only used to debug.
- */
-#ifdef ENV_DEBUG
-String *
-IMPL_FOR_DEBUG(to_string, CIDeclStructField, const CIDeclStructField *self);
-#endif
-
-/**
- *
- * @brief Free CIDeclStructField type.
- */
-DESTRUCTOR(CIDeclStructField, CIDeclStructField *self);
-
 typedef struct CIDeclStruct
 {
     Rc *name;                        // Rc<String*>*?
     CIGenericParams *generic_params; // CIGenericParams*?
-    Vec *fields;                     // Vec<CIDeclStructField*>*?
+    CIDeclStructFields *fields;      // CIDeclStructFields*?
     CISizeInfo size_info;
 } CIDeclStruct;
 
@@ -2085,7 +2346,7 @@ inline CONSTRUCTOR(CIDeclStruct,
                    CIDeclStruct,
                    Rc *name,
                    CIGenericParams *generic_params,
-                   Vec *fields)
+                   CIDeclStructFields *fields)
 {
     return (CIDeclStruct){ .name = name ? ref__Rc(name) : NULL,
                            .generic_params = generic_params,
@@ -2148,7 +2409,7 @@ typedef struct CIDeclStructGen
     const CIDeclStruct *struct_; // const CIDeclStruct* (&)
     String *name;
     CIGenericParams *called_generic_params; // CIGenericParams*
-    Vec *fields;                            // Vec<CIDeclStructField*>*?
+    CIDeclStructFields *fields;             // CIDeclStructFields*?
     CISizeInfo size_info;
 } CIDeclStructGen;
 
@@ -2161,7 +2422,7 @@ inline CONSTRUCTOR(CIDeclStructGen,
                    const CIDeclStruct *struct_,
                    String *name,
                    CIGenericParams *called_generic_params,
-                   Vec *fields)
+                   CIDeclStructFields *fields)
 {
     return (CIDeclStructGen){ .struct_ = struct_,
                               .name = name,
@@ -2325,7 +2586,7 @@ typedef struct CIDeclUnion
 {
     Rc *name;                        // Rc<String*>*?
     CIGenericParams *generic_params; // CIGenericParams*?
-    Vec *fields;                     // Vec<CIDeclStructField*>*?
+    CIDeclStructFields *fields;      // CIDeclStructFields*?
     CISizeInfo size_info;
 } CIDeclUnion;
 
@@ -2338,7 +2599,7 @@ inline CONSTRUCTOR(CIDeclUnion,
                    CIDeclUnion,
                    Rc *name,
                    CIGenericParams *generic_params,
-                   Vec *fields)
+                   CIDeclStructFields *fields)
 {
     return (CIDeclUnion){ .name = name ? ref__Rc(name) : NULL,
                           .generic_params = generic_params,
@@ -2400,7 +2661,7 @@ typedef struct CIDeclUnionGen
     const CIDeclUnion *union_; // const CIDeclFunction* (&)
     String *name;
     CIGenericParams *called_generic_params; // CIGenericParams*
-    Vec *fields;                            // Vec<CIDeclStructField*>*?
+    CIDeclStructFields *fields;             // CIDeclStructFields*?
     CISizeInfo size_info;
 } CIDeclUnionGen;
 
@@ -2413,7 +2674,7 @@ inline CONSTRUCTOR(CIDeclUnionGen,
                    const CIDeclUnion *union_,
                    String *name,
                    CIGenericParams *called_generic_params,
-                   Vec *fields)
+                   CIDeclStructFields *fields)
 {
     return (CIDeclUnionGen){ .union_ = union_,
                              .name = name,
@@ -2583,7 +2844,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl *struct_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
-                    Vec *fields);
+                    CIDeclStructFields *fields);
 
 /**
  *
@@ -2625,7 +2886,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl *union_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
-                    Vec *fields);
+                    CIDeclStructFields *fields);
 
 /**
  *
@@ -2641,8 +2902,9 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 /**
  *
  * @brief Get fields from decl.
+ * @return const CIDeclStructFields*? (&)
  */
-const Vec *
+const CIDeclStructFields *
 get_fields__CIDecl(const CIDecl *self);
 
 /**

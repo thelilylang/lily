@@ -91,14 +91,31 @@ substitute_and_generate_from_data_type__CIVisitor(
   CIGenericParams *generic_params,
   CIGenericParams *called_generic_params);
 
+/// @param current_field CIDeclStructField*? (&)* (&)
+/// @param prev_gen_field CIDeclStructField*? (&)* (&)
+/// @param parent_gen_field CIDeclStructField*? (&)
+static void
+visit_struct_or_union_field__CIVisitor(CIVisitor *self,
+                                       CIDeclStructField **current_field_ref,
+                                       CIDeclStructFields *gen_fields,
+                                       CIDeclStructField **prev_gen_field,
+                                       CIDeclStructField *parent_gen_field,
+                                       CIGenericParams *generic_params,
+                                       CIGenericParams *called_generic_params);
+
 /// @brief If the struct or union is not generic, this function will return
 /// NULL.
 /// @return the generated fields.
-/// @return Vec<CIDataType*>*?
-static Vec *
+/// @return CIDeclStructFields*?
+static CIDeclStructFields *
 visit_struct_or_union__CIVisitor(CIVisitor *self,
                                  const CIDecl *decl,
                                  CIGenericParams *called_generic_params);
+
+static void
+visit_non_generic_struct_or_union_field__CIVisitor(
+  CIVisitor *self,
+  CIDeclStructField *current_field);
 
 static void
 visit_non_generic_struct_or_union__CIVisitor(CIVisitor *self,
@@ -435,8 +452,9 @@ generate_type_gen__CIVisitor(CIVisitor *self,
             if (!decl_gen) {
                 switch (decl->kind) {
                     case CI_DECL_KIND_STRUCT: {
-                        Vec *fields = visit_struct_or_union__CIVisitor(
-                          self, decl, resolved_generic_params);
+                        CIDeclStructFields *fields =
+                          visit_struct_or_union__CIVisitor(
+                            self, decl, resolved_generic_params);
 
                         if (fields) {
                             decl_gen = NEW_VARIANT(
@@ -477,8 +495,9 @@ generate_type_gen__CIVisitor(CIVisitor *self,
                         return;
                     }
                     case CI_DECL_KIND_UNION: {
-                        Vec *fields = visit_struct_or_union__CIVisitor(
-                          self, decl, resolved_generic_params);
+                        CIDeclStructFields *fields =
+                          visit_struct_or_union__CIVisitor(
+                            self, decl, resolved_generic_params);
 
                         if (fields) {
                             decl_gen = NEW_VARIANT(
@@ -625,7 +644,85 @@ substitute_and_generate_from_data_type__CIVisitor(
     return subs_data_type;
 }
 
-Vec *
+void
+visit_struct_or_union_field__CIVisitor(CIVisitor *self,
+                                       CIDeclStructField **current_field_ref,
+                                       CIDeclStructFields *gen_fields,
+                                       CIDeclStructField **prev_gen_field,
+                                       CIDeclStructField *parent_gen_field,
+                                       CIGenericParams *generic_params,
+                                       CIGenericParams *called_generic_params)
+{
+    CIDeclStructField *current_field = *current_field_ref;
+
+    switch (current_field->kind) {
+        case CI_DECL_STRUCT_FIELD_KIND_MEMBER: {
+            CIDataType *field_dt = current_field->member.data_type;
+            CIDataType *subs_field_dt =
+              substitute_and_generate_from_data_type__CIVisitor(
+                self, field_dt, generic_params, called_generic_params);
+
+            if (subs_field_dt) {
+                CIDeclStructField *gen_field =
+                  NEW_VARIANT(CIDeclStructField,
+                              member,
+                              current_field->name,
+                              parent_gen_field,
+                              *prev_gen_field,
+                              NEW(CIDeclStructFieldMember,
+                                  subs_field_dt,
+                                  current_field->member.bit));
+
+                ASSERT(add__CIDeclStructFields(
+                  gen_fields, gen_field, *prev_gen_field));
+
+                *prev_gen_field = gen_field;
+            }
+
+            break;
+        }
+        case CI_DECL_STRUCT_FIELD_KIND_NAMED_STRUCT:
+        case CI_DECL_STRUCT_FIELD_KIND_NAMED_UNION:
+        case CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_STRUCT:
+        case CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_UNION: {
+            CIDeclStructField *parent_field = current_field;
+            CIDeclStructField *new_parent_gen_field =
+              clone__CIDeclStructField(current_field);
+
+            new_parent_gen_field->prev = *prev_gen_field;
+            new_parent_gen_field->parent = parent_gen_field;
+
+            ASSERT(add__CIDeclStructFields(
+              gen_fields, new_parent_gen_field, *prev_gen_field));
+
+            *prev_gen_field = new_parent_gen_field;
+
+            while (*current_field_ref) {
+                if ((*current_field_ref)->next &&
+                    has_parent_by_addr__CIDeclStructField(
+                      (*current_field_ref)->next, parent_field)) {
+                    *current_field_ref = (*current_field_ref)->next;
+                } else {
+                    break;
+                }
+
+                visit_struct_or_union_field__CIVisitor(self,
+                                                       current_field_ref,
+                                                       gen_fields,
+                                                       prev_gen_field,
+                                                       new_parent_gen_field,
+                                                       generic_params,
+                                                       called_generic_params);
+            }
+
+            break;
+        }
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+CIDeclStructFields *
 visit_struct_or_union__CIVisitor(CIVisitor *self,
                                  const CIDecl *decl,
                                  CIGenericParams *called_generic_params)
@@ -634,27 +731,28 @@ visit_struct_or_union__CIVisitor(CIVisitor *self,
            decl->kind == CI_DECL_KIND_UNION);
 
     if (has_generic__CIDecl(decl)) {
-        const Vec *fields = get_fields__CIDecl(decl);
+        const CIDeclStructFields *fields = get_fields__CIDecl(decl);
 
         if (!fields) {
             return NULL;
         }
 
         CIGenericParams *generic_params = get_generic_params__CIDecl(decl);
-        Vec *gen_fields = NEW(Vec);
+        CIDeclStructField *current_field = fields->first;
+        CIDeclStructFields *gen_fields = NEW(CIDeclStructFields);
+        CIDeclStructField *prev_gen_field = NULL;
 
-        for (Usize i = 0; i < fields->len; ++i) {
-            const CIDeclStructField *field = get__Vec(fields, i);
-            CIDataType *subs_data_type =
-              substitute_and_generate_from_data_type__CIVisitor(
-                self, field->data_type, generic_params, called_generic_params);
+        while (current_field) {
+            visit_struct_or_union_field__CIVisitor(self,
+                                                   &current_field,
+                                                   gen_fields,
+                                                   &prev_gen_field,
+                                                   NULL,
+                                                   generic_params,
+                                                   called_generic_params);
 
-            if (subs_data_type) {
-                push__Vec(gen_fields,
-                          NEW(CIDeclStructField,
-                              field->name,
-                              subs_data_type,
-                              field->bit));
+            if (current_field) {
+                current_field = current_field->next;
             }
         }
 
@@ -665,22 +763,41 @@ visit_struct_or_union__CIVisitor(CIVisitor *self,
 }
 
 void
+visit_non_generic_struct_or_union_field__CIVisitor(
+  CIVisitor *self,
+  CIDeclStructField *current_field)
+{
+    switch (current_field->kind) {
+        case CI_DECL_STRUCT_FIELD_KIND_MEMBER: {
+            generate_from_data_type__CIVisitor(
+              self, current_field->member.data_type, NULL, NULL);
+
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+void
 visit_non_generic_struct_or_union__CIVisitor(CIVisitor *self,
                                              const CIDecl *decl)
 {
     ASSERT(decl->kind == CI_DECL_KIND_STRUCT ||
            decl->kind == CI_DECL_KIND_UNION);
 
-    const Vec *fields = get_fields__CIDecl(decl);
+    const CIDeclStructFields *fields = get_fields__CIDecl(decl);
 
     if (!fields) {
         return;
     }
 
-    for (Usize i = 0; i < fields->len; ++i) {
-        const CIDeclStructField *field = get__Vec(fields, i);
+    CIDeclStructField *current_field = fields->first;
 
-        generate_from_data_type__CIVisitor(self, field->data_type, NULL, NULL);
+    while (current_field) {
+        visit_non_generic_struct_or_union_field__CIVisitor(self, current_field);
+
+        current_field = current_field->next;
     }
 }
 

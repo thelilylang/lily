@@ -158,6 +158,21 @@ eq_op__CIGenericParams(const CIGenericParams *self,
 
 extern inline CONSTRUCTOR(CISizeInfo, CISizeInfo);
 
+extern inline CIDeclStructFields *
+ref__CIDeclStructFields(CIDeclStructFields *self);
+
+extern struct CIDeclStructField *
+get_field_from_name__CIDeclStructFields(const CIDeclStructFields *self,
+                                        const Rc *name);
+
+extern inline CONSTRUCTOR(CIDeclStructFieldMember,
+                          CIDeclStructFieldMember,
+                          CIDataType *data_type,
+                          Uint8 bit);
+
+extern inline CIDeclStructField *
+ref__CIDeclStructField(CIDeclStructField *self);
+
 extern inline VARIANT_CONSTRUCTOR(CIDataTypeArray,
                                   CIDataTypeArray,
                                   sized,
@@ -194,7 +209,7 @@ extern inline CONSTRUCTOR(CIDataTypeStruct,
                           CIDataTypeStruct,
                           Rc *name,
                           CIGenericParams *generic_params,
-                          Vec *fields);
+                          CIDeclStructFields *fields);
 
 extern inline CONSTRUCTOR(CIDataTypeTypedef,
                           CIDataTypeTypedef,
@@ -205,7 +220,7 @@ extern inline CONSTRUCTOR(CIDataTypeUnion,
                           CIDataTypeUnion,
                           Rc *name,
                           CIGenericParams *generic_params,
-                          Vec *fields);
+                          CIDeclStructFields *fields);
 
 extern inline CIDataType *
 ref__CIDataType(CIDataType *self);
@@ -274,7 +289,7 @@ extern inline CONSTRUCTOR(CIDeclStruct,
                           CIDeclStruct,
                           Rc *name,
                           CIGenericParams *generic_params,
-                          Vec *fields);
+                          CIDeclStructFields *fields);
 
 extern inline bool
 eq_generic_params__CIDeclStruct(const CIDeclStruct *self,
@@ -285,7 +300,7 @@ extern inline CONSTRUCTOR(CIDeclStructGen,
                           const CIDeclStruct *struct_,
                           String *name,
                           CIGenericParams *called_generic_params,
-                          Vec *fields);
+                          CIDeclStructFields *fields);
 
 extern inline CONSTRUCTOR(CIDeclTypedef,
                           CIDeclTypedef,
@@ -310,7 +325,7 @@ extern inline CONSTRUCTOR(CIDeclUnion,
                           CIDeclUnion,
                           Rc *name,
                           CIGenericParams *generic_params,
-                          Vec *fields);
+                          CIDeclStructFields *fields);
 
 extern inline bool
 eq_generic_params__CIDeclUnion(const CIDeclUnion *self,
@@ -321,7 +336,7 @@ extern inline CONSTRUCTOR(CIDeclUnionGen,
                           const CIDeclUnion *union_,
                           String *name,
                           CIGenericParams *called_generic_params,
-                          Vec *fields);
+                          CIDeclStructFields *fields);
 
 extern inline CONSTRUCTOR(CIDeclVariable,
                           CIDeclVariable,

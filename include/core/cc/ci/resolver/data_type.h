@@ -38,6 +38,7 @@ bool
 is_array_data_type__CIResolverDataType(
   const CIResultFile *file,
   CIDataType *data_type,
+  bool allow_implicit_cast,
   const CIGenericParams *called_generic_params,
   const CIGenericParams *decl_generic_params);
 
@@ -178,9 +179,9 @@ unwrap_implicit_ptr_data_type__CIResolverDataType(
  * @brief Get fields from struct or union data type.
  * @param called_generic_params const CIGenericParams*? (&)
  * @param decl_generic_params const CIGenericParams*? (&)
- * @return const Vec<CIDeclStructField*>*? (&)
+ * @return const CIDeclStructFields*? (&)
  */
-const Vec *
+const CIDeclStructFields *
 get_fields_from_data_type__CIResolverDataType(
   const CIResultFile *file,
   const CIDataType *data_type,

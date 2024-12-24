@@ -29,6 +29,7 @@
 
 #include <core/cc/ci/ast.h>
 #include <core/cc/ci/builtin.h>
+#include <core/cc/ci/resolver/data_type.h>
 #include <core/cc/ci/result.h>
 #include <core/cc/ci/token.h>
 
@@ -49,6 +50,10 @@
 #define EXPR_PRECEDENCE_LEVEL_12 45
 #define EXPR_PRECEDENCE_LEVEL_13 40
 #define EXPR_PRECEDENCE_LEVEL_14 35
+
+static CIDataType *
+build_struct_or_union_data_type__CIDeclStructField(
+  const CIDeclStructField *self);
 
 static inline bool
 has_heap__CIDataTypeContext(int self);
@@ -112,6 +117,31 @@ static VARIANT_DESTRUCTOR(CIDeclFunctionParam,
 static inline VARIANT_DESTRUCTOR(CIDeclFunctionParam,
                                  variadic,
                                  CIDeclFunctionParam *self);
+
+/// @brief Free CIDeclStructField type
+/// (CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_STRUCT).
+static VARIANT_DESTRUCTOR(CIDeclStructField,
+                          anonymous_struct,
+                          CIDeclStructField *self);
+
+/// @brief Free CIDeclStructField type
+/// (CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_UNION).
+static VARIANT_DESTRUCTOR(CIDeclStructField,
+                          anonymous_union,
+                          CIDeclStructField *self);
+
+/// @brief Free CIDeclStructField type (CI_DECL_STRUCT_FIELD_KIND_NAMED_STRUCT).
+static VARIANT_DESTRUCTOR(CIDeclStructField,
+                          named_struct,
+                          CIDeclStructField *self);
+
+/// @brief Free CIDeclStructField type (CI_DECL_STRUCT_FIELD_KIND_NAMED_UNION).
+static VARIANT_DESTRUCTOR(CIDeclStructField,
+                          named_union,
+                          CIDeclStructField *self);
+
+/// @brief Free CIDeclStructField type (CI_DECL_STRUCT_FIELD_KIND_MEMBER).
+static VARIANT_DESTRUCTOR(CIDeclStructField, member, CIDeclStructField *self);
 
 static const CISizeInfo *
 get_size_info__CIDecl(const CIDecl *self);
@@ -709,6 +739,749 @@ DESTRUCTOR(CIGenericParams, CIGenericParams *self)
     lily_free(self);
 }
 
+CONSTRUCTOR(CIDeclStructFields *, CIDeclStructFields)
+{
+    CIDeclStructFields *self = lily_malloc(sizeof(CIDeclStructFields));
+
+    self->first = NULL;
+    self->last = NULL;
+    self->members = NEW(OrderedHashMap);
+    self->ref_count = 0;
+
+    return self;
+}
+
+bool
+add__CIDeclStructFields(CIDeclStructFields *self,
+                        struct CIDeclStructField *field,
+                        struct CIDeclStructField *prev)
+{
+    if (prev) {
+        prev->next = field;
+
+        ASSERT(field->prev == prev);
+    }
+
+    bool is_duplicated = false;
+
+    if (!field->name) {
+        goto add_to_linked_list;
+    }
+
+    CIDeclStructField *current_parent = field->parent;
+
+    while (true) {
+        if (current_parent) {
+            switch (current_parent->kind) {
+                case CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_STRUCT:
+                case CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_UNION:
+                    current_parent = current_parent->parent;
+
+                    continue;
+                case CI_DECL_STRUCT_FIELD_KIND_NAMED_STRUCT:
+                case CI_DECL_STRUCT_FIELD_KIND_NAMED_UNION:
+                    switch (current_parent->kind) {
+                        case CI_DECL_STRUCT_FIELD_KIND_NAMED_STRUCT:
+                            is_duplicated = insert__OrderedHashMap(
+                              current_parent->named_struct,
+                              GET_PTR_RC(String, field->name)->buffer,
+                              field);
+
+                            break;
+                        case CI_DECL_STRUCT_FIELD_KIND_NAMED_UNION:
+                            is_duplicated = insert__OrderedHashMap(
+                              current_parent->named_union,
+                              GET_PTR_RC(String, field->name)->buffer,
+                              field);
+
+                            break;
+                        default:
+                            UNREACHABLE("unknown variant");
+                    }
+
+                    break;
+                case CI_DECL_STRUCT_FIELD_KIND_MEMBER:
+                    UNREACHABLE("impossible to have member as parent");
+                default:
+                    UNREACHABLE("unknown variant");
+            }
+        } else {
+            is_duplicated = insert__OrderedHashMap(
+              self->members, GET_PTR_RC(String, field->name)->buffer, field);
+        }
+
+        break;
+    }
+
+add_to_linked_list:
+    if (!is_duplicated) {
+        if (self->first) {
+            self->last->next = field;
+            self->last = self->last->next;
+        } else {
+            self->first = field;
+            self->last = self->first;
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+CIDeclStructFields *
+clone__CIDeclStructFields(CIDeclStructFields *self)
+{
+    CIDeclStructFields *cloned_self = NEW(CIDeclStructFields);
+    CIDeclStructField *current = self->first;
+    CIDeclStructField *cloned_prev = NULL;
+    CIDeclStructField *cloned_parent = NULL;
+
+    while (current) {
+        CIDeclStructField *cloned_current = clone__CIDeclStructField(current);
+
+        cloned_current->prev = cloned_prev;
+        cloned_current->parent = cloned_parent;
+
+        ASSERT(
+          add__CIDeclStructFields(cloned_self, cloned_current, cloned_prev));
+
+        switch (cloned_current->kind) {
+            case CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_STRUCT:
+            case CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_UNION:
+            case CI_DECL_STRUCT_FIELD_KIND_NAMED_STRUCT:
+            case CI_DECL_STRUCT_FIELD_KIND_NAMED_UNION:
+                cloned_parent = cloned_current;
+
+                break;
+            case CI_DECL_STRUCT_FIELD_KIND_MEMBER:
+                break;
+            default:
+                UNREACHABLE("unknown variant");
+        }
+
+        cloned_prev = cloned_current;
+        current = current->next;
+    }
+
+    return cloned_self;
+}
+
+struct CIDeclStructField *
+get_field_from_path__CIDeclStructFields(
+  const CIDeclStructFields *self,
+  const Vec *path,
+  const CIResultFile *file,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params)
+{
+    CIDeclStructField *current_field = NULL;
+
+    for (Usize i = 0; i < path->len; ++i) {
+        Rc *path_part = get__Vec(path, i); // Rc<String*>* (&)
+        const OrderedHashMap *members =
+          current_field
+            ? get_members__CIDeclStructField(current_field)
+            : self
+                ->members; // const OrderedHashMap<CIDeclStructField* (&)>*? (&)
+
+        if (!members) {
+            /* GET MEMBERS from another struct if is that possible, otherwise
+             * return NULL */
+        }
+
+        if (members) {
+            current_field = get__OrderedHashMap(
+              (OrderedHashMap *)members, GET_PTR_RC(String, path_part)->buffer);
+
+            if (!current_field) {
+                return NULL;
+            }
+        } else {
+            return NULL;
+        }
+    }
+
+    return current_field;
+}
+
+bool
+has_generic__CIDeclStructFields(const CIDeclStructFields *self)
+{
+    for (CIDeclStructField *current = self->first; current;
+         current = current->next) {
+        switch (current->kind) {
+            case CI_DECL_STRUCT_FIELD_KIND_MEMBER:
+                switch (current->member.data_type->kind) {
+                    case CI_DATA_TYPE_KIND_GENERIC:
+                        return true;
+                    default: {
+                        const CIGenericParams *generic_params =
+                          get_generic_params__CIDataType(
+                            current->member.data_type);
+
+                        if (generic_params &&
+                            has_generic__CIGenericParams(generic_params)) {
+                            return true;
+                        }
+                    }
+                }
+
+                break;
+            default:
+                break;
+        }
+    }
+
+    return false;
+}
+
+bool
+eq__CIDeclStructFields(const CIDeclStructFields *self,
+                       const CIDeclStructFields *other)
+{
+    CIDeclStructField *current_self = self->first;
+    CIDeclStructField *current_other = other->first;
+
+    for (; current_self && current_other; current_self = current_self->next,
+                                          current_other = current_other->next) {
+        if (!eq__CIDeclStructField(current_self, current_other)) {
+            return false;
+        }
+    }
+
+    return !current_self && !current_other;
+}
+
+struct CIDeclStructField *
+get_first_named_member__CIDeclStructFields(const CIDeclStructFields *self)
+{
+    for (CIDeclStructField *current = self->first; current;
+         current = current->next) {
+        switch (current->kind) {
+            case CI_DECL_STRUCT_FIELD_KIND_MEMBER:
+            case CI_DECL_STRUCT_FIELD_KIND_NAMED_STRUCT:
+            case CI_DECL_STRUCT_FIELD_KIND_NAMED_UNION:
+                return current;
+            default:
+                continue;
+        }
+    }
+
+    return NULL;
+}
+
+struct CIDeclStructField *
+get_first_member__CIDeclStructFields(const CIDeclStructFields *self)
+{
+    CIDeclStructField *current = self->first;
+
+    while (current) {
+        switch (current->kind) {
+            case CI_DECL_STRUCT_FIELD_KIND_MEMBER:
+                return current;
+            default:
+                break;
+        }
+
+        current = current->next;
+    }
+
+    return NULL;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclStructFields, const CIDeclStructFields *self)
+{
+    return format__String(
+      "CIDeclStructFields{{ first = {Sr}, last = {Sr} }",
+      self->first ? to_string__Debug__CIDeclStructField(self->first)
+                  : from__String("NULL"),
+      self->last ? to_string__Debug__CIDeclStructField(self->last)
+                 : from__String("NULL"));
+}
+#endif
+
+DESTRUCTOR(CIDeclStructFields, CIDeclStructFields *self)
+{
+    if (self->ref_count > 0) {
+        --self->ref_count;
+        return;
+    }
+
+    CIDeclStructField *current = self->first;
+
+    while (current) {
+        CIDeclStructField *prev = current;
+
+        current = current->next;
+
+        FREE(CIDeclStructField, prev);
+    }
+
+    FREE(OrderedHashMap, self->members);
+
+    lily_free(self);
+}
+
+bool
+eq__CIDeclStructFieldMember(const CIDeclStructFieldMember *self,
+                            const CIDeclStructFieldMember *other)
+{
+    return eq__CIDataType(self->data_type, other->data_type) &&
+           self->bit == other->bit;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CIDeclStructFieldMember,
+               const CIDeclStructFieldMember *self)
+{
+    return format__String(
+      "CIDeclStructFieldMember{{ data_type = {Sr}, bit = {d} }",
+      to_string__Debug__CIDataType(self->data_type),
+      self->bit);
+}
+#endif
+
+DESTRUCTOR(CIDeclStructFieldMember, const CIDeclStructFieldMember *self)
+{
+    FREE(CIDataType, self->data_type);
+}
+
+#ifdef ENV_DEBUG
+char *
+IMPL_FOR_DEBUG(to_string,
+               CIDeclStructFieldKind,
+               enum CIDeclStructFieldKind self)
+{
+    switch (self) {
+        case CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_STRUCT:
+            return "CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_STRUCT";
+        case CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_UNION:
+            return "CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_UNION";
+        case CI_DECL_STRUCT_FIELD_KIND_NAMED_STRUCT:
+            return "CI_DECL_STRUCT_FIELD_KIND_NAMED_STRUCT";
+        case CI_DECL_STRUCT_FIELD_KIND_NAMED_UNION:
+            return "CI_DECL_STRUCT_FIELD_KIND_NAMED_UNION";
+        case CI_DECL_STRUCT_FIELD_KIND_MEMBER:
+            return "CI_DECL_STRUCT_FIELD_KIND_MEMBER";
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+VARIANT_CONSTRUCTOR(CIDeclStructField *,
+                    CIDeclStructField,
+                    anonymous_struct,
+                    struct CIDeclStructField *parent,
+                    struct CIDeclStructField *prev)
+{
+    CIDeclStructField *self = lily_malloc(sizeof(CIDeclStructField));
+
+    self->name = NULL;
+    self->kind = CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_STRUCT;
+    self->ref_count = 0;
+    self->parent = parent;
+    self->next = NULL;
+    self->prev = prev;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIDeclStructField *,
+                    CIDeclStructField,
+                    anonymous_union,
+                    struct CIDeclStructField *parent,
+                    struct CIDeclStructField *prev)
+{
+    CIDeclStructField *self = lily_malloc(sizeof(CIDeclStructField));
+
+    self->name = NULL;
+    self->kind = CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_UNION;
+    self->ref_count = 0;
+    self->parent = parent;
+    self->next = NULL;
+    self->prev = prev;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIDeclStructField *,
+                    CIDeclStructField,
+                    named_struct,
+                    Rc *name,
+                    struct CIDeclStructField *parent,
+                    struct CIDeclStructField *prev)
+{
+    CIDeclStructField *self = lily_malloc(sizeof(CIDeclStructField));
+
+    self->name = ref__Rc(name);
+    self->kind = CI_DECL_STRUCT_FIELD_KIND_NAMED_STRUCT;
+    self->ref_count = 0;
+    self->parent = parent;
+    self->next = NULL;
+    self->prev = prev;
+    self->named_struct = NEW(OrderedHashMap);
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIDeclStructField *,
+                    CIDeclStructField,
+                    named_union,
+                    Rc *name,
+                    struct CIDeclStructField *parent,
+                    struct CIDeclStructField *prev)
+{
+    CIDeclStructField *self = lily_malloc(sizeof(CIDeclStructField));
+
+    self->name = ref__Rc(name);
+    self->kind = CI_DECL_STRUCT_FIELD_KIND_NAMED_UNION;
+    self->ref_count = 0;
+    self->parent = parent;
+    self->next = NULL;
+    self->prev = prev;
+    self->named_union = NEW(OrderedHashMap);
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIDeclStructField *,
+                    CIDeclStructField,
+                    member,
+                    Rc *name,
+                    struct CIDeclStructField *parent,
+                    struct CIDeclStructField *prev,
+                    CIDeclStructFieldMember member)
+{
+    CIDeclStructField *self = lily_malloc(sizeof(CIDeclStructField));
+
+    self->name = ref__Rc(name);
+    self->kind = CI_DECL_STRUCT_FIELD_KIND_MEMBER;
+    self->ref_count = 0;
+    self->parent = parent;
+    self->next = NULL;
+    self->prev = prev;
+    self->member = member;
+
+    return self;
+}
+
+const OrderedHashMap *
+get_members__CIDeclStructField(const CIDeclStructField *self)
+{
+    switch (self->kind) {
+        case CI_DECL_STRUCT_FIELD_KIND_NAMED_STRUCT:
+            return self->named_struct;
+        case CI_DECL_STRUCT_FIELD_KIND_NAMED_UNION:
+            return self->named_union;
+        default:
+            return NULL;
+    }
+}
+
+CIDeclStructField *
+clone__CIDeclStructField(CIDeclStructField *self)
+{
+    switch (self->kind) {
+        case CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_STRUCT:
+            return NEW_VARIANT(
+              CIDeclStructField, anonymous_struct, self->parent, self->prev);
+        case CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_UNION:
+            return NEW_VARIANT(
+              CIDeclStructField, anonymous_union, self->parent, self->prev);
+        case CI_DECL_STRUCT_FIELD_KIND_NAMED_STRUCT:
+            return NEW_VARIANT(CIDeclStructField,
+                               named_struct,
+                               self->name,
+                               self->parent,
+                               self->prev);
+        case CI_DECL_STRUCT_FIELD_KIND_NAMED_UNION:
+            return NEW_VARIANT(CIDeclStructField,
+                               named_union,
+                               self->name,
+                               self->parent,
+                               self->prev);
+        case CI_DECL_STRUCT_FIELD_KIND_MEMBER:
+            return NEW_VARIANT(CIDeclStructField,
+                               member,
+                               self->name,
+                               self->parent,
+                               self->prev,
+                               NEW(CIDeclStructFieldMember,
+                                   clone__CIDataType(self->member.data_type),
+                                   self->member.bit));
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+bool
+eq__CIDeclStructField(const CIDeclStructField *self,
+                      const CIDeclStructField *other)
+{
+    if (self->kind != other->kind) {
+        return false;
+    }
+
+    if (!((self->name && other->name &&
+           !strcmp(GET_PTR_RC(String, self->name)->buffer,
+                   GET_PTR_RC(String, other->name)->buffer)) ||
+          (!self->name && !other->name))) {
+        return false;
+    }
+
+    switch (self->kind) {
+        case CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_STRUCT:
+        case CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_UNION:
+        case CI_DECL_STRUCT_FIELD_KIND_NAMED_STRUCT:
+        case CI_DECL_STRUCT_FIELD_KIND_NAMED_UNION:
+            return true;
+        case CI_DECL_STRUCT_FIELD_KIND_MEMBER:
+            return eq__CIDeclStructFieldMember(&self->member, &other->member);
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+CIDataType *
+build_struct_or_union_data_type__CIDeclStructField(
+  const CIDeclStructField *self)
+{
+    ASSERT(self->kind != CI_DECL_STRUCT_FIELD_KIND_MEMBER);
+
+    const CIDeclStructField *parent_master = self;
+    CIDeclStructField *current_field = self->next;
+    CIDeclStructField *prev_cloned_field = NULL;
+    CIDeclStructField *current_parent = NULL;
+    CIDeclStructField *current_cloned_parent = NULL;
+    CIDeclStructFields *fields = NEW(CIDeclStructFields);
+
+    while (current_field && has_parent_by_addr__CIDeclStructField(
+                              current_field, parent_master)) {
+        // Downgrade parent if needed
+        while (
+          current_parent && current_field->parent != current_parent &&
+          current_field->parent !=
+            parent_master /* Equivalent to: `&& current_cloned_parent` */) {
+            current_parent = current_parent->parent;
+            current_cloned_parent = current_cloned_parent->parent;
+        }
+
+        CIDeclStructField *cloned_field =
+          clone__CIDeclStructField(current_field);
+
+        cloned_field->parent = current_cloned_parent;
+        cloned_field->prev = prev_cloned_field;
+
+        ASSERT(
+          add__CIDeclStructFields(fields, cloned_field, prev_cloned_field));
+
+        if (cloned_field->kind != CI_DECL_STRUCT_FIELD_KIND_MEMBER) {
+            current_parent = current_field;
+            current_cloned_parent = cloned_field;
+        }
+
+        prev_cloned_field = cloned_field;
+        current_field = current_field->next;
+    }
+
+    return parent_master->kind == CI_DECL_STRUCT_FIELD_KIND_NAMED_STRUCT ||
+               parent_master->kind == CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_STRUCT
+             ? NEW_VARIANT(
+                 CIDataType, struct, NEW(CIDataTypeStruct, NULL, NULL, fields))
+             : NEW_VARIANT(
+                 CIDataType, union, NEW(CIDataTypeUnion, NULL, NULL, fields));
+}
+
+CIDataType *
+build_data_type__CIDeclStructField(const CIDeclStructField *self)
+{
+    switch (self->kind) {
+        case CI_DECL_STRUCT_FIELD_KIND_NAMED_STRUCT:
+        case CI_DECL_STRUCT_FIELD_KIND_NAMED_UNION:
+        case CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_STRUCT:
+        case CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_UNION:
+            return build_struct_or_union_data_type__CIDeclStructField(self);
+        case CI_DECL_STRUCT_FIELD_KIND_MEMBER:
+            return ref__CIDataType(self->member.data_type);
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+bool
+has_parent_by_addr__CIDeclStructField(const CIDeclStructField *self,
+                                      const CIDeclStructField *parent)
+{
+    CIDeclStructField *current_parent = self->parent;
+
+    while (current_parent) {
+        if (current_parent == parent) {
+            return true;
+        }
+
+        current_parent = current_parent->parent;
+    }
+
+    return false;
+}
+
+CIDeclStructField *
+get_next_field_with_no_parent__CIDeclStructField(const CIDeclStructField *self)
+{
+    ASSERT(self);
+
+    CIDeclStructField *current = self->next;
+
+    while (current && current->parent) {
+        current = current->next;
+    }
+
+    return current;
+}
+
+Usize
+get_bit__CIDeclStructField(const CIDeclStructField *self)
+{
+    switch (self->kind) {
+        case CI_DECL_STRUCT_FIELD_KIND_MEMBER:
+            return self->member.bit;
+        default:
+            return 0;
+    }
+}
+
+CIDeclStructField *
+get_next_member__CIDeclStructField(const CIDeclStructField *self)
+{
+    ASSERT(self);
+
+    CIDeclStructField *current = self->next;
+
+    while (current) {
+        switch (current->kind) {
+            case CI_DECL_STRUCT_FIELD_KIND_MEMBER:
+                return current;
+            default:
+                break;
+        }
+
+        current = current->next;
+    }
+
+    return NULL;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDeclStructField, const CIDeclStructField *self)
+{
+    switch (self->kind) {
+        case CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_STRUCT:
+        case CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_UNION:
+        case CI_DECL_STRUCT_FIELD_KIND_NAMED_STRUCT:
+        case CI_DECL_STRUCT_FIELD_KIND_NAMED_UNION:
+            return format__String(
+              "CIDeclStructField{{ name = {s}, kind = {s} }",
+              self->name ? GET_PTR_RC(String, self->name)->buffer : "NULL",
+              to_string__Debug__CIDeclStructFieldKind(self->kind));
+        case CI_DECL_STRUCT_FIELD_KIND_MEMBER:
+            return format__String(
+              "CIDeclStructField{{ name = {s}, kind = {s}, member = {Sr} }",
+              GET_PTR_RC(String, self->name)->buffer,
+              to_string__Debug__CIDeclStructFieldKind(self->kind),
+              to_string__Debug__CIDeclStructFieldMember(&self->member));
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+#endif
+
+VARIANT_DESTRUCTOR(CIDeclStructField, anonymous_struct, CIDeclStructField *self)
+{
+    ASSERT(!self->name);
+
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIDeclStructField, anonymous_union, CIDeclStructField *self)
+{
+    ASSERT(!self->name);
+
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIDeclStructField, named_struct, CIDeclStructField *self)
+{
+    if (self->name) {
+        FREE_RC(String, self->name);
+    }
+
+    FREE(OrderedHashMap, self->named_struct);
+
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIDeclStructField, named_union, CIDeclStructField *self)
+{
+    if (self->name) {
+        FREE_RC(String, self->name);
+    }
+
+    FREE(OrderedHashMap, self->named_union);
+
+    lily_free(self);
+}
+
+VARIANT_DESTRUCTOR(CIDeclStructField, member, CIDeclStructField *self)
+{
+    if (self->name) {
+        FREE_RC(String, self->name);
+    }
+
+    FREE(CIDeclStructFieldMember, &self->member);
+
+    lily_free(self);
+}
+
+DESTRUCTOR(CIDeclStructField, CIDeclStructField *self)
+{
+    if (self->ref_count > 0) {
+        --self->ref_count;
+        return;
+    }
+
+    switch (self->kind) {
+        case CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_STRUCT:
+            FREE_VARIANT(CIDeclStructField, anonymous_struct, self);
+
+            break;
+        case CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_UNION:
+            FREE_VARIANT(CIDeclStructField, anonymous_union, self);
+
+            break;
+        case CI_DECL_STRUCT_FIELD_KIND_NAMED_STRUCT:
+            FREE_VARIANT(CIDeclStructField, named_struct, self);
+
+            break;
+        case CI_DECL_STRUCT_FIELD_KIND_NAMED_UNION:
+            FREE_VARIANT(CIDeclStructField, named_union, self);
+
+            break;
+        case CI_DECL_STRUCT_FIELD_KIND_MEMBER:
+            FREE_VARIANT(CIDeclStructField, member, self);
+
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 bool
 has_heap__CIDataTypeContext(int self)
 {
@@ -1028,22 +1801,14 @@ DESTRUCTOR(CIDataTypeFunction, const CIDataTypeFunction *self)
 String *
 IMPL_FOR_DEBUG(to_string, CIDataTypeStruct, const CIDataTypeStruct *self)
 {
-    String *res = format__String(
-      "CIDataTypeStruct{{ name = {s}, generic_params = {Sr}, fields =",
+    return format__String(
+      "CIDataTypeStruct{{ name = {s}, generic_params = {Sr}, fields = {Sr} }",
       self->name ? GET_PTR_RC(String, self->name)->buffer : "NULL",
       self->generic_params
         ? to_string__Debug__CIGenericParams(self->generic_params)
-        : from__String("NULL"));
-
-    if (self->fields) {
-        DEBUG_VEC_STRING(self->fields, res, CIDeclStructField);
-    } else {
-        push_str__String(res, " NULL");
-    }
-
-    push_str__String(res, " }");
-
-    return res;
+        : from__String("NULL"),
+      self->fields ? to_string__Debug__CIDeclStructFields(self->fields)
+                   : from__String("NULL"));
 }
 #endif
 
@@ -1058,9 +1823,7 @@ DESTRUCTOR(CIDataTypeStruct, const CIDataTypeStruct *self)
     }
 
     if (self->fields) {
-        FREE_BUFFER_ITEMS(
-          self->fields->buffer, self->fields->len, CIDeclStructField);
-        FREE(Vec, self->fields);
+        FREE(CIDeclStructFields, self->fields);
     }
 }
 
@@ -1090,22 +1853,14 @@ DESTRUCTOR(CIDataTypeTypedef, const CIDataTypeTypedef *self)
 String *
 IMPL_FOR_DEBUG(to_string, CIDataTypeUnion, const CIDataTypeUnion *self)
 {
-    String *res = format__String(
-      "CIDataTypeUnion{{ name = {s}, generic_params = {Sr}, fields =",
+    return format__String(
+      "CIDataTypeUnion{{ name = {s}, generic_params = {Sr}, fields = {Sr} }",
       self->name ? GET_PTR_RC(String, self->name)->buffer : "NULL",
       self->generic_params
         ? to_string__Debug__CIGenericParams(self->generic_params)
-        : from__String("NULL"));
-
-    if (self->fields) {
-        DEBUG_VEC_STRING(self->fields, res, CIDeclStructField);
-    } else {
-        push_str__String(res, " NULL");
-    }
-
-    push_str__String(res, " }");
-
-    return res;
+        : from__String("NULL"),
+      self->fields ? to_string__Debug__CIDeclStructFields(self->fields)
+                   : from__String("NULL"));
 }
 #endif
 
@@ -1120,9 +1875,7 @@ DESTRUCTOR(CIDataTypeUnion, const CIDataTypeUnion *self)
     }
 
     if (self->fields) {
-        FREE_BUFFER_ITEMS(
-          self->fields->buffer, self->fields->len, CIDeclStructField);
-        FREE(Vec, self->fields);
+        FREE(CIDeclStructFields, self->fields);
     }
 }
 
@@ -1419,16 +2172,10 @@ clone__CIDataType(const CIDataType *self)
 
             break;
         case CI_DATA_TYPE_KIND_STRUCT: {
-            Vec *fields = NULL;
+            CIDeclStructFields *fields = NULL;
 
             if (self->struct_.fields) {
-                fields = NEW(Vec);
-
-                for (Usize i = 0; i < self->struct_.fields->len; ++i) {
-                    push__Vec(fields,
-                              clone__CIDeclStructField(
-                                get__Vec(self->struct_.fields, i)));
-                }
+                fields = clone__CIDeclStructFields(self->struct_.fields);
             }
 
             res = NEW_VARIANT(
@@ -1455,16 +2202,10 @@ clone__CIDataType(const CIDataType *self)
 
             break;
         case CI_DATA_TYPE_KIND_UNION: {
-            Vec *fields = NULL;
+            CIDeclStructFields *fields = NULL;
 
             if (self->union_.fields) {
-                fields = NEW(Vec);
-
-                for (Usize i = 0; i < self->union_.fields->len; ++i) {
-                    push__Vec(fields,
-                              clone__CIDeclStructField(
-                                get__Vec(self->union_.fields, i)));
-                }
+                fields = clone__CIDeclStructFields(self->union_.fields);
             }
 
             res = NEW_VARIANT(
@@ -1696,20 +2437,22 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
                      : false;
         case CI_DATA_TYPE_KIND_STRUCT:
         case CI_DATA_TYPE_KIND_UNION: {
-            const Vec *self_fields = get_fields__CIDataType(self);
-            const Vec *other_fields = get_fields__CIDataType(other);
+            const CIDeclStructFields *self_fields =
+              get_fields__CIDataType(self);
+            const CIDeclStructFields *other_fields =
+              get_fields__CIDataType(other);
 
-            if ((!self_fields || !other_fields) ||
-                self_fields->len != other_fields->len) {
+            if (!self_fields && !other_fields) {
                 const String *self_name = get_name__CIDataType(self);
                 const String *other_name = get_name__CIDataType(other);
 
-                return !self_fields && !other_fields && self_name && other_name
+                return self_name && other_name
                          ? !strcmp(self_name->buffer, other_name->buffer)
                          : false;
             }
 
-            return eq__CIDeclStructField(self_fields, other_fields);
+            return self_fields && other_fields &&
+                   eq__CIDeclStructFields(self_fields, other_fields);
         }
         case CI_DATA_TYPE_KIND_TYPEDEF:
             return !strcmp(GET_PTR_RC(String, self->typedef_.name)->buffer,
@@ -1835,7 +2578,7 @@ has_name__CIDataType(const CIDataType *self)
     }
 }
 
-const Vec *
+const CIDeclStructFields *
 get_fields__CIDataType(const CIDataType *self)
 {
     switch (self->kind) {
@@ -1844,7 +2587,7 @@ get_fields__CIDataType(const CIDataType *self)
         case CI_DATA_TYPE_KIND_UNION:
             return self->union_.fields;
         default:
-            UNREACHABLE("cannot get fields from data type");
+            return NULL;
     }
 }
 
@@ -2775,173 +3518,6 @@ DESTRUCTOR(CIDeclLabel, const CIDeclLabel *self)
     FREE_RC(String, self->name);
 }
 
-CONSTRUCTOR(CIDeclStructField *,
-            CIDeclStructField,
-            Rc *name,
-            CIDataType *data_type,
-            Uint8 bit)
-{
-    CIDeclStructField *self = lily_malloc(sizeof(CIDeclStructField));
-
-    self->name = name ? ref__Rc(name) : NULL;
-    self->data_type = data_type;
-    self->bit = bit;
-
-    return self;
-}
-
-CIDeclStructField *
-clone__CIDeclStructField(CIDeclStructField *self)
-{
-    return NEW(CIDeclStructField,
-               self->name,
-               clone__CIDataType(self->data_type),
-               self->bit);
-}
-
-Vec *
-clone_fields__CIDeclStructField(Vec *fields)
-{
-    Vec *res = NEW(Vec);
-
-    for (Usize i = 0; i < fields->len; ++i) {
-        push__Vec(res, clone__CIDeclStructField(get__Vec(fields, i)));
-    }
-
-    return res;
-}
-
-bool
-eq__CIDeclStructField(const Vec *self_fields, const Vec *other_fields)
-{
-    if (self_fields->len != other_fields->len) {
-        return false;
-    }
-
-    for (Usize i = 0; i < self_fields->len; ++i) {
-        CIDeclStructField *self_field = get__Vec(self_fields, i);
-        CIDeclStructField *other_field = get__Vec(other_fields, i);
-
-        if (!eq__CIDataType(self_field->data_type, other_field->data_type)) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-bool
-has_generic__CIDeclStructField(const Vec *self_fields)
-{
-    for (Usize i = 0; i < self_fields->len; ++i) {
-        const CIDeclStructField *field = get__Vec(self_fields, i);
-
-        switch (field->data_type->kind) {
-            case CI_DATA_TYPE_KIND_GENERIC:
-                return true;
-            default: {
-                const CIGenericParams *generic_params =
-                  get_generic_params__CIDataType(field->data_type);
-
-                if (generic_params &&
-                    has_generic__CIGenericParams(generic_params)) {
-                    return true;
-                }
-
-                continue;
-            }
-        }
-    }
-
-    return false;
-}
-
-CIDataType *
-get__CIDeclStructField(const Vec *self_fields, const String *field_name)
-{
-    for (Usize i = 0; i < self_fields->len; ++i) {
-        CIDeclStructField *field = get__Vec(self_fields, i);
-
-        if (!strcmp(GET_PTR_RC(String, field->name)->buffer,
-                    field_name->buffer)) {
-            return field->data_type;
-        }
-    }
-
-    return NULL;
-}
-
-Vec *
-build_fields_from_data_type__CIDeclStructField(CIDataType *data_type,
-                                               Usize nb_fields)
-{
-    Vec *fields = NEW(Vec); // Vec<CIDeclStructField*>*
-
-    for (Usize i = 0; i < nb_fields; ++i) {
-        push__Vec(fields,
-                  NEW(CIDeclStructField, NULL, ref__CIDataType(data_type), 0));
-    }
-
-    return fields;
-}
-
-CIDeclStructField *
-get_field_from_name__CIDeclStructField(const Vec *fields,
-                                       const Rc *name,
-                                       const CIResultFile *file)
-{
-    ASSERT(name);
-
-    char *name_buffer = GET_PTR_RC(String, name)->buffer; // char* (&)
-
-    for (Usize i = 0; i < fields->len; ++i) {
-        CIDeclStructField *field = get__Vec(fields, i);
-
-        if (field->name) {
-            if (!strcmp(name_buffer, GET_PTR_RC(String, field->name)->buffer)) {
-                return field;
-            }
-
-            continue;
-        }
-
-        const Vec *data_type_fields = get_fields__CIDataType(field->data_type);
-
-        ASSERT(data_type_fields);
-
-        CIDeclStructField *res =
-          get_field_from_name__CIDeclStructField(data_type_fields, name, file);
-
-        if (res) {
-            return res;
-        }
-    }
-
-    return NULL;
-}
-
-#ifdef ENV_DEBUG
-String *
-IMPL_FOR_DEBUG(to_string, CIDeclStructField, const CIDeclStructField *self)
-{
-    return format__String(
-      "CIDeclStructField{{ name = {s}, data_type = {Sr}, bit = {zu} }",
-      self->name ? GET_PTR_RC(String, self->name)->buffer : "NULL",
-      to_string__Debug__CIDataType(self->data_type),
-      self->bit);
-}
-#endif
-
-DESTRUCTOR(CIDeclStructField, CIDeclStructField *self)
-{
-    if (self->name) {
-        FREE_RC(String, self->name);
-    }
-
-    FREE(CIDataType, self->data_type);
-    lily_free(self);
-}
-
 bool
 match_prototype__CIDeclStruct(const CIDeclStruct *self,
                               const CIDeclStruct *other)
@@ -2966,27 +3542,16 @@ serialize_name__CIDeclStruct(const CIDeclStruct *self,
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclStruct, const CIDeclStruct *self)
 {
-    String *res = format__String(
-      "CIDeclStruct{{ name = {s}, generic_params = {Sr}, fields =",
+    return format__String(
+      "CIDeclStruct{{ name = {s}, generic_params = {Sr}, fields = {Sr}, "
+      "size_info = {Sr} }",
       self->name ? GET_PTR_RC(String, self->name)->buffer : "NULL",
       self->generic_params
         ? to_string__Debug__CIGenericParams(self->generic_params)
-        : from__String("NULL"));
-
-    if (self->fields) {
-        DEBUG_VEC_STRING(self->fields, res, CIDeclStructField);
-    } else {
-        push_str__String(res, " NULL");
-    }
-
-    {
-        char *s = format(", size_info = {Sr} }",
-                         to_string__Debug__CISizeInfo(&self->size_info));
-
-        PUSH_STR_AND_FREE(res, s);
-    }
-
-    return res;
+        : from__String("NULL"),
+      self->fields ? to_string__Debug__CIDeclStructFields(self->fields)
+                   : from__String("NULL"),
+      to_string__Debug__CISizeInfo(&self->size_info));
 }
 #endif
 
@@ -3007,9 +3572,7 @@ DESTRUCTOR(CIDeclStruct, const CIDeclStruct *self)
     free_as_prototype__CIDeclStruct(self);
 
     if (self->fields) {
-        FREE_BUFFER_ITEMS(
-          self->fields->buffer, self->fields->len, CIDeclStructField);
-        FREE(Vec, self->fields);
+        FREE(CIDeclStructFields, self->fields);
     }
 }
 
@@ -3023,27 +3586,15 @@ has_generic__CIDeclStructGen(const CIDeclStructGen *self)
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclStructGen, const CIDeclStructGen *self)
 {
-    String *res = format__String(
+    return format__String(
       "CIDeclStructGen{{ struct_ = {Sr}, name = {S}, called_generic_params = "
-      "{Sr}, fields =",
+      "{Sr}, fields = {Sr}, size_info = {Sr} }",
       to_string__Debug__CIDeclStruct(self->struct_),
       self->name,
-      to_string__Debug__CIGenericParams(self->called_generic_params));
-
-    if (self->fields) {
-        DEBUG_VEC_STRING(self->fields, res, CIDeclStructField);
-    } else {
-        push_str__String(res, " NULL");
-    }
-
-    {
-        char *s = format(", size_info = {Sr} }",
-                         to_string__Debug__CISizeInfo(&self->size_info));
-
-        PUSH_STR_AND_FREE(res, s);
-    }
-
-    return res;
+      to_string__Debug__CIGenericParams(self->called_generic_params),
+      self->fields ? to_string__Debug__CIDeclStructFields(self->fields)
+                   : from__String("NULL"),
+      to_string__Debug__CISizeInfo(&self->size_info));
 }
 #endif
 
@@ -3053,9 +3604,7 @@ DESTRUCTOR(CIDeclStructGen, const CIDeclStructGen *self)
     FREE(CIGenericParams, self->called_generic_params);
 
     if (self->fields) {
-        FREE_BUFFER_ITEMS(
-          self->fields->buffer, self->fields->len, CIDeclStructField);
-        FREE(Vec, self->fields);
+        FREE(CIDeclStructFields, self->fields);
     }
 }
 
@@ -3158,27 +3707,16 @@ serialize_name__CIDeclUnion(const CIDeclUnion *self,
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclUnion, const CIDeclUnion *self)
 {
-    String *res = format__String(
-      "CIDeclUnion{{ name = {S}, generic_params = {Sr}, fields =",
+    return format__String(
+      "CIDeclUnion{{ name = {S}, generic_params = {Sr}, fields = {Sr}, "
+      "size_info = {Sr} }",
       GET_PTR_RC(String, self->name),
       self->generic_params
         ? to_string__Debug__CIGenericParams(self->generic_params)
-        : from__String("NULL"));
-
-    if (self->fields) {
-        DEBUG_VEC_STRING(self->fields, res, CIDeclStructField);
-    } else {
-        push_str__String(res, " NULL");
-    }
-
-    {
-        char *s = format(", size_info = {Sr} }",
-                         to_string__Debug__CISizeInfo(&self->size_info));
-
-        PUSH_STR_AND_FREE(res, s);
-    }
-
-    return res;
+        : from__String("NULL"),
+      self->fields ? to_string__Debug__CIDeclStructFields(self->fields)
+                   : from__String("NULL"),
+      to_string__Debug__CISizeInfo(&self->size_info));
 }
 #endif
 
@@ -3199,9 +3737,7 @@ DESTRUCTOR(CIDeclUnion, const CIDeclUnion *self)
     free_as_prototype__CIDeclUnion(self);
 
     if (self->fields) {
-        FREE_BUFFER_ITEMS(
-          self->fields->buffer, self->fields->len, CIDeclStructField);
-        FREE(Vec, self->fields);
+        FREE(CIDeclStructFields, self->fields);
     }
 }
 
@@ -3215,27 +3751,15 @@ has_generic__CIDeclUnionGen(const CIDeclUnionGen *self)
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclUnionGen, const CIDeclUnionGen *self)
 {
-    String *res = format__String(
+    return format__String(
       "CIDeclUnionGen{{ union_ = {Sr}, name = {S}, called_generic_params = "
-      "{Sr}, fields =",
+      "{Sr}, fields = {Sr}, size_info = {Sr} }",
       to_string__Debug__CIDeclUnion(self->union_),
       self->name,
-      to_string__Debug__CIGenericParams(self->called_generic_params));
-
-    if (self->fields) {
-        DEBUG_VEC_STRING(self->fields, res, CIDeclStructField);
-    } else {
-        push_str__String(res, " NULL");
-    }
-
-    {
-        char *s = format(", size_info = {Sr} }",
-                         to_string__Debug__CISizeInfo(&self->size_info));
-
-        PUSH_STR_AND_FREE(res, s);
-    }
-
-    return res;
+      to_string__Debug__CIGenericParams(self->called_generic_params),
+      self->fields ? to_string__Debug__CIDeclStructFields(self->fields)
+                   : from__String("NULL"),
+      to_string__Debug__CISizeInfo(&self->size_info));
 }
 #endif
 
@@ -3245,9 +3769,7 @@ DESTRUCTOR(CIDeclUnionGen, const CIDeclUnionGen *self)
     FREE(CIGenericParams, self->called_generic_params);
 
     if (self->fields) {
-        FREE_BUFFER_ITEMS(
-          self->fields->buffer, self->fields->len, CIDeclStructField);
-        FREE(Vec, self->fields);
+        FREE(CIDeclStructFields, self->fields);
     }
 }
 
@@ -3400,7 +3922,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl *struct_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
-                    Vec *fields)
+                    CIDeclStructFields *fields)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
     const CIDeclStruct *s = &struct_decl->struct_;
@@ -3473,7 +3995,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl *union_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
-                    Vec *fields)
+                    CIDeclStructFields *fields)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
     const CIDeclUnion *u = &union_decl->union_;
@@ -3506,7 +4028,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     return self;
 }
 
-const Vec *
+const CIDeclStructFields *
 get_fields__CIDecl(const CIDecl *self)
 {
     switch (self->kind) {
