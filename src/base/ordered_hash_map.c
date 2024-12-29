@@ -164,8 +164,11 @@ push_bucket__OrderedHashMap(OrderedHashMap *self,
 {
     void *is_exist = get__OrderedHashMap(self, new->pair.key);
 
-    if (is_exist)
+    if (is_exist) {
+        FREE(OrderedHashMapBucket, new);
+
         return is_exist;
+    }
 
     if (self->buckets[index]) {
         OrderedHashMapBucket *current = self->buckets[index];
