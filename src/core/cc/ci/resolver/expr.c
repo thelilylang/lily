@@ -2313,14 +2313,18 @@ run__CIResolverExpr(const CIResolverExpr *self, CIExpr *expr)
             return run__CIResolverExpr(self, expr->grouping);
         case CI_EXPR_KIND_IDENTIFIER:
             return resolve_identifier__CIResolver(self, expr);
+        case CI_EXPR_KIND_INITIALIZER:
+            if (self->is_at_preprocessor_time) {
+                FAILED("initializer is not expected at preprocessor time");
+            }
+
+            TODO("initializer");
         case CI_EXPR_KIND_LITERAL:
             return ref__CIExpr(expr);
         case CI_EXPR_KIND_NULLPTR:
             return ref__CIExpr(expr);
         case CI_EXPR_KIND_SIZEOF:
             return resolve_sizeof_expr__CIResolverExpr(self, expr);
-        case CI_EXPR_KIND_STRUCT_CALL:
-            TODO("resolve struct");
         case CI_EXPR_KIND_TERNARY: {
             CIExpr *resolved_cond =
               run__CIResolverExpr(self, expr->ternary.cond);

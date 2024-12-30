@@ -268,10 +268,7 @@ static CIExpr *
 parse_primary_expr__CIParser(CIParser *self);
 
 static CIExpr *
-parse_struct_call__CIParser(CIParser *self);
-
-static CIExpr *
-parse_array__CIParser(CIParser *self);
+parse_initializer__CIParser(CIParser *self);
 
 static CIExpr *
 parse_binary_expr__CIParser(CIParser *self, CIExpr *expr);
@@ -2495,9 +2492,9 @@ parse_literal_expr__CIParser(CIParser *self)
 }
 
 CIExpr *
-parse_struct_call__CIParser(CIParser *self)
+parse_initializer__CIParser(CIParser *self)
 {
-    Vec *fields = NEW(Vec);
+    Vec *items = NEW(Vec);
 
     next_token__CIParser(self); // skip `{`
 
@@ -2531,37 +2528,12 @@ parse_struct_call__CIParser(CIParser *self)
             continue;
         }
 
-        push__Vec(fields, NEW(CIExprStructFieldCall, path, value));
+        push__Vec(items, NEW(CIExprInitializerItem, path, value));
     }
 
     expect__CIParser(self, CI_TOKEN_KIND_RBRACE, true);
 
-    return NEW_VARIANT(CIExpr, struct_call, NEW(CIExprStructCall, fields));
-}
-
-CIExpr *
-parse_array__CIParser(CIParser *self)
-{
-    next_token__CIParser(self); // skip `{`
-
-    Vec *array = NEW(Vec);
-
-    while (self->current_token->kind != CI_TOKEN_KIND_RBRACE &&
-           self->current_token->kind != CI_TOKEN_KIND_EOF) {
-        CIExpr *expr = parse_expr__CIParser(self);
-
-        if (expr) {
-            push__Vec(array, expr);
-        }
-
-        if (self->current_token->kind != CI_TOKEN_KIND_RBRACE) {
-            expect__CIParser(self, CI_TOKEN_KIND_COMMA, true);
-        }
-    }
-
-    expect__CIParser(self, CI_TOKEN_KIND_RBRACE, true);
-
-    return NEW_VARIANT(CIExpr, array, NEW(CIExprArray, array));
+    return NEW_VARIANT(CIExpr, initializer, NEW(CIExprInitializer, items));
 }
 
 CIExpr *
@@ -3051,15 +3023,7 @@ parse_expr__CIParser(CIParser *self)
                        "outside of variable initialization");
             }
 
-            CIToken *peeked = peek_token__CIParser(self, 1);
-
-            if (peeked && peeked->kind == CI_TOKEN_KIND_DOT) {
-                return parse_struct_call__CIParser(self);
-            } else {
-                return parse_array__CIParser(self);
-            }
-
-            break;
+            return parse_initializer__CIParser(self);
         }
         default:
             break;
@@ -4002,12 +3966,16 @@ add_struct_or_union_to_fields__CIParser(CIParser *self,
 
     *prev_field_ref = current_field;
 
-    for (CIDeclStructField *current_field_dt = data_type_fields->first,
-                           *current_parent = data_type_fields->first->parent,
-                           *current_cloned_parent = current_field;
+    for (CIDeclStructField *
+           current_field_dt = data_type_fields->first,
+          *current_parent = data_type_fields->first->parent,
+          *current_parent_master = data_type_fields->first->parent,
+          *current_cloned_parent = current_field;
          current_field_dt;
          current_field_dt = current_field_dt->next) {
-        while (current_parent && current_parent != current_field_dt->parent) {
+        // Downgrade parent if needed
+        while (current_parent && current_parent != current_field_dt->parent &&
+               current_field_dt->parent != current_parent_master) {
             current_parent = current_parent->parent;
             current_cloned_parent = current_cloned_parent->parent;
         }
@@ -4040,6 +4008,7 @@ add_struct_or_union_to_fields__CIParser(CIParser *self,
                   fields, cloned_current_field_dt, *prev_field_ref);
 
                 *prev_field_ref = cloned_current_field_dt;
+                current_parent = current_field_dt;
                 current_cloned_parent = cloned_current_field_dt;
             }
         }
@@ -4113,6 +4082,17 @@ parse_fields__CIParser(CIParser *self)
     }
 
     expect__CIParser(self, CI_TOKEN_KIND_RBRACE, true);
+
+    CIDeclStructField *current_field = fields->first;
+
+    while (current_field) {
+        printf("%p:%s:%p\n",
+               current_field,
+               to_string__Debug__CIDeclStructField(current_field)->buffer,
+               current_field->parent);
+
+        current_field = current_field->next;
+    }
 
     return fields;
 }
@@ -4240,7 +4220,7 @@ bool
 is_initialization_expr__CIParser(CIParser *self, CIExpr *expr)
 {
     switch (expr->kind) {
-        case CI_EXPR_KIND_ARRAY:
+        case CI_EXPR_KIND_INITIALIZER:
             return true;
         case CI_EXPR_KIND_LITERAL:
             switch (expr->literal.kind) {

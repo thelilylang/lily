@@ -185,9 +185,6 @@ static VARIANT_DESTRUCTOR(CIDecl, variable, CIDecl *self);
 /// @brief Free CIExpr type (CI_EXPR_KIND_ALIGNOF).
 static VARIANT_DESTRUCTOR(CIExpr, alignof, CIExpr *self);
 
-/// @brief Free CIExpr type (CI_EXPR_KIND_ARRAY).
-static VARIANT_DESTRUCTOR(CIExpr, array, CIExpr *self);
-
 /// @brief Free CIExpr type (CI_EXPR_KIND_ARRAY_ACCESS).
 static VARIANT_DESTRUCTOR(CIExpr, array_access, CIExpr *self);
 
@@ -215,14 +212,14 @@ static VARIANT_DESTRUCTOR(CIExpr, grouping, CIExpr *self);
 /// @brief Free CIExpr type (CI_EXPR_KIND_IDENTIFIER).
 static VARIANT_DESTRUCTOR(CIExpr, identifier, CIExpr *self);
 
+/// @brief Free CIExpr type (CI_EXPR_KIND_INITIALIZER).
+static VARIANT_DESTRUCTOR(CIExpr, initializer, CIExpr *self);
+
 /// @brief Free CIExpr type (CI_EXPR_KIND_LITERAL).
 static VARIANT_DESTRUCTOR(CIExpr, literal, CIExpr *self);
 
 /// @brief Free CIExpr type (CI_EXPR_KIND_SIZEOF).
 static VARIANT_DESTRUCTOR(CIExpr, sizeof, CIExpr *self);
-
-/// @brief Free CIExpr type (CI_EXPR_KIND_STRUCT_CALL).
-static VARIANT_DESTRUCTOR(CIExpr, struct_call, CIExpr *self);
 
 /// @brief Free CIExpr type (CI_EXPR_KIND_TERNARY).
 static VARIANT_DESTRUCTOR(CIExpr, ternary, CIExpr *self);
@@ -885,9 +882,24 @@ get_field_from_path__CIDeclStructFields(
             : self
                 ->members; // const OrderedHashMap<CIDeclStructField* (&)>*? (&)
 
-        if (!members) {
-            /* GET MEMBERS from another struct if is that possible, otherwise
-             * return NULL */
+        if (!members && i > 0) {
+            CIDataType *current_field_dt =
+              build_data_type__CIDeclStructField(current_field);
+
+            const CIDeclStructFields *current_field_fields =
+              get_fields_from_data_type__CIResolverDataType(
+                file,
+                current_field_dt,
+                called_generic_params,
+                decl_generic_params);
+
+            FREE(CIDataType, current_field_dt);
+
+            if (current_field_fields) {
+                members = current_field_fields->members;
+            } else {
+                return NULL;
+            }
         }
 
         if (members) {
@@ -4577,26 +4589,6 @@ DESTRUCTOR(CIDecl, CIDecl *self)
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, CIExprArray, const CIExprArray *self)
-{
-    String *res = from__String("CIExprArray{ array =");
-
-    DEBUG_VEC_STRING(self->array, res, CIExpr);
-
-    push_str__String(res, " }");
-
-    return res;
-}
-#endif
-
-DESTRUCTOR(CIExprArray, const CIExprArray *self)
-{
-    FREE_BUFFER_ITEMS(self->array->buffer, self->array->len, CIExpr);
-    FREE(Vec, self->array);
-}
-
-#ifdef ENV_DEBUG
-String *
 IMPL_FOR_DEBUG(to_string, CIExprArrayAccess, const CIExprArrayAccess *self)
 {
     return format__String("CIExprArrayAccess{{ array = {Sr}, access = {Sr} }",
@@ -5182,12 +5174,12 @@ IMPL_FOR_DEBUG(to_string, CIExprIdentifier, const CIExprIdentifier *self)
 }
 #endif
 
-CONSTRUCTOR(CIExprStructFieldCall *,
-            CIExprStructFieldCall,
+CONSTRUCTOR(CIExprInitializerItem *,
+            CIExprInitializerItem,
             Vec *path,
             CIExpr *value)
 {
-    CIExprStructFieldCall *self = lily_malloc(sizeof(CIExprStructFieldCall));
+    CIExprInitializerItem *self = lily_malloc(sizeof(CIExprInitializerItem));
 
     self->path = path;
     self->value = value;
@@ -5198,10 +5190,10 @@ CONSTRUCTOR(CIExprStructFieldCall *,
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
-               CIExprStructFieldCall,
-               const CIExprStructFieldCall *self)
+               CIExprInitializerItem,
+               const CIExprInitializerItem *self)
 {
-    String *res = format__String("CIExprStructFieldCall{{ path =");
+    String *res = format__String("CIExprInitializerItem{{ path =");
 
     if (self->path) {
         push_str__String(res, "{ ");
@@ -5232,7 +5224,7 @@ IMPL_FOR_DEBUG(to_string,
 }
 #endif
 
-DESTRUCTOR(CIExprStructFieldCall, CIExprStructFieldCall *self)
+DESTRUCTOR(CIExprInitializerItem, CIExprInitializerItem *self)
 {
     if (self->path) {
         FREE_BUFFER_RC_ITEMS(self->path->buffer, self->path->len, String);
@@ -5245,22 +5237,22 @@ DESTRUCTOR(CIExprStructFieldCall, CIExprStructFieldCall *self)
 
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, CIExprStructCall, const CIExprStructCall *self)
+IMPL_FOR_DEBUG(to_string, CIExprInitializer, const CIExprInitializer *self)
 {
-    String *res = format__String("CIExprStructCall{{ fields =");
+    String *res = format__String("CIExprStructCall{{ items =");
 
-    DEBUG_VEC_STRING(self->fields, res, CIExprStructFieldCall);
+    DEBUG_VEC_STRING(self->items, res, CIExprInitializerItem);
     push_str__String(res, " }");
 
     return res;
 }
 #endif
 
-DESTRUCTOR(CIExprStructCall, const CIExprStructCall *self)
+DESTRUCTOR(CIExprInitializer, const CIExprInitializer *self)
 {
     FREE_BUFFER_ITEMS(
-      self->fields->buffer, self->fields->len, CIExprStructFieldCall);
-    FREE(Vec, self->fields);
+      self->items->buffer, self->items->len, CIExprInitializerItem);
+    FREE(Vec, self->items);
 }
 
 #ifdef ENV_DEBUG
@@ -5270,8 +5262,6 @@ IMPL_FOR_DEBUG(to_string, CIExprKind, enum CIExprKind self)
     switch (self) {
         case CI_EXPR_KIND_ALIGNOF:
             return "CI_EXPR_KIND_ALIGNOF";
-        case CI_EXPR_KIND_ARRAY:
-            return "CI_EXPR_KIND_ARRAY";
         case CI_EXPR_KIND_ARRAY_ACCESS:
             return "CI_EXPR_KIND_ARRAY_ACCESS";
         case CI_EXPR_KIND_BINARY:
@@ -5288,14 +5278,14 @@ IMPL_FOR_DEBUG(to_string, CIExprKind, enum CIExprKind self)
             return "CI_EXPR_KIND_GROUPING";
         case CI_EXPR_KIND_IDENTIFIER:
             return "CI_EXPR_KIND_IDENTIFIER";
+        case CI_EXPR_KIND_INITIALIZER:
+            return "CI_EXPR_KIND_INITIALIZER";
         case CI_EXPR_KIND_LITERAL:
             return "CI_EXPR_KIND_LITERAL";
         case CI_EXPR_KIND_NULLPTR:
             return "CI_EXPR_KIND_NULLPTR";
         case CI_EXPR_KIND_SIZEOF:
             return "CI_EXPR_KIND_SIZEOF";
-        case CI_EXPR_KIND_STRUCT_CALL:
-            return "CI_EXPR_KIND_STRUCT_CALL";
         case CI_EXPR_KIND_TERNARY:
             return "CI_EXPR_KIND_TERNARY";
         case CI_EXPR_KIND_UNARY:
@@ -5323,17 +5313,6 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, alignof, CIExpr *alignof_)
     self->kind = CI_EXPR_KIND_ALIGNOF;
     self->ref_count = 0;
     self->alignof_ = alignof_;
-
-    return self;
-}
-
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, array, CIExprArray array)
-{
-    CIExpr *self = lily_malloc(sizeof(CIExpr));
-
-    self->kind = CI_EXPR_KIND_ARRAY;
-    self->ref_count = 0;
-    self->array = array;
 
     return self;
 }
@@ -5435,6 +5414,20 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, identifier, CIExprIdentifier identifier)
     return self;
 }
 
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    initializer,
+                    CIExprInitializer initializer)
+{
+    CIExpr *self = lily_malloc(sizeof(CIExpr));
+
+    self->kind = CI_EXPR_KIND_INITIALIZER;
+    self->ref_count = 0;
+    self->initializer = initializer;
+
+    return self;
+}
+
 VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, literal, CIExprLiteral literal)
 {
     CIExpr *self = lily_malloc(sizeof(CIExpr));
@@ -5453,17 +5446,6 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, sizeof, CIExpr *sizeof_)
     self->kind = CI_EXPR_KIND_SIZEOF;
     self->ref_count = 0;
     self->sizeof_ = sizeof_;
-
-    return self;
-}
-
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, struct_call, CIExprStructCall struct_call)
-{
-    CIExpr *self = lily_malloc(sizeof(CIExpr));
-
-    self->kind = CI_EXPR_KIND_STRUCT_CALL;
-    self->ref_count = 0;
-    self->struct_call = struct_call;
 
     return self;
 }
@@ -5490,176 +5472,6 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, unary, CIExprUnary unary)
     return self;
 }
 
-CIDataType *
-get_data_type__CIExpr(const CIExpr *self)
-{
-    switch (self->kind) {
-        case CI_EXPR_KIND_ALIGNOF:
-            TODO("alignof: implement size_t");
-        case CI_EXPR_KIND_ARRAY:
-            TODO("array");
-        case CI_EXPR_KIND_ARRAY_ACCESS:
-            TODO("array access");
-        case CI_EXPR_KIND_BINARY:
-            switch (self->binary.kind) {
-                case CI_EXPR_BINARY_KIND_ASSIGN:
-                case CI_EXPR_BINARY_KIND_ASSIGN_ADD:
-                case CI_EXPR_BINARY_KIND_ASSIGN_SUB:
-                case CI_EXPR_BINARY_KIND_ASSIGN_MUL:
-                case CI_EXPR_BINARY_KIND_ASSIGN_DIV:
-                case CI_EXPR_BINARY_KIND_ASSIGN_MOD:
-                case CI_EXPR_BINARY_KIND_ASSIGN_BIT_AND:
-                case CI_EXPR_BINARY_KIND_ASSIGN_BIT_OR:
-                case CI_EXPR_BINARY_KIND_ASSIGN_XOR:
-                case CI_EXPR_BINARY_KIND_ASSIGN_BIT_LSHIFT:
-                case CI_EXPR_BINARY_KIND_ASSIGN_BIT_RSHIFT:
-                case CI_EXPR_BINARY_KIND_ADD:
-                case CI_EXPR_BINARY_KIND_SUB:
-                case CI_EXPR_BINARY_KIND_MUL:
-                case CI_EXPR_BINARY_KIND_DIV:
-                case CI_EXPR_BINARY_KIND_MOD:
-                case CI_EXPR_BINARY_KIND_BIT_AND:
-                case CI_EXPR_BINARY_KIND_BIT_OR:
-                case CI_EXPR_BINARY_KIND_BIT_XOR:
-                case CI_EXPR_BINARY_KIND_BIT_LSHIFT:
-                case CI_EXPR_BINARY_KIND_BIT_RSHIFT: {
-                    CIDataType *left_data_type =
-                      get_data_type__CIExpr(self->binary.left);
-                    CIDataType *right_data_type =
-                      get_data_type__CIExpr(self->binary.right);
-
-                    if (!eq__CIDataType(left_data_type, right_data_type)) {
-                        FREE(CIDataType, left_data_type);
-                        FREE(CIDataType, right_data_type);
-
-                        return NULL;
-                    }
-
-                    FREE(CIDataType, right_data_type);
-
-                    return left_data_type;
-                }
-                case CI_EXPR_BINARY_KIND_AND:
-                case CI_EXPR_BINARY_KIND_OR:
-                case CI_EXPR_BINARY_KIND_EQ:
-                case CI_EXPR_BINARY_KIND_NE:
-                case CI_EXPR_BINARY_KIND_LESS:
-                case CI_EXPR_BINARY_KIND_GREATER:
-                case CI_EXPR_BINARY_KIND_LESS_EQ:
-                case CI_EXPR_BINARY_KIND_GREATER_EQ: {
-                    // TODO: Check the left and right expr's data type
-                    return NEW(CIDataType, CI_DATA_TYPE_KIND_BOOL);
-                }
-                case CI_EXPR_BINARY_KIND_DOT:
-                case CI_EXPR_BINARY_KIND_ARROW:
-                    TODO("get data type of right expression of . and ->");
-                default:
-                    UNREACHABLE("unknown variant");
-            }
-        case CI_EXPR_KIND_CAST:
-            return clone__CIDataType(self->cast.data_type);
-        case CI_EXPR_KIND_FUNCTION_CALL:
-            TODO("get data from function");
-        case CI_EXPR_KIND_FUNCTION_CALL_BUILTIN: {
-            CIBuiltin *builtin = get_ref__CIBuiltin();
-            const CIBuiltinFunction *function = get_builtin_function__CIBuiltin(
-              builtin, self->function_call_builtin.id);
-
-            ASSERT(function);
-
-            return clone__CIDataType(function->return_data_type);
-        }
-        case CI_EXPR_KIND_GROUPING:
-            return get_data_type__CIExpr(self->grouping);
-        case CI_EXPR_KIND_IDENTIFIER:
-            TODO("search identifier");
-        case CI_EXPR_KIND_LITERAL:
-            switch (self->literal.kind) {
-                case CI_EXPR_LITERAL_KIND_BOOL:
-                    return NEW(CIDataType, CI_DATA_TYPE_KIND_BOOL);
-                case CI_EXPR_LITERAL_KIND_CHAR:
-                    return NEW(CIDataType, CI_DATA_TYPE_KIND_CHAR);
-                case CI_EXPR_LITERAL_KIND_FLOAT:
-                    return NEW(CIDataType, CI_DATA_TYPE_KIND_DOUBLE);
-                case CI_EXPR_LITERAL_KIND_SIGNED_INT:
-                    return NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
-                case CI_EXPR_LITERAL_KIND_STRING:
-                    return NEW_VARIANT(
-                      CIDataType, ptr, NEW(CIDataType, CI_DATA_TYPE_KIND_CHAR));
-                case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:
-                    return NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_INT);
-                default:
-                    UNREACHABLE("unknown variant");
-            }
-        case CI_EXPR_KIND_NULLPTR:
-            // void*
-            return NEW_VARIANT(
-              CIDataType, ptr, NEW(CIDataType, CI_DATA_TYPE_KIND_VOID));
-        case CI_EXPR_KIND_SIZEOF:
-            TODO("sizeof: implement size_t");
-        case CI_EXPR_KIND_STRUCT_CALL:
-            TODO("struct call");
-        case CI_EXPR_KIND_TERNARY: {
-            CIDataType *if_ = get_data_type__CIExpr(self->ternary.if_);
-            CIDataType *else_ = get_data_type__CIExpr(self->ternary.else_);
-
-            if (!eq__CIDataType(if_, else_)) {
-                FREE(CIDataType, if_);
-                FREE(CIDataType, else_);
-
-                return NULL;
-            }
-
-            FREE(CIDataType, else_);
-
-            return if_;
-        }
-        case CI_EXPR_KIND_UNARY:
-            switch (self->unary.kind) {
-                case CI_EXPR_UNARY_KIND_PRE_INCREMENT:
-                case CI_EXPR_UNARY_KIND_PRE_DECREMENT:
-                case CI_EXPR_UNARY_KIND_POST_INCREMENT:
-                case CI_EXPR_UNARY_KIND_POST_DECREMENT:
-                case CI_EXPR_UNARY_KIND_POSITIVE:
-                case CI_EXPR_UNARY_KIND_NEGATIVE:
-                case CI_EXPR_UNARY_KIND_BIT_NOT:
-                case CI_EXPR_UNARY_KIND_NOT: {
-                    CIDataType *right = get_data_type__CIExpr(self->unary.expr);
-
-                    if (right) {
-                        if (is_integer__CIDataType(right)) {
-                            return right;
-                        }
-
-                        FREE(CIDataType, right);
-                    }
-
-                    return NULL;
-                }
-                case CI_EXPR_UNARY_KIND_DEREFERENCE: {
-                    CIDataType *right = get_data_type__CIExpr(self->unary.expr);
-
-                    if (right) {
-                        return get_ptr__CIDataType(right);
-                    }
-
-                    return NULL;
-                }
-                case CI_EXPR_UNARY_KIND_REF: {
-                    CIDataType *right = get_data_type__CIExpr(self->unary.expr);
-
-                    if (right) {
-                        return NEW_VARIANT(CIDataType, ptr, right);
-                    }
-
-                    return NULL;
-                }
-            }
-        default:
-            UNREACHABLE("unknown variant");
-    }
-}
-
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIExpr, const CIExpr *self)
@@ -5669,10 +5481,6 @@ IMPL_FOR_DEBUG(to_string, CIExpr, const CIExpr *self)
             return format__String("CIExpr{{ kind = {s}, alignof_ = {Sr} }",
                                   to_string__Debug__CIExprKind(self->kind),
                                   to_string__Debug__CIExpr(self->alignof_));
-        case CI_EXPR_KIND_ARRAY:
-            return format__String("CIExpr{{ kind = {s}, array = {Sr} }",
-                                  to_string__Debug__CIExprKind(self->kind),
-                                  to_string__Debug__CIExprArray(&self->array));
         case CI_EXPR_KIND_ARRAY_ACCESS:
             return format__String(
               "CIExpr{{ kind = {s}, array_access = {Sr} }",
@@ -5712,6 +5520,11 @@ IMPL_FOR_DEBUG(to_string, CIExpr, const CIExpr *self)
               "CIExpr{{ kind = {s}, identifier = {Sr} }",
               to_string__Debug__CIExprKind(self->kind),
               to_string__Debug__CIExprIdentifier(&self->identifier));
+        case CI_EXPR_KIND_INITIALIZER:
+            return format__String(
+              "CIExpr{{ kind = {s}, initializer = {Sr} }",
+              to_string__Debug__CIExprKind(self->kind),
+              to_string__Debug__CIExprInitializer(&self->initializer));
         case CI_EXPR_KIND_LITERAL:
             return format__String(
               "CIExpr{{ kind = {s}, literal = {Sr} }",
@@ -5724,11 +5537,6 @@ IMPL_FOR_DEBUG(to_string, CIExpr, const CIExpr *self)
             return format__String("CIExpr{{ kind = {s}, sizeof_ = {Sr} }",
                                   to_string__Debug__CIExprKind(self->kind),
                                   to_string__Debug__CIExpr(self->sizeof_));
-        case CI_EXPR_KIND_STRUCT_CALL:
-            return format__String(
-              "CIExpr{{ kind = {s}, struct_call = {Sr} }",
-              to_string__Debug__CIExprKind(self->kind),
-              to_string__Debug__CIExprStructCall(&self->struct_call));
         case CI_EXPR_KIND_TERNARY:
             return format__String(
               "CIExpr{{ kind = {s}, ternary = {Sr} }",
@@ -5770,12 +5578,6 @@ to_precedence__CIExpr(const CIExpr *self)
 VARIANT_DESTRUCTOR(CIExpr, alignof, CIExpr *self)
 {
     FREE(CIExpr, self->alignof_);
-    lily_free(self);
-}
-
-VARIANT_DESTRUCTOR(CIExpr, array, CIExpr *self)
-{
-    FREE(CIExprArray, &self->array);
     lily_free(self);
 }
 
@@ -5827,6 +5629,12 @@ VARIANT_DESTRUCTOR(CIExpr, identifier, CIExpr *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(CIExpr, initializer, CIExpr *self)
+{
+    FREE(CIExprInitializer, &self->initializer);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(CIExpr, literal, CIExpr *self)
 {
     FREE(CIExprLiteral, &self->literal);
@@ -5836,12 +5644,6 @@ VARIANT_DESTRUCTOR(CIExpr, literal, CIExpr *self)
 VARIANT_DESTRUCTOR(CIExpr, sizeof, CIExpr *self)
 {
     FREE(CIExpr, self->sizeof_);
-    lily_free(self);
-}
-
-VARIANT_DESTRUCTOR(CIExpr, struct_call, CIExpr *self)
-{
-    FREE(CIExprStructCall, &self->struct_call);
     lily_free(self);
 }
 
@@ -5868,9 +5670,6 @@ DESTRUCTOR(CIExpr, CIExpr *self)
         case CI_EXPR_KIND_ALIGNOF:
             FREE_VARIANT(CIExpr, alignof, self);
             break;
-        case CI_EXPR_KIND_ARRAY:
-            FREE_VARIANT(CIExpr, array, self);
-            break;
         case CI_EXPR_KIND_ARRAY_ACCESS:
             FREE_VARIANT(CIExpr, array_access, self);
             break;
@@ -5895,6 +5694,9 @@ DESTRUCTOR(CIExpr, CIExpr *self)
         case CI_EXPR_KIND_IDENTIFIER:
             FREE_VARIANT(CIExpr, identifier, self);
             break;
+        case CI_EXPR_KIND_INITIALIZER:
+            FREE_VARIANT(CIExpr, initializer, self);
+            break;
         case CI_EXPR_KIND_LITERAL:
             FREE_VARIANT(CIExpr, literal, self);
             break;
@@ -5903,9 +5705,6 @@ DESTRUCTOR(CIExpr, CIExpr *self)
             break;
         case CI_EXPR_KIND_SIZEOF:
             FREE_VARIANT(CIExpr, sizeof, self);
-            break;
-        case CI_EXPR_KIND_STRUCT_CALL:
-            FREE_VARIANT(CIExpr, struct_call, self);
             break;
         case CI_EXPR_KIND_TERNARY:
             FREE_VARIANT(CIExpr, ternary, self);

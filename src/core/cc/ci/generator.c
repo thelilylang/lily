@@ -251,10 +251,6 @@ generate_function_prototype__CIGenerator(CIGenerator *self,
                                          const CIDeclFunction *function);
 
 static void
-generate_function_array_expr__CIGenerator(CIGenerator *self,
-                                          const CIExprArray *array);
-
-static void
 generate_function_binary_expr__CIGenerator(CIGenerator *self,
                                            const CIExprBinary *binary);
 
@@ -285,9 +281,9 @@ generate_function_literal_expr__CIGenerator(CIGenerator *self,
                                             const CIExprLiteral *literal);
 
 static void
-generate_function_struct_call_expr__CIGenerator(
+generate_function_initializer_expr__CIGenerator(
   CIGenerator *self,
-  const CIExprStructCall *struct_call);
+  const CIExprInitializer *initializer);
 
 static void
 generate_function_unary_expr__CIGenerator(CIGenerator *self,
@@ -1402,20 +1398,6 @@ generate_function_prototype__CIGenerator(CIGenerator *self,
 }
 
 void
-generate_function_array_expr__CIGenerator(CIGenerator *self,
-                                          const CIExprArray *array)
-{
-    write_str__CIGenerator(self, "{");
-
-    for (Usize i = 0; i < array->array->len; ++i) {
-        generate_function_expr__CIGenerator(self, get__Vec(array->array, i));
-        write_str__CIGenerator(self, ",");
-    }
-
-    write_str__CIGenerator(self, "}");
-}
-
-void
 generate_function_binary_expr__CIGenerator(CIGenerator *self,
                                            const CIExprBinary *binary)
 {
@@ -1718,30 +1700,33 @@ generate_function_literal_expr__CIGenerator(CIGenerator *self,
 }
 
 void
-generate_function_struct_call_expr__CIGenerator(
+generate_function_initializer_expr__CIGenerator(
   CIGenerator *self,
-  const CIExprStructCall *struct_call)
+  const CIExprInitializer *initializer)
 {
     write_str__CIGenerator(self, "{");
 
-    for (Usize i = 0; i < struct_call->fields->len; ++i) {
-        CIExprStructFieldCall *field = get__Vec(struct_call->fields, i);
+    for (Usize i = 0; i < initializer->items->len; ++i) {
+        CIExprInitializerItem *initializer_item =
+          get__Vec(initializer->items, i);
 
-        if (field->path) {
-            for (Usize j = 0; j < field->path->len; ++j) {
+        if (initializer_item->path) {
+            for (Usize j = 0; j < initializer_item->path->len; ++j) {
                 write_String__CIGenerator(
                   self,
                   format__String(
                     ".{S}",
-                    GET_PTR_RC(String, CAST(Rc *, get__Vec(field->path, j)))));
+                    GET_PTR_RC(
+                      String,
+                      CAST(Rc *, get__Vec(initializer_item->path, j)))));
             }
 
             write_str__CIGenerator(self, " = ");
         }
 
-        generate_function_expr__CIGenerator(self, field->value);
+        generate_function_expr__CIGenerator(self, initializer_item->value);
 
-        if (i + 1 != struct_call->fields->len) {
+        if (i + 1 != initializer->items->len) {
             write_str__CIGenerator(self, ", ");
         }
     }
@@ -1828,10 +1813,6 @@ generate_function_expr__CIGenerator(CIGenerator *self, const CIExpr *expr)
             write_str__CIGenerator(self, ")");
 
             break;
-        case CI_EXPR_KIND_ARRAY:
-            generate_function_array_expr__CIGenerator(self, &expr->array);
-
-            break;
         case CI_EXPR_KIND_ARRAY_ACCESS:
             generate_function_expr__CIGenerator(self, expr->array_access.array);
             write_str__CIGenerator(self, "[");
@@ -1876,6 +1857,11 @@ generate_function_expr__CIGenerator(CIGenerator *self, const CIExpr *expr)
               self, GET_PTR_RC(String, expr->identifier.value)->buffer);
 
             break;
+        case CI_EXPR_KIND_INITIALIZER:
+            generate_function_initializer_expr__CIGenerator(self,
+                                                            &expr->initializer);
+
+            break;
         case CI_EXPR_KIND_LITERAL:
             generate_function_literal_expr__CIGenerator(self, &expr->literal);
 
@@ -1888,11 +1874,6 @@ generate_function_expr__CIGenerator(CIGenerator *self, const CIExpr *expr)
             write_str__CIGenerator(self, "sizeof(");
             generate_function_expr__CIGenerator(self, expr->sizeof_);
             write_str__CIGenerator(self, ")");
-
-            break;
-        case CI_EXPR_KIND_STRUCT_CALL:
-            generate_function_struct_call_expr__CIGenerator(self,
-                                                            &expr->struct_call);
 
             break;
         case CI_EXPR_KIND_TERNARY:

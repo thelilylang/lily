@@ -3073,36 +3073,6 @@ free_as_prototype__CIDecl(CIDecl *self);
  */
 DESTRUCTOR(CIDecl, CIDecl *self);
 
-typedef struct CIExprArray
-{
-    Vec *array; // Vec<CIExpr*>*
-} CIExprArray;
-
-/**
- *
- * @brief Construct CIExprArray type.
- */
-inline CONSTRUCTOR(CIExprArray, CIExprArray, Vec *array)
-{
-    return (CIExprArray){ .array = array };
-}
-
-/**
- *
- * @brief Convert CIExprArray in String.
- * @note This function is only used to debug.
- */
-#ifdef ENV_DEBUG
-String *
-IMPL_FOR_DEBUG(to_string, CIExprArray, const CIExprArray *self);
-#endif
-
-/**
- *
- * @brief Free CIExprArray type.
- */
-DESTRUCTOR(CIExprArray, const CIExprArray *self);
-
 // <array>[<access>]
 typedef struct CIExprArrayAccess
 {
@@ -3729,73 +3699,72 @@ inline DESTRUCTOR(CIExprIdentifier, const CIExprIdentifier *self)
     FREE_RC(String, self->value);
 }
 
-typedef struct CIExprStructFieldCall
+typedef struct CIExprInitializerItem
 {
     Vec *path; // Vec<Rc<String*>*>*?
     CIExpr *value;
-} CIExprStructFieldCall;
+} CIExprInitializerItem;
 
 /**
  *
- * @brief Construct CIExprStructFieldCall type.
+ * @brief Construct CIExprInitializerItem type.
  */
-CONSTRUCTOR(CIExprStructFieldCall *,
-            CIExprStructFieldCall,
+CONSTRUCTOR(CIExprInitializerItem *,
+            CIExprInitializerItem,
             Vec *path,
             CIExpr *value);
 
 /**
  *
- * @brief Convert CIExprStructFieldCall in String.
+ * @brief Convert CIExprInitializerItem in String.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string,
-               CIExprStructFieldCall,
-               const CIExprStructFieldCall *self);
+               CIExprInitializerItem,
+               const CIExprInitializerItem *self);
 #endif
 
 /**
  *
- * @brief Free CIExprStructFieldCall type.
+ * @brief Free CIExprInitializerItem type.
  */
-DESTRUCTOR(CIExprStructFieldCall, CIExprStructFieldCall *self);
+DESTRUCTOR(CIExprInitializerItem, CIExprInitializerItem *self);
 
-typedef struct CIExprStructCall
+typedef struct CIExprInitializer
 {
-    Vec *fields; // Vec<CIExprStructFieldCall*>*
-} CIExprStructCall;
+    Vec *items; // Vec<CIExprInitializerItem*>*
+} CIExprInitializer;
 
 /**
  *
- * @brief Construct CIExprStructCall type.
+ * @brief Construct CIExprInitializer type.
  */
-inline CONSTRUCTOR(CIExprStructCall, CIExprStructCall, Vec *fields)
+inline CONSTRUCTOR(CIExprInitializer, CIExprInitializer, Vec *items)
 {
-    return (CIExprStructCall){ .fields = fields };
+    return (CIExprInitializer){ .items = items };
 }
 
 /**
  *
- * @brief Convert CIExprStructCall in String.
+ * @brief Convert CIExprInitializer in String.
  * @note This function is only used to debug.
  */
 #ifdef ENV_DEBUG
 String *
-IMPL_FOR_DEBUG(to_string, CIExprStructCall, const CIExprStructCall *self);
+IMPL_FOR_DEBUG(to_string, CIExprInitializer, const CIExprInitializer *self);
 #endif
 
 /**
  *
- * @brief Free CIExprStructCall type.
+ * @brief Free CIExprInitializer type.
  */
-DESTRUCTOR(CIExprStructCall, const CIExprStructCall *self);
+DESTRUCTOR(CIExprInitializer, const CIExprInitializer *self);
 
 enum CIExprKind
 {
     CI_EXPR_KIND_ALIGNOF,
-    CI_EXPR_KIND_ARRAY,
     CI_EXPR_KIND_ARRAY_ACCESS,
     CI_EXPR_KIND_BINARY,
     CI_EXPR_KIND_CAST,
@@ -3804,10 +3773,10 @@ enum CIExprKind
     CI_EXPR_KIND_FUNCTION_CALL_BUILTIN,
     CI_EXPR_KIND_GROUPING,
     CI_EXPR_KIND_IDENTIFIER,
+    CI_EXPR_KIND_INITIALIZER,
     CI_EXPR_KIND_LITERAL,
     CI_EXPR_KIND_NULLPTR,
     CI_EXPR_KIND_SIZEOF,
-    CI_EXPR_KIND_STRUCT_CALL,
     CI_EXPR_KIND_TERNARY,
     CI_EXPR_KIND_UNARY,
 };
@@ -3829,7 +3798,6 @@ struct CIExpr
     union
     {
         CIExpr *alignof_;
-        CIExprArray array;
         CIExprArrayAccess array_access;
         CIExprBinary binary;
         CIExprCast cast;
@@ -3838,9 +3806,9 @@ struct CIExpr
         CIExprFunctionCallBuiltin function_call_builtin;
         CIExpr *grouping;
         CIExprIdentifier identifier;
+        CIExprInitializer initializer;
         CIExprLiteral literal;
         CIExpr *sizeof_;
-        CIExprStructCall struct_call;
         CIExprTernary ternary;
         CIExprUnary unary;
     };
@@ -3857,12 +3825,6 @@ CONSTRUCTOR(CIExpr *, CIExpr, enum CIExprKind kind);
  * @brief Construct CIExpr type (CI_EXPR_KIND_ALIGNOF).
  */
 VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, alignof, CIExpr *alignof_);
-
-/**
- *
- * @brief Construct CIExpr type (CI_EXPR_KIND_ARRAY).
- */
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, array, CIExprArray array);
 
 /**
  *
@@ -3923,6 +3885,15 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, identifier, CIExprIdentifier identifier);
 
 /**
  *
+ * @brief Construct CIExpr type (CI_EXPR_KIND_INITIALIZER).
+ */
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    initializer,
+                    CIExprInitializer initializer);
+
+/**
+ *
  * @brief Construct CIExpr type (CI_EXPR_KIND_LITERAL).
  */
 VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, literal, CIExprLiteral literal);
@@ -3935,15 +3906,6 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, sizeof, CIExpr *sizeof_);
 
 /**
  *
- * @brief Construct CIExpr type (CI_EXPR_KIND_STRUCT_CALL).
- */
-VARIANT_CONSTRUCTOR(CIExpr *,
-                    CIExpr,
-                    struct_call,
-                    CIExprStructCall struct_call);
-
-/**
- *
  * @brief Construct CIExpr type (CI_EXPR_KIND_TERNARY).
  */
 VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, ternary, CIExprTernary ternary);
@@ -3953,16 +3915,6 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, ternary, CIExprTernary ternary);
  * @brief Construct CIExpr type (CI_EXPR_KIND_UNARY).
  */
 VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, unary, CIExprUnary unary);
-
-/**
- *
- * @brief Get data type from expression.
- * @note If it is not possible to determine the type of the expression, the
- * function returns NULL.
- * @return CIDataType*?
- */
-CIDataType *
-get_data_type__CIExpr(const CIExpr *self);
 
 /**
  *

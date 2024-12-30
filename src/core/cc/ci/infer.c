@@ -627,8 +627,6 @@ infer_expr_data_type__CIInfer(const CIResultFile *file,
         case CI_EXPR_KIND_SIZEOF:
             // NOTE: Get 32 bits version of size_t
             return NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT);
-        case CI_EXPR_KIND_ARRAY:
-            FAILED("cannot give array to typeof(...)");
         case CI_EXPR_KIND_ARRAY_ACCESS: {
             CIDataType *array_dt =
               infer_expr_data_type__CIInfer(file,
@@ -671,12 +669,12 @@ infer_expr_data_type__CIInfer(const CIResultFile *file,
               current_scope_id,
               called_generic_params,
               decl_generic_params);
+        case CI_EXPR_KIND_INITIALIZER:
+            FAILED("cannot give initializer to infer");
         case CI_EXPR_KIND_LITERAL:
             return infer_expr_literal_data_type__CIInfer(file, &expr->literal);
         case CI_EXPR_KIND_NULLPTR:
             TODO("nullptr");
-        case CI_EXPR_KIND_STRUCT_CALL:
-            FAILED("cannot give struct call to typeof(...)");
         case CI_EXPR_KIND_TERNARY:
             return infer_expr_data_type__CIInfer(file,
                                                  expr->ternary.if_,

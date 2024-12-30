@@ -363,8 +363,6 @@ is_prototype__CIDecl(CIDecl *self);
 extern inline bool
 can_have_prototype__CIDecl(const CIDecl *self);
 
-extern inline CONSTRUCTOR(CIExprArray, CIExprArray, Vec *array);
-
 extern inline CONSTRUCTOR(CIExprArrayAccess,
                           CIExprArrayAccess,
                           CIExpr *array,
@@ -375,6 +373,8 @@ extern inline CONSTRUCTOR(CIExprBinary,
                           enum CIExprBinaryKind kind,
                           CIExpr *left,
                           CIExpr *right);
+
+extern inline CONSTRUCTOR(CIExprInitializer, CIExprInitializer, Vec *items);
 
 extern inline VARIANT_CONSTRUCTOR(CIExprLiteral,
                                   CIExprLiteral,
@@ -464,8 +464,6 @@ extern inline DESTRUCTOR(CIExprIdentifier, const CIExprIdentifier *self);
 
 extern inline CIExpr *
 ref__CIExpr(CIExpr *self);
-
-extern inline CONSTRUCTOR(CIExprStructCall, CIExprStructCall, Vec *fields);
 
 extern inline CONSTRUCTOR(CIStmtBlock, CIStmtBlock, CIDeclFunctionBody *body);
 

@@ -161,12 +161,6 @@ visit_function_decl__CIVisitor(CIVisitor *self,
                                CIGenericParams *decl_generic_params);
 
 static void
-visit_function_expr_array__CIVisitor(CIVisitor *self,
-                                     const CIExprArray *array,
-                                     CIGenericParams *called_generic_params,
-                                     CIGenericParams *decl_generic_params);
-
-static void
 visit_function_expr_array_access__CIVisitor(
   CIVisitor *self,
   const CIExprArrayAccess *array_access,
@@ -200,9 +194,9 @@ visit_function_expr_function_call_builtin__CIVisitor(
   CIGenericParams *decl_generic_params);
 
 static void
-visit_function_expr_struct_call__CIVisitor(
+visit_function_expr_initializer__CIVisitor(
   CIVisitor *self,
-  const CIExprStructCall *struct_call,
+  const CIExprInitializer *initializer,
   CIGenericParams *called_generic_params,
   CIGenericParams *decl_generic_params);
 
@@ -967,20 +961,6 @@ visit_function_decl__CIVisitor(CIVisitor *self,
 }
 
 void
-visit_function_expr_array__CIVisitor(CIVisitor *self,
-                                     const CIExprArray *array,
-                                     CIGenericParams *called_generic_params,
-                                     CIGenericParams *decl_generic_params)
-{
-    for (Usize i = 0; i < array->array->len; ++i) {
-        visit_function_expr__CIVisitor(self,
-                                       get__Vec(array->array, i),
-                                       called_generic_params,
-                                       decl_generic_params);
-    }
-}
-
-void
 visit_function_expr_array_access__CIVisitor(
   CIVisitor *self,
   const CIExprArrayAccess *array_access,
@@ -1058,17 +1038,20 @@ visit_function_expr_function_call_builtin__CIVisitor(
 }
 
 void
-visit_function_expr_struct_call__CIVisitor(
+visit_function_expr_initializer__CIVisitor(
   CIVisitor *self,
-  const CIExprStructCall *struct_call,
+  const CIExprInitializer *initializer,
   CIGenericParams *called_generic_params,
   CIGenericParams *decl_generic_params)
 {
-    for (Usize i = 0; i < struct_call->fields->len; ++i) {
-        CIExprStructFieldCall *field_call = get__Vec(struct_call->fields, i);
+    for (Usize i = 0; i < initializer->items->len; ++i) {
+        CIExprInitializerItem *initializer_item =
+          get__Vec(initializer->items, i);
 
-        visit_function_expr__CIVisitor(
-          self, field_call->value, called_generic_params, decl_generic_params);
+        visit_function_expr__CIVisitor(self,
+                                       initializer_item->value,
+                                       called_generic_params,
+                                       decl_generic_params);
     }
 }
 
@@ -1096,11 +1079,6 @@ visit_function_expr__CIVisitor(CIVisitor *self,
         case CI_EXPR_KIND_ALIGNOF:
             visit_function_expr__CIVisitor(
               self, expr->alignof_, called_generic_params, decl_generic_params);
-
-            break;
-        case CI_EXPR_KIND_ARRAY:
-            visit_function_expr_array__CIVisitor(
-              self, &expr->array, called_generic_params, decl_generic_params);
 
             break;
         case CI_EXPR_KIND_ARRAY_ACCESS:
@@ -1150,14 +1128,14 @@ visit_function_expr__CIVisitor(CIVisitor *self,
         case CI_EXPR_KIND_IDENTIFIER:
             // TODO: Handling the case of generic pass-by-reference functions.
             break;
-        case CI_EXPR_KIND_LITERAL:
-            break;
-        case CI_EXPR_KIND_STRUCT_CALL:
-            visit_function_expr_struct_call__CIVisitor(self,
-                                                       &expr->struct_call,
+        case CI_EXPR_KIND_INITIALIZER:
+            visit_function_expr_initializer__CIVisitor(self,
+                                                       &expr->initializer,
                                                        called_generic_params,
                                                        decl_generic_params);
 
+            break;
+        case CI_EXPR_KIND_LITERAL:
             break;
         case CI_EXPR_KIND_SIZEOF:
             visit_function_expr__CIVisitor(
