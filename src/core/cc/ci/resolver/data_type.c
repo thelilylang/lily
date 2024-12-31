@@ -31,6 +31,16 @@
 
 /// @param called_generic_params const CIGenericParams*? (&)
 /// @param decl_generic_params const CIGenericParams*? (&)
+/// @return CIDataType*?
+static CIDataType *
+resolve_to_integer_data_type__CIResolverDataType(
+  const CIResultFile *file,
+  CIDataType *data_type,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params);
+
+/// @param called_generic_params const CIGenericParams*? (&)
+/// @param decl_generic_params const CIGenericParams*? (&)
 /// @return CIDataType*
 static CIDataType *
 resolve_generic_data_type__CIResolverDataType(
@@ -76,17 +86,24 @@ bool
 is_array_data_type__CIResolverDataType(
   const CIResultFile *file,
   CIDataType *data_type,
+  bool allow_implicit_cast,
   const CIGenericParams *called_generic_params,
   const CIGenericParams *decl_generic_params)
 {
     switch (data_type->kind) {
         case CI_DATA_TYPE_KIND_ARRAY:
             return true;
+        case CI_DATA_TYPE_KIND_PTR:
+            return allow_implicit_cast;
         case CI_DATA_TYPE_KIND_TYPEDEF: {
             CIDataType *resolved_dt = run__CIResolverDataType(
               file, data_type, called_generic_params, decl_generic_params);
-            bool res = is_array_data_type__CIResolverDataType(
-              file, resolved_dt, called_generic_params, decl_generic_params);
+            bool res =
+              is_array_data_type__CIResolverDataType(file,
+                                                     resolved_dt,
+                                                     allow_implicit_cast,
+                                                     called_generic_params,
+                                                     decl_generic_params);
 
             FREE(CIDataType, resolved_dt);
 
@@ -118,6 +135,8 @@ is_integer_data_type__CIResolverDataType(
         case CI_DATA_TYPE_KIND_ARRAY:
         case CI_DATA_TYPE_KIND_PTR: // via implicit cast
             return allow_implicit_cast;
+        case CI_DATA_TYPE_KIND_ENUM:
+            return true;
         default:
             return is_integer__CIDataType(data_type);
     }
@@ -143,6 +162,23 @@ is_float_data_type__CIResolverDataType(
         default:
             return is_float__CIDataType(data_type);
     }
+}
+
+bool
+is_numeric_data_type__CIResolverDataType(
+  const CIResultFile *file,
+  CIDataType *data_type,
+  bool allow_implicit_cast,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params)
+{
+    return is_integer_data_type__CIResolverDataType(file,
+                                                    data_type,
+                                                    allow_implicit_cast,
+                                                    called_generic_params,
+                                                    decl_generic_params) ||
+           is_float_data_type__CIResolverDataType(
+             file, data_type, called_generic_params, decl_generic_params);
 }
 
 bool
@@ -257,6 +293,63 @@ is_compatible_with_void_ptr_data_type__CIResolverDataType(
     return false;
 }
 
+Uint8
+get_integer_rank__CIResolverDataType(const CIResultFile *file,
+                                     CIDataType *data_type,
+                                     CIGenericParams *called_generic_params,
+                                     CIGenericParams *decl_generic_params)
+{
+    CIDataType *integer_data_type =
+      resolve_to_integer_data_type__CIResolverDataType(
+        file, data_type, called_generic_params, decl_generic_params);
+
+    if (!integer_data_type) {
+        UNREACHABLE("expected only integer type");
+    }
+
+    Uint8 res = 0;
+
+    /* 6.3.1.1 Boolean, characters, and integers */
+    switch (integer_data_type->kind) {
+        case CI_DATA_TYPE_KIND_LONG_LONG_INT:
+        case CI_DATA_TYPE_KIND_UNSIGNED_LONG_LONG_INT:
+            res = 6;
+
+            break;
+        case CI_DATA_TYPE_KIND_LONG_INT:
+        case CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT:
+            res = 5;
+
+            break;
+        case CI_DATA_TYPE_KIND_INT:
+        case CI_DATA_TYPE_KIND_UNSIGNED_INT:
+            res = 4;
+
+            break;
+        case CI_DATA_TYPE_KIND_SHORT_INT:
+        case CI_DATA_TYPE_KIND_UNSIGNED_SHORT_INT:
+            res = 3;
+
+            break;
+        case CI_DATA_TYPE_KIND_CHAR:
+        case CI_DATA_TYPE_KIND_SIGNED_CHAR:
+        case CI_DATA_TYPE_KIND_UNSIGNED_CHAR:
+            res = 2;
+
+            break;
+        case CI_DATA_TYPE_KIND_BOOL:
+            res = 1;
+
+            break;
+        default:
+            UNREACHABLE("expected only integer type");
+    }
+
+    FREE(CIDataType, integer_data_type);
+
+    return res;
+}
+
 CIDataType *
 unwrap_implicit_ptr_data_type__CIResolverDataType(
   const CIResultFile *file,
@@ -297,6 +390,52 @@ unwrap_implicit_ptr_data_type__CIResolverDataType(
             UNREACHABLE("this kind of data type is not expected, expected "
                         "pointer compatible data type");
     }
+}
+
+CIDataType *
+resolve_to_integer_data_type__CIResolverDataType(
+  const CIResultFile *file,
+  CIDataType *data_type,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params)
+{
+    CIDataType *res = NULL;
+    CIDataType *resolved_data_type = run__CIResolverDataType(
+      file, data_type, called_generic_params, decl_generic_params);
+
+    switch (resolved_data_type->kind) {
+        case CI_DATA_TYPE_KIND_ENUM:
+            if (resolved_data_type->enum_.name) {
+                CIDecl *enum_decl = search_enum__CIResultFile(
+                  file, GET_PTR_RC(String, resolved_data_type->enum_.name));
+
+                ASSERT(enum_decl);
+
+                res = enum_decl->enum_.data_type
+                        ? ref__CIDataType(enum_decl->enum_.data_type)
+                        : NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
+
+                break;
+            }
+
+            res = NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
+
+            break;
+        default:
+            if (is_integer_data_type__CIResolverDataType(file,
+                                                         resolved_data_type,
+                                                         true,
+                                                         called_generic_params,
+                                                         decl_generic_params)) {
+                res = ref__CIDataType(resolved_data_type);
+
+                break;
+            }
+    }
+
+    FREE(CIDataType, resolved_data_type);
+
+    return res;
 }
 
 CIDataType *
@@ -424,19 +563,24 @@ resolve_union_data_type__CIResolverDataType(
     return ref__CIDataType(data_type);
 }
 
-const Vec *
+const CIDeclStructFields *
 get_fields_from_data_type__CIResolverDataType(
   const CIResultFile *file,
   const CIDataType *data_type,
   const CIGenericParams *called_generic_params,
   const CIGenericParams *decl_generic_params)
 {
-    ASSERT(data_type->kind == CI_DATA_TYPE_KIND_STRUCT ||
-           data_type->kind == CI_DATA_TYPE_KIND_UNION);
-
-    const Vec *dt_fields = get_fields__CIDataType(data_type);
+    CIDataType *resolved_data_type =
+      run__CIResolverDataType(file,
+                              (CIDataType *)data_type,
+                              called_generic_params,
+                              decl_generic_params);
+    const CIDeclStructFields *dt_fields =
+      get_fields__CIDataType(resolved_data_type);
 
     if (dt_fields) {
+        FREE(CIDataType, resolved_data_type);
+
         return dt_fields;
     }
 
@@ -447,7 +591,7 @@ get_fields_from_data_type__CIResolverDataType(
 
     ASSERT(name);
 
-    switch (data_type->kind) {
+    switch (resolved_data_type->kind) {
         case CI_DATA_TYPE_KIND_TYPEDEF:
             UNREACHABLE("data type is resolved at this point");
         case CI_DATA_TYPE_KIND_STRUCT:
@@ -475,6 +619,8 @@ get_fields_from_data_type__CIResolverDataType(
     if (!decl) {
         FAILED("struct or union is not found");
     }
+
+    FREE(CIDataType, resolved_data_type);
 
     return get_fields__CIDecl(decl);
 }

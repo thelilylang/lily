@@ -30,10 +30,58 @@
 
 /**
  *
- * @brief Infer data type of the given expression.
- * @param current_scope_id const CIScopeID*? (&)
+ * @brief Infer data type of binary expression.
  * @param called_generic_params const CIGenericParams*? (&)
  * @param decl_generic_params const CIGenericParams*? (&)
+ */
+CIDataType *
+infer_expr_binary_data_type__CIInfer(
+  const CIResultFile *file,
+  const CIExpr *expr,
+  const CIScopeID *current_scope_id,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params);
+
+/**
+ *
+ * @brief Infer data type of identifier expression.
+ * @param called_generic_params const CIGenericParams*? (&)
+ * @param decl_generic_params const CIGenericParams*? (&)
+ * @return CIDataType*
+ */
+CIDataType *
+infer_expr_identifier_data_type__CIInfer(
+  const CIResultFile *file,
+  const CIExpr *expr,
+  const CIScopeID *current_scope_id,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params);
+
+/**
+ *
+ * @brief Infer data type of function call expression.
+ * @param called_generic_params const CIGenericParams*? (&)
+ * @param decl_generic_params const CIGenericParams*? (&)
+ * @return CIDataType*
+ */
+CIDataType *
+infer_expr_function_call_data_type__CIInfer(
+  const CIResultFile *file,
+  const CIExpr *expr,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params);
+
+/**
+ *
+ * @brief Infer data type of function call builtin expression.
+ * @return CIDataType*
+ */
+CIDataType *
+infer_expr_function_call_builtin_data_type__CIInfer(const CIExpr *expr);
+
+/**
+ *
+ * @brief Infer data type of expression.
  * @return CIDataType*
  */
 CIDataType *
@@ -42,5 +90,29 @@ infer_expr_data_type__CIInfer(const CIResultFile *file,
                               const CIScopeID *current_scope_id,
                               const CIGenericParams *called_generic_params,
                               const CIGenericParams *decl_generic_params);
+
+/**
+ *
+ * @brief Evaluate expression as typeof.
+ * @return CIDataType*
+ */
+CIDataType *
+perform_typeof__CIInfer(const CIResultFile *file,
+                        const CIExpr *expr,
+                        const CIScopeID *current_scope_id,
+                        const CIGenericParams *called_generic_params,
+                        const CIGenericParams *decl_generic_params);
+
+/**
+ *
+ * @brief Evaluate expression as typeof_unqual.
+ * @return CIDataType*
+ */
+CIDataType *
+perform_typeof_unqual__CIInfer(const CIResultFile *file,
+                               const CIExpr *expr,
+                               const CIScopeID *current_scope_id,
+                               const CIGenericParams *called_generic_params,
+                               const CIGenericParams *decl_generic_params);
 
 #endif // LILY_CORE_CC_CI_INFER_H

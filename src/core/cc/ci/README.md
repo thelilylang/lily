@@ -65,3 +65,10 @@ You can find more code examples in the following [directory](/examples/core/cc/c
 ## Documentation
 
 You can find the documentation in the following [directory](/docs/core/cc/ci).
+
+## References
+
+- [C99 standard](https://www.open-std.org/Jtc1/sc22/wg14/www/docs/n1256.pdf)
+- [C11 standard](https://www.open-std.org/JTC1/SC22/WG14/www/docs/n1570.pdf)
+- [C23 standard](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3220.pdf)
+- [C2Y standard](https://www.open-std.org/JTC1/SC22/WG14/www/docs/n3301.pdf)

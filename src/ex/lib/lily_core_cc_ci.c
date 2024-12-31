@@ -34,6 +34,7 @@
 #include <core/cc/ci/resolver/expr.h>
 #include <core/cc/ci/result.h>
 #include <core/cc/ci/scanner.h>
+#include <core/cc/ci/state_checker.h>
 #include <core/cc/ci/token.h>
 #include <core/cc/ci/typecheck.h>
 #include <core/cc/ci/visitor.h>
@@ -157,6 +158,21 @@ eq_op__CIGenericParams(const CIGenericParams *self,
 
 extern inline CONSTRUCTOR(CISizeInfo, CISizeInfo);
 
+extern inline CIDeclStructFields *
+ref__CIDeclStructFields(CIDeclStructFields *self);
+
+extern struct CIDeclStructField *
+get_field_from_name__CIDeclStructFields(const CIDeclStructFields *self,
+                                        const Rc *name);
+
+extern inline CONSTRUCTOR(CIDeclStructFieldMember,
+                          CIDeclStructFieldMember,
+                          CIDataType *data_type,
+                          Uint8 bit);
+
+extern inline CIDeclStructField *
+ref__CIDeclStructField(CIDeclStructField *self);
+
 extern inline VARIANT_CONSTRUCTOR(CIDataTypeArray,
                                   CIDataTypeArray,
                                   sized,
@@ -193,7 +209,7 @@ extern inline CONSTRUCTOR(CIDataTypeStruct,
                           CIDataTypeStruct,
                           Rc *name,
                           CIGenericParams *generic_params,
-                          Vec *fields);
+                          CIDeclStructFields *fields);
 
 extern inline CONSTRUCTOR(CIDataTypeTypedef,
                           CIDataTypeTypedef,
@@ -204,7 +220,7 @@ extern inline CONSTRUCTOR(CIDataTypeUnion,
                           CIDataTypeUnion,
                           Rc *name,
                           CIGenericParams *generic_params,
-                          Vec *fields);
+                          CIDeclStructFields *fields);
 
 extern inline CIDataType *
 ref__CIDataType(CIDataType *self);
@@ -273,7 +289,7 @@ extern inline CONSTRUCTOR(CIDeclStruct,
                           CIDeclStruct,
                           Rc *name,
                           CIGenericParams *generic_params,
-                          Vec *fields);
+                          CIDeclStructFields *fields);
 
 extern inline bool
 eq_generic_params__CIDeclStruct(const CIDeclStruct *self,
@@ -284,7 +300,7 @@ extern inline CONSTRUCTOR(CIDeclStructGen,
                           const CIDeclStruct *struct_,
                           String *name,
                           CIGenericParams *called_generic_params,
-                          Vec *fields);
+                          CIDeclStructFields *fields);
 
 extern inline CONSTRUCTOR(CIDeclTypedef,
                           CIDeclTypedef,
@@ -309,7 +325,7 @@ extern inline CONSTRUCTOR(CIDeclUnion,
                           CIDeclUnion,
                           Rc *name,
                           CIGenericParams *generic_params,
-                          Vec *fields);
+                          CIDeclStructFields *fields);
 
 extern inline bool
 eq_generic_params__CIDeclUnion(const CIDeclUnion *self,
@@ -320,7 +336,7 @@ extern inline CONSTRUCTOR(CIDeclUnionGen,
                           const CIDeclUnion *union_,
                           String *name,
                           CIGenericParams *called_generic_params,
-                          Vec *fields);
+                          CIDeclStructFields *fields);
 
 extern inline CONSTRUCTOR(CIDeclVariable,
                           CIDeclVariable,
@@ -347,8 +363,6 @@ is_prototype__CIDecl(CIDecl *self);
 extern inline bool
 can_have_prototype__CIDecl(const CIDecl *self);
 
-extern inline CONSTRUCTOR(CIExprArray, CIExprArray, Vec *array);
-
 extern inline CONSTRUCTOR(CIExprArrayAccess,
                           CIExprArrayAccess,
                           CIExpr *array,
@@ -359,6 +373,8 @@ extern inline CONSTRUCTOR(CIExprBinary,
                           enum CIExprBinaryKind kind,
                           CIExpr *left,
                           CIExpr *right);
+
+extern inline CONSTRUCTOR(CIExprInitializer, CIExprInitializer, Vec *items);
 
 extern inline VARIANT_CONSTRUCTOR(CIExprLiteral,
                                   CIExprLiteral,
@@ -448,8 +464,6 @@ extern inline DESTRUCTOR(CIExprIdentifier, const CIExprIdentifier *self);
 
 extern inline CIExpr *
 ref__CIExpr(CIExpr *self);
-
-extern inline CONSTRUCTOR(CIExprStructCall, CIExprStructCall, Vec *fields);
 
 extern inline CONSTRUCTOR(CIStmtBlock, CIStmtBlock, CIDeclFunctionBody *body);
 
@@ -698,6 +712,30 @@ is_in_prepro_if__CIScannerContext(const CIScannerContext *self);
 
 extern inline bool
 is_in_prepro_else__CIScannerContext(const CIScannerContext *self);
+
+// <core/cc/ci/state_checker.h>
+extern inline CONSTRUCTOR(CIStateCheckerState,
+                          CIStateCheckerState,
+                          Usize flags);
+
+extern inline void
+increment_copy__CIStateCheckerState(CIStateCheckerState *self);
+
+extern inline void
+decrement_copy__CIStateCheckerState(CIStateCheckerState *self);
+
+extern inline CONSTRUCTOR(CIStateCheckerValueStruct,
+                          CIStateCheckerValueStruct,
+                          HashMap *values);
+
+extern inline CONSTRUCTOR(CIStateCheckerValueVariable,
+                          CIStateCheckerValueVariable,
+                          const String *name,
+                          CIStateCheckerState state);
+
+extern inline CONSTRUCTOR(CIStateChecker,
+                          CIStateChecker,
+                          const CIResult *result);
 
 // <core/cc/ci/token.h>
 extern inline CONSTRUCTOR(CITokens, CITokens);

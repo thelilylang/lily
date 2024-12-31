@@ -47,10 +47,11 @@ static Usize
 calculate_enum_alignment__CIResolverExpr(const CIResolverExpr *self,
                                          CIDecl *enum_decl);
 
-/// @param fields const Vec<CIDeclStructField*>* (&)
+/// @param fields const CIDeclStructFields* (&)
 static Usize
-calculate_struct_or_union_alignment__CIResolverExpr(const CIResolverExpr *self,
-                                                    const Vec *fields);
+calculate_struct_or_union_alignment__CIResolverExpr(
+  const CIResolverExpr *self,
+  const CIDeclStructFields *fields);
 
 static struct DataTypeInfoAlignment
 resolve_struct_or_union_alignment__CIResolverExpr(
@@ -169,15 +170,15 @@ static struct DataTypeInfoSize
 resolve_enum_size__CIResolverExpr(const CIResolverExpr *self,
                                   const String *enum_name);
 
-/// @param fields const Vec<CIDeclStructField*>* (&)
+/// @param fields const CIDeclStructFields* (&)
 static Usize
 calculate_struct_size__CIResolverExpr(const CIResolverExpr *self,
-                                      const Vec *fields);
+                                      const CIDeclStructFields *fields);
 
-/// @param fields const Vec<CIDeclStructField*>* (&)
+/// @param fields const CIDeclStructFields* (&)
 static Usize
 calculate_union_size__CIResolverExpr(const CIResolverExpr *self,
-                                     const Vec *fields);
+                                     const CIDeclStructFields *fields);
 
 /// @param struct_data_type const CIDataType* (&)
 static struct DataTypeInfoSize
@@ -586,19 +587,27 @@ calculate_enum_alignment__CIResolverExpr(const CIResolverExpr *self,
 }
 
 static Usize
-calculate_struct_or_union_alignment__CIResolverExpr(const CIResolverExpr *self,
-                                                    const Vec *fields)
+calculate_struct_or_union_alignment__CIResolverExpr(
+  const CIResolverExpr *self,
+  const CIDeclStructFields *fields)
 {
     Usize max_alignment = 0;
+    CIDeclStructField *current_field = fields->first;
 
-    for (Usize i = 0; i < fields->len; ++i) {
-        const CIDeclStructField *field = get__Vec(fields, i);
+    while (current_field) {
+        CIDataType *current_field_dt =
+          build_data_type__CIDeclStructField(current_field);
         Usize field_alignment =
-          resolve_data_type_alignment__CIResolverExpr(self, field->data_type);
+          resolve_data_type_alignment__CIResolverExpr(self, current_field_dt);
 
         if (field_alignment > max_alignment) {
             max_alignment = field_alignment;
         }
+
+        FREE(CIDataType, current_field_dt);
+
+        current_field =
+          get_next_field_with_no_parent__CIDeclStructField(current_field);
     }
 
     return max_alignment;
@@ -612,7 +621,7 @@ resolve_struct_or_union_alignment__CIResolverExpr(
                     const String *name,
                     CIGenericParams *called_generic_params))
 {
-    Vec *fields = data_type->struct_.fields;
+    CIDeclStructFields *fields = data_type->struct_.fields;
     CIDecl *decl = !fields ? search(self->parser,
                                     GET_PTR_RC(String, data_type->struct_.name),
                                     data_type->struct_.generic_params)
@@ -621,7 +630,8 @@ resolve_struct_or_union_alignment__CIResolverExpr(
 
     if (decl) {
         alignment = get_alignment__CIDecl(decl);
-        fields = alignment == 0 ? (Vec *)get_fields__CIDecl(decl) : NULL;
+        fields = alignment == 0 ? (CIDeclStructFields *)get_fields__CIDecl(decl)
+                                : NULL;
     }
 
     if (fields) {
@@ -1638,17 +1648,19 @@ resolve_enum_size__CIResolverExpr(const CIResolverExpr *self,
 
 Usize
 calculate_struct_size__CIResolverExpr(const CIResolverExpr *self,
-                                      const Vec *fields)
+                                      const CIDeclStructFields *fields)
 {
-    ASSERT(!has_generic__CIDeclStructField(fields));
+    ASSERT(!has_generic__CIDeclStructFields(fields));
 
     Usize total_size = 0;
     Usize max_alignment = 0;
+    CIDeclStructField *current_field = fields->first;
 
-    for (Usize i = 0; i < fields->len; ++i) {
-        const CIDeclStructField *field = get__Vec(fields, i);
+    while (current_field) {
+        CIDataType *current_field_dt =
+          build_data_type__CIDeclStructField(current_field);
         Usize field_alignment =
-          resolve_data_type_alignment__CIResolverExpr(self, field->data_type);
+          resolve_data_type_alignment__CIResolverExpr(self, current_field_dt);
 
         // NOTE: We skip this case, as it means that the alignment could not be
         // resolved.
@@ -1665,7 +1677,12 @@ calculate_struct_size__CIResolverExpr(const CIResolverExpr *self,
         }
 
         total_size +=
-          resolve_data_type_size__CIResolverExpr(self, field->data_type);
+          resolve_data_type_size__CIResolverExpr(self, current_field_dt);
+
+        FREE(CIDataType, current_field_dt);
+
+        current_field =
+          get_next_field_with_no_parent__CIDeclStructField(current_field);
     }
 
     if (total_size % max_alignment != 0) {
@@ -1677,18 +1694,25 @@ calculate_struct_size__CIResolverExpr(const CIResolverExpr *self,
 
 Usize
 calculate_union_size__CIResolverExpr(const CIResolverExpr *self,
-                                     const Vec *fields)
+                                     const CIDeclStructFields *fields)
 {
     Usize max_size = 0;
+    CIDeclStructField *current_field = fields->first;
 
-    for (Usize i = 0; i < fields->len; ++i) {
-        const CIDeclStructField *field = get__Vec(fields, i);
+    while (current_field) {
+        CIDataType *current_field_dt =
+          build_data_type__CIDeclStructField(current_field);
         Usize field_size =
-          resolve_data_type_size__CIResolverExpr(self, field->data_type);
+          resolve_data_type_size__CIResolverExpr(self, current_field_dt);
 
         if (field_size > max_size) {
             max_size = field_size;
         }
+
+        FREE(CIDataType, current_field_dt);
+
+        current_field =
+          get_next_field_with_no_parent__CIDeclStructField(current_field);
     }
 
     return max_size;
@@ -1698,7 +1722,7 @@ struct DataTypeInfoSize
 resolve_struct_size__CIResolverExpr(const CIResolverExpr *self,
                                     const CIDataType *struct_data_type)
 {
-    Vec *struct_fields = struct_data_type->struct_.fields;
+    CIDeclStructFields *struct_fields = struct_data_type->struct_.fields;
     CIDecl *decl = !struct_fields
                      ? search_struct__CIParser(
                          self->parser,
@@ -1709,8 +1733,9 @@ resolve_struct_size__CIResolverExpr(const CIResolverExpr *self,
 
     if (decl) {
         struct_size = get_size__CIDecl(decl);
-        struct_fields =
-          struct_size == 0 ? (Vec *)get_fields__CIDecl(decl) : NULL;
+        struct_fields = struct_size == 0
+                          ? (CIDeclStructFields *)get_fields__CIDecl(decl)
+                          : NULL;
     }
 
     if (struct_fields) {
@@ -1728,7 +1753,7 @@ struct DataTypeInfoSize
 resolve_union_size__CIResolverExpr(const CIResolverExpr *self,
                                    const CIDataType *union_data_type)
 {
-    Vec *union_fields = union_data_type->union_.fields;
+    CIDeclStructFields *union_fields = union_data_type->union_.fields;
     CIDecl *decl = !union_fields
                      ? search_union__CIParser(
                          self->parser,
@@ -1739,7 +1764,9 @@ resolve_union_size__CIResolverExpr(const CIResolverExpr *self,
 
     if (decl) {
         union_size = get_size__CIDecl(decl);
-        union_fields = union_size == 0 ? (Vec *)get_fields__CIDecl(decl) : NULL;
+        union_fields = union_size == 0
+                         ? (CIDeclStructFields *)get_fields__CIDecl(decl)
+                         : NULL;
     }
 
     if (union_fields) {
@@ -2286,14 +2313,18 @@ run__CIResolverExpr(const CIResolverExpr *self, CIExpr *expr)
             return run__CIResolverExpr(self, expr->grouping);
         case CI_EXPR_KIND_IDENTIFIER:
             return resolve_identifier__CIResolver(self, expr);
+        case CI_EXPR_KIND_INITIALIZER:
+            if (self->is_at_preprocessor_time) {
+                FAILED("initializer is not expected at preprocessor time");
+            }
+
+            TODO("initializer");
         case CI_EXPR_KIND_LITERAL:
             return ref__CIExpr(expr);
         case CI_EXPR_KIND_NULLPTR:
             return ref__CIExpr(expr);
         case CI_EXPR_KIND_SIZEOF:
             return resolve_sizeof_expr__CIResolverExpr(self, expr);
-        case CI_EXPR_KIND_STRUCT_CALL:
-            TODO("resolve struct");
         case CI_EXPR_KIND_TERNARY: {
             CIExpr *resolved_cond =
               run__CIResolverExpr(self, expr->ternary.cond);

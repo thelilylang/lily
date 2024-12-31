@@ -251,10 +251,6 @@ generate_function_prototype__CIGenerator(CIGenerator *self,
                                          const CIDeclFunction *function);
 
 static void
-generate_function_array_expr__CIGenerator(CIGenerator *self,
-                                          const CIExprArray *array);
-
-static void
 generate_function_binary_expr__CIGenerator(CIGenerator *self,
                                            const CIExprBinary *binary);
 
@@ -285,9 +281,9 @@ generate_function_literal_expr__CIGenerator(CIGenerator *self,
                                             const CIExprLiteral *literal);
 
 static void
-generate_function_struct_call_expr__CIGenerator(
+generate_function_initializer_expr__CIGenerator(
   CIGenerator *self,
-  const CIExprStructCall *struct_call);
+  const CIExprInitializer *initializer);
 
 static void
 generate_function_unary_expr__CIGenerator(CIGenerator *self,
@@ -363,12 +359,15 @@ generate_struct_field__CIGenerator(CIGenerator *self,
                                    const CIDeclStructField *field);
 
 static void
-generate_struct_fields__CIGenerator(CIGenerator *self, const Vec *fields);
+generate_struct_fields__CIGenerator(CIGenerator *self,
+                                    const CIDeclStructFields *fields);
 
 /// @param name String*? (&)
-/// @param fields Vec<CIDeclStructField*>*? (&)
+/// @param fields CIDeclStructFields* (&)
 static void
-generate_struct__CIGenerator(CIGenerator *self, String *name, Vec *fields);
+generate_struct__CIGenerator(CIGenerator *self,
+                             String *name,
+                             CIDeclStructFields *fields);
 
 static inline void
 generate_struct_decl__CIGenerator(CIGenerator *self,
@@ -395,7 +394,9 @@ generate_union_prototype__CIGenerator(CIGenerator *self,
                                       const CIDeclUnion *union_);
 
 static void
-generate_union__CIGenerator(CIGenerator *self, String *name, Vec *fields);
+generate_union__CIGenerator(CIGenerator *self,
+                            String *name,
+                            CIDeclStructFields *fields);
 
 static void
 generate_union_decl__CIGenerator(CIGenerator *self, const CIDeclUnion *union_);
@@ -428,7 +429,8 @@ static void
 run_file__CIGenerator(CIGenerator *self);
 
 static void
-handler__CIGenerator(const CIResultFile *file, void *other_args);
+handler__CIGenerator(const CIResultFile *file,
+                     [[maybe_unused]] void *other_args);
 
 CONSTRUCTOR(CIGeneratorContentSession *,
             CIGeneratorContentSession,
@@ -1396,20 +1398,6 @@ generate_function_prototype__CIGenerator(CIGenerator *self,
 }
 
 void
-generate_function_array_expr__CIGenerator(CIGenerator *self,
-                                          const CIExprArray *array)
-{
-    write_str__CIGenerator(self, "{");
-
-    for (Usize i = 0; i < array->array->len; ++i) {
-        generate_function_expr__CIGenerator(self, get__Vec(array->array, i));
-        write_str__CIGenerator(self, ",");
-    }
-
-    write_str__CIGenerator(self, "}");
-}
-
-void
 generate_function_binary_expr__CIGenerator(CIGenerator *self,
                                            const CIExprBinary *binary)
 {
@@ -1712,27 +1700,33 @@ generate_function_literal_expr__CIGenerator(CIGenerator *self,
 }
 
 void
-generate_function_struct_call_expr__CIGenerator(
+generate_function_initializer_expr__CIGenerator(
   CIGenerator *self,
-  const CIExprStructCall *struct_call)
+  const CIExprInitializer *initializer)
 {
     write_str__CIGenerator(self, "{");
 
-    for (Usize i = 0; i < struct_call->fields->len; ++i) {
-        CIExprStructFieldCall *field = get__Vec(struct_call->fields, i);
+    for (Usize i = 0; i < initializer->items->len; ++i) {
+        CIExprInitializerItem *initializer_item =
+          get__Vec(initializer->items, i);
 
-        for (Usize j = 0; j < field->path->len; ++j) {
-            write_String__CIGenerator(
-              self,
-              format__String(
-                ".{S}",
-                GET_PTR_RC(String, CAST(Rc *, get__Vec(field->path, j)))));
+        if (initializer_item->path) {
+            for (Usize j = 0; j < initializer_item->path->len; ++j) {
+                write_String__CIGenerator(
+                  self,
+                  format__String(
+                    ".{S}",
+                    GET_PTR_RC(
+                      String,
+                      CAST(Rc *, get__Vec(initializer_item->path, j)))));
+            }
+
+            write_str__CIGenerator(self, " = ");
         }
 
-        write_str__CIGenerator(self, " = ");
-        generate_function_expr__CIGenerator(self, field->value);
+        generate_function_expr__CIGenerator(self, initializer_item->value);
 
-        if (i + 1 != struct_call->fields->len) {
+        if (i + 1 != initializer->items->len) {
             write_str__CIGenerator(self, ", ");
         }
     }
@@ -1819,10 +1813,6 @@ generate_function_expr__CIGenerator(CIGenerator *self, const CIExpr *expr)
             write_str__CIGenerator(self, ")");
 
             break;
-        case CI_EXPR_KIND_ARRAY:
-            generate_function_array_expr__CIGenerator(self, &expr->array);
-
-            break;
         case CI_EXPR_KIND_ARRAY_ACCESS:
             generate_function_expr__CIGenerator(self, expr->array_access.array);
             write_str__CIGenerator(self, "[");
@@ -1867,6 +1857,11 @@ generate_function_expr__CIGenerator(CIGenerator *self, const CIExpr *expr)
               self, GET_PTR_RC(String, expr->identifier.value)->buffer);
 
             break;
+        case CI_EXPR_KIND_INITIALIZER:
+            generate_function_initializer_expr__CIGenerator(self,
+                                                            &expr->initializer);
+
+            break;
         case CI_EXPR_KIND_LITERAL:
             generate_function_literal_expr__CIGenerator(self, &expr->literal);
 
@@ -1879,11 +1874,6 @@ generate_function_expr__CIGenerator(CIGenerator *self, const CIExpr *expr)
             write_str__CIGenerator(self, "sizeof(");
             generate_function_expr__CIGenerator(self, expr->sizeof_);
             write_str__CIGenerator(self, ")");
-
-            break;
-        case CI_EXPR_KIND_STRUCT_CALL:
-            generate_function_struct_call_expr__CIGenerator(self,
-                                                            &expr->struct_call);
 
             break;
         case CI_EXPR_KIND_TERNARY:
@@ -2202,35 +2192,49 @@ void
 generate_struct_field__CIGenerator(CIGenerator *self,
                                    const CIDeclStructField *field)
 {
-    generate_data_type__CIGenerator(self, field->data_type);
+    CIDataType *field_dt = build_data_type__CIDeclStructField(field);
 
-    if (field->name && !has_name__CIDataType(field->data_type)) {
+    generate_data_type__CIGenerator(self, field_dt);
+
+    if (field->name && !has_name__CIDataType(field_dt)) {
         write_String__CIGenerator(
           self, format__String(" {S}", GET_PTR_RC(String, field->name)));
     }
 
-    if (field->bit != 0) {
-        write_String__CIGenerator(self, format__String(" : {zu}", field->bit));
+    Usize field_bit = get_bit__CIDeclStructField(field);
+
+    if (field_bit != 0) {
+        write_String__CIGenerator(self, format__String(" : {zu}", field_bit));
     }
 
     write_str__CIGenerator(self, ";\n");
+
+    FREE(CIDataType, field_dt);
 }
 
 void
-generate_struct_fields__CIGenerator(CIGenerator *self, const Vec *fields)
+generate_struct_fields__CIGenerator(CIGenerator *self,
+                                    const CIDeclStructFields *fields)
 {
     inc_tab_count__CIGenerator(self);
 
-    for (Usize i = 0; i < fields->len; ++i) {
+    CIDeclStructField *current_field = fields->first;
+
+    while (current_field) {
         write_tab__CIGenerator(self);
-        generate_struct_field__CIGenerator(self, get__Vec(fields, i));
+        generate_struct_field__CIGenerator(self, current_field);
+
+        current_field =
+          get_next_field_with_no_parent__CIDeclStructField(current_field);
     }
 
     dec_tab_count__CIGenerator(self);
 }
 
 void
-generate_struct__CIGenerator(CIGenerator *self, String *name, Vec *fields)
+generate_struct__CIGenerator(CIGenerator *self,
+                             String *name,
+                             CIDeclStructFields *fields)
 {
     write_String__CIGenerator(self,
                               format__String("struct{s}{s}",
@@ -2314,7 +2318,9 @@ generate_union_prototype__CIGenerator(CIGenerator *self,
 }
 
 void
-generate_union__CIGenerator(CIGenerator *self, String *name, Vec *fields)
+generate_union__CIGenerator(CIGenerator *self,
+                            String *name,
+                            CIDeclStructFields *fields)
 {
     write_String__CIGenerator(
       self,

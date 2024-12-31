@@ -33,6 +33,7 @@
 #include <core/cc/ci/project_config.h>
 #include <core/cc/ci/result.h>
 #include <core/cc/ci/scanner.h>
+#include <core/cc/ci/state_checker.h>
 #include <core/cc/ci/typecheck.h>
 #include <core/cc/ci/visitor.h>
 
@@ -53,11 +54,13 @@ run__CI(const CIConfig *config)
     CIResult result = NEW(CIResult, &project_config, &builtin);
     CIVisitor visitor = NEW(CIVisitor, &result);
     CITypecheck typecheck = NEW(CITypecheck, &result);
+    CIStateChecker state_checker = NEW(CIStateChecker, &result);
 
     set__CIBuiltin(&builtin);
     build__CIResult(&result);
     run__CIVisitor(&visitor);
     run__CITypecheck(&typecheck);
+    run__CIStateChecker(&state_checker);
     run__CIGenerator(&result);
 
     FREE(CIResult, &result);

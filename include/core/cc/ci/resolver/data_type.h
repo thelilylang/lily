@@ -38,6 +38,7 @@ bool
 is_array_data_type__CIResolverDataType(
   const CIResultFile *file,
   CIDataType *data_type,
+  bool allow_implicit_cast,
   const CIGenericParams *called_generic_params,
   const CIGenericParams *decl_generic_params);
 
@@ -58,13 +59,27 @@ is_integer_data_type__CIResolverDataType(
 /**
  *
  * @brief Check if the data type is float compatible.
- * param called_generic_params const CIGenericParams*? (&)
+ * @param called_generic_params const CIGenericParams*? (&)
  * @param decl_generic_params const CIGenericParams*? (&)
  */
 bool
 is_float_data_type__CIResolverDataType(
   const CIResultFile *file,
   CIDataType *data_type,
+  const CIGenericParams *called_generic_params,
+  const CIGenericParams *decl_generic_params);
+
+/**
+ *
+ * @brief Check if the data type is numeric compatible.
+ * @param called_generic_params const CIGenericParams*? (&)
+ * @param decl_generic_params const CIGenericParams*? (&)
+ */
+bool
+is_numeric_data_type__CIResolverDataType(
+  const CIResultFile *file,
+  CIDataType *data_type,
+  bool allow_implicit_cast,
   const CIGenericParams *called_generic_params,
   const CIGenericParams *decl_generic_params);
 
@@ -137,6 +152,16 @@ is_compatible_with_void_ptr_data_type__CIResolverDataType(
 
 /**
  *
+ * @brief Get integer rank.
+ */
+Uint8
+get_integer_rank__CIResolverDataType(const CIResultFile *file,
+                                     CIDataType *data_type,
+                                     CIGenericParams *called_generic_params,
+                                     CIGenericParams *decl_generic_params);
+
+/**
+ *
  * @brief Get wrapped data type in implicit pointer.
  * @param called_generic_params const CIGenericParams*? (&)
  * @param decl_generic_params const CIGenericParams*? (&)
@@ -154,9 +179,9 @@ unwrap_implicit_ptr_data_type__CIResolverDataType(
  * @brief Get fields from struct or union data type.
  * @param called_generic_params const CIGenericParams*? (&)
  * @param decl_generic_params const CIGenericParams*? (&)
- * @return const Vec<CIDeclStructField*>*? (&)
+ * @return const CIDeclStructFields*? (&)
  */
-const Vec *
+const CIDeclStructFields *
 get_fields_from_data_type__CIResolverDataType(
   const CIResultFile *file,
   const CIDataType *data_type,
