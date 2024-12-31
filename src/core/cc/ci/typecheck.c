@@ -475,6 +475,7 @@ is_valid_implicit_cast__CITypecheck(const CITypecheck *self,
             UNREACHABLE(
               "impossible to get typedef at this point (already resolved)");
         case CI_DATA_TYPE_KIND_ARRAY:
+        case CI_DATA_TYPE_KIND_NULLPTR_T:
         case CI_DATA_TYPE_KIND_PTR:
             // In this case, we check whether the pointers being compared are
             // compatible. For example, we check whether a `void*` is compatible

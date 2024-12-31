@@ -640,6 +640,8 @@ static const enum CIAttributeStandardKind
       CI_ATTRIBUTE_STANDARD_KIND_REPRODUCIBLE
   };
 
+#define BUILTIN_NULLPTR_T_S "nullptr_t"
+
 CONSTRUCTOR(CIParser, CIParser, CIResultFile *file)
 {
     if (!names_error) {
@@ -926,7 +928,11 @@ token_is_data_type__CIParser(CIParser *self, const CIToken *token)
         case CI_TOKEN_KIND_IDENTIFIER:
             return is__CIBuiltinType(GET_PTR_RC(String, token->identifier)) ||
                    search_typedef__CIResultFile(
-                     self->file, GET_PTR_RC(String, token->identifier));
+                     self->file, GET_PTR_RC(String, token->identifier)) ||
+                   /* We recognize the `nullptr_t` type as a possible builtin
+                      type. */
+                   !strcmp(GET_PTR_RC(String, token->identifier)->buffer,
+                           BUILTIN_NULLPTR_T_S);
         case CI_TOKEN_KIND_AT: // TODO: check if the next token is an identifier
                                // (not needed for the moment)
         case CI_TOKEN_KIND_KEYWORD_BOOL:
@@ -1858,6 +1864,14 @@ parse_pre_data_type__CIParser(CIParser *self)
                          self->file,
                          GET_PTR_RC(String,
                                     self->previous_token->identifier))) {
+                if (!strcmp(GET_PTR_RC(String, self->previous_token->identifier)
+                              ->buffer,
+                            BUILTIN_NULLPTR_T_S)) {
+                    res = NEW(CIDataType, CI_DATA_TYPE_KIND_NULLPTR_T);
+
+                    break;
+                }
+
                 FAILED("expected type");
             }
 
@@ -2063,6 +2077,8 @@ parse_pre_data_type__CIParser(CIParser *self)
                       current_scope ? current_scope->scope_id : NULL,
                       NULL,
                       NULL);
+
+                    break;
                 case CI_TOKEN_KIND_KEYWORD_TYPEOF_UNQUAL:
                     res = perform_typeof_unqual__CIInfer(
                       self->file,
@@ -2070,6 +2086,8 @@ parse_pre_data_type__CIParser(CIParser *self)
                       current_scope ? current_scope->scope_id : NULL,
                       NULL,
                       NULL);
+
+                    break;
                 default:
                     UNREACHABLE("unknown variant");
             }

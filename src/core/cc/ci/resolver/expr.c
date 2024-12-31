@@ -764,6 +764,10 @@ resolve_data_type_alignment__CIResolverExpr(const CIResolverExpr *self,
             return alignof(long int);
         case CI_DATA_TYPE_KIND_LONG_LONG_INT:
             return alignof(long long int);
+            // From: ISO/IEC 9899:2024 (en) - N3220 working draft
+            // The size and alignment of nullptr_t is the same as for a pointer
+            // to character type
+        case CI_DATA_TYPE_KIND_NULLPTR_T:
         case CI_DATA_TYPE_KIND_PTR:
             return alignof(void *);
         case CI_DATA_TYPE_KIND_SHORT_INT:
@@ -1863,6 +1867,10 @@ resolve_data_type_size__CIResolverExpr(const CIResolverExpr *self,
             return sizeof(long int);
         case CI_DATA_TYPE_KIND_LONG_LONG_INT:
             return sizeof(long long int);
+            // From: ISO/IEC 9899:2024 (en) - N3220 working draft
+            // The size and alignment of nullptr_t is the same as for a pointer
+            // to character type
+        case CI_DATA_TYPE_KIND_NULLPTR_T:
         case CI_DATA_TYPE_KIND_PTR:
             return sizeof(void *);
         case CI_DATA_TYPE_KIND_SHORT_INT:

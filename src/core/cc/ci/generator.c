@@ -1047,6 +1047,19 @@ generate_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type)
             write_str__CIGenerator(self, "long long int");
 
             break;
+        case CI_DATA_TYPE_KIND_NULLPTR_T:
+            // Clang (18.1.8) does not support the builtin use of `nullptr_t`,
+            // it supports it only if defined as `typeof(nullptr)`.
+            if (self->file->config->compiler.kind ==
+                CI_PROJECT_CONFIG_COMPILER_KIND_CLANG) {
+                write_str__CIGenerator(self, "typeof(nullptr)");
+
+                break;
+            }
+
+            write_str__CIGenerator(self, "nullptr_t");
+
+            break;
         case CI_DATA_TYPE_KIND_PTR:
             if (subs_data_type->ptr) {
                 generate_data_type__CIGenerator(self, subs_data_type->ptr);

@@ -674,7 +674,7 @@ infer_expr_data_type__CIInfer(const CIResultFile *file,
         case CI_EXPR_KIND_LITERAL:
             return infer_expr_literal_data_type__CIInfer(file, &expr->literal);
         case CI_EXPR_KIND_NULLPTR:
-            TODO("nullptr");
+            return NEW(CIDataType, CI_DATA_TYPE_KIND_NULLPTR_T);
         case CI_EXPR_KIND_TERNARY:
             return infer_expr_data_type__CIInfer(file,
                                                  expr->ternary.if_,

@@ -1783,6 +1783,8 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeKind, enum CIDataTypeKind self)
             return "CI_DATA_TYPE_KIND_LONG_INT";
         case CI_DATA_TYPE_KIND_LONG_LONG_INT:
             return "CI_DATA_TYPE_KIND_LONG_LONG_INT";
+        case CI_DATA_TYPE_KIND_NULLPTR_T:
+            return "CI_DATA_TYPE_KIND_NULLPTR_T";
         case CI_DATA_TYPE_KIND_PTR:
             return "CI_DATA_TYPE_KIND_PTR";
         case CI_DATA_TYPE_KIND_SHORT_INT:
@@ -2477,6 +2479,7 @@ serialize__CIDataType(const CIDataType *self, String *buffer)
         case CI_DATA_TYPE_KIND_LONG_DOUBLE__IMAGINARY:
         case CI_DATA_TYPE_KIND_LONG_INT:
         case CI_DATA_TYPE_KIND_LONG_LONG_INT:
+        case CI_DATA_TYPE_KIND_NULLPTR_T:
         case CI_DATA_TYPE_KIND_SHORT_INT:
         case CI_DATA_TYPE_KIND_SIGNED_CHAR:
         case CI_DATA_TYPE_KIND_UNSIGNED_INT:
@@ -2628,6 +2631,7 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
         case CI_DATA_TYPE_KIND_LONG_DOUBLE__IMAGINARY:
         case CI_DATA_TYPE_KIND_LONG_INT:
         case CI_DATA_TYPE_KIND_LONG_LONG_INT:
+        case CI_DATA_TYPE_KIND_NULLPTR_T:
         case CI_DATA_TYPE_KIND_SHORT_INT:
         case CI_DATA_TYPE_KIND_SIGNED_CHAR:
         case CI_DATA_TYPE_KIND_TYPE_INFO:
