@@ -409,6 +409,14 @@ add_field_to_fields__CIParser(CIParser *self,
                               CIDataType *data_type,
                               Uint8 bit);
 
+static void
+add_many_fields__CIParser(CIParser *self,
+                          CIDeclStructFields *fields,
+                          CIDeclStructField **current_field_ref,
+                          CIDeclStructField **prev_field_ref,
+                          CIDeclStructField *cloned_parent,
+                          CIDeclStructField *parent);
+
 /// @brief Parse fields.
 static CIDeclStructFields *
 parse_fields__CIParser(CIParser *self);
@@ -3966,53 +3974,14 @@ add_struct_or_union_to_fields__CIParser(CIParser *self,
 
     *prev_field_ref = current_field;
 
-    for (CIDeclStructField *
-           current_field_dt = data_type_fields->first,
-          *current_parent = data_type_fields->first->parent,
-          *current_parent_master = data_type_fields->first->parent,
-          *current_cloned_parent = current_field;
-         current_field_dt;
-         current_field_dt = current_field_dt->next) {
-        // Downgrade parent if needed
-        while (current_parent && current_parent != current_field_dt->parent &&
-               current_field_dt->parent != current_parent_master) {
-            current_parent = current_parent->parent;
-            current_cloned_parent = current_cloned_parent->parent;
-        }
+    CIDeclStructField *current_field_dt = data_type_fields->first;
 
-        switch (current_field_dt->kind) {
-            case CI_DECL_STRUCT_FIELD_KIND_MEMBER: {
-                Rc *name_field_dt = current_field_dt->name;
-                Uint8 bit_field_dt =
-                  get_bit__CIDeclStructField(current_field_dt);
-
-                add_member_to_fields__CIParser(
-                  self,
-                  fields,
-                  prev_field_ref,
-                  current_cloned_parent,
-                  name_field_dt,
-                  ref__CIDataType(current_field_dt->member.data_type),
-                  bit_field_dt);
-
-                break;
-            }
-            default: {
-                CIDeclStructField *cloned_current_field_dt =
-                  clone__CIDeclStructField(current_field_dt);
-
-                cloned_current_field_dt->prev = *prev_field_ref;
-                cloned_current_field_dt->parent = current_cloned_parent;
-
-                add__CIDeclStructFields(
-                  fields, cloned_current_field_dt, *prev_field_ref);
-
-                *prev_field_ref = cloned_current_field_dt;
-                current_parent = current_field_dt;
-                current_cloned_parent = cloned_current_field_dt;
-            }
-        }
-    }
+    add_many_fields__CIParser(self,
+                              fields,
+                              &current_field_dt,
+                              prev_field_ref,
+                              current_field,
+                              current_field_dt->parent);
 
     FREE(CIDataType, data_type);
 }
@@ -4036,6 +4005,59 @@ add_field_to_fields__CIParser(CIParser *self,
         default:
             add_member_to_fields__CIParser(
               self, fields, prev_field_ref, parent, name, data_type, bit);
+    }
+}
+
+void
+add_many_fields__CIParser(CIParser *self,
+                          CIDeclStructFields *fields,
+                          CIDeclStructField **current_field_ref,
+                          CIDeclStructField **prev_field_ref,
+                          CIDeclStructField *cloned_parent,
+                          CIDeclStructField *parent)
+{
+    while (*current_field_ref && (*current_field_ref)->parent == parent) {
+        switch ((*current_field_ref)->kind) {
+            case CI_DECL_STRUCT_FIELD_KIND_MEMBER: {
+                Rc *name_field_dt = (*current_field_ref)->name;
+                Uint8 bit_field_dt =
+                  get_bit__CIDeclStructField(*current_field_ref);
+
+                add_member_to_fields__CIParser(
+                  self,
+                  fields,
+                  prev_field_ref,
+                  cloned_parent,
+                  name_field_dt,
+                  ref__CIDataType((*current_field_ref)->member.data_type),
+                  bit_field_dt);
+
+                *current_field_ref = (*current_field_ref)->next;
+
+                break;
+            }
+            default: {
+                CIDeclStructField *cloned_current_field =
+                  clone__CIDeclStructField(*current_field_ref);
+                CIDeclStructField *new_parent = *current_field_ref;
+
+                cloned_current_field->prev = *prev_field_ref;
+                cloned_current_field->parent = cloned_parent;
+
+                add__CIDeclStructFields(
+                  fields, cloned_current_field, *prev_field_ref);
+
+                *prev_field_ref = cloned_current_field;
+                *current_field_ref = (*current_field_ref)->next;
+
+                add_many_fields__CIParser(self,
+                                          fields,
+                                          current_field_ref,
+                                          prev_field_ref,
+                                          cloned_current_field,
+                                          new_parent);
+            }
+        }
     }
 }
 
@@ -4082,17 +4104,6 @@ parse_fields__CIParser(CIParser *self)
     }
 
     expect__CIParser(self, CI_TOKEN_KIND_RBRACE, true);
-
-    CIDeclStructField *current_field = fields->first;
-
-    while (current_field) {
-        printf("%p:%s:%p\n",
-               current_field,
-               to_string__Debug__CIDeclStructField(current_field)->buffer,
-               current_field->parent);
-
-        current_field = current_field->next;
-    }
 
     return fields;
 }

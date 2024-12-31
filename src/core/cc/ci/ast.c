@@ -51,6 +51,46 @@
 #define EXPR_PRECEDENCE_LEVEL_13 40
 #define EXPR_PRECEDENCE_LEVEL_14 35
 
+static CIDeclStructField *
+clone_and_add_field__CIDeclStructFields(CIDeclStructFields *cloned_self,
+                                        CIDeclStructField *field,
+                                        CIDeclStructField **prev_cloned_field,
+                                        CIDeclStructField *parent_cloned_field);
+
+static void
+clone_and_add_parent__CIDeclStructFields(
+  CIDeclStructFields *cloned_self,
+  CIDeclStructField **current_field,
+  CIDeclStructField **prev_cloned_field,
+  CIDeclStructField *parent_cloned_field);
+
+static void
+clone_and_add_fields_parent__CIDeclStructFields(
+  CIDeclStructFields *cloned_self,
+  CIDeclStructField **current_field,
+  CIDeclStructField **prev_cloned_field,
+  CIDeclStructField *parent_cloned_field,
+  CIDeclStructField *parent);
+
+static void
+build_member_field__CIDeclStructField(CIDeclStructField **self,
+                                      CIDeclStructFields *fields,
+                                      CIDeclStructField **prev_cloned_field,
+                                      CIDeclStructField *parent_cloned_field);
+
+static void
+build_parent_field__CIDeclStructField(CIDeclStructField **self,
+                                      CIDeclStructFields *fields,
+                                      CIDeclStructField **prev_cloned_field,
+                                      CIDeclStructField *parent_cloned_field);
+
+static void
+build_fields__CIDeclStructField(CIDeclStructField **self,
+                                CIDeclStructFields **fields_ref,
+                                CIDeclStructField **prev_cloned_field,
+                                CIDeclStructField *parent_cloned_field,
+                                CIDeclStructField *parent);
+
 static CIDataType *
 build_struct_or_union_data_type__CIDeclStructField(
   const CIDeclStructField *self);
@@ -826,40 +866,84 @@ add_to_linked_list:
     return false;
 }
 
+CIDeclStructField *
+clone_and_add_field__CIDeclStructFields(CIDeclStructFields *cloned_self,
+                                        CIDeclStructField *field,
+                                        CIDeclStructField **prev_cloned_field,
+                                        CIDeclStructField *parent_cloned_field)
+{
+    CIDeclStructField *current_cloned_field = clone__CIDeclStructField(field);
+
+    current_cloned_field->prev = *prev_cloned_field;
+    current_cloned_field->parent = parent_cloned_field;
+
+    ASSERT(add__CIDeclStructFields(
+      cloned_self, current_cloned_field, *prev_cloned_field));
+
+    *prev_cloned_field = current_cloned_field;
+
+    return current_cloned_field;
+}
+
+void
+clone_and_add_parent__CIDeclStructFields(CIDeclStructFields *cloned_self,
+                                         CIDeclStructField **current_field,
+                                         CIDeclStructField **prev_cloned_field,
+                                         CIDeclStructField *parent_cloned_field)
+{
+    ASSERT((*current_field)->kind != CI_DECL_STRUCT_FIELD_KIND_MEMBER);
+
+    CIDeclStructField *parent = *current_field;
+    CIDeclStructField *current_cloned_field =
+      clone_and_add_field__CIDeclStructFields(
+        cloned_self, *current_field, prev_cloned_field, parent_cloned_field);
+
+    *current_field = (*current_field)->next;
+
+    clone_and_add_fields_parent__CIDeclStructFields(cloned_self,
+                                                    current_field,
+                                                    prev_cloned_field,
+                                                    current_cloned_field,
+                                                    parent);
+}
+
+void
+clone_and_add_fields_parent__CIDeclStructFields(
+  CIDeclStructFields *cloned_self,
+  CIDeclStructField **current_field,
+  CIDeclStructField **prev_cloned_field,
+  CIDeclStructField *parent_cloned_field,
+  CIDeclStructField *parent)
+{
+    while (*current_field && (*current_field)->parent == parent) {
+        switch ((*current_field)->kind) {
+            case CI_DECL_STRUCT_FIELD_KIND_MEMBER:
+                clone_and_add_field__CIDeclStructFields(cloned_self,
+                                                        *current_field,
+                                                        prev_cloned_field,
+                                                        parent_cloned_field);
+
+                *current_field = (*current_field)->next;
+
+                break;
+            default:
+                clone_and_add_parent__CIDeclStructFields(cloned_self,
+                                                         current_field,
+                                                         prev_cloned_field,
+                                                         parent_cloned_field);
+        }
+    }
+}
+
 CIDeclStructFields *
 clone__CIDeclStructFields(CIDeclStructFields *self)
 {
     CIDeclStructFields *cloned_self = NEW(CIDeclStructFields);
     CIDeclStructField *current = self->first;
-    CIDeclStructField *cloned_prev = NULL;
-    CIDeclStructField *cloned_parent = NULL;
+    CIDeclStructField *prev_cloned_field = NULL;
 
-    while (current) {
-        CIDeclStructField *cloned_current = clone__CIDeclStructField(current);
-
-        cloned_current->prev = cloned_prev;
-        cloned_current->parent = cloned_parent;
-
-        ASSERT(
-          add__CIDeclStructFields(cloned_self, cloned_current, cloned_prev));
-
-        switch (cloned_current->kind) {
-            case CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_STRUCT:
-            case CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_UNION:
-            case CI_DECL_STRUCT_FIELD_KIND_NAMED_STRUCT:
-            case CI_DECL_STRUCT_FIELD_KIND_NAMED_UNION:
-                cloned_parent = cloned_current;
-
-                break;
-            case CI_DECL_STRUCT_FIELD_KIND_MEMBER:
-                break;
-            default:
-                UNREACHABLE("unknown variant");
-        }
-
-        cloned_prev = cloned_current;
-        current = current->next;
-    }
+    clone_and_add_fields_parent__CIDeclStructFields(
+      cloned_self, &current, &prev_cloned_field, NULL, NULL);
 
     return cloned_self;
 }
@@ -1260,50 +1344,94 @@ eq__CIDeclStructField(const CIDeclStructField *self,
     }
 }
 
+void
+build_member_field__CIDeclStructField(CIDeclStructField **self,
+                                      CIDeclStructFields *fields,
+                                      CIDeclStructField **prev_cloned_field,
+                                      CIDeclStructField *parent_cloned_field)
+{
+    ASSERT((*self)->kind == CI_DECL_STRUCT_FIELD_KIND_MEMBER);
+
+    CIDeclStructField *cloned_field = clone__CIDeclStructField(*self);
+
+    cloned_field->prev = *prev_cloned_field;
+    cloned_field->parent = parent_cloned_field;
+
+    ASSERT(add__CIDeclStructFields(fields, cloned_field, *prev_cloned_field));
+
+    *prev_cloned_field = cloned_field;
+}
+
+void
+build_parent_field__CIDeclStructField(CIDeclStructField **self,
+                                      CIDeclStructFields *fields,
+                                      CIDeclStructField **prev_cloned_field,
+                                      CIDeclStructField *parent_cloned_field)
+{
+    ASSERT((*self)->kind != CI_DECL_STRUCT_FIELD_KIND_MEMBER);
+
+    CIDeclStructField *cloned_field = clone__CIDeclStructField(*self);
+
+    cloned_field->parent = parent_cloned_field;
+    cloned_field->prev = *prev_cloned_field;
+
+    ASSERT(add__CIDeclStructFields(fields, cloned_field, *prev_cloned_field));
+
+    *prev_cloned_field = cloned_field;
+
+    CIDeclStructField *parent = *self;
+
+    *self = (*self)->next;
+
+    build_fields__CIDeclStructField(
+      self, &fields, prev_cloned_field, cloned_field, parent);
+}
+
+void
+build_fields__CIDeclStructField(CIDeclStructField **self,
+                                CIDeclStructFields **fields_ref,
+                                CIDeclStructField **prev_cloned_field,
+                                CIDeclStructField *parent_cloned_field,
+                                CIDeclStructField *parent)
+{
+    if (!(*fields_ref)) {
+        *fields_ref = NEW(CIDeclStructFields);
+    }
+
+    CIDeclStructFields *fields = *fields_ref;
+
+    while (*self && (*self)->parent == parent) {
+        switch ((*self)->kind) {
+            case CI_DECL_STRUCT_FIELD_KIND_MEMBER:
+                build_member_field__CIDeclStructField(
+                  self, fields, prev_cloned_field, parent_cloned_field);
+
+                *self = (*self)->next;
+
+                break;
+            default:
+                build_parent_field__CIDeclStructField(
+                  self, fields, prev_cloned_field, parent_cloned_field);
+        }
+    }
+}
+
 CIDataType *
 build_struct_or_union_data_type__CIDeclStructField(
   const CIDeclStructField *self)
 {
     ASSERT(self->kind != CI_DECL_STRUCT_FIELD_KIND_MEMBER);
 
-    const CIDeclStructField *parent_master = self;
+    CIDeclStructField *parent = (CIDeclStructField *)self;
     CIDeclStructField *current_field = self->next;
     CIDeclStructField *prev_cloned_field = NULL;
-    CIDeclStructField *current_parent = NULL;
-    CIDeclStructField *current_cloned_parent = NULL;
-    CIDeclStructFields *fields = NEW(CIDeclStructFields);
+    CIDeclStructFields *fields = NULL;
 
-    while (current_field && has_parent_by_addr__CIDeclStructField(
-                              current_field, parent_master)) {
-        // Downgrade parent if needed
-        while (
-          current_parent && current_field->parent != current_parent &&
-          current_field->parent !=
-            parent_master /* Equivalent to: `&& current_cloned_parent` */) {
-            current_parent = current_parent->parent;
-            current_cloned_parent = current_cloned_parent->parent;
-        }
+    build_fields__CIDeclStructField(
+      &current_field, &fields, &prev_cloned_field, NULL, parent);
 
-        CIDeclStructField *cloned_field =
-          clone__CIDeclStructField(current_field);
-
-        cloned_field->parent = current_cloned_parent;
-        cloned_field->prev = prev_cloned_field;
-
-        ASSERT(
-          add__CIDeclStructFields(fields, cloned_field, prev_cloned_field));
-
-        if (cloned_field->kind != CI_DECL_STRUCT_FIELD_KIND_MEMBER) {
-            current_parent = current_field;
-            current_cloned_parent = cloned_field;
-        }
-
-        prev_cloned_field = cloned_field;
-        current_field = current_field->next;
-    }
-
-    return parent_master->kind == CI_DECL_STRUCT_FIELD_KIND_NAMED_STRUCT ||
-               parent_master->kind == CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_STRUCT
+    return parent->kind == CI_DECL_STRUCT_FIELD_KIND_NAMED_STRUCT ||
+               parent->kind == CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_STRUCT
              ? NEW_VARIANT(
                  CIDataType, struct, NEW(CIDataTypeStruct, NULL, NULL, fields))
              : NEW_VARIANT(
