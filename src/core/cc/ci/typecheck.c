@@ -989,18 +989,18 @@ typecheck_initializer_expr__CITypecheck(
             typecheck_initializer_expr_for_array_dt__CITypecheck(
               self,
               initializer,
-              expected_data_type->array.data_type,
+              resolved_expected_data_type->array.data_type,
               typecheck_ctx);
 
             break;
         case CI_DATA_TYPE_KIND_STRUCT:
             typecheck_initializer_expr_for_struct_dt__CITypecheck(
-              self, initializer, expected_data_type, typecheck_ctx);
+              self, initializer, resolved_expected_data_type, typecheck_ctx);
 
             break;
         case CI_DATA_TYPE_KIND_UNION:
             typecheck_initializer_expr_for_union_dt__CITypecheck(
-              self, initializer, expected_data_type, typecheck_ctx);
+              self, initializer, resolved_expected_data_type, typecheck_ctx);
 
             break;
         default:
