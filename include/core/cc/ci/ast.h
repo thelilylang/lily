@@ -1067,6 +1067,16 @@ get_next_member__CIDeclStructField(const CIDeclStructField *self);
 
 /**
  *
+ * @brief Skip all fields that are children of this field. If the given field
+ * (self) is of type member (CI_DECL_STRUCT_FIELD_KIND_MEMBER), we return the
+ * next field.
+ * @return CIDeclStructField*? (&)
+ */
+CIDeclStructField *
+skip_fields_with_given_parent__CIDeclStructField(CIDeclStructField *self);
+
+/**
+ *
  * @brief Convert CIDeclStructField in String.
  * @note This function is only used to debug.
  */

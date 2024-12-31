@@ -1517,6 +1517,18 @@ get_next_member__CIDeclStructField(const CIDeclStructField *self)
     return NULL;
 }
 
+CIDeclStructField *
+skip_fields_with_given_parent__CIDeclStructField(CIDeclStructField *self)
+{
+    CIDeclStructField *current = self->next;
+
+    while (current && has_parent_by_addr__CIDeclStructField(current, self)) {
+        current = current->next;
+    }
+
+    return current;
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclStructField, const CIDeclStructField *self)

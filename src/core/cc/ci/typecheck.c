@@ -933,7 +933,8 @@ typecheck_initializer_expr_for_struct_dt__CITypecheck(
         typecheck_struct_or_union_initializer_item__CITypecheck(
           self, initializer_item, fields, &current_field, typecheck_ctx);
 
-        current_field = current_field->next;
+        current_field =
+          skip_fields_with_given_parent__CIDeclStructField(current_field);
     }
 
     FREE(Vec, called_fields);
