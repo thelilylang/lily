@@ -1136,6 +1136,7 @@ visit_function_expr__CIVisitor(CIVisitor *self,
 
             break;
         case CI_EXPR_KIND_LITERAL:
+        case CI_EXPR_KIND_NULLPTR:
             break;
         case CI_EXPR_KIND_SIZEOF:
             visit_function_expr__CIVisitor(

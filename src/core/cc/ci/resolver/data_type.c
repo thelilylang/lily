@@ -94,6 +94,7 @@ is_array_data_type__CIResolverDataType(
         case CI_DATA_TYPE_KIND_ARRAY:
             return true;
         case CI_DATA_TYPE_KIND_PTR:
+        case CI_DATA_TYPE_KIND_NULLPTR_T:
             return allow_implicit_cast;
         case CI_DATA_TYPE_KIND_TYPEDEF: {
             CIDataType *resolved_dt = run__CIResolverDataType(
@@ -133,6 +134,7 @@ is_integer_data_type__CIResolverDataType(
             return res;
         }
         case CI_DATA_TYPE_KIND_ARRAY:
+        case CI_DATA_TYPE_KIND_NULLPTR_T:
         case CI_DATA_TYPE_KIND_PTR: // via implicit cast
             return allow_implicit_cast;
         case CI_DATA_TYPE_KIND_ENUM:
@@ -199,8 +201,9 @@ is_ptr_data_type__CIResolverDataType(
 
             return res;
         }
-        case CI_DATA_TYPE_KIND_PTR:
         case CI_DATA_TYPE_KIND_ARRAY:
+        case CI_DATA_TYPE_KIND_NULLPTR_T:
+        case CI_DATA_TYPE_KIND_PTR:
             return true;
         default:
             return false;
@@ -217,12 +220,14 @@ is_void_ptr_data_type__CIResolverDataType(
     CIDataType *current_dt = (CIDataType *)data_type;
 
     while (is_ptr_data_type__CIResolverDataType(
-      file, current_dt, called_generic_params, decl_generic_params)) {
+             file, current_dt, called_generic_params, decl_generic_params) &&
+           current_dt->kind != CI_DATA_TYPE_KIND_NULLPTR_T) {
         current_dt = unwrap_implicit_ptr_data_type__CIResolverDataType(
           file, current_dt, called_generic_params, decl_generic_params);
     }
 
-    return current_dt->kind == CI_DATA_TYPE_KIND_VOID;
+    return current_dt->kind == CI_DATA_TYPE_KIND_VOID ||
+           current_dt->kind == CI_DATA_TYPE_KIND_NULLPTR_T;
 }
 
 bool
@@ -263,7 +268,8 @@ count_compatible_pointer_depth__CIResolverDataType(
 
     while (current_dt &&
            is_ptr_data_type__CIResolverDataType(
-             file, current_dt, called_generic_params, decl_generic_params)) {
+             file, current_dt, called_generic_params, decl_generic_params) &&
+           current_dt->kind != CI_DATA_TYPE_KIND_NULLPTR_T) {
         ++depth_count;
         current_dt = unwrap_implicit_ptr_data_type__CIResolverDataType(
           file, current_dt, called_generic_params, decl_generic_params);
@@ -386,6 +392,8 @@ unwrap_implicit_ptr_data_type__CIResolverDataType(
             return data_type->ptr;
         case CI_DATA_TYPE_KIND_ARRAY:
             return data_type->array.data_type;
+        case CI_DATA_TYPE_KIND_NULLPTR_T:
+            return data_type;
         default:
             UNREACHABLE("this kind of data type is not expected, expected "
                         "pointer compatible data type");
