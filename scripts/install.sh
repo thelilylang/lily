@@ -5,7 +5,7 @@ set -e
 BASH_CONFIG="$HOME/.bashrc"
 ZSH_CONFIG="$HOME/.zshrc"
 FISH_CONFIG="$HOME/.config/fish/config.fish"
-LATEST_VERSION="0.7.0"
+LATEST_VERSION="0.8.0"
 LOCAL_BIN_DIR="./bin"
 LOCAL_BUILD_DIR="./build"
 CURRENT_SHELL=""

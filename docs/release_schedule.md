@@ -10,16 +10,17 @@
 | v0.5.0  | Continue to implement CI (4).                                    | 2024-09-21   |
 | v0.6.0  | Continue to implement CI (5).                                    | 2024-10-22   |
 | v0.7.0  | Continue to implement CI (6).                                    | 2024-11-21   |
-| v0.8.0  | Continue to implement CI (7).                                    | 2024-12-21   |
-| v0.9.0  | Add some basic features                                          | 2025-01-21   |
-| v0.10.0 | Implement OOP                                                    | 2025-02-21   |
-| v0.11.0 | Begin to write Std library + Core library                        | 2025-03-21   |
-| v0.12.0 | Implement @std.C.*                                               | 2025-04-21   |
-| v0.13.0 | Implement contract oriented programming                          | 2025-07-21   |
-| v0.14.0 | Continue to write Std library                                    | 2025-10-21   |
-| v0.15.0 | Continue to write Std library (Containers)                       | 2025-12-21   |
-| v0.16.0 | Implement C mode                                                 | 2026-03-21   |
-| v0.17.0 | Implement C++ mode                                               | 2026-06-21   |
-| v0.18.0 | ASM features                                                     | 2026-09-21   |
-| v0.19.0 | Thread + Future data type                                        | 2026-12-21   |
+| v0.8.0  | Continue to implement CI (7).                                    | 2024-12-31   |
+| v0.9.0  | Continue to implement CI (8).                                    | 2025-01-21   |
+| v0.10.0 | Add some basic features                                          | 2025-02-21   |
+| v0.11.0 | Implement OOP                                                    | 2025-03-21   |
+| v0.12.0 | Begin to write Std library + Core library                        | 2025-04-21   |
+| v0.13.0 | Implement @std.C.*                                               | 2025-05-21   |
+| v0.14.0 | Implement contract oriented programming                          | 2025-06-21   |
+| v0.15.0 | Continue to write Std library                                    | 2025-10-21   |
+| v0.16.0 | Continue to write Std library (Containers)                       | 2025-12-21   |
+| v0.17.0 | Implement C mode                                                 | 2026-03-21   |
+| v0.18.0 | Implement C++ mode                                               | 2026-06-21   |
+| v0.19.0 | ASM features                                                     | 2026-09-21   |
+| v0.20.0 | Thread + Future data type                                        | 2026-12-21   |
 | v1.0.0  | Self host and add some other features                            |--------------|

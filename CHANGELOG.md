@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.8.0 - 2024-12-31
+
+### Added
+
+- Parse multiple fields on same line [#683](https://github.com/thelilylang/lily/pull/683)
+- Add enum variants to enum data type [#684](https://github.com/thelilylang/lily/pull/684)
+- Enable `restrict` in string standard header [#691](https://github.com/thelilylang/lily/pull/691)
+- Add node example [#694](https://github.com/thelilylang/lily/pull/694)
+- Implement `nullptr_t` for C23 standard [#696](https://github.com/thelilylang/lily/pull/696)
+
+### Changed
+
+- Prepare to implement state checker [#689](https://github.com/thelilylang/lily/pull/689)
+- Make some improvements (typecheck, inferance, ...) [#695](https://github.com/thelilylang/lily/pull/695)
+
+### Fixed
+
+- Fix macro call with paren after [#681](https://github.com/thelilylang/lily/pull/681)
+- Allow initialization on cast expression [#685](https://github.com/thelilylang/lily/pull/685)
+- Allow array and function to cast data type [#686](https://github.com/thelilylang/lily/pull/686)
+- Disallow assignment to array data type [#686](https://github.com/thelilylang/lily/pull/687)
+- Fix visit of struct, union and typedef [#692](https://github.com/thelilylang/lily/pull/692)
+- Fix missing typedef data type resolution [#693](https://github.com/thelilylang/lily/pull/693)
+
+### Removed
+
+- Remove comment doc token after scan [#682](https://github.com/thelilylang/lily/pull/682)
+- Remove unused EOT contexts [#688](https://github.com/thelilylang/lily/pull/688)
+- Remove unused code in the parser [#690](https://github.com/thelilylang/lily/pull/690)
+
 ## 0.7.0 - 2024-11-21
 
 ### Added
