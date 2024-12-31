@@ -47,4 +47,8 @@ typedef __SIZE_TYPE__ size_t;
 typedef __WCHAR_TYPE__ wchar_t;
 #endif /* __WCHAR_TYPE__ */
 
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ > 201710L
+typedef typeof(nullptr) nullptr_t;
+#endif /* defined(__STDC_VERSION__) && __STDC_VERSION__ > 201710L */
+
 #endif /* _CC_STDDEF_H */
