@@ -570,17 +570,20 @@ get_fields_from_data_type__CIResolverDataType(
   const CIGenericParams *called_generic_params,
   const CIGenericParams *decl_generic_params)
 {
-    const CIDeclStructFields *dt_fields = get_fields__CIDataType(data_type);
-
-    if (dt_fields) {
-        return dt_fields;
-    }
-
     CIDataType *resolved_data_type =
       run__CIResolverDataType(file,
                               (CIDataType *)data_type,
                               called_generic_params,
                               decl_generic_params);
+    const CIDeclStructFields *dt_fields =
+      get_fields__CIDataType(resolved_data_type);
+
+    if (dt_fields) {
+        FREE(CIDataType, resolved_data_type);
+
+        return dt_fields;
+    }
+
     String *name = get_name__CIDataType(data_type);
     CIGenericParams *data_type_generic_params =
       (CIGenericParams *)get_generic_params__CIDataType(data_type);
