@@ -230,7 +230,8 @@ static String *
 scan_identifier_with_peek_char__CIScanner(const CIScanner *self);
 
 /// @brief Scan character constant literal.
-static char *
+/// @return Return -1 on error, otherwise returns a character as an integer.
+static int
 scan_character__CIScanner(CIScanner *self);
 
 /// @brief Scan string constant literal.
@@ -1961,7 +1962,7 @@ scan_identifier_with_peek_char__CIScanner(const CIScanner *self)
     return res;
 }
 
-char *
+int
 scan_character__CIScanner(CIScanner *self)
 {
     Location location_error = default__Location(self->base.source.file->name);
@@ -2006,18 +2007,18 @@ scan_character__CIScanner(CIScanner *self)
                 FREE(String, character);
             }
 
-            return NULL;
+            return -1;
         }
 
         if (character) {
-            char *res = (char *)(Uptr)character->buffer[0];
+            int res = (int)character->buffer[0];
 
             FREE(String, character);
 
             return res;
         }
 
-        return NULL;
+        return -1;
     }
 
     end__Location(&location_error,
@@ -2037,7 +2038,7 @@ scan_character__CIScanner(CIScanner *self)
         from__String("unexpected token here: `'`")),
       self->base.count_error);
 
-    return NULL;
+    return -1;
 }
 
 String *
@@ -4004,13 +4005,13 @@ get_token__CIScanner(CIScanner *self,
             return get_num__CIScanner(self);
 
         case '\'': {
-            char *res = scan_character__CIScanner(self);
+            int res = scan_character__CIScanner(self);
 
-            if (res) {
+            if (res != -1) {
                 return NEW_VARIANT(CIToken,
                                    literal_constant_character,
                                    clone__Location(&self->base.location),
-                                   (char)(Uptr)res);
+                                   (char)res);
             }
 
             return NULL;
