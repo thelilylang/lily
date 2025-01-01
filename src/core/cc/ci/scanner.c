@@ -2834,6 +2834,8 @@ scan_embed_preprocessor__CIScanner(CIScanner *self)
     CITokens content = NEW(CITokens);
     Location preprocessor_embed_location =
       clone__Location(&self->base.location);
+    CIScannerContext embed_ctx =
+      NEW(CIScannerContext, CI_SCANNER_CONTEXT_LOCATION_NONE, &content);
     String *preprocessor_embed_value = NULL;
 
     skip_space_and_backslash__CIScanner(self);
@@ -2842,20 +2844,27 @@ scan_embed_preprocessor__CIScanner(CIScanner *self)
         case '\"': {
             CIScannerContext ctx =
               NEW(CIScannerContext, CI_SCANNER_CONTEXT_LOCATION_NONE, NULL);
-            CIToken *string_token = get_token__CIScanner(self, &ctx, NULL);
+            CIToken *token_embed_value = get_token__CIScanner(self, &ctx, NULL);
 
-            switch (string_token->kind) {
-                case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
-                    preprocessor_embed_value = clone__String(GET_PTR_RC(
-                      String, string_token->literal_constant_string));
+            if (token_embed_value) {
+                switch (token_embed_value->kind) {
+                    case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
+                        preprocessor_embed_value = clone__String(GET_PTR_RC(
+                          String, token_embed_value->literal_constant_string));
 
-                    FREE(CIToken, string_token);
+                        next_char__CIScanner(self);
 
-                    break;
-                default:
-                    FREE(CIToken, string_token);
+                        FREE(CIToken, token_embed_value);
 
-                    FAILED("expected string token");
+                        break;
+                    default:
+                        FREE(CIToken, token_embed_value);
+
+                        goto expected_string_literal;
+                }
+            } else {
+            expected_string_literal:
+                FAILED("expected string token");
             }
 
             break;
@@ -2866,6 +2875,9 @@ scan_embed_preprocessor__CIScanner(CIScanner *self)
 
     // TODO: Scan parameters (limit, suffix, prefix, if_empty)
     // https://en.cppreference.com/w/c/preprocessor/embed
+
+    add_eot_token__CIScanner(
+      self, &embed_ctx, NEW(CITokenEot, CI_TOKEN_EOT_CONTEXT_OTHER));
 
     return NEW_VARIANT(
       CIToken,

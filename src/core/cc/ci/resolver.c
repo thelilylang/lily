@@ -23,6 +23,7 @@
  */
 
 #include <base/assert.h>
+#include <base/dir.h>
 #include <base/format.h>
 
 #include <core/cc/ci/include.h>
@@ -139,6 +140,12 @@ resolve_preprocessor_else__CIResolver(CIResolver *self, CITokens *content);
 static void
 resolve_preprocessor_conditional__CIResolver(CIResolver *self,
                                              CIToken *preprocessor_cond_token);
+
+static bool
+load_embed__CIResolver(CIResolver *self,
+                       CIToken *preprocessor_embed_token,
+                       const String *current_dir,
+                       const String *embed_path);
 
 static void
 resolve_preprocessor_embed__CIResolver(CIResolver *self,
@@ -952,11 +959,86 @@ resolve_preprocessor_conditional__CIResolver(CIResolver *self,
     }
 }
 
+bool
+load_embed__CIResolver(CIResolver *self,
+                       CIToken *preprocessor_embed_token,
+                       const String *current_dir,
+                       const String *embed_path)
+{
+    char *full_include_path = format("{S}/{S}", current_dir, embed_path);
+    bool load_res = false;
+
+    if (exists__File(full_include_path)) {
+        char *content = read_file__File(full_include_path); // char*
+        char *current = content;                            // char* (&)
+
+        while (*current) {
+            add_resolved_token__CIResolver(
+              self,
+              NEW_VARIANT(CIToken,
+                          literal_constant_int,
+                          clone__Location(&preprocessor_embed_token->location),
+                          NEW(CITokenLiteralConstantInt,
+                              CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_NONE,
+                              format__String("{zu}", *current))));
+
+            if (*(current + 1)) {
+                add_resolved_token__CIResolver(
+                  self,
+                  NEW(CIToken,
+                      CI_TOKEN_KIND_COMMA,
+                      clone__Location(&preprocessor_embed_token->location)));
+            }
+
+            ++current;
+        }
+
+        lily_free(content);
+
+        load_res = true;
+    }
+
+    lily_free(full_include_path);
+
+    return load_res;
+}
+
 void
 resolve_preprocessor_embed__CIResolver(CIResolver *self,
                                        CIToken *preprocessor_embed_token)
 {
-    TODO("preprocessor embed");
+    char *current_dir = get_cwd__Dir();
+
+    if (!current_dir) {
+        UNREACHABLE("cannot call get_cwd__Dir function");
+    }
+
+#define EMBED_DIRS_LEN 2
+    String *embed_dirs[EMBED_DIRS_LEN] = {
+        // Current directory of the file.
+        get_dir__File(preprocessor_embed_token->location.filename),
+        format__String("{sa}", current_dir)
+    };
+
+    for (Usize i = 0; i < EMBED_DIRS_LEN; ++i) {
+        const String *current_dir = embed_dirs[i];
+
+        if (load_embed__CIResolver(
+              self,
+              preprocessor_embed_token,
+              current_dir,
+              preprocessor_embed_token->preprocessor_embed.value)) {
+            goto exit;
+        }
+    }
+
+    FAILED("failed to open embed path");
+
+exit:
+    FREE(String, embed_dirs[0]);
+    FREE(String, embed_dirs[1]);
+
+#undef EMBED_DIRS_LEN
 }
 
 void
