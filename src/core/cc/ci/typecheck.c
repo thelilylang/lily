@@ -31,8 +31,6 @@
 
 struct CurrentSwitch
 {
-    bool is_integer;
-    bool is_float;
     bool is_present;
 };
 
@@ -365,9 +363,7 @@ CONSTRUCTOR(struct CITypecheckContext,
         .current_generic_params =
           NEW(CurrentGenericParams, called_generic_params, decl_generic_params),
         .current_scope_id = NULL,
-        .current_switch = { .is_integer = false,
-                            .is_float = false,
-                            .is_present = false }
+        .current_switch = { .is_present = false }
     };
 }
 
@@ -1439,34 +1435,18 @@ typecheck_case_stmt__CITypecheck(const CITypecheck *self,
           typecheck_ctx->current_generic_params.called,
           typecheck_ctx->current_generic_params.decl);
 
-        if (typecheck_ctx->current_switch.is_integer) {
-            if (!is_integer_data_type__CIResolverDataType(
-                  self->file,
-                  expr_data_type,
-                  false,
-                  typecheck_ctx->current_generic_params.called,
-                  typecheck_ctx->current_generic_params.decl)) {
-                FAILED("expected integer compatible data type");
-            }
-
-            FREE(CIDataType, expr_data_type);
-
-            return;
-        } else if (typecheck_ctx->current_switch.is_float) {
-            if (!is_float_data_type__CIResolverDataType(
-                  self->file,
-                  expr_data_type,
-                  typecheck_ctx->current_generic_params.called,
-                  typecheck_ctx->current_generic_params.decl)) {
-                FAILED("expected float compatible data type");
-            }
-
-            FREE(CIDataType, expr_data_type);
-
-            return;
+        if (!is_integer_data_type__CIResolverDataType(
+              self->file,
+              expr_data_type,
+              false,
+              typecheck_ctx->current_generic_params.called,
+              typecheck_ctx->current_generic_params.decl)) {
+            FAILED("expected integer compatible data type");
         }
 
-        UNREACHABLE("is_integer or is_float must be true");
+        FREE(CIDataType, expr_data_type);
+
+        return;
     }
 
     // NOTE: We don't do anything because we're outside the switch
@@ -1624,21 +1604,13 @@ typecheck_switch_stmt__CITypecheck(const CITypecheck *self,
 
     typecheck_ctx->current_switch.is_present = true;
 
-    if (is_integer_data_type__CIResolverDataType(
+    if (!is_integer_data_type__CIResolverDataType(
           self->file,
           expr_data_type,
           false,
           typecheck_ctx->current_generic_params.called,
           typecheck_ctx->current_generic_params.decl)) {
-        typecheck_ctx->current_switch.is_integer = true;
-    } else if (is_float_data_type__CIResolverDataType(
-                 self->file,
-                 expr_data_type,
-                 typecheck_ctx->current_generic_params.called,
-                 typecheck_ctx->current_generic_params.decl)) {
-        typecheck_ctx->current_switch.is_float = true;
-    } else {
-        FAILED("expected integer compatible or float compatible data type");
+        FAILED("expected integer compatible data type");
     }
 
     typecheck_body__CITypecheck(self, switch_->body, typecheck_ctx);
