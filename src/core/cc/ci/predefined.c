@@ -90,6 +90,9 @@ generate__CIPreDefined(const CIProjectConfig *config)
             push_str__String(builtin_h, "#define _XOPEN_SOURCE 500\n");
     }
 
+    // NOTE: Add a custom predefined macro to recognize CI.
+    push_str__String(builtin_h, "#define __CI__\n");
+
     // NOTE: For the moment, we're adding these '#undef', to avoid errors caused
     // by the extensions that are specific to these compilers, because we don't
     // support them all yet.
