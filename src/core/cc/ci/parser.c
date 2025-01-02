@@ -122,7 +122,39 @@ token_is_data_type_qualifier__CIParser(CIParser *self, const CIToken *token);
 static inline bool
 is_data_type_qualifier__CIParser(CIParser *self);
 
-/// @return CIDeclStructFields*?
+/// @param parent_subs_field CIDeclStructField*? (&)
+static void
+substitute_field_member__CIParser(CIDeclStructFields *subs_fields,
+                                  CIDeclStructField *field,
+                                  CIDeclStructField *parent_subs_field,
+                                  CIDeclStructField **prev_subs_field,
+                                  CIGenericParams *generic_params,
+                                  CIGenericParams *called_generic_params);
+
+/// @param parent_subs_field CIDeclStructField*? (&)
+static void
+substitute_field_parent__CIParser(CIDeclStructFields *subs_fields,
+                                  CIDeclStructField **field,
+                                  CIDeclStructField *parent_subs_field,
+                                  CIDeclStructField **prev_subs_field,
+                                  CIGenericParams *generic_params,
+                                  CIGenericParams *called_generic_params);
+
+/// @param parent CIDeclStructField*? (&)
+/// @param parent_subs_field CIDeclStructField*? (&)
+static void
+substitute_struct_or_union_fields_base__CIParser(
+  CIDeclStructField **field,
+  CIDeclStructField *parent,
+  CIDeclStructField *parent_subs_field,
+  CIDeclStructField **prev_subs_field,
+  CIDeclStructFields **subs_fields,
+  CIGenericParams *generic_params,
+  CIGenericParams *called_generic_params);
+
+/// @param fields CIDeclStructFields* (&)
+/// @param generic_params CIGenericParams*? (&)
+/// @param called_generic_params CIGenericParams*? (&)
 static CIDeclStructFields *
 substitute_struct_or_union_fields__CIParser(
   CIDeclStructFields *fields,
@@ -219,9 +251,12 @@ static CIDataType *
 parse_pre_data_type__CIParser(CIParser *self);
 
 /// @brief Parse enum variants.
+/// @param enum_name Rc<String*>* (&)
 /// @return Vec<CIDeclEnumVariant*>*
 static Vec *
-parse_enum_variants__CIParser(CIParser *self);
+parse_enum_variants__CIParser(CIParser *self,
+                              Rc *enum_name,
+                              CIDataType *enum_data_type);
 
 /// @brief Parse enum declaration.
 /// @param name Rc<String*>* (&)
@@ -1079,53 +1114,115 @@ substitute_generic_params__CIParser(
     return NULL;
 }
 
+void
+substitute_field_member__CIParser(CIDeclStructFields *subs_fields,
+                                  CIDeclStructField *field,
+                                  CIDeclStructField *parent_subs_field,
+                                  CIDeclStructField **prev_subs_field,
+                                  CIGenericParams *generic_params,
+                                  CIGenericParams *called_generic_params)
+{
+    CIDataType *subs_field_dt = substitute_data_type__CIParser(
+      field->member.data_type, generic_params, called_generic_params);
+
+    CIDeclStructField *subs_field = NEW_VARIANT(
+      CIDeclStructField,
+      member,
+      field->name,
+      parent_subs_field,
+      *prev_subs_field,
+      NEW(CIDeclStructFieldMember, subs_field_dt, field->member.bit));
+
+    ASSERT(add__CIDeclStructFields(subs_fields, subs_field, *prev_subs_field));
+
+    *prev_subs_field = subs_field;
+}
+
+void
+substitute_field_parent__CIParser(CIDeclStructFields *subs_fields,
+                                  CIDeclStructField **field,
+                                  CIDeclStructField *parent_subs_field,
+                                  CIDeclStructField **prev_subs_field,
+                                  CIGenericParams *generic_params,
+                                  CIGenericParams *called_generic_params)
+{
+    CIDeclStructField *subs_field = clone__CIDeclStructField(*field);
+
+    subs_field->prev = *prev_subs_field;
+    subs_field->parent = parent_subs_field;
+
+    ASSERT(add__CIDeclStructFields(subs_fields, subs_field, *prev_subs_field));
+
+    *prev_subs_field = subs_field;
+
+    CIDeclStructField *parent = *field;
+
+    *field = (*field)->next;
+
+    substitute_struct_or_union_fields_base__CIParser(field,
+                                                     parent,
+                                                     subs_field,
+                                                     prev_subs_field,
+                                                     &subs_fields,
+                                                     generic_params,
+                                                     called_generic_params);
+}
+
+void
+substitute_struct_or_union_fields_base__CIParser(
+  CIDeclStructField **field,
+  CIDeclStructField *parent,
+  CIDeclStructField *parent_subs_field,
+  CIDeclStructField **prev_subs_field,
+  CIDeclStructFields **subs_fields,
+  CIGenericParams *generic_params,
+  CIGenericParams *called_generic_params)
+{
+    if (!(*subs_fields)) {
+        *subs_fields = NEW(CIDeclStructFields);
+    }
+
+    while (*field && (*field)->parent == parent) {
+        switch ((*field)->kind) {
+            case CI_DECL_STRUCT_FIELD_KIND_MEMBER:
+                substitute_field_member__CIParser(*subs_fields,
+                                                  *field,
+                                                  parent_subs_field,
+                                                  prev_subs_field,
+                                                  generic_params,
+                                                  called_generic_params);
+
+                *field = (*field)->next;
+
+                break;
+            default:
+                substitute_field_parent__CIParser(*subs_fields,
+                                                  field,
+                                                  parent_subs_field,
+                                                  prev_subs_field,
+                                                  generic_params,
+                                                  called_generic_params);
+        }
+    }
+}
+
 CIDeclStructFields *
 substitute_struct_or_union_fields__CIParser(
   CIDeclStructFields *fields,
   CIGenericParams *generic_params,
   CIGenericParams *called_generic_params)
 {
+    CIDeclStructField *current_field = fields->first;
+    CIDeclStructField *prev_subs_field = NULL;
     CIDeclStructFields *subs_fields = NULL;
 
-    if (fields) {
-        CIDeclStructField *prev_subs_field = NULL;
-        CIDeclStructField *parent_subs_field = NULL;
-
-        subs_fields = NEW(CIDeclStructFields);
-
-        for (CIDeclStructField *current_field = fields->first; current_field;
-             prev_subs_field = current_field,
-                               current_field = current_field->next) {
-            CIDeclStructField *subs_field = NULL;
-
-            switch (current_field->kind) {
-                case CI_DECL_STRUCT_FIELD_KIND_MEMBER: {
-                    CIDataType *subs_field_dt = substitute_data_type__CIParser(
-                      current_field->member.data_type,
-                      generic_params,
-                      called_generic_params);
-
-                    subs_field = NEW_VARIANT(CIDeclStructField,
-                                             member,
-                                             current_field->name,
-                                             parent_subs_field,
-                                             prev_subs_field,
-                                             NEW(CIDeclStructFieldMember,
-                                                 subs_field_dt,
-                                                 current_field->member.bit));
-
-                    break;
-                }
-                default:
-                    subs_field = clone__CIDeclStructField(current_field);
-                    subs_field->parent = parent_subs_field;
-                    parent_subs_field = subs_field;
-            }
-
-            ASSERT(add__CIDeclStructFields(
-              subs_fields, subs_field, prev_subs_field));
-        }
-    }
+    substitute_struct_or_union_fields_base__CIParser(&current_field,
+                                                     NULL,
+                                                     NULL,
+                                                     &prev_subs_field,
+                                                     &subs_fields,
+                                                     generic_params,
+                                                     called_generic_params);
 
     return subs_fields;
 }
@@ -1261,11 +1358,14 @@ substitute_data_type__CIParser(CIDataType *data_type,
         case CI_DATA_TYPE_KIND_STRUCT: {
 #define SUBSTITUTE_STRUCT_OR_UNION(decl_name, decl_ty, variant)               \
     if (data_type->decl_name.generic_params || data_type->decl_name.fields) { \
-        CIDeclStructFields *subs_fields =                                     \
-          substitute_struct_or_union_fields__CIParser(                        \
-            data_type->decl_name.fields,                                      \
-            generic_params,                                                   \
-            called_generic_params);                                           \
+        CIDeclStructFields *subs_fields = NULL;                               \
+                                                                              \
+        if (data_type->decl_name.fields) {                                    \
+            subs_fields = substitute_struct_or_union_fields__CIParser(        \
+              data_type->decl_name.fields,                                    \
+              generic_params,                                                 \
+              called_generic_params);                                         \
+        }                                                                     \
                                                                               \
         res = NEW_VARIANT(CIDataType,                                         \
                           variant,                                            \
@@ -2146,7 +2246,9 @@ parse_data_type__CIParser(CIParser *self)
 }
 
 Vec *
-parse_enum_variants__CIParser(CIParser *self)
+parse_enum_variants__CIParser(CIParser *self,
+                              Rc *enum_name,
+                              CIDataType *enum_data_type)
 {
     Vec *variants = NEW(Vec); // Vec<CIDeclEnumVariant*>*
     Isize precedent_value = -1;
@@ -2187,7 +2289,11 @@ parse_enum_variants__CIParser(CIParser *self)
                 }
 
                 precedent_value = custom_value;
-                variant = NEW(CIDeclEnumVariant, name, custom_value);
+                variant = NEW(CIDeclEnumVariant,
+                              enum_name,
+                              enum_data_type,
+                              name,
+                              custom_value);
 
                 push__Vec(variants, variant);
 
@@ -2197,7 +2303,11 @@ parse_enum_variants__CIParser(CIParser *self)
                 break;
             }
             default:
-                variant = NEW(CIDeclEnumVariant, name, ++precedent_value);
+                variant = NEW(CIDeclEnumVariant,
+                              enum_name,
+                              enum_data_type,
+                              name,
+                              ++precedent_value);
 
                 push__Vec(variants, variant);
         }
@@ -2260,12 +2370,14 @@ parse_enum__CIParser(CIParser *self, int storage_class_flag, Rc *name)
             FAILED("expected `{` or `;`");
     }
 
-    return NEW_VARIANT(
-      CIDecl,
-      enum,
-      storage_class_flag,
-      false,
-      NEW(CIDeclEnum, name, parse_enum_variants__CIParser(self), data_type));
+    return NEW_VARIANT(CIDecl,
+                       enum,
+                       storage_class_flag,
+                       false,
+                       NEW(CIDeclEnum,
+                           name,
+                           parse_enum_variants__CIParser(self, name, data_type),
+                           data_type));
 }
 
 Vec *

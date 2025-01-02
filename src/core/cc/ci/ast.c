@@ -3233,10 +3233,18 @@ IMPL_FOR_DEBUG(to_string, CIDeclKind, enum CIDeclKind self)
 }
 #endif
 
-CONSTRUCTOR(CIDeclEnumVariant *, CIDeclEnumVariant, Rc *name, Isize value)
+CONSTRUCTOR(CIDeclEnumVariant *,
+            CIDeclEnumVariant,
+            Rc *enum_name,
+            CIDataType *enum_data_type,
+            Rc *name,
+            Isize value)
 {
     CIDeclEnumVariant *self = lily_malloc(sizeof(CIDeclEnumVariant));
 
+    self->enum_name = enum_name ? ref__Rc(enum_name) : NULL;
+    self->enum_data_type =
+      enum_data_type ? ref__CIDataType(enum_data_type) : NULL;
     self->name = ref__Rc(name);
     self->value = value;
     self->ref_count = 0;
@@ -3247,7 +3255,11 @@ CONSTRUCTOR(CIDeclEnumVariant *, CIDeclEnumVariant, Rc *name, Isize value)
 CIDeclEnumVariant *
 clone__CIDeclEnumVariant(CIDeclEnumVariant *self)
 {
-    return NEW(CIDeclEnumVariant, self->name, self->value);
+    return NEW(CIDeclEnumVariant,
+               self->enum_name,
+               self->enum_data_type,
+               self->name,
+               self->value);
 }
 
 Vec *
@@ -3273,7 +3285,16 @@ eq__CIDeclEnumVariant(const Vec *self_variants, const Vec *other_variants)
         CIDeclEnumVariant *self_variant = get__Vec(self_variants, i);
         CIDeclEnumVariant *other_variant = get__Vec(other_variants, i);
 
-        if (strcmp(GET_PTR_RC(String, self_variant->name)->buffer,
+        if (!((self_variant->enum_name && other_variant->enum_name &&
+               strcmp(GET_PTR_RC(String, self_variant->enum_name)->buffer,
+                      GET_PTR_RC(String, other_variant->name)->buffer)) ||
+              (!self_variant->enum_name && !other_variant->enum_name)) ||
+            !((self_variant->enum_data_type && other_variant->enum_data_type &&
+               !eq__CIDataType(self_variant->enum_data_type,
+                               other_variant->enum_data_type)) ||
+              (!self_variant->enum_data_type &&
+               !other_variant->enum_data_type)) ||
+            strcmp(GET_PTR_RC(String, self_variant->name)->buffer,
                    GET_PTR_RC(String, other_variant->name)->buffer) ||
             self_variant->value != other_variant->value) {
             return false;
@@ -3287,9 +3308,14 @@ eq__CIDeclEnumVariant(const Vec *self_variants, const Vec *other_variants)
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclEnumVariant, const CIDeclEnumVariant *self)
 {
-    return format__String("CIDeclEnumVariant{{ name = {S}, value = {zi} }",
-                          GET_PTR_RC(String, self->name),
-                          self->value);
+    return format__String(
+      "CIDeclEnumVariant{{ enum_name = {s}, enum_data_type = {Sr}, name = {S}, "
+      "value = {zi} }",
+      self->enum_name ? GET_PTR_RC(String, self->enum_name)->buffer : "NULL",
+      self->enum_data_type ? to_string__Debug__CIDataType(self->enum_data_type)
+                           : from__String("NULL"),
+      GET_PTR_RC(String, self->name),
+      self->value);
 }
 #endif
 
@@ -3298,6 +3324,14 @@ DESTRUCTOR(CIDeclEnumVariant, CIDeclEnumVariant *self)
     if (self->ref_count > 0) {
         --self->ref_count;
         return;
+    }
+
+    if (self->enum_name) {
+        FREE_RC(String, self->enum_name);
+    }
+
+    if (self->enum_data_type) {
+        FREE(CIDataType, self->enum_data_type);
     }
 
     FREE_RC(String, self->name);

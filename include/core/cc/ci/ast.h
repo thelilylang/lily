@@ -1939,7 +1939,9 @@ IMPL_FOR_DEBUG(to_string, CIDeclKind, enum CIDeclKind self);
 
 typedef struct CIDeclEnumVariant
 {
-    Rc *name; // Rc<String*>*
+    Rc *enum_name;              // Rc<String*>*?
+    CIDataType *enum_data_type; // CIDataType*?
+    Rc *name;                   // Rc<String*>*
     Isize value;
     Usize ref_count;
 } CIDeclEnumVariant;
@@ -1947,9 +1949,16 @@ typedef struct CIDeclEnumVariant
 /**
  *
  * @brief Construct CIDeclEnumVariant type.
+ * @param enum_name Rc<String*>*? (&)
+ * @param enum_data_type CIDataType*? (&)
  * @param name Rc<String*>* (&)
  */
-CONSTRUCTOR(CIDeclEnumVariant *, CIDeclEnumVariant, Rc *name, Isize value);
+CONSTRUCTOR(CIDeclEnumVariant *,
+            CIDeclEnumVariant,
+            Rc *enum_name,
+            CIDataType *enum_data_type,
+            Rc *name,
+            Isize value);
 
 /**
  *
