@@ -724,6 +724,12 @@ typecheck_binary_expr__CITypecheck(const CITypecheck *self,
                                    const CIExprBinary *binary,
                                    struct CITypecheckContext *typecheck_ctx)
 {
+    if (binary->kind == CI_EXPR_BINARY_KIND_DOT ||
+        binary->kind == CI_EXPR_BINARY_KIND_ARROW) {
+        // NOTE: We perform no typecheck here on `.` or `->` binary operator.
+        return;
+    }
+
     CIDataType *left_dt = infer_expr_data_type__CIInfer(
       self->file,
       binary->left,
