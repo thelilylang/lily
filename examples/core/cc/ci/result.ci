@@ -1,0 +1,104 @@
+#include <stdio.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+
+enum ResultKind {
+	RESULT_KIND_OK,
+	RESULT_KIND_ERR
+};
+
+typedef struct Result.[@T, @E] {
+	enum ResultKind kind;
+	union {
+		@T ok;
+		@E err;
+	};
+} Result.[@T, @E];
+
+enum ReadFileErrorKind {
+	READ_FILE_ERROR_KIND_FALED_TO_OPEN_FILE,
+	READ_FILE_ERROR_KIND_OUT_OF_MEMORY,
+	READ_FILE_ERROR_KIND_FAILED_TO_CLOSE_FILE,
+	READ_FILE_ERROR_KIND_FAILED_TO_READ
+};
+
+typedef struct ReadFileError {
+	enum ReadFileErrorKind kind;
+	union {
+		int failed_to_open_file;
+	};
+} ReadFileError;
+
+Result.[char*, ReadFileError]
+read_file(const char *path) {
+	FILE *file = fopen(path, "r");
+
+	if (!file) {
+		return (Result.[char*, ReadFileError]){
+			.kind = RESULT_KIND_ERR,
+			.err = (ReadFileError){
+				.kind = READ_FILE_ERROR_KIND_FALED_TO_OPEN_FILE,
+				.failed_to_open_file = errno
+			}
+		};
+	}
+
+	struct stat st;
+
+	stat(path, &st);
+
+	size_t n = st.st_size + 1;
+	char *buffer = malloc(n);
+
+	if (!buffer) {
+		return (Result.[char*, ReadFileError]){
+			.kind = RESULT_KIND_ERR,
+			.err = (ReadFileError){
+				.kind = READ_FILE_ERROR_KIND_OUT_OF_MEMORY
+			}
+		};
+	}
+
+	memset(buffer, 0, n);
+
+	if (fread(buffer, sizeof(char), n, file) != n - 1) {
+		return (Result.[char*, ReadFileError]){
+			.kind = RESULT_KIND_ERR,
+			.err = (ReadFileError){
+				.kind = READ_FILE_ERROR_KIND_FAILED_TO_READ
+			}
+		};
+	}
+
+	if (fclose(file) != 0) {
+		return (Result.[char*, ReadFileError]){
+			.kind = RESULT_KIND_ERR,
+			.err = (ReadFileError){
+				.kind = READ_FILE_ERROR_KIND_FAILED_TO_CLOSE_FILE
+			}
+		};
+	}
+
+	return (Result.[char*, ReadFileError]){
+		.kind = RESULT_KIND_OK,
+		.ok = buffer
+	};
+}
+
+int main() {
+	Result.[char*, ReadFileError] read_result = read_file("README.md");
+
+	switch (read_result.kind) {
+		case RESULT_KIND_OK:
+			printf("OK:\n%s\n", read_result.ok);
+			free(read_result.ok);
+			break;
+		case RESULT_KIND_ERR:
+			printf("ERR\n");
+			break;
+		default:
+			break;
+	}
+}
