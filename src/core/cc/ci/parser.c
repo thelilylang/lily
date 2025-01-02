@@ -219,9 +219,12 @@ static CIDataType *
 parse_pre_data_type__CIParser(CIParser *self);
 
 /// @brief Parse enum variants.
+/// @param enum_name Rc<String*>* (&)
 /// @return Vec<CIDeclEnumVariant*>*
 static Vec *
-parse_enum_variants__CIParser(CIParser *self);
+parse_enum_variants__CIParser(CIParser *self,
+                              Rc *enum_name,
+                              CIDataType *enum_data_type);
 
 /// @brief Parse enum declaration.
 /// @param name Rc<String*>* (&)
@@ -2146,7 +2149,9 @@ parse_data_type__CIParser(CIParser *self)
 }
 
 Vec *
-parse_enum_variants__CIParser(CIParser *self)
+parse_enum_variants__CIParser(CIParser *self,
+                              Rc *enum_name,
+                              CIDataType *enum_data_type)
 {
     Vec *variants = NEW(Vec); // Vec<CIDeclEnumVariant*>*
     Isize precedent_value = -1;
@@ -2187,7 +2192,11 @@ parse_enum_variants__CIParser(CIParser *self)
                 }
 
                 precedent_value = custom_value;
-                variant = NEW(CIDeclEnumVariant, name, custom_value);
+                variant = NEW(CIDeclEnumVariant,
+                              enum_name,
+                              enum_data_type,
+                              name,
+                              custom_value);
 
                 push__Vec(variants, variant);
 
@@ -2197,7 +2206,11 @@ parse_enum_variants__CIParser(CIParser *self)
                 break;
             }
             default:
-                variant = NEW(CIDeclEnumVariant, name, ++precedent_value);
+                variant = NEW(CIDeclEnumVariant,
+                              enum_name,
+                              enum_data_type,
+                              name,
+                              ++precedent_value);
 
                 push__Vec(variants, variant);
         }
@@ -2260,12 +2273,14 @@ parse_enum__CIParser(CIParser *self, int storage_class_flag, Rc *name)
             FAILED("expected `{` or `;`");
     }
 
-    return NEW_VARIANT(
-      CIDecl,
-      enum,
-      storage_class_flag,
-      false,
-      NEW(CIDeclEnum, name, parse_enum_variants__CIParser(self), data_type));
+    return NEW_VARIANT(CIDecl,
+                       enum,
+                       storage_class_flag,
+                       false,
+                       NEW(CIDeclEnum,
+                           name,
+                           parse_enum_variants__CIParser(self, name, data_type),
+                           data_type));
 }
 
 Vec *

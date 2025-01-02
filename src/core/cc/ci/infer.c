@@ -461,8 +461,21 @@ infer_expr_identifier_data_type__CIInfer(
 
             break;
         }
-        case CI_EXPR_IDENTIFIER_ID_KIND_ENUM_VARIANT:
-            TODO("enum variant");
+        case CI_EXPR_IDENTIFIER_ID_KIND_ENUM_VARIANT: {
+            CIDecl *enum_variant_decl = get_enum_variant_from_id__CIResultFile(
+              file, expr->identifier.id.enum_variant);
+
+            ASSERT(enum_variant_decl);
+
+            CIDataType *enum_data_type =
+              enum_variant_decl->enum_variant->enum_data_type;
+
+            if (enum_data_type) {
+                return ref__CIDataType(enum_data_type);
+            }
+
+            return NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
+        }
         case CI_EXPR_IDENTIFIER_ID_KIND_FUNCTION: {
             // TODO: Call generic function is not yet implemented
             CIDecl *decl = get_function_from_id__CIResultFile(
@@ -605,7 +618,16 @@ infer_expr_unary_data_type__CIInfer(
                                                      unary_right_expr_data_type,
                                                      called_generic_params,
                                                      decl_generic_params)) {
-                TODO("get the type after dereferencing");
+                CIDataType *res = ref__CIDataType(
+                  unwrap_implicit_ptr_data_type__CIResolverDataType(
+                    file,
+                    unary_right_expr_data_type,
+                    called_generic_params,
+                    decl_generic_params));
+
+                FREE(CIDataType, unary_right_expr_data_type);
+
+                return res;
             }
 
             return unary_right_expr_data_type;
