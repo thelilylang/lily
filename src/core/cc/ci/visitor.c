@@ -1397,10 +1397,12 @@ visit_function_params__CIVisitor(CIVisitor *self,
         for (Usize i = 0; i < params->len; ++i) {
             const CIDeclFunctionParam *param = get__Vec(params, i);
 
-            visit_data_type__CIVisitor(self,
-                                       param->data_type,
-                                       called_generic_params,
-                                       decl_generic_params);
+            if (param->data_type) {
+                visit_data_type__CIVisitor(self,
+                                           param->data_type,
+                                           called_generic_params,
+                                           decl_generic_params);
+            }
         }
     }
 }
