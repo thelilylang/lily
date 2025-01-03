@@ -1050,18 +1050,30 @@ typecheck_function_call_expr_params__CITypecheck(
           decl_function_call_params,
           i >= decl_function_call_params_len ? decl_function_call_params_len - 1
                                              : i);
+        const CIExpr *called_param = get__Vec(called_params, i);
 
         switch (decl_param->kind) {
             case CI_DECL_FUNCTION_PARAM_KIND_NORMAL: {
-                const CIExpr *called_param = get__Vec(called_params, i);
-
                 typecheck_expr__CITypecheck(
                   self, decl_param->data_type, called_param, typecheck_ctx);
 
                 break;
             }
-            case CI_DECL_FUNCTION_PARAM_KIND_VARIADIC:
+            case CI_DECL_FUNCTION_PARAM_KIND_VARIADIC: {
+                // NOTE: Here, we expect any data type because a variadic
+                // parameter doesn't require a specific data type, but we do
+                // need to perform a typecheck on the child expression of the
+                // "called_param" expression.
+                CIDataType *expected_data_type =
+                  NEW(CIDataType, CI_DATA_TYPE_KIND_ANY);
+
+                typecheck_expr__CITypecheck(
+                  self, expected_data_type, called_param, typecheck_ctx);
+
+                FREE(CIDataType, expected_data_type);
+
                 break;
+            }
             default:
                 UNREACHABLE("unknown variant");
         }
