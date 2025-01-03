@@ -49,6 +49,7 @@ typedef struct CIConfig
 
     // Store values passed via the `--include0` option
     Vec *includes0; // Vec<char* (&)>*
+    bool no_state_check;
 } CIConfig;
 
 /**
@@ -62,14 +63,16 @@ inline CONSTRUCTOR(CIConfig,
                    bool file,
                    enum CIStandard standard,
                    Vec *includes,
-                   Vec *includes0)
+                   Vec *includes0,
+                   bool no_state_check)
 {
     return (CIConfig){ .path = path,
                        .mode = mode,
                        .file = file,
                        .standard = standard,
                        .includes = includes,
-                       .includes0 = includes0 };
+                       .includes0 = includes0,
+                       .no_state_check = no_state_check };
 }
 
 /**

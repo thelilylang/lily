@@ -50,6 +50,7 @@
 #define I_OPTION 9
 #define INCLUDE_OPTION 10
 #define INCLUDE0_OPTION 11
+#define NO_STATE_CHECK_OPTION 12
 
 CIConfig
 run__CIParseConfig(const Vec *results)
@@ -60,6 +61,7 @@ run__CIParseConfig(const Vec *results)
     enum CIStandard standard = CI_STANDARD_NONE;
     Vec *includes = NEW(Vec);  // Vec<char* (&)>*
     Vec *includes0 = NEW(Vec); // Vec<char* (&)>*
+    bool no_state_check = false;
 
     VecIter iter = NEW(VecIter, results);
     CliResult *current = NULL;
@@ -139,6 +141,10 @@ run__CIParseConfig(const Vec *results)
                         push__Vec(includes0, current->option->value->single);
 
                         break;
+                    case NO_STATE_CHECK_OPTION:
+                        no_state_check = true;
+
+                        break;
                     default:
                         UNREACHABLE("unknown option");
                 }
@@ -153,5 +159,12 @@ run__CIParseConfig(const Vec *results)
         standard = CI_STANDARD_99;
     }
 
-    return NEW(CIConfig, path, mode, file, standard, includes, includes0);
+    return NEW(CIConfig,
+               path,
+               mode,
+               file,
+               standard,
+               includes,
+               includes0,
+               no_state_check);
 }
