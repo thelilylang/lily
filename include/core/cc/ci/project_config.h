@@ -127,6 +127,7 @@ typedef struct CIProjectConfig
     const Vec *include_dirs; // Vec<char* (&)>* (&)
     Vec *libraries;          // Vec<CIProjectConfigLibrary*>*
     Vec *bins;               // Vec<CIProjectConfigBin*>*
+    bool no_state_check;
 } CIProjectConfig;
 
 /**
@@ -140,14 +141,16 @@ inline VARIANT_CONSTRUCTOR(CIProjectConfig,
                            CIProjectConfigCompiler compiler,
                            const Vec *include_dirs,
                            Vec *libraries,
-                           Vec *bins)
+                           Vec *bins,
+                           bool no_state_check)
 {
     return (CIProjectConfig){ .kind = CI_PROJECT_CONFIG_KIND_CLI,
                               .standard = standard,
                               .compiler = compiler,
                               .include_dirs = include_dirs,
                               .libraries = libraries,
-                              .bins = bins };
+                              .bins = bins,
+                              .no_state_check = no_state_check };
 }
 
 /**
@@ -162,7 +165,8 @@ inline VARIANT_CONSTRUCTOR(CIProjectConfig,
                            CIProjectConfigCompiler compiler,
                            const Vec *include_dirs,
                            Vec *libraries,
-                           Vec *bins)
+                           Vec *bins,
+                           bool no_state_check)
 {
     return (CIProjectConfig){ .kind = CI_PROJECT_CONFIG_KIND_YAML,
                               .yaml = yaml,
@@ -170,7 +174,8 @@ inline VARIANT_CONSTRUCTOR(CIProjectConfig,
                               .compiler = compiler,
                               .include_dirs = include_dirs,
                               .libraries = libraries,
-                              .bins = bins };
+                              .bins = bins,
+                              .no_state_check = no_state_check };
 }
 
 /**

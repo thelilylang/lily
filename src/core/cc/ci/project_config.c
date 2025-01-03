@@ -71,6 +71,9 @@ static Vec *
 parse_bins__CIProjectConfig(YAMLLoadRes *yaml_load_res,
                             const char *absolute_config_dir);
 
+static bool
+parse_no_state_check__CIProjectConfig(YAMLLoadRes *yaml_load_res);
+
 String *
 convert_path_to_absolute_path__CIProjectConfig(char *path,
                                                const char *absolute_config_dir)
@@ -87,7 +90,7 @@ convert_path_to_absolute_path__CIProjectConfig(char *path,
 enum CIStandard
 parse_standard__CIProjectConfig(YAMLLoadRes *yaml_load_res)
 {
-    enum CIStandard standard;
+    enum CIStandard standard = CI_STANDARD_99;
 
     // standard: c89 | c95 | c99 | c11 | c17 | c23
     Int32 standard_value_id = GET_KEY_ON_DEFAULT_MAPPING__YAML(
@@ -482,6 +485,44 @@ parse_bins__CIProjectConfig(YAMLLoadRes *yaml_load_res,
     return bins;
 }
 
+bool
+parse_no_state_check__CIProjectConfig(YAMLLoadRes *yaml_load_res)
+{
+    bool no_state_check = false;
+
+    // no_state_check: true | false
+    Int32 no_state_check_value_id = GET_KEY_ON_DEFAULT_MAPPING__YAML(
+      yaml_load_res, FIRST_DOCUMENT, "no_state_check");
+
+    if (no_state_check_value_id == -1) {
+        goto exit;
+    }
+
+    YAMLNode *no_state_check_value_node = get_node_from_id__YAML(
+      yaml_load_res, FIRST_DOCUMENT, no_state_check_value_id);
+
+    switch (GET_NODE_TYPE__YAML(no_state_check_value_node)) {
+        case YAML_SCALAR_NODE: {
+            char *no_state_check_value =
+              GET_NODE_SCALAR_VALUE__YAML(no_state_check_value_node);
+
+            if (!strcmp(no_state_check_value, "true")) {
+                no_state_check = true;
+            } else if (strcmp(no_state_check_value, "false")) {
+                FAILED("expected true or false as scalar value of "
+                       "no_state_check key");
+            }
+
+            break;
+        }
+        default:
+            FAILED("expected: no_state_check: true | false");
+    }
+
+exit:
+    return no_state_check;
+}
+
 CONSTRUCTOR(CIProjectConfigLibrary *,
             CIProjectConfigLibrary,
             String *name,
@@ -562,7 +603,8 @@ parse_cli__CIProjectConfig(const CIConfig *cli_config)
                        init__Vec(1,
                                  NEW(CIProjectConfigBin,
                                      bin_name,
-                                     from__String((char *)cli_config->path))));
+                                     from__String((char *)cli_config->path))),
+                       cli_config->no_state_check);
 }
 
 CIProjectConfig
@@ -595,6 +637,7 @@ parse_yaml__CIProjectConfig(const char *config_dir)
       &yaml_load_res, absolute_config_dir->buffer);
     Vec *bins =
       parse_bins__CIProjectConfig(&yaml_load_res, absolute_config_dir->buffer);
+    bool no_state_check = parse_no_state_check__CIProjectConfig(&yaml_load_res);
 
     FREE(String, path_ci_config);
     FREE(String, absolute_config_dir);
@@ -606,7 +649,8 @@ parse_yaml__CIProjectConfig(const char *config_dir)
                        compiler,
                        get_include_dirs__CIInclude(),
                        libraries,
-                       bins);
+                       bins,
+                       no_state_check);
 }
 
 DESTRUCTOR(CIProjectConfig, const CIProjectConfig *self)

@@ -559,7 +559,8 @@ extern inline VARIANT_CONSTRUCTOR(CIProjectConfig,
                                   CIProjectConfigCompiler compiler,
                                   const Vec *include_dirs,
                                   Vec *libraries,
-                                  Vec *bins);
+                                  Vec *bins,
+                                  bool no_state_check);
 
 extern inline VARIANT_CONSTRUCTOR(CIProjectConfig,
                                   CIProjectConfig,
@@ -569,7 +570,8 @@ extern inline VARIANT_CONSTRUCTOR(CIProjectConfig,
                                   CIProjectConfigCompiler compiler,
                                   const Vec *include_dirs,
                                   Vec *libraries,
-                                  Vec *bins);
+                                  Vec *bins,
+                                  bool no_state_check);
 
 // <core/cc/ci/parser.h>
 extern inline CONSTRUCTOR(CIParserSpan, CIParserSpan, Usize line, Usize column);

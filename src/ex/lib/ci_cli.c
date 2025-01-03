@@ -37,6 +37,7 @@ extern inline CONSTRUCTOR(CIConfig,
                           bool file,
                           enum CIStandard standard,
                           Vec *includes,
-                          Vec *includes0);
+                          Vec *includes0,
+                          bool no_state_check);
 
 #endif // LILY_EX_LIB_CI_CLI_C

@@ -35,6 +35,7 @@ build__CliCI(Vec *args)
     CliOption *standard = NEW(CliOption, "--std");
     CliOption *include = NEW(CliOption, "--include");
     CliOption *include0 = NEW(CliOption, "--include0");
+    CliOption *no_state_check = NEW(CliOption, "--no-state-check");
 
     mode->$help(mode, "Specify transpilation mode (DEBUG | RELEASE)")
       ->$value(mode, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "MODE", true));
@@ -60,6 +61,8 @@ build__CliCI(Vec *args)
               "Add directory to the begin of the list of include search paths")
       ->$value(include0, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "DIR", true));
 
+    no_state_check->$help(no_state_check, "Disable the state checker");
+
     cli.$version(&cli, VERSION)
       ->$author(&cli, "ArthurPV")
       ->$about(&cli, "The CI programming language")
@@ -68,6 +71,7 @@ build__CliCI(Vec *args)
       ->$option(&cli, standard)
       ->$option(&cli, include)
       ->$option(&cli, include0)
+      ->$option(&cli, no_state_check)
       ->$single_value(&cli, "PROJECT_PATH | FILE_PATH", true);
 
     return cli;

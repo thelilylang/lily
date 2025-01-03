@@ -284,5 +284,8 @@ handler__CIStateChecker(const CIResultFile *file, void *other_args)
 void
 run__CIStateChecker(CIStateChecker *self)
 {
-    pass_through_result__CIResult(self->result, &handler__CIStateChecker, self);
+    if (!self->result->config->no_state_check) {
+        pass_through_result__CIResult(
+          self->result, &handler__CIStateChecker, self);
+    }
 }
