@@ -1423,18 +1423,20 @@ parse_data_type_contexts__CIParser(CIParser *self)
 
         switch (self->current_token->kind) {
             case CI_TOKEN_KIND_IDENTIFIER: {
-#define CTX_IDS_LEN 4
+#define CTX_IDS_LEN 9
                 enum CIDataTypeContext ctx_ids[CTX_IDS_LEN] = {
-                    CI_DATA_TYPE_CONTEXT_HEAP,
-                    CI_DATA_TYPE_CONTEXT_NON_NULL,
-                    CI_DATA_TYPE_CONTEXT_STACK,
-                    CI_DATA_TYPE_CONTEXT_TRACE
+                    CI_DATA_TYPE_CONTEXT_HEAP,  CI_DATA_TYPE_CONTEXT_NON_NULL,
+                    CI_DATA_TYPE_CONTEXT_STACK, CI_DATA_TYPE_CONTEXT_TRACE,
+                    CI_DATA_TYPE_CONTEXT_INDEX, CI_DATA_TYPE_CONTEXT_REALLOC,
+                    CI_DATA_TYPE_CONTEXT_DROP,  CI_DATA_TYPE_CONTEXT_STATIC,
+                    CI_DATA_TYPE_CONTEXT_FREE,
                 };
                 static SizedStr ctx_ids_s[CTX_IDS_LEN] = {
-                    SIZED_STR_FROM_RAW("heap"),
-                    SIZED_STR_FROM_RAW("non_null"),
-                    SIZED_STR_FROM_RAW("stack"),
-                    SIZED_STR_FROM_RAW("trace")
+                    SIZED_STR_FROM_RAW("heap"),  SIZED_STR_FROM_RAW("non_null"),
+                    SIZED_STR_FROM_RAW("stack"), SIZED_STR_FROM_RAW("trace"),
+                    SIZED_STR_FROM_RAW("index"), SIZED_STR_FROM_RAW("realloc"),
+                    SIZED_STR_FROM_RAW("drop"),  SIZED_STR_FROM_RAW("static"),
+                    SIZED_STR_FROM_RAW("free"),
                 };
                 int current_ctx = get_id__Search(
                   GET_PTR_RC(String, self->current_token->identifier),
@@ -1443,7 +1445,8 @@ parse_data_type_contexts__CIParser(CIParser *self)
                   CTX_IDS_LEN);
 
                 if (current_ctx == -1) {
-                    FAILED("expected only !heap, !non_null, !stack or !trace "
+                    FAILED("expected only !heap, !non_null, !stack, !trace, "
+                           "!index, !realloc, !drop, !static or !free "
                            "as data type context");
                 } else {
                     data_type_ctx |= current_ctx;
@@ -1713,6 +1716,21 @@ valid_data_type_context__CIParser(CIParser *self, int context_flag)
         CI_DATA_TYPE_CONTEXT_HEAP
     };
     static enum CIDataTypeContext rejected_context_when_trace_is_present[] = {};
+    static enum CIDataTypeContext rejected_context_when_index_is_present[] = {};
+    static enum CIDataTypeContext
+      rejected_context_when_realloc_is_present[] = {};
+    static enum CIDataTypeContext rejected_context_when_drop_is_present[] = {
+        CI_DATA_TYPE_CONTEXT_TRACE, CI_DATA_TYPE_CONTEXT_FREE
+    };
+    static enum CIDataTypeContext
+      rejected_context_when_dropped_is_present[] = {};
+    static enum CIDataTypeContext
+      rejected_context_when_static_is_present[] = {};
+    static enum CIDataTypeContext rejected_context_when_owned_is_present[] = {};
+    static enum CIDataTypeContext rejected_context_when_free_is_present[] = {
+        CI_DATA_TYPE_CONTEXT_DROP, CI_DATA_TYPE_CONTEXT_FREE
+    };
+    static enum CIDataTypeContext rejected_context_when_freed_is_present[] = {};
     typedef struct CIDataTypeRejectedContexts
     {
         enum CIDataTypeContext *buffer;
@@ -1721,20 +1739,44 @@ valid_data_type_context__CIParser(CIParser *self, int context_flag)
     static CIDataTypeRejectedContexts
       rejected_context_when_x_context_is_present[] = {
           { rejected_context_when_none_is_present,
-            sizeof(rejected_context_when_none_is_present) /
-              sizeof(*rejected_context_when_none_is_present) },
+            LEN(rejected_context_when_none_is_present,
+                *rejected_context_when_none_is_present) },
           { rejected_context_when_heap_is_present,
-            sizeof(rejected_context_when_heap_is_present) /
-              sizeof(*rejected_context_when_heap_is_present) },
+            LEN(rejected_context_when_heap_is_present,
+                *rejected_context_when_heap_is_present) },
           { rejected_context_when_non_null_is_present,
-            sizeof(rejected_context_when_non_null_is_present) /
-              sizeof(*rejected_context_when_non_null_is_present) },
+            LEN(rejected_context_when_non_null_is_present,
+                *rejected_context_when_non_null_is_present) },
           { rejected_context_when_stack_is_present,
-            sizeof(rejected_context_when_stack_is_present) /
-              sizeof(*rejected_context_when_stack_is_present) },
+            LEN(rejected_context_when_stack_is_present,
+                *rejected_context_when_stack_is_present) },
           { rejected_context_when_trace_is_present,
-            sizeof(rejected_context_when_trace_is_present) /
-              sizeof(*rejected_context_when_trace_is_present) }
+            LEN(rejected_context_when_trace_is_present,
+                *rejected_context_when_trace_is_present) },
+          { rejected_context_when_realloc_is_present,
+            LEN(rejected_context_when_realloc_is_present,
+                *rejected_context_when_realloc_is_present) },
+          { rejected_context_when_index_is_present,
+            LEN(rejected_context_when_index_is_present,
+                *rejected_context_when_index_is_present) },
+          { rejected_context_when_drop_is_present,
+            LEN(rejected_context_when_drop_is_present,
+                *rejected_context_when_drop_is_present) },
+          { rejected_context_when_dropped_is_present,
+            LEN(rejected_context_when_dropped_is_present,
+                *rejected_context_when_dropped_is_present) },
+          { rejected_context_when_static_is_present,
+            LEN(rejected_context_when_static_is_present,
+                *rejected_context_when_static_is_present) },
+          { rejected_context_when_owned_is_present,
+            LEN(rejected_context_when_owned_is_present,
+                *rejected_context_when_owned_is_present) },
+          { rejected_context_when_free_is_present,
+            LEN(rejected_context_when_free_is_present,
+                *rejected_context_when_free_is_present) },
+          { rejected_context_when_freed_is_present,
+            LEN(rejected_context_when_freed_is_present,
+                *rejected_context_when_freed_is_present) }
       };
     CIDataTypeContextIds data_type_context_ids = get_ids__CIDataTypeContext();
 

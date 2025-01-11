@@ -266,6 +266,12 @@ visit_function_item__CIVisitor(CIVisitor *self,
                                CIGenericParams *called_generic_params,
                                CIGenericParams *decl_generic_params);
 
+/// @param prev_scope CIScope* (&)*? (&)
+static void
+set_current_scope__CIVisitor(CIVisitor *self,
+                             CIScope *scope,
+                             CIScope **prev_scope);
+
 static void
 visit_function_body__CIVisitor(CIVisitor *self,
                                const CIDeclFunctionBody *body,
@@ -1359,17 +1365,39 @@ visit_function_item__CIVisitor(CIVisitor *self,
 }
 
 void
+set_current_scope__CIVisitor(CIVisitor *self,
+                             CIScope *scope,
+                             CIScope **prev_scope)
+{
+    if (prev_scope) {
+        *prev_scope = (CIScope *)self->current_scope;
+    }
+
+    self->current_scope = scope;
+}
+
+void
 visit_function_body__CIVisitor(CIVisitor *self,
                                const CIDeclFunctionBody *body,
                                CIGenericParams *called_generic_params,
                                CIGenericParams *decl_generic_params)
 {
+    CIScope *prev_scope = NULL;
+    CIScope *new_current_scope =
+      get_scope_from_id__CIResultFile(self->file, body->scope_id);
+
+    ASSERT(new_current_scope);
+
+    set_current_scope__CIVisitor(self, new_current_scope, &prev_scope);
+
     for (Usize i = 0; i < body->content->len; ++i) {
         visit_function_item__CIVisitor(self,
                                        get__Vec(body->content, i),
                                        called_generic_params,
                                        decl_generic_params);
     }
+
+    set_current_scope__CIVisitor(self, prev_scope, NULL);
 }
 
 void

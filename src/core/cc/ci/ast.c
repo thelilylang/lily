@@ -95,18 +95,6 @@ static CIDataType *
 build_struct_or_union_data_type__CIDeclStructField(
   const CIDeclStructField *self);
 
-static inline bool
-has_heap__CIDataTypeContext(int self);
-
-static inline bool
-has_non_null__CIDataTypeContext(int self);
-
-static inline bool
-has_stack__CIDataTypeContext(int self);
-
-static inline bool
-has_trace__CIDataTypeContext(int self);
-
 /// @brief Free CIDataType type (CI_DATA_TYPE_KIND_ARRAY).
 static VARIANT_DESTRUCTOR(CIDataType, array, CIDataType *self);
 
@@ -304,11 +292,13 @@ static VARIANT_DESTRUCTOR(CIDeclFunctionItem, expr, CIDeclFunctionItem *self);
 static VARIANT_DESTRUCTOR(CIDeclFunctionItem, stmt, CIDeclFunctionItem *self);
 
 static const enum CIDataTypeContext data_type_ctx_ids[] = {
-    CI_DATA_TYPE_CONTEXT_NONE,
-    CI_DATA_TYPE_CONTEXT_HEAP,
-    CI_DATA_TYPE_CONTEXT_NON_NULL,
-    CI_DATA_TYPE_CONTEXT_STACK,
-    CI_DATA_TYPE_CONTEXT_TRACE
+    CI_DATA_TYPE_CONTEXT_NONE,     CI_DATA_TYPE_CONTEXT_HEAP,
+    CI_DATA_TYPE_CONTEXT_NON_NULL, CI_DATA_TYPE_CONTEXT_STACK,
+    CI_DATA_TYPE_CONTEXT_TRACE,    CI_DATA_TYPE_CONTEXT_INDEX,
+    CI_DATA_TYPE_CONTEXT_REALLOC,  CI_DATA_TYPE_CONTEXT_DROP,
+    CI_DATA_TYPE_CONTEXT_DROPPED,  CI_DATA_TYPE_CONTEXT_STATIC,
+    CI_DATA_TYPE_CONTEXT_OWNED,    CI_DATA_TYPE_CONTEXT_FREE,
+    CI_DATA_TYPE_CONTEXT_FREED,    CI_DATA_TYPE_CONTEXT_UNDEFINED
 };
 static const Usize data_type_ctx_ids_count =
   sizeof(data_type_ctx_ids) / sizeof(*data_type_ctx_ids);
@@ -1634,68 +1624,6 @@ DESTRUCTOR(CIDeclStructField, CIDeclStructField *self)
     }
 }
 
-bool
-has_heap__CIDataTypeContext(int self)
-{
-    return self & CI_DATA_TYPE_CONTEXT_HEAP;
-}
-
-bool
-has_non_null__CIDataTypeContext(int self)
-{
-    return self & CI_DATA_TYPE_CONTEXT_NON_NULL;
-}
-
-bool
-has_stack__CIDataTypeContext(int self)
-{
-    return self & CI_DATA_TYPE_CONTEXT_STACK;
-}
-
-bool
-has_trace__CIDataTypeContext(int self)
-{
-    return self & CI_DATA_TYPE_CONTEXT_TRACE;
-}
-
-bool
-is_compatible__CIDataTypeContext(int self, int other)
-{
-#define HAS_HEAP2() \
-    (has_heap__CIDataTypeContext(self) && has_heap__CIDataTypeContext(other))
-#define HAS_NON_NULL2()                       \
-    (has_non_null__CIDataTypeContext(self) && \
-     has_non_null__CIDataTypeContext(other))
-#define HAS_STACK2() \
-    (has_stack__CIDataTypeContext(self) && has_stack__CIDataTypeContext(other))
-#define HAS_TRACE2() \
-    (has_trace__CIDataTypeContext(self) && has_trace__CIDataTypeContext(other))
-
-    // Incompatible (vice-versa):
-    //
-    // !heap v. !stack
-    // !non_null v. <nothing>
-    // !trace v. <nothing>
-    // !non_null v. <nothing>
-    // !heap v. <nothing>
-    // !stack v. <nothing>
-
-    if (HAS_HEAP2() && HAS_STACK2()) {
-        return false;
-    } else if (HAS_NON_NULL2() && !HAS_NON_NULL2()) {
-        return false;
-    } else if (!HAS_TRACE2()) {
-        return false;
-    }
-
-    return true;
-
-#undef HAS_HEAP2
-#undef HAS_NON_NULL2
-#undef HAS_STACK2
-#undef HAS_TRACE2
-}
-
 CIDataTypeContextIds
 get_ids__CIDataTypeContext()
 {
@@ -1710,7 +1638,11 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeContext, int self)
     static char *data_type_ctxs[] = {
         "CI_DATA_TYPE_CONTEXT_NONE",     "CI_DATA_TYPE_CONTEXT_HEAP",
         "CI_DATA_TYPE_CONTEXT_NON_NULL", "CI_DATA_TYPE_CONTEXT_STACK",
-        "CI_DATA_TYPE_CONTEXT_TRACE",
+        "CI_DATA_TYPE_CONTEXT_TRACE",    "CI_DATA_TYPE_CONTEXT_INDEX",
+        "CI_DATA_TYPE_CONTEXT_REALLOC",  "CI_DATA_TYPE_CONTEXT_DROP",
+        "CI_DATA_TYPE_CONTEXT_DROPPED",  "CI_DATA_TYPE_CONTEXT_STATIC",
+        "CI_DATA_TYPE_CONTEXT_OWNED",    "CI_DATA_TYPE_CONTEXT_FREE",
+        "CI_DATA_TYPE_CONTEXT_FREED",    "CI_DATA_TYPE_CONTEXT_UNDEFINED"
     };
 
     static_assert(data_type_ctx_ids_count ==

@@ -29,18 +29,9 @@
 
 #include <core/cc/ci/result.h>
 
-enum CIStateCheckerStateKind
-{
-    CI_STATE_CHECKER_STATE_KIND_NONE = 0,
-    CI_STATE_CHECKER_STATE_KIND_HEAP = 1 << 0,
-    CI_STATE_CHECKER_STATE_KIND_NON_NULL = 1 << 1,
-    CI_STATE_CHECKER_STATE_KIND_STACK = 1 << 2,
-    CI_STATE_CHECKER_STATE_KIND_TRACE = 1 << 3,
-};
-
 typedef struct CIStateCheckerState
 {
-    Usize flags;
+    int flags;
     Usize copy_count;
 } CIStateCheckerState;
 
@@ -48,7 +39,7 @@ typedef struct CIStateCheckerState
  *
  * @brief Construct CIStateCheckerState type.
  */
-inline CONSTRUCTOR(CIStateCheckerState, CIStateCheckerState, Usize flags)
+inline CONSTRUCTOR(CIStateCheckerState, CIStateCheckerState, int flags)
 {
     return (CIStateCheckerState){ .flags = flags, .copy_count = 0 };
 }
@@ -75,25 +66,120 @@ decrement_copy__CIStateCheckerState(CIStateCheckerState *self)
 
 enum CIStateCheckerValueKind
 {
+    CI_STATE_CHECKER_VALUE_KIND_ARRAY,
+    CI_STATE_CHECKER_VALUE_KIND_FUNCTION,
+    CI_STATE_CHECKER_VALUE_KIND_FUNCTION_PTR,
+    CI_STATE_CHECKER_VALUE_KIND_PRIMARY,
+    CI_STATE_CHECKER_VALUE_KIND_PTR,
     CI_STATE_CHECKER_VALUE_KIND_STRUCT,
     CI_STATE_CHECKER_VALUE_KIND_UNION,
     CI_STATE_CHECKER_VALUE_KIND_VARIABLE,
 };
 
+typedef struct CIStateCheckerValueFunction
+{
+    Rc *name;                    // Rc<String*>*
+    HashMap *final_params_state; // HashMap<CIStateCheckerValue*>*
+    struct CIStateCheckerValue *return_value;
+} CIStateCheckerValueFunction;
+
+/**
+ *
+ * @brief Construct CIStateCheckerValueFunction type.
+ */
+inline CONSTRUCTOR(CIStateCheckerValueFunction,
+                   CIStateCheckerValueFunction,
+                   Rc *name,
+                   HashMap *final_params_state,
+                   struct CIStateCheckerValue *return_value)
+{
+    return (CIStateCheckerValueFunction){ .name = name,
+                                          .final_params_state =
+                                            final_params_state,
+                                          .return_value = return_value };
+}
+
+/**
+ *
+ * @brief Free CIStateCheckerValueFunction type.
+ */
+DESTRUCTOR(CIStateCheckerValueFunction,
+           const CIStateCheckerValueFunction *self);
+
+typedef struct CIStateCheckerValueFunctionPtr
+{
+    CIStateCheckerState state;
+    Vec *params; // Vec<CIStateCheckerValue*>*
+    struct CIStateCheckerValue *return_value;
+} CIStateCheckerValueFunctionPtr;
+
+/**
+ *
+ * @brief Construct CIStateCheckerValueFunctionPtr type.
+ */
+inline CONSTRUCTOR(CIStateCheckerValueFunctionPtr,
+                   CIStateCheckerValueFunctionPtr,
+                   CIStateCheckerState state,
+                   Vec *params,
+                   struct CIStateCheckerValue *return_value)
+{
+    return (CIStateCheckerValueFunctionPtr){ .state = state,
+                                             .params = params,
+                                             .return_value = return_value };
+}
+
+/**
+ *
+ * @brief Free CIStateCheckerValueFunctionPtr type.
+ */
+DESTRUCTOR(CIStateCheckerValueFunctionPtr,
+           const CIStateCheckerValueFunctionPtr *self);
+
+typedef struct CIStateCheckerValuePtr
+{
+    CIStateCheckerState state;
+    struct CIStateCheckerValue *value;
+} CIStateCheckerValuePtr;
+
+/**
+ *
+ * @brief Construct CIStateCheckerValuePtr type.
+ */
+inline CONSTRUCTOR(CIStateCheckerValuePtr,
+                   CIStateCheckerValuePtr,
+                   CIStateCheckerState state,
+                   struct CIStateCheckerValue *value)
+{
+    return (CIStateCheckerValuePtr){ .state = state, .value = value };
+}
+
+/**
+ *
+ * @brief Free CIStateCheckerValuePtr type.
+ */
+DESTRUCTOR(CIStateCheckerValuePtr, const CIStateCheckerValuePtr *self);
+
 typedef struct CIStateCheckerValueStruct
 {
+    Rc *name;        // Rc<String*>*?
     HashMap *values; // HashMap<CIStateCheckerValue*>*
+    CIStateCheckerState state;
 } CIStateCheckerValueStruct;
 
 /**
  *
  * @brief Construct CIStateCheckerValueStruct type.
+ * @param name Rc<String*>*? (&)
  */
 inline CONSTRUCTOR(CIStateCheckerValueStruct,
                    CIStateCheckerValueStruct,
-                   HashMap *values)
+                   Rc *name,
+                   HashMap *values,
+                   CIStateCheckerState state)
 {
-    return (CIStateCheckerValueStruct){ .values = values };
+    return (CIStateCheckerValueStruct){ .name = name ? ref__Rc(name) : NULL,
+                                        .values = values,
+                                        .state = state };
 }
 
 /**
@@ -104,20 +190,22 @@ DESTRUCTOR(CIStateCheckerValueStruct, const CIStateCheckerValueStruct *self);
 
 typedef struct CIStateCheckerValueVariable
 {
-    const String *name; // const String* (&)
-    CIStateCheckerState state;
+    Rc *name; // Rc<String*>*
+    struct CIStateCheckerValue *value;
 } CIStateCheckerValueVariable;
 
 /**
  *
  * @brief Construct CIStateCheckerValueVariable type.
+ * @param name Rc<String*>* (&)
  */
 inline CONSTRUCTOR(CIStateCheckerValueVariable,
                    CIStateCheckerValueVariable,
-                   const String *name,
-                   CIStateCheckerState state)
+                   Rc *name,
+                   struct CIStateCheckerValue *value)
 {
-    return (CIStateCheckerValueVariable){ .name = name, .state = state };
+    return (CIStateCheckerValueVariable){ .name = ref__Rc(name),
+                                          .value = value };
 }
 
 typedef struct CIStateCheckerValue
@@ -126,11 +214,66 @@ typedef struct CIStateCheckerValue
     Usize ref_count;
     union
     {
+        CIStateCheckerValuePtr array;
+        CIStateCheckerValueFunction function;
+        CIStateCheckerValueFunctionPtr function_ptr;
+        CIStateCheckerState primary;
+        CIStateCheckerValuePtr ptr;
         CIStateCheckerValueStruct struct_;
         CIStateCheckerValueStruct union_;
         CIStateCheckerValueVariable variable;
     };
 } CIStateCheckerValue;
+
+/**
+ *
+ * @brief Construct CIStateCheckerValue type
+ * (CI_STATE_CHECKER_VALUE_KIND_ARRAY).
+ */
+VARIANT_CONSTRUCTOR(CIStateCheckerValue *,
+                    CIStateCheckerValue,
+                    array,
+                    struct CIStateCheckerValuePtr array);
+
+/**
+ *
+ * @brief Construct CIStateCheckerValue type
+ * (CI_STATE_CHECKER_VALUE_KIND_FUNCTION).
+ */
+VARIANT_CONSTRUCTOR(CIStateCheckerValue *,
+                    CIStateCheckerValue,
+                    function,
+                    CIStateCheckerValueFunction function);
+
+/**
+ *
+ * @brief Construct CIStateCheckerValue type
+ * (CI_STATE_CHECKER_VALUE_KIND_FUNCTION_PTR).
+ */
+VARIANT_CONSTRUCTOR(CIStateCheckerValue *,
+                    CIStateCheckerValue,
+                    function_ptr,
+                    CIStateCheckerValueFunctionPtr function_ptr);
+
+/**
+ *
+ * @brief Construct CIStateCheckerValue type
+ * (CI_STATE_CHECKER_VALUE_KIND_PRIMARY).
+ */
+VARIANT_CONSTRUCTOR(CIStateCheckerValue *,
+                    CIStateCheckerValue,
+                    primary,
+                    CIStateCheckerState primary);
+
+/**
+ *
+ * @brief Construct CIStateCheckerValue type
+ * (CI_STATE_CHECKER_VALUE_KIND_PTR).
+ */
+VARIANT_CONSTRUCTOR(CIStateCheckerValue *,
+                    CIStateCheckerValue,
+                    ptr,
+                    CIStateCheckerValuePtr ptr);
 
 /**
  *
@@ -164,6 +307,41 @@ VARIANT_CONSTRUCTOR(CIStateCheckerValue *,
 
 /**
  *
+ * @brief Get name from value.
+ * @return const String*? (&)
+ */
+const String *
+get_name__CIStateCheckerValue(CIStateCheckerValue *self);
+
+/**
+ *
+ * @brief Build value from data type.
+ */
+CIStateCheckerValue *
+build_from_data_type__CIStateCheckerValue(CIDataType *data_type);
+
+/**
+ *
+ * @brief Get return state from value.
+ * @return CIStateCheckerState* (&)
+ */
+CIStateCheckerState *
+get_return_state__CIStateCheckerValue(CIStateCheckerValue *self);
+
+/**
+ *
+ * @brief Increment `ref_count`.
+ * @return CIStateCheckerValue*
+ */
+inline CIStateCheckerValue *
+ref__CIStateCheckerValue(CIStateCheckerValue *self)
+{
+    ++self->ref_count;
+    return self;
+}
+
+/**
+ *
  * @brief Free CIStateCheckerValue type.
  */
 DESTRUCTOR(CIStateCheckerValue, CIStateCheckerValue *self);
@@ -185,15 +363,29 @@ CONSTRUCTOR(CIStateCheckerScope *,
 
 /**
  *
+ * @brief Add value to scope.
+ */
+void
+add__CIStateCheckerScope(CIStateCheckerScope *self, CIStateCheckerValue *value);
+
+/**
+ *
+ * @brief Get value from name.
+ */
+CIStateCheckerValue *
+get__CIStateCheckerScope(CIStateCheckerScope *self, Rc *name);
+
+/**
+ *
  * @brief Free CIStateCheckerScope type.
  */
 DESTRUCTOR(CIStateCheckerScope, CIStateCheckerScope *self);
 
 typedef struct CIStateChecker
 {
-    const CIResult *result;     // const CIResult* (&)
-    const CIResultFile *file;   // const CIResultFile*? (&)
-    CIStateCheckerScope *scope; // CIStateCheckerScope*?
+    const CIResult *result;             // const CIResult* (&)
+    const CIResultFile *file;           // const CIResultFile*? (&)
+    CIStateCheckerScope *current_scope; // CIStateCheckerScope*?
 } CIStateChecker;
 
 /**
@@ -202,7 +394,8 @@ typedef struct CIStateChecker
  */
 inline CONSTRUCTOR(CIStateChecker, CIStateChecker, const CIResult *result)
 {
-    return (CIStateChecker){ .result = result, .file = NULL, .scope = NULL };
+    return (
+      CIStateChecker){ .result = result, .file = NULL, .current_scope = NULL };
 }
 
 /**
