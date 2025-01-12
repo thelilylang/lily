@@ -78,7 +78,7 @@ if(LILY_BUILD_LLVM)
   )
 
   set(LLVM_DIR "${CMAKE_SOURCE_DIR}/lib/local/src/llvm-project/llvm")
-  set(LLVM_VERSION "16.0.6")
+  set(LLVM_VERSION "18.1.x")
 
   # Add include directories
   include_directories(
@@ -91,13 +91,13 @@ if(LILY_BUILD_LLVM)
   message(STATUS "Build LLVM v${LLVM_VERSION}")
 else()
   # Require LLVM
-  find_package(LLVM 16 CONFIG REQUIRED)
+  find_package(LLVM 18.1 CONFIG REQUIRED)
   set(LLVM_VERSION ${LLVM_PACKAGE_VERSION})
 
   message(STATUS "Found LLVM v${LLVM_VERSION}")
 
   # Require LLD
-  find_package(LLD 16)
+  find_package(LLD 18)
   set(LLD_VERSION ${LLVM_PACKAGE_VERSION})
 
   if(LILY_LINK_DYNAMIC)
@@ -176,7 +176,7 @@ else()
   message(STATUS "Found LLD v${LLD_VERSION}")
 
   # Require Clang
-  find_package(Clang 16)
+  find_package(Clang 18)
   set(CLANG_VERSION ${LLVM_PACKAGE_VERSION})
 
   message(STATUS "Found Clang v${CLANG_VERSION}")

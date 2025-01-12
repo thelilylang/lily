@@ -30,11 +30,11 @@ If you want to install Lily on your machine, you'll be able to do so when you fi
 
 ## Linux
 
-Make sure you are using `Clang` 16 as your default compiler, if not, run:
+Make sure you are using `Clang` 18 as your default compiler, if not, run:
 
 ```bash
-export CC=clang # or clang-16
-export CXX=clang++ # or clang++-16
+export CC=clang # or clang-18
+export CXX=clang++ # or clang++-18
 ```
 
 After launching the CMake configuration:
@@ -72,12 +72,12 @@ lily -h # installed version
 
 ## MacOS
 
-Make sure you are using `Clang` 16 as your default compiler, if not, run:
+Make sure you are using `Clang` 18 as your default compiler, if not, run:
 
 ```bash
 # Brew installation
-export CC=$(brew --prefix llvm@16)/bin/clang 
-export CXX=$(brew --prefix llvm@16)/bin/clang++ 
+export CC=$(brew --prefix llvm@18)/bin/clang 
+export CXX=$(brew --prefix llvm@18)/bin/clang++ 
 
 # No-brew installation
 export CC=clang
@@ -96,7 +96,7 @@ If LLVM is not found by CMake run:
 
 ```bash
 # Brew installation
-export LLVM_DIR=$(brew --prefix llvm@16)
+export LLVM_DIR=$(brew --prefix llvm@18)
 ```
 
 Then, the build:

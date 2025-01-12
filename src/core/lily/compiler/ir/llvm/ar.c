@@ -148,7 +148,11 @@ compile_lib__LilyIrLlvmAr(LilyLibrary *self)
         print_cmd_args__LilyCompilerIrLlvmUtils(LINKER_CMD, linker_args);
 #endif
 
-        run__LilyLLD((int)linker_args->len, (const char **)linker_args->buffer);
+        if (run__LilyLLD((int)linker_args->len,
+                         (const char **)linker_args->buffer)) {
+            EMIT_ERROR("LLD error");
+            exit(1);
+        }
 
         // Clean up
 

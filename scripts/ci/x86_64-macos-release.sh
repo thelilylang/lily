@@ -4,7 +4,7 @@ set -e
 set -x
 
 # Download & Install LLVM
-brew install llvm@16
+brew install llvm@18
 
 # Download & Install ZLib
 brew install zlib
@@ -26,14 +26,14 @@ brew install gpatch
 ./scripts/patches/enable_local.sh
 
 # Configure CMake
-export LLVM_DIR=$(brew --prefix llvm@16)
+export LLVM_DIR=$(brew --prefix llvm@18)
 cmake \
 	-B ./build \
 	-G Ninja \
 	-DCMAKE_BUILD_TYPE=Release \
 	-DLILY_DEBUG=ON \
-	-DCMAKE_C_COMPILER=$(brew --prefix llvm@16)/bin/clang \
-	-DCMAKE_CXX_COMPILER=$(brew --prefix llvm@16)/bin/clang++
+	-DCMAKE_C_COMPILER=$(brew --prefix llvm@18)/bin/clang \
+	-DCMAKE_CXX_COMPILER=$(brew --prefix llvm@18)/bin/clang++
 
 # Build
 cmake --build build

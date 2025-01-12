@@ -26,13 +26,13 @@
 
 #include <core/lily/compiler/ir/llvm/optimize.h>
 
-#include <llvm/ADT/Triple.h>
 #include <llvm/Analysis/AliasAnalysis.h>
 #include <llvm/Analysis/LoopAnalysisManager.h>
 #include <llvm/Analysis/TargetTransformInfo.h>
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/Passes/StandardInstrumentations.h>
 #include <llvm/Target/TargetMachine.h>
+#include <llvm/TargetParser/Triple.h>
 #include <llvm/Transforms/Utils/AddDiscriminators.h>
 
 #include <llvm-c/DebugInfo.h>
