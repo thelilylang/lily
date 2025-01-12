@@ -42,7 +42,7 @@ link_exe__LilyLLD(enum LilyCompilerLinkerObjectFormat obj_format,
  *
  * @brief Run LLD to the main entry point.
  */
-void
+int
 run__LilyLLD(int argc, const char **argv);
 
 #endif // LILY_CORE_LILY_COMPILER_DRIVER_LLD_H

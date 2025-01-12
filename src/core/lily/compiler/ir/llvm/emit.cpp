@@ -67,8 +67,10 @@ LilyLLVMEmit(const LilyIrLlvm *self,
             return 1;
         }
 
-        if (machine.addPassesToEmitFile(
-              code_gen_passes, *out_asm, nullptr, llvm::CGFT_AssemblyFile)) {
+        if (machine.addPassesToEmitFile(code_gen_passes,
+                                        *out_asm,
+                                        nullptr,
+                                        llvm::CodeGenFileType::AssemblyFile)) {
             *error_msg = strdup((const char *)"Can't emit file");
 
             return 1;
@@ -90,8 +92,10 @@ LilyLLVMEmit(const LilyIrLlvm *self,
             return 1;
         }
 
-        if (machine.addPassesToEmitFile(
-              code_gen_passes, *out_obj, nullptr, llvm::CGFT_ObjectFile)) {
+        if (machine.addPassesToEmitFile(code_gen_passes,
+                                        *out_obj,
+                                        nullptr,
+                                        llvm::CodeGenFileType::ObjectFile)) {
             *error_msg = strdup((const char *)"Can't emit file");
 
             return 1;
