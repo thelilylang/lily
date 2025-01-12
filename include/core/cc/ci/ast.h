@@ -1093,19 +1093,23 @@ DESTRUCTOR(CIDeclStructField, CIDeclStructField *self);
 
 enum CIDataTypeContext
 {
+    // NOTE: !freed, !dropped, !owned and !undefined, cannot be defined by the
+    // user.
     CI_DATA_TYPE_CONTEXT_NONE = 0,
-    CI_DATA_TYPE_CONTEXT_HEAP = 1 << 0,     // !heap
-    CI_DATA_TYPE_CONTEXT_NON_NULL = 1 << 1, // !non_null
-    CI_DATA_TYPE_CONTEXT_STACK = 1 << 2,    // !stack
-    CI_DATA_TYPE_CONTEXT_TRACE = 1 << 3,    // !trace
+    CI_DATA_TYPE_CONTEXT_HEAP = 1 << 0,       // !heap
+    CI_DATA_TYPE_CONTEXT_NON_NULL = 1 << 1,   // !non_null
+    CI_DATA_TYPE_CONTEXT_STACK = 1 << 2,      // !stack
+    CI_DATA_TYPE_CONTEXT_TRACE = 1 << 3,      // !trace
+    CI_DATA_TYPE_CONTEXT_INDEX = 1 << 4,      // !index
+    CI_DATA_TYPE_CONTEXT_REALLOC = 1 << 5,    // !realloc
+    CI_DATA_TYPE_CONTEXT_DROP = 1 << 6,       // !drop
+    CI_DATA_TYPE_CONTEXT_DROPPED = 1 << 7,    // !dropped
+    CI_DATA_TYPE_CONTEXT_STATIC = 1 << 8,     // !static
+    CI_DATA_TYPE_CONTEXT_OWNED = 1 << 9,      // !owned
+    CI_DATA_TYPE_CONTEXT_FREE = 1 << 10,      // !free
+    CI_DATA_TYPE_CONTEXT_FREED = 1 << 11,     // !freed
+    CI_DATA_TYPE_CONTEXT_UNDEFINED = 1 << 12, // !undefined
 };
-
-/**
- *
- * @brief Check if the two given flags context are compatible.
- */
-bool
-is_compatible__CIDataTypeContext(int self, int other);
 
 typedef struct CIDataTypeContextIds
 {

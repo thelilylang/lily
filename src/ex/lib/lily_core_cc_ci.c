@@ -716,9 +716,7 @@ extern inline bool
 is_in_prepro_else__CIScannerContext(const CIScannerContext *self);
 
 // <core/cc/ci/state_checker.h>
-extern inline CONSTRUCTOR(CIStateCheckerState,
-                          CIStateCheckerState,
-                          Usize flags);
+extern inline CONSTRUCTOR(CIStateCheckerState, CIStateCheckerState, int flags);
 
 extern inline void
 increment_copy__CIStateCheckerState(CIStateCheckerState *self);
@@ -726,14 +724,36 @@ increment_copy__CIStateCheckerState(CIStateCheckerState *self);
 extern inline void
 decrement_copy__CIStateCheckerState(CIStateCheckerState *self);
 
+extern inline CONSTRUCTOR(CIStateCheckerValueFunction,
+                          CIStateCheckerValueFunction,
+                          Rc *name,
+                          HashMap *final_params_state,
+                          struct CIStateCheckerValue *return_value);
+
+extern inline CONSTRUCTOR(CIStateCheckerValueFunctionPtr,
+                          CIStateCheckerValueFunctionPtr,
+                          CIStateCheckerState state,
+                          Vec *params,
+                          struct CIStateCheckerValue *return_value);
+
+extern inline CONSTRUCTOR(CIStateCheckerValuePtr,
+                          CIStateCheckerValuePtr,
+                          CIStateCheckerState state,
+                          struct CIStateCheckerValue *value);
+
 extern inline CONSTRUCTOR(CIStateCheckerValueStruct,
                           CIStateCheckerValueStruct,
-                          HashMap *values);
+                          Rc *name,
+                          HashMap *values,
+                          CIStateCheckerState state);
 
 extern inline CONSTRUCTOR(CIStateCheckerValueVariable,
                           CIStateCheckerValueVariable,
-                          const String *name,
-                          CIStateCheckerState state);
+                          Rc *name,
+                          struct CIStateCheckerValue *value);
+
+extern inline CIStateCheckerValue *
+ref__CIStateCheckerValue(CIStateCheckerValue *self);
 
 extern inline CONSTRUCTOR(CIStateChecker,
                           CIStateChecker,
