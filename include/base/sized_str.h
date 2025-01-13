@@ -28,11 +28,7 @@
 #include <base/macros.h>
 #include <base/types.h>
 
-#define SIZED_STR_FROM_RAW(b)             \
-    (SizedStr)                            \
-    {                                     \
-        .buffer = b, .len = sizeof(b) - 1 \
-    }
+#define SIZED_STR_FROM_RAW(b) (SizedStr){ .buffer = b, .len = sizeof(b) - 1 }
 
 typedef struct SizedStr
 {
