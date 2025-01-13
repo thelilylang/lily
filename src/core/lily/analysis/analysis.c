@@ -3421,7 +3421,7 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
 
             if (!left &&
                 expr->binary.left->kind == LILY_AST_EXPR_KIND_WILDCARD &&
-                expr->binary.kind == LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN) {
+                expr->binary.kind == LILY_AST_EXPR_BINARY_KIND_ASSIGN) {
                 return NEW_VARIANT(
                   LilyCheckedExpr,
                   uniter,
@@ -3439,7 +3439,7 @@ check_binary_expr__LilyAnalysis(LilyAnalysis *self,
               scope,
               safety_mode,
               false,
-              expr->binary.kind == LILY_CHECKED_EXPR_BINARY_KIND_ASSIGN
+              expr->binary.kind == LILY_AST_EXPR_BINARY_KIND_ASSIGN
                 ? left->data_type
                 : NULL);
 
