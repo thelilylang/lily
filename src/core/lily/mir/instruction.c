@@ -2317,13 +2317,13 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     not,
-                    LilyMirInstructionSrc not )
+                    LilyMirInstructionSrc not)
 {
     LilyMirInstruction *self = lily_malloc(sizeof(LilyMirInstruction));
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_NOT;
     self->debug_info = NULL;
-    self->not = not ;
+    self->not = not;
 
     return self;
 }
@@ -2842,7 +2842,7 @@ IMPL_FOR_DEBUG(to_string, LilyMirInstruction, const LilyMirInstruction *self)
         case LILY_MIR_INSTRUCTION_KIND_NOT:
             res = format__String(
               "\x1b[34mnot\x1b[0m {Sr}",
-              to_string__Debug__LilyMirInstructionSrc(&self->not ));
+              to_string__Debug__LilyMirInstructionSrc(&self->not));
             break;
         case LILY_MIR_INSTRUCTION_KIND_REF_PTR:
             res = format__String(
@@ -3314,7 +3314,7 @@ VARIANT_DESTRUCTOR(LilyMirInstruction, non_nil, LilyMirInstruction *self)
 VARIANT_DESTRUCTOR(LilyMirInstruction, not, LilyMirInstruction *self)
 {
     FREE_DEBUG_INFO(self);
-    FREE(LilyMirInstructionSrc, &self->not );
+    FREE(LilyMirInstructionSrc, &self->not);
     lily_free(self);
 }
 

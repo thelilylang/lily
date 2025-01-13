@@ -1560,7 +1560,7 @@ LilyLLVMBuildInst(const LilyIrLlvm *Self,
         case LILY_MIR_INSTRUCTION_KIND_NON_NIL:
             TODO("non nil");
         case LILY_MIR_INSTRUCTION_KIND_NOT:
-            res = LilyLLVMBuildNot(Self, Scope, Pending, Inst->not .src, Name);
+            res = LilyLLVMBuildNot(Self, Scope, Pending, Inst->not.src, Name);
             break;
         case LILY_MIR_INSTRUCTION_KIND_REF_PTR:
             TODO("ref ptr");

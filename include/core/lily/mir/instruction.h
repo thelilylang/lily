@@ -1479,7 +1479,7 @@ typedef struct LilyMirInstruction
         LilyMirInstructionSrc makeref;
         LilyMirInstructionSrc makeopt;
         LilyMirInstruction *non_nil;
-        LilyMirInstructionSrc not ;
+        LilyMirInstructionSrc not;
         LilyMirInstructionReg reg;
         LilyMirInstructionSrc ref_ptr;
         LilyMirInstruction *ret;
@@ -2041,7 +2041,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 VARIANT_CONSTRUCTOR(LilyMirInstruction *,
                     LilyMirInstruction,
                     not,
-                    LilyMirInstructionSrc not );
+                    LilyMirInstructionSrc not);
 
 /**
  *

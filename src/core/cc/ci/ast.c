@@ -5196,14 +5196,14 @@ search_identifier__CIExprIdentifierID(const String *name,
                           (const void *(*)(const CIScope *, const String *)) &
                             search_variable__CIScope };
     static CIExprIdentifierID (*constructor_functions[])(const void *) = {
-        (CIExprIdentifierID(*)(const void *)) &
-          VARIANT_CONSTRUCTOR_NAME(CIExprIdentifierID, enum_variant),
-        (CIExprIdentifierID(*)(const void *)) &
-          VARIANT_CONSTRUCTOR_NAME(CIExprIdentifierID, function),
-        (CIExprIdentifierID(*)(const void *)) &
-          VARIANT_CONSTRUCTOR_NAME(CIExprIdentifierID, label),
-        (CIExprIdentifierID(*)(const void *)) &
-          VARIANT_CONSTRUCTOR_NAME(CIExprIdentifierID, variable),
+        (CIExprIdentifierID(*)(const void *))&VARIANT_CONSTRUCTOR_NAME(
+          CIExprIdentifierID, enum_variant),
+        (CIExprIdentifierID(*)(const void *))&VARIANT_CONSTRUCTOR_NAME(
+          CIExprIdentifierID, function),
+        (CIExprIdentifierID(*)(const void *))&VARIANT_CONSTRUCTOR_NAME(
+          CIExprIdentifierID, label),
+        (CIExprIdentifierID(*)(const void *))&VARIANT_CONSTRUCTOR_NAME(
+          CIExprIdentifierID, variable),
     };
 
     for (; scope; scope = scope->parent ? get_scope_from_id__CIResultFile(

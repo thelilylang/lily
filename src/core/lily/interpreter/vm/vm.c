@@ -3808,7 +3808,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
 
     VM_INST(LILY_MIR_INSTRUCTION_KIND_NOT)
     {
-        push_value__LilyInterpreterVM(self, current_block_inst->not .src);
+        push_value__LilyInterpreterVM(self, current_block_inst->not.src);
 
         LilyInterpreterValue rhs = VM_POP(stack);
 
