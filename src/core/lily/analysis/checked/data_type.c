@@ -907,7 +907,7 @@ eq__LilyCheckedDataType(LilyCheckedDataType *self, LilyCheckedDataType *other)
                         return true;
                     } else if (self->array.kind != other->array.kind &&
                                other->array.kind ==
-                                 LILY_CHECKED_DATA_TYPE_KIND_UNKNOWN) {
+                                 LILY_CHECKED_DATA_TYPE_ARRAY_KIND_UNKNOWN) {
                         other->array.kind = self->array.kind;
 
                         if (other->array.kind ==
