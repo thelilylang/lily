@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CORE_CC_CI_PREPROCESSOR_CONDITION_RESOLVER_H
-#define LILY_CORE_CC_CI_PREPROCESSOR_CONDITION_RESOLVER_H
+#ifndef LILY_CORE_CC_CI_RESOLVER_EXPR_H
+#define LILY_CORE_CC_CI_RESOLVER_EXPR_H
 
 #include <core/cc/ci/ast.h>
 #include <core/cc/ci/parser.h>
@@ -79,4 +79,4 @@ to_literal_integer_value__CIResolverExpr(CIExpr *expr);
 CIExpr *
 run__CIResolverExpr(const CIResolverExpr *self, CIExpr *expr);
 
-#endif // LILY_CORE_CC_CI_PREPROCESSOR_CONDITION_RESOLVER_H
+#endif // LILY_CORE_CC_CI_RESOLVER_EXPR_H
