@@ -18,7 +18,7 @@ COMMIT_MESSAGE="$1"
 MAX_COMMIT_MESSAGE_LEN=72
 
 ACTIONS="build|chore|ci|feat|fix|docs|perf|refactor|style|test"
-TOPICS="base|bin/ci|bin/lily|bin/lilyc|cli/lily|cli/lilyc|command/lily|command/lilyc|cc|cc/ci|cpp|ex|global|lib/builtin|lib/cc|lib/local|lib/std|lib/sys|lily|lily/analysis|lily/compiler|lily/diagnostic|lily/functions|lily/mir|lily/package|lily/parser|lily/precompiler|lily/preparser|lily/scanner|lily/shared|lsp|patches|scripts|shared"
+TOPICS="base|bin/ci|bin/lily|bin/lilyc|cli/lily|cli/lilyc|command/lily|command/lilyc|cc|cc/ci|cc/runtime|cpp|ex|global|lib/builtin|lib/cc|lib/local|lib/std|lib/sys|lily|lily/analysis|lily/compiler|lily/diagnostic|lily/functions|lily/mir|lily/package|lily/parser|lily/precompiler|lily/preparser|lily/scanner|lily/shared|lsp|patches|scripts|shared"
 
 COMMIT_MESSAGE_PATTERN="^([a-zA-Z]+)\(([^)]+)\): (.+)$"
 
