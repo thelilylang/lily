@@ -251,6 +251,7 @@ find_library(ZSTD NAMES libzstd.a libzstdstatic.a zstd NAMES_PER_DIR)
 list(APPEND LILY_LLVM_LIBS "${ZLIB};${ZSTD}")
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/core/cc)
+add_subdirectory(${CMAKE_SOURCE_DIR}/lib/cc/std/src)
 
 # lily_libyaml
 set(LIBYAML_SRC
