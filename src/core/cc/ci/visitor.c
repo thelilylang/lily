@@ -838,21 +838,14 @@ visit_function_data_type__CIVisitor(CIVisitor *self,
                                decl_generic_params);
 
     if (function->params) {
-        for (Usize i = 0; i < function->params->len; ++i) {
-            CIDeclFunctionParam *param = get__Vec(function->params, i);
+        for (Usize i = 0; i < function->params->content->len; ++i) {
+            CIDeclFunctionParam *param = get__Vec(function->params->content, i);
 
             visit_data_type__CIVisitor(self,
                                        param->data_type,
                                        called_generic_params,
                                        decl_generic_params);
         }
-    }
-
-    if (function->function_data_type) {
-        visit_data_type__CIVisitor(self,
-                                   function->function_data_type,
-                                   called_generic_params,
-                                   decl_generic_params);
     }
 }
 
@@ -878,9 +871,9 @@ visit_data_type__CIVisitor(CIVisitor *self,
 
             break;
         case CI_DATA_TYPE_KIND_PTR:
-            if (data_type->ptr) {
+            if (data_type->ptr.data_type) {
                 visit_data_type__CIVisitor(self,
-                                           data_type->ptr,
+                                           data_type->ptr.data_type,
                                            called_generic_params,
                                            decl_generic_params);
             }
@@ -1418,12 +1411,12 @@ visit_function_params__CIVisitor(CIVisitor *self,
                                  const CIDecl *decl,
                                  CIGenericParams *called_generic_params)
 {
-    const Vec *params = get_function_params__CIDecl(decl);
+    const CIDeclFunctionParams *params = get_function_params__CIDecl(decl);
     CIGenericParams *decl_generic_params = get_generic_params__CIDecl(decl);
 
     if (params) {
-        for (Usize i = 0; i < params->len; ++i) {
-            const CIDeclFunctionParam *param = get__Vec(params, i);
+        for (Usize i = 0; i < params->content->len; ++i) {
+            const CIDeclFunctionParam *param = get__Vec(params->content, i);
 
             if (param->data_type) {
                 visit_data_type__CIVisitor(self,

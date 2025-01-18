@@ -96,9 +96,15 @@ load__CIBuiltinFunction()
 
     builtins[CI_BUILTIN_FUNCTION_MEMCPY] = CI_BUILTIN_FUNCTION(
       CI_BUILTIN_FUNCTION_MEMCPY,
-      NEW_VARIANT(CIDataType, ptr, NEW(CIDataType, CI_DATA_TYPE_KIND_VOID)),
+      NEW_VARIANT(
+        CIDataType,
+        ptr,
+        NEW(CIDataTypePtr, NULL, NEW(CIDataType, CI_DATA_TYPE_KIND_VOID))),
       2,
-      NEW_VARIANT(CIDataType, ptr, NEW(CIDataType, CI_DATA_TYPE_KIND_VOID)),
+      NEW_VARIANT(
+        CIDataType,
+        ptr,
+        NEW(CIDataTypePtr, NULL, NEW(CIDataType, CI_DATA_TYPE_KIND_VOID))),
       NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT));
     builtins[CI_BUILTIN_FUNCTION_VA_START] = CI_BUILTIN_FUNCTION(
       CI_BUILTIN_FUNCTION_VA_START,

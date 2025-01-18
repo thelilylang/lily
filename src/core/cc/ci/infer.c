@@ -490,20 +490,19 @@ infer_expr_identifier_data_type__CIInfer(
                                       function_return_data_type,
                                       called_generic_params,
                                       decl_generic_params);
-            const Vec *function_params = get_function_params__CIDecl(decl);
-            // NOTE: Maybe use ref count instead of.
-            Vec *cloned_function_params =
-              function_params
-                ? clone_params__CIDeclFunctionParam(function_params)
-                : NULL;
+            CIDeclFunctionParams *function_params =
+              (CIDeclFunctionParams *)get_function_params__CIDecl(decl);
 
-            return NEW_VARIANT(CIDataType,
-                               function,
-                               NEW(CIDataTypeFunction,
-                                   NULL,
-                                   cloned_function_params,
-                                   resolved_function_return_data_type,
-                                   NULL));
+            return NEW_VARIANT(
+              CIDataType,
+              function,
+              NEW(CIDataTypeFunction,
+                  NULL,
+                  function_params ? ref__CIDeclFunctionParams(function_params)
+                                  : NULL,
+                  resolved_function_return_data_type,
+                  NULL,
+                  NULL));
         }
         case CI_EXPR_IDENTIFIER_ID_KIND_LABEL:
         label:
@@ -574,14 +573,17 @@ infer_expr_literal_data_type__CIInfer(const CIResultFile *file,
         case CI_EXPR_LITERAL_KIND_SIGNED_INT:
             return NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
         case CI_EXPR_LITERAL_KIND_STRING: {
-            CIDataType *string_dt = NEW_VARIANT(
-              CIDataType,
-              array,
-              NEW_VARIANT(CIDataTypeArray,
-                          sized,
-                          NEW(CIDataType, CI_DATA_TYPE_KIND_CHAR),
-                          NULL,
-                          GET_PTR_RC(String, literal->string)->len));
+            CIDataType *string_dt =
+              NEW_VARIANT(CIDataType,
+                          array,
+                          NEW_VARIANT(CIDataTypeArray,
+                                      sized,
+                                      NEW(CIDataType, CI_DATA_TYPE_KIND_CHAR),
+                                      NULL,
+                                      GET_PTR_RC(String, literal->string)->len,
+                                      NULL,
+                                      false,
+                                      CI_DATA_TYPE_QUALIFIER_NONE));
 
             set_context__CIDataType(string_dt, CI_DATA_TYPE_CONTEXT_STACK);
 

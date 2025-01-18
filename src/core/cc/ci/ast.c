@@ -1789,6 +1789,10 @@ DESTRUCTOR(CIDataTypeArray, const CIDataTypeArray *self)
     if (self->name) {
         FREE_RC(String, self->name);
     }
+
+    if (self->size_expr) {
+        FREE(CIExpr, self->size_expr);
+    }
 }
 
 #ifdef ENV_DEBUG
@@ -1840,21 +1844,18 @@ String *
 IMPL_FOR_DEBUG(to_string, CIDataTypeFunction, const CIDataTypeFunction *self)
 {
     String *res = format__String(
-      "CIDataTypeFunction{{ name = {s}, params =",
-      self->name ? GET_PTR_RC(String, self->name)->buffer : "NULL");
-
-    if (self->params) {
-        DEBUG_VEC_STRING(self->params, res, CIDeclFunctionParam);
-    } else {
-        push_str__String(res, " NULL");
-    }
+      "CIDataTypeFunction{{ name = {s}, params = {Sr}",
+      self->name ? GET_PTR_RC(String, self->name)->buffer : "NULL",
+      self->params ? to_string__Debug__CIDeclFunctionParams(self->params)
+                   : from__String("NULL"));
 
     {
         String *s = format__String(
-          ", return_data_type = {Sr}, function_data_type = {Sr} }",
+          ", return_data_type = {Sr}, generic_params = {Sr}, parent_scope = {{ "
+          "... } }",
           to_string__Debug__CIDataType(self->return_data_type),
-          self->function_data_type
-            ? to_string__Debug__CIDataType(self->function_data_type)
+          self->generic_params
+            ? to_string__Debug__CIGenericParams(self->generic_params)
             : from__String("NULL"));
 
         APPEND_AND_FREE(res, s);
@@ -1871,16 +1872,34 @@ DESTRUCTOR(CIDataTypeFunction, const CIDataTypeFunction *self)
     }
 
     if (self->params) {
-        FREE_BUFFER_ITEMS(
-          self->params->buffer, self->params->len, CIDeclFunctionParam);
-        FREE(Vec, self->params);
+        FREE(CIDeclFunctionParams, self->params);
     }
 
     FREE(CIDataType, self->return_data_type);
 
-    if (self->function_data_type) {
-        FREE(CIDataType, self->function_data_type);
+    if (self->generic_params) {
+        FREE(CIGenericParams, self->generic_params);
     }
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDataTypePtr, const CIDataTypePtr *self)
+{
+    return format__String("CIDataTypePtr{{ name = {s}, data_type = {Sr} }",
+                          self->name ? GET_PTR_RC(String, self->name)->buffer
+                                     : "NULL",
+                          to_string__Debug__CIDataType(self->data_type));
+}
+#endif
+
+DESTRUCTOR(CIDataTypePtr, const CIDataTypePtr *self)
+{
+    if (self->name) {
+        FREE_RC(String, self->name);
+    }
+
+    FREE(CIDataType, self->data_type);
 }
 
 #ifdef ENV_DEBUG
@@ -2099,7 +2118,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, generic, Rc *generic)
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, ptr, CIDataType *ptr)
+VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, ptr, CIDataTypePtr ptr)
 {
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
@@ -2181,7 +2200,12 @@ clone__CIDataType(const CIDataType *self)
                       NEW_VARIANT(CIDataTypeArray,
                                   none,
                                   clone__CIDataType(self->array.data_type),
-                                  self->array.name));
+                                  self->array.name,
+                                  self->array.size_expr
+                                    ? ref__CIExpr(self->array.size_expr)
+                                    : NULL,
+                                  self->array.is_static,
+                                  self->array.qualifier));
 
                     break;
                 case CI_DATA_TYPE_ARRAY_KIND_SIZED:
@@ -2192,7 +2216,10 @@ clone__CIDataType(const CIDataType *self)
                                   sized,
                                   clone__CIDataType(self->array.data_type),
                                   self->array.name,
-                                  self->array.size));
+                                  self->array.size,
+                                  ref__CIExpr(self->array.size_expr),
+                                  self->array.is_static,
+                                  self->array.qualifier));
 
                     break;
                 default:
@@ -2231,10 +2258,10 @@ clone__CIDataType(const CIDataType *self)
         case CI_DATA_TYPE_KIND_FUNCTION: {
             Vec *params = NEW(Vec); // Vec<CIDataType*>*
 
-            for (Usize i = 0; i < self->function.params->len; ++i) {
-                push__Vec(
-                  params,
-                  clone__CIDataType(get__Vec(self->function.params, i)));
+            for (Usize i = 0; i < self->function.params->content->len; ++i) {
+                push__Vec(params,
+                          clone__CIDataType(
+                            get__Vec(self->function.params->content, i)));
             }
 
             res = NEW_VARIANT(
@@ -2242,9 +2269,10 @@ clone__CIDataType(const CIDataType *self)
               function,
               NEW(CIDataTypeFunction,
                   self->function.name,
-                  params,
+                  NEW(CIDeclFunctionParams, params),
                   clone__CIDataType(self->function.return_data_type),
-                  clone__CIDataType(self->function.function_data_type)));
+                  clone__CIGenericParams(self->function.generic_params),
+                  self->function.parent_scope));
 
             break;
         }
@@ -2253,8 +2281,11 @@ clone__CIDataType(const CIDataType *self)
 
             break;
         case CI_DATA_TYPE_KIND_PTR:
-            res = NEW_VARIANT(
-              CIDataType, ptr, self->ptr ? clone__CIDataType(self->ptr) : NULL);
+            res = NEW_VARIANT(CIDataType,
+                              ptr,
+                              NEW(CIDataTypePtr,
+                                  self->ptr.name,
+                                  clone__CIDataType(self->ptr.data_type)));
 
             break;
         case CI_DATA_TYPE_KIND_STRUCT: {
@@ -2363,7 +2394,7 @@ serialize__CIDataType(const CIDataType *self, String *buffer)
             break;
         case CI_DATA_TYPE_KIND_FUNCTION:
             serialize__CIDataType(self->function.return_data_type, buffer);
-            serialize_vec__CIDataType(self->function.params, buffer);
+            serialize_params__CIDataType(self->function.params, buffer);
 
             break;
         case CI_DATA_TYPE_KIND_GENERIC:
@@ -2374,9 +2405,7 @@ serialize__CIDataType(const CIDataType *self, String *buffer)
 
             break;
         case CI_DATA_TYPE_KIND_PTR:
-            if (self->ptr) {
-                serialize__CIDataType(self->ptr, buffer);
-            }
+            serialize__CIDataType(self->ptr.data_type, buffer);
 
             break;
         case CI_DATA_TYPE_KIND_STRUCT:
@@ -2438,6 +2467,17 @@ serialize_vec__CIDataType(const Vec *data_types, String *buffer)
     }
 }
 
+void
+serialize_params__CIDataType(const struct CIDeclFunctionParams *params,
+                             String *buffer)
+{
+    for (Usize i = 0; i < params->content->len; ++i) {
+        CIDeclFunctionParam *param = get__Vec(params->content, i);
+
+        serialize__CIDataType(param->data_type, buffer);
+    }
+}
+
 bool
 eq__CIDataType(const CIDataType *self, const CIDataType *other)
 {
@@ -2463,7 +2503,7 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
                 case CI_DATA_TYPE_ARRAY_KIND_SIZED:
                     return self->array.size == other->array.size;
                 case CI_DATA_TYPE_ARRAY_KIND_NONE:
-                    return false;
+                    return true;
                 default:
                     UNREACHABLE("unknown variant");
             }
@@ -2484,25 +2524,21 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
                                          other->enum_.variants);
         }
         case CI_DATA_TYPE_KIND_FUNCTION:
-            if (!(self->function.function_data_type &&
-                  other->function.function_data_type) ||
-                !eq__CIDataType(self->function.function_data_type,
-                                other->function.function_data_type) ||
-                !eq__CIDataType(self->function.return_data_type,
+            if (!eq__CIDataType(self->function.return_data_type,
                                 other->function.return_data_type)) {
                 return false;
             } else if (self->function.params && other->function.params
-                         ? self->function.params->len !=
-                             other->function.params->len
+                         ? self->function.params->content->len !=
+                             other->function.params->content->len
                          : true) {
                 return !self->function.params && !other->function.params;
             }
 
-            for (Usize i = 0; i < self->function.params->len; ++i) {
+            for (Usize i = 0; i < self->function.params->content->len; ++i) {
                 CIDeclFunctionParam *self_param =
-                  get__Vec(self->function.params, i);
+                  get__Vec(self->function.params->content, i);
                 CIDeclFunctionParam *other_param =
-                  get__Vec(other->function.params, i);
+                  get__Vec(other->function.params->content, i);
 
                 if (!eq__CIDataType(self_param->data_type,
                                     other_param->data_type)) {
@@ -2515,13 +2551,7 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
             return !strcmp(GET_PTR_RC(String, self->generic)->buffer,
                            GET_PTR_RC(String, other->generic)->buffer);
         case CI_DATA_TYPE_KIND_PTR:
-            if (!self->ptr && !other->ptr) {
-                return true;
-            }
-
-            return self->ptr && other->ptr
-                     ? eq__CIDataType(self->ptr, other->ptr)
-                     : false;
+            return eq__CIDataType(self->ptr.data_type, other->ptr.data_type);
         case CI_DATA_TYPE_KIND_STRUCT:
         case CI_DATA_TYPE_KIND_UNION: {
             const CIDeclStructFields *self_fields =
@@ -2628,7 +2658,7 @@ get_ptr__CIDataType(const CIDataType *self)
 {
     switch (self->kind) {
         case CI_DATA_TYPE_KIND_PTR:
-            return self->ptr;
+            return self->ptr.data_type;
         default:
             return NULL;
     }
@@ -2650,7 +2680,7 @@ get_generic_params__CIDataType(const CIDataType *self)
 }
 
 bool
-has_name__CIDataType(const CIDataType *self)
+has_variable_name__CIDataType(const CIDataType *self)
 {
     switch (self->kind) {
         case CI_DATA_TYPE_KIND_ARRAY:
@@ -2658,9 +2688,20 @@ has_name__CIDataType(const CIDataType *self)
                 return true;
             }
 
-            return has_name__CIDataType(self->array.data_type);
+            return has_variable_name__CIDataType(self->array.data_type);
+        case CI_DATA_TYPE_KIND_PTR:
+            if (self->ptr.name) {
+                return true;
+            }
+
+            return has_variable_name__CIDataType(self->ptr.data_type);
         case CI_DATA_TYPE_KIND_FUNCTION:
-            return self->function.name;
+            if (self->function.name) {
+                return true;
+            }
+
+            return has_variable_name__CIDataType(
+              self->function.return_data_type);
         default:
             return false;
     }
@@ -2700,6 +2741,29 @@ get_name__CIDataType(const CIDataType *self)
     }
 }
 
+bool
+set_name__CIDataType(CIDataType *self, Rc *name)
+{
+    switch (self->kind) {
+        case CI_DATA_TYPE_KIND_ARRAY:
+            self->array.name = name ? ref__Rc(name) : NULL;
+
+            break;
+        case CI_DATA_TYPE_KIND_FUNCTION:
+            self->function.name = name ? ref__Rc(name) : NULL;
+
+            break;
+        case CI_DATA_TYPE_KIND_PTR:
+            self->ptr.name = name ? ref__Rc(name) : NULL;
+
+            break;
+        default:
+            return false;
+    }
+
+    return true;
+}
+
 String *
 serialize_name__CIDataType(const CIDataType *self,
                            const CIGenericParams *called_generic_params)
@@ -2716,22 +2780,35 @@ serialize_name__CIDataType(const CIDataType *self,
 CIDataType *
 wrap_ptr__CIDataType(CIDataType *self, int ptr_ctx)
 {
-    switch (self->kind) {
-        case CI_DATA_TYPE_KIND_FUNCTION:
-            self->function.function_data_type =
-              NEW_VARIANT(CIDataType, ptr, self->function.function_data_type);
+    CIDataType *res =
+      NEW_VARIANT(CIDataType, ptr, NEW(CIDataTypePtr, NULL, self));
 
-            set_context__CIDataType(self->function.function_data_type, ptr_ctx);
+    set_context__CIDataType(res, ptr_ctx);
 
-            return self;
-        default: {
-            CIDataType *res = NEW_VARIANT(CIDataType, ptr, self);
+    return res;
+}
 
-            set_context__CIDataType(res, ptr_ctx);
+CIDataType *
+get_function__CIDataType(CIDataType *self)
+{
+    for (CIDataType *current_data_type = self; self;) {
+        switch (current_data_type->kind) {
+            case CI_DATA_TYPE_KIND_ARRAY:
+                current_data_type = current_data_type->array.data_type;
 
-            return res;
+                break;
+            case CI_DATA_TYPE_KIND_PTR:
+                current_data_type = current_data_type->ptr.data_type;
+
+                break;
+            case CI_DATA_TYPE_KIND_FUNCTION:
+                return current_data_type;
+            default:
+                return NULL;
         }
     }
+
+    return NULL;
 }
 
 #ifdef ENV_DEBUG
@@ -2786,8 +2863,7 @@ IMPL_FOR_DEBUG(to_string, CIDataType, const CIDataType *self)
               to_string__Debug__CIDataTypeKind(self->kind),
               to_string__Debug__CIDataTypeContext(self->ctx),
               to_string__Debug__CIDataTypeQualifier(self->qualifier),
-              self->ptr ? to_string__Debug__CIDataType(self->ptr)
-                        : from__String("NULL"));
+              to_string__Debug__CIDataTypePtr(&self->ptr));
         case CI_DATA_TYPE_KIND_STRUCT:
             return format__String(
               "CIDataType{{ kind = {s}, ctx = {Sr}, qualifier = {Sr}, struct_ "
@@ -2856,10 +2932,7 @@ VARIANT_DESTRUCTOR(CIDataType, generic, CIDataType *self)
 
 VARIANT_DESTRUCTOR(CIDataType, ptr, CIDataType *self)
 {
-    if (self->ptr) {
-        FREE(CIDataType, self->ptr);
-    }
-
+    FREE(CIDataTypePtr, &self->ptr);
     lily_free(self);
 }
 
@@ -3403,20 +3476,6 @@ clone_params__CIDeclFunctionParam(const Vec *params)
     return cloned_params;
 }
 
-bool
-is_variadic__CIDeclFunctionParam(const Vec *params)
-{
-    for (Usize i = 0; i < params->len; ++i) {
-        CIDeclFunctionParam *param = get__Vec(params, i);
-
-        if (param->kind == CI_DECL_FUNCTION_PARAM_KIND_VARIADIC) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclFunctionParam, const CIDeclFunctionParam *self)
@@ -3468,6 +3527,72 @@ DESTRUCTOR(CIDeclFunctionParam, CIDeclFunctionParam *self)
         default:
             UNREACHABLE("unknown variant");
     }
+}
+
+CONSTRUCTOR(CIDeclFunctionParams *, CIDeclFunctionParams, Vec *content)
+{
+    CIDeclFunctionParams *self = lily_malloc(sizeof(CIDeclFunctionParams));
+
+    self->content = content;
+    self->ref_count = 0;
+
+    return self;
+}
+
+CIDeclFunctionParams *
+clone__CIDeclFunctionParams(CIDeclFunctionParams *self)
+{
+    Vec *content = NEW(Vec);
+
+    for (Usize i = 0; i < self->content->len; ++i) {
+        push__Vec(content,
+                  clone__CIDeclFunctionParam(get__Vec(self->content, i)));
+    }
+
+    return NEW(CIDeclFunctionParams, content);
+}
+
+bool
+is_variadic__CIDeclFunctionParams(const CIDeclFunctionParams *self)
+{
+    for (Usize i = 0; i < self->content->len; ++i) {
+        CIDeclFunctionParam *param = get__Vec(self->content, i);
+
+        if (param->kind == CI_DECL_FUNCTION_PARAM_KIND_VARIADIC) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CIDeclFunctionParams,
+               const CIDeclFunctionParams *self)
+{
+    String *res = from__String("CIDeclFunctionParams{ content =");
+
+    DEBUG_VEC_STRING(self->content, res, CIDeclFunctionParam);
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CIDeclFunctionParams, CIDeclFunctionParams *self)
+{
+    if (self->ref_count > 0) {
+        --self->ref_count;
+        return;
+    }
+
+    FREE_BUFFER_ITEMS(
+      self->content->buffer, self->content->len, CIDeclFunctionParam);
+    FREE(Vec, self->content);
+    lily_free(self);
 }
 
 CONSTRUCTOR(CIDeclFunctionBody *, CIDeclFunctionBody, CIScopeID *scope_id)
@@ -3529,29 +3654,18 @@ match_prototype__CIDeclFunction(const CIDeclFunction *self,
 String *
 IMPL_FOR_DEBUG(to_string, CIDeclFunction, const CIDeclFunction *self)
 {
-    String *res =
-      format__String("CIDeclFunction{{ name = {S}, return_data_type = {Sr}, "
-                     "generic_params = {Sr}, params =",
-                     GET_PTR_RC(String, self->name),
-                     to_string__Debug__CIDataType(self->return_data_type),
-                     self->generic_params
-                       ? to_string__Debug__CIGenericParams(self->generic_params)
-                       : from__String("NULL"));
-
-    if (self->params) {
-        DEBUG_VEC_STRING(self->params, res, CIDeclFunctionParam);
-    } else {
-        push_str__String(res, " NULL");
-    }
-
-    {
-        String *s = format__String(
-          ", body = {Sr}",
-          self->body ? to_string__Debug__CIDeclFunctionBody(self->body)
-                     : from__String("NULL"));
-
-        APPEND_AND_FREE(res, s);
-    }
+    String *res = format__String(
+      "CIDeclFunction{{ name = {S}, return_data_type = {Sr}, "
+      "generic_params = {Sr}, params = {Sr}, body = {Sr}, attributes =",
+      GET_PTR_RC(String, self->name),
+      to_string__Debug__CIDataType(self->return_data_type),
+      self->generic_params
+        ? to_string__Debug__CIGenericParams(self->generic_params)
+        : from__String("NULL"),
+      self->params ? to_string__Debug__CIDeclFunctionParams(self->params)
+                   : from__String("NULL"),
+      self->body ? to_string__Debug__CIDeclFunctionBody(self->body)
+                 : from__String("NULL"));
 
     push_str__String(res, ", attributes =");
 
@@ -3578,9 +3692,7 @@ free_as_prototype__CIDeclFunction(const CIDeclFunction *self)
     }
 
     if (self->params) {
-        FREE_BUFFER_ITEMS(
-          self->params->buffer, self->params->len, CIDeclFunctionParam);
-        FREE(Vec, self->params);
+        FREE(CIDeclFunctionParams, self->params);
     }
 
     if (self->attributes) {
@@ -4402,7 +4514,7 @@ is_local__CIDecl(const CIDecl *self)
     }
 }
 
-const Vec *
+const CIDeclFunctionParams *
 get_function_params__CIDecl(const CIDecl *self)
 {
     switch (self->kind) {
@@ -5278,11 +5390,24 @@ IMPL_FOR_DEBUG(to_string, CIExprIdentifierID, const CIExprIdentifierID *self)
 String *
 IMPL_FOR_DEBUG(to_string, CIExprIdentifier, const CIExprIdentifier *self)
 {
-    return format__String("CIExprIdentifier{{ value = {S}, id = {Sr} }",
-                          GET_PTR_RC(String, self->value),
-                          to_string__Debug__CIExprIdentifierID(&self->id));
+    return format__String(
+      "CIExprIdentifier{{ value = {S}, id = {Sr}, generic_params = {Sr} }",
+      GET_PTR_RC(String, self->value),
+      to_string__Debug__CIExprIdentifierID(&self->id),
+      self->generic_params
+        ? to_string__Debug__CIGenericParams(self->generic_params)
+        : from__String("NULL"));
 }
 #endif
+
+DESTRUCTOR(CIExprIdentifier, const CIExprIdentifier *self)
+{
+    FREE_RC(String, self->value);
+
+    if (self->generic_params) {
+        FREE(CIGenericParams, self->generic_params);
+    }
+}
 
 CONSTRUCTOR(CIExprInitializerItem *,
             CIExprInitializerItem,

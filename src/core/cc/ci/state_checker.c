@@ -487,7 +487,8 @@ build_from_data_type__CIStateCheckerValue(CIDataType *data_type)
               NEW(CIStateCheckerValuePtr,
                   NEW(CIStateCheckerState,
                       data_type->ctx | CI_DATA_TYPE_CONTEXT_UNDEFINED),
-                  build_from_data_type__CIStateCheckerValue(data_type->ptr)));
+                  build_from_data_type__CIStateCheckerValue(
+                    data_type->ptr.data_type)));
         case CI_DATA_TYPE_KIND_STRUCT:
             return build_struct_from_data_type__CIStateCheckerValue(data_type);
         case CI_DATA_TYPE_KIND_UNION:

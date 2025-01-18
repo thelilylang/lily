@@ -389,7 +389,7 @@ unwrap_implicit_ptr_data_type__CIResolverDataType(
               decl_generic_params);
         }
         case CI_DATA_TYPE_KIND_PTR:
-            return data_type->ptr;
+            return data_type->ptr.data_type;
         case CI_DATA_TYPE_KIND_ARRAY:
             return data_type->array.data_type;
         case CI_DATA_TYPE_KIND_NULLPTR_T:
@@ -667,12 +667,15 @@ run__CIResolverDataType(const CIResultFile *file,
 
                 goto exit;
             case CI_DATA_TYPE_KIND_PTR:
-                res = NEW_VARIANT(CIDataType,
-                                  ptr,
-                                  run__CIResolverDataType(file,
-                                                          res->ptr,
-                                                          called_generic_params,
-                                                          decl_generic_params));
+                res = NEW_VARIANT(
+                  CIDataType,
+                  ptr,
+                  NEW(CIDataTypePtr,
+                      NULL,
+                      run__CIResolverDataType(file,
+                                              res->ptr.data_type,
+                                              called_generic_params,
+                                              decl_generic_params)));
 
                 goto exit;
             default:
