@@ -22,16 +22,28 @@
  * SOFTWARE.
  */
 
+#include <errno.h>
 #include <errno_map.h>
+#include <platform.h>
+#include <stddef.h>
+
+static char *__errno_map[] = {
+#define E(id, s) [id] = s,
+#if defined(_CC_STD_LINUX)
+#include <errno_map/linux.h>
+#else
+#error
+#endif
+#undef E
+};
+static size_t __errno_map_length = sizeof(__errno_map) / sizeof(*__errno_map);
 
 char *
-strerror(int errnum)
+__get_errno(int errnum)
 {
-    char *res = __get_errno(errnum);
-
-    if (res) {
-        return res;
+    if (errnum >= 0 && errnum < __errno_map_length) {
+        return __errno_map[errnum];
     }
 
-    return "Unknown error";
+    return NULL;
 }
