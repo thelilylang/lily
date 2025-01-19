@@ -22,16 +22,10 @@
  * SOFTWARE.
  */
 
-#include <errno_map.h>
+#ifndef _CC_STD_ERRNO_MAP_H
+#define _CC_STD_ERRNO_MAP_H
 
 char *
-strerror(int errnum)
-{
-    char *res = __get_errno(errnum);
+__get_errno(int errnum);
 
-    if (res) {
-        return res;
-    }
-
-    return "Unknown error";
-}
+#endif /* _CC_STD_ERRNO_MAP_H */

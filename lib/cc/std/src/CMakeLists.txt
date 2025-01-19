@@ -3,6 +3,7 @@
 if(LILY_COMPILE_LIB_CC_STD)
   set(LIB_CC_STD_SRC
       ${CMAKE_SOURCE_DIR}/lib/cc/std/src/errno.c
+      ${CMAKE_SOURCE_DIR}/lib/cc/std/src/errno_map.c
       ${CMAKE_SOURCE_DIR}/lib/cc/std/src/string/strerror.c
       ${CMAKE_SOURCE_DIR}/lib/cc/std/src/sys/exit.c
       ${CMAKE_SOURCE_DIR}/lib/cc/std/src/sys/write.c)
