@@ -66,7 +66,6 @@ command/lilyc
 
 cc
 cc/ci
-cc/runtime
 
 cpp
 

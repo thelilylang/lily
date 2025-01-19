@@ -67,14 +67,6 @@ format:
 	${CLANG_FORMAT} ./include/core/cc/ci/extensions/*.h
 	${CLANG_FORMAT} ./include/core/cc/ci/resolver/*.h
 	${CLANG_FORMAT} ./include/core/cc/diagnostic/*.h
-	${CLANG_FORMAT} ./include/core/cc/runtime/*.h
-	${CLANG_FORMAT} ./include/core/cc/runtime/call_main/*.h
-	${CLANG_FORMAT} ./include/core/cc/runtime/call_main/linux/*.h
-	${CLANG_FORMAT} ./include/core/cc/runtime/sys/*.h
-	${CLANG_FORMAT} ./include/core/cc/runtime/sys/table/*.h
-	${CLANG_FORMAT} ./include/core/cc/runtime/sys/table/linux/*.h
-	${CLANG_FORMAT} ./include/core/cc/runtime/syscall/*.h
-	${CLANG_FORMAT} ./include/core/cc/runtime/syscall/linux/*.h	
 	${CLANG_FORMAT} ./include/core/cpp/diagnostic/*.h
 	${CLANG_FORMAT} ./include/core/lily/*.h
 	${CLANG_FORMAT} ./include/core/lily/parser/ast/*.h
@@ -129,6 +121,19 @@ format:
 	${CLANG_FORMAT} ./lib/*.h
 	${CLANG_FORMAT} ./lib/builtin/*.h
 	${CLANG_FORMAT} ./lib/builtin/*.c
+	${CLANG_FORMAT} ./lib/cc/std/include/call_main/*.h
+	${CLANG_FORMAT} ./lib/cc/std/include/call_main/linux/*.h
+	${CLANG_FORMAT} ./lib/cc/std/include/errno/*.h
+	${CLANG_FORMAT} ./lib/cc/std/include/sys/*.h
+	${CLANG_FORMAT} ./lib/cc/std/include/sys/table/linux/*.h
+	${CLANG_FORMAT} ./lib/cc/std/include/sys/table/*.h
+	${CLANG_FORMAT} ./lib/cc/std/include/syscall/linux/*.h
+	${CLANG_FORMAT} ./lib/cc/std/include/syscall/*.h
+	${CLANG_FORMAT} ./lib/cc/std/include/utils/*.h
+	${CLANG_FORMAT} ./lib/cc/std/include/*.h
+	${CLANG_FORMAT} ./lib/cc/std/src/string/*.c
+	${CLANG_FORMAT} ./lib/cc/std/src/sys/*.c
+	${CLANG_FORMAT} ./lib/cc/std/src/*.c
 	${CLANG_FORMAT} ./lib/sys/*.h
 	${CLANG_FORMAT} ./lib/sys/*.c
 	${CLANG_FORMAT} ./src/base/*.c
@@ -160,8 +165,6 @@ format:
 	${CLANG_FORMAT} ./src/core/cc/ci/extensions/*.c
 	${CLANG_FORMAT} ./src/core/cc/ci/resolver/*.c
 	${CLANG_FORMAT} ./src/core/cc/diagnostic/*.c
-	${CLANG_FORMAT} ./src/core/cc/runtime/*.c
-	${CLANG_FORMAT} ./src/core/cc/runtime/sys/*.c
 	${CLANG_FORMAT} ./src/core/cc/*.c
 	${CLANG_FORMAT} ./src/core/cpp/diagnostic/*.c
 	${CLANG_FORMAT} ./src/core/lily/parser/ast/*.c
@@ -222,6 +225,7 @@ format:
 	${CLANG_FORMAT} ./tests/core/lily/preparser/*.c
 	${CLANG_FORMAT} ./tests/core/lily/scanner/*.c
 	${CMAKE_FORMAT} ./CMakeLists.txt
+	${CMAKE_FORMAT} ./lib/cc/std/src/CMakeLists.txt
 	${CMAKE_FORMAT} ./src/core/cc/CMakeLists.txt
 	${CMAKE_FORMAT} ./src/core/cc/ci/CMakeLists.txt
 
