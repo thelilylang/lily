@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.9.0 - 2025-02-04
+
+### Added
+
+- Implement embed preprocessor [#699](https://github.com/thelilylang/lily/pull/699)
+- Add new preprocessor tests [#701](https://github.com/thelilylang/lily/pull/701)
+- Add result example [#706](https://github.com/thelilylang/lily/pull/706)
+- Typecheck variadic function called parameter [#707](https://github.com/thelilylang/lily/pull/707)
+- Add a way to disable the state checker [#708](https://github.com/thelilylang/lily/pull/708)
+- Continue to implement the state checker [#710](https://github.com/thelilylang/lily/pull/710)
+- Add experimental cc runtime [#717](https://github.com/thelilylang/lily/pull/717)
+- Implement strerror function [#719](https://github.com/thelilylang/lily/pull/719)
+
+### Fixed
+
+- Fix bug on null character [#700](https://github.com/thelilylang/lily/pull/700)
+- Fix switch statement typecheck [#703](https://github.com/thelilylang/lily/pull/703)
+- Fix bug on substitution of fields and get data type of enum variant [#704](https://github.com/thelilylang/lily/pull/704)
+- Fix segfault on visit of function params [#709](https://github.com/thelilylang/lily/pull/709)
+- Fix warnings in analysis [#713](https://github.com/thelilylang/lily/pull/713)
+- Fix warning in checked data type [#715](https://github.com/thelilylang/lily/pull/715)
+
+### Changed
+
+- Update the license to 2025 [#702](https://github.com/thelilylang/lily/pull/702)
+- Disable typecheck of path binary operator [#705](https://github.com/thelilylang/lily/pull/705)
+- Upgrade to LLVM 18 [#712](https://github.com/thelilylang/lily/pull/712)
+- Beautify files [#714](https://github.com/thelilylang/lily/pull/714)
+- Rename header guard name of expression resolver [#716](https://github.com/thelilylang/lily/pull/716)
+- Refactor libc organization [#718](https://github.com/thelilylang/lily/pull/718)
+- Refactor parsing of declarator [#720](https://github.com/thelilylang/lily/pull/720)
+
 ## 0.8.0 - 2024-12-31
 
 ### Added
