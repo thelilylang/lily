@@ -1208,10 +1208,10 @@ typedef struct CIDataTypeArray
     // NOTE: The only point in having a reference to the name of the variable,
     // parameter or field is when generating the C code.
     Rc *name; // Rc<String*>*?
-    union
-    {
-        Usize size;
-    };
+    Usize size;
+    CIExpr *size_expr; // CIExpr*?
+    bool is_static;
+    int qualifier;
 } CIDataTypeArray;
 
 /**
@@ -1224,12 +1224,18 @@ inline VARIANT_CONSTRUCTOR(CIDataTypeArray,
                            sized,
                            struct CIDataType *data_type,
                            Rc *name,
-                           Usize size)
+                           Usize size,
+                           CIExpr *size_expr,
+                           bool is_static,
+                           int qualifier)
 {
     return (CIDataTypeArray){ .kind = CI_DATA_TYPE_ARRAY_KIND_SIZED,
                               .data_type = data_type,
                               .name = name ? ref__Rc(name) : NULL,
-                              .size = size };
+                              .size = size,
+                              .size_expr = size_expr,
+                              .is_static = is_static,
+                              .qualifier = qualifier };
 }
 
 /**
@@ -1241,12 +1247,19 @@ inline VARIANT_CONSTRUCTOR(CIDataTypeArray,
                            CIDataTypeArray,
                            none,
                            struct CIDataType *data_type,
-                           Rc *name)
+                           Rc *name,
+                           CIExpr *size_expr,
+                           bool is_static,
+                           int qualifier)
 {
     return (CIDataTypeArray){
         .kind = CI_DATA_TYPE_ARRAY_KIND_NONE,
         .data_type = data_type,
         .name = name ? ref__Rc(name) : NULL,
+        .size = 0,
+        .size_expr = size_expr,
+        .is_static = is_static,
+        .qualifier = qualifier,
     };
 }
 
@@ -1305,31 +1318,32 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeEnum, const CIDataTypeEnum *self);
  */
 DESTRUCTOR(CIDataTypeEnum, const CIDataTypeEnum *self);
 
-// <return_data_type>(<function_data_type>)(<params>)
 typedef struct CIDataTypeFunction
 {
-    Rc *name;    // Rc<String*>*?
-    Vec *params; // Vec<CIDeclFunctionParam*>*?
+    Rc *name;                            // Rc<String*>*?
+    struct CIDeclFunctionParams *params; // struct CIDeclFunctionParams*?
     struct CIDataType *return_data_type;
-    struct CIDataType *function_data_type; // struct CIDataType*?
+    CIGenericParams *generic_params; // CIGenericParams*?
+    CIScope *parent_scope;           // CIScope*? (&)
 } CIDataTypeFunction;
 
 /**
  *
  * @brief Construct CIDataTypeFunction type.
- * @param name Rc<String*>*? (&)
  */
 inline CONSTRUCTOR(CIDataTypeFunction,
                    CIDataTypeFunction,
                    Rc *name,
-                   Vec *params,
+                   struct CIDeclFunctionParams *params,
                    struct CIDataType *return_data_type,
-                   struct CIDataType *function_data_type)
+                   CIGenericParams *generic_params,
+                   CIScope *parent_scope)
 {
     return (CIDataTypeFunction){ .name = name ? ref__Rc(name) : NULL,
                                  .params = params,
                                  .return_data_type = return_data_type,
-                                 .function_data_type = function_data_type };
+                                 .generic_params = generic_params,
+                                 .parent_scope = parent_scope };
 }
 
 /**
@@ -1347,6 +1361,42 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeFunction, const CIDataTypeFunction *self);
  * @brief Free CIDataTypeFunction type.
  */
 DESTRUCTOR(CIDataTypeFunction, const CIDataTypeFunction *self);
+
+typedef struct CIDataTypePtr
+{
+    Rc *name; // Rc<String*>*?
+    struct CIDataType *data_type;
+} CIDataTypePtr;
+
+/**
+ *
+ * @brief Construct CIDataTypePtr type.
+ * @param name Rc<String*>*? (&)
+ */
+inline CONSTRUCTOR(CIDataTypePtr,
+                   CIDataTypePtr,
+                   Rc *name,
+                   struct CIDataType *data_type)
+{
+    return (CIDataTypePtr){ .name = name ? ref__Rc(name) : NULL,
+                            .data_type = data_type };
+}
+
+/**
+ *
+ * @brief Convert CIDataTypePtr in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIDataTypePtr, const CIDataTypePtr *self);
+#endif
+
+/**
+ *
+ * @brief Free CIDataTypePtr type.
+ */
+DESTRUCTOR(CIDataTypePtr, const CIDataTypePtr *self);
 
 typedef struct CIDataTypeStruct
 {
@@ -1502,8 +1552,8 @@ typedef struct CIDataType
         Usize builtin; // id of the builtin
         CIDataTypeEnum enum_;
         CIDataTypeFunction function;
-        Rc *generic;            // Rc<String*>*
-        struct CIDataType *ptr; // struct CIDataType*?
+        Rc *generic; // Rc<String*>*
+        CIDataTypePtr ptr;
         CIDataTypeStruct struct_;
         CIDataTypeTypedef typedef_;
         CIDataTypeUnion union_;
@@ -1548,7 +1598,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, generic, Rc *generic);
  *
  * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_PTR).
  */
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, ptr, CIDataType *ptr);
+VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, ptr, CIDataTypePtr ptr);
 
 /**
  *
@@ -1613,6 +1663,15 @@ serialize_vec__CIDataType(const Vec *data_types, String *buffer);
 
 /**
  *
+ * @brief Serialize CIDeclFunctionParams.
+ * @param params const struct CIDeclFunctionParams* (&)
+ */
+void
+serialize_params__CIDataType(const struct CIDeclFunctionParams *params,
+                             String *buffer);
+
+/**
+ *
  * @brief Set context on data type.
  */
 inline void
@@ -1663,10 +1722,10 @@ get_generic_params__CIDataType(const CIDataType *self);
 
 /**
  *
- * @brief Check if the data type has name in reference.
+ * @brief Check if the data type has variable name in reference.
  */
 bool
-has_name__CIDataType(const CIDataType *self);
+has_variable_name__CIDataType(const CIDataType *self);
 
 /**
  *
@@ -1686,6 +1745,15 @@ get_name__CIDataType(const CIDataType *self);
 
 /**
  *
+ * @brief Set name to the given data type.
+ * @param name Rc<String*>*? (&)
+ * @return If the `name` is set, the function returns `true`, otherwise `false`.
+ */
+bool
+set_name__CIDataType(CIDataType *self, Rc *name);
+
+/**
+ *
  * @brief Serialize name from called generic params.
  * @return String*
  */
@@ -1701,6 +1769,14 @@ serialize_name__CIDataType(const CIDataType *self,
  */
 CIDataType *
 wrap_ptr__CIDataType(CIDataType *self, int ptr_ctx);
+
+/**
+ *
+ * @brief Contains function data type in the given data type.
+ * @return CIDataType*? (&)
+ */
+CIDataType *
+get_function__CIDataType(CIDataType *self);
 
 /**
  *
@@ -2123,22 +2199,6 @@ clone__CIDeclFunctionParam(const CIDeclFunctionParam *self);
 
 /**
  *
- * @brief Clone params (Vec<CIDeclFunctionParam*>*)
- * @param params Vec<CIDeclFunctionParam*>* (&)
- */
-Vec *
-clone_params__CIDeclFunctionParam(const Vec *params);
-
-/**
- *
- * @brief Check if the given params contains variadic parametter.
- * @param params Vec<CIDeclFunctionParam*>* (&)
- */
-bool
-is_variadic__CIDeclFunctionParam(const Vec *params);
-
-/**
- *
  * @brief Convert CIDeclFunctionParam in String.
  * @note This function is only used to debug.
  */
@@ -2152,6 +2212,64 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunctionParam, const CIDeclFunctionParam *self);
  * @brief Free CIDeclFunctionParam type.
  */
 DESTRUCTOR(CIDeclFunctionParam, CIDeclFunctionParam *self);
+
+typedef struct CIDeclFunctionParams
+{
+    Usize ref_count;
+    Vec *content; // Vec<CIDeclFunctionParam*>*
+} CIDeclFunctionParams;
+
+/**
+ *
+ * @brief Construct CIDeclFunctionParams type.
+ */
+CONSTRUCTOR(CIDeclFunctionParams *, CIDeclFunctionParams, Vec *content);
+
+/**
+ *
+ * @brief Clone params.
+ * @param params CIDeclFunctionParams* (&)
+ */
+CIDeclFunctionParams *
+clone__CIDeclFunctionParams(CIDeclFunctionParams *self);
+
+/**
+ *
+ * @brief Check if the given params contains variadic parametter.
+ * @param params CIDeclFunctionParams* (&)
+ */
+bool
+is_variadic__CIDeclFunctionParams(const CIDeclFunctionParams *self);
+
+/**
+ *
+ * @brief Increment `ref_count`.
+ * @return CIDeclFunctionParams*
+ */
+inline CIDeclFunctionParams *
+ref__CIDeclFunctionParams(CIDeclFunctionParams *self)
+{
+    ++self->ref_count;
+    return self;
+}
+
+/**
+ *
+ * @brief Convert CIDeclFunctionParams in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string,
+               CIDeclFunctionParams,
+               const CIDeclFunctionParams *self);
+#endif
+
+/**
+ *
+ * @brief Free CIDeclFunctionParams type.
+ */
+DESTRUCTOR(CIDeclFunctionParams, CIDeclFunctionParams *self);
 
 typedef struct CIDeclFunctionBody
 {
@@ -2198,7 +2316,7 @@ typedef struct CIDeclFunction
     Rc *name; // Rc<String*>*
     CIDataType *return_data_type;
     CIGenericParams *generic_params; // CIGenericParams*?
-    Vec *params;                     // Vec<CIDeclFunctionParam*>*?
+    CIDeclFunctionParams *params;    // CIDeclFunctionParams*?
     CIDeclFunctionBody *body;
     Vec *attributes; // Vec<CIAttribute*>*?
 } CIDeclFunction;
@@ -2212,7 +2330,7 @@ inline CONSTRUCTOR(CIDeclFunction,
                    Rc *name,
                    CIDataType *return_data_type,
                    CIGenericParams *generic_params,
-                   Vec *params,
+                   CIDeclFunctionParams *params,
                    CIDeclFunctionBody *body,
                    Vec *attributes)
 {
@@ -3040,9 +3158,9 @@ is_local__CIDecl(const CIDecl *self);
 /**
  *
  * @brief Get function params from declaration.
- * @return const Vec<CIDeclFunctionParam*>*? (&)
+ * @return const CIDeclFunctionParams* (&)
  */
-const Vec *
+const CIDeclFunctionParams *
 get_function_params__CIDecl(const CIDecl *self);
 
 /**
@@ -3689,6 +3807,7 @@ typedef struct CIExprIdentifier
 {
     Rc *value; // Rc<String*>*
     CIExprIdentifierID id;
+    CIGenericParams *generic_params; // CIGenericParams*?
 } CIExprIdentifier;
 
 /**
@@ -3699,9 +3818,12 @@ typedef struct CIExprIdentifier
 inline CONSTRUCTOR(CIExprIdentifier,
                    CIExprIdentifier,
                    Rc *value,
-                   CIExprIdentifierID id)
+                   CIExprIdentifierID id,
+                   CIGenericParams *generic_params)
 {
-    return (CIExprIdentifier){ .value = ref__Rc(value), .id = id };
+    return (CIExprIdentifier){ .value = ref__Rc(value),
+                               .id = id,
+                               .generic_params = generic_params };
 }
 
 /**
@@ -3718,10 +3840,7 @@ IMPL_FOR_DEBUG(to_string, CIExprIdentifier, const CIExprIdentifier *self);
  *
  * @brief Free CIExprIdentifier type.
  */
-inline DESTRUCTOR(CIExprIdentifier, const CIExprIdentifier *self)
-{
-    FREE_RC(String, self->value);
-}
+DESTRUCTOR(CIExprIdentifier, const CIExprIdentifier *self);
 
 typedef struct CIExprInitializerItem
 {

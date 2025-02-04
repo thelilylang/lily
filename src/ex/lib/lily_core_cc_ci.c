@@ -178,13 +178,19 @@ extern inline VARIANT_CONSTRUCTOR(CIDataTypeArray,
                                   sized,
                                   struct CIDataType *data_type,
                                   Rc *name,
-                                  Usize size);
+                                  Usize size,
+                                  CIExpr *size_expr,
+                                  bool is_static,
+                                  int qualifier);
 
 extern inline VARIANT_CONSTRUCTOR(CIDataTypeArray,
                                   CIDataTypeArray,
                                   none,
                                   struct CIDataType *data_type,
-                                  Rc *name);
+                                  Rc *name,
+                                  CIExpr *size_expr,
+                                  bool is_static,
+                                  int qualifier);
 
 extern inline CONSTRUCTOR(CIDataTypeEnum,
                           CIDataTypeEnum,
@@ -192,18 +198,18 @@ extern inline CONSTRUCTOR(CIDataTypeEnum,
                           Vec *variants,
                           CIDataType *data_type);
 
-extern inline CONSTRUCTOR(CIDeclEnum,
-                          CIDeclEnum,
-                          Rc *name,
-                          Vec *variants,
-                          CIDataType *data_type);
-
 extern inline CONSTRUCTOR(CIDataTypeFunction,
                           CIDataTypeFunction,
                           Rc *name,
-                          Vec *params,
+                          struct CIDeclFunctionParams *params,
                           struct CIDataType *return_data_type,
-                          struct CIDataType *function_data_type);
+                          CIGenericParams *generic_params,
+                          CIScope *parent_scope);
+
+extern inline CONSTRUCTOR(CIDataTypePtr,
+                          CIDataTypePtr,
+                          Rc *name,
+                          struct CIDataType *data_type);
 
 extern inline CONSTRUCTOR(CIDataTypeStruct,
                           CIDataTypeStruct,
@@ -254,6 +260,9 @@ extern inline CONSTRUCTOR(CIDeclEnum,
                           Vec *variants,
                           CIDataType *data_type);
 
+extern inline CIDeclFunctionParams *
+ref__CIDeclFunctionParams(CIDeclFunctionParams *self);
+
 extern inline bool
 is_variable__CIDeclFunctionItem(const CIDeclFunctionItem *self);
 
@@ -268,7 +277,7 @@ extern inline CONSTRUCTOR(CIDeclFunction,
                           Rc *name,
                           CIDataType *return_data_type,
                           CIGenericParams *generic_params,
-                          Vec *params,
+                          CIDeclFunctionParams *params,
                           CIDeclFunctionBody *body,
                           Vec *attributes);
 
@@ -458,9 +467,8 @@ extern inline VARIANT_CONSTRUCTOR(CIExprIdentifierID,
 extern inline CONSTRUCTOR(CIExprIdentifier,
                           CIExprIdentifier,
                           Rc *value,
-                          CIExprIdentifierID id);
-
-extern inline DESTRUCTOR(CIExprIdentifier, const CIExprIdentifier *self);
+                          CIExprIdentifierID id,
+                          CIGenericParams *generic_params);
 
 extern inline CIExpr *
 ref__CIExpr(CIExpr *self);

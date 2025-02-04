@@ -1020,14 +1020,14 @@ typecheck_function_call_expr_params__CITypecheck(
   const Vec *called_params,
   struct CITypecheckContext *typecheck_ctx)
 {
-    const Vec *decl_function_call_params =
+    const CIDeclFunctionParams *decl_function_call_params =
       get_function_params__CIDecl(decl_function_call);
     bool is_variadic =
       decl_function_call_params
-        ? is_variadic__CIDeclFunctionParam(decl_function_call_params)
+        ? is_variadic__CIDeclFunctionParams(decl_function_call_params)
         : false;
     Usize decl_function_call_params_len =
-      decl_function_call_params ? decl_function_call_params->len : 0;
+      decl_function_call_params ? decl_function_call_params->content->len : 0;
     Usize called_params_len = called_params->len;
 
     if (decl_function_call_params_len != called_params_len &&
@@ -1047,7 +1047,7 @@ typecheck_function_call_expr_params__CITypecheck(
 
     for (Usize i = 0; i < called_params_len; ++i) {
         const CIDeclFunctionParam *decl_param = get__Vec(
-          decl_function_call_params,
+          decl_function_call_params->content,
           i >= decl_function_call_params_len ? decl_function_call_params_len - 1
                                              : i);
         const CIExpr *called_param = get__Vec(called_params, i);

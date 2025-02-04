@@ -191,6 +191,30 @@ search_typedef_decl_and_generate__CIGenerator(CIGenerator *self,
                                               const String *name);
 
 static void
+generate_pre_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type);
+
+static void
+generate_post_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type);
+
+static void
+generate_array_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type);
+
+static void
+generate_ptr_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type);
+
+/// @param data_type CIDataType* (&)
+/// @param function_data_type CIDataType* (&)
+static void
+generate_function_data_type__CIGenerator(CIGenerator *self,
+                                         CIDataType *data_type,
+                                         CIDataType *function_data_type);
+
+static void
+generate_data_type_base__CIGenerator(CIGenerator *self,
+                                     CIDataType *data_type,
+                                     bool is_on_top);
+
+static void
 generate_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type);
 
 /// @param storage_class_flag const int* (&)
@@ -244,7 +268,8 @@ static inline void
 generate_enum_decl__CIGenerator(CIGenerator *self, const CIDeclEnum *enum_);
 
 static void
-generate_function_params__CIGenerator(CIGenerator *self, const Vec *params);
+generate_function_params__CIGenerator(CIGenerator *self,
+                                      const CIDeclFunctionParams *params);
 
 static void
 generate_function_prototype__CIGenerator(CIGenerator *self,
@@ -855,54 +880,147 @@ search_typedef_decl_and_generate__CIGenerator(CIGenerator *self,
 }
 
 void
-generate_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type)
+generate_pre_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type)
 {
-    CIDataType *subs_data_type = NULL;
-
-    if (self->content.last_session->inherit_props.current_generic_params &&
-        self->content.last_session->inherit_props
-          .current_called_generic_params) {
-        subs_data_type = substitute_data_type__CIGenerator(self, data_type);
-    } else {
-        subs_data_type = ref__CIDataType(data_type);
-    }
-
-    switch (subs_data_type->kind) {
-        case CI_DATA_TYPE_KIND_ANY:
-            UNREACHABLE("cannot generate this data type");
+    switch (data_type->kind) {
+        case CI_DATA_TYPE_KIND_FUNCTION:
+            break;
         case CI_DATA_TYPE_KIND_ARRAY:
-            generate_data_type__CIGenerator(self,
-                                            subs_data_type->array.data_type);
+            return generate_pre_data_type__CIGenerator(
+              self, data_type->array.data_type);
+        default:
+            generate_data_type_base__CIGenerator(self, data_type, false);
+    }
+}
 
-            switch (subs_data_type->array.kind) {
-                case CI_DATA_TYPE_ARRAY_KIND_NONE:
-                    write_String__CIGenerator(
-                      self,
-                      format__String(
-                        " {s}[]",
-                        subs_data_type->array.name
-                          ? GET_PTR_RC(String, subs_data_type->array.name)
-                              ->buffer
-                          : ""));
-
-                    break;
-                case CI_DATA_TYPE_ARRAY_KIND_SIZED:
-                    write_String__CIGenerator(
-                      self,
-                      format__String(
-                        " {s}[{zu}]",
-                        subs_data_type->array.name
-                          ? GET_PTR_RC(String, subs_data_type->array.name)
-                              ->buffer
-                          : "",
-                        subs_data_type->array.size));
-
-                    break;
-                default:
-                    UNREACHABLE("unknown variant");
-            }
+void
+generate_post_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type)
+{
+    switch (data_type->kind) {
+        case CI_DATA_TYPE_KIND_ARRAY:
+            return generate_array_data_type__CIGenerator(self, data_type);
+        case CI_DATA_TYPE_KIND_FUNCTION:
+            generate_data_type_base__CIGenerator(self, data_type, false);
 
             break;
+        default:
+            break;
+    }
+}
+
+void
+generate_array_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type)
+{
+#define GENERATE_DATA_TYPE_QUALIFIER(q)                        \
+    if ((q) != CI_DATA_TYPE_QUALIFIER_NONE) {                  \
+        write__CIGenerator(self, ' ');                         \
+        generate_data_type_qualifier__CIGenerator(self, &(q)); \
+    }
+
+    if (data_type->kind != CI_DATA_TYPE_KIND_ARRAY) {
+        return;
+    }
+
+    if (data_type->array.name) {
+        write__CIGenerator(self, ' ');
+        write_str__CIGenerator(
+          self, GET_PTR_RC(String, data_type->array.name)->buffer);
+    }
+
+    write__CIGenerator(self, '[');
+
+    if (data_type->array.is_static) {
+        write_str__CIGenerator(self, "static ");
+    }
+
+    GENERATE_DATA_TYPE_QUALIFIER(data_type->array.qualifier);
+
+    if (data_type->array.size_expr) {
+        generate_function_expr__CIGenerator(self, data_type->array.size_expr);
+    }
+
+    write__CIGenerator(self, ']');
+
+    generate_array_data_type__CIGenerator(self, data_type->array.data_type);
+}
+
+void
+generate_ptr_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type)
+{
+    if (data_type->kind != CI_DATA_TYPE_KIND_PTR) {
+        return;
+    }
+
+    generate_ptr_data_type__CIGenerator(self, data_type->ptr.data_type);
+
+    write__CIGenerator(self, '*');
+
+    GENERATE_DATA_TYPE_QUALIFIER(data_type->qualifier);
+
+    if (data_type->ptr.name) {
+        write__CIGenerator(self, ' ');
+        write_str__CIGenerator(self,
+                               GET_PTR_RC(String, data_type->ptr.name)->buffer);
+    }
+}
+
+void
+generate_function_data_type__CIGenerator(CIGenerator *self,
+                                         CIDataType *data_type,
+                                         CIDataType *function_data_type)
+{
+    ASSERT(function_data_type->kind == CI_DATA_TYPE_KIND_FUNCTION);
+
+    generate_data_type_base__CIGenerator(
+      self, function_data_type->function.return_data_type, false);
+
+    if (function_data_type == data_type) {
+        write__CIGenerator(self, ' ');
+        write_str__CIGenerator(
+          self, GET_PTR_RC(String, function_data_type->function.name)->buffer);
+    } else {
+        write__CIGenerator(self, '(');
+        generate_data_type_base__CIGenerator(self, data_type, false);
+        write__CIGenerator(self, ')');
+    }
+
+    if (function_data_type->function.params) {
+        generate_function_params__CIGenerator(
+          self, function_data_type->function.params);
+    } else {
+        write_str__CIGenerator(self, "()");
+    }
+}
+
+void
+generate_data_type_base__CIGenerator(CIGenerator *self,
+                                     CIDataType *data_type,
+                                     bool is_on_top)
+{
+    switch (data_type->kind) {
+        case CI_DATA_TYPE_KIND_ANY:
+            UNREACHABLE("cannot generate this data type");
+        case CI_DATA_TYPE_KIND_ARRAY: {
+            CIDataType *wrapped_data_type = NULL;
+
+            {
+                CIDataType *current_data_type = data_type->array.data_type;
+
+                while (current_data_type->kind == CI_DATA_TYPE_KIND_ARRAY &&
+                       (current_data_type = current_data_type->array.data_type))
+                    ;
+
+                wrapped_data_type = current_data_type;
+            }
+
+            ASSERT(wrapped_data_type);
+
+            generate_data_type_base__CIGenerator(
+              self, wrapped_data_type, false);
+            generate_array_data_type__CIGenerator(self, data_type);
+
+            return;
+        }
         case CI_DATA_TYPE_KIND_BOOL:
             if (self->file->config->standard < CI_STANDARD_23) {
                 write_str__CIGenerator(self, "_Bool");
@@ -913,7 +1031,7 @@ generate_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type)
             break;
         case CI_DATA_TYPE_KIND_BUILTIN: {
             const CIBuiltinType *builtin_type = get_builtin_type__CIBuiltin(
-              self->file->entity.result->builtin, subs_data_type->builtin);
+              self->file->entity.result->builtin, data_type->builtin);
 
             ASSERT(builtin_type);
 
@@ -952,16 +1070,14 @@ generate_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type)
         case CI_DATA_TYPE_KIND_ENUM: {
             search_enum_decl_and_generate__CIGenerator(
               self,
-              subs_data_type->enum_.name
-                ? GET_PTR_RC(String, subs_data_type->enum_.name)
-                : NULL);
+              data_type->enum_.name ? GET_PTR_RC(String, data_type->enum_.name)
+                                    : NULL);
             generate_enum__CIGenerator(
               self,
-              subs_data_type->enum_.name
-                ? GET_PTR_RC(String, subs_data_type->enum_.name)
-                : NULL,
-              subs_data_type->enum_.data_type,
-              subs_data_type->enum_.variants);
+              data_type->enum_.name ? GET_PTR_RC(String, data_type->enum_.name)
+                                    : NULL,
+              data_type->enum_.data_type,
+              data_type->enum_.variants);
 
             break;
         }
@@ -977,52 +1093,13 @@ generate_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type)
             write_str__CIGenerator(self, "float _Imaginary");
 
             break;
-        case CI_DATA_TYPE_KIND_FUNCTION: {
-            generate_data_type__CIGenerator(
-              self, subs_data_type->function.return_data_type);
+        case CI_DATA_TYPE_KIND_FUNCTION:
+            // NOTE: The function data type is generated by the
+            // `generate_function_data_type__CIGenerator` function.
 
-            if (subs_data_type->function.function_data_type) {
-                write_str__CIGenerator(self, "(");
-
-                generate_data_type__CIGenerator(
-                  self, subs_data_type->function.function_data_type);
-
-                if (subs_data_type->function.name) {
-                    write_str__CIGenerator(
-                      self,
-                      GET_PTR_RC(String, subs_data_type->function.name)
-                        ->buffer);
-                }
-
-                write_str__CIGenerator(self, ")");
-            } else {
-                write__CIGenerator(self, ' ');
-
-                if (subs_data_type->function.name) {
-                    write_str__CIGenerator(
-                      self,
-                      GET_PTR_RC(String, subs_data_type->function.name)
-                        ->buffer);
-                }
-            }
-
-            if (subs_data_type->function.params) {
-                generate_function_params__CIGenerator(
-                  self, subs_data_type->function.params);
-            } else {
-                write_str__CIGenerator(self, "()");
-            }
-
-            break;
-        }
-        case CI_DATA_TYPE_KIND_GENERIC: {
-            String *buffer = NEW(String);
-
-            serialize__CIDataType(subs_data_type, buffer);
-            write_String__CIGenerator(self, buffer);
-
-            break;
-        }
+            return;
+        case CI_DATA_TYPE_KIND_GENERIC:
+            UNREACHABLE("cannot get generic at this point");
         case CI_DATA_TYPE_KIND_INT:
             write_str__CIGenerator(self, "int");
 
@@ -1060,14 +1137,39 @@ generate_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type)
             write_str__CIGenerator(self, "nullptr_t");
 
             break;
-        case CI_DATA_TYPE_KIND_PTR:
-            if (subs_data_type->ptr) {
-                generate_data_type__CIGenerator(self, subs_data_type->ptr);
+        case CI_DATA_TYPE_KIND_PTR: {
+            CIDataType *wrapped_data_type = NULL;
+
+            {
+                CIDataType *current_data_type = data_type->ptr.data_type;
+
+                while (current_data_type->kind == CI_DATA_TYPE_KIND_PTR &&
+                       (current_data_type = current_data_type->ptr.data_type))
+                    ;
+
+                wrapped_data_type = current_data_type;
             }
 
-            write_str__CIGenerator(self, "*");
+            ASSERT(wrapped_data_type);
 
-            break;
+            generate_pre_data_type__CIGenerator(self, wrapped_data_type);
+
+            bool need_to_generate_paren = is_on_top && data_type->ptr.name;
+
+            if (need_to_generate_paren) {
+                write__CIGenerator(self, '(');
+            }
+
+            generate_ptr_data_type__CIGenerator(self, data_type);
+
+            if (need_to_generate_paren) {
+                write__CIGenerator(self, ')');
+            }
+
+            generate_post_data_type__CIGenerator(self, wrapped_data_type);
+
+            return;
+        }
         case CI_DATA_TYPE_KIND_SHORT_INT:
             write_str__CIGenerator(self, "short int");
 
@@ -1078,33 +1180,33 @@ generate_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type)
             break;
         case CI_DATA_TYPE_KIND_STRUCT: {
 #define GENERATE_STRUCT_OR_UNION_DT(dt_name)                                  \
-    if (subs_data_type->dt_name##_.generic_params) {                          \
+    if (data_type->dt_name##_.generic_params) {                               \
         /* NOTE: Normally you can't declare a anonymous struct/union with     \
         generic parameters. This possibility is rejected in the               \
         parser. */                                                            \
-        ASSERT(subs_data_type->dt_name##_.name);                              \
+        ASSERT(data_type->dt_name##_.name);                                   \
                                                                               \
         String *serialized_name =                                             \
           substitute_and_serialize_generic_params__CIGenerator(               \
             self,                                                             \
-            subs_data_type->dt_name##_.generic_params,                        \
-            GET_PTR_RC(String, subs_data_type->dt_name##_.name));             \
+            data_type->dt_name##_.generic_params,                             \
+            GET_PTR_RC(String, data_type->dt_name##_.name));                  \
                                                                               \
         search_##dt_name##_decl_and_generate__CIGenerator(self,               \
                                                           serialized_name);   \
         generate_##dt_name##__CIGenerator(                                    \
-          self, serialized_name, subs_data_type->dt_name##_.fields);          \
+          self, serialized_name, data_type->dt_name##_.fields);               \
                                                                               \
         FREE(String, serialized_name);                                        \
     } else {                                                                  \
         String *struct_name =                                                 \
-          subs_data_type->dt_name##_.name                                     \
-            ? GET_PTR_RC(String, subs_data_type->dt_name##_.name)             \
+          data_type->dt_name##_.name                                          \
+            ? GET_PTR_RC(String, data_type->dt_name##_.name)                  \
             : NULL;                                                           \
                                                                               \
         search_##dt_name##_decl_and_generate__CIGenerator(self, struct_name); \
         generate_##dt_name##__CIGenerator(                                    \
-          self, struct_name, subs_data_type->dt_name##_.fields);              \
+          self, struct_name, data_type->dt_name##_.fields);                   \
     }
 
             GENERATE_STRUCT_OR_UNION_DT(struct);
@@ -1112,19 +1214,19 @@ generate_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type)
             break;
         }
         case CI_DATA_TYPE_KIND_TYPEDEF:
-            if (subs_data_type->typedef_.generic_params) {
+            if (data_type->typedef_.generic_params) {
                 String *serialized_name =
                   substitute_and_serialize_generic_params__CIGenerator(
                     self,
-                    subs_data_type->typedef_.generic_params,
-                    GET_PTR_RC(String, subs_data_type->typedef_.name));
+                    data_type->typedef_.generic_params,
+                    GET_PTR_RC(String, data_type->typedef_.name));
 
                 search_typedef_decl_and_generate__CIGenerator(self,
                                                               serialized_name);
                 write_String__CIGenerator(self, serialized_name);
             } else {
                 String *typedef_name =
-                  GET_PTR_RC(String, subs_data_type->typedef_.name);
+                  GET_PTR_RC(String, data_type->typedef_.name);
 
                 search_typedef_decl_and_generate__CIGenerator(self,
                                                               typedef_name);
@@ -1167,9 +1269,31 @@ generate_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type)
             UNREACHABLE("unknown variant");
     }
 
-    if (data_type->qualifier != CI_DATA_TYPE_QUALIFIER_NONE) {
-        write__CIGenerator(self, ' ');
-        generate_data_type_qualifier__CIGenerator(self, &data_type->qualifier);
+    GENERATE_DATA_TYPE_QUALIFIER(data_type->qualifier);
+
+#undef GENERATE_DATA_TYPE_QUALIFIER
+}
+
+void
+generate_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type)
+{
+    CIDataType *subs_data_type = NULL;
+
+    if (self->content.last_session->inherit_props.current_generic_params &&
+        self->content.last_session->inherit_props
+          .current_called_generic_params) {
+        subs_data_type = substitute_data_type__CIGenerator(self, data_type);
+    } else {
+        subs_data_type = ref__CIDataType(data_type);
+    }
+
+    CIDataType *function_data_type = get_function__CIDataType(subs_data_type);
+
+    if (function_data_type) {
+        generate_function_data_type__CIGenerator(
+          self, subs_data_type, function_data_type);
+    } else {
+        generate_data_type_base__CIGenerator(self, subs_data_type, true);
     }
 
     FREE(CIDataType, subs_data_type);
@@ -1360,13 +1484,14 @@ generate_enum_decl__CIGenerator(CIGenerator *self, const CIDeclEnum *enum_)
 }
 
 void
-generate_function_params__CIGenerator(CIGenerator *self, const Vec *params)
+generate_function_params__CIGenerator(CIGenerator *self,
+                                      const CIDeclFunctionParams *params)
 {
     write_str__CIGenerator(self, "(");
 
     if (params) {
-        for (Usize i = 0; i < params->len; ++i) {
-            const CIDeclFunctionParam *param = get__Vec(params, i);
+        for (Usize i = 0; i < params->content->len; ++i) {
+            const CIDeclFunctionParam *param = get__Vec(params->content, i);
 
             switch (param->kind) {
                 case CI_DECL_FUNCTION_PARAM_KIND_NORMAL:
@@ -1375,7 +1500,7 @@ generate_function_params__CIGenerator(CIGenerator *self, const Vec *params)
                     generate_data_type__CIGenerator(self, param->data_type);
 
                     if (param->name &&
-                        !has_name__CIDataType(param->data_type)) {
+                        !has_variable_name__CIDataType(param->data_type)) {
                         write_String__CIGenerator(
                           self,
                           format__String(" {S}",
@@ -1391,7 +1516,7 @@ generate_function_params__CIGenerator(CIGenerator *self, const Vec *params)
                     UNREACHABLE("unknown variant");
             }
 
-            if (i + 1 != params->len) {
+            if (i + 1 != params->content->len) {
                 write_str__CIGenerator(self, ", ");
             }
         }
@@ -2209,7 +2334,7 @@ generate_struct_field__CIGenerator(CIGenerator *self,
 
     generate_data_type__CIGenerator(self, field_dt);
 
-    if (field->name && !has_name__CIDataType(field_dt)) {
+    if (field->name && !has_variable_name__CIDataType(field_dt)) {
         write_String__CIGenerator(
           self, format__String(" {S}", GET_PTR_RC(String, field->name)));
     }
@@ -2297,7 +2422,7 @@ generate_typedef_decl__CIGenerator(CIGenerator *self,
     write_str__CIGenerator(self, "typedef ");
     generate_data_type__CIGenerator(self, typedef_->data_type);
 
-    if (!has_name__CIDataType(typedef_->data_type)) {
+    if (!has_variable_name__CIDataType(typedef_->data_type)) {
         write_String__CIGenerator(
           self, format__String(" {S}", GET_PTR_RC(String, typedef_->name)));
     }
@@ -2314,7 +2439,7 @@ generate_typedef_gen_decl__CIGenerator(CIGenerator *self,
     write_str__CIGenerator(self, "typedef ");
     generate_data_type__CIGenerator(self, typedef_gen->typedef_->data_type);
 
-    if (!has_name__CIDataType(typedef_gen->data_type)) {
+    if (!has_variable_name__CIDataType(typedef_gen->data_type)) {
         write_String__CIGenerator(self,
                                   format__String(" {S}", typedef_gen->name));
     }
@@ -2380,7 +2505,7 @@ generate_variable_decl__CIGenerator(CIGenerator *self,
 {
     generate_data_type__CIGenerator(self, variable->data_type);
 
-    if (!has_name__CIDataType(variable->data_type)) {
+    if (!has_variable_name__CIDataType(variable->data_type)) {
         write_String__CIGenerator(
           self, format__String(" {S}", GET_PTR_RC(String, variable->name)));
     }

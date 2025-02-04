@@ -103,13 +103,6 @@ run__CIParser(CIParser *self, const CIResolvedTokens *resolved_tokens);
 
 /**
  *
- * @brief Parse data type.
- */
-CIDataType *
-parse_data_type__CIParser(CIParser *self);
-
-/**
- *
  * @brief Parse expression.
  * @return CIExpr*?
  */
