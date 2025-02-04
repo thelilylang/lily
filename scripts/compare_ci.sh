@@ -82,7 +82,7 @@ function process_standard() {
 
 	while IFS= read -r -d '' FILE
 	do
-		check_status "ci_command --include0 lib/cc/std -f -s $1 $FILE" "inc_success CI_SUCCESS[$2]" $FILE $CI
+		check_status "ci_command --no-state-check --include0 lib/cc/std/include -f -s $1 $FILE" "inc_success CI_SUCCESS[$2]" $FILE $CI
 	done < <(find "${!dir_ci}" -type l -print0)
 }
 
