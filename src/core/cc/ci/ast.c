@@ -1510,9 +1510,11 @@ get_next_member__CIDeclStructField(const CIDeclStructField *self)
 CIDeclStructField *
 skip_fields_with_given_parent__CIDeclStructField(CIDeclStructField *self)
 {
+    CIDeclStructField *initial_field = self;
     CIDeclStructField *current = self->next;
 
-    while (current && has_parent_by_addr__CIDeclStructField(current, self)) {
+    while (current && has_parent_by_addr__CIDeclStructField(
+                        current, initial_field->parent)) {
         current = current->next;
     }
 
