@@ -76,6 +76,7 @@ typedef struct CIProjectConfigLibrary
 /**
  *
  * @brief Construct CIProjectConfigLibrary type.
+ * @param paths Vec<String*>*
  */
 CONSTRUCTOR(CIProjectConfigLibrary *,
             CIProjectConfigLibrary,
@@ -125,8 +126,8 @@ typedef struct CIProjectConfig
     enum CIStandard standard;
     CIProjectConfigCompiler compiler;
     const Vec *include_dirs; // Vec<char* (&)>* (&)
-    Vec *libraries;          // Vec<CIProjectConfigLibrary*>*
-    Vec *bins;               // Vec<CIProjectConfigBin*>*
+    Vec *libraries;          // Vec<CIProjectConfigLibrary*>*?
+    Vec *bins;               // Vec<CIProjectConfigBin*>*?
     bool no_state_check;
 } CIProjectConfig;
 

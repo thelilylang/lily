@@ -285,32 +285,33 @@ get_key__YAML(YAMLLoadRes *self,
               Int32 mapping_id,
               const char *key)
 {
-    Int32 id = 0;
     YAMLDocument *document = &GET_DOCUMENT(self, document_id);
 
-    for (YAMLNode *node = document->nodes.start; node < document->nodes.top;
-         ++node, ++id) {
+    if (!document) {
+        return -1;
+    }
+
+    YAMLNode *node = mapping_id != -1
+                       ? get_node_from_id__YAML(self, document_id, mapping_id)
+                       : get_root_node__YAML(self, document_id);
+
+    if (node) {
         switch (GET_NODE_TYPE__YAML(node)) {
-            case YAML_SCALAR_NODE:
-                if (!strcmp(GET_NODE_SCALAR_VALUE__YAML(node), key)) {
-                    return id;
-                }
-
-                break;
             case YAML_MAPPING_NODE:
-                for (YAMLNodePair *pair = node->data.mapping.pairs.start;
-                     pair < node->data.mapping.pairs.top;
-                     ++pair) {
-                    YAMLNode *node_key =
-                      yaml_document_get_node(document, pair->key);
+                ITER_ON_MAPPING_NODE__YAML(self, FIRST_DOCUMENT, node, pair, {
+                    switch (GET_NODE_TYPE__YAML(pair_key_node)) {
+                        case YAML_SCALAR_NODE:
+                            if (!strcmp(
+                                  GET_NODE_SCALAR_VALUE__YAML(pair_key_node),
+                                  key)) {
+                                return pair->value;
+                            }
 
-                    ASSERT(node_key &&
-                           GET_NODE_TYPE__YAML(node_key) == YAML_SCALAR_NODE);
-
-                    if (!strcmp(GET_NODE_SCALAR_VALUE__YAML(node_key), key)) {
-                        return pair->value;
+                            break;
+                        default:
+                            break;
                     }
-                }
+                });
 
                 break;
             default:

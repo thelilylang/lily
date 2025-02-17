@@ -1640,12 +1640,17 @@ build__CIResult(CIResult *self)
 {
     load_predefined__CIResult(self);
 
-    for (Usize i = 0; i < self->config->libraries->len; ++i) {
-        add_and_run_lib__CIResult(self, get__Vec(self->config->libraries, i));
+    if (self->config->libraries) {
+        for (Usize i = 0; i < self->config->libraries->len; ++i) {
+            add_and_run_lib__CIResult(self,
+                                      get__Vec(self->config->libraries, i));
+        }
     }
 
-    for (Usize i = 0; i < self->config->bins->len; ++i) {
-        add_and_run_bin__CIResult(self, get__Vec(self->config->bins, i));
+    if (self->config->bins) {
+        for (Usize i = 0; i < self->config->bins->len; ++i) {
+            add_and_run_bin__CIResult(self, get__Vec(self->config->bins, i));
+        }
     }
 }
 

@@ -33,10 +33,24 @@
 #include <core/cc/ci/include.h>
 #include <core/cc/ci/project_config.h>
 
+#include <core/shared/search.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 
 #define CI_CONFIG "CI.yaml"
+
+struct CIProjectConfigContext
+{
+    YAMLLoadRes *yaml_load_res;      // YAMLLoadRes* (&)
+    const char *absolute_config_dir; // const char* (&)
+};
+
+/// @brief Construct CIProjectConfigContext type.
+static inline CONSTRUCTOR(struct CIProjectConfigContext,
+                          CIProjectConfigContext,
+                          YAMLLoadRes *yaml_load_res,
+                          const char *absolute_config_dir);
 
 /// @param path char* (&)
 /// @param absolute_config_dir const char* (&)
@@ -45,34 +59,134 @@ static String *
 convert_path_to_absolute_path__CIProjectConfig(char *path,
                                                const char *absolute_config_dir);
 
+/// @param mapping_id node id of mapping or -1 (for NULL)
+/// @return Return the node id.
+static Int32
+get_node__CIProjectConfig(struct CIProjectConfigContext *ctx,
+                          Int32 mapping_id,
+                          char *key);
+
+/// @param mapping_id node id of mapping or -1 (for NULL)
+/// @return Return the node id or -1.
+static Int32
+get_optional_node__CIProjectConfig(struct CIProjectConfigContext *ctx,
+                                   Int32 mapping_id,
+                                   char *key);
+
+/// @param mapping_id node id of mapping or -1 (for NULL)
+/// @return String*
+static String *
+get_scalar_value__CIProjectConfig(struct CIProjectConfigContext *ctx,
+                                  Int32 mapping_id,
+                                  char *key);
+
+/// @param mapping_id node id of mapping or -1 (for NULL)
+/// @return String*?
+static String *
+get_optional_scalar_value__CIProjectConfig(struct CIProjectConfigContext *ctx,
+                                           Int32 mapping_id,
+                                           char *key);
+
+/// @param mapping_id node id of mapping or -1 (for NULL)
+static Int32
+get_integer_from_scalar_value__CIProjectConfig(
+  struct CIProjectConfigContext *ctx,
+  Int32 mapping_id,
+  char *key,
+  SizedStr values[],
+  Int32 value_ids[],
+  Usize values_len);
+
+/// @param mapping_id node id of mapping or -1 (for NULL)
+static Int32
+get_integer_from_optional_scalar_value__CIProjectConfig(
+  struct CIProjectConfigContext *ctx,
+  Int32 mapping_id,
+  char *key,
+  SizedStr values[],
+  Int32 value_ids[],
+  Usize values_len,
+  Int32 null_value);
+
+/// @param mapping_id node id of mapping or -1 (for NULL)
+/// @return Vec<String*>*
+static Vec *
+get_sequence_value__CIProjectConfig(struct CIProjectConfigContext *ctx,
+                                    Int32 mapping_id,
+                                    char *key);
+
+/// @param mapping_id node id of mapping or -1 (for NULL)
+/// @return Vec<String*>*?
+static Vec *
+get_optional_sequence_value__CIProjectConfig(struct CIProjectConfigContext *ctx,
+                                             Int32 mapping_id,
+                                             char *key);
+
+/// @return Vec<void*>*
+static Vec *
+iter_on_mapping__CIProjectConfig(
+  struct CIProjectConfigContext *ctx,
+  Int32 mapping_id,
+  char *key,
+  void *(*parse_item)(struct CIProjectConfigContext *ctx,
+                      Int32 mapping_id,
+                      const char *key_name));
+
+/// @return Vec<void*>*?
+static Vec *
+iter_on_optional_mapping__CIProjectConfig(
+  struct CIProjectConfigContext *ctx,
+  Int32 mapping_id,
+  char *key,
+  void *(*parse_item)(struct CIProjectConfigContext *ctx,
+                      Int32 mapping_id,
+                      const char *key_name));
+
 static enum CIStandard
-parse_standard__CIProjectConfig(YAMLLoadRes *yaml_load_res);
+get_standard__CIProjectConfig(struct CIProjectConfigContext *ctx);
 
 static CIProjectConfigCompiler
-parse_compiler__CIProjectConfig(YAMLLoadRes *yaml_load_res,
-                                const char *absolute_config_dir);
+get_compiler__CIProjectConfig(struct CIProjectConfigContext *ctx);
 
 static void
-parse_std_include__CIProjectConfig(YAMLLoadRes *yaml_load_res,
-                                   const char *absolute_config_dir);
+get_std_include__CIProjectConfig(struct CIProjectConfigContext *ctx);
 
 static void
-parse_include_dirs__CIProjectConfig(YAMLLoadRes *yaml_load_res,
-                                    const String *compiler_path,
-                                    const char *base_path);
+get_include_dirs__CIProjectConfig(struct CIProjectConfigContext *ctx,
+                                  const String *compiler_path);
+
+/// @param library_name const char* (&)
+static CIProjectConfigLibrary *
+get_library__CIProjectConfig(struct CIProjectConfigContext *ctx,
+                             Int32 mapping_id,
+                             const char *library_name);
 
 /// @return Vec<CIProjectConfigLibrary*>*
 static Vec *
-parse_libraries__CIProjectConfig(YAMLLoadRes *yaml_load_res,
-                                 const char *absolute_config_dir);
+get_libraries__CIProjectConfig(struct CIProjectConfigContext *ctx);
+
+/// @param bin_name const char* (&)
+static CIProjectConfigBin *
+get_bin__CIProjectConfig(struct CIProjectConfigContext *ctx,
+                         Int32 mapping_id,
+                         const char *bin_name);
 
 /// @return Vec<CIProjectConfigBin*>*
 static Vec *
-parse_bins__CIProjectConfig(YAMLLoadRes *yaml_load_res,
-                            const char *absolute_config_dir);
+get_bins__CIProjectConfig(struct CIProjectConfigContext *ctx);
 
 static bool
-parse_no_state_check__CIProjectConfig(YAMLLoadRes *yaml_load_res);
+get_no_state_check__CIProjectConfig(struct CIProjectConfigContext *ctx);
+
+CONSTRUCTOR(struct CIProjectConfigContext,
+            CIProjectConfigContext,
+            YAMLLoadRes *yaml_load_res,
+            const char *absolute_config_dir)
+{
+    return (struct CIProjectConfigContext){ .yaml_load_res = yaml_load_res,
+                                            .absolute_config_dir =
+                                              absolute_config_dir };
+}
 
 String *
 convert_path_to_absolute_path__CIProjectConfig(char *path,
@@ -87,160 +201,318 @@ convert_path_to_absolute_path__CIProjectConfig(char *path,
     return from__String(path);
 }
 
-enum CIStandard
-parse_standard__CIProjectConfig(YAMLLoadRes *yaml_load_res)
+Int32
+get_node__CIProjectConfig(struct CIProjectConfigContext *ctx,
+                          Int32 mapping_id,
+                          char *key)
 {
-    enum CIStandard standard = CI_STANDARD_99;
+    Int32 res = get_optional_node__CIProjectConfig(ctx, mapping_id, key);
 
-    // standard: c89 | c95 | c99 | c11 | c17 | c23
-    Int32 standard_value_id = GET_KEY_ON_DEFAULT_MAPPING__YAML(
-      yaml_load_res, FIRST_DOCUMENT, "standard");
-
-    if (standard_value_id == -1) {
-        FAILED("expected standard key");
+    if (res == -1) {
+        FAILED("expected to have this key");
     }
 
-    YAMLNode *standard_value_node =
-      get_node_from_id__YAML(yaml_load_res, FIRST_DOCUMENT, standard_value_id);
+    return res;
+}
 
-    ASSERT(standard_value_node);
+Int32
+get_optional_node__CIProjectConfig(struct CIProjectConfigContext *ctx,
+                                   Int32 mapping_id,
+                                   char *key)
+{
+    return get_key__YAML(ctx->yaml_load_res, FIRST_DOCUMENT, mapping_id, key);
+}
 
-    switch (GET_NODE_TYPE__YAML(standard_value_node)) {
+String *
+get_scalar_value__CIProjectConfig(struct CIProjectConfigContext *ctx,
+                                  Int32 mapping_id,
+                                  char *key)
+{
+    String *res =
+      get_optional_scalar_value__CIProjectConfig(ctx, mapping_id, key);
+
+    if (!res) {
+        FAILED("expected to have this key");
+    }
+
+    return res;
+}
+
+String *
+get_optional_scalar_value__CIProjectConfig(struct CIProjectConfigContext *ctx,
+                                           Int32 mapping_id,
+                                           char *key)
+{
+    YAMLNode *node;
+
+    Int32 key_value_id =
+      mapping_id != -1
+        ? get_optional_node__CIProjectConfig(ctx, mapping_id, key)
+        : GET_KEY_ON_DEFAULT_MAPPING__YAML(
+            ctx->yaml_load_res, FIRST_DOCUMENT, key);
+
+    if (key_value_id == -1) {
+        return NULL;
+    }
+
+    node =
+      get_node_from_id__YAML(ctx->yaml_load_res, FIRST_DOCUMENT, key_value_id);
+
+    ASSERT(node);
+
+    switch (GET_NODE_TYPE__YAML(node)) {
         case YAML_SCALAR_NODE: {
-            char *standard_value =
-              GET_NODE_SCALAR_VALUE__YAML(standard_value_node);
+            char *key_value = GET_NODE_SCALAR_VALUE__YAML(node);
 
-            if (!strcmp(standard_value, "k&r")) {
-                standard = CI_STANDARD_KR;
-            } else if (!strcmp(standard_value, "c89")) {
-                standard = CI_STANDARD_89;
-            } else if (!strcmp(standard_value, "c95")) {
-                standard = CI_STANDARD_95;
-            } else if (!strcmp(standard_value, "c99")) {
-                standard = CI_STANDARD_99;
-            } else if (!strcmp(standard_value, "c11")) {
-                standard = CI_STANDARD_11;
-            } else if (!strcmp(standard_value, "c17")) {
-                standard = CI_STANDARD_17;
-            } else if (!strcmp(standard_value, "c23")) {
-                standard = CI_STANDARD_23;
-            } else {
-                FAILED("unknown standard");
-            }
-
-            break;
+            return from__String(key_value);
         }
         default:
-            FAILED("expected: standard: k&r | c89 | c95 | c99 | c11 | c17 "
-                   "| c23");
+            FAILED("expected scalar value");
+    }
+}
+
+Int32
+get_integer_from_scalar_value__CIProjectConfig(
+  struct CIProjectConfigContext *ctx,
+  Int32 mapping_id,
+  char *key,
+  SizedStr values[],
+  Int32 value_ids[],
+  Usize values_len)
+{
+    String *value = get_scalar_value__CIProjectConfig(ctx, mapping_id, key);
+    Int32 res = get_id__Search(value, values, value_ids, values_len);
+
+    if (res == -1) {
+        FAILED("invalid value");
     }
 
-    return standard;
+    FREE(String, value);
+
+    return res;
+}
+
+Int32
+get_integer_from_optional_scalar_value__CIProjectConfig(
+  struct CIProjectConfigContext *ctx,
+  Int32 mapping_id,
+  char *key,
+  SizedStr values[],
+  Int32 value_ids[],
+  Usize values_len,
+  Int32 null_value)
+{
+    String *value =
+      get_optional_scalar_value__CIProjectConfig(ctx, mapping_id, key);
+
+    if (!value) {
+        return null_value;
+    }
+
+    Int32 res = get_id__Search(value, values, value_ids, values_len);
+
+    FREE(String, value);
+
+    if (res == -1) {
+        FAILED("invalid value");
+    }
+
+    return res;
+}
+
+Vec *
+get_sequence_value__CIProjectConfig(struct CIProjectConfigContext *ctx,
+                                    Int32 mapping_id,
+                                    char *key)
+{
+    Vec *res =
+      get_optional_sequence_value__CIProjectConfig(ctx, mapping_id, key);
+
+    if (!res) {
+        FAILED("expected to have this key");
+    }
+
+    return res;
+}
+
+Vec *
+get_optional_sequence_value__CIProjectConfig(struct CIProjectConfigContext *ctx,
+                                             Int32 mapping_id,
+                                             char *key)
+{
+    YAMLNode *node;
+
+    Int32 key_value_id =
+      mapping_id != -1
+        ? get_optional_node__CIProjectConfig(ctx, mapping_id, key)
+        : GET_KEY_ON_DEFAULT_MAPPING__YAML(
+            ctx->yaml_load_res, FIRST_DOCUMENT, key);
+
+    if (key_value_id == -1) {
+        return NULL;
+    }
+
+    node =
+      get_node_from_id__YAML(ctx->yaml_load_res, FIRST_DOCUMENT, key_value_id);
+
+    ASSERT(node);
+
+    Vec *res = NEW(Vec); // Vec<String*>*
+
+    switch (GET_NODE_TYPE__YAML(node)) {
+        case YAML_SEQUENCE_NODE:
+            ITER_ON_SEQUENCE_NODE__YAML(
+              ctx->yaml_load_res, FIRST_DOCUMENT, node, sequence_item, {
+                  push__Vec(res, sequence_item_value);
+              });
+
+            break;
+        default:
+            FAILED("expected sequence value");
+    }
+
+    return res;
+}
+
+[[maybe_unused]] Vec *
+iter_on_mapping__CIProjectConfig(
+  struct CIProjectConfigContext *ctx,
+  Int32 mapping_id,
+  char *key,
+  void *(*parse_item)(struct CIProjectConfigContext *ctx,
+                      Int32 mapping_id,
+                      const char *key_name))
+{
+    Vec *res = iter_on_optional_mapping__CIProjectConfig(
+      ctx, mapping_id, key, parse_item);
+
+    if (!res) {
+        FAILED("expected to have mapping here");
+    }
+
+    return res;
+}
+
+Vec *
+iter_on_optional_mapping__CIProjectConfig(
+  struct CIProjectConfigContext *ctx,
+  Int32 mapping_id,
+  char *key,
+  void *(*parse_item)(struct CIProjectConfigContext *ctx,
+                      Int32 mapping_id,
+                      const char *key_name))
+{
+    Int32 node_id = get_optional_node__CIProjectConfig(ctx, mapping_id, key);
+
+    if (node_id == -1) {
+        return NULL;
+    }
+
+    YAMLNode *node =
+      get_node_from_id__YAML(ctx->yaml_load_res, FIRST_DOCUMENT, node_id);
+
+    switch (GET_NODE_TYPE__YAML(node)) {
+        case YAML_MAPPING_NODE: {
+            Vec *res = NEW(Vec);
+
+            ITER_ON_MAPPING_NODE__YAML(
+              ctx->yaml_load_res, FIRST_DOCUMENT, node, pair, {
+                  push__Vec(res, parse_item(ctx, pair->value, pair_key));
+              });
+
+            return res;
+        }
+        default:
+            return NULL;
+    }
+}
+
+enum CIStandard
+get_standard__CIProjectConfig(struct CIProjectConfigContext *ctx)
+{
+    // standard: k&r | c89 | c95 | c99 | c11 | c17 | c23
+
+    // NOTE: This array must be in alphabetical order.
+    SizedStr values[] = {
+        SIZED_STR_FROM_RAW("c11"), SIZED_STR_FROM_RAW("c17"),
+        SIZED_STR_FROM_RAW("c23"), SIZED_STR_FROM_RAW("c89"),
+        SIZED_STR_FROM_RAW("c95"), SIZED_STR_FROM_RAW("c99"),
+        SIZED_STR_FROM_RAW("k&r"),
+    };
+    Int32 value_ids[] = {
+        CI_STANDARD_11, CI_STANDARD_17, CI_STANDARD_23, CI_STANDARD_89,
+        CI_STANDARD_95, CI_STANDARD_99, CI_STANDARD_KR,
+    };
+    const Usize values_len = LEN(values, *values);
+    const Usize value_ids_len = LEN(value_ids, *value_ids);
+
+    static_assert(values_len == value_ids_len);
+
+    return get_integer_from_optional_scalar_value__CIProjectConfig(
+      ctx, -1, "standard", values, value_ids, values_len, CI_STANDARD_99);
 }
 
 CIProjectConfigCompiler
-parse_compiler__CIProjectConfig(YAMLLoadRes *yaml_load_res,
-                                const char *absolute_config_dir)
+get_compiler__CIProjectConfig(struct CIProjectConfigContext *ctx)
 {
     // compiler:
     //   name: clang | gcc
     //   command: <path_of_command> | <command>
-    Int32 compiler_value_id = GET_KEY_ON_DEFAULT_MAPPING__YAML(
-      yaml_load_res, FIRST_DOCUMENT, "compiler");
-    enum CIProjectConfigCompilerKind compiler_kind;
-    const char *command = NULL;
 
-    if (compiler_value_id == -1) {
-        FAILED("expected compiler key");
-    }
+    Int32 compiler_value_id = get_node__CIProjectConfig(ctx, -1, "compiler");
+    // NOTE: This array must be in alphabetical order.
+    SizedStr compiler_names[] = {
+        SIZED_STR_FROM_RAW("clang"),
+        SIZED_STR_FROM_RAW("gcc"),
+    };
+    Int32 compiler_ids[] = { CI_PROJECT_CONFIG_COMPILER_KIND_CLANG,
+                             CI_PROJECT_CONFIG_COMPILER_KIND_GCC };
+    const Usize compiler_names_len = LEN(compiler_names, *compiler_names);
+    const Usize compiler_ids_len = LEN(compiler_ids, *compiler_ids);
 
-    YAMLNode *compiler_value_node =
-      get_node_from_id__YAML(yaml_load_res, FIRST_DOCUMENT, compiler_value_id);
+    static_assert(compiler_names_len == compiler_ids_len);
 
-    ASSERT(compiler_value_node);
-
-    switch (GET_NODE_TYPE__YAML(compiler_value_node)) {
-        case YAML_MAPPING_NODE: {
-            const char *expected_mapping_keys[] = { "name", "command" };
-
-            ITER_ON_MAPPING_NODE_WITH_EXPECTED_KEYS__YAML(
-              yaml_load_res,
-              FIRST_DOCUMENT,
-              compiler_value_node,
-              compiler_pair,
-              expected_mapping_keys,
-              {
-                  if (!strcmp(compiler_pair_key, "name")) {
-                      if (!strcmp(compiler_pair_value, "clang")) {
-                          compiler_kind = CI_PROJECT_CONFIG_COMPILER_KIND_CLANG;
-                      } else if (!strcmp(compiler_pair_value, "gcc")) {
-                          compiler_kind = CI_PROJECT_CONFIG_COMPILER_KIND_GCC;
-                      } else {
-                          UNREACHABLE("unknown compiler");
-                      }
-                  } else if (!strcmp(compiler_pair_key, "command")) {
-                      ASSERT(!command);
-
-                      command = compiler_pair_value;
-                  } else {
-                      UNREACHABLE("this situation is impossible");
-                  }
-              });
-
-            break;
-        }
-        default:
-            FAILED("expected compiler:\n"
-                   "  name: clang | gcc\n"
-                   "  command: <path_of_command> | <command>");
-    }
+    enum CIProjectConfigCompilerKind compiler_kind =
+      get_integer_from_scalar_value__CIProjectConfig(ctx,
+                                                     compiler_value_id,
+                                                     "name",
+                                                     compiler_names,
+                                                     compiler_ids,
+                                                     compiler_names_len);
+    String *command =
+      get_scalar_value__CIProjectConfig(ctx, compiler_value_id, "command");
+    bool command_is_absolute_path =
+      !is_empty__String(command) && get__String(command, 0) == '/';
 
     return NEW(CIProjectConfigCompiler,
                compiler_kind,
-               command[0] == '/' // Check if the path is absolute
-                 ? from__String((char *)command)
-                 : format__String("{s}" DIR_SEPARATOR_S "{s}",
-                                  absolute_config_dir,
+               command_is_absolute_path
+                 ? command
+                 : format__String("{s}" DIR_SEPARATOR_S "{Sr}",
+                                  ctx->absolute_config_dir,
                                   command));
 }
 
 void
-parse_std_include__CIProjectConfig(YAMLLoadRes *yaml_load_res,
-                                   const char *absolute_config_dir)
+get_std_include__CIProjectConfig(struct CIProjectConfigContext *ctx)
 {
     // std_include: <path>
-    Int32 std_include_value_id = GET_KEY_ON_DEFAULT_MAPPING__YAML(
-      yaml_load_res, FIRST_DOCUMENT, "std_include");
 
-    if (std_include_value_id == -1) {
-        return;
-    }
+    String *path = get_scalar_value__CIProjectConfig(ctx, -1, "std_include");
 
-    YAMLNode *std_include_value_node = get_node_from_id__YAML(
-      yaml_load_res, FIRST_DOCUMENT, std_include_value_id);
+    // NOTE: We insert the standard include directory in first, to take
+    // precedence over other include directories.
+    insert_include_dir__CIInclude(
+      convert_path_to_absolute_path__CIProjectConfig(path->buffer,
+                                                     ctx->absolute_config_dir),
+      0);
 
-    ASSERT(std_include_value_node);
-
-    switch (GET_NODE_TYPE__YAML(std_include_value_node)) {
-        case YAML_SCALAR_NODE:
-            // NOTE: We insert the standard include directory in first, to take
-            // precedence over other include directories.
-            insert_include_dir__CIInclude(
-              convert_path_to_absolute_path__CIProjectConfig(
-                GET_NODE_SCALAR_VALUE__YAML(std_include_value_node),
-                absolute_config_dir),
-              0);
-
-            return;
-        default:
-            FAILED("expected: std_include: <path>");
-    }
+    FREE(String, path);
 }
 
 void
-parse_include_dirs__CIProjectConfig(YAMLLoadRes *yaml_load_res,
-                                    const String *compiler_path,
-                                    const char *base_path)
+get_include_dirs__CIProjectConfig(struct CIProjectConfigContext *ctx,
+                                  const String *compiler_path)
 {
     // include_dirs:
     //   - dir
@@ -248,279 +520,133 @@ parse_include_dirs__CIProjectConfig(YAMLLoadRes *yaml_load_res,
     //   ...
 
     // Initialize include directories workspace
-    init_include_dirs__CIInclude(compiler_path, base_path);
+    init_include_dirs__CIInclude(compiler_path, ctx->absolute_config_dir);
 
-    Int32 include_dirs_value_id = GET_KEY_ON_DEFAULT_MAPPING__YAML(
-      yaml_load_res, FIRST_DOCUMENT, "include_dirs");
+    Vec *include_dir_values = get_optional_sequence_value__CIProjectConfig(
+      ctx, -1, "include_dirs"); // Vec<String*>*
 
-    if (include_dirs_value_id != -1) {
-        YAMLNode *include_dirs_value_node = get_node_from_id__YAML(
-          yaml_load_res, FIRST_DOCUMENT, include_dirs_value_id);
-
-        ASSERT(include_dirs_value_node);
-
-        switch (GET_NODE_TYPE__YAML(include_dirs_value_node)) {
-            case YAML_SEQUENCE_NODE:
-                ITER_ON_SEQUENCE_NODE__YAML(
-                  yaml_load_res,
-                  FIRST_DOCUMENT,
-                  include_dirs_value_node,
-                  include_dir,
-                  {
-                      add_include_dir__CIInclude(
-                        convert_path_to_absolute_path__CIProjectConfig(
-                          include_dir_value, base_path));
-                  });
-
-                break;
-            default:
-                FAILED("expected sequence node:\n"
-                       "include_dirs:\n"
-                       "  - dir\n"
-                       "  - dir2\n"
-                       "  ...");
+    if (include_dir_values) {
+        for (Usize i = 0; i < include_dir_values->len; ++i) {
+            add_include_dir__CIInclude(get__Vec(include_dir_values, i));
         }
+
+        FREE(Vec, include_dir_values);
     }
 }
 
-Vec *
-parse_libraries__CIProjectConfig(YAMLLoadRes *yaml_load_res,
-                                 const char *absolute_config_dir)
+CIProjectConfigLibrary *
+get_library__CIProjectConfig(struct CIProjectConfigContext *ctx,
+                             Int32 mapping_id,
+                             const char *library_name)
 {
-    Vec *libraries = NEW(Vec);
+    // <library_name>:
+    //   paths:
+    //     - <path_1>
+    //     - <path_2>
+    //     - <path_3>
 
+    Vec *paths = get_sequence_value__CIProjectConfig(
+      ctx, mapping_id, "paths"); // Vec<String*>*
+
+    // Make paths absolute.
+    for (Usize i = 0; i < paths->len; ++i) {
+        replace__Vec(paths,
+                     i,
+                     format__String("{s}" DIR_SEPARATOR_S "{Sr}",
+                                    ctx->absolute_config_dir,
+                                    get__Vec(paths, i)));
+    }
+
+    return NEW(
+      CIProjectConfigLibrary, from__String((char *)library_name), paths);
+}
+
+Vec *
+get_libraries__CIProjectConfig(struct CIProjectConfigContext *ctx)
+{
     // libraries:
-    //   <lib_name>:
+    //   <library_name>:
     //     paths:
     //       - <path_1>
     //       - <path_2>
     //       - <path_3>
     //       - ...
-    //   <lib_name>:
+    //   <library_name>:
     //     paths:
     //       - <path_1>
     //       - <path_2>
     //       - ...
     //   ...
 
-    Int32 libraries_value_id = GET_KEY_ON_DEFAULT_MAPPING__YAML(
-      yaml_load_res, FIRST_DOCUMENT, "libraries");
+    return iter_on_optional_mapping__CIProjectConfig(
+      ctx,
+      -1,
+      "libraries",
+      (void *(*)(struct CIProjectConfigContext *, Int32, const char *)) &
+        get_library__CIProjectConfig);
+}
 
-    if (libraries_value_id != -1) {
-        YAMLNode *libraries_value_node = get_node_from_id__YAML(
-          yaml_load_res, FIRST_DOCUMENT, libraries_value_id);
+CIProjectConfigBin *
+get_bin__CIProjectConfig(struct CIProjectConfigContext *ctx,
+                         Int32 mapping_id,
+                         const char *bin_name)
+{
+    // <bin_name>:
+    //   path: <file_path>
 
-        ASSERT(libraries_value_node);
+    String *path = get_scalar_value__CIProjectConfig(ctx, mapping_id, "path");
+    path = format__String(
+      "{s}" DIR_SEPARATOR_S "{Sr}", ctx->absolute_config_dir, path);
 
-        switch (GET_NODE_TYPE__YAML(libraries_value_node)) {
-            case YAML_MAPPING_NODE: {
-                //   <lib_name>:
-                //     ...
-                //   ...
-                ITER_ON_MAPPING_NODE__YAML(
-                  yaml_load_res,
-                  FIRST_DOCUMENT,
-                  libraries_value_node,
-                  library,
-                  {
-                      String *name = from__String(library_key);
-                      Vec *paths = NULL; // Vec<String*>*
-
-                      switch (GET_NODE_TYPE__YAML(library_value_node)) {
-                          case YAML_MAPPING_NODE: {
-                              const char *expected_mapping_keys[] = { "paths" };
-
-                              // paths:
-                              //   ...
-                              ITER_ON_MAPPING_NODE_WITH_EXPECTED_KEYS__YAML(
-                                yaml_load_res,
-                                FIRST_DOCUMENT,
-                                library_value_node,
-                                library_mapping,
-                                expected_mapping_keys,
-                                {
-                                    if (!strcmp(library_mapping_key, "paths")) {
-                                        ASSERT(!paths);
-
-                                        paths = NEW(Vec);
-
-                                        // paths:
-                                        //   - <path1>
-                                        //   - <path2>
-                                        //   ...
-                                        switch (GET_NODE_TYPE__YAML(
-                                          library_mapping_value_node)) {
-                                            case YAML_SEQUENCE_NODE:
-                                                ITER_ON_SEQUENCE_NODE__YAML(
-                                                  yaml_load_res,
-                                                  FIRST_DOCUMENT,
-                                                  library_mapping_value_node,
-                                                  path,
-                                                  {
-                                                      push__Vec(
-                                                        paths,
-                                                        format__String(
-                                                          "{s}" DIR_SEPARATOR_S
-                                                          "{s}",
-                                                          absolute_config_dir,
-                                                          path_value));
-                                                  });
-
-                                                break;
-                                            default:
-                                                goto error;
-                                        }
-                                    } else {
-                                        UNREACHABLE("this key is not expected");
-                                    }
-                                });
-
-                              break;
-                          }
-                          default:
-                              goto error;
-                      }
-
-                      push__Vec(libraries,
-                                NEW(CIProjectConfigLibrary, name, paths));
-                  });
-
-                break;
-            }
-            default:
-            error:
-                FAILED("expected mapping node:\n"
-                       "libraries:\n"
-                       "  <lib_name>:\n"
-                       "    paths:\n"
-                       "      - <path_1>\n"
-                       "      - <path_2>\n"
-                       "      - <path_3>\n"
-                       "      - ...\n"
-                       "  <lib_name>:\n"
-                       "    paths:\n"
-                       "      - <path_1>\n"
-                       "      - <path_2>\n"
-                       "      - ...\n"
-                       "  ...");
-        }
-    }
-
-    return libraries;
+    return NEW(CIProjectConfigBin, from__String((char *)bin_name), path);
 }
 
 Vec *
-parse_bins__CIProjectConfig(YAMLLoadRes *yaml_load_res,
-                            const char *absolute_config_dir)
+get_bins__CIProjectConfig(struct CIProjectConfigContext *ctx)
 {
-    Vec *bins = NEW(Vec);
-
     // bins:
     //   <bin_name>:
     //     path: <file_path>
+    //  ...
 
-    Int32 bins_value_id =
-      GET_KEY_ON_DEFAULT_MAPPING__YAML(yaml_load_res, FIRST_DOCUMENT, "bins");
-
-    if (bins_value_id != -1) {
-        YAMLNode *bins_value_node =
-          get_node_from_id__YAML(yaml_load_res, FIRST_DOCUMENT, bins_value_id);
-
-        ASSERT(bins_value_node);
-
-        switch (GET_NODE_TYPE__YAML(bins_value_node)) {
-            case YAML_MAPPING_NODE:
-                //   <bin_name>:
-                //     ...
-                //   ...
-                ITER_ON_MAPPING_NODE__YAML(
-                  yaml_load_res, FIRST_DOCUMENT, bins_value_node, bin, {
-                      String *name = from__String(bin_key);
-                      String *path = NULL;
-
-                      switch (GET_NODE_TYPE__YAML(bin_value_node)) {
-                          case YAML_MAPPING_NODE: {
-                              // path: <file_path>
-                              const char *expected_mapping_keys[] = { "path" };
-
-                              ITER_ON_MAPPING_NODE_WITH_EXPECTED_KEYS__YAML(
-                                yaml_load_res,
-                                FIRST_DOCUMENT,
-                                bin_value_node,
-                                bin_mapping,
-                                expected_mapping_keys,
-                                {
-                                    if (!strcmp(bin_mapping_key, "path")) {
-                                        ASSERT(!path);
-
-                                        path = format__String(
-                                          "{s}" DIR_SEPARATOR_S "{s}",
-                                          absolute_config_dir,
-                                          bin_mapping_value);
-                                    } else {
-                                        UNREACHABLE("this key is not expected");
-                                    }
-                                });
-
-                              break;
-                          }
-                          default:
-                              goto error;
-                      }
-
-                      push__Vec(bins, NEW(CIProjectConfigBin, name, path));
-                  });
-
-                break;
-            default:
-            error:
-                FAILED("expected mapping node:\n"
-                       "bins:\n"
-                       "  <bin_name>:\n"
-                       "    path: <file_path>\n"
-                       "  ...");
-        }
-    }
-
-    return bins;
+    return iter_on_optional_mapping__CIProjectConfig(
+      ctx,
+      -1,
+      "bins",
+      (void *(*)(struct CIProjectConfigContext *, Int32, const char *)) &
+        get_bin__CIProjectConfig);
 }
 
 bool
-parse_no_state_check__CIProjectConfig(YAMLLoadRes *yaml_load_res)
+get_no_state_check__CIProjectConfig(struct CIProjectConfigContext *ctx)
 {
-    bool no_state_check = false;
-
     // no_state_check: true | false
-    Int32 no_state_check_value_id = GET_KEY_ON_DEFAULT_MAPPING__YAML(
-      yaml_load_res, FIRST_DOCUMENT, "no_state_check");
 
-    if (no_state_check_value_id == -1) {
-        goto exit;
-    }
+    enum NoStateCheckValue
+    {
+        NO_STATE_CHECK_VALUE_FALSE = 0,
+        NO_STATE_CHECK_VALUE_TRUE = 1,
+    };
+    // NOTE: This array must be in alphabetical order.
+    SizedStr no_state_check_values[] = { SIZED_STR_FROM_RAW("false"),
+                                         SIZED_STR_FROM_RAW("true") };
+    Int32 no_state_check_ids[] = { NO_STATE_CHECK_VALUE_FALSE,
+                                   NO_STATE_CHECK_VALUE_TRUE };
+    const Usize no_state_check_values_len =
+      LEN(no_state_check_values, *no_state_check_values);
+    const Usize no_state_check_ids_len =
+      LEN(no_state_check_ids, *no_state_check_ids);
 
-    YAMLNode *no_state_check_value_node = get_node_from_id__YAML(
-      yaml_load_res, FIRST_DOCUMENT, no_state_check_value_id);
+    static_assert(no_state_check_values_len == no_state_check_ids_len);
 
-    switch (GET_NODE_TYPE__YAML(no_state_check_value_node)) {
-        case YAML_SCALAR_NODE: {
-            char *no_state_check_value =
-              GET_NODE_SCALAR_VALUE__YAML(no_state_check_value_node);
-
-            if (!strcmp(no_state_check_value, "true")) {
-                no_state_check = true;
-            } else if (strcmp(no_state_check_value, "false")) {
-                FAILED("expected true or false as scalar value of "
-                       "no_state_check key");
-            }
-
-            break;
-        }
-        default:
-            FAILED("expected: no_state_check: true | false");
-    }
-
-exit:
-    return no_state_check;
+    return get_integer_from_optional_scalar_value__CIProjectConfig(
+      ctx,
+      -1,
+      "no_state_check",
+      no_state_check_values,
+      no_state_check_ids,
+      no_state_check_values_len,
+      NO_STATE_CHECK_VALUE_FALSE);
 }
 
 CONSTRUCTOR(CIProjectConfigLibrary *,
@@ -610,8 +736,8 @@ parse_cli__CIProjectConfig(const CIConfig *cli_config)
 CIProjectConfig
 parse_yaml__CIProjectConfig(const char *config_dir)
 {
-    String *absolute_config_dir = convert_to_absolute_path__Path(config_dir);
-    String *path_ci_config = exists_rec__File(absolute_config_dir->buffer,
+    String *absolute_config_path = convert_to_absolute_path__Path(config_dir);
+    String *path_ci_config = exists_rec__File(absolute_config_path->buffer,
                                               CI_CONFIG); // <path>/CI.yaml
 
     if (!path_ci_config) {
@@ -619,25 +745,21 @@ parse_yaml__CIProjectConfig(const char *config_dir)
                "directory");
     }
 
-    FREE(String, absolute_config_dir);
+    FREE(String, absolute_config_path);
 
-    absolute_config_dir = get_dir__File(path_ci_config->buffer);
-
+    String *absolute_config_dir = get_dir__File(path_ci_config->buffer);
     YAMLLoadRes yaml_load_res = load__YAML(path_ci_config->buffer);
-    enum CIStandard standard = parse_standard__CIProjectConfig(&yaml_load_res);
-    CIProjectConfigCompiler compiler = parse_compiler__CIProjectConfig(
-      &yaml_load_res, absolute_config_dir->buffer);
+    struct CIProjectConfigContext ctx =
+      NEW(CIProjectConfigContext, &yaml_load_res, absolute_config_dir->buffer);
+    enum CIStandard standard = get_standard__CIProjectConfig(&ctx);
+    CIProjectConfigCompiler compiler = get_compiler__CIProjectConfig(&ctx);
 
-    parse_include_dirs__CIProjectConfig(
-      &yaml_load_res, compiler.command, absolute_config_dir->buffer);
-    parse_std_include__CIProjectConfig(&yaml_load_res,
-                                       absolute_config_dir->buffer);
+    get_include_dirs__CIProjectConfig(&ctx, compiler.command);
+    get_std_include__CIProjectConfig(&ctx);
 
-    Vec *libraries = parse_libraries__CIProjectConfig(
-      &yaml_load_res, absolute_config_dir->buffer);
-    Vec *bins =
-      parse_bins__CIProjectConfig(&yaml_load_res, absolute_config_dir->buffer);
-    bool no_state_check = parse_no_state_check__CIProjectConfig(&yaml_load_res);
+    Vec *libraries = get_libraries__CIProjectConfig(&ctx);
+    Vec *bins = get_bins__CIProjectConfig(&ctx);
+    bool no_state_check = get_no_state_check__CIProjectConfig(&ctx);
 
     FREE(String, path_ci_config);
     FREE(String, absolute_config_dir);
@@ -665,10 +787,17 @@ DESTRUCTOR(CIProjectConfig, const CIProjectConfig *self)
     }
 
     FREE(CIProjectConfigCompiler, &self->compiler);
-    FREE_BUFFER_ITEMS(
-      self->libraries->buffer, self->libraries->len, CIProjectConfigLibrary);
-    FREE(Vec, self->libraries);
 
-    FREE_BUFFER_ITEMS(self->bins->buffer, self->bins->len, CIProjectConfigBin);
-    FREE(Vec, self->bins);
+    if (self->libraries) {
+        FREE_BUFFER_ITEMS(self->libraries->buffer,
+                          self->libraries->len,
+                          CIProjectConfigLibrary);
+        FREE(Vec, self->libraries);
+    }
+
+    if (self->bins) {
+        FREE_BUFFER_ITEMS(
+          self->bins->buffer, self->bins->len, CIProjectConfigBin);
+        FREE(Vec, self->bins);
+    }
 }
