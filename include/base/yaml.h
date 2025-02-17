@@ -22,10 +22,11 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_BASE_YAML
-#define LILY_BASE_YAML
+#ifndef LILY_BASE_YAML_H
+#define LILY_BASE_YAML_H
 
 #include <base/alloc.h>
+#include <base/assert.h>
 #include <base/vec.h>
 
 #include <local/src/libyaml/src/yaml.h>
@@ -33,7 +34,7 @@
 #define FIRST_DOCUMENT 0
 
 #define GET_KEY_ON_DEFAULT_MAPPING__YAML(self, document_id, key) \
-    get_key__YAML(self, document_id, 1, key)
+    get_key__YAML(self, document_id, -1, key)
 
 #define GET_NODE_TYPE__YAML(node) node->type
 #define GET_NODE_SCALAR_VALUE__YAML(node) (char *)node->data.scalar.value
@@ -138,7 +139,6 @@ DESTRUCTOR(YAMLLoadRes, const YAMLLoadRes *self);
  *
  * @brief Load YAML file.
  * @url https://github.com/thelilylang/libyaml/blob/master/tests/run-loader.c
- * @return YAMLDocument*
  */
 YAMLLoadRes
 load__YAML(const char *filename);
@@ -198,6 +198,9 @@ add_new_document__YAML(YAMLLoadRes *self);
 /**
  *
  * @brief Get value from key.
+ * @param mapping YAMLNode*? (&) - If `mapping` is not equal to `-1`, the
+ * function will try to match the key to the `mapping` node, otherwise it will
+ * try to match the key to the root node.
  * @return If the key is not found return -1, otherwise return the index of the
  * node value.
  */
@@ -215,7 +218,22 @@ get_key__YAML(YAMLLoadRes *self,
 inline YAMLNode *
 get_node_from_id__YAML(YAMLLoadRes *self, Usize document_id, Int32 node_id)
 {
+    ASSERT(document_id < self->len);
+
     return yaml_document_get_node(&self->documents[document_id], node_id);
 }
 
-#endif // LILY_BASE_YAML
+/**
+ *
+ * @brief Get root node from document id.
+ * @rerturn YAMLNode*? (&)
+ */
+inline YAMLNode *
+get_root_node__YAML(YAMLLoadRes *self, Usize document_id)
+{
+    ASSERT(document_id < self->len);
+
+    return yaml_document_get_root_node(&self->documents[document_id]);
+}
+
+#endif // LILY_BASE_YAML_H

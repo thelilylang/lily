@@ -193,6 +193,9 @@ get_document__YAML(const YAMLLoadRes *self, Usize document_id);
 extern inline YAMLNode *
 get_node_from_id__YAML(YAMLLoadRes *self, Usize document_id, Int32 node_id);
 
+extern inline YAMLNode *
+get_root_node__YAML(YAMLLoadRes *self, Usize document_id);
+
 // <base/cli/default_action.h>
 extern inline DESTRUCTOR(CliDefaultAction, CliDefaultAction *self);
 
