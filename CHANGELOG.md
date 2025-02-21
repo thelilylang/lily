@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.10.0 - 2025-02-21
+
+### Fixed
+
+- Fix duplicate version in `docs/release_schedule.md` [#723](https://github.com/thelilylang/lily/pull/723)
+- Fix bad error "data type is not expected with initializer" [#724](https://github.com/thelilylang/lily/pull/724)
+
+### Changed
+
+- Improve parsing of CI configuration [#725](https://github.com/thelilylang/lily/pull/725)
+
 ## 0.9.0 - 2025-02-04
 
 ### Added
