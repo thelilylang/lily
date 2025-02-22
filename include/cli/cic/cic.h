@@ -22,12 +22,12 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_COMMAND_CI_H
-#define LILY_COMMAND_CI_H
+#ifndef LILY_CLI_CIC_H
+#define LILY_CLI_CIC_H
 
-#include <cli/ci/config.h>
+#include <base/cli.h>
 
-void
-run__CI(const CIConfig *config);
+Cli
+build__CliCIc(Vec *args);
 
-#endif // LILY_COMMAND_CI_H
+#endif // LILY_CLI_CIC_H

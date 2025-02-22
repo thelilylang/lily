@@ -691,7 +691,7 @@ DESTRUCTOR(CIProjectConfigBin, CIProjectConfigBin *self)
 }
 
 CIProjectConfig
-parse_cli__CIProjectConfig(const CIConfig *cli_config)
+parse_cli__CIProjectConfig(const CIcConfig *cli_config)
 {
     String *bin_name = get_filename__File(cli_config->path);
     CIProjectConfigCompiler compiler =

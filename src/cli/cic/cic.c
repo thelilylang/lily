@@ -22,14 +22,14 @@
  * SOFTWARE.
  */
 
-#include <cli/lily/lily.h>
-#include <cli/lilyc/lilyc.h>
+#include <base/cli.h>
+
 #include <cli/version.h>
 
 Cli
-build__CliCI(Vec *args)
+build__CliCIc(Vec *args)
 {
-    Cli cli = NEW(Cli, args, "ci");
+    Cli cli = NEW(Cli, args, "cic");
     CliOption *mode = NEW(CliOption, "--mode");
     CliOption *file = NEW(CliOption, "--file");
     CliOption *standard = NEW(CliOption, "--std");
@@ -65,7 +65,7 @@ build__CliCI(Vec *args)
 
     cli.$version(&cli, VERSION)
       ->$author(&cli, "ArthurPV")
-      ->$about(&cli, "The CI programming language")
+      ->$about(&cli, "The CI transpiler tool")
       ->$option(&cli, mode)
       ->$option(&cli, file)
       ->$option(&cli, standard)

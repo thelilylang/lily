@@ -22,22 +22,12 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_EX_LIB_CI_CLI_C
-#define LILY_EX_LIB_CI_CLI_C
+#include <base/new.h>
 
-#include <cli/ci/ci.h>
-#include <cli/ci/config.h>
-#include <cli/ci/parse_config.h>
+#include <cli/cic/config.h>
 
-// <cli/ci/config.h>
-extern inline CONSTRUCTOR(CIConfig,
-                          CIConfig,
-                          const char *path,
-                          enum CIConfigMode mode,
-                          bool file,
-                          enum CIStandard standard,
-                          Vec *includes,
-                          Vec *includes0,
-                          bool no_state_check);
-
-#endif // LILY_EX_LIB_CI_CLI_C
+DESTRUCTOR(CIcConfig, const CIcConfig *self)
+{
+    FREE(Vec, self->includes);
+    FREE(Vec, self->includes0);
+}

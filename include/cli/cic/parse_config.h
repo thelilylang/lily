@@ -22,9 +22,14 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_EX_BIN_CI_C
-#define LILY_EX_BIN_CI_C
+#ifndef LILY_CLI_CIC_PARSE_CONFIG_H
+#define LILY_CLI_CIC_PARSE_CONFIG_H
 
-#include "../lib/lily_core_cc_ci.c"
+#include <base/vec.h>
 
-#endif // LILY_EX_BIN_CI_C
+#include <cli/cic/config.h>
+
+CIcConfig
+run__CIcParseConfig(const Vec *results);
+
+#endif // LILY_CLI_CIC_PARSE_CONFIG_H

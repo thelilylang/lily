@@ -22,26 +22,26 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CLI_CI_CONFIG_H
-#define LILY_CLI_CI_CONFIG_H
+#ifndef LILY_CLI_CIC_CONFIG_H
+#define LILY_CLI_CIC_CONFIG_H
 
 #include <base/macros.h>
 #include <base/vec.h>
 
 #include <core/cc/ci/features.h>
 
-enum CIConfigMode
+enum CIcConfigMode
 {
-    CI_CONFIG_MODE_DEBUG,
-    CI_CONFIG_MODE_NONE,
-    CI_CONFIG_MODE_RELEASE,
+    CIC_CONFIG_MODE_DEBUG,
+    CIC_CONFIG_MODE_NONE,
+    CIC_CONFIG_MODE_RELEASE,
 };
 
-typedef struct CIConfig
+typedef struct CIcConfig
 {
     // PROJECT_PATH | FILE_PATH
     const char *path; // const char* (&)
-    enum CIConfigMode mode;
+    enum CIcConfigMode mode;
     bool file;
     enum CIStandard standard;
     // Store values passed via the `-I`/`--include` option
@@ -50,35 +50,35 @@ typedef struct CIConfig
     // Store values passed via the `--include0` option
     Vec *includes0; // Vec<char* (&)>*
     bool no_state_check;
-} CIConfig;
+} CIcConfig;
 
 /**
  *
- * @brief Construct CIConfig type.
+ * @brief Construct CIcConfig type.
  */
-inline CONSTRUCTOR(CIConfig,
-                   CIConfig,
+inline CONSTRUCTOR(CIcConfig,
+                   CIcConfig,
                    const char *path,
-                   enum CIConfigMode mode,
+                   enum CIcConfigMode mode,
                    bool file,
                    enum CIStandard standard,
                    Vec *includes,
                    Vec *includes0,
                    bool no_state_check)
 {
-    return (CIConfig){ .path = path,
-                       .mode = mode,
-                       .file = file,
-                       .standard = standard,
-                       .includes = includes,
-                       .includes0 = includes0,
-                       .no_state_check = no_state_check };
+    return (CIcConfig){ .path = path,
+                        .mode = mode,
+                        .file = file,
+                        .standard = standard,
+                        .includes = includes,
+                        .includes0 = includes0,
+                        .no_state_check = no_state_check };
 }
 
 /**
  *
- * @brief Free CIConfig type.
+ * @brief Free CIcConfig type.
  */
-DESTRUCTOR(CIConfig, const CIConfig *self);
+DESTRUCTOR(CIcConfig, const CIcConfig *self);
 
-#endif // LILY_CLI_CI_CONFIG_H
+#endif // LILY_CLI_CIC_CONFIG_H

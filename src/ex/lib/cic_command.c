@@ -22,9 +22,9 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_EX_LIB_CI_COMMAND_C
-#define LILY_EX_LIB_CI_COMMAND_C
+#ifndef LILY_EX_LIB_CIC_COMMAND_C
+#define LILY_EX_LIB_CIC_COMMAND_C
 
-#include <command/ci/ci.h>
+#include <command/cic/cic.h>
 
-#endif // LILY_EX_LIB_CI_COMMAND_C
+#endif // LILY_EX_LIB_CIC_COMMAND_C

@@ -22,12 +22,9 @@
  * SOFTWARE.
  */
 
-#include <base/new.h>
+#ifndef LILY_EX_BIN_CIC_C
+#define LILY_EX_BIN_CIC_C
 
-#include <cli/ci/config.h>
+#include "../lib/lily_core_cc_ci.c"
 
-DESTRUCTOR(CIConfig, const CIConfig *self)
-{
-    FREE(Vec, self->includes);
-    FREE(Vec, self->includes0);
-}
+#endif // LILY_EX_BIN_CIC_C

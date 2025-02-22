@@ -22,14 +22,22 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CLI_CI_PARSE_CONFIG_H
-#define LILY_CLI_CI_PARSE_CONFIG_H
+#ifndef LILY_EX_LIB_CIC_CLI_C
+#define LILY_EX_LIB_CIC_CLI_C
 
-#include <base/vec.h>
+#include <cli/cic/cic.h>
+#include <cli/cic/config.h>
+#include <cli/cic/parse_config.h>
 
-#include <cli/ci/config.h>
+// <cli/cic/config.h>
+extern inline CONSTRUCTOR(CIcConfig,
+                          CIcConfig,
+                          const char *path,
+                          enum CIcConfigMode mode,
+                          bool file,
+                          enum CIStandard standard,
+                          Vec *includes,
+                          Vec *includes0,
+                          bool no_state_check);
 
-CIConfig
-run__CIParseConfig(const Vec *results);
-
-#endif // LILY_CLI_CI_PARSE_CONFIG_H
+#endif // LILY_EX_LIB_CIC_CLI_C

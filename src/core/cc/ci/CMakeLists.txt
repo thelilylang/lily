@@ -1,21 +1,23 @@
 include(${CMAKE_SOURCE_DIR}/cmake/Lily.cmake)
 
-set(CI_CLI_SRC
-    ${CMAKE_SOURCE_DIR}/src/cli/ci/ci.c ${CMAKE_SOURCE_DIR}/src/cli/ci/config.c
-    ${CMAKE_SOURCE_DIR}/src/cli/ci/parse_config.c)
+set(CIC_CLI_SRC
+    ${CMAKE_SOURCE_DIR}/src/cli/cic/cic.c
+    ${CMAKE_SOURCE_DIR}/src/cli/cic/config.c
+    ${CMAKE_SOURCE_DIR}/src/cli/cic/parse_config.c)
 
-# ci_cli
-add_library(ci_cli STATIC ${CI_CLI_SRC} ${CMAKE_SOURCE_DIR}/src/ex/lib/ci_cli.c)
-target_link_libraries(ci_cli PRIVATE lily_base)
-target_include_directories(ci_cli PRIVATE ${LILY_INCLUDE})
+# cic_cli
+add_library(cic_cli STATIC ${CIC_CLI_SRC}
+                           ${CMAKE_SOURCE_DIR}/src/ex/lib/cic_cli.c)
+target_link_libraries(cic_cli PRIVATE lily_base)
+target_include_directories(cic_cli PRIVATE ${LILY_INCLUDE})
 
-set(CI_COMMAND_SRC ${CMAKE_SOURCE_DIR}/src/command/ci/ci.c)
+set(CIC_COMMAND_SRC ${CMAKE_SOURCE_DIR}/src/command/cic/cic.c)
 
-# ci_command
-add_library(ci_command STATIC ${CI_COMMAND_SRC}
-                              ${CMAKE_SOURCE_DIR}/src/ex/lib/ci_command.c)
-target_link_libraries(ci_command PRIVATE lily_base lily_core_cc_ci)
-target_include_directories(ci_command PRIVATE ${LILY_INCLUDE})
+# cic_command
+add_library(cic_command STATIC ${CIC_COMMAND_SRC}
+                               ${CMAKE_SOURCE_DIR}/src/ex/lib/cic_command.c)
+target_link_libraries(cic_command PRIVATE lily_base lily_core_cc_ci)
+target_include_directories(cic_command PRIVATE ${LILY_INCLUDE})
 
 set(CI_DIAGNOSTIC_SRC ${CMAKE_SOURCE_DIR}/src/core/cc/ci/diagnostic/error.c
                       ${CMAKE_SOURCE_DIR}/src/core/cc/ci/diagnostic/warning.c)
@@ -69,8 +71,8 @@ target_link_libraries(
                           lily_core_cc_ci_extensions lily_core_shared)
 target_include_directories(lily_core_cc_ci PRIVATE ${LILY_INCLUDE})
 
-# ci
-add_executable(ci ${CMAKE_SOURCE_DIR}/src/bin/ci/main.c
-                  ${CMAKE_SOURCE_DIR}/src/ex/bin/ci.c)
-target_link_libraries(ci PRIVATE lily_core_cc_ci ci_cli ci_command)
-target_include_directories(ci PRIVATE ${LILY_INCLUDE})
+# cic
+add_executable(cic ${CMAKE_SOURCE_DIR}/src/bin/cic/main.c
+                   ${CMAKE_SOURCE_DIR}/src/ex/bin/cic.c)
+target_link_libraries(cic PRIVATE lily_core_cc_ci cic_cli cic_command)
+target_include_directories(cic PRIVATE ${LILY_INCLUDE})

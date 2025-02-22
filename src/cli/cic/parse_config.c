@@ -25,7 +25,7 @@
 #include <base/assert.h>
 #include <base/cli/result.h>
 
-#include <cli/ci/parse_config.h>
+#include <cli/cic/parse_config.h>
 #include <cli/emit.h>
 
 #include <core/cc/ci/features.h>
@@ -52,10 +52,10 @@
 #define INCLUDE0_OPTION 11
 #define NO_STATE_CHECK_OPTION 12
 
-CIConfig
-run__CIParseConfig(const Vec *results)
+CIcConfig
+run__CIcParseConfig(const Vec *results)
 {
-    enum CIConfigMode mode = CI_CONFIG_MODE_NONE;
+    enum CIcConfigMode mode = CIC_CONFIG_MODE_NONE;
     bool file = false;
     char *path = NULL;
     enum CIStandard standard = CI_STANDARD_NONE;
@@ -83,10 +83,10 @@ run__CIParseConfig(const Vec *results)
                                CLI_RESULT_VALUE_KIND_SINGLE);
 
                         if (!strcmp(current->option->value->single, "DEBUG")) {
-                            mode = CI_CONFIG_MODE_DEBUG;
+                            mode = CIC_CONFIG_MODE_DEBUG;
                         } else if (!strcmp(current->option->value->single,
                                            "RELEASE")) {
-                            mode = CI_CONFIG_MODE_RELEASE;
+                            mode = CIC_CONFIG_MODE_RELEASE;
                         } else {
                             EMIT_ERROR(
                               "expected DEBUG or RELEASE as value of `--mode`");
@@ -159,7 +159,7 @@ run__CIParseConfig(const Vec *results)
         standard = CI_STANDARD_99;
     }
 
-    return NEW(CIConfig,
+    return NEW(CIcConfig,
                path,
                mode,
                file,

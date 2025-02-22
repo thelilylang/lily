@@ -24,7 +24,7 @@
 
 #include <base/macros.h>
 
-#include <command/ci/ci.h>
+#include <command/cic/cic.h>
 
 #include <core/cc/ci/builtin.h>
 #include <core/cc/ci/generator.h>
@@ -41,9 +41,9 @@
 #include <stdlib.h>
 
 void
-run__CI(const CIConfig *config)
+run__CIc(const CIcConfig *config)
 {
-    if (config->mode != CI_CONFIG_MODE_NONE) {
+    if (config->mode != CIC_CONFIG_MODE_NONE) {
         TODO("implement --mode option");
     }
 

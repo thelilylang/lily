@@ -31,7 +31,7 @@
 #include <base/vec.h>
 #include <base/yaml.h>
 
-#include <cli/ci/config.h>
+#include <cli/cic/config.h>
 #include <core/cc/ci/features.h>
 
 enum CIProjectConfigCompilerKind
@@ -184,7 +184,7 @@ inline VARIANT_CONSTRUCTOR(CIProjectConfig,
  * @brief Parse CLI configuration.
  */
 CIProjectConfig
-parse_cli__CIProjectConfig(const CIConfig *cli_config);
+parse_cli__CIProjectConfig(const CIcConfig *cli_config);
 
 /**
  *
