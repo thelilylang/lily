@@ -55,6 +55,7 @@ global
 base
 
 bin/ci
+bin/cic
 bin/lily
 bin/lilyc
 
