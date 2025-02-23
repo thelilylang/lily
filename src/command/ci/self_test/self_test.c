@@ -22,22 +22,9 @@
  * SOFTWARE.
  */
 
-#include <base/cli.h>
+#include <command/ci/self_test/self_test.h>
 
-#include <cli/cic/cic.h>
-#include <cli/version.h>
-
-Cli
-build__CliCIc(Vec *args)
+void
+run__CISelfTest(const CIConfig *config)
 {
-    Cli cli = NEW(Cli, args, "cic");
-
-    cli.$version(&cli, VERSION)
-      ->$author(&cli, "ArthurPV")
-      ->$about(&cli, "The CI transpiler tool")
-      ->$single_value(&cli, "PROJECT_PATH | FILE_PATH", true);
-
-    CIC_OPTIONS((&cli));
-
-    return cli;
 }

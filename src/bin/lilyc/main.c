@@ -50,4 +50,6 @@ main(int argc, char **argv)
     run__Lilyc(&config);
 
     LLVMShutdown();
+
+    return 0;
 }

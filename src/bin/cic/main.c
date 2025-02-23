@@ -39,11 +39,13 @@ main(int argc, char **argv)
     CIcConfig config = run__CIcParseConfig(res);
 
     FREE_BUFFER_ITEMS(res->buffer, res->len, CliResult);
-    FREE(Vec, args);
     FREE(Vec, res);
+    FREE(Vec, args);
     FREE(Cli, &cli);
 
     run__CIc(&config);
 
     FREE(CIcConfig, &config);
+
+    return 0;
 }

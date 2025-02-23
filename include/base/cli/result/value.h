@@ -40,9 +40,9 @@ typedef struct CliResultValue
     const char *name;
     union
     {
-        char *single;
-        Vec *multiple;     // Vec<char*>*
-        Vec *multiple_inf; // Vec<char*>*
+        char *single;      // char* (&)
+        Vec *multiple;     // Vec<char* (&)>*
+        Vec *multiple_inf; // Vec<char* (&)>*
     };
 } CliResultValue;
 

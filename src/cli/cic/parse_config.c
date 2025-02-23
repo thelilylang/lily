@@ -42,19 +42,44 @@
 #define V_OPTION 2
 #define VERSION_OPTION 3
 */
-#define MODE_OPTION 4
-#define F_OPTION 5
-#define FILE_OPTION 6
-#define S_OPTION 7
-#define STD_OPTION 8
-#define I_OPTION 9
-#define INCLUDE_OPTION 10
-#define INCLUDE0_OPTION 11
-#define NO_STATE_CHECK_OPTION 12
+#define MODE_OPTION 0           // (4 or 2)
+#define F_OPTION 1              // (5 or 3)
+#define FILE_OPTION 2           // (6 or 4)
+#define S_OPTION 3              // (7 or 5)
+#define STD_OPTION 4            // (8 or 6)
+#define I_OPTION 5              // (9 or 7)
+#define INCLUDE_OPTION 6        // (10 or 8)
+#define INCLUDE0_OPTION 7       // (11 or 9)
+#define NO_STATE_CHECK_OPTION 8 // (12 or 10)
+
+/// @brief Get offset, given the purpose.
+static int
+get_offset__CIcParseConfigPurpose(enum CIcParseConfigPurpose self);
+
+/// @brief Parse cic configuration (base).
+static CIcConfig
+run_base__CIcParseConfig(const Vec *results,
+                         enum CIcParseConfigPurpose purpose);
+
+int
+get_offset__CIcParseConfigPurpose(enum CIcParseConfigPurpose self)
+{
+    switch (self) {
+        case CIC_PARSE_CONFIG_PURPOSE_CLI:
+            // H_OPTION + HELP_OPTION + V_OPTION + VERSION_OPTION = 4
+            return 4;
+        case CIC_PARSE_CONFIG_PURPOSE_CMD:
+            // H_OPTION + HELP_OPTION = 2
+            return 2;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
 
 CIcConfig
-run__CIcParseConfig(const Vec *results)
+run_base__CIcParseConfig(const Vec *results, enum CIcParseConfigPurpose purpose)
 {
+    int option_offset = get_offset__CIcParseConfigPurpose(purpose);
     enum CIcConfigMode mode = CIC_CONFIG_MODE_NONE;
     bool file = false;
     char *path = NULL;
@@ -69,14 +94,21 @@ run__CIcParseConfig(const Vec *results)
     while ((current = next__VecIter(&iter))) {
         switch (current->kind) {
             case CLI_RESULT_KIND_VALUE:
-                ASSERT(current->value);
-                ASSERT(current->value->kind == CLI_RESULT_VALUE_KIND_SINGLE);
+                if (purpose == CIC_PARSE_CONFIG_PURPOSE_CLI) {
+                    ASSERT(current->value);
+                    ASSERT(current->value->kind ==
+                           CLI_RESULT_VALUE_KIND_SINGLE);
 
-                path = current->value->single;
+                    path = current->value->single;
 
-                break;
+                    break;
+                }
+
+                UNREACHABLE("not expected in this context");
             case CLI_RESULT_KIND_OPTION:
-                switch (current->option->id) {
+                ASSERT(current->option->id >= option_offset);
+
+                switch (current->option->id - option_offset) {
                     case MODE_OPTION:
                         ASSERT(current->option->value);
                         ASSERT(current->option->value->kind ==
@@ -150,8 +182,20 @@ run__CIcParseConfig(const Vec *results)
                 }
 
                 break;
-            default:
+            case CLI_RESULT_KIND_COMMAND:
+                if (purpose == CIC_PARSE_CONFIG_PURPOSE_CMD) {
+                    ASSERT(current->command.value);
+                    ASSERT(current->command.value->kind ==
+                           CLI_RESULT_VALUE_KIND_SINGLE);
+
+                    path = current->command.value->single;
+
+                    break;
+                }
+
                 UNREACHABLE("not expected in this context");
+            default:
+                UNREACHABLE("unknown variant");
         }
     }
 
@@ -167,4 +211,16 @@ run__CIcParseConfig(const Vec *results)
                includes,
                includes0,
                no_state_check);
+}
+
+CIcConfig
+run_for_command__CIcParseConfig(const Vec *results)
+{
+    return run_base__CIcParseConfig(results, CIC_PARSE_CONFIG_PURPOSE_CMD);
+}
+
+CIcConfig
+run__CIcParseConfig(const Vec *results)
+{
+    return run_base__CIcParseConfig(results, CIC_PARSE_CONFIG_PURPOSE_CLI);
 }

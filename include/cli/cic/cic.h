@@ -27,6 +27,44 @@
 
 #include <base/cli.h>
 
+#define CIC_OPTIONS(self)                                                     \
+    CliOption *mode = NEW(CliOption, "--mode");                               \
+    CliOption *file = NEW(CliOption, "--file");                               \
+    CliOption *standard = NEW(CliOption, "--std");                            \
+    CliOption *include = NEW(CliOption, "--include");                         \
+    CliOption *include0 = NEW(CliOption, "--include0");                       \
+    CliOption *no_state_check = NEW(CliOption, "--no-state-check");           \
+                                                                              \
+    mode->$help(mode, "Specify transpilation mode (DEBUG | RELEASE)")         \
+      ->$value(mode, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "MODE", true));     \
+    file->$help(file, "Allow to pass a file instead of a project path")       \
+      ->$short_name(file, "-f");                                              \
+    standard                                                                  \
+      ->$help(                                                                \
+        standard,                                                             \
+        "Pass the standard to use (values: kr | c89 | c95 | c99 | c11 | "     \
+        "c17 | c23, default: c99)")                                           \
+      ->$value(standard, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "STD", true))   \
+      ->$short_name(standard, "-s");                                          \
+    include                                                                   \
+      ->$help(include,                                                        \
+              "Add directory to the end of the list of include search paths") \
+      ->$value(include, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "DIR", true))    \
+      ->$short_name(include, "-I");                                           \
+    include0                                                                  \
+      ->$help(                                                                \
+        include0,                                                             \
+        "Add directory to the begin of the list of include search paths")     \
+      ->$value(include0, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "DIR", true));  \
+    no_state_check->$help(no_state_check, "Disable the state checker");       \
+                                                                              \
+    self->$option(self, mode)                                                 \
+      ->$option(self, file)                                                   \
+      ->$option(self, standard)                                               \
+      ->$option(self, include)                                                \
+      ->$option(self, include0)                                               \
+      ->$option(self, no_state_check);
+
 Cli
 build__CliCIc(Vec *args);
 

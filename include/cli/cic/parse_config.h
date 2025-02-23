@@ -29,6 +29,23 @@
 
 #include <cli/cic/config.h>
 
+enum CIcParseConfigPurpose
+{
+    CIC_PARSE_CONFIG_PURPOSE_CLI,
+    CIC_PARSE_CONFIG_PURPOSE_CMD,
+};
+
+/**
+ *
+ * @brief Parse cic configuration, for a command.
+ */
+CIcConfig
+run_for_command__CIcParseConfig(const Vec *results);
+
+/**
+ *
+ * @brief Parse cic configuration.
+ */
 CIcConfig
 run__CIcParseConfig(const Vec *results);
 

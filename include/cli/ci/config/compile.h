@@ -22,22 +22,40 @@
  * SOFTWARE.
  */
 
-#include <base/cli.h>
+#ifndef LILY_CLI_CI_CONFIG_COMPILE_H
+#define LILY_CLI_CI_CONFIG_COMPILE_H
 
-#include <cli/cic/cic.h>
-#include <cli/version.h>
+#include <base/new.h>
 
-Cli
-build__CliCIc(Vec *args)
+#include <cli/cic/config.h>
+
+typedef CIcConfig CIConfigCompile;
+
+/**
+ *
+ * @brief Construct CIConfigCompile type.
+ */
+inline CONSTRUCTOR(CIConfigCompile,
+                   CIConfigCompile,
+                   const char *path,
+                   enum CIcConfigMode mode,
+                   bool file,
+                   enum CIStandard standard,
+                   Vec *includes,
+                   Vec *includes0,
+                   bool no_state_check)
 {
-    Cli cli = NEW(Cli, args, "cic");
-
-    cli.$version(&cli, VERSION)
-      ->$author(&cli, "ArthurPV")
-      ->$about(&cli, "The CI transpiler tool")
-      ->$single_value(&cli, "PROJECT_PATH | FILE_PATH", true);
-
-    CIC_OPTIONS((&cli));
-
-    return cli;
+	return NEW(CIcConfig, path, mode, file, standard, includes, includes0, no_state_check);
 }
+
+
+/**
+ *
+ * @brief Free CIConfigCompile type.
+ */
+inline DESTRUCTOR(CIConfigCompile, const CIConfigCompile *self)
+{
+	return FREE(CIcConfig, self);
+}
+
+#endif // LILY_CLI_CI_CONFIG_COMPILE_H

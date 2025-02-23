@@ -22,22 +22,70 @@
  * SOFTWARE.
  */
 
-#include <base/cli.h>
-
+#include <cli/ci/ci.h>
 #include <cli/cic/cic.h>
 #include <cli/version.h>
 
-Cli
-build__CliCIc(Vec *args)
+static CliCommand *
+compile_command__CliCI();
+
+static CliCommand *
+self_test_command__CliCI();
+
+static CliCommand *
+compile_options__CliCI(CliCommand *cmd);
+
+static CliCommand *
+self_test_options__CliCI(CliCommand *cmd);
+
+CliCommand *
+compile_command__CliCI()
 {
-    Cli cli = NEW(Cli, args, "cic");
+    CliCommand *cmd = NEW(CliCommand, "compile");
+
+    cmd->$help(cmd, "Compile a file or a project")
+      ->$value(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "PROJECT_PATH | FILE_PATH", true))
+      ->$defer(cmd, &compile_options__CliCI);
+
+    return cmd;
+}
+
+CliCommand *
+self_test_command__CliCI()
+{
+	CliCommand *cmd = NEW(CliCommand, "self-test");
+
+	cmd->$help(cmd, "Self test the compiler")
+	   ->$value(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE_PATH", true))
+	   ->$defer(cmd, &self_test_options__CliCI);
+
+	return cmd;
+}
+
+CliCommand *
+compile_options__CliCI(CliCommand *cmd)
+{
+	CIC_OPTIONS(cmd);
+
+    return cmd;
+}
+
+CliCommand *
+self_test_options__CliCI(CliCommand *cmd)
+{
+	return cmd;
+}
+
+Cli
+build__CliCI(Vec *args)
+{
+    Cli cli = NEW(Cli, args, "ci");
 
     cli.$version(&cli, VERSION)
       ->$author(&cli, "ArthurPV")
-      ->$about(&cli, "The CI transpiler tool")
-      ->$single_value(&cli, "PROJECT_PATH | FILE_PATH", true);
-
-    CIC_OPTIONS((&cli));
+      ->$about(&cli, "The CI programming language")
+      ->$subcommand(&cli, compile_command__CliCI())
+	  ->$subcommand(&cli, self_test_command__CliCI());
 
     return cli;
 }

@@ -22,22 +22,42 @@
  * SOFTWARE.
  */
 
-#include <base/cli.h>
+#include <base/macros.h>
 
-#include <cli/cic/cic.h>
-#include <cli/version.h>
+#include <cli/ci/config.h>
 
-Cli
-build__CliCIc(Vec *args)
+#include <stdio.h>
+#include <stdlib.h>
+
+/// @brief Free CIConfig type (CI_CONFIG_KIND_COMPILE).
+static inline VARIANT_DESTRUCTOR(CIConfig, compile, const CIConfig *self);
+
+/// @brief Free CIConfig type (CI_CONFIG_KIND_SELF_TEST).
+static inline VARIANT_DESTRUCTOR(CIConfig, self_test, const CIConfig *self);
+
+
+VARIANT_DESTRUCTOR(CIConfig, compile, const CIConfig *self)
 {
-    Cli cli = NEW(Cli, args, "cic");
+	FREE(CIConfigCompile, &self->compile);
+}
 
-    cli.$version(&cli, VERSION)
-      ->$author(&cli, "ArthurPV")
-      ->$about(&cli, "The CI transpiler tool")
-      ->$single_value(&cli, "PROJECT_PATH | FILE_PATH", true);
+VARIANT_DESTRUCTOR(CIConfig, self_test, const CIConfig *self)
+{
+	// NOTE: Nothing to free yet.
+}
 
-    CIC_OPTIONS((&cli));
+DESTRUCTOR(CIConfig, const CIConfig *self)
+{
+	switch (self->kind) {
+		case CI_CONFIG_KIND_COMPILE:
+			FREE_VARIANT(CIConfig, compile, self);
 
-    return cli;
+			break;
+		case CI_CONFIG_KIND_SELF_TEST:
+			FREE_VARIANT(CIConfig, self_test, self);
+
+			break;
+		default:
+			UNREACHABLE("unknown variant");
+	}
 }

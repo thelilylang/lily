@@ -22,22 +22,13 @@
  * SOFTWARE.
  */
 
-#include <base/cli.h>
+#ifndef LILY_EX_LIB_CI_COMMAND_C
+#define LILY_EX_LIB_CI_COMMAND_C
 
-#include <cli/cic/cic.h>
-#include <cli/version.h>
+#include <command/ci/compile/compile.h>
 
-Cli
-build__CliCIc(Vec *args)
-{
-    Cli cli = NEW(Cli, args, "cic");
+// <command/ci/compile.h>
+extern inline void
+run__CICompile(CIConfig *config);
 
-    cli.$version(&cli, VERSION)
-      ->$author(&cli, "ArthurPV")
-      ->$about(&cli, "The CI transpiler tool")
-      ->$single_value(&cli, "PROJECT_PATH | FILE_PATH", true);
-
-    CIC_OPTIONS((&cli));
-
-    return cli;
-}
+#endif // LILY_EX_LIB_CI_COMMAND_C

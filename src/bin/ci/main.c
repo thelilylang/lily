@@ -22,22 +22,45 @@
  * SOFTWARE.
  */
 
-#include <base/cli.h>
+#include <base/cli/args.h>
+#include <base/cli/result.h>
 
-#include <cli/cic/cic.h>
-#include <cli/version.h>
+#include <cli/ci/ci.h>
+#include <cli/ci/parse_config.h>
 
-Cli
-build__CliCIc(Vec *args)
+#include <command/ci/compile.h>
+#include <command/ci/self_test.h>
+
+#include <stdlib.h>
+#include <stdio.h>
+
+int
+main(int argc, char **argv)
 {
-    Cli cli = NEW(Cli, args, "cic");
+    Vec *args = build__CliArgs(argc, argv);
+    Cli cli = build__CliCI(args);
+    Vec *res = cli.$parse(&cli);
+    CIConfig config = run__CIParseConfig(res);
 
-    cli.$version(&cli, VERSION)
-      ->$author(&cli, "ArthurPV")
-      ->$about(&cli, "The CI transpiler tool")
-      ->$single_value(&cli, "PROJECT_PATH | FILE_PATH", true);
+    FREE_BUFFER_ITEMS(res->buffer, res->len, CliResult);
+    FREE(Vec, res);
+	FREE(Vec, args);
+	FREE(Cli, &cli);
 
-    CIC_OPTIONS((&cli));
+    switch (config.kind) {
+        case CI_CONFIG_KIND_COMPILE:
+			run__CICompile(&config);
 
-    return cli;
+			break;
+		case CI_CONFIG_KIND_SELF_TEST:
+			run__CISelfTest(&config);
+
+			break;
+		default:
+			UNREACHABLE("unknown variant");
+	}
+
+	FREE(CIConfig, &config);
+
+	return 0;
 }

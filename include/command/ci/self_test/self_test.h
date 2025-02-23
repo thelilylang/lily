@@ -22,22 +22,16 @@
  * SOFTWARE.
  */
 
-#include <base/cli.h>
+#ifndef LILY_COMMAND_CI_SELF_TEST_SELF_TEST_H
+#define LILY_COMMAND_CI_SELF_TEST_SELF_TEST_H
 
-#include <cli/cic/cic.h>
-#include <cli/version.h>
+#include <cli/ci/config.h>
 
-Cli
-build__CliCIc(Vec *args)
-{
-    Cli cli = NEW(Cli, args, "cic");
+/**
+ *
+ * @param config CIConfig* (&) 
+ */
+void
+run__CISelfTest(const CIConfig *config);
 
-    cli.$version(&cli, VERSION)
-      ->$author(&cli, "ArthurPV")
-      ->$about(&cli, "The CI transpiler tool")
-      ->$single_value(&cli, "PROJECT_PATH | FILE_PATH", true);
-
-    CIC_OPTIONS((&cli));
-
-    return cli;
-}
+#endif // LILY_COMMAND_CI_SELF_TEST_SELF_TEST_H

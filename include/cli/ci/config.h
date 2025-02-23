@@ -22,22 +22,51 @@
  * SOFTWARE.
  */
 
-#include <base/cli.h>
+#ifndef LILY_CLI_CI_CONFIG_H
+#define LILY_CLI_CI_CONFIG_H
 
-#include <cli/cic/cic.h>
-#include <cli/version.h>
+#include <base/macros.h>
 
-Cli
-build__CliCIc(Vec *args)
+#include <cli/ci/config/compile.h>
+#include <cli/ci/config/self_test.h>
+
+enum CIConfigKind 
 {
-    Cli cli = NEW(Cli, args, "cic");
+	CI_CONFIG_KIND_COMPILE,
+	CI_CONFIG_KIND_SELF_TEST
+};
 
-    cli.$version(&cli, VERSION)
-      ->$author(&cli, "ArthurPV")
-      ->$about(&cli, "The CI transpiler tool")
-      ->$single_value(&cli, "PROJECT_PATH | FILE_PATH", true);
+typedef struct CIConfig {
+    enum CIConfigKind kind;
+	union {
+		CIConfigCompile compile;
+		CIConfigSelfTest self_test;
+	};
+} CIConfig;
 
-    CIC_OPTIONS((&cli));
-
-    return cli;
+/**
+ *
+ * @brief Construct CIConfig type (CI_CONFIG_KIND_COMPILE).
+ */
+inline VARIANT_CONSTRUCTOR(CIConfig, CIConfig, compile, CIConfigCompile compile)
+{
+	return (CIConfig){ .kind = CI_CONFIG_KIND_COMPILE, .compile = compile };
 }
+
+/**
+ *
+ * @brief Construct CIConfig type (CI_CONFIG_KIND_SELF_TEST).
+ */
+inline VARIANT_CONSTRUCTOR(CIConfig, CIConfig, self_test, CIConfigSelfTest self_test)
+{
+	return (CIConfig){ .kind = CI_CONFIG_KIND_SELF_TEST, .self_test = self_test };
+}
+
+/**
+ *
+ * @brief Free CIConfig type.
+ * @param self const CIConfig* (&)
+ */
+DESTRUCTOR(CIConfig, const CIConfig *self);
+
+#endif // LILY_CLI_CI_CONFIG_H

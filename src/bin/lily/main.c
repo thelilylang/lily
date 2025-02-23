@@ -36,6 +36,9 @@
 
 #include <llvm-c/Core.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+
 int
 main(int argc, char **argv)
 {
@@ -56,6 +59,7 @@ main(int argc, char **argv)
             break;
         case LILY_CONFIG_KIND_COMPILE:
             run__LilyCompile(args);
+
             break;
         case LILY_CONFIG_KIND_CPP:
             break;
@@ -65,11 +69,14 @@ main(int argc, char **argv)
             break;
         case LILY_CONFIG_KIND_RUN:
             run__LilyRun(&config);
+
             break;
         case LILY_CONFIG_KIND_TEST:
             break;
         case LILY_CONFIG_KIND_TO:
             break;
+        default:
+            UNREACHABLE("unknown variant");
     }
 
     FREE(Vec, args);

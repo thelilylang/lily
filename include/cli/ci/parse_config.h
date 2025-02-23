@@ -22,22 +22,14 @@
  * SOFTWARE.
  */
 
-#include <base/cli.h>
+#ifndef LILY_CLI_CI_PARSE_CONFIG_H
+#define LILY_CLI_CI_PARSE_CONFIG_H
 
-#include <cli/cic/cic.h>
-#include <cli/version.h>
+#include <base/vec.h>
 
-Cli
-build__CliCIc(Vec *args)
-{
-    Cli cli = NEW(Cli, args, "cic");
+#include <cli/ci/config.h>
 
-    cli.$version(&cli, VERSION)
-      ->$author(&cli, "ArthurPV")
-      ->$about(&cli, "The CI transpiler tool")
-      ->$single_value(&cli, "PROJECT_PATH | FILE_PATH", true);
+CIConfig
+run__CIParseConfig(const Vec *results);
 
-    CIC_OPTIONS((&cli));
-
-    return cli;
-}
+#endif // LILY_CLI_CI_PARSE_CONFIG_H
