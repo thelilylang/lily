@@ -22,25 +22,36 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CLI_EMIT_H
-#define LILY_CLI_EMIT_H
+#ifndef LILY_COMMAND_CI_SELF_TEST_METADATA_H
+#define LILY_COMMAND_CI_SELF_TEST_METADATA_H
 
-#include <base/print.h>
+#include <base/string.h>
 
-#define EMIT_HELP(msg) PRINTLN("\x1b[1m\x1b[33mhelp\x1b[0m: {s}\x1b[0m", msg)
+#include <stddef.h>
 
-#define EMIT_HELP_FMT(msg, ...) \
-    PRINTLN("\x1b[1m\x1b[33mhelp\x1b[0m: {sa}\x1b[0m", format(msg, __VA_ARGS__))
+typedef struct CISelfTestMetadata
+{
+    String *compile_options; // String*?
+    String *expected_stdout; // String*?
+    String *expected_stderr; // String*?
+} CISelfTestMetadata;
 
-#define EMIT_ERROR(msg) PRINTLN("\x1b[1m\x1b[31merror\x1b[0m: {s}\x1b[0m", msg)
+/**
+ *
+ * @brief Construct CISelfTestMetadata type.
+ */
+inline CONSTRUCTOR(CISelfTestMetadata, CISelfTestMetadata)
+{
+    return (CISelfTestMetadata){ .compile_options = NULL,
+                                 .expected_stdout = NULL,
+                                 .expected_stderr = NULL };
+}
 
-#define EMIT_ERROR_FMT(msg, ...)                        \
-    PRINTLN("\x1b[1m\x1b[31merror\x1b[0m: {sa}\x1b[0m", \
-            format(msg, __VA_ARGS__))
+/**
+ *
+ * @brief Free CISelfTestMetadata type.
+ * @param self const CISelfTestMetadata* (&)
+ */
+DESTRUCTOR(CISelfTestMetadata, const CISelfTestMetadata *self);
 
-#define EMIT_NOTE(msg) PRINTLN("\x1b[1m\x1b[31mnote\x1b[0m: {s}\x1b[0m", msg)
-
-#define EMIT_NOTE_FMT(msg, ...) \
-    PRINTLN("\x1b[1m\x1b[31mnote\x1b[0m: {sa}\x1b[0m", format(msg, __VA_ARGS__))
-
-#endif // LILY_CLI_EMIT_H
+#endif // LILY_COMMAND_CI_SELF_TEST_METADATA_H

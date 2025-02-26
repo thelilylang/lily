@@ -25,10 +25,14 @@
 #ifndef LILY_BASE_FILE_H
 #define LILY_BASE_FILE_H
 
-#include <stdbool.h>
+#define _GNU_SOURCE
 
+#include <base/assert.h>
 #include <base/string.h>
 #include <base/types.h>
+
+#include <stdbool.h>
+#include <stdio.h>
 
 /**
  *
@@ -123,5 +127,38 @@ exists__File(const char *path);
  */
 String *
 exists_rec__File(const char *path, const char *filename);
+
+/**
+ *
+ * @brief Open file stream.
+ * @return FILE*
+ */
+inline FILE *
+open__File(const char *filename, const char *modes)
+{
+    return fopen(filename, modes);
+}
+
+/**
+ *
+ * @brief Get line from a stream.
+ * @param line_ref char** (&)
+ * @param n Usize* (&)
+ * @param stream FILE* (&)
+ */
+Isize
+getline__File(char **line_ref, Usize *n, FILE *stream);
+
+/**
+ *
+ * @brief Close file stream.
+ * @param stream FILE* - `stream` is no longer accessible after this function
+ * has been called.
+ */
+inline Int32
+close__File(FILE *stream)
+{
+    return fclose(stream);
+}
 
 #endif // LILY_BASE_FILE_H

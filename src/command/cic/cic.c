@@ -28,7 +28,6 @@
 
 #include <core/cc/ci/builtin.h>
 #include <core/cc/ci/generator.h>
-#include <core/cc/ci/include.h>
 #include <core/cc/ci/parser.h>
 #include <core/cc/ci/project_config.h>
 #include <core/cc/ci/result.h>
@@ -49,7 +48,7 @@ run__CIc(const CIcConfig *config)
 
     CIBuiltin builtin = NEW(CIBuiltin);
     CIProjectConfig project_config =
-      config->file ? parse_cli__CIProjectConfig(config)
+      config->file ? parse_cic_cli__CIProjectConfig(config)
                    : parse_yaml__CIProjectConfig(config->path);
     CIResult result = NEW(CIResult, &project_config, &builtin);
     CIVisitor visitor = NEW(CIVisitor, &result);
@@ -66,6 +65,4 @@ run__CIc(const CIcConfig *config)
     FREE(CIResult, &result);
     FREE(CIBuiltin, &builtin);
     FREE(CIProjectConfig, &project_config);
-
-    destroy__CIInclude();
 }

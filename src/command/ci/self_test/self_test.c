@@ -22,9 +22,39 @@
  * SOFTWARE.
  */
 
+#include <base/dir.h>
+#include <base/fork.h>
+#include <base/new.h>
+
+#include <command/ci/self_test/metadata/scanner.h>
+#include <command/ci/self_test/run.h>
 #include <command/ci/self_test/self_test.h>
+
+#include <core/cc/ci/project_config.h>
 
 void
 run__CISelfTest(const CIConfig *config)
 {
+    CIProjectConfig project_config;
+
+    if (is__Dir(config->self_test.path)) {
+        project_config = parse_yaml__CIProjectConfig(config->self_test.path);
+    } else {
+        project_config = parse_ci_cli__CIProjectConfig(config);
+    }
+
+    if (project_config.self_tests) {
+        for (Usize i = 0; i < project_config.self_tests->len; ++i) {
+            const CIProjectConfigSelfTest *self_test =
+              get__Vec(project_config.self_tests, i);
+            CISelfTestMetadata metadata = NEW(CISelfTestMetadata);
+
+            run__CISelfTestMetadataScanner(self_test, &metadata);
+            run__CISelfTestRun(&metadata, self_test);
+
+            FREE(CISelfTestMetadata, &metadata);
+        }
+    }
+
+    FREE(CIProjectConfig, &project_config);
 }

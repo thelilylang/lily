@@ -22,25 +22,19 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CLI_EMIT_H
-#define LILY_CLI_EMIT_H
+#ifndef LILY_COMMAND_CI_SELF_TEST_RUN_H
+#define LILY_COMMAND_CI_SELF_TEST_RUN_H
 
-#include <base/print.h>
+#include <command/ci/self_test/metadata.h>
 
-#define EMIT_HELP(msg) PRINTLN("\x1b[1m\x1b[33mhelp\x1b[0m: {s}\x1b[0m", msg)
+#include <core/cc/ci/project_config.h>
 
-#define EMIT_HELP_FMT(msg, ...) \
-    PRINTLN("\x1b[1m\x1b[33mhelp\x1b[0m: {sa}\x1b[0m", format(msg, __VA_ARGS__))
+/**
+ *
+ * @brief Run one self-test.
+ */
+void
+run__CISelfTestRun(const CISelfTestMetadata *metadata,
+                   const CIProjectConfigSelfTest *self_test);
 
-#define EMIT_ERROR(msg) PRINTLN("\x1b[1m\x1b[31merror\x1b[0m: {s}\x1b[0m", msg)
-
-#define EMIT_ERROR_FMT(msg, ...)                        \
-    PRINTLN("\x1b[1m\x1b[31merror\x1b[0m: {sa}\x1b[0m", \
-            format(msg, __VA_ARGS__))
-
-#define EMIT_NOTE(msg) PRINTLN("\x1b[1m\x1b[31mnote\x1b[0m: {s}\x1b[0m", msg)
-
-#define EMIT_NOTE_FMT(msg, ...) \
-    PRINTLN("\x1b[1m\x1b[31mnote\x1b[0m: {sa}\x1b[0m", format(msg, __VA_ARGS__))
-
-#endif // LILY_CLI_EMIT_H
+#endif // LILY_COMMAND_CI_SELF_TEST_RUN_H

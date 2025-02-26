@@ -31,12 +31,12 @@
 
 /**
  *
- * @param config CIConfig* (&) 
+ * @param config CIConfig* (&)
  */
 inline void
 run__CICompile(CIConfig *config)
 {
-	run__CIc(&config->compile);
+    run__CIc(&config->compile);
 }
 
 #endif // LILY_COMMAND_CI_COMPILE_COMPILE_H

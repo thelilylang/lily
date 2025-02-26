@@ -29,7 +29,7 @@
 
 /**
  *
- * @param config CIConfig* (&) 
+ * @param config CIConfig* (&)
  */
 void
 run__CISelfTest(const CIConfig *config);

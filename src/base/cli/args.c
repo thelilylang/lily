@@ -24,14 +24,29 @@
 
 #include <base/cli/args.h>
 #include <base/new.h>
+#include <base/string.h>
 
-Vec *
+CliArgs
 build__CliArgs(int argc, char **argv)
 {
     Vec *args = NEW(Vec);
 
     for (Usize i = 0; i < argc; ++i) {
         push__Vec(args, argv[i]);
+    }
+
+    return args;
+}
+
+CliArgs
+build_from_string_args__CliArgs(Vec *args_string)
+{
+    Vec *args = NEW(Vec); // Vec<char* (&)>*
+
+    for (Usize i = 0; i < args_string->len; ++i) {
+        String *arg_string = get__Vec(args_string, i);
+
+        push__Vec(args, arg_string->buffer);
     }
 
     return args;

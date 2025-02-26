@@ -49,6 +49,10 @@ format:
 	${CLANG_FORMAT} ./include/cli/lily/*.h
 	${CLANG_FORMAT} ./include/cli/lily/config/*.h
 	${CLANG_FORMAT} ./include/cli/lilyc/*.h
+	${CLANG_FORMAT} ./include/command/ci/*.h
+	${CLANG_FORMAT} ./include/command/ci/compile/*.h
+	${CLANG_FORMAT} ./include/command/ci/self_test/*.h
+	${CLANG_FORMAT} ./include/command/ci/self_test/metadata/*.h
 	${CLANG_FORMAT} ./include/command/cic/*.h
 	${CLANG_FORMAT} ./include/command/lily/*.h
 	${CLANG_FORMAT} ./include/command/lily/build/*.h
@@ -149,6 +153,8 @@ format:
 	${CLANG_FORMAT} ./src/cli/cic/*.c
 	${CLANG_FORMAT} ./src/cli/lily/*.c
 	${CLANG_FORMAT} ./src/cli/lilyc/*.c
+	${CLANG_FORMAT} ./src/command/ci/self_test/*.c
+	${CLANG_FORMAT} ./src/command/ci/self_test/metadata/*.c
 	${CLANG_FORMAT} ./src/command/cic/*.c
 	${CLANG_FORMAT} ./src/command/lily/build/*.c
 	${CLANG_FORMAT} ./src/command/lily/cc/*.c

@@ -101,3 +101,20 @@ count_c__Str(const char *self, char c)
 
     return count;
 }
+
+char *
+strstr_list__Str(char *self, char **matches, Int32 matches_n, Int32 *match_at)
+{
+    char *res = NULL;
+    Usize i = 0;
+
+    for (; i < matches_n && !res; ++i) {
+        res = strstr(self, matches[i]);
+    }
+
+    if (match_at) {
+        *match_at = res ? i - 1 : -1;
+    }
+
+    return res;
+}

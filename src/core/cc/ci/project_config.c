@@ -175,8 +175,14 @@ get_bin__CIProjectConfig(struct CIProjectConfigContext *ctx,
 static Vec *
 get_bins__CIProjectConfig(struct CIProjectConfigContext *ctx);
 
+static Vec *
+get_self_tests__CIProjectConfig(struct CIProjectConfigContext *ctx);
+
 static bool
 get_no_state_check__CIProjectConfig(struct CIProjectConfigContext *ctx);
+
+static CIProjectConfig
+parse_ci_self_test__CIProjectConfig(const CIConfigSelfTest *cli_config);
 
 CONSTRUCTOR(struct CIProjectConfigContext,
             CIProjectConfigContext,
@@ -363,7 +369,7 @@ get_optional_sequence_value__CIProjectConfig(struct CIProjectConfigContext *ctx,
         case YAML_SEQUENCE_NODE:
             ITER_ON_SEQUENCE_NODE__YAML(
               ctx->yaml_load_res, FIRST_DOCUMENT, node, sequence_item, {
-                  push__Vec(res, sequence_item_value);
+                  push__Vec(res, from__String(sequence_item_value));
               });
 
             break;
@@ -498,16 +504,19 @@ get_std_include__CIProjectConfig(struct CIProjectConfigContext *ctx)
 {
     // std_include: <path>
 
-    String *path = get_scalar_value__CIProjectConfig(ctx, -1, "std_include");
+    String *path =
+      get_optional_scalar_value__CIProjectConfig(ctx, -1, "std_include");
 
-    // NOTE: We insert the standard include directory in first, to take
-    // precedence over other include directories.
-    insert_include_dir__CIInclude(
-      convert_path_to_absolute_path__CIProjectConfig(path->buffer,
-                                                     ctx->absolute_config_dir),
-      0);
+    if (path) {
+        // NOTE: We insert the standard include directory in first, to take
+        // precedence over other include directories.
+        insert_include_dir__CIInclude(
+          convert_path_to_absolute_path__CIProjectConfig(
+            path->buffer, ctx->absolute_config_dir),
+          0);
 
-    FREE(String, path);
+        FREE(String, path);
+    }
 }
 
 void
@@ -617,6 +626,33 @@ get_bins__CIProjectConfig(struct CIProjectConfigContext *ctx)
         get_bin__CIProjectConfig);
 }
 
+Vec *
+get_self_tests__CIProjectConfig(struct CIProjectConfigContext *ctx)
+{
+    // self_tests:
+    //   - <path_1>
+    //   - <path_2>
+    //   - <path_3>
+    // ...
+
+    Vec *self_tests = get_optional_sequence_value__CIProjectConfig(
+      ctx, -1, "self_tests"); // Vec<String* | CIProjectConfigSelfTest*>*?
+
+    if (self_tests) {
+        for (Usize i = 0; i < self_tests->len; ++i) {
+            // self_tests becomes only Vec<CIProjectConfigSelfTest*>*
+            replace__Vec(self_tests,
+                         i,
+                         NEW(CIProjectConfigSelfTest,
+                             format__String("{s}/{Sr}",
+                                            ctx->absolute_config_dir,
+                                            get__Vec(self_tests, i))));
+        }
+    }
+
+    return self_tests;
+}
+
 bool
 get_no_state_check__CIProjectConfig(struct CIProjectConfigContext *ctx)
 {
@@ -690,8 +726,24 @@ DESTRUCTOR(CIProjectConfigBin, CIProjectConfigBin *self)
     lily_free(self);
 }
 
+CONSTRUCTOR(CIProjectConfigSelfTest *, CIProjectConfigSelfTest, String *path)
+{
+    CIProjectConfigSelfTest *self =
+      lily_malloc(sizeof(CIProjectConfigSelfTest));
+
+    self->path = path;
+
+    return self;
+}
+
+DESTRUCTOR(CIProjectConfigSelfTest, CIProjectConfigSelfTest *self)
+{
+    FREE(String, self->path);
+    lily_free(self);
+}
+
 CIProjectConfig
-parse_cli__CIProjectConfig(const CIcConfig *cli_config)
+parse_cic_cli__CIProjectConfig(const CIcConfig *cli_config)
 {
     String *bin_name = get_filename__File(cli_config->path);
     CIProjectConfigCompiler compiler =
@@ -725,12 +777,43 @@ parse_cli__CIProjectConfig(const CIcConfig *cli_config)
                        cli_config->standard,
                        compiler,
                        get_include_dirs__CIInclude(),
-                       NEW(Vec),
+                       NULL,
                        init__Vec(1,
                                  NEW(CIProjectConfigBin,
                                      bin_name,
                                      from__String((char *)cli_config->path))),
+                       NULL,
                        cli_config->no_state_check);
+}
+
+CIProjectConfig
+parse_ci_self_test__CIProjectConfig(const CIConfigSelfTest *cli_config)
+{
+    return NEW_VARIANT(
+      CIProjectConfig,
+      cli,
+      CI_STANDARD_NONE,
+      NEW(CIProjectConfigCompiler, CI_PROJECT_CONFIG_COMPILER_KIND_NONE, NULL),
+      NULL,
+      NULL,
+      NULL,
+      init__Vec(
+        1,
+        NEW(CIProjectConfigSelfTest, from__String((char *)cli_config->path))),
+      false);
+}
+
+CIProjectConfig
+parse_ci_cli__CIProjectConfig(const CIConfig *cli_config)
+{
+    switch (cli_config->kind) {
+        case CI_CONFIG_KIND_COMPILE:
+            return parse_cic_cli__CIProjectConfig(&cli_config->compile);
+        case CI_CONFIG_KIND_SELF_TEST:
+            return parse_ci_self_test__CIProjectConfig(&cli_config->self_test);
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }
 
 CIProjectConfig
@@ -759,6 +842,7 @@ parse_yaml__CIProjectConfig(const char *config_dir)
 
     Vec *libraries = get_libraries__CIProjectConfig(&ctx);
     Vec *bins = get_bins__CIProjectConfig(&ctx);
+    Vec *self_tests = get_self_tests__CIProjectConfig(&ctx);
     bool no_state_check = get_no_state_check__CIProjectConfig(&ctx);
 
     FREE(String, path_ci_config);
@@ -772,6 +856,7 @@ parse_yaml__CIProjectConfig(const char *config_dir)
                        get_include_dirs__CIInclude(),
                        libraries,
                        bins,
+                       self_tests,
                        no_state_check);
 }
 
@@ -788,6 +873,8 @@ DESTRUCTOR(CIProjectConfig, const CIProjectConfig *self)
 
     FREE(CIProjectConfigCompiler, &self->compiler);
 
+    destroy__CIInclude();
+
     if (self->libraries) {
         FREE_BUFFER_ITEMS(self->libraries->buffer,
                           self->libraries->len,
@@ -799,5 +886,12 @@ DESTRUCTOR(CIProjectConfig, const CIProjectConfig *self)
         FREE_BUFFER_ITEMS(
           self->bins->buffer, self->bins->len, CIProjectConfigBin);
         FREE(Vec, self->bins);
+    }
+
+    if (self->self_tests) {
+        FREE_BUFFER_ITEMS(self->self_tests->buffer,
+                          self->self_tests->len,
+                          CIProjectConfigSelfTest);
+        FREE(Vec, self->self_tests);
     }
 }

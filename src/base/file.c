@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+#define _GNU_SOURCE
+
 #include <base/alloc.h>
 #include <base/assert.h>
 #include <base/dir.h>
@@ -265,7 +267,7 @@ read_file__File(const char *path)
         exit(1);
     }
 
-    ASSERT(feof(file));
+    ASSERT(feof(file) != 0);
 
     fclose(file);
 
@@ -350,4 +352,12 @@ exists_rec__File(const char *path, const char *filename)
     }
 
     return NULL;
+}
+
+Isize
+getline__File(char **line_ref, Usize *n, FILE *stream)
+{
+    ASSERT(stream);
+
+    return getline(line_ref, n, stream);
 }

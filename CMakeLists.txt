@@ -9,8 +9,10 @@ include(${CMAKE_SOURCE_DIR}/cmake/Lily.cmake)
 
 if(LILY_DEBUG)
   set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin/Debug)
+  add_compile_options(-DLILY_BIN_DEBUG_PATH_AVAILABLE)
 else()
   set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
+  add_compile_options(-DLILY_BIN_PATH_AVAILABLE)
 endif()
 
 set(CMAKE_C_STANDARD 23)
