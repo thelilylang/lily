@@ -22,57 +22,17 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CLI_CI_CONFIG_H
-#define LILY_CLI_CI_CONFIG_H
+#ifndef LILY_CORE_CC_CI_COMPILE_H
+#define LILY_CORE_CC_CI_COMPILE_H
 
-#include <base/macros.h>
-
-#include <cli/ci/config/compile.h>
-#include <cli/ci/config/self_test.h>
-
-enum CIConfigKind
-{
-    CI_CONFIG_KIND_COMPILE,
-    CI_CONFIG_KIND_SELF_TEST
-};
-
-typedef struct CIConfig
-{
-    enum CIConfigKind kind;
-    union
-    {
-        CIConfigCompile compile;
-        CIConfigSelfTest self_test;
-    };
-} CIConfig;
+#include <core/cc/ci/result.h>
 
 /**
  *
- * @brief Construct CIConfig type (CI_CONFIG_KIND_COMPILE).
+ * @brief Compile binaries and libraries.
+ * @param result const CIResult* (&)
  */
-inline VARIANT_CONSTRUCTOR(CIConfig, CIConfig, compile, CIConfigCompile compile)
-{
-    return (CIConfig){ .kind = CI_CONFIG_KIND_COMPILE, .compile = compile };
-}
+void
+exec__CICompile(const CIResult *result);
 
-/**
- *
- * @brief Construct CIConfig type (CI_CONFIG_KIND_SELF_TEST).
- */
-inline VARIANT_CONSTRUCTOR(CIConfig,
-                           CIConfig,
-                           self_test,
-                           CIConfigSelfTest self_test)
-{
-    return (CIConfig){ .kind = CI_CONFIG_KIND_SELF_TEST,
-                       .self_test = self_test };
-}
-
-/**
- *
- * @brief Free CIConfig type.
- * @param self const CIConfig* (&)
- */
-DESTRUCTOR(CIConfig, const CIConfig *self);
-
-#endif // LILY_CLI_CI_CONFIG_H
+#endif // LILY_CORE_CC_CI_COMPILE_H

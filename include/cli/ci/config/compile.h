@@ -45,9 +45,15 @@ inline CONSTRUCTOR(CIConfigCompile,
                    Vec *includes0,
                    bool no_state_check)
 {
-	return NEW(CIcConfig, path, mode, file, standard, includes, includes0, no_state_check);
+    return NEW(CIcConfig,
+               path,
+               mode,
+               file,
+               standard,
+               includes,
+               includes0,
+               no_state_check);
 }
-
 
 /**
  *
@@ -55,7 +61,7 @@ inline CONSTRUCTOR(CIConfigCompile,
  */
 inline DESTRUCTOR(CIConfigCompile, const CIConfigCompile *self)
 {
-	return FREE(CIcConfig, self);
+    return FREE(CIcConfig, self);
 }
 
 #endif // LILY_CLI_CI_CONFIG_COMPILE_H

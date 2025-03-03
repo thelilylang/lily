@@ -66,4 +66,6 @@ extern inline CONSTRUCTOR(LilycConfig,
                           bool verbose,
                           bool run);
 
+extern inline DESTRUCTOR(LilycConfig, const LilycConfig *self);
+
 #endif // LILY_EX_LIB_LILYC_CLI_C

@@ -23,6 +23,7 @@
  */
 
 #include <base/cli/args.h>
+#include <base/cli/entry.h>
 #include <base/cli/result.h>
 
 #include <cli/cic/cic.h>
@@ -33,19 +34,11 @@
 int
 main(int argc, char **argv)
 {
-    Vec *args = build__CliArgs(argc, argv);
-    Cli cli = build__CliCIc(args);
-    Vec *res = cli.$parse(&cli);
-    CIcConfig config = run__CIcParseConfig(res);
+    CliArgs args = build__CliArgs(argc, argv);
 
-    FREE_BUFFER_ITEMS(res->buffer, res->len, CliResult);
-    FREE(Vec, res);
-    FREE(Vec, args);
-    FREE(Cli, &cli);
-
-    run__CIc(&config);
-
-    FREE(CIcConfig, &config);
+    RUN__CLI_ENTRY(args, build__CliCIc, CIcConfig, run__CIcParseConfig, {
+        run__CIc(&config, NULL, NULL);
+    });
 
     return 0;
 }

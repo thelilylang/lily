@@ -22,57 +22,23 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CLI_CI_CONFIG_H
-#define LILY_CLI_CI_CONFIG_H
+#ifndef LILY_CLI_ENTRY_H
+#define LILY_CLI_ENTRY_H
 
-#include <base/macros.h>
+#define RUN__CLI_ENTRY(args, build_cli, config_t, run_config, block) \
+    {                                                                \
+        Cli cli = build_cli(args);                                   \
+        Vec *res = cli.$parse(&cli);                                 \
+        config_t config = run_config(res);                           \
+                                                                     \
+        FREE_BUFFER_ITEMS(res->buffer, res->len, CliResult);         \
+        FREE(Vec, res);                                              \
+        FREE(Cli, &cli);                                             \
+                                                                     \
+        block;                                                       \
+                                                                     \
+        FREE(CliArgs, args);                                         \
+        FREE(config_t, &config);                                     \
+    }
 
-#include <cli/ci/config/compile.h>
-#include <cli/ci/config/self_test.h>
-
-enum CIConfigKind
-{
-    CI_CONFIG_KIND_COMPILE,
-    CI_CONFIG_KIND_SELF_TEST
-};
-
-typedef struct CIConfig
-{
-    enum CIConfigKind kind;
-    union
-    {
-        CIConfigCompile compile;
-        CIConfigSelfTest self_test;
-    };
-} CIConfig;
-
-/**
- *
- * @brief Construct CIConfig type (CI_CONFIG_KIND_COMPILE).
- */
-inline VARIANT_CONSTRUCTOR(CIConfig, CIConfig, compile, CIConfigCompile compile)
-{
-    return (CIConfig){ .kind = CI_CONFIG_KIND_COMPILE, .compile = compile };
-}
-
-/**
- *
- * @brief Construct CIConfig type (CI_CONFIG_KIND_SELF_TEST).
- */
-inline VARIANT_CONSTRUCTOR(CIConfig,
-                           CIConfig,
-                           self_test,
-                           CIConfigSelfTest self_test)
-{
-    return (CIConfig){ .kind = CI_CONFIG_KIND_SELF_TEST,
-                       .self_test = self_test };
-}
-
-/**
- *
- * @brief Free CIConfig type.
- * @param self const CIConfig* (&)
- */
-DESTRUCTOR(CIConfig, const CIConfig *self);
-
-#endif // LILY_CLI_CI_CONFIG_H
+#endif // LILY_CLI_ENTRY_H

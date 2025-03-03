@@ -32,10 +32,10 @@
 /**
  *
  * @brief Scan self-test metadata.
- * @param self_test const CIProjectConfigSelfTest* (&)
+ * @param path const String* (&)
  */
 void
-run__CISelfTestMetadataScanner(const CIProjectConfigSelfTest *self_test,
+run__CISelfTestMetadataScanner(const String *path,
                                CISelfTestMetadata *metadata);
 
 #endif // LILY_COMMAND_CI_SELF_TEST_METADATA_SCANNER_H

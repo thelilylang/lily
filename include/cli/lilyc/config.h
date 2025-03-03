@@ -139,4 +139,14 @@ inline CONSTRUCTOR(LilycConfig,
                           .run = run };
 }
 
+/**
+ *
+ * @brief Free LilycConfig type.
+ */
+inline DESTRUCTOR(LilycConfig, const LilycConfig *self)
+{
+    // NOTE: There's nothing to free for the moment, the definition of this
+    // function is only useful to avoid a compile-time error.
+}
+
 #endif // LILY_CLI_LILYC_CONFIG_H

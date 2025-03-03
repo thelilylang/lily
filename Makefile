@@ -45,6 +45,8 @@ format:
 	${CLANG_FORMAT} ./include/base/object/*.h
 	${CLANG_FORMAT} ./include/base/object/value/*.h
 	${CLANG_FORMAT} ./include/cli/*.h
+	${CLANG_FORMAT} ./include/cli/ci/*.h
+	${CLANG_FORMAT} ./include/cli/ci/config/*.h
 	${CLANG_FORMAT} ./include/cli/cic/*.h
 	${CLANG_FORMAT} ./include/cli/lily/*.h
 	${CLANG_FORMAT} ./include/cli/lily/config/*.h
@@ -150,6 +152,7 @@ format:
 	${CLANG_FORMAT} ./src/bin/cic/*.c
 	${CLANG_FORMAT} ./src/bin/lily/*.c
 	${CLANG_FORMAT} ./src/bin/lilyc/*.c
+	${CLANG_FORMAT} ./src/cli/ci/*.c
 	${CLANG_FORMAT} ./src/cli/cic/*.c
 	${CLANG_FORMAT} ./src/cli/lily/*.c
 	${CLANG_FORMAT} ./src/cli/lilyc/*.c

@@ -336,7 +336,9 @@ typecheck_global_decls__CITypecheck(CITypecheck *self);
 
 /// @param other_args void* (CITypecheck* (&))
 static void
-handler__Typecheck(const CIResultFile *file, void *other_args);
+handler__Typecheck([[maybe_unused]] void *entity,
+                   const CIResultFile *file,
+                   void *other_args);
 
 CONSTRUCTOR(struct CurrentGenericParams,
             CurrentGenericParams,
@@ -1810,7 +1812,9 @@ typecheck_global_decls__CITypecheck(CITypecheck *self)
 }
 
 void
-handler__Typecheck(const CIResultFile *file, void *other_args)
+handler__Typecheck([[maybe_unused]] void *entity,
+                   const CIResultFile *file,
+                   void *other_args)
 {
     CITypecheck *self = (CITypecheck *)other_args;
 

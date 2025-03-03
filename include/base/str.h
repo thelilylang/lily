@@ -60,13 +60,16 @@ count_c__Str(const char *self, char c);
 /**
  *
  * @brief Try to find the first occurence over a list of substring.
- * @param matches char* (&)* (&)
- * @param match_at Int32*? (&) - If an occurrence is found in the list, it
+ * @param matches const char* (&)* (&)
+ * @param match_at Isize*? (&) - If an occurrence is found in the list, it
  * returns the index of the list where an occurrence was found with the
  * corresponding substring, otherwise it returns -1.
  * @return char*? (&)
  */
 char *
-strstr_list__Str(char *self, char **matches, Int32 matches_n, Int32 *match_at);
+strstr_list__Str(const char *self,
+                 const char **matches,
+                 Usize matches_n,
+                 Isize *match_at);
 
 #endif // LILY_BASE_STR_H

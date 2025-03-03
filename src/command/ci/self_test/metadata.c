@@ -35,8 +35,4 @@ DESTRUCTOR(CISelfTestMetadata, const CISelfTestMetadata *self)
     if (self->expected_stdout) {
         FREE(String, self->expected_stdout);
     }
-
-    if (self->expected_stderr) {
-        FREE(String, self->expected_stderr);
-    }
 }

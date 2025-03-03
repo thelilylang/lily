@@ -23,6 +23,7 @@
  */
 
 #include <base/cli/args.h>
+#include <base/cli/entry.h>
 #include <base/cli/result.h>
 
 #include <cli/ci/ci.h>
@@ -37,30 +38,22 @@
 int
 main(int argc, char **argv)
 {
-    Vec *args = build__CliArgs(argc, argv);
-    Cli cli = build__CliCI(args);
-    Vec *res = cli.$parse(&cli);
-    CIConfig config = run__CIParseConfig(res);
+    CliArgs args = build__CliArgs(argc, argv);
 
-    FREE_BUFFER_ITEMS(res->buffer, res->len, CliResult);
-    FREE(Vec, res);
-	FREE(Vec, args);
-	FREE(Cli, &cli);
+    RUN__CLI_ENTRY(args, build__CliCI, CIConfig, run__CIParseConfig, {
+		switch (config.kind) {
+			case CI_CONFIG_KIND_COMPILE:
+				run__CICompile(&config);
 
-    switch (config.kind) {
-        case CI_CONFIG_KIND_COMPILE:
-			run__CICompile(&config);
+				break;
+			case CI_CONFIG_KIND_SELF_TEST:
+				run__CISelfTest(&config);
 
-			break;
-		case CI_CONFIG_KIND_SELF_TEST:
-			run__CISelfTest(&config);
-
-			break;
-		default:
-			UNREACHABLE("unknown variant");
-	}
-
-	FREE(CIConfig, &config);
+				break;
+			default:
+				UNREACHABLE("unknown variant");
+		}
+	});
 
 	return 0;
 }

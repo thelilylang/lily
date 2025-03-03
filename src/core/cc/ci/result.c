@@ -34,6 +34,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/// @brief Scan file.
+/// @param path char* (&)
+static CIResultFile *
+scan_file__CIResult(const CIResult *self,
+                    CIResultFile *owner,
+                    CIResultFile *file_parent,
+                    char *path,
+                    Usize id,
+                    enum CIResultEntityKind entity_kind);
+
+/// @brief Run (Scan & Parse) file.
+/// @param path char* (&)
+static CIResultFile *
+run_file__CIResult(const CIResult *self,
+                   CIResultFile *owner,
+                   CIResultFile *file_parent,
+                   char *path,
+                   Usize id,
+                   enum CIResultEntityKind entity_kind);
+
 /// @param new_enum_decl CIDecl* (&)
 static void
 replace_enum_from_id__CIResultFile(const CIResultFile *self,
@@ -1284,6 +1304,32 @@ is_same_filename__CIResultFile(const CIResultFile *self, const char *filename)
     UNREACHABLE("unknown filename extension");
 }
 
+String *
+get_dir_result__CIResultFile(const CIResultFile *self,
+                             enum CIDirResultPurpose purpose)
+{
+    // TODO: Add a possibly to the user to "create its custom output directory"
+    const char *output_dir = "out.ci";
+
+    switch (purpose) {
+        case CI_DIR_RESULT_PURPOSE_BIN:
+            return format__String(
+              "{s}/bin/{Sr}", output_dir, get_dir__File(self->file_input.name));
+            ;
+        case CI_DIR_RESULT_PURPOSE_C_GEN:
+            return format__String("{s}/c_gen/{Sr}",
+                                  output_dir,
+                                  get_dir__File(self->file_input.name));
+            ;
+        case CI_DIR_RESULT_PURPOSE_LIB:
+            return format__String(
+              "{s}/lib/{Sr}", output_dir, get_dir__File(self->file_input.name));
+            ;
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 DESTRUCTOR(CIResultFile, CIResultFile *self)
 {
     if (self->file_input.content) {
@@ -1490,7 +1536,8 @@ scan_file__CIResult(const CIResult *self,
                     CIResultFile *owner,
                     CIResultFile *file_parent,
                     char *path,
-                    Usize id)
+                    Usize id,
+                    enum CIResultEntityKind entity_kind)
 {
     String *filename_result = get_filename__File(path);
     bool kind;
@@ -1518,7 +1565,7 @@ scan_file__CIResult(const CIResult *self,
                                     self->config,
                                     id,
                                     self,
-                                    CI_RESULT_ENTITY_KIND_FILE,
+                                    entity_kind,
                                     filename_result);
     (void)NEW(CIResultFileAnalysis, result_file);
 
@@ -1540,10 +1587,11 @@ run_file__CIResult(const CIResult *self,
                    CIResultFile *owner,
                    CIResultFile *file_parent,
                    char *path,
-                   Usize id)
+                   Usize id,
+                   enum CIResultEntityKind entity_kind)
 {
     CIResultFile *result_file =
-      scan_file__CIResult(self, owner, file_parent, path, id);
+      scan_file__CIResult(self, owner, file_parent, path, id, entity_kind);
     CIResolver resolver = NEW(CIResolver,
                               result_file,
                               &result_file->scanner.tokens,
@@ -1568,8 +1616,12 @@ add_and_run_lib_file__CIResult(const CIResult *self,
                                CIResultLib *lib,
                                char *path)
 {
-    CIResultFile *lib_file =
-      run_file__CIResult(self, lib->file, NULL, path, self->sources->len);
+    CIResultFile *lib_file = run_file__CIResult(self,
+                                                lib->file,
+                                                NULL,
+                                                path,
+                                                self->sources->len,
+                                                CI_RESULT_ENTITY_KIND_FILE);
 
     ASSERT(lib_file->entity.filename_result);
 
@@ -1580,7 +1632,7 @@ void
 add_and_run_lib__CIResult(const CIResult *self,
                           const CIProjectConfigLibrary *lib)
 {
-    CIResultLib *result_lib = add_lib__CIResult(self, (char *)lib->name);
+    CIResultLib *result_lib = add_lib__CIResult(self, lib->name->buffer);
 
     // Run (Scan & Parse) all source files of the library.
     for (Usize i = 0; i < lib->paths->len; ++i) {
@@ -1607,10 +1659,10 @@ add_and_run_lib__CIResult(const CIResult *self,
 void
 add_and_run_bin__CIResult(const CIResult *self, const CIProjectConfigBin *bin)
 {
-    CIResultBin *result_bin = add_bin__CIResult(self, (char *)bin->name);
+    CIResultBin *result_bin = add_bin__CIResult(self, bin->name->buffer);
     char *path = bin->path->buffer;
-    CIResultFile *bin_file =
-      run_file__CIResult(self, NULL, NULL, path, self->sources->len);
+    CIResultFile *bin_file = run_file__CIResult(
+      self, NULL, NULL, path, self->sources->len, CI_RESULT_ENTITY_KIND_BIN);
 
     ASSERT(bin_file->entity.filename_result);
 
@@ -1628,8 +1680,12 @@ add_and_run_header__CIResult(const CIResult *self,
     CIResultFile *header = get__OrderedHashMap(self->headers, path);
 
     if (!header) {
-        header = scan_file__CIResult(
-          self, NULL, file_parent, path, self->headers->len);
+        header = scan_file__CIResult(self,
+                                     NULL,
+                                     file_parent,
+                                     path,
+                                     self->headers->len,
+                                     CI_RESULT_ENTITY_KIND_FILE);
     }
 
     return header;
@@ -1656,7 +1712,8 @@ build__CIResult(CIResult *self)
 
 void
 pass_through_result__CIResult(const CIResult *self,
-                              void (*run)(const CIResultFile *file,
+                              void (*run)(void *entity,
+                                          const CIResultFile *file,
                                           void *other_args),
                               void *other_args)
 {
@@ -1666,11 +1723,11 @@ pass_through_result__CIResult(const CIResult *self,
     CIResultBin *current_bin = NULL;
 
     while ((current_lib = next__OrderedHashMapIter(&iter_libs))) {
-        run(current_lib->file, other_args);
+        run(current_lib, current_lib->file, other_args);
     }
 
     while ((current_bin = next__OrderedHashMapIter(&iter_bins))) {
-        run(current_bin->file, other_args);
+        run(current_bin, current_bin->file, other_args);
     }
 }
 

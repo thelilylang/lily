@@ -454,7 +454,8 @@ static void
 run_file__CIGenerator(CIGenerator *self);
 
 static void
-handler__CIGenerator(const CIResultFile *file,
+handler__CIGenerator([[maybe_unused]] void *entity,
+                     const CIResultFile *file,
                      [[maybe_unused]] void *other_args);
 
 CONSTRUCTOR(CIGeneratorContentSession *,
@@ -2698,10 +2699,8 @@ generate_global_decls_prototype__CIGenerator(CIGenerator *self)
 void
 run_file__CIGenerator(CIGenerator *self)
 {
-    // TODO: Add a possibly to the user to "create its custom output director"
-    const char *output_dir = "out.ci";
-    String *dir_result = format__String(
-      "{s}/{Sr}", output_dir, get_dir__File(self->file->file_input.name));
+    String *dir_result =
+      get_dir_result__CIResultFile(self->file, CI_DIR_RESULT_PURPOSE_C_GEN);
     String *path_result =
       format__String("{S}/{S}", dir_result, self->file->entity.filename_result);
 
@@ -2719,7 +2718,8 @@ run_file__CIGenerator(CIGenerator *self)
 }
 
 void
-handler__CIGenerator(const CIResultFile *file,
+handler__CIGenerator([[maybe_unused]] void *entity,
+                     const CIResultFile *file,
                      [[maybe_unused]] void *other_args)
 {
     CIGenerator generator = NEW(CIGenerator, file);

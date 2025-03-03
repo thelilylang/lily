@@ -141,13 +141,23 @@ open__File(const char *filename, const char *modes)
 
 /**
  *
- * @brief Get line from a stream.
- * @param line_ref char** (&)
- * @param n Usize* (&)
+ * @brief Get line from a stream (equivalent to getdelim).
+ * @param line_ref String*? (&)* (&)
  * @param stream FILE* (&)
+ * @return Return true if the function is a success, otherwise it returns false.
  */
-Isize
-getline__File(char **line_ref, Usize *n, FILE *stream);
+bool
+getdelim__File(String **line_ref, int delim, FILE *stream);
+
+/**
+ *
+ * @brief Get line from a stream (equivalent to getline).
+ * @param line_ref String*? (&)* (&)
+ * @param stream FILE* (&)
+ * @return Return true if the function is a success, otherwise it returns false.
+ */
+bool
+getline__File(String **line_ref, FILE *stream);
 
 /**
  *

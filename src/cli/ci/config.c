@@ -35,29 +35,28 @@ static inline VARIANT_DESTRUCTOR(CIConfig, compile, const CIConfig *self);
 /// @brief Free CIConfig type (CI_CONFIG_KIND_SELF_TEST).
 static inline VARIANT_DESTRUCTOR(CIConfig, self_test, const CIConfig *self);
 
-
 VARIANT_DESTRUCTOR(CIConfig, compile, const CIConfig *self)
 {
-	FREE(CIConfigCompile, &self->compile);
+    FREE(CIConfigCompile, &self->compile);
 }
 
 VARIANT_DESTRUCTOR(CIConfig, self_test, const CIConfig *self)
 {
-	// NOTE: Nothing to free yet.
+    // NOTE: Nothing to free yet.
 }
 
 DESTRUCTOR(CIConfig, const CIConfig *self)
 {
-	switch (self->kind) {
-		case CI_CONFIG_KIND_COMPILE:
-			FREE_VARIANT(CIConfig, compile, self);
+    switch (self->kind) {
+        case CI_CONFIG_KIND_COMPILE:
+            FREE_VARIANT(CIConfig, compile, self);
 
-			break;
-		case CI_CONFIG_KIND_SELF_TEST:
-			FREE_VARIANT(CIConfig, self_test, self);
+            break;
+        case CI_CONFIG_KIND_SELF_TEST:
+            FREE_VARIANT(CIConfig, self_test, self);
 
-			break;
-		default:
-			UNREACHABLE("unknown variant");
-	}
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }

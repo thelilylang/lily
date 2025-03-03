@@ -27,6 +27,7 @@
 #include <command/cic/cic.h>
 
 #include <core/cc/ci/builtin.h>
+#include <core/cc/ci/compile.h>
 #include <core/cc/ci/generator.h>
 #include <core/cc/ci/parser.h>
 #include <core/cc/ci/project_config.h>
@@ -40,7 +41,9 @@
 #include <stdlib.h>
 
 void
-run__CIc(const CIcConfig *config)
+run__CIc(const CIcConfig *config,
+         void (*handler)(const CIResult *result, void *other_args),
+         void *other_args)
 {
     if (config->mode != CIC_CONFIG_MODE_NONE) {
         TODO("implement --mode option");
@@ -61,6 +64,12 @@ run__CIc(const CIcConfig *config)
     run__CITypecheck(&typecheck);
     run__CIStateChecker(&state_checker);
     run__CIGenerator(&result);
+
+    exec__CICompile(&result);
+
+    if (handler) {
+        handler(&result, other_args);
+    }
 
     FREE(CIResult, &result);
     FREE(CIBuiltin, &builtin);

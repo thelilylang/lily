@@ -32,9 +32,9 @@
 /**
  *
  * @brief Run one self-test.
+ * @param path const String* (&)
  */
 void
-run__CISelfTestRun(const CISelfTestMetadata *metadata,
-                   const CIProjectConfigSelfTest *self_test);
+run__CISelfTestRun(const String *path);
 
 #endif // LILY_COMMAND_CI_SELF_TEST_RUN_H

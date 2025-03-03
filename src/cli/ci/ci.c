@@ -44,7 +44,9 @@ compile_command__CliCI()
     CliCommand *cmd = NEW(CliCommand, "compile");
 
     cmd->$help(cmd, "Compile a file or a project")
-      ->$value(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "PROJECT_PATH | FILE_PATH", true))
+      ->$value(
+        cmd,
+        NEW(CliValue, CLI_VALUE_KIND_SINGLE, "PROJECT_PATH | FILE_PATH", true))
       ->$defer(cmd, &compile_options__CliCI);
 
     return cmd;
@@ -53,19 +55,19 @@ compile_command__CliCI()
 CliCommand *
 self_test_command__CliCI()
 {
-	CliCommand *cmd = NEW(CliCommand, "self-test");
+    CliCommand *cmd = NEW(CliCommand, "self-test");
 
-	cmd->$help(cmd, "Self test the compiler")
-	   ->$value(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE_PATH", true))
-	   ->$defer(cmd, &self_test_options__CliCI);
+    cmd->$help(cmd, "Self test the compiler")
+      ->$value(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE_PATH", true))
+      ->$defer(cmd, &self_test_options__CliCI);
 
-	return cmd;
+    return cmd;
 }
 
 CliCommand *
 compile_options__CliCI(CliCommand *cmd)
 {
-	CIC_OPTIONS(cmd);
+    CIC_OPTIONS(cmd);
 
     return cmd;
 }
@@ -73,7 +75,7 @@ compile_options__CliCI(CliCommand *cmd)
 CliCommand *
 self_test_options__CliCI(CliCommand *cmd)
 {
-	return cmd;
+    return cmd;
 }
 
 Cli
@@ -85,7 +87,7 @@ build__CliCI(Vec *args)
       ->$author(&cli, "ArthurPV")
       ->$about(&cli, "The CI programming language")
       ->$subcommand(&cli, compile_command__CliCI())
-	  ->$subcommand(&cli, self_test_command__CliCI());
+      ->$subcommand(&cli, self_test_command__CliCI());
 
     return cli;
 }

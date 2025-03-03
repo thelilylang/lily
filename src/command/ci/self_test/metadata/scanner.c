@@ -36,7 +36,7 @@
 
 struct CISelfTestMetadataScannerContext
 {
-    String *path;                 // String* (&)
+    const String *path;           // const String* (&)
     CISelfTestMetadata *metadata; // CISelfTestMetadata* (&)
     Usize line_count;
 };
@@ -44,7 +44,7 @@ struct CISelfTestMetadataScannerContext
 /// @param path char* (&)
 static inline CONSTRUCTOR(struct CISelfTestMetadataScannerContext,
                           CISelfTestMetadataScannerContext,
-                          String *path,
+                          const String *path,
                           CISelfTestMetadata *metadata);
 
 static bool
@@ -63,23 +63,23 @@ emit_error__CISelfTestMetadataScanner(
   const struct CISelfTestMetadataScannerContext *ctx,
   const char *msg);
 
-/// @param line char* (&)
-/// @param end_match char* (&)
+/// @param line const char* (&)
+/// @param end_match const char* (&)
 static void
 get_metadata_from_line__CISelfTestMetadataScanner(
-  char *line,
-  char *end_match,
+  const char *line,
+  const char *end_match,
   struct CISelfTestMetadataScannerContext *ctx);
 
-/// @param line_ref char** (&)
+/// @param line_ref String** (&)
 static bool
 scan_line__CISelfTestMetadataScanner(
-  char **line_ref,
+  String **line_ref,
   struct CISelfTestMetadataScannerContext *ctx);
 
 CONSTRUCTOR(struct CISelfTestMetadataScannerContext,
             CISelfTestMetadataScannerContext,
-            String *path,
+            const String *path,
             CISelfTestMetadata *metadata)
 {
     return (struct CISelfTestMetadataScannerContext){ .path = path,
@@ -91,12 +91,10 @@ bool
 metadata_is_duplicatable__CISelfTestMetadataScanner(Int32 metadata_kind)
 {
 #define MATCHES_EXPECTED_STDOUT 0
-#define MATCHES_EXPECTED_STDERR 1
 #define MATCHES_COMPILE_OPTIONS 2
 
     switch (metadata_kind) {
         case MATCHES_EXPECTED_STDOUT:
-        case MATCHES_EXPECTED_STDERR:
             return true;
         case MATCHES_COMPILE_OPTIONS:
             return false;
@@ -116,10 +114,6 @@ set_metadata__CISelfTestMetadataScanner(
     switch (metadata_kind) {
         case MATCHES_EXPECTED_STDOUT:
             metadata_ctx_value = &ctx->metadata->expected_stdout;
-
-            break;
-        case MATCHES_EXPECTED_STDERR:
-            metadata_ctx_value = &ctx->metadata->expected_stderr;
 
             break;
         case MATCHES_COMPILE_OPTIONS:
@@ -152,8 +146,8 @@ emit_error__CISelfTestMetadataScanner(
 
 void
 get_metadata_from_line__CISelfTestMetadataScanner(
-  char *line,
-  char *end_match,
+  const char *line,
+  const char *end_match,
   struct CISelfTestMetadataScannerContext *ctx)
 {
 #define MATCHES_SINGLE_LINE 0
@@ -165,32 +159,29 @@ get_metadata_from_line__CISelfTestMetadataScanner(
 #define MATCHES_EXPECTED_STDOUT_S "@expected_stdout" MATCHES_SPACE_S
 #define MATCHES_EXPECTED_STDERR_S "@expected_stderr" MATCHES_SPACE_S
 #define MATCHES_COMPILE_OPTIONS_S "@compile_options" MATCHES_SPACE_S
-    char *matches[] = {
+    const char *matches[] = {
         [MATCHES_EXPECTED_STDOUT] = MATCHES_EXPECTED_STDOUT_S,
-        [MATCHES_EXPECTED_STDERR] = MATCHES_EXPECTED_STDERR_S,
         [MATCHES_COMPILE_OPTIONS] = MATCHES_COMPILE_OPTIONS_S,
     };
     const Int32 matches_len[] = {
         [MATCHES_EXPECTED_STDOUT] = sizeof(MATCHES_EXPECTED_STDOUT_S) - 1,
-        [MATCHES_EXPECTED_STDERR] = sizeof(MATCHES_EXPECTED_STDERR_S) - 1,
         [MATCHES_COMPILE_OPTIONS] = sizeof(MATCHES_COMPILE_OPTIONS_S) - 1,
     };
-    const Int32 matches_n = LEN(matches, *matches);
-    const Int32 matches_len_n = LEN(matches_len, *matches_len);
+    const Usize matches_n = LEN(matches, *matches);
+    const Usize matches_len_n = LEN(matches_len, *matches_len);
 
     static_assert(matches_len_n == matches_len_n);
 
-    Int32 match_at;
+    Isize match_at;
 
     strstr_list__Str(line, matches, matches_n, &match_at);
 
     switch (match_at) {
         case MATCHES_EXPECTED_STDOUT:
-        case MATCHES_EXPECTED_STDERR:
         case MATCHES_COMPILE_OPTIONS: {
             line += matches_len[match_at];
 
-            char *current = line;
+            const char *current = line;
             String *metadata_value = NEW(String);
             char *end_match_at = strstr(line, end_match); // char*? (&)
 
@@ -209,6 +200,8 @@ get_metadata_from_line__CISelfTestMetadataScanner(
                   ctx, "expected new line or `*/` before the end of line");
             }
 
+            enable_constant_escapes__String(metadata_value);
+
             set_metadata__CISelfTestMetadataScanner(
               ctx, match_at, metadata_value);
 
@@ -226,67 +219,62 @@ get_metadata_from_line__CISelfTestMetadataScanner(
     }
 
 #undef MATCHES_EXPECTED_STDOUT
-#undef MATCHES_EXPECTED_STDERR
 #undef MATCHES_COMPILE_OPTIONS
 
 #undef MATCHES_SPACE_S
 #undef MATCHES_EXPECTED_STDOUT_S
-#undef MATCHES_EXPECTED_STDERR_S
 #undef MATCHES_COMPILE_OPTIONS_S
 }
 
 bool
 scan_line__CISelfTestMetadataScanner(
-  char **line_ref,
+  String **line_ref,
   struct CISelfTestMetadataScannerContext *ctx)
 {
-    char *line = *line_ref;
-    char *matches[] = {
+    String *line = *line_ref;
+    const char *matches[] = {
         [MATCHES_SINGLE_LINE] = "//@", [MATCHES_MULTI_LINE] = "/*@"
     };
     const Int32 matches_n = LEN(matches, *matches);
-    char *end_matches[] = {
+    const char *end_matches[] = {
         [MATCHES_SINGLE_LINE] = "\n",
         [MATCHES_MULTI_LINE] = "*/",
     };
-    Int32 match_at;
-    char *begin =
-      strstr_list__Str(line, matches, matches_n, &match_at); // char*? (&)
+    Isize match_at;
+    char *begin = find_sub_over_many__String(
+      line, matches, matches_n, &match_at); // char*? (&)
+    bool res = false;
 
-    if (line == begin) {
+    if (line->buffer == begin) {
         get_metadata_from_line__CISelfTestMetadataScanner(
-          line + 2 /* 2 = `//` or `/\*` */, end_matches[match_at], ctx);
+          line->buffer + 2 /* 2 = `//` or `/\*` */, end_matches[match_at], ctx);
 
-        return true;
+        res = true;
     }
 
-    lily_free(line);
+    FREE(String, line);
 
     *line_ref = NULL;
 
-    return false;
+    return res;
 #undef MATCHES_SINGLE_LINE
 #undef MATCHES_MULTI_LINE
 #undef MATCHES_NOT_FOUND
 }
 
 void
-run__CISelfTestMetadataScanner(const CIProjectConfigSelfTest *self_test,
-                               CISelfTestMetadata *metadata)
+run__CISelfTestMetadataScanner(const String *path, CISelfTestMetadata *metadata)
 {
-    FILE *f = open__File(self_test->path->buffer, "r");
-
-    char *line = NULL; // char*?
-    Usize line_n = 0;
-    Isize nread;
+    FILE *f = open__File(path->buffer, "r");
+    String *line = NULL; // String*?
     struct CISelfTestMetadataScannerContext ctx =
-      NEW(CISelfTestMetadataScannerContext, self_test->path, metadata);
+      NEW(CISelfTestMetadataScannerContext, path, metadata);
 
     if (!f) {
         emit_error__CISelfTestMetadataScanner(&ctx, "cannot read the file");
     }
 
-    while ((nread = getline__File(&line, &line_n, f))) {
+    while (getline__File(&line, f)) {
         if (!scan_line__CISelfTestMetadataScanner(&line, &ctx)) {
             break;
         }

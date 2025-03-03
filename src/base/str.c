@@ -103,7 +103,10 @@ count_c__Str(const char *self, char c)
 }
 
 char *
-strstr_list__Str(char *self, char **matches, Int32 matches_n, Int32 *match_at)
+strstr_list__Str(const char *self,
+                 const char **matches,
+                 Usize matches_n,
+                 Isize *match_at)
 {
     char *res = NULL;
     Usize i = 0;

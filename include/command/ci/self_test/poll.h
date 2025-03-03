@@ -22,57 +22,14 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CLI_CI_CONFIG_H
-#define LILY_CLI_CI_CONFIG_H
-
-#include <base/macros.h>
-
-#include <cli/ci/config/compile.h>
-#include <cli/ci/config/self_test.h>
-
-enum CIConfigKind
-{
-    CI_CONFIG_KIND_COMPILE,
-    CI_CONFIG_KIND_SELF_TEST
-};
-
-typedef struct CIConfig
-{
-    enum CIConfigKind kind;
-    union
-    {
-        CIConfigCompile compile;
-        CIConfigSelfTest self_test;
-    };
-} CIConfig;
+#ifndef LILY_COMMAND_CI_SELF_TEST_POLL_H
+#define LILY_COMMAND_CI_SELF_TEST_POLL_H
 
 /**
  *
- * @brief Construct CIConfig type (CI_CONFIG_KIND_COMPILE).
+ * @brief Poll all child processes.
  */
-inline VARIANT_CONSTRUCTOR(CIConfig, CIConfig, compile, CIConfigCompile compile)
-{
-    return (CIConfig){ .kind = CI_CONFIG_KIND_COMPILE, .compile = compile };
-}
+void
+run__CISelfTestPoll();
 
-/**
- *
- * @brief Construct CIConfig type (CI_CONFIG_KIND_SELF_TEST).
- */
-inline VARIANT_CONSTRUCTOR(CIConfig,
-                           CIConfig,
-                           self_test,
-                           CIConfigSelfTest self_test)
-{
-    return (CIConfig){ .kind = CI_CONFIG_KIND_SELF_TEST,
-                       .self_test = self_test };
-}
-
-/**
- *
- * @brief Free CIConfig type.
- * @param self const CIConfig* (&)
- */
-DESTRUCTOR(CIConfig, const CIConfig *self);
-
-#endif // LILY_CLI_CI_CONFIG_H
+#endif // LILY_COMMAND_CI_SELF_TEST_POLL_H

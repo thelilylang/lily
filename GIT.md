@@ -59,9 +59,13 @@ bin/cic
 bin/lily
 bin/lilyc
 
+cli/ci
+cli/cic
 cli/lily
 cli/lilyc
 
+command/ci
+command/cic
 command/lily
 command/lilyc
 

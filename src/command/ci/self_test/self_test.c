@@ -26,10 +26,11 @@
 #include <base/fork.h>
 #include <base/new.h>
 
-#include <command/ci/self_test/metadata/scanner.h>
+#include <command/ci/self_test/poll.h>
 #include <command/ci/self_test/run.h>
 #include <command/ci/self_test/self_test.h>
 
+#include <core/cc/ci/file.h>
 #include <core/cc/ci/project_config.h>
 
 void
@@ -47,13 +48,26 @@ run__CISelfTest(const CIConfig *config)
         for (Usize i = 0; i < project_config.self_tests->len; ++i) {
             const CIProjectConfigSelfTest *self_test =
               get__Vec(project_config.self_tests, i);
-            CISelfTestMetadata metadata = NEW(CISelfTestMetadata);
 
-            run__CISelfTestMetadataScanner(self_test, &metadata);
-            run__CISelfTestRun(&metadata, self_test);
+            if (is__Dir(self_test->path->buffer)) {
+                Vec *files = get_files_rec__Dir(self_test->path->buffer);
+                VecIter iter = NEW(VecIter, files);
+                String *current = NULL;
 
-            FREE(CISelfTestMetadata, &metadata);
+                while ((current = next__VecIter(&iter))) {
+                    if (is_source__CIFile(current->buffer)) {
+                        run__CISelfTestRun(current);
+                    }
+                }
+
+                FREE_BUFFER_ITEMS(files->buffer, files->len, String);
+                FREE(Vec, files);
+            } else {
+                run__CISelfTestRun(self_test->path);
+            }
         }
+
+        run__CISelfTestPoll();
     }
 
     FREE(CIProjectConfig, &project_config);

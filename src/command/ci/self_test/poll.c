@@ -22,57 +22,34 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_CLI_CI_CONFIG_H
-#define LILY_CLI_CI_CONFIG_H
-
+#include <base/color.h>
+#include <base/fork.h>
 #include <base/macros.h>
+#include <base/print.h>
 
-#include <cli/ci/config/compile.h>
-#include <cli/ci/config/self_test.h>
+#include <command/ci/self_test/poll.h>
 
-enum CIConfigKind
+#include <stdio.h>
+#include <stdlib.h>
+
+void
+run__CISelfTestPoll()
 {
-    CI_CONFIG_KIND_COMPILE,
-    CI_CONFIG_KIND_SELF_TEST
-};
+    while (true) {
+        int exit_status = -1;
+        int kill_signal = -1;
+        int stop_signal = -1;
 
-typedef struct CIConfig
-{
-    enum CIConfigKind kind;
-    union
-    {
-        CIConfigCompile compile;
-        CIConfigSelfTest self_test;
-    };
-} CIConfig;
+        if (wait__Fork(-1, &exit_status, &kill_signal, &stop_signal, true) >
+            0) {
+            if ((exit_status != -1 && exit_status != EXIT_OK) ||
+                kill_signal != -1 || stop_signal != -1) {
+                PRINTLN("{sa}", RED("ERR"));
+            }
 
-/**
- *
- * @brief Construct CIConfig type (CI_CONFIG_KIND_COMPILE).
- */
-inline VARIANT_CONSTRUCTOR(CIConfig, CIConfig, compile, CIConfigCompile compile)
-{
-    return (CIConfig){ .kind = CI_CONFIG_KIND_COMPILE, .compile = compile };
+            continue;
+        }
+
+        break;
+    }
 }
-
-/**
- *
- * @brief Construct CIConfig type (CI_CONFIG_KIND_SELF_TEST).
- */
-inline VARIANT_CONSTRUCTOR(CIConfig,
-                           CIConfig,
-                           self_test,
-                           CIConfigSelfTest self_test)
-{
-    return (CIConfig){ .kind = CI_CONFIG_KIND_SELF_TEST,
-                       .self_test = self_test };
-}
-
-/**
- *
- * @brief Free CIConfig type.
- * @param self const CIConfig* (&)
- */
-DESTRUCTOR(CIConfig, const CIConfig *self);
-
-#endif // LILY_CLI_CI_CONFIG_H

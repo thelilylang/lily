@@ -21,9 +21,10 @@ target_link_libraries(cic_cli PRIVATE lily_base)
 target_include_directories(cic_cli PRIVATE ${LILY_INCLUDE})
 
 set(CI_COMMAND_SRC
-    ${CMAKE_SOURCE_DIR}/src/command/ci/self_test/run.c
     ${CMAKE_SOURCE_DIR}/src/command/ci/self_test/metadata/scanner.c
     ${CMAKE_SOURCE_DIR}/src/command/ci/self_test/metadata.c
+    ${CMAKE_SOURCE_DIR}/src/command/ci/self_test/poll.c
+    ${CMAKE_SOURCE_DIR}/src/command/ci/self_test/run.c
     ${CMAKE_SOURCE_DIR}/src/command/ci/self_test/self_test.c)
 
 # ci_command
@@ -67,6 +68,7 @@ target_include_directories(lily_core_cc_ci_extensions PRIVATE ${LILY_INCLUDE})
 set(CI_SRC
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/ast.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/builtin.c
+    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/compile.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/features.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/generator.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/include.c

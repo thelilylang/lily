@@ -33,7 +33,6 @@ typedef struct CISelfTestMetadata
 {
     String *compile_options; // String*?
     String *expected_stdout; // String*?
-    String *expected_stderr; // String*?
 } CISelfTestMetadata;
 
 /**
@@ -43,8 +42,7 @@ typedef struct CISelfTestMetadata
 inline CONSTRUCTOR(CISelfTestMetadata, CISelfTestMetadata)
 {
     return (CISelfTestMetadata){ .compile_options = NULL,
-                                 .expected_stdout = NULL,
-                                 .expected_stderr = NULL };
+                                 .expected_stdout = NULL };
 }
 
 /**

@@ -29,8 +29,8 @@
 #include <cli/ci/parse_config.h>
 #include <cli/cic/parse_config.h>
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 // NOTE: The following options, are builtin:
 /*
@@ -43,24 +43,25 @@
 #define SELF_TEST_COMMAND 1
 
 /// @brief Parse compile config.
-static inline CIConfig 
+static inline CIConfig
 parse_compile__CIParseConfig(const Vec *results);
 
 /// @brief Parse self-test config.
 static CIConfig
 parse_self_test__CIParseConfig(const Vec *results);
 
-CIConfig 
+CIConfig
 parse_compile__CIParseConfig(const Vec *results)
 {
-	return NEW_VARIANT(CIConfig, compile, run_for_command__CIcParseConfig(results));
+    return NEW_VARIANT(
+      CIConfig, compile, run_for_command__CIcParseConfig(results));
 }
 
-CIConfig 
+CIConfig
 parse_self_test__CIParseConfig(const Vec *results)
 {
-	char *path = NULL;
-	VecIter iter = NEW(VecIter, results);
+    char *path = NULL;
+    VecIter iter = NEW(VecIter, results);
     CliResult *current = NULL;
 
     while ((current = next__VecIter(&iter))) {
@@ -74,13 +75,13 @@ parse_self_test__CIParseConfig(const Vec *results)
 
                 break;
             case CLI_RESULT_KIND_OPTION:
-				UNREACHABLE("unknown option");
-			default:
+                UNREACHABLE("unknown option");
+            default:
                 UNREACHABLE("not expected in this context");
-		}
-	}
+        }
+    }
 
-	return NEW_VARIANT(CIConfig, self_test, NEW(CIConfigSelfTest, path));
+    return NEW_VARIANT(CIConfig, self_test, NEW(CIConfigSelfTest, path));
 }
 
 CIConfig
@@ -91,11 +92,11 @@ run__CIParseConfig(const Vec *results)
     ASSERT(command->kind == CLI_RESULT_KIND_COMMAND);
 
     switch (command->command.id) {
-		case COMPILE_COMMAND:
-			return parse_compile__CIParseConfig(results);
-		case SELF_TEST_COMMAND:
-			return parse_self_test__CIParseConfig(results);
+        case COMPILE_COMMAND:
+            return parse_compile__CIParseConfig(results);
+        case SELF_TEST_COMMAND:
+            return parse_self_test__CIParseConfig(results);
         default:
             UNREACHABLE("unknown command");
-	}
+    }
 }

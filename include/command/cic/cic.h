@@ -27,7 +27,17 @@
 
 #include <cli/cic/config.h>
 
+#include <core/cc/ci/result.h>
+
+/**
+ *
+ * @brief Run cic command.
+ * @param handler void (*handler)(const CIResult* (&))*? (&)
+ * @param other_args void*? (&)
+ */
 void
-run__CIc(const CIcConfig *config);
+run__CIc(const CIcConfig *config,
+         void (*handler)(const CIResult *result, void *other_args),
+         void *other_args);
 
 #endif // LILY_COMMAND_CIC_H

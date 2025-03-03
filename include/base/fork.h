@@ -49,6 +49,20 @@ use__Fork(Fork pid,
           int *exit_status,
           int *kill_signal,
           int *stop_signal);
+
+/**
+ *
+ * @brief Wait for a child process and handle exit_status, kill_signal or
+ * stop_signal.
+ * @param allow_w_err If the `waitpid` function fails, we simply return the
+ * error value instead of issuing an `unreachable`.
+ */
+Fork
+wait__Fork(Fork pid,
+           int *exit_status,
+           int *kill_signal,
+           int *stop_signal,
+           bool allow_w_err);
 #else
 #error "this OS is not yet supported"
 #endif

@@ -23,6 +23,7 @@
  */
 
 #include <base/cli/args.h>
+#include <base/cli/entry.h>
 #include <base/cli/result.h>
 #include <base/macros.h>
 #include <base/new.h>
@@ -42,44 +43,36 @@
 int
 main(int argc, char **argv)
 {
-    Vec *args = build__CliArgs(argc, argv);
-    Cli cli = build__CliLily(args);
+    CliArgs args = build__CliArgs(argc, argv);
 
-    Vec *res = cli.$parse(&cli);
-    LilyConfig config = run__LilyParseConfig(res);
+    RUN__CLI_ENTRY(args, build__CliLily, LilyConfig, run__LilyParseConfig, {
+        switch (config.kind) {
+            case LILY_CONFIG_KIND_BUILD:
+                break;
+            case LILY_CONFIG_KIND_CC:
+                break;
+            case LILY_CONFIG_KIND_COMPILE:
+                run__LilyCompile(args);
 
-    FREE_BUFFER_ITEMS(res->buffer, res->len, CliResult);
-    FREE(Vec, res);
-    FREE(Cli, &cli);
+                break;
+            case LILY_CONFIG_KIND_CPP:
+                break;
+            case LILY_CONFIG_KIND_INIT:
+                break;
+            case LILY_CONFIG_KIND_NEW:
+                break;
+            case LILY_CONFIG_KIND_RUN:
+                run__LilyRun(&config);
 
-    switch (config.kind) {
-        case LILY_CONFIG_KIND_BUILD:
-            break;
-        case LILY_CONFIG_KIND_CC:
-            break;
-        case LILY_CONFIG_KIND_COMPILE:
-            run__LilyCompile(args);
-
-            break;
-        case LILY_CONFIG_KIND_CPP:
-            break;
-        case LILY_CONFIG_KIND_INIT:
-            break;
-        case LILY_CONFIG_KIND_NEW:
-            break;
-        case LILY_CONFIG_KIND_RUN:
-            run__LilyRun(&config);
-
-            break;
-        case LILY_CONFIG_KIND_TEST:
-            break;
-        case LILY_CONFIG_KIND_TO:
-            break;
-        default:
-            UNREACHABLE("unknown variant");
-    }
-
-    FREE(Vec, args);
+                break;
+            case LILY_CONFIG_KIND_TEST:
+                break;
+            case LILY_CONFIG_KIND_TO:
+                break;
+            default:
+                UNREACHABLE("unknown variant");
+        }
+    });
 
     LLVMShutdown();
 

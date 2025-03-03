@@ -65,7 +65,7 @@ save__Command(const char *cmd)
         push_str__String(output, temp_buffer);
     }
 
-    ASSERT(feof(file));
+    ASSERT(feof(file) != 0);
 
 #ifdef LILY_WINDOWS_OS
     _pclose(file);

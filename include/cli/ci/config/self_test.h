@@ -27,9 +27,10 @@
 
 #include <base/macros.h>
 
-typedef struct CIConfigSelfTest {
+typedef struct CIConfigSelfTest
+{
     // PROJECT_PATH | FILE_PATH
-	const char *path; // const char* (&)
+    const char *path; // const char* (&)
 } CIConfigSelfTest;
 
 /**
@@ -38,7 +39,7 @@ typedef struct CIConfigSelfTest {
  */
 inline CONSTRUCTOR(CIConfigSelfTest, CIConfigSelfTest, const char *path)
 {
-	return (CIConfigSelfTest){ .path = path };
+    return (CIConfigSelfTest){ .path = path };
 }
 
 #endif // LILY_CLI_CI_CONFIG_SELF_TEST_H
