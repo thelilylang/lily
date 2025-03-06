@@ -23,27 +23,37 @@
  */
 
 #include <base/cli/args.h>
+#include <base/cli/entry.h>
 #include <base/cli/result.h>
 
 #include <cli/ci/ci.h>
 #include <cli/ci/parse_config.h>
 
-#include <command/ci/ci.h>
+#include <command/ci/compile.h>
+#include <command/ci/self_test.h>
+
+#include <stdlib.h>
+#include <stdio.h>
 
 int
 main(int argc, char **argv)
 {
-    Vec *args = build__CliArgs(argc, argv);
-    Cli cli = build__CliCI(args);
-    Vec *res = cli.$parse(&cli);
-    CIConfig config = run__CIParseConfig(res);
+    CliArgs args = build__CliArgs(argc, argv);
 
-    FREE_BUFFER_ITEMS(res->buffer, res->len, CliResult);
-    FREE(Vec, args);
-    FREE(Vec, res);
-    FREE(Cli, &cli);
+    RUN__CLI_ENTRY(args, build__CliCI, CIConfig, run__CIParseConfig, {
+		switch (config.kind) {
+			case CI_CONFIG_KIND_COMPILE:
+				run__CICompile(&config);
 
-    run__CI(&config);
+				break;
+			case CI_CONFIG_KIND_SELF_TEST:
+				run__CISelfTest(&config);
 
-    FREE(CIConfig, &config);
+				break;
+			default:
+				UNREACHABLE("unknown variant");
+		}
+	});
+
+	return 0;
 }

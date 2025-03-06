@@ -25,6 +25,14 @@
 #ifndef LILY_EX_LIB_CI_COMMAND_C
 #define LILY_EX_LIB_CI_COMMAND_C
 
-#include <command/ci/ci.h>
+#include <command/ci/compile/compile.h>
+#include <command/ci/self_test/metadata.h>
+
+// <command/ci/compile.h>
+extern inline void
+run__CICompile(CIConfig *config);
+
+// <command/ci/self_test/metadata.h>
+extern inline CONSTRUCTOR(CISelfTestMetadata, CISelfTestMetadata);
 
 #endif // LILY_EX_LIB_CI_COMMAND_C

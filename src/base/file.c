@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+#define _GNU_SOURCE
+
 #include <base/alloc.h>
 #include <base/assert.h>
 #include <base/dir.h>
@@ -265,7 +267,7 @@ read_file__File(const char *path)
         exit(1);
     }
 
-    ASSERT(feof(file));
+    ASSERT(feof(file) != 0);
 
     fclose(file);
 
@@ -350,4 +352,52 @@ exists_rec__File(const char *path, const char *filename)
     }
 
     return NULL;
+}
+
+bool
+getdelim__File(String **line_ref, int delim, FILE *stream)
+{
+#define ADVANCE() fseek(stream, 1, SEEK_CUR);
+
+    ASSERT(stream);
+
+    String *line = NULL;
+    long default_position = ftell(stream);
+    char current;
+
+    flockfile(stream);
+
+    if (default_position != 0) {
+        ADVANCE();
+    }
+
+    while ((current = fgetc(stream)) != EOF) {
+        if (!line) {
+            line = NEW(String);
+        }
+
+        push__String(line, current);
+
+        if (current == delim) {
+            break;
+        }
+    }
+
+    *line_ref = line;
+
+    funlockfile(stream);
+
+    if (line) {
+        return true;
+    }
+
+    return false;
+
+#undef ADVANCE
+}
+
+bool
+getline__File(String **line_ref, FILE *stream)
+{
+    return getdelim__File(line_ref, '\n', stream);
 }

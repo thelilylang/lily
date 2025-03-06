@@ -42,21 +42,36 @@ use__Fork(Fork pid,
         case 0:
             child_process();
             exit(EXIT_OK);
-        default: {
-            int wstatus;
-            pid_t w = waitpid(pid, &wstatus, 0);
-
-            if (w == -1) {
-                UNREACHABLE("something wrong with waitpid");
-            } else if (exit_status && WIFEXITED(wstatus)) {
-                *exit_status = WEXITSTATUS(wstatus);
-            } else if (kill_signal && WIFSIGNALED(wstatus)) {
-                *kill_signal = WTERMSIG(wstatus);
-            } else if (stop_signal && WIFSTOPPED(wstatus)) {
-                *stop_signal = WSTOPSIG(wstatus);
-            }
-        }
+        default:
+            wait__Fork(pid, exit_status, kill_signal, stop_signal, false);
     }
+}
+
+Fork
+wait__Fork(Fork pid,
+           int *exit_status,
+           int *kill_signal,
+           int *stop_signal,
+           bool allow_w_err)
+{
+    int wstatus;
+    Fork w = waitpid(pid, &wstatus, 0);
+
+    if (w == -1) {
+        if (allow_w_err) {
+            return w;
+        }
+
+        UNREACHABLE("something wrong with waitpid");
+    } else if (exit_status && WIFEXITED(wstatus)) {
+        *exit_status = WEXITSTATUS(wstatus);
+    } else if (kill_signal && WIFSIGNALED(wstatus)) {
+        *kill_signal = WTERMSIG(wstatus);
+    } else if (stop_signal && WIFSTOPPED(wstatus)) {
+        *stop_signal = WSTOPSIG(wstatus);
+    }
+
+    return w;
 }
 #else
 #error "this OS is not yet supported"

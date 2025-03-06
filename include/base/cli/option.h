@@ -55,7 +55,7 @@ CONSTRUCTOR(CliOption *, CliOption, const char *name);
 /**
  *
  * @brief Pass to ref the CliOption and increment the `ref_count`.
- * @return LilyCheckedDataType* (&)
+ * @return CliOption*
  */
 inline CliOption *
 ref__CliOption(CliOption *self)

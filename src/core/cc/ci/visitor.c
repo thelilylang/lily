@@ -317,7 +317,9 @@ run_file__CIVisitor(CIVisitor *self, const CIResultFile *file);
 
 /// @param other_args void* (CIVisitor*)
 static void
-handler__CIVisitor(const CIResultFile *file, void *other_args);
+handler__CIVisitor([[maybe_unused]] void *entity,
+                   const CIResultFile *file,
+                   void *other_args);
 
 bool
 is_in_function_body__CIVisitor(CIVisitor *self)
@@ -1311,8 +1313,12 @@ visit_function_stmt__CIVisitor(CIVisitor *self,
 
             break;
         case CI_STMT_KIND_RETURN:
-            visit_function_expr__CIVisitor(
-              self, stmt->return_, called_generic_params, decl_generic_params);
+            if (stmt->return_) {
+                visit_function_expr__CIVisitor(self,
+                                               stmt->return_,
+                                               called_generic_params,
+                                               decl_generic_params);
+            }
 
             break;
         case CI_STMT_KIND_SWITCH:
@@ -1524,7 +1530,9 @@ run_file__CIVisitor(CIVisitor *self, const CIResultFile *file)
 }
 
 void
-handler__CIVisitor(const CIResultFile *file, void *other_args)
+handler__CIVisitor([[maybe_unused]] void *entity,
+                   const CIResultFile *file,
+                   void *other_args)
 {
     CIVisitor *self = (CIVisitor *)other_args;
 

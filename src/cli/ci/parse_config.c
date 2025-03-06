@@ -24,16 +24,13 @@
 
 #include <base/assert.h>
 #include <base/cli/result.h>
+#include <base/macros.h>
 
 #include <cli/ci/parse_config.h>
-#include <cli/emit.h>
-
-#include <core/cc/ci/features.h>
-#include <core/shared/search.h>
+#include <cli/cic/parse_config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 // NOTE: The following options, are builtin:
 /*
@@ -42,129 +39,64 @@
 #define V_OPTION 2
 #define VERSION_OPTION 3
 */
-#define MODE_OPTION 4
-#define F_OPTION 5
-#define FILE_OPTION 6
-#define S_OPTION 7
-#define STD_OPTION 8
-#define I_OPTION 9
-#define INCLUDE_OPTION 10
-#define INCLUDE0_OPTION 11
-#define NO_STATE_CHECK_OPTION 12
+#define COMPILE_COMMAND 0
+#define SELF_TEST_COMMAND 1
+
+/// @brief Parse compile config.
+static inline CIConfig
+parse_compile__CIParseConfig(const Vec *results);
+
+/// @brief Parse self-test config.
+static CIConfig
+parse_self_test__CIParseConfig(const Vec *results);
 
 CIConfig
-run__CIParseConfig(const Vec *results)
+parse_compile__CIParseConfig(const Vec *results)
 {
-    enum CIConfigMode mode = CI_CONFIG_MODE_NONE;
-    bool file = false;
-    char *path = NULL;
-    enum CIStandard standard = CI_STANDARD_NONE;
-    Vec *includes = NEW(Vec);  // Vec<char* (&)>*
-    Vec *includes0 = NEW(Vec); // Vec<char* (&)>*
-    bool no_state_check = false;
+    return NEW_VARIANT(
+      CIConfig, compile, run_for_command__CIcParseConfig(results));
+}
 
+CIConfig
+parse_self_test__CIParseConfig(const Vec *results)
+{
+    char *path = NULL;
     VecIter iter = NEW(VecIter, results);
     CliResult *current = NULL;
 
     while ((current = next__VecIter(&iter))) {
         switch (current->kind) {
-            case CLI_RESULT_KIND_VALUE:
-                ASSERT(current->value);
-                ASSERT(current->value->kind == CLI_RESULT_VALUE_KIND_SINGLE);
+            case CLI_RESULT_KIND_COMMAND:
+                ASSERT(current->command.value);
+                ASSERT(current->command.value->kind ==
+                       CLI_RESULT_VALUE_KIND_SINGLE);
 
-                path = current->value->single;
+                path = current->command.value->single;
 
                 break;
             case CLI_RESULT_KIND_OPTION:
-                switch (current->option->id) {
-                    case MODE_OPTION:
-                        ASSERT(current->option->value);
-                        ASSERT(current->option->value->kind ==
-                               CLI_RESULT_VALUE_KIND_SINGLE);
-
-                        if (!strcmp(current->option->value->single, "DEBUG")) {
-                            mode = CI_CONFIG_MODE_DEBUG;
-                        } else if (!strcmp(current->option->value->single,
-                                           "RELEASE")) {
-                            mode = CI_CONFIG_MODE_RELEASE;
-                        } else {
-                            EMIT_ERROR(
-                              "expected DEBUG or RELEASE as value of `--mode`");
-                            exit(1);
-                        }
-
-                        break;
-                    case F_OPTION:
-                    case FILE_OPTION:
-                        file = true;
-
-                        break;
-                    case S_OPTION:
-                    case STD_OPTION: {
-                        ASSERT(current->option->value);
-                        ASSERT(current->option->value->kind ==
-                               CLI_RESULT_VALUE_KIND_SINGLE);
-
-                        String *option_s =
-                          from__String(current->option->value->single);
-                        Int32 res =
-                          get_id__Search(option_s,
-                                         get_standards__CIStandard(),
-                                         get_standard_ids__CIStandard(),
-                                         CI_N_STANDARD);
-
-                        if (res == -1) {
-                            FAILED("this value is not expected to be a valid "
-                                   "standard value");
-                        } else {
-                            standard = res;
-                        }
-
-                        FREE(String, option_s);
-
-                        break;
-                    }
-                    case I_OPTION:
-                    case INCLUDE_OPTION:
-                        ASSERT(current->option->value);
-                        ASSERT(current->option->value->kind ==
-                               CLI_RESULT_VALUE_KIND_SINGLE);
-
-                        push__Vec(includes, current->option->value->single);
-
-                        break;
-                    case INCLUDE0_OPTION:
-                        ASSERT(current->option->value);
-                        ASSERT(current->option->value->kind ==
-                               CLI_RESULT_VALUE_KIND_SINGLE);
-
-                        push__Vec(includes0, current->option->value->single);
-
-                        break;
-                    case NO_STATE_CHECK_OPTION:
-                        no_state_check = true;
-
-                        break;
-                    default:
-                        UNREACHABLE("unknown option");
-                }
-
-                break;
+                UNREACHABLE("unknown option");
             default:
                 UNREACHABLE("not expected in this context");
         }
     }
 
-    if (standard == CI_STANDARD_NONE) {
-        standard = CI_STANDARD_99;
-    }
+    return NEW_VARIANT(CIConfig, self_test, NEW(CIConfigSelfTest, path));
+}
 
-    return NEW(CIConfig,
-               path,
-               mode,
-               file,
-               standard,
-               includes,
-               includes0,
-               no_state_check);
+CIConfig
+run__CIParseConfig(const Vec *results)
+{
+    CliResult *command = get__Vec(results, 0);
+
+    ASSERT(command->kind == CLI_RESULT_KIND_COMMAND);
+
+    switch (command->command.id) {
+        case COMPILE_COMMAND:
+            return parse_compile__CIParseConfig(results);
+        case SELF_TEST_COMMAND:
+            return parse_self_test__CIParseConfig(results);
+        default:
+            UNREACHABLE("unknown command");
+    }
 }

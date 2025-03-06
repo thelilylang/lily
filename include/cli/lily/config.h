@@ -144,4 +144,14 @@ inline VARIANT_CONSTRUCTOR(LilyConfig, LilyConfig, to, LilyConfigTo to)
     return (LilyConfig){ .kind = LILY_CONFIG_KIND_TO, .to = to };
 }
 
+/**
+ *
+ * @brief Free LilyConfig type.
+ */
+inline DESTRUCTOR(LilyConfig, const LilyConfig *self)
+{
+    // NOTE: There's nothing to free for the moment, the definition of this
+    // function is only useful to avoid a compile-time error.
+}
+
 #endif // LILY_CLI_LILY_CONFIG_H

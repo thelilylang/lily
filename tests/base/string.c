@@ -108,3 +108,71 @@ CASE(string_push, {
 
     FREE(String, s);
 });
+
+CASE(replace_sub, {
+    String *s = from__String("Hello X");
+
+    replace_sub__String(s, "X", "World!");
+
+    TEST_ASSERT(s->len == 12);
+
+    TEST_ASSERT(s->buffer[0] == 'H');
+    TEST_ASSERT(s->buffer[1] == 'e');
+    TEST_ASSERT(s->buffer[2] == 'l');
+    TEST_ASSERT(s->buffer[3] == 'l');
+    TEST_ASSERT(s->buffer[4] == 'o');
+    TEST_ASSERT(s->buffer[5] == ' ');
+    TEST_ASSERT(s->buffer[6] == 'W');
+    TEST_ASSERT(s->buffer[7] == 'o');
+    TEST_ASSERT(s->buffer[8] == 'r');
+    TEST_ASSERT(s->buffer[9] == 'l');
+    TEST_ASSERT(s->buffer[10] == 'd');
+    TEST_ASSERT(s->buffer[11] == '!');
+
+    FREE(String, s);
+});
+
+CASE(replace_sub2, {
+    String *s = from__String("X + 1 = 2; X + X = 2");
+
+    replace_sub__String(s, "X", "1");
+
+    TEST_ASSERT(s->len == 20);
+
+    TEST_ASSERT(s->buffer[0] == '1');
+    TEST_ASSERT(s->buffer[1] == ' ');
+    TEST_ASSERT(s->buffer[2] == '+');
+    TEST_ASSERT(s->buffer[3] == ' ');
+    TEST_ASSERT(s->buffer[4] == '1');
+    TEST_ASSERT(s->buffer[5] == ' ');
+    TEST_ASSERT(s->buffer[6] == '=');
+    TEST_ASSERT(s->buffer[7] == ' ');
+    TEST_ASSERT(s->buffer[8] == '2');
+    TEST_ASSERT(s->buffer[9] == ';');
+    TEST_ASSERT(s->buffer[10] == ' ');
+    TEST_ASSERT(s->buffer[11] == '1');
+    TEST_ASSERT(s->buffer[12] == ' ');
+    TEST_ASSERT(s->buffer[13] == '+');
+    TEST_ASSERT(s->buffer[14] == ' ');
+    TEST_ASSERT(s->buffer[15] == '1');
+    TEST_ASSERT(s->buffer[16] == ' ');
+    TEST_ASSERT(s->buffer[17] == '=');
+    TEST_ASSERT(s->buffer[18] == ' ');
+    TEST_ASSERT(s->buffer[19] == '2');
+
+    FREE(String, s);
+});
+
+CASE(replace_sub3, {
+    String *s = from__String("H\\nI");
+
+    replace_sub__String(s, "\\n", "\n");
+
+    TEST_ASSERT(s->len == 3);
+
+    TEST_ASSERT(s->buffer[0] == 'H');
+    TEST_ASSERT(s->buffer[1] == '\n');
+    TEST_ASSERT(s->buffer[2] == 'I');
+
+    FREE(String, s);
+});

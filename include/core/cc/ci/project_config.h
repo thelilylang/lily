@@ -32,18 +32,20 @@
 #include <base/yaml.h>
 
 #include <cli/ci/config.h>
+#include <cli/cic/config.h>
 #include <core/cc/ci/features.h>
 
 enum CIProjectConfigCompilerKind
 {
     CI_PROJECT_CONFIG_COMPILER_KIND_CLANG,
     CI_PROJECT_CONFIG_COMPILER_KIND_GCC,
+    CI_PROJECT_CONFIG_COMPILER_KIND_NONE
 };
 
 typedef struct CIProjectConfigCompiler
 {
     enum CIProjectConfigCompilerKind kind;
-    String *command;
+    String *command; // String*?
 } CIProjectConfigCompiler;
 
 /**
@@ -64,7 +66,9 @@ inline CONSTRUCTOR(CIProjectConfigCompiler,
  */
 inline DESTRUCTOR(CIProjectConfigCompiler, const CIProjectConfigCompiler *self)
 {
-    FREE(String, self->command);
+    if (self->command) {
+        FREE(String, self->command);
+    }
 }
 
 typedef struct CIProjectConfigLibrary
@@ -110,6 +114,23 @@ CONSTRUCTOR(CIProjectConfigBin *,
  */
 DESTRUCTOR(CIProjectConfigBin, CIProjectConfigBin *self);
 
+typedef struct CIProjectConfigSelfTest
+{
+    String *path;
+} CIProjectConfigSelfTest;
+
+/**
+ *
+ * @brief Construct CIProjectConfigSelfTest type.
+ */
+CONSTRUCTOR(CIProjectConfigSelfTest *, CIProjectConfigSelfTest, String *path);
+
+/**
+ *
+ * @brief Free CIProjectConfigSelfTest type.
+ */
+DESTRUCTOR(CIProjectConfigSelfTest, CIProjectConfigSelfTest *self);
+
 enum CIProjectConfigKind
 {
     CI_PROJECT_CONFIG_KIND_CLI,  // config values passed by a CLI
@@ -128,6 +149,7 @@ typedef struct CIProjectConfig
     const Vec *include_dirs; // Vec<char* (&)>* (&)
     Vec *libraries;          // Vec<CIProjectConfigLibrary*>*?
     Vec *bins;               // Vec<CIProjectConfigBin*>*?
+    Vec *self_tests;         // Vec<CIProjectConfigSelfTest*>*?
     bool no_state_check;
 } CIProjectConfig;
 
@@ -143,6 +165,7 @@ inline VARIANT_CONSTRUCTOR(CIProjectConfig,
                            const Vec *include_dirs,
                            Vec *libraries,
                            Vec *bins,
+                           Vec *self_tests,
                            bool no_state_check)
 {
     return (CIProjectConfig){ .kind = CI_PROJECT_CONFIG_KIND_CLI,
@@ -151,6 +174,7 @@ inline VARIANT_CONSTRUCTOR(CIProjectConfig,
                               .include_dirs = include_dirs,
                               .libraries = libraries,
                               .bins = bins,
+                              .self_tests = self_tests,
                               .no_state_check = no_state_check };
 }
 
@@ -167,6 +191,7 @@ inline VARIANT_CONSTRUCTOR(CIProjectConfig,
                            const Vec *include_dirs,
                            Vec *libraries,
                            Vec *bins,
+                           Vec *self_tests,
                            bool no_state_check)
 {
     return (CIProjectConfig){ .kind = CI_PROJECT_CONFIG_KIND_YAML,
@@ -176,15 +201,23 @@ inline VARIANT_CONSTRUCTOR(CIProjectConfig,
                               .include_dirs = include_dirs,
                               .libraries = libraries,
                               .bins = bins,
+                              .self_tests = self_tests,
                               .no_state_check = no_state_check };
 }
 
 /**
  *
- * @brief Parse CLI configuration.
+ * @brief Parse CLI of cci configuration.
  */
 CIProjectConfig
-parse_cli__CIProjectConfig(const CIConfig *cli_config);
+parse_cic_cli__CIProjectConfig(const CIcConfig *cli_config);
+
+/**
+ *
+ * @brief Parse CLI of ci configuration.
+ */
+CIProjectConfig
+parse_ci_cli__CIProjectConfig(const CIConfig *cli_config);
 
 /**
  *

@@ -24,11 +24,11 @@
 
 #include <base/macros.h>
 
-#include <command/ci/ci.h>
+#include <command/cic/cic.h>
 
 #include <core/cc/ci/builtin.h>
+#include <core/cc/ci/compile.h>
 #include <core/cc/ci/generator.h>
-#include <core/cc/ci/include.h>
 #include <core/cc/ci/parser.h>
 #include <core/cc/ci/project_config.h>
 #include <core/cc/ci/result.h>
@@ -41,15 +41,17 @@
 #include <stdlib.h>
 
 void
-run__CI(const CIConfig *config)
+run__CIc(const CIcConfig *config,
+         void (*handler)(const CIResult *result, void *other_args),
+         void *other_args)
 {
-    if (config->mode != CI_CONFIG_MODE_NONE) {
+    if (config->mode != CIC_CONFIG_MODE_NONE) {
         TODO("implement --mode option");
     }
 
     CIBuiltin builtin = NEW(CIBuiltin);
     CIProjectConfig project_config =
-      config->file ? parse_cli__CIProjectConfig(config)
+      config->file ? parse_cic_cli__CIProjectConfig(config)
                    : parse_yaml__CIProjectConfig(config->path);
     CIResult result = NEW(CIResult, &project_config, &builtin);
     CIVisitor visitor = NEW(CIVisitor, &result);
@@ -63,9 +65,13 @@ run__CI(const CIConfig *config)
     run__CIStateChecker(&state_checker);
     run__CIGenerator(&result);
 
+    exec__CICompile(&result);
+
+    if (handler) {
+        handler(&result, other_args);
+    }
+
     FREE(CIResult, &result);
     FREE(CIBuiltin, &builtin);
     FREE(CIProjectConfig, &project_config);
-
-    destroy__CIInclude();
 }

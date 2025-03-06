@@ -26,58 +26,52 @@
 #define LILY_CLI_CI_CONFIG_H
 
 #include <base/macros.h>
-#include <base/vec.h>
 
-#include <core/cc/ci/features.h>
+#include <cli/ci/config/compile.h>
+#include <cli/ci/config/self_test.h>
 
-enum CIConfigMode
+enum CIConfigKind
 {
-    CI_CONFIG_MODE_DEBUG,
-    CI_CONFIG_MODE_NONE,
-    CI_CONFIG_MODE_RELEASE,
+    CI_CONFIG_KIND_COMPILE,
+    CI_CONFIG_KIND_SELF_TEST
 };
 
 typedef struct CIConfig
 {
-    // PROJECT_PATH | FILE_PATH
-    const char *path; // const char* (&)
-    enum CIConfigMode mode;
-    bool file;
-    enum CIStandard standard;
-    // Store values passed via the `-I`/`--include` option
-    Vec *includes; // Vec<char* (&)>*
-
-    // Store values passed via the `--include0` option
-    Vec *includes0; // Vec<char* (&)>*
-    bool no_state_check;
+    enum CIConfigKind kind;
+    union
+    {
+        CIConfigCompile compile;
+        CIConfigSelfTest self_test;
+    };
 } CIConfig;
 
 /**
  *
- * @brief Construct CIConfig type.
+ * @brief Construct CIConfig type (CI_CONFIG_KIND_COMPILE).
  */
-inline CONSTRUCTOR(CIConfig,
-                   CIConfig,
-                   const char *path,
-                   enum CIConfigMode mode,
-                   bool file,
-                   enum CIStandard standard,
-                   Vec *includes,
-                   Vec *includes0,
-                   bool no_state_check)
+inline VARIANT_CONSTRUCTOR(CIConfig, CIConfig, compile, CIConfigCompile compile)
 {
-    return (CIConfig){ .path = path,
-                       .mode = mode,
-                       .file = file,
-                       .standard = standard,
-                       .includes = includes,
-                       .includes0 = includes0,
-                       .no_state_check = no_state_check };
+    return (CIConfig){ .kind = CI_CONFIG_KIND_COMPILE, .compile = compile };
+}
+
+/**
+ *
+ * @brief Construct CIConfig type (CI_CONFIG_KIND_SELF_TEST).
+ */
+inline VARIANT_CONSTRUCTOR(CIConfig,
+                           CIConfig,
+                           self_test,
+                           CIConfigSelfTest self_test)
+{
+    return (CIConfig){ .kind = CI_CONFIG_KIND_SELF_TEST,
+                       .self_test = self_test };
 }
 
 /**
  *
  * @brief Free CIConfig type.
+ * @param self const CIConfig* (&)
  */
 DESTRUCTOR(CIConfig, const CIConfig *self);
 

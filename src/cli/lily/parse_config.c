@@ -34,6 +34,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// NOTE: The following options, are builtin:
+/*
+#define H_OPTION 0
+#define HELP_OPTION 1
+#define V_OPTION 2
+#define VERSION_OPTION 3
+*/
 #define BUILD_COMMAND 0
 #define CC_COMMAND 1
 #define COMPILE_COMMAND 2

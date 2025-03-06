@@ -29,7 +29,7 @@
 
 /**
  *
- * @param args Vec<char*>* (&)
+ * @param args Vec<char* (&)>* (&)
  */
 void
 run__LilyCompile(Vec *args);

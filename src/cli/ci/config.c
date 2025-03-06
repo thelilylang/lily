@@ -22,12 +22,41 @@
  * SOFTWARE.
  */
 
-#include <base/new.h>
+#include <base/macros.h>
 
 #include <cli/ci/config.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+
+/// @brief Free CIConfig type (CI_CONFIG_KIND_COMPILE).
+static inline VARIANT_DESTRUCTOR(CIConfig, compile, const CIConfig *self);
+
+/// @brief Free CIConfig type (CI_CONFIG_KIND_SELF_TEST).
+static inline VARIANT_DESTRUCTOR(CIConfig, self_test, const CIConfig *self);
+
+VARIANT_DESTRUCTOR(CIConfig, compile, const CIConfig *self)
+{
+    FREE(CIConfigCompile, &self->compile);
+}
+
+VARIANT_DESTRUCTOR(CIConfig, self_test, const CIConfig *self)
+{
+    // NOTE: Nothing to free yet.
+}
+
 DESTRUCTOR(CIConfig, const CIConfig *self)
 {
-    FREE(Vec, self->includes);
-    FREE(Vec, self->includes0);
+    switch (self->kind) {
+        case CI_CONFIG_KIND_COMPILE:
+            FREE_VARIANT(CIConfig, compile, self);
+
+            break;
+        case CI_CONFIG_KIND_SELF_TEST:
+            FREE_VARIANT(CIConfig, self_test, self);
+
+            break;
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }

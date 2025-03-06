@@ -735,6 +735,21 @@ include_content__CIResultFile(const CIResultFile *self, CIResultFile *other);
 bool
 is_same_filename__CIResultFile(const CIResultFile *self, const char *filename);
 
+enum CIDirResultPurpose
+{
+    CI_DIR_RESULT_PURPOSE_BIN,
+    CI_DIR_RESULT_PURPOSE_C_GEN,
+    CI_DIR_RESULT_PURPOSE_LIB
+};
+
+/**
+ *
+ * @brief Get directory result.
+ */
+String *
+get_dir_result__CIResultFile(const CIResultFile *self,
+                             enum CIDirResultPurpose purpose);
+
 /**
  *
  * @brief Free CIResultFile type.
@@ -904,30 +919,6 @@ load_predefined__CIResult(CIResult *self);
 
 /**
  *
- * @brief Scan file.
- * @param path char* (&)
- */
-CIResultFile *
-scan_file__CIResult(const CIResult *self,
-                    CIResultFile *owner,
-                    CIResultFile *file_parent,
-                    char *path,
-                    Usize id);
-
-/**
- *
- * @brief Run (Scan & Parse) file.
- * @param path char* (&)
- */
-CIResultFile *
-run_file__CIResult(const CIResult *self,
-                   CIResultFile *owner,
-                   CIResultFile *file_parent,
-                   char *path,
-                   Usize id);
-
-/**
- *
  * @brief Add & Run from the passed library.
  */
 void
@@ -964,7 +955,8 @@ build__CIResult(CIResult *self);
  */
 void
 pass_through_result__CIResult(const CIResult *self,
-                              void (*run)(const CIResultFile *file,
+                              void (*run)(void *entity,
+                                          const CIResultFile *file,
                                           void *other_args),
                               void *other_args);
 

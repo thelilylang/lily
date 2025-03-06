@@ -25,13 +25,43 @@
 #ifndef LILY_CLI_ARGS_H
 #define LILY_CLI_ARGS_H
 
+#include <base/macros.h>
+#include <base/new.h>
 #include <base/vec.h>
+
+typedef Vec * /* Vec<char* (&)>* */ CliArgs;
 
 /**
  *
- * @return Vec<char* (&)>*
+ * @brief Construct CliArgs type.
  */
-Vec *
+inline CONSTRUCTOR(CliArgs, CliArgs)
+{
+    return NEW(Vec);
+}
+
+/**
+ *
+ * @return CliArgs
+ */
+CliArgs
 build__CliArgs(int argc, char **argv);
+
+/**
+ *
+ * @param args Vec<String*>* (&)
+ * @return CliArgs
+ */
+CliArgs
+build_from_string_args__CliArgs(Vec *args_string);
+
+/**
+ *
+ * @brief Free CliArgs type.
+ */
+inline DESTRUCTOR(CliArgs, CliArgs self)
+{
+    FREE(Vec, self);
+}
 
 #endif // LILY_CLI_ARGS_H

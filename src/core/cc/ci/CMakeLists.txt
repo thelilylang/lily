@@ -6,16 +6,40 @@ set(CI_CLI_SRC
 
 # ci_cli
 add_library(ci_cli STATIC ${CI_CLI_SRC} ${CMAKE_SOURCE_DIR}/src/ex/lib/ci_cli.c)
-target_link_libraries(ci_cli PRIVATE lily_base)
+target_link_libraries(ci_cli PRIVATE lily_base cic_cli)
 target_include_directories(ci_cli PRIVATE ${LILY_INCLUDE})
 
-set(CI_COMMAND_SRC ${CMAKE_SOURCE_DIR}/src/command/ci/ci.c)
+set(CIC_CLI_SRC
+    ${CMAKE_SOURCE_DIR}/src/cli/cic/cic.c
+    ${CMAKE_SOURCE_DIR}/src/cli/cic/config.c
+    ${CMAKE_SOURCE_DIR}/src/cli/cic/parse_config.c)
+
+# cic_cli
+add_library(cic_cli STATIC ${CIC_CLI_SRC}
+                           ${CMAKE_SOURCE_DIR}/src/ex/lib/cic_cli.c)
+target_link_libraries(cic_cli PRIVATE lily_base)
+target_include_directories(cic_cli PRIVATE ${LILY_INCLUDE})
+
+set(CI_COMMAND_SRC
+    ${CMAKE_SOURCE_DIR}/src/command/ci/self_test/metadata/scanner.c
+    ${CMAKE_SOURCE_DIR}/src/command/ci/self_test/metadata.c
+    ${CMAKE_SOURCE_DIR}/src/command/ci/self_test/poll.c
+    ${CMAKE_SOURCE_DIR}/src/command/ci/self_test/run.c
+    ${CMAKE_SOURCE_DIR}/src/command/ci/self_test/self_test.c)
 
 # ci_command
 add_library(ci_command STATIC ${CI_COMMAND_SRC}
                               ${CMAKE_SOURCE_DIR}/src/ex/lib/ci_command.c)
-target_link_libraries(ci_command PRIVATE lily_base lily_core_cc_ci)
+target_link_libraries(ci_command PRIVATE lily_base lily_core_cc_ci cic_command)
 target_include_directories(ci_command PRIVATE ${LILY_INCLUDE})
+
+set(CIC_COMMAND_SRC ${CMAKE_SOURCE_DIR}/src/command/cic/cic.c)
+
+# cic_command
+add_library(cic_command STATIC ${CIC_COMMAND_SRC}
+                               ${CMAKE_SOURCE_DIR}/src/ex/lib/cic_command.c)
+target_link_libraries(cic_command PRIVATE lily_base lily_core_cc_ci)
+target_include_directories(cic_command PRIVATE ${LILY_INCLUDE})
 
 set(CI_DIAGNOSTIC_SRC ${CMAKE_SOURCE_DIR}/src/core/cc/ci/diagnostic/error.c
                       ${CMAKE_SOURCE_DIR}/src/core/cc/ci/diagnostic/warning.c)
@@ -44,6 +68,7 @@ target_include_directories(lily_core_cc_ci_extensions PRIVATE ${LILY_INCLUDE})
 set(CI_SRC
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/ast.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/builtin.c
+    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/compile.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/features.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/generator.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/include.c
@@ -74,3 +99,9 @@ add_executable(ci ${CMAKE_SOURCE_DIR}/src/bin/ci/main.c
                   ${CMAKE_SOURCE_DIR}/src/ex/bin/ci.c)
 target_link_libraries(ci PRIVATE lily_core_cc_ci ci_cli ci_command)
 target_include_directories(ci PRIVATE ${LILY_INCLUDE})
+
+# cic
+add_executable(cic ${CMAKE_SOURCE_DIR}/src/bin/cic/main.c
+                   ${CMAKE_SOURCE_DIR}/src/ex/bin/cic.c)
+target_link_libraries(cic PRIVATE lily_core_cc_ci cic_cli cic_command)
+target_include_directories(cic PRIVATE ${LILY_INCLUDE})

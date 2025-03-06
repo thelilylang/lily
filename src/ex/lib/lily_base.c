@@ -26,12 +26,14 @@
 #define LILY_EX_LIB_LILY_BASE_C
 
 #include <base/allocator.h>
+#include <base/cli/args.h>
 #include <base/cli/default_action.h>
 #include <base/cli/diagnostic.h>
 #include <base/cli/option.h>
 #include <base/cli/result/command.h>
 #include <base/cli/value.h>
 #include <base/env.h>
+#include <base/file.h>
 #include <base/hash_map.h>
 #include <base/linked_list.h>
 #include <base/memory/api.h>
@@ -60,6 +62,13 @@ extern inline VARIANT_CONSTRUCTOR(Allocator, Allocator, page);
 // <base/env.h>
 extern inline char *
 get__Env(const char *name);
+
+// <base/file.h>
+extern inline FILE *
+open__File(const char *filename, const char *modes);
+
+extern inline Int32
+close__File(FILE *stream);
 
 // <base/hash_map.h>
 extern inline CONSTRUCTOR(HashMapPair, HashMapPair, char *key, void *value);
@@ -195,6 +204,11 @@ get_node_from_id__YAML(YAMLLoadRes *self, Usize document_id, Int32 node_id);
 
 extern inline YAMLNode *
 get_root_node__YAML(YAMLLoadRes *self, Usize document_id);
+
+// <base/cli/args.h>
+extern inline CONSTRUCTOR(CliArgs, CliArgs);
+
+extern inline DESTRUCTOR(CliArgs, CliArgs self);
 
 // <base/cli/default_action.h>
 extern inline DESTRUCTOR(CliDefaultAction, CliDefaultAction *self);

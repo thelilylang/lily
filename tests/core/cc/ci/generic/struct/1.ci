@@ -1,0 +1,59 @@
+//@expected_stdout 1:2:3\nPASS\n
+
+#include <helper.h>
+
+struct Vec.[@T] {
+	@T *buffer;
+	size_t capacity;
+	size_t len;
+};
+
+struct Vec.[@T]
+init__Vec.[@T]()
+{
+	return (struct Vec.[@T]){
+		.buffer = NULL,
+		.capacity = 4,
+		.len = 0
+	};
+}
+
+@T *
+get__Vec.[@T](struct Vec.[@T] *self, size_t index)
+{
+	return &self->buffer[index];
+}
+
+void
+push__Vec.[@T](struct Vec.[@T] *self, @T v)
+{
+	if (!self->buffer) {
+		self->buffer = malloc(sizeof(@T) * self->capacity);
+	} else if (self->len == self->capacity) {
+		puts("FAILED"); /* too lazy to realloc */
+
+		return;
+	}
+
+	self->buffer[self->len++] = v;
+}
+
+void
+deinit__Vec.[@T](struct Vec.[@T] *self)
+{
+	free(self->buffer);
+}
+
+int main() {
+	struct Vec.[int] v = init__Vec.[int]();
+
+	push__Vec.[int](&v, 1);
+	push__Vec.[int](&v, 2);
+	push__Vec.[int](&v, 3);
+
+	printf("%d:%d:%d\n", *get__Vec.[int](&v, 0), *get__Vec.[int](&v, 1), *get__Vec.[int](&v, 2));
+
+	puts("PASS");
+
+	deinit__Vec.[int](&v);
+}

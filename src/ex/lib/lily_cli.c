@@ -74,6 +74,8 @@ extern inline VARIANT_CONSTRUCTOR(LilyConfig,
 
 extern inline VARIANT_CONSTRUCTOR(LilyConfig, LilyConfig, to, LilyConfigTo to);
 
+extern inline DESTRUCTOR(LilyConfig, const LilyConfig *self);
+
 // <cli/lily/config/build.h>
 extern inline CONSTRUCTOR(LilyConfigBuild, LilyConfigBuild, bool verbose);
 

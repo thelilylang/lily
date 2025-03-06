@@ -25,10 +25,22 @@
 #ifndef LILY_CLI_EMIT_H
 #define LILY_CLI_EMIT_H
 
-#define EMIT_HELP(msg) printf("\x1b[1m\x1b[33mhelp\x1b[0m: %s\x1b[0m\n", msg)
+#include <base/print.h>
 
-#define EMIT_ERROR(msg) printf("\x1b[1m\x1b[31merror\x1b[0m: %s\x1b[0m\n", msg)
+#define EMIT_HELP(msg) PRINTLN("\x1b[1m\x1b[33mhelp\x1b[0m: {s}\x1b[0m", msg)
 
-#define EMIT_NOTE(msg) printf("\x1b[1m\x1b[31mnote\x1b[0m: %s\x1b[0m\n", msg)
+#define EMIT_HELP_FMT(msg, ...) \
+    PRINTLN("\x1b[1m\x1b[33mhelp\x1b[0m: {sa}\x1b[0m", format(msg, __VA_ARGS__))
+
+#define EMIT_ERROR(msg) PRINTLN("\x1b[1m\x1b[31merror\x1b[0m: {s}\x1b[0m", msg)
+
+#define EMIT_ERROR_FMT(msg, ...)                        \
+    PRINTLN("\x1b[1m\x1b[31merror\x1b[0m: {sa}\x1b[0m", \
+            format(msg, __VA_ARGS__))
+
+#define EMIT_NOTE(msg) PRINTLN("\x1b[1m\x1b[31mnote\x1b[0m: {s}\x1b[0m", msg)
+
+#define EMIT_NOTE_FMT(msg, ...) \
+    PRINTLN("\x1b[1m\x1b[31mnote\x1b[0m: {sa}\x1b[0m", format(msg, __VA_ARGS__))
 
 #endif // LILY_CLI_EMIT_H

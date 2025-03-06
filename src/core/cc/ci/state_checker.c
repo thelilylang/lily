@@ -237,7 +237,9 @@ run_file__CIStateChecker(CIStateChecker *self, const CIResultFile *file);
 
 /// @param other_args void* (CIStateChecker* (&))
 static void
-handler__CIStateChecker(const CIResultFile *file, void *other_args);
+handler__CIStateChecker([[maybe_unused]] void *entity,
+                        const CIResultFile *file,
+                        void *other_args);
 
 DESTRUCTOR(CIStateCheckerValueFunction, const CIStateCheckerValueFunction *self)
 {
@@ -1156,7 +1158,9 @@ run_file__CIStateChecker(CIStateChecker *self, const CIResultFile *file)
 }
 
 void
-handler__CIStateChecker(const CIResultFile *file, void *other_args)
+handler__CIStateChecker([[maybe_unused]] void *entity,
+                        const CIResultFile *file,
+                        void *other_args)
 {
     CIStateChecker *self = (CIStateChecker *)other_args;
 

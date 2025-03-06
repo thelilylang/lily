@@ -81,6 +81,40 @@ clone__String(String *self);
 
 /**
  *
+ * @brief Count the number of repetitions of this character in this String.
+ */
+Usize
+count_c__String(const String *self, char c);
+
+/**
+ *
+ * @brief Find a character into a string.
+ * @return char*? (&)
+ */
+char *
+find__String(const String *self, char c);
+
+/**
+ *
+ * @brief Find a substring into a string.
+ * @return char*? (&)
+ */
+char *
+find_sub__String(const String *self, const char *match);
+
+/**
+ *
+ * @brief Find a substring into a string overt a list of matches.
+ * @return char*? (&)
+ */
+char *
+find_sub_over_many__String(const String *self,
+                           const char **matches,
+                           Usize matches_n,
+                           Isize *match_at);
+
+/**
+ *
  * @brief A format way for String.
  */
 String *
@@ -114,6 +148,20 @@ get_slice__String(const String *self, Usize start, Usize end);
  */
 void
 grow__String(String *self, Usize new_capacity);
+
+/**
+ *
+ * @brief Insert an item at the given index.
+ */
+void
+insert__String(String *self, char item, Usize index);
+
+/**
+ *
+ * @brief Insert an item at n + 1 index.
+ */
+void
+insert_after__String(String *self, char item, Usize index);
 
 /**
  *
@@ -162,10 +210,77 @@ push_str_with_len__String(String *self, const char *s, Usize len);
 
 /**
  *
+ * @brief Remove character into a string at the given index.
+ */
+char
+remove__String(String *self, Usize index);
+
+/**
+ *
  * @brief Repeat n times a str.
  */
 String *
 repeat__String(char *s, Usize n);
+
+/**
+ *
+ * @brief Replace character by the `replacement` character at the given index.
+ */
+void
+replace__String(String *self, Usize index, char replacement);
+
+/**
+ *
+ * @brief Replace `c` character, by `replacement` character.
+ */
+void
+replace_c__String(String *self, char c, char replacement);
+
+/**
+ *
+ * @brief Replace many characters, by the corresponding `replacements`.
+ * @param cs const char* (&) - Array of character.
+ * @param replacements const char* (&) - Array of replacement characters.
+ * @param len Length of `cs` and `replacements` array.
+ */
+void
+replace_many__String(String *self,
+                     const char *cs,
+                     const char *replacements,
+                     Usize len);
+
+/**
+ *
+ * @brief Replace `s` sub string, by `replacement` sub string.
+ * @param s const char* (&)
+ * @param replacement const char* (&)
+ */
+void
+replace_sub__String(String *self, const char *s, const char *replacement);
+
+/**
+ *
+ * @brief Replace `subs` subs string, by `replacements` subs string.
+ * @param len Length of `subs` and `replacements` array.
+ * @param subs const char* (&)* (&)
+ * @param replacements const char* (&)* (&)
+ */
+void
+replace_many_sub__String(String *self,
+                         const char **subs,
+                         const char **replacements,
+                         Usize len);
+
+/**
+ *
+ * @note Enable all constants escapes by replacing.
+ * @example "\\a" => "\a", "\\b" => "\b", "\\e" => "\e", "\\f" => "\f", "\\n" =>
+ * "\n", "\\r" => "\r", "\\t" => "\t", "\\v" => "\v", "\\\\" => "\\", "\\'" =>
+ * "\'", "\\?" => "\?"
+ * @note except "\"".
+ */
+void
+enable_constant_escapes__String(String *self);
 
 /**
  *
@@ -206,13 +321,6 @@ take_slice__String(String *self, Usize index);
  */
 void
 ungrow__String(String *self);
-
-/**
- *
- * @brief Count the number of repetitions of this character in this String.
- */
-Usize
-count_c__String(const String *self, char c);
 
 /**
  *

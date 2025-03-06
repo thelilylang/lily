@@ -25,19 +25,35 @@
 #ifndef LILY_EX_LIB_CI_CLI_C
 #define LILY_EX_LIB_CI_CLI_C
 
-#include <cli/ci/ci.h>
 #include <cli/ci/config.h>
-#include <cli/ci/parse_config.h>
+#include <cli/ci/config/compile.h>
+#include <cli/ci/config/self_test.h>
 
 // <cli/ci/config.h>
-extern inline CONSTRUCTOR(CIConfig,
-                          CIConfig,
+extern inline VARIANT_CONSTRUCTOR(CIConfig,
+                                  CIConfig,
+                                  compile,
+                                  CIConfigCompile compile);
+
+extern inline VARIANT_CONSTRUCTOR(CIConfig,
+                                  CIConfig,
+                                  self_test,
+                                  CIConfigSelfTest self_test);
+
+// <cli/ci/config/compile.h>
+extern inline CONSTRUCTOR(CIConfigCompile,
+                          CIConfigCompile,
                           const char *path,
-                          enum CIConfigMode mode,
+                          enum CIcConfigMode mode,
                           bool file,
                           enum CIStandard standard,
                           Vec *includes,
                           Vec *includes0,
                           bool no_state_check);
+
+extern inline DESTRUCTOR(CIConfigCompile, const CIConfigCompile *self);
+
+// <cli/ci/config/self_test.h>
+extern inline CONSTRUCTOR(CIConfigSelfTest, CIConfigSelfTest, const char *path);
 
 #endif // LILY_EX_LIB_CI_CLI_C
