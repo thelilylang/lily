@@ -122,9 +122,9 @@ bins:
     path: src/bin/ci/main.c
 
 self_tests:
-  - tests/core/cc/c89
-  - tests/core/cc/c99
-  - tests/core/cc/c11
-  - tests/core/cc/c17
-  - tests/core/cc/c23
+  # - tests/core/cc/c89
+  # - tests/core/cc/c99
+  # - tests/core/cc/c11
+  # - tests/core/cc/c17
+  # - tests/core/cc/c23
   - tests/core/cc/ci

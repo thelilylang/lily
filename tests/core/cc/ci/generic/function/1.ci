@@ -1,0 +1,18 @@
+//@expected_stdout PASS\n
+
+#include <helper.h>
+
+@T
+get.[@T](@T x) {
+	return x;
+}
+
+int main() {	
+	int x = get.[int](20);
+
+	if (x == 20) {
+		puts("PASS");
+	} else {
+		puts("FAILED");
+	}
+}
