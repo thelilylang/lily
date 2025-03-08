@@ -22,23 +22,40 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_COMMAND_CI_SELF_TEST_RUN_H
-#define LILY_COMMAND_CI_SELF_TEST_RUN_H
+#ifndef LILY_COMMAND_CI_SELF_TEST_DIAGNOSTIC_H
+#define LILY_COMMAND_CI_SELF_TEST_DIAGNOSTIC_H
 
-#include <base/fork.h>
-#include <base/pipe.h>
-
-#include <command/ci/self_test/metadata.h>
-#include <command/ci/self_test/process_unit.h>
-
-#include <core/cc/ci/project_config.h>
+#include <base/string.h>
 
 /**
  *
- * @brief Run one self-test.
- * @param path const String*
+ * @param filename const char* (&)
+ * @param time Time in seconds.
  */
-CISelfTestProcessUnit *
-run__CISelfTestRun(String *path);
+void
+display_pass_test_output__CISelfTestDiagnostic(const char *filename,
+                                               double time);
 
-#endif // LILY_COMMAND_CI_SELF_TEST_RUN_H
+/**
+ *
+ * @param filename const char* (&)
+ */
+void
+display_failed_test_output__CISelfTestDiagnostic(const char *filename,
+                                                 int exit_status,
+                                                 int kill_signal,
+                                                 int stop_signal);
+
+/**
+ *
+ * @param expected_stdout String* (&)
+ * @param actual_stdout String* (&)
+ * @param filename const char* (&)
+ */
+void
+display_failed_expected_stdout_assertion_output__CISelfTestDiagnostic(
+  String *expected_stdout,
+  String *actual_stdout,
+  const char *filename);
+
+#endif // LILY_COMMAND_CI_SELF_TEST_DIAGNOSTIC_H

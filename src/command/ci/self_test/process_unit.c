@@ -22,23 +22,34 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_COMMAND_CI_SELF_TEST_RUN_H
-#define LILY_COMMAND_CI_SELF_TEST_RUN_H
+#include <base/alloc.h>
+#include <base/fd.h>
+#include <base/macros.h>
+#include <base/new.h>
 
-#include <base/fork.h>
-#include <base/pipe.h>
-
-#include <command/ci/self_test/metadata.h>
 #include <command/ci/self_test/process_unit.h>
 
-#include <core/cc/ci/project_config.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-/**
- *
- * @brief Run one self-test.
- * @param path const String*
- */
-CISelfTestProcessUnit *
-run__CISelfTestRun(String *path);
+CONSTRUCTOR(CISelfTestProcessUnit *,
+            CISelfTestProcessUnit,
+            Fork pid,
+            String *path,
+            int read_fd)
+{
+    CISelfTestProcessUnit *self = lily_malloc(sizeof(CISelfTestProcessUnit));
 
-#endif // LILY_COMMAND_CI_SELF_TEST_RUN_H
+    self->pid = pid;
+    self->path = path;
+    self->read_fd = read_fd;
+
+    return self;
+}
+
+DESTRUCTOR(CISelfTestProcessUnit, CISelfTestProcessUnit *self)
+{
+    FREE(String, self->path);
+    close__Fd(self->read_fd);
+    lily_free(self);
+}

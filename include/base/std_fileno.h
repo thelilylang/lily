@@ -22,23 +22,32 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_COMMAND_CI_SELF_TEST_RUN_H
-#define LILY_COMMAND_CI_SELF_TEST_RUN_H
+#ifndef LILY_BASE_STD_FILENO_H
+#define LILY_BASE_STD_FILENO_H
 
-#include <base/fork.h>
-#include <base/pipe.h>
+#include <base/platform.h>
 
-#include <command/ci/self_test/metadata.h>
-#include <command/ci/self_test/process_unit.h>
+#undef LILY_STDIN_FILENO
+#undef LILY_STDOUT_FILENO
+#undef LILY_STDERR_FILENO
 
-#include <core/cc/ci/project_config.h>
+#ifdef LILY_UNIX_OS
+// [...]
+// On program startup, the integer file descriptors associated with the
+// streams stdin, stdout, and stderr are 0, 1, and 2, respectively. The
+// preprocessor symbols STDIN_FILENO, STDOUT_FILENO, and STDERR_FILENO [...]
+//
+// From: https://linux.die.net/man/3/stdout
 
-/**
- *
- * @brief Run one self-test.
- * @param path const String*
- */
-CISelfTestProcessUnit *
-run__CISelfTestRun(String *path);
+#define LILY_STDIN_FILENO 0
+#define LILY_STDOUT_FILENO 1
+#define LILY_STDERR_FILENO 2
+#elif LILY_WINDOWS_OS
+#define LILY_STDIN_FILENO 0
+#define LILY_STDOUT_FILENO 1
+#define LILY_STDERR_FILENO 2
+#else
+#error "this OS is not yet supported"
+#endif
 
-#endif // LILY_COMMAND_CI_SELF_TEST_RUN_H
+#endif // LILY_BASE_STD_FILENO_H

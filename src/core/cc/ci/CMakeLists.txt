@@ -21,9 +21,11 @@ target_link_libraries(cic_cli PRIVATE lily_base)
 target_include_directories(cic_cli PRIVATE ${LILY_INCLUDE})
 
 set(CI_COMMAND_SRC
+    ${CMAKE_SOURCE_DIR}/src/command/ci/self_test/diagnostic.c
     ${CMAKE_SOURCE_DIR}/src/command/ci/self_test/metadata/scanner.c
     ${CMAKE_SOURCE_DIR}/src/command/ci/self_test/metadata.c
     ${CMAKE_SOURCE_DIR}/src/command/ci/self_test/poll.c
+    ${CMAKE_SOURCE_DIR}/src/command/ci/self_test/process_unit.c
     ${CMAKE_SOURCE_DIR}/src/command/ci/self_test/run.c
     ${CMAKE_SOURCE_DIR}/src/command/ci/self_test/self_test.c)
 

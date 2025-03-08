@@ -27,9 +27,11 @@
 #include <base/cli/result.h>
 #include <base/color.h>
 #include <base/command.h>
+#include <base/dup.h>
 #include <base/fork.h>
 #include <base/new.h>
 #include <base/print.h>
+#include <base/std_fileno.h>
 #include <base/string.h>
 
 #include <bin/bin.h>
@@ -38,19 +40,34 @@
 #include <cli/cic/config.h>
 #include <cli/cic/parse_config.h>
 
+#include <command/ci/self_test/diagnostic.h>
 #include <command/ci/self_test/metadata/scanner.h>
 #include <command/ci/self_test/run.h>
 #include <command/cic/cic.h>
 
+#include <time.h>
+
+struct CIHandlerOtherArgs
+{
+    const CISelfTestMetadata *metadata; // const CISelfTestMetadata* (&)
+    clock_t start;
+};
+
+/// @brief Construct CIHandlerOtherArgs type.
+static inline CONSTRUCTOR(struct CIHandlerOtherArgs,
+                          CIHandlerOtherArgs,
+                          const CISelfTestMetadata *metadata,
+                          clock_t start);
+
 /// @brief Handler of pass_through_result__CIResult`` function.
-/// @param other_args  void* (&) (const CISelfTestMetadata* (&))
+/// @param other_args  void* (&) (const struct CIHandlerOtherArgs* (&))
 static void
 handler_result__CISelfTestRun(void *entity,
                               const CIResultFile *file,
                               void *other_args);
 
 /// @brief Handler of `run__CIc` function.
-/// @param other_args void* (&) (const CISelfTestMetadata* (&))
+/// @param other_args void* (&) (const struct CIHandlerOtherArgs* (&))
 static void
 handler__CISelfTestRun(const CIResult *result, void *other_args);
 
@@ -58,6 +75,14 @@ handler__CISelfTestRun(const CIResult *result, void *other_args);
 /// @param path const String* (&)
 static void
 run_cic__CISelfTestRun(const String *path, const CISelfTestMetadata *metadata);
+
+CONSTRUCTOR(struct CIHandlerOtherArgs,
+            CIHandlerOtherArgs,
+            const CISelfTestMetadata *metadata,
+            clock_t start)
+{
+    return (struct CIHandlerOtherArgs){ .metadata = metadata, .start = start };
+}
 
 void
 handler_result__CISelfTestRun(void *entity,
@@ -67,32 +92,37 @@ handler_result__CISelfTestRun(void *entity,
     ASSERT(file->entity.kind == CI_RESULT_ENTITY_KIND_BIN);
 
     const CIResultBin *bin = entity;
-    const CISelfTestMetadata *metadata = other_args;
+    const struct CIHandlerOtherArgs *other_args_casted = other_args;
+    const CISelfTestMetadata *metadata = other_args_casted->metadata;
+    const clock_t start = other_args_casted->start;
     String *bin_dir_result =
       get_dir_result__CIResultFile(file, CI_DIR_RESULT_PURPOSE_BIN);
     String *command = format__String("{Sr}/{s}", bin_dir_result, bin->name);
     String *command_output = save__Command(command->buffer);
+    bool is_ok = true;
 
     if (metadata->expected_stdout && strcmp(metadata->expected_stdout->buffer,
                                             command_output->buffer) != 0) {
-        PRINTLN("{sa}", RED("ERR"));
+        display_failed_expected_stdout_assertion_output__CISelfTestDiagnostic(
+          metadata->expected_stdout, command_output, file->file_input.name);
 
-        return;
+        is_ok = false;
     }
 
     FREE(String, command);
     FREE(String, command_output);
 
-    PRINTLN("{sa}", GREEN("OK"));
+    if (is_ok) {
+        display_pass_test_output__CISelfTestDiagnostic(
+          file->file_input.name, (double)(clock() - start) / CLOCKS_PER_SEC);
+    }
 }
 
 void
 handler__CISelfTestRun(const CIResult *result, void *other_args)
 {
-    const CISelfTestMetadata *metadata = other_args;
-
     pass_through_result__CIResult(
-      result, &handler_result__CISelfTestRun, (void *)metadata);
+      result, &handler_result__CISelfTestRun, other_args);
 }
 
 void
@@ -117,22 +147,32 @@ run_cic__CISelfTestRun(const String *path, const CISelfTestMetadata *metadata)
     }
 
     CliArgs args = build_from_string_args__CliArgs(args_string);
+    struct CIHandlerOtherArgs other_args =
+      NEW(CIHandlerOtherArgs, metadata, clock());
 
     RUN__CLI_ENTRY(args, build__CliCIc, CIcConfig, run__CIcParseConfig, {
-        run__CIc(&config, &handler__CISelfTestRun, (void *)metadata);
+        run__CIc(&config, &handler__CISelfTestRun, &other_args);
     });
 
     FREE_BUFFER_ITEMS(args_string->buffer, args_string->len, String);
     FREE(Vec, args_string);
 }
 
-void
-run__CISelfTestRun(const String *path)
+CISelfTestProcessUnit *
+run__CISelfTestRun(String *path)
 {
+    Pipefd pipefd;
+
+    create__Pipe(pipefd);
+
     const Fork pid = run__Fork();
 
     switch (pid) {
         case 0: {
+            // Redirect stdout to the pipe.
+            run2__Dup(pipefd[PIPE_WRITE_FD], LILY_STDOUT_FILENO);
+            close__Pipe(pipefd);
+
             CISelfTestMetadata metadata = NEW(CISelfTestMetadata);
 
             run__CISelfTestMetadataScanner(path, &metadata);
@@ -140,11 +180,15 @@ run__CISelfTestRun(const String *path)
 
             FREE(CISelfTestMetadata, &metadata);
 
+            fflush(stdout);
+
             exit(EXIT_OK);
         }
         case -1:
             UNREACHABLE("failed to fork process");
         default:
-            break;
+            close_write__Pipe(pipefd);
+
+            return NEW(CISelfTestProcessUnit, pid, path, pipefd[PIPE_READ_FD]);
     }
 }

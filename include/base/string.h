@@ -275,12 +275,19 @@ replace_many_sub__String(String *self,
  *
  * @note Enable all constants escapes by replacing.
  * @example "\\a" => "\a", "\\b" => "\b", "\\e" => "\e", "\\f" => "\f", "\\n" =>
- * "\n", "\\r" => "\r", "\\t" => "\t", "\\v" => "\v", "\\\\" => "\\", "\\'" =>
+ * "\n", "\\r" => "\r", "\\t" => "\t", "\\v" => "\v", "\\'" =>
  * "\'", "\\?" => "\?"
  * @note except "\"".
  */
 void
 enable_constant_escapes__String(String *self);
+
+/**
+ *
+ * @brief Does the same as `enable_constant_escapes__String`, but in reverse.
+ */
+void
+disable_constant_escapes__String(String *self);
 
 /**
  *

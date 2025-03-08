@@ -282,6 +282,7 @@ set(BASE_SRC
     ${CMAKE_SOURCE_DIR}/src/base/bitmap.c
     ${CMAKE_SOURCE_DIR}/src/base/buffer.c
     ${CMAKE_SOURCE_DIR}/src/base/char.c
+    ${CMAKE_SOURCE_DIR}/src/base/dup.c
     ${CMAKE_SOURCE_DIR}/src/base/cli/args.c
     ${CMAKE_SOURCE_DIR}/src/base/cli/command.c
     ${CMAKE_SOURCE_DIR}/src/base/cli/default_action.c
@@ -298,6 +299,7 @@ set(BASE_SRC
     ${CMAKE_SOURCE_DIR}/src/base/dir.c
     ${CMAKE_SOURCE_DIR}/src/base/env.c
     ${CMAKE_SOURCE_DIR}/src/base/error.c
+    ${CMAKE_SOURCE_DIR}/src/base/fd.c
     ${CMAKE_SOURCE_DIR}/src/base/file.c
     ${CMAKE_SOURCE_DIR}/src/base/format.c
     ${CMAKE_SOURCE_DIR}/src/base/fork.c
@@ -328,6 +330,7 @@ set(BASE_SRC
     ${CMAKE_SOURCE_DIR}/src/base/optional.c
     ${CMAKE_SOURCE_DIR}/src/base/ordered_hash_map.c
     ${CMAKE_SOURCE_DIR}/src/base/path.c
+    ${CMAKE_SOURCE_DIR}/src/base/pipe.c
     ${CMAKE_SOURCE_DIR}/src/base/queue.c
     ${CMAKE_SOURCE_DIR}/src/base/quick_select.c
     ${CMAKE_SOURCE_DIR}/src/base/quick_sort.c
