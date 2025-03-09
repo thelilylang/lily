@@ -25,6 +25,7 @@
 #include <base/alloc.h>
 #include <base/assert.h>
 #include <base/dir.h>
+#include <base/dir_separator.h>
 #include <base/macros.h>
 
 #include <core/cc/ci/file.h>
@@ -1313,18 +1314,20 @@ get_dir_result__CIResultFile(const CIResultFile *self,
 
     switch (purpose) {
         case CI_DIR_RESULT_PURPOSE_BIN:
-            return format__String(
-              "{s}/bin/{Sr}", output_dir, get_dir__File(self->file_input.name));
-            ;
-        case CI_DIR_RESULT_PURPOSE_C_GEN:
-            return format__String("{s}/c_gen/{Sr}",
+            return format__String("{s}" DIR_SEPARATOR_S "bin" DIR_SEPARATOR_S
+                                  "{Sr}",
                                   output_dir,
                                   get_dir__File(self->file_input.name));
-            ;
+        case CI_DIR_RESULT_PURPOSE_C_GEN:
+            return format__String("{s}" DIR_SEPARATOR_S "c_gen" DIR_SEPARATOR_S
+                                  "{Sr}",
+                                  output_dir,
+                                  get_dir__File(self->file_input.name));
         case CI_DIR_RESULT_PURPOSE_LIB:
-            return format__String(
-              "{s}/lib/{Sr}", output_dir, get_dir__File(self->file_input.name));
-            ;
+            return format__String("{s}" DIR_SEPARATOR_S "lib" DIR_SEPARATOR_S
+                                  "{Sr}",
+                                  output_dir,
+                                  get_dir__File(self->file_input.name));
         default:
             UNREACHABLE("unknown variant");
     }
