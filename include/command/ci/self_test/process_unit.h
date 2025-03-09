@@ -22,23 +22,33 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_COMMAND_CI_SELF_TEST_RUN_H
-#define LILY_COMMAND_CI_SELF_TEST_RUN_H
+#ifndef LILY_COMMAND_CI_SELF_TEST_PROCESS_UNIT_H
+#define LILY_COMMAND_CI_SELF_TEST_PROCESS_UNIT_H
 
 #include <base/fork.h>
-#include <base/pipe.h>
+#include <base/string.h>
 
-#include <command/ci/self_test/metadata.h>
-#include <command/ci/self_test/process_unit.h>
-
-#include <core/cc/ci/project_config.h>
+typedef struct CISelfTestProcessUnit
+{
+    Fork pid;
+    String *path;
+    int read_fd;
+} CISelfTestProcessUnit;
 
 /**
  *
- * @brief Run one self-test.
- * @param path const String*
+ * @brief Construct CISelfTestProcessUnit type.
  */
-CISelfTestProcessUnit *
-run__CISelfTestRun(String *path);
+CONSTRUCTOR(CISelfTestProcessUnit *,
+            CISelfTestProcessUnit,
+            Fork pid,
+            String *path,
+            int read_fd);
 
-#endif // LILY_COMMAND_CI_SELF_TEST_RUN_H
+/**
+ *
+ * @brief Free CISelfTestProcessUnit type.
+ */
+DESTRUCTOR(CISelfTestProcessUnit, CISelfTestProcessUnit *self);
+
+#endif // LILY_COMMAND_CI_SELF_TEST_PROCESS_UNIT_H

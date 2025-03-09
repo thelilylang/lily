@@ -417,11 +417,31 @@ replace_many_sub__String(String *self,
 void
 enable_constant_escapes__String(String *self)
 {
-    const char *constant_escapes[] = { "\\a",  "\\b", "\\e", "\\f",
-                                       "\\n",  "\\r", "\\t", "\\v",
-                                       "\\\\", "\\'", "\\?" };
-    const char *replacements[] = { "\a", "\b", "\e", "\f", "\n", "\r",
-                                   "\t", "\v", "\\", "\'", "\?" };
+    replace_sub__String(self, "\\\\", "\\");
+
+    const char *constant_escapes[] = { "\\a", "\\b", "\\e", "\\f", "\\n",
+                                       "\\r", "\\t", "\\v", "\\'", "\\?" };
+    const char *replacements[] = { "\a", "\b", "\e", "\f", "\n",
+                                   "\r", "\t", "\v", "\'", "\?" };
+
+    const Usize constant_escapes_len = LEN(constant_escapes, *constant_escapes);
+    const Usize replacements_len = LEN(replacements, *replacements);
+
+    static_assert(constant_escapes_len == replacements_len);
+
+    replace_many_sub__String(
+      self, constant_escapes, replacements, constant_escapes_len);
+}
+
+void
+disable_constant_escapes__String(String *self)
+{
+    replace_sub__String(self, "\\", "\\\\");
+
+    const char *constant_escapes[] = { "\a", "\b", "\e", "\f", "\n",
+                                       "\r", "\t", "\v", "\'", "\?" };
+    const char *replacements[] = { "\\a", "\\b", "\\e", "\\f", "\\n",
+                                   "\\r", "\\t", "\\v", "\\'", "\\?" };
 
     const Usize constant_escapes_len = LEN(constant_escapes, *constant_escapes);
     const Usize replacements_len = LEN(replacements, *replacements);

@@ -25,11 +25,15 @@
 #ifndef LILY_COMMAND_CI_SELF_TEST_POLL_H
 #define LILY_COMMAND_CI_SELF_TEST_POLL_H
 
+#include <base/vec.h>
+
 /**
  *
  * @brief Poll all child processes.
+ * @param process_units Vec<CISelfTestProcessUnit*>*
+ * @param n_test_failed Usize* (&)
  */
 void
-run__CISelfTestPoll();
+run__CISelfTestPoll(Vec *process_units, Usize *n_test_failed);
 
 #endif // LILY_COMMAND_CI_SELF_TEST_POLL_H

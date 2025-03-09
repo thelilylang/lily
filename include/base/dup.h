@@ -22,23 +22,47 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_COMMAND_CI_SELF_TEST_RUN_H
-#define LILY_COMMAND_CI_SELF_TEST_RUN_H
+#ifndef LILY_BASE_DUP_H
+#define LILY_BASE_DUP_H
 
-#include <base/fork.h>
-#include <base/pipe.h>
+#include <base/platform.h>
 
-#include <command/ci/self_test/metadata.h>
-#include <command/ci/self_test/process_unit.h>
-
-#include <core/cc/ci/project_config.h>
+#ifdef LILY_UNIX_OS
+/**
+ *
+ * @brief Wrapper of dup(...) function.
+ * @see https://man7.org/linux/man-pages/man2/dup.2.html
+ */
+int
+run__Dup(int oldfd);
 
 /**
  *
- * @brief Run one self-test.
- * @param path const String*
+ * @brief Wrapper of dup2(...) function.
+ * @see https://man7.org/linux/man-pages/man2/dup.2.html
  */
-CISelfTestProcessUnit *
-run__CISelfTestRun(String *path);
+int
+run2__Dup(int oldfd, int newfd);
+#elifdef LILY_WINDOWS_OS
+/**
+ *
+ * @brief Wrapper of _dup(...) function.
+ * @see
+ * https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/dup-dup2?view=msvc-170
+ */
+int
+run__Dup(int oldfd);
 
-#endif // LILY_COMMAND_CI_SELF_TEST_RUN_H
+/**
+ *
+ * @brief Wrapper of _dup2(...) function.
+ * @see
+ * https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/dup-dup2?view=msvc-170
+ */
+int
+run2__Dup(int oldfd, int newfd);
+#else
+#error "this OS is not yet supported"
+#endif
+
+#endif // LILY_BASE_DUP_H

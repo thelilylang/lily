@@ -22,23 +22,50 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_COMMAND_CI_SELF_TEST_RUN_H
-#define LILY_COMMAND_CI_SELF_TEST_RUN_H
+#include <base/dup.h>
+#include <base/macros.h>
 
-#include <base/fork.h>
-#include <base/pipe.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-#include <command/ci/self_test/metadata.h>
-#include <command/ci/self_test/process_unit.h>
+#if defined(LILY_UNIX_OS) || defined(LILY_WINDOWS_OS)
+#ifdef LILY_UNIX_OS
+#include <unistd.h>
 
-#include <core/cc/ci/project_config.h>
+#define DUP(oldfd) dup(oldfd)
+#define DUP2(oldfd, newfd) dup2(oldfd, newfd)
+#else
+#include <io.h>
 
-/**
- *
- * @brief Run one self-test.
- * @param path const String*
- */
-CISelfTestProcessUnit *
-run__CISelfTestRun(String *path);
+#define DUP(oldfd) _dup(oldfd)
+#define DUP2(oldfd, newfd) _dup2(oldfd, newfd)
+#endif
 
-#endif // LILY_COMMAND_CI_SELF_TEST_RUN_H
+int
+run__Dup(int oldfd)
+{
+    int res = DUP(oldfd);
+
+    if (res == -1) {
+        UNREACHABLE("failed to perform dup(...)");
+    }
+
+    return res;
+}
+
+int
+run2__Dup(int oldfd, int newfd)
+{
+    int res = DUP2(oldfd, newfd);
+
+    if (res == -1) {
+        UNREACHABLE("failed to perform dup2(...)");
+    }
+
+    return res;
+}
+#undef DUP
+#undef DUP2
+#else
+#error "this OS is not yet supported"
+#endif

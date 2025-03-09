@@ -22,23 +22,61 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_COMMAND_CI_SELF_TEST_RUN_H
-#define LILY_COMMAND_CI_SELF_TEST_RUN_H
+#ifndef LILY_BASE_PIPE_H
+#define LILY_BASE_PIPE_H
 
-#include <base/fork.h>
-#include <base/pipe.h>
+#include <base/platform.h>
 
-#include <command/ci/self_test/metadata.h>
-#include <command/ci/self_test/process_unit.h>
+#ifdef LILY_UNIX_OS
+#define _GNU_SOURCE
 
-#include <core/cc/ci/project_config.h>
+#include <unistd.h>
+
+#undef PIPE_READ_FD
+#undef PIPE_WRITE_FD
+
+#define PIPE_READ_FD 0
+#define PIPE_WRITE_FD 1
+
+typedef int Pipefd[2];
+typedef int PipeFlags;
 
 /**
  *
- * @brief Run one self-test.
- * @param path const String*
+ * @brief Create a pipe via pipe(...) function.
  */
-CISelfTestProcessUnit *
-run__CISelfTestRun(String *path);
+void
+create__Pipe(Pipefd pipefd);
 
-#endif // LILY_COMMAND_CI_SELF_TEST_RUN_H
+/**
+ *
+ * @brief Create a pipe via pipe2(...) function.
+ */
+void
+create2__Pipe(Pipefd pipefd, PipeFlags flags);
+
+/**
+ *
+ * @brief Close read fd of pipe.
+ */
+void
+close_read__Pipe(Pipefd pipefd);
+
+/**
+ *
+ * @brief Close write fd of pipe.
+ */
+void
+close_write__Pipe(Pipefd pipefd);
+
+/**
+ *
+ * @brief Close read and write fd of pipe.
+ */
+void
+close__Pipe(Pipefd pipefd);
+#else
+#error "this OS is not yet supported"
+#endif
+
+#endif // LILY_BASE_PIPE_H

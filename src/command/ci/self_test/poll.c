@@ -23,33 +23,52 @@
  */
 
 #include <base/color.h>
+#include <base/fd.h>
 #include <base/fork.h>
 #include <base/macros.h>
 #include <base/print.h>
+#include <base/std_fileno.h>
 
+#include <command/ci/self_test/diagnostic.h>
 #include <command/ci/self_test/poll.h>
+#include <command/ci/self_test/process_unit.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
 void
-run__CISelfTestPoll()
+run__CISelfTestPoll(Vec *process_units, Usize *n_test_failed)
 {
-    while (true) {
+    for (Usize i = 0; i < process_units->len; ++i) {
+        CISelfTestProcessUnit *process_unit = get__Vec(process_units, i);
         int exit_status = -1;
         int kill_signal = -1;
         int stop_signal = -1;
 
-        if (wait__Fork(-1, &exit_status, &kill_signal, &stop_signal, true) >
-            0) {
-            if ((exit_status != -1 && exit_status != EXIT_OK) ||
-                kill_signal != -1 || stop_signal != -1) {
-                PRINTLN("{sa}", RED("ERR"));
+        if (wait__Fork(process_unit->pid,
+                       &exit_status,
+                       &kill_signal,
+                       &stop_signal,
+                       true) > 0) {
+            FdReadResult bytes_read;
+            char buffer[256];
+
+            while ((bytes_read = try_read__Fd(
+                      process_unit->read_fd, buffer, sizeof(buffer) - 1)) > 0) {
+                buffer[bytes_read] = '\0';
+                write__Fd(LILY_STDOUT_FILENO, buffer, bytes_read);
             }
 
-            continue;
-        }
+            if ((exit_status != -1 && exit_status != EXIT_OK) ||
+                kill_signal != -1 || stop_signal != -1) {
+                ++(*n_test_failed);
 
-        break;
+                display_failed_test_output__CISelfTestDiagnostic(
+                  process_unit->path->buffer,
+                  exit_status,
+                  kill_signal,
+                  stop_signal);
+            }
+        }
     }
 }

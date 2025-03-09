@@ -176,3 +176,44 @@ CASE(replace_sub3, {
 
     FREE(String, s);
 });
+
+CASE(replace_sub4, {
+    String *s = from__String("H\nI");
+
+    replace_sub__String(s, "\n", "\\n");
+
+    TEST_ASSERT(s->len == 4);
+
+    TEST_ASSERT(s->buffer[0] == 'H');
+    TEST_ASSERT(s->buffer[1] == '\\');
+    TEST_ASSERT(s->buffer[2] == 'n');
+    TEST_ASSERT(s->buffer[3] == 'I');
+
+    FREE(String, s);
+});
+
+CASE(replace_sub5, {
+    String *s = from__String("1:2:3\nPASS\n\n");
+
+    replace_sub__String(s, "\n", "\\n");
+
+    TEST_ASSERT(s->len == 15);
+
+    TEST_ASSERT(s->buffer[0] == '1');
+    TEST_ASSERT(s->buffer[1] == ':');
+    TEST_ASSERT(s->buffer[2] == '2');
+    TEST_ASSERT(s->buffer[3] == ':');
+    TEST_ASSERT(s->buffer[4] == '3');
+    TEST_ASSERT(s->buffer[5] == '\\');
+    TEST_ASSERT(s->buffer[6] == 'n');
+    TEST_ASSERT(s->buffer[7] == 'P');
+    TEST_ASSERT(s->buffer[8] == 'A');
+    TEST_ASSERT(s->buffer[9] == 'S');
+    TEST_ASSERT(s->buffer[10] == 'S');
+    TEST_ASSERT(s->buffer[11] == '\\');
+    TEST_ASSERT(s->buffer[12] == 'n');
+    TEST_ASSERT(s->buffer[13] == '\\');
+    TEST_ASSERT(s->buffer[14] == 'n');
+
+    FREE(String, s);
+});

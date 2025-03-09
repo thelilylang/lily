@@ -22,23 +22,51 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_COMMAND_CI_SELF_TEST_RUN_H
-#define LILY_COMMAND_CI_SELF_TEST_RUN_H
-
-#include <base/fork.h>
+#include <base/macros.h>
 #include <base/pipe.h>
 
-#include <command/ci/self_test/metadata.h>
-#include <command/ci/self_test/process_unit.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-#include <core/cc/ci/project_config.h>
+#ifdef LILY_UNIX_OS
+void
+create__Pipe(Pipefd pipefd)
+{
+    if (pipe(pipefd) == -1) {
+        UNREACHABLE("cannot create pipe");
+    }
+}
 
-/**
- *
- * @brief Run one self-test.
- * @param path const String*
- */
-CISelfTestProcessUnit *
-run__CISelfTestRun(String *path);
+void
+create2__Pipe(Pipefd pipefd, PipeFlags flags)
+{
+    if (pipe2(pipefd, flags) == -1) {
+        UNREACHABLE("cannot create pipe");
+    }
+}
 
-#endif // LILY_COMMAND_CI_SELF_TEST_RUN_H
+void
+close_read__Pipe(Pipefd pipefd)
+{
+    if (close(pipefd[PIPE_READ_FD]) == -1) {
+        UNREACHABLE("failed to close read fd of pipe");
+    }
+}
+
+void
+close_write__Pipe(Pipefd pipefd)
+{
+    if (close(pipefd[PIPE_WRITE_FD]) == -1) {
+        UNREACHABLE("failed to close write fd of pipe");
+    }
+}
+
+void
+close__Pipe(Pipefd pipefd)
+{
+    close_read__Pipe(pipefd);
+    close_write__Pipe(pipefd);
+}
+#else
+#error "this OS is not yet supported"
+#endif
