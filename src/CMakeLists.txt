@@ -1,0 +1,5 @@
+add_subdirectory(${CMAKE_SOURCE_DIR}/src/base)
+add_subdirectory(${CMAKE_SOURCE_DIR}/src/bin)
+add_subdirectory(${CMAKE_SOURCE_DIR}/src/cli)
+add_subdirectory(${CMAKE_SOURCE_DIR}/src/command)
+add_subdirectory(${CMAKE_SOURCE_DIR}/src/core)

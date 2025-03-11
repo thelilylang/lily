@@ -1,0 +1,5 @@
+add_subdirectory(${CMAKE_SOURCE_DIR}/tests/base)
+add_subdirectory(${CMAKE_SOURCE_DIR}/tests/core/lily/parser)
+add_subdirectory(${CMAKE_SOURCE_DIR}/tests/core/lily/precompiler)
+add_subdirectory(${CMAKE_SOURCE_DIR}/tests/core/lily/preparser)
+add_subdirectory(${CMAKE_SOURCE_DIR}/tests/core/lily/scanner)
