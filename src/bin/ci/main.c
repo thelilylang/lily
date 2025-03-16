@@ -32,8 +32,8 @@
 #include <command/ci/compile.h>
 #include <command/ci/self_test.h>
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 int
 main(int argc, char **argv)
@@ -41,19 +41,19 @@ main(int argc, char **argv)
     CliArgs args = build__CliArgs(argc, argv);
 
     RUN__CLI_ENTRY(args, build__CliCI, CIConfig, run__CIParseConfig, {
-		switch (config.kind) {
-			case CI_CONFIG_KIND_COMPILE:
-				run__CICompile(&config);
+        switch (config.kind) {
+            case CI_CONFIG_KIND_COMPILE:
+                run__CICompile(&config);
 
-				break;
-			case CI_CONFIG_KIND_SELF_TEST:
-				run__CISelfTest(&config);
+                break;
+            case CI_CONFIG_KIND_SELF_TEST:
+                run__CISelfTest(&config);
 
-				break;
-			default:
-				UNREACHABLE("unknown variant");
-		}
-	});
+                break;
+            default:
+                UNREACHABLE("unknown variant");
+        }
+    });
 
-	return 0;
+    return 0;
 }
