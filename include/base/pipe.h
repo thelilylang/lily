@@ -51,6 +51,8 @@ create__Pipe(Pipefd pipefd);
 /**
  *
  * @brief Create a pipe via pipe2(...) function.
+ * @note On MacOS this function call only `create__Pipe`, because pipe2(...)
+ * function doesn't exist.
  */
 void
 create2__Pipe(Pipefd pipefd, PipeFlags flags);
