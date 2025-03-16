@@ -40,9 +40,13 @@ create__Pipe(Pipefd pipefd)
 void
 create2__Pipe(Pipefd pipefd, PipeFlags flags)
 {
+#ifdef LILY_APPLE_OS
+    create__Pipe(pipefd);
+#else
     if (pipe2(pipefd, flags) == -1) {
         UNREACHABLE("cannot create pipe");
     }
+#endif
 }
 
 void
