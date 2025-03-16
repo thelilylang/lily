@@ -33,15 +33,16 @@
 #elifdef LILY_BIN_DEBUG_PATH_AVAILABLE
 #define BIN_PATH "bin/Debug/"
 #else
-#error "expected to have at least `LILY_BIN_PATH_AVAILABLE` or `LILY_BIN_DEBUG_PATH_AVAILABLE` defined"
+#error \
+  "expected to have at least `LILY_BIN_PATH_AVAILABLE` or `LILY_BIN_DEBUG_PATH_AVAILABLE` defined"
 #endif
 #else
 #define BIN_PATH ""
 #endif
 
-#define CI_BIN_PATH BIN_PATH"ci"
-#define CIC_BIN_PATH BIN_PATH"cic"
-#define LILY_BIN_PATH BIN_PATH"lily"
-#define LILYC_BIN_PATH BIN_PATH"lilyc"
+#define CI_BIN_PATH BIN_PATH "ci"
+#define CIC_BIN_PATH BIN_PATH "cic"
+#define LILY_BIN_PATH BIN_PATH "lily"
+#define LILYC_BIN_PATH BIN_PATH "lilyc"
 
 #endif // LILY_BIN_H

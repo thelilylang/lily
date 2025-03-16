@@ -1,0 +1,6 @@
+add_subdirectory(${CMAKE_SOURCE_DIR}/src/core/lily/compiler/ar)
+add_subdirectory(${CMAKE_SOURCE_DIR}/src/core/lily/compiler/driver)
+add_subdirectory(${CMAKE_SOURCE_DIR}/src/core/lily/compiler/ir)
+add_subdirectory(${CMAKE_SOURCE_DIR}/src/core/lily/compiler/linker)
+add_subdirectory(${CMAKE_SOURCE_DIR}/src/core/lily/compiler/output)
+add_subdirectory(${CMAKE_SOURCE_DIR}/src/core/lily/compiler/package)
