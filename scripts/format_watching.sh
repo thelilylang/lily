@@ -1,27 +1,14 @@
 #!/bin/sh
 
+set -e
+
 INOTIFYWAIT=inotifywait
 CLANG_FORMAT=clang-format
 CMAKE_FORMAT=cmake-format
 
-function log_missing_command() {
-	if [ $? -ne 0 ]
-	then
-		echo "You need to install $1."
-		exit 1
-	fi
-}
-
-function check_for_missing_command() {
-	which $1 > /dev/null 2>&1
-	log_missing_command $1 
-}
-
-check_for_missing_command $INOTIFYWAIT 
-check_for_missing_command $CLANG_FORMAT
-check_for_missing_command $CMAKE_FORMAT
-
-set -e
+./scripts/check_for_missing_command.sh $INOTIFYWAIT 
+./scripts/check_for_missing_command.sh $CLANG_FORMAT
+./scripts/check_for_missing_command.sh $CMAKE_FORMAT
 
 PWD=$(pwd)
 
