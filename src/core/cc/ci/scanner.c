@@ -2170,35 +2170,8 @@ scan_num__CIScanner(CIScanner *self)
         // Check if the float literal is valid. If the current character is `.`
         // and the number is not a float, we continue to scan the float,
         // otherwise we emit an error.
-        if (self->base.source.cursor.current == '.' && !is_float) {
+        if (self->base.source.cursor.current == '.') {
             is_float = true;
-        } else if (self->base.source.cursor.current == '.' && is_float) {
-            start__Location(&location_error,
-                            self->base.source.cursor.line,
-                            self->base.source.cursor.column,
-                            self->base.source.cursor.position);
-            end__Location(&location_error,
-                          self->base.source.cursor.line,
-                          self->base.source.cursor.column,
-                          self->base.source.cursor.position);
-
-            next_char__CIScanner(self);
-
-            emit__Diagnostic(
-              NEW_VARIANT(Diagnostic,
-                          simple_lily_error,
-                          self->base.source.file,
-                          &location_error,
-                          NEW(LilyError, LILY_ERROR_KIND_INVALID_FLOAT_LITERAL),
-                          NULL,
-                          NULL,
-                          from__String("in a float literal it is forbidden to "
-                                       "add more than one `.`")),
-              self->base.count_error);
-
-            FREE(String, res);
-
-            return NULL;
         }
 
         // Check if the scientific notation is valid. If the current character
@@ -3616,7 +3589,9 @@ get_token__CIScanner(CIScanner *self,
                        clone__Location(&self->base.location));
         // ..., .
         case '.':
-            if (c1 == (char *)'.' && c2 == (char *)'.') {
+            if (c1 >= (char *)'0' && c1 <= (char *)'9') {
+                return get_num__CIScanner(self);
+            } else if (c1 == (char *)'.' && c2 == (char *)'.') {
                 return NEW(CIToken,
                            CI_TOKEN_KIND_DOT_DOT_DOT,
                            clone__Location(&self->base.location));
@@ -4003,7 +3978,6 @@ get_token__CIScanner(CIScanner *self,
         // number
         case IS_DIGIT_WITHOUT_ZERO:
             return get_num__CIScanner(self);
-
         case '\'': {
             int res = scan_character__CIScanner(self);
 

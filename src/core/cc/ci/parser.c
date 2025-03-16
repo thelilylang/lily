@@ -350,6 +350,13 @@ parse_function_call__CIParser(CIParser *self,
                               Rc *identifier,
                               CIGenericParams *generic_params);
 
+/// @brief Check if the given literal constant float is valid.
+/// @param literal_constant_float_value const String* (&)
+static bool
+is_valid_literal_constant_float__CIParser(
+  CIParser *self,
+  const String *literal_constant_float_value);
+
 /// @brief Parse literal expression.
 /// @brief @return CIExpr*?
 static CIExpr *
@@ -2797,6 +2804,28 @@ parse_function_call__CIParser(CIParser *self,
       NEW(CIExprFunctionCall, identifier, params, generic_params));
 }
 
+bool
+is_valid_literal_constant_float__CIParser(
+  CIParser *self,
+  const String *literal_constant_float_value)
+{
+    bool has_point = false;
+
+    for (Usize i = 0; i < literal_constant_float_value->len; ++i) {
+        char current = get__String(literal_constant_float_value, i);
+
+        if (current == '.') {
+            if (has_point) {
+                return false;
+            }
+
+            has_point = true;
+        }
+    }
+
+    return true;
+}
+
 CIExpr *
 parse_literal_expr__CIParser(CIParser *self)
 {
@@ -2854,6 +2883,12 @@ parse_literal_expr__CIParser(CIParser *self)
               CIExpr, literal, NEW_VARIANT(CIExprLiteral, signed_int, res));
         }
         case CI_TOKEN_KIND_LITERAL_CONSTANT_FLOAT:
+            if (!is_valid_literal_constant_float__CIParser(
+                  self, self->previous_token->literal_constant_float.value)) {
+                FAILED("in a float literal it is forbidden to add more than "
+                       "one `.`");
+            }
+
             // TODO: Check if the float is overflow/underflow.
             // Update `base/atof.h` header.
             return NEW_VARIANT(
