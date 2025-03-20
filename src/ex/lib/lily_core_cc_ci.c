@@ -728,12 +728,6 @@ is_in_prepro_else__CIScannerContext(const CIScannerContext *self);
 // <core/cc/ci/state_checker.h>
 extern inline CONSTRUCTOR(CIStateCheckerState, CIStateCheckerState, int flags);
 
-extern inline void
-increment_copy__CIStateCheckerState(CIStateCheckerState *self);
-
-extern inline void
-decrement_copy__CIStateCheckerState(CIStateCheckerState *self);
-
 extern inline CONSTRUCTOR(CIStateCheckerValueFunction,
                           CIStateCheckerValueFunction,
                           Rc *name,

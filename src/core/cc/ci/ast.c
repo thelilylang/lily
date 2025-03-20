@@ -5011,6 +5011,27 @@ from_token__CIExprBinaryKind(const CIToken *token)
     }
 }
 
+bool
+is_assign__CIExprBinaryKind(enum CIExprBinaryKind kind)
+{
+    switch (kind) {
+        case CI_EXPR_BINARY_KIND_ASSIGN:
+        case CI_EXPR_BINARY_KIND_ASSIGN_ADD:
+        case CI_EXPR_BINARY_KIND_ASSIGN_SUB:
+        case CI_EXPR_BINARY_KIND_ASSIGN_MUL:
+        case CI_EXPR_BINARY_KIND_ASSIGN_DIV:
+        case CI_EXPR_BINARY_KIND_ASSIGN_MOD:
+        case CI_EXPR_BINARY_KIND_ASSIGN_BIT_AND:
+        case CI_EXPR_BINARY_KIND_ASSIGN_BIT_OR:
+        case CI_EXPR_BINARY_KIND_ASSIGN_XOR:
+        case CI_EXPR_BINARY_KIND_ASSIGN_BIT_LSHIFT:
+        case CI_EXPR_BINARY_KIND_ASSIGN_BIT_RSHIFT:
+            return true;
+        default:
+            return false;
+    }
+}
+
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIExprBinary, const CIExprBinary *self)

@@ -32,7 +32,6 @@
 typedef struct CIStateCheckerState
 {
     int flags;
-    Usize copy_count;
 } CIStateCheckerState;
 
 /**
@@ -41,27 +40,7 @@ typedef struct CIStateCheckerState
  */
 inline CONSTRUCTOR(CIStateCheckerState, CIStateCheckerState, int flags)
 {
-    return (CIStateCheckerState){ .flags = flags, .copy_count = 0 };
-}
-
-/**
- *
- * @brief Increment `copy_count` field.
- */
-inline void
-increment_copy__CIStateCheckerState(CIStateCheckerState *self)
-{
-    ++self->copy_count;
-}
-
-/**
- *
- * @brief Decrement `copy_count` field.
- */
-inline void
-decrement_copy__CIStateCheckerState(CIStateCheckerState *self)
-{
-    --self->copy_count;
+    return (CIStateCheckerState){ .flags = flags };
 }
 
 enum CIStateCheckerValueKind
@@ -164,6 +143,10 @@ typedef struct CIStateCheckerValueStruct
     Rc *name;        // Rc<String*>*?
     HashMap *values; // HashMap<CIStateCheckerValue*>*
     CIStateCheckerState state;
+    // -1: the value is not set
+    // 0: the struct is not dropable
+    // 1: the struct is dropable
+    int is_dropable;
 } CIStateCheckerValueStruct;
 
 /**
@@ -179,7 +162,8 @@ inline CONSTRUCTOR(CIStateCheckerValueStruct,
 {
     return (CIStateCheckerValueStruct){ .name = name ? ref__Rc(name) : NULL,
                                         .values = values,
-                                        .state = state };
+                                        .state = state,
+                                        .is_dropable = -1 };
 }
 
 /**

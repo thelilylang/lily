@@ -3309,6 +3309,13 @@ to_precedence__CIExprBinaryKind(enum CIExprBinaryKind kind);
 enum CIExprBinaryKind
 from_token__CIExprBinaryKind(const CIToken *token);
 
+/**
+ *
+ * @brief Check if the binary is a such assignment.
+ */
+bool
+is_assign__CIExprBinaryKind(enum CIExprBinaryKind kind);
+
 typedef struct CIExprBinary
 {
     enum CIExprBinaryKind kind;
