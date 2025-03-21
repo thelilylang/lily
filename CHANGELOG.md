@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.11.0 - 2025-03-21
+
+### Added
+
+- Add `self-test` command [#728](https://github.com/thelilylang/lily/pull/728)
+
+### Changed
+
+- Move the check of floating-point to the parser [#733](https://github.com/thelilylang/lily/pull/733)
+- Improve `self-test` diagnostic [#729](https://github.com/thelilylang/lily/pull/729)
+- Improve `get_dir_result__CIResultFile` function [#730](https://github.com/thelilylang/lily/pull/730)
+- Improve CMake organization [#731](https://github.com/thelilylang/lily/pull/731)
+
+### Fixed
+
+- Fix: Call `create__Pipe` into `create2__Pipe` on MacOS [#732](https://github.com/thelilylang/lily/pull/732)
+
+### Removed
+
+- Remove unused files [#734](https://github.com/thelilylang/lily/pull/734)
+
 ## 0.10.0 - 2025-02-21
 
 ### Fixed
