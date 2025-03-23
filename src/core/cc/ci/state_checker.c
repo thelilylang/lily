@@ -48,6 +48,27 @@ build_struct_from_data_type__CIStateCheckerValue(CIDataType *data_type);
 static CIStateCheckerValue *
 build_union_from_data_type__CIStateCheckerValue(CIDataType *data_type);
 
+/// @param name const char*? (&)
+/// @return CIStateCheckerValue*?
+static CIStateCheckerValue *
+get_next_child_value_access__CIStateCheckerValue(CIStateCheckerValue *self,
+                                                 const char *name);
+
+static bool
+value_need_to_be_destroyed__CIStateCheckerValue(CIStateCheckerValue *value);
+
+/// @param values HashMap<CIStateCheckerValue*>* (&)
+static bool
+values_need_to_be_destroyed__CIStateCheckerValue(HashMap *values);
+
+/// @brief Check if the struct is dropable
+static bool
+check_if_struct_is_dropable__CIStateCheckerValue(CIStateCheckerValue *self);
+
+/// @brief Check if the union is dropable
+static bool
+check_if_union_is_dropable__CIStateCheckerValue(CIStateCheckerValue *self);
+
 /// @brief Free CIStateCheckerValue type (CI_STATE_CHECKER_VALUE_KIND_ARRAY).
 static VARIANT_DESTRUCTOR(CIStateCheckerValue,
                           array,
@@ -102,15 +123,19 @@ static inline void
 deinit_current_scope__CIStateChecker(CIStateChecker *self);
 
 static void
+check_if_value_is_accesible__CIStateChecker(CIStateChecker *self,
+                                            CIStateCheckerValue *value);
+
+static CIStateCheckerValue *
 check_function_expr_array_access__CIStateChecker(
   CIStateChecker *self,
   const CIExprArrayAccess *array_access);
 
-static void
+static CIStateCheckerValue *
 check_function_expr_binary__CIStateChecker(CIStateChecker *self,
                                            const CIExprBinary *binary);
 
-static void
+static CIStateCheckerValue *
 check_function_expr_cast__CIStateChecker(
   CIStateChecker *self,
   const CIExprCast *cast,
@@ -121,12 +146,12 @@ static void
 check_function_expr_function_call_params__CIStateChecker(CIStateChecker *self,
                                                          const Vec *params);
 
-static void
+static CIStateCheckerValue *
 check_function_expr_function_call__CIStateChecker(
   CIStateChecker *self,
   const CIExprFunctionCall *function_call);
 
-static void
+static CIStateCheckerValue *
 check_function_expr_function_call_builtin__CIStateChecker(
   CIStateChecker *self,
   const CIExprFunctionCallBuiltin *function_call_builtin);
@@ -141,22 +166,31 @@ check_function_expr_identifier_write_state__CIStateChecker(
   CIStateChecker *self,
   CIStateCheckerValue *identifier_value);
 
-static void
+static CIStateCheckerValue *
 check_function_expr_identifier__CIStateChecker(
   CIStateChecker *self,
   const CIExprIdentifier *identifier,
   enum CIStateCheckerExpr state_checker_expr);
 
-static void
+static CIStateCheckerValue *
 check_function_expr_initializer__CIStateChecker(
   CIStateChecker *self,
   const CIExprInitializer *initializer);
 
-static void
+static CIStateCheckerValue *
+check_function_expr_literal__CIStateChecker(CIStateChecker *self,
+                                            const CIExprLiteral *literal);
+
+static CIStateCheckerValue *
 check_function_expr_ternary__CIStateChecker(CIStateChecker *self,
                                             const CIExprTernary *ternary);
 
-static void
+static CIStateCheckerValue *
+check_function_expr_unary__CIStateChecker(CIStateChecker *self,
+                                          const CIExprUnary *unary);
+
+/// @return CIStateCheckerValue*?
+static CIStateCheckerValue *
 check_function_expr__CIStateChecker(CIStateChecker *self,
                                     const CIExpr *expr,
                                     enum CIStateCheckerExpr state_checker_expr);
@@ -209,8 +243,15 @@ check_function_body__CIStateChecker(CIStateChecker *self,
                                     const CIDeclFunctionBody *body);
 
 static void
+check_if_values_are_destroyed__CIStateChecker(CIStateChecker *self);
+
+static void
 check_non_generic_function__CIStateChecker(CIStateChecker *self,
                                            const CIDecl *decl);
+
+static void
+check_generic_function__CIStateChecker(CIStateChecker *self,
+                                       const CIDecl *decl);
 
 /// @brief Check if the given state, is compatible with the provided expression.
 static void
@@ -504,6 +545,104 @@ build_from_data_type__CIStateCheckerValue(CIDataType *data_type)
     }
 }
 
+CIStateCheckerValue *
+get_next_child_value_access__CIStateCheckerValue(CIStateCheckerValue *self,
+                                                 const char *name)
+{
+    switch (self->kind) {
+        case CI_STATE_CHECKER_VALUE_KIND_ARRAY:
+            return ref__CIStateCheckerValue(self->array.value);
+        case CI_STATE_CHECKER_VALUE_KIND_FUNCTION:
+            return ref__CIStateCheckerValue(self->function.return_value);
+        case CI_STATE_CHECKER_VALUE_KIND_FUNCTION_PTR:
+            return ref__CIStateCheckerValue(self->function_ptr.return_value);
+        case CI_STATE_CHECKER_VALUE_KIND_PRIMARY:
+            return NULL;
+        case CI_STATE_CHECKER_VALUE_KIND_PTR:
+            return ref__CIStateCheckerValue(self->ptr.value);
+        case CI_STATE_CHECKER_VALUE_KIND_STRUCT: {
+            ASSERT(name);
+
+            CIStateCheckerValue *value =
+              get__HashMap(self->struct_.values, (char *)name);
+
+            return value ? ref__CIStateCheckerValue(value) : NULL;
+        }
+        case CI_STATE_CHECKER_VALUE_KIND_UNION: {
+            ASSERT(name);
+
+            CIStateCheckerValue *value =
+              get__HashMap(self->union_.values, (char *)name);
+
+            return value ? ref__CIStateCheckerValue(value) : NULL;
+        }
+        case CI_STATE_CHECKER_VALUE_KIND_VARIABLE:
+            return ref__CIStateCheckerValue(self->variable.value);
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+bool
+value_need_to_be_destroyed__CIStateCheckerValue(CIStateCheckerValue *value)
+{
+    switch (value->kind) {
+        case CI_STATE_CHECKER_VALUE_KIND_PTR:
+            return value->ptr.state.flags & CI_DATA_TYPE_CONTEXT_HEAP &&
+                   !(value->ptr.state.flags & CI_DATA_TYPE_CONTEXT_FREED);
+        case CI_STATE_CHECKER_VALUE_KIND_STRUCT:
+            return check_if_struct_is_dropable__CIStateCheckerValue(value);
+        case CI_STATE_CHECKER_VALUE_KIND_UNION:
+            return check_if_union_is_dropable__CIStateCheckerValue(value);
+        case CI_STATE_CHECKER_VALUE_KIND_VARIABLE:
+            return value_need_to_be_destroyed__CIStateCheckerValue(
+              value->variable.value);
+        default:
+            return false;
+    }
+}
+
+bool
+values_need_to_be_destroyed__CIStateCheckerValue(HashMap *values)
+{
+    HashMapIter values_iter = NEW(HashMapIter, values);
+    CIStateCheckerValue *value = NULL; // CIStateCheckerValue*? (&)
+
+    while ((value = next__HashMapIter(&values_iter))) {
+        if (value_need_to_be_destroyed__CIStateCheckerValue(value)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool
+check_if_struct_is_dropable__CIStateCheckerValue(CIStateCheckerValue *self)
+{
+    if (self->struct_.is_dropable == -1) {
+        self->struct_.is_dropable =
+          values_need_to_be_destroyed__CIStateCheckerValue(self->struct_.values)
+            ? 1
+            : 0;
+    }
+
+    return self->struct_.is_dropable;
+}
+
+bool
+check_if_union_is_dropable__CIStateCheckerValue(CIStateCheckerValue *self)
+{
+    if (self->union_.is_dropable == -1) {
+        self->union_.is_dropable =
+          values_need_to_be_destroyed__CIStateCheckerValue(self->union_.values)
+            ? 1
+            : 0;
+    }
+
+    return self->union_.is_dropable;
+}
+
 CIStateCheckerState *
 get_return_state__CIStateCheckerValue(CIStateCheckerValue *self)
 {
@@ -674,6 +813,7 @@ void
 set_file__CIStateChecker(CIStateChecker *self, const CIResultFile *file)
 {
     self->file = file;
+    self->current_scope = NEW(CIStateCheckerScope, NULL);
 }
 
 void
@@ -685,7 +825,7 @@ unset_file__CIStateChecker(CIStateChecker *self, const CIResultFile *file)
 void
 init_current_scope__CIStateChecker(CIStateChecker *self)
 {
-    self->current_scope = NEW(CIStateCheckerScope, NULL);
+    self->current_scope = NEW(CIStateCheckerScope, self->current_scope);
 }
 
 void
@@ -693,42 +833,132 @@ deinit_current_scope__CIStateChecker(CIStateChecker *self)
 {
     ASSERT(self->current_scope);
 
-    FREE(CIStateCheckerScope, self->current_scope);
-    self->current_scope = NULL;
+    CIStateCheckerScope *tmp_current_scope = self->current_scope;
+
+    self->current_scope = self->current_scope->parent;
+
+    FREE(CIStateCheckerScope, tmp_current_scope);
 }
 
 void
+check_if_value_is_accesible__CIStateChecker(CIStateChecker *self,
+                                            CIStateCheckerValue *value)
+{
+    CIStateCheckerState *state = get_return_state__CIStateCheckerValue(value);
+
+    if (state->flags & CI_DATA_TYPE_CONTEXT_UNDEFINED) {
+        FAILED("not expected to access to a undefined value");
+    }
+
+    switch (value->kind) {
+        case CI_STATE_CHECKER_VALUE_KIND_PTR:
+            if (!(state->flags & CI_DATA_TYPE_CONTEXT_NON_NULL)) {
+                FAILED("not expected to access to a nullable pointer");
+            }
+
+            if (state->flags & CI_DATA_TYPE_CONTEXT_FREED) {
+                FAILED("not expected to access to a freed pointer");
+            }
+
+            break;
+        case CI_STATE_CHECKER_VALUE_KIND_STRUCT:
+        case CI_STATE_CHECKER_VALUE_KIND_UNION:
+            if (state->flags & CI_DATA_TYPE_CONTEXT_DROPPED) {
+                FAILED("not expected to access to a dropped struct or union");
+            }
+
+            break;
+        default:
+            break;
+    }
+}
+
+CIStateCheckerValue *
 check_function_expr_array_access__CIStateChecker(
   CIStateChecker *self,
   const CIExprArrayAccess *array_access)
 {
-    check_function_expr__CIStateChecker(
-      self, array_access->array, CI_STATE_CHECKER_EXPR_READ);
-    check_function_expr__CIStateChecker(
-      self, array_access->access, CI_STATE_CHECKER_EXPR_READ);
+    CIStateCheckerValue *array_state_value =
+      check_function_expr__CIStateChecker(
+        self, array_access->array, CI_STATE_CHECKER_EXPR_READ);
+    CIStateCheckerValue *array_access_state_value =
+      check_function_expr__CIStateChecker(
+        self, array_access->access, CI_STATE_CHECKER_EXPR_READ);
+    CIStateCheckerState *array_access_state =
+      get_return_state__CIStateCheckerValue(array_access_state_value);
 
-    // TODO: Check if !index context is present.
+    if (!(array_access_state->flags & CI_DATA_TYPE_CONTEXT_INDEX)) {
+        FAILED("expected to have index context flag on return value");
+    }
+
+    check_if_value_is_accesible__CIStateChecker(self, array_state_value);
+
+    CIStateCheckerValue *res =
+      get_next_child_value_access__CIStateCheckerValue(array_state_value, NULL);
+
+    FREE(CIStateCheckerValue, array_state_value);
+    FREE(CIStateCheckerValue, array_access_state_value);
+
+    return res;
 }
 
-void
+CIStateCheckerValue *
 check_function_expr_binary__CIStateChecker(CIStateChecker *self,
                                            const CIExprBinary *binary)
 {
-    check_function_expr__CIStateChecker(
+    if (is_assign__CIExprBinaryKind(binary->kind)) {
+        CIStateCheckerValue *left_res = check_function_expr__CIStateChecker(
+          self, binary->left, CI_STATE_CHECKER_EXPR_WRITE);
+        CIStateCheckerState *left_res_state =
+          get_return_state__CIStateCheckerValue(left_res);
+
+        CIStateCheckerValue *right_res = check_function_expr__CIStateChecker(
+          self, binary->right, CI_STATE_CHECKER_EXPR_READ);
+
+        // After an assignment, the left value is no longer undefined.
+        left_res_state->flags &= ~CI_DATA_TYPE_CONTEXT_UNDEFINED;
+
+        FREE(CIStateCheckerValue, right_res);
+
+        return left_res;
+    }
+
+    CIStateCheckerValue *left_res = check_function_expr__CIStateChecker(
       self, binary->left, CI_STATE_CHECKER_EXPR_READ);
-    check_function_expr__CIStateChecker(
+    CIStateCheckerValue *right_res = check_function_expr__CIStateChecker(
       self, binary->right, CI_STATE_CHECKER_EXPR_READ);
+    CIStateCheckerValue *res = NULL;
+
+    if (left_res->kind == CI_STATE_CHECKER_VALUE_KIND_PTR ||
+        left_res->kind == CI_STATE_CHECKER_VALUE_KIND_ARRAY ||
+        left_res->kind == CI_STATE_CHECKER_VALUE_KIND_FUNCTION_PTR) {
+        res = left_res;
+    } else if (right_res->kind == CI_STATE_CHECKER_VALUE_KIND_PTR ||
+               right_res->kind == CI_STATE_CHECKER_VALUE_KIND_ARRAY ||
+               right_res->kind == CI_STATE_CHECKER_VALUE_KIND_FUNCTION_PTR) {
+        res = right_res;
+    } else {
+        res = left_res;
+    }
+
+    if (res != left_res) {
+        FREE(CIStateCheckerValue, left_res);
+    } else if (res != right_res) {
+        FREE(CIStateCheckerValue, right_res);
+    }
+
+    return res;
 }
 
-void
+CIStateCheckerValue *
 check_function_expr_cast__CIStateChecker(
   CIStateChecker *self,
   const CIExprCast *cast,
   enum CIStateCheckerExpr state_checker_expr)
 {
-    check_function_expr__CIStateChecker(self, cast->expr, state_checker_expr);
-
     // TODO: Check if the conversion is fine.
+    return check_function_expr__CIStateChecker(
+      self, cast->expr, state_checker_expr);
 }
 
 void
@@ -738,27 +968,42 @@ check_function_expr_function_call_params__CIStateChecker(CIStateChecker *self,
     for (Usize i = 0; i < params->len; ++i) {
         CIExpr *param = get__Vec(params, i);
 
-        check_function_expr__CIStateChecker(
-          self, param, CI_STATE_CHECKER_EXPR_READ);
+        FREE(CIStateCheckerValue,
+             check_function_expr__CIStateChecker(
+               self, param, CI_STATE_CHECKER_EXPR_READ));
     }
 }
 
-void
+CIStateCheckerValue *
 check_function_expr_function_call__CIStateChecker(
   CIStateChecker *self,
   const CIExprFunctionCall *function_call)
 {
     check_function_expr_function_call_params__CIStateChecker(
       self, function_call->params);
+
+    CIStateCheckerValue *function_value =
+      get__CIStateCheckerScope(self->current_scope, function_call->identifier);
+
+    return get_next_child_value_access__CIStateCheckerValue(function_value,
+                                                            NULL);
 }
 
-void
+CIStateCheckerValue *
 check_function_expr_function_call_builtin__CIStateChecker(
   CIStateChecker *self,
   const CIExprFunctionCallBuiltin *function_call_builtin)
 {
     check_function_expr_function_call_params__CIStateChecker(
       self, function_call_builtin->params);
+
+    CIBuiltin *builtin = get_ref__CIBuiltin();
+    const CIBuiltinFunction *builtin_function =
+      get_builtin_function__CIBuiltin(builtin, function_call_builtin->id);
+    CIStateCheckerValue *value = build_from_data_type__CIStateCheckerValue(
+      builtin_function->return_data_type);
+
+    return value;
 }
 
 void
@@ -794,12 +1039,12 @@ check_function_expr_identifier_write_state__CIStateChecker(
 
     ASSERT(state);
 
-    if (state->flags & CI_DATA_TYPE_CONTEXT_HEAP && state->copy_count == 0) {
+    if (state->flags & CI_DATA_TYPE_CONTEXT_HEAP) {
         FAILED("direct memory leak detected");
     }
 }
 
-void
+CIStateCheckerValue *
 check_function_expr_identifier__CIStateChecker(
   CIStateChecker *self,
   const CIExprIdentifier *identifier,
@@ -810,17 +1055,23 @@ check_function_expr_identifier__CIStateChecker(
 
     switch (state_checker_expr) {
         case CI_STATE_CHECKER_EXPR_READ:
-            return check_function_expr_identifier_read_state__CIStateChecker(
+            check_function_expr_identifier_read_state__CIStateChecker(
               self, identifier_value);
+
+            break;
         case CI_STATE_CHECKER_EXPR_WRITE:
-            return check_function_expr_identifier_write_state__CIStateChecker(
+            check_function_expr_identifier_write_state__CIStateChecker(
               self, identifier_value);
+
+            break;
         default:
             UNREACHABLE("unknown variant");
     }
+
+    return identifier_value;
 }
 
-void
+CIStateCheckerValue *
 check_function_expr_initializer__CIStateChecker(
   CIStateChecker *self,
   const CIExprInitializer *initializer)
@@ -833,31 +1084,96 @@ check_function_expr_initializer__CIStateChecker(
     }
 }
 
-void
+CIStateCheckerValue *
+check_function_expr_literal__CIStateChecker(CIStateChecker *self,
+                                            const CIExprLiteral *literal)
+{
+    int flags = CI_DATA_TYPE_CONTEXT_NONE;
+
+    switch (literal->kind) {
+        case CI_EXPR_LITERAL_KIND_STRING:
+            flags = CI_DATA_TYPE_CONTEXT_STACK;
+
+            break;
+        case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:
+            flags = CI_DATA_TYPE_CONTEXT_INDEX;
+
+            break;
+        default:
+            break;
+    }
+
+    return NEW_VARIANT(
+      CIStateCheckerValue, primary, NEW(CIStateCheckerState, flags));
+}
+
+CIStateCheckerValue *
 check_function_expr_ternary__CIStateChecker(CIStateChecker *self,
                                             const CIExprTernary *ternary)
 {
-    check_function_expr__CIStateChecker(
-      self, ternary->cond, CI_STATE_CHECKER_EXPR_READ);
-    check_function_expr__CIStateChecker(
+    FREE(CIStateCheckerValue,
+         check_function_expr__CIStateChecker(
+           self, ternary->cond, CI_STATE_CHECKER_EXPR_READ));
+
+    CIStateCheckerValue *if_res = check_function_expr__CIStateChecker(
       self, ternary->if_, CI_STATE_CHECKER_EXPR_READ);
-    check_function_expr__CIStateChecker(
+    CIStateCheckerValue *else_res = check_function_expr__CIStateChecker(
       self, ternary->else_, CI_STATE_CHECKER_EXPR_READ);
+
+    return if_res;
 }
 
-void
+CIStateCheckerValue *
+check_function_expr_unary__CIStateChecker(CIStateChecker *self,
+                                          const CIExprUnary *unary)
+{
+    switch (unary->kind) {
+        case CI_EXPR_UNARY_KIND_DEREFERENCE: {
+            CIStateCheckerValue *value = check_function_expr__CIStateChecker(
+              self, unary->expr, CI_STATE_CHECKER_EXPR_READ);
+            CIStateCheckerValue *res =
+              get_next_child_value_access__CIStateCheckerValue(value, NULL);
+
+            FREE(CIStateCheckerValue, value);
+
+            return res;
+        }
+        default:
+            return check_function_expr__CIStateChecker(
+              self, unary->expr, CI_STATE_CHECKER_EXPR_READ);
+    }
+}
+
+CIStateCheckerValue *
 check_function_expr__CIStateChecker(CIStateChecker *self,
                                     const CIExpr *expr,
                                     enum CIStateCheckerExpr state_checker_expr)
 {
     switch (expr->kind) {
         case CI_EXPR_KIND_ALIGNOF:
+            return NEW_VARIANT(
+              CIStateCheckerValue,
+              primary,
+              NEW(CIStateCheckerState, CI_DATA_TYPE_CONTEXT_INDEX));
         case CI_EXPR_KIND_DATA_TYPE:
+            return NEW_VARIANT(
+              CIStateCheckerValue,
+              primary,
+              NEW(CIStateCheckerState, CI_DATA_TYPE_CONTEXT_NONE));
         case CI_EXPR_KIND_LITERAL:
+            return check_function_expr_literal__CIStateChecker(self,
+                                                               &expr->literal);
         case CI_EXPR_KIND_NULLPTR:
+            return NEW_VARIANT(
+              CIStateCheckerValue,
+              primary,
+              NEW(CIStateCheckerState, CI_DATA_TYPE_CONTEXT_NONE));
         case CI_EXPR_KIND_SIZEOF:
+            return NEW_VARIANT(
+              CIStateCheckerValue,
+              primary,
+              NEW(CIStateCheckerState, CI_DATA_TYPE_CONTEXT_INDEX));
             // NOTE: We don't need to perform any check in that case.
-            return;
         case CI_EXPR_KIND_ARRAY_ACCESS:
             return check_function_expr_array_access__CIStateChecker(
               self, &expr->array_access);
@@ -886,8 +1202,8 @@ check_function_expr__CIStateChecker(CIStateChecker *self,
             return check_function_expr_ternary__CIStateChecker(self,
                                                                &expr->ternary);
         case CI_EXPR_KIND_UNARY:
-            return check_function_expr__CIStateChecker(
-              self, expr->unary.expr, state_checker_expr);
+            return check_function_expr_unary__CIStateChecker(self,
+                                                             &expr->unary);
         default:
             UNREACHABLE("unknown variant");
     }
@@ -1069,9 +1385,71 @@ void
 check_non_generic_function__CIStateChecker(CIStateChecker *self,
                                            const CIDecl *decl)
 {
+    if (is_prototype__CIDecl((CIDecl *)decl)) {
+        CIStateCheckerValue *function_value = NEW_VARIANT(
+          CIStateCheckerValue,
+          function,
+          NEW(CIStateCheckerValueFunction, decl->function.name, NULL, NULL));
+
+        return add__CIStateCheckerScope(self->current_scope, function_value);
+    }
+
     init_current_scope__CIStateChecker(self);
     check_function_body__CIStateChecker(self, decl->function.body);
     deinit_current_scope__CIStateChecker(self);
+}
+
+void
+check_generic_function__CIStateChecker(CIStateChecker *self, const CIDecl *decl)
+{
+    if (is_prototype__CIDecl((CIDecl *)decl)) {
+        // TODO: manage prototype function gen
+        return;
+    }
+}
+
+void
+check_if_values_are_destroyed__CIStateChecker(CIStateChecker *self)
+{
+    HashMapIter values_iter = NEW(HashMapIter, self->current_scope->values);
+    CIStateCheckerValue *value = NULL; // CIStateCheckerValue*? (&)
+
+    while ((value = next__HashMapIter(&values_iter))) {
+        if (value->kind == CI_STATE_CHECKER_VALUE_KIND_VARIABLE) {
+            value = value->variable.value;
+
+            switch (value->kind) {
+                case CI_STATE_CHECKER_VALUE_KIND_PTR:
+                    if (value->ptr.state.flags & CI_DATA_TYPE_CONTEXT_HEAP &&
+                        !(value->ptr.state.flags &
+                          CI_DATA_TYPE_CONTEXT_FREED)) {
+                        FAILED("direct memory leak detected");
+                    }
+
+                    break;
+                case CI_STATE_CHECKER_VALUE_KIND_STRUCT:
+                    if (!(value->struct_.state.flags &
+                          CI_DATA_TYPE_CONTEXT_DROPPED) &&
+                        check_if_struct_is_dropable__CIStateCheckerValue(
+                          value)) {
+                        FAILED("direct memory leak detected");
+                    }
+
+                    break;
+                case CI_STATE_CHECKER_VALUE_KIND_UNION:
+                    if (!(value->union_.state.flags &
+                          CI_DATA_TYPE_CONTEXT_DROPPED) &&
+                        check_if_union_is_dropable__CIStateCheckerValue(
+                          value)) {
+                        FAILED("potential direct memory leak detected");
+                    }
+
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
 }
 
 void
@@ -1099,13 +1477,6 @@ check_state_and_expr__CIStateChecker(CIStateChecker *self,
 void
 check_variable__CIStateChecker(CIStateChecker *self, const CIDecl *decl)
 {
-    // CIStateCheckerValue *variable_value =
-    //   NEW_VARIANT(CIStateCheckerValue,
-    //               variable,
-    //               NEW(CIStateCheckerValueVariable,
-    //                   decl->variable.name,
-    //                   NEW(CIStateCheckerState, 0)));
-
     CIStateCheckerValue *state_value =
       build_from_data_type__CIStateCheckerValue(decl->variable.data_type);
 
@@ -1113,28 +1484,63 @@ check_variable__CIStateChecker(CIStateChecker *self, const CIDecl *decl)
         check_state_and_expr__CIStateChecker(
           self, state_value, decl->variable.expr);
     }
+
+    add__CIStateCheckerScope(
+      self->current_scope,
+      NEW_VARIANT(
+        CIStateCheckerValue,
+        variable,
+        NEW(CIStateCheckerValueVariable, decl->variable.name, state_value)));
 }
 
 void
 check_global_decl__CIStateChecker(CIStateChecker *self, const CIDecl *decl)
 {
-    if (is_prototype__CIDecl((CIDecl *)decl)) {
+    if (is_local__CIDecl(decl)) {
         return;
     }
 
     switch (decl->kind) {
+        case CI_DECL_KIND_ENUM:
+            // TODO: enum
+            break;
+        case CI_DECL_KIND_ENUM_VARIANT:
+            // TODO: enum variant
+            break;
         case CI_DECL_KIND_FUNCTION:
             check_non_generic_function__CIStateChecker(self, decl);
 
             break;
         case CI_DECL_KIND_FUNCTION_GEN:
+            check_generic_function__CIStateChecker(self, decl);
+
+            break;
+        case CI_DECL_KIND_LABEL:
+            UNREACHABLE("cannot get label declaration in this context")
+        case CI_DECL_KIND_STRUCT:
+            // TODO: struct
+            break;
+        case CI_DECL_KIND_STRUCT_GEN:
+            // TODO: struct gen
+            break;
+        case CI_DECL_KIND_TYPEDEF:
+            // TODO: typedef
+            break;
+        case CI_DECL_KIND_TYPEDEF_GEN:
+            // TODO: typedef gen
+            break;
+        case CI_DECL_KIND_UNION:
+            // TODO: union
+            break;
+        case CI_DECL_KIND_UNION_GEN:
+            // TODO: union gen
             break;
         case CI_DECL_KIND_VARIABLE:
             check_variable__CIStateChecker(self, decl);
 
             break;
         default:
-            break;
+            UNREACHABLE("unknown variant");
     }
 }
 
