@@ -227,7 +227,10 @@ read_file__File(const char *path)
         content[len] = '\0';
     }
 
-    fclose(file);
+    if (fclose(file) != 0) {
+        printf("\x1b[31merror\x1b[0m: could not close file: `%s`\n", path);
+        exit(1);
+    }
 
     content = lily_realloc(content, len + 2);
     strcat(content, "\n\0");
@@ -269,7 +272,10 @@ read_file__File(const char *path)
 
     ASSERT(feof(file) != 0);
 
-    fclose(file);
+    if (fclose(file) != 0) {
+        printf("\x1b[31merror\x1b[0m: could not close file: `%s`\n", path);
+        exit(1);
+    }
 
     return content;
 }
@@ -318,7 +324,10 @@ write_file__File(const char *path, const char *content, Usize content_len)
         exit(1);
     }
 
-    fclose(file);
+    if (fclose(file) != 0) {
+        printf("\x1b[31merror\x1b[0m: could not close file: `%s`\n", path);
+        exit(1);
+    }
 }
 #endif
 
