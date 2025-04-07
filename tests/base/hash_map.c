@@ -89,3 +89,29 @@ CASE(hash_map_iter_next, {
 
     FREE(HashMap, hm);
 });
+
+CASE(hash_map_iter_next_pair, {
+    HashMap *hm = NEW(HashMap); // HashMap<char*>*
+
+    TEST_ASSERT(!insert__HashMap(hm, "1", "a"));
+    TEST_ASSERT(!insert__HashMap(hm, "2", "b"));
+    TEST_ASSERT(!insert__HashMap(hm, "3", "c"));
+
+    HashMapIter iter = NEW(HashMapIter, hm);
+    HashMapIterPair pair;
+    bool enter_in_loop = false;
+
+    while (!HASH_MAP_ITER_PAIR_IS_NULL(pair = next_pair__HashMapIter(&iter))) {
+        enter_in_loop = true;
+
+        TEST_ASSERT(!strcmp(pair.key, "1") || !strcmp(pair.key, "2") ||
+                    !strcmp(pair.key, "3"));
+        TEST_ASSERT(!strcmp(pair.value, "a") || !strcmp(pair.value, "b") ||
+                    !strcmp(pair.value, "c"));
+    }
+
+    TEST_ASSERT(enter_in_loop);
+    TEST_ASSERT(HASH_MAP_ITER_PAIR_IS_NULL(next_pair__HashMapIter(&iter)));
+
+    FREE(HashMap, hm);
+});

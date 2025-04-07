@@ -234,8 +234,16 @@ DESTRUCTOR(HashMap, HashMap *self)
 void *
 next__HashMapIter(HashMapIter *self)
 {
+    HashMapIterPair pair = next_pair__HashMapIter(self);
+
+    return pair.value;
+}
+
+HashMapIterPair
+next_pair__HashMapIter(HashMapIter *self)
+{
     if (!self->hash_map->buckets) {
-        return NULL;
+        return HASH_MAP_ITER_PAIR_NULL();
     }
 
     for (; !self->current && self->count < self->hash_map->capacity;
@@ -243,12 +251,13 @@ next__HashMapIter(HashMapIter *self)
         ;
 
     if (self->current) {
-        void *tmp = self->current->pair.value;
+        HashMapIterPair pair = NEW(
+          HashMapIterPair, self->current->pair.key, self->current->pair.value);
 
         self->current = self->current->next;
 
-        return tmp;
+        return pair;
     } else {
-        return NULL;
+        return HASH_MAP_ITER_PAIR_NULL();
     }
 }

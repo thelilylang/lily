@@ -1031,6 +1031,7 @@ eq__CIDeclStructField(const CIDeclStructField *self,
 /**
  *
  * @brief Build data type from the given field.
+ * @return CIDataType*
  */
 CIDataType *
 build_data_type__CIDeclStructField(const CIDeclStructField *self);
@@ -2317,8 +2318,8 @@ typedef struct CIDeclFunction
     CIDataType *return_data_type;
     CIGenericParams *generic_params; // CIGenericParams*?
     CIDeclFunctionParams *params;    // CIDeclFunctionParams*?
-    CIDeclFunctionBody *body;
-    Vec *attributes; // Vec<CIAttribute*>*?
+    CIDeclFunctionBody *body;        // CIDeclFunctionBody*?
+    Vec *attributes;                 // Vec<CIAttribute*>*?
 } CIDeclFunction;
 
 /**
@@ -2394,8 +2395,8 @@ DESTRUCTOR(CIDeclFunction, const CIDeclFunction *self);
 
 typedef struct CIDeclFunctionGen
 {
-    const CIDeclFunction *function; // const CIDeclFunction* (&)
-    String *name;
+    const CIDeclFunction *function;         // const CIDeclFunction* (&)
+    Rc *name;                               // Rc<String*>*
     CIGenericParams *called_generic_params; // CIGenericParams*
     CIDataType *return_data_type;
 } CIDeclFunctionGen;
@@ -2403,11 +2404,12 @@ typedef struct CIDeclFunctionGen
 /**
  *
  * @brief Construct CIDeclFunctionGen type.
+ * @param name Rc<String*>*
  */
 inline CONSTRUCTOR(CIDeclFunctionGen,
                    CIDeclFunctionGen,
                    const CIDeclFunction *function,
-                   String *name,
+                   Rc *name,
                    CIGenericParams *called_generic_params,
                    CIDataType *return_data_type)
 {
@@ -2548,8 +2550,8 @@ DESTRUCTOR(CIDeclStruct, const CIDeclStruct *self);
 
 typedef struct CIDeclStructGen
 {
-    const CIDeclStruct *struct_; // const CIDeclStruct* (&)
-    String *name;
+    const CIDeclStruct *struct_;            // const CIDeclStruct* (&)
+    Rc *name;                               // Rc<String*>*
     CIGenericParams *called_generic_params; // CIGenericParams*
     CIDeclStructFields *fields;             // CIDeclStructFields*?
     CISizeInfo size_info;
@@ -2558,11 +2560,12 @@ typedef struct CIDeclStructGen
 /**
  *
  * @brief Construct CIDeclStructGen type.
+ * @param name Rc<String*>*
  */
 inline CONSTRUCTOR(CIDeclStructGen,
                    CIDeclStructGen,
                    const CIDeclStruct *struct_,
-                   String *name,
+                   Rc *name,
                    CIGenericParams *called_generic_params,
                    CIDeclStructFields *fields)
 {
@@ -2676,8 +2679,8 @@ inline DESTRUCTOR(CIDeclTypedef, const CIDeclTypedef *self)
 
 typedef struct CIDeclTypedefGen
 {
-    const CIDeclTypedef *typedef_; // const CIDeclTypedef* (&)
-    String *name;
+    const CIDeclTypedef *typedef_;          // const CIDeclTypedef* (&)
+    Rc *name;                               // Rc<String*>*
     CIGenericParams *called_generic_params; // CIGenericParams*
     CIDataType *data_type;
     CISizeInfo size_info;
@@ -2686,11 +2689,12 @@ typedef struct CIDeclTypedefGen
 /**
  *
  * @brief Construct CIDeclTypedefGen type.
+ * @param name Rc<String*>*
  */
 inline CONSTRUCTOR(CIDeclTypedefGen,
                    CIDeclTypedefGen,
                    const CIDeclTypedef *typedef_,
-                   String *name,
+                   Rc *name,
                    CIGenericParams *called_generic_params,
                    CIDataType *data_type)
 {
@@ -2800,8 +2804,8 @@ DESTRUCTOR(CIDeclUnion, const CIDeclUnion *self);
 
 typedef struct CIDeclUnionGen
 {
-    const CIDeclUnion *union_; // const CIDeclFunction* (&)
-    String *name;
+    const CIDeclUnion *union_;              // const CIDeclFunction* (&)
+    Rc *name;                               // Rc<String*>*
     CIGenericParams *called_generic_params; // CIGenericParams*
     CIDeclStructFields *fields;             // CIDeclStructFields*?
     CISizeInfo size_info;
@@ -2810,11 +2814,12 @@ typedef struct CIDeclUnionGen
 /**
  *
  * @brief Construct CIDeclUnionGen type.
+ * @param name Rc<String*>*
  */
 inline CONSTRUCTOR(CIDeclUnionGen,
                    CIDeclUnionGen,
                    const CIDeclUnion *union_,
-                   String *name,
+                   Rc *name,
                    CIGenericParams *called_generic_params,
                    CIDeclStructFields *fields)
 {
@@ -3070,6 +3075,14 @@ ref__CIDecl(CIDecl *self)
 
 /**
  *
+ * @brief Get name rc from declaration.
+ * @return Rc<String*>*? (&)
+ */
+Rc *
+get_name_rc__CIDecl(const CIDecl *self);
+
+/**
+ *
  * @brief Get name from declaration.
  * @return String*? (&)
  */
@@ -3158,7 +3171,7 @@ is_local__CIDecl(const CIDecl *self);
 /**
  *
  * @brief Get function params from declaration.
- * @return const CIDeclFunctionParams* (&)
+ * @return const CIDeclFunctionParams*? (&)
  */
 const CIDeclFunctionParams *
 get_function_params__CIDecl(const CIDecl *self);
@@ -3179,6 +3192,14 @@ is_prototype__CIDecl(CIDecl *self)
  */
 void
 set_function_body__CIDecl(CIDecl *self, CIDeclFunctionBody *body);
+
+/**
+ *
+ * @brief Get body from a function.
+ * @return const CIDeclFunctionBody*? (&)
+ */
+const CIDeclFunctionBody *
+get_function_body__CIDecl(const CIDecl *self);
 
 /**
  *

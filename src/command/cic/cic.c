@@ -74,4 +74,5 @@ run__CIc(const CIcConfig *config,
     FREE(CIResult, &result);
     FREE(CIBuiltin, &builtin);
     FREE(CIProjectConfig, &project_config);
+    FREE(CIStateChecker, &state_checker);
 }

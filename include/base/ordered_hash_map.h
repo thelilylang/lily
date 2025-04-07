@@ -160,6 +160,7 @@ get_from_id__OrderedHashMap(OrderedHashMap *self, Usize id);
 /**
  *
  * @brief Get pair (key-value) from id.
+ * @return OrderedHashMapPair*? (&)
  */
 OrderedHashMapPair *
 get_pair_from_id__OrderedHashMap(OrderedHashMap *self, Usize id);
@@ -246,6 +247,31 @@ last__OrderedHashMap(OrderedHashMap *self);
  */
 DESTRUCTOR(OrderedHashMap, OrderedHashMap *self);
 
+typedef struct OrderedHashMapIterPair
+{
+    char *key;   // char*? (&)
+    void *value; // void*? (&)
+} OrderedHashMapIterPair;
+
+/**
+ *
+ * @brief Construct OrderedHashMapIterPair type.
+ */
+inline CONSTRUCTOR(OrderedHashMapIterPair,
+                   OrderedHashMapIterPair,
+                   char *key,
+                   void *value)
+{
+    return (OrderedHashMapIterPair){ .key = key, .value = value };
+}
+
+#define ORD_HASH_MAP_ITER_PAIR_NULL() NEW(OrderedHashMapIterPair, NULL, NULL)
+#define ORD_HASH_MAP_ITER_PAIR_IS_NULL(_self) \
+    ({                                        \
+        OrderedHashMapIterPair _pair = _self; \
+        (!(_pair).key || !(_pair).value);     \
+    })
+
 typedef struct OrderedHashMapIter
 {
     OrderedHashMap *ordered_hash_map;
@@ -270,6 +296,13 @@ inline CONSTRUCTOR(OrderedHashMapIter,
  */
 void *
 next__OrderedHashMapIter(OrderedHashMapIter *self);
+
+/**
+ *
+ * @brief Get the next pair value.
+ */
+OrderedHashMapIterPair
+next_pair__OrderedHashMapIter(OrderedHashMapIter *self);
 
 typedef struct OrderedHashMapIter2
 {

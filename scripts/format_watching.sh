@@ -20,10 +20,25 @@ inotifywait -qmr -e attrib --format '%w%f%0' --no-newline "$PWD/" |\
 	while IFS= read -r -d '' file
 	do
 		case $file in
-			$PWD/include/*.h | $PWD/src/*.c | $PWD/src/*.cpp)
+			$PWD/lib/local/include* \
+			| $PWD/lib/local/src/libyaml* \
+			| $PWD/lib/local/src/llvm-project*)
+				continue
+				;;
+			$PWD/include/*.h \
+			| $PWD/lib/*.h \
+			| $PWD/lib/*.c \
+			| $PWD/src/*.c \
+			| $PWD/src/*.cpp \
+			| $PWD/tests/base/*.c \
+			| $PWD/tests/core/lily/*.c)
 				$CLANG_FORMAT -i $file
 				;;
-			$PWD/src/*CMakeLists.txt | $PWD/CMakeLists.txt | $PWD/cmake/*.cmake)
+			$PWD/lib/*CMakeLists.txt \
+			| $PWD/src/*CMakeLists.txt \
+			| $PWD/CMakeLists.txt \
+			| $PWD/cmake/*.cmake \
+			| $PWD/tests/*CMakeLists.txt)
 				$CMAKE_FORMAT -i $file
 				;;
 			*)

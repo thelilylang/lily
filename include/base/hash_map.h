@@ -208,6 +208,28 @@ remove__HashMap(HashMap *self, char *key);
  */
 DESTRUCTOR(HashMap, HashMap *self);
 
+typedef struct HashMapIterPair
+{
+    char *key;   // char*? (&)
+    void *value; // void*? (&)
+} HashMapIterPair;
+
+/**
+ *
+ * @brief Construct HashMapIterPair type.
+ */
+inline CONSTRUCTOR(HashMapIterPair, HashMapIterPair, char *key, void *value)
+{
+    return (HashMapIterPair){ .key = key, .value = value };
+}
+
+#define HASH_MAP_ITER_PAIR_NULL() NEW(HashMapIterPair, NULL, NULL)
+#define HASH_MAP_ITER_PAIR_IS_NULL(_self) \
+    ({                                    \
+        HashMapIterPair _pair = _self;    \
+        (!(_pair).key || !(_pair).value); \
+    })
+
 typedef struct HashMapIter
 {
     HashMap *hash_map;
@@ -230,5 +252,12 @@ inline CONSTRUCTOR(HashMapIter, HashMapIter, HashMap *hash_map)
  */
 void *
 next__HashMapIter(HashMapIter *self);
+
+/**
+ *
+ * @brief Get the next pair.
+ */
+HashMapIterPair
+next_pair__HashMapIter(HashMapIter *self);
 
 #endif // LILY_BASE_HASH_MAP_H

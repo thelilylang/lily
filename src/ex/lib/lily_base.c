@@ -79,6 +79,11 @@ hash__HashMap(HashMap *self, char *key);
 extern inline Usize
 index__HashMap(HashMap *self, char *key);
 
+extern inline CONSTRUCTOR(HashMapIterPair,
+                          HashMapIterPair,
+                          char *key,
+                          void *value);
+
 extern inline CONSTRUCTOR(HashMapIter, HashMapIter, HashMap *hash_map);
 
 // <base/linked_list.h>
@@ -124,6 +129,11 @@ hash__OrderedHashMap(OrderedHashMap *self, char *key);
 
 extern inline Usize
 index__OrderedHashMap(OrderedHashMap *self, char *key);
+
+extern inline CONSTRUCTOR(OrderedHashMapIterPair,
+                          OrderedHashMapIterPair,
+                          char *key,
+                          void *value);
 
 extern inline CONSTRUCTOR(OrderedHashMapIter,
                           OrderedHashMapIter,
