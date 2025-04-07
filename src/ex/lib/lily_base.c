@@ -130,6 +130,11 @@ hash__OrderedHashMap(OrderedHashMap *self, char *key);
 extern inline Usize
 index__OrderedHashMap(OrderedHashMap *self, char *key);
 
+extern inline CONSTRUCTOR(OrderedHashMapIterPair,
+                          OrderedHashMapIterPair,
+                          char *key,
+                          void *value);
+
 extern inline CONSTRUCTOR(OrderedHashMapIter,
                           OrderedHashMapIter,
                           OrderedHashMap *ordered_hash_map);

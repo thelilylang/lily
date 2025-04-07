@@ -301,6 +301,19 @@ DESTRUCTOR(OrderedHashMap, OrderedHashMap *self)
     lily_free(self);
 }
 
+OrderedHashMapIterPair
+next_pair__OrderedHashMapIter(OrderedHashMapIter *self)
+{
+    OrderedHashMapPair *ord_pair =
+      get_pair_from_id__OrderedHashMap(self->ordered_hash_map, self->count++);
+
+    if (ord_pair) {
+        return NEW(OrderedHashMapIterPair, ord_pair->key, ord_pair->value);
+    }
+
+    return ORD_HASH_MAP_ITER_PAIR_NULL();
+}
+
 void *
 next__OrderedHashMapIter(OrderedHashMapIter *self)
 {
