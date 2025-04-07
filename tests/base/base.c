@@ -55,7 +55,10 @@ main()
               CALL_CASE(hash_map_get),
               CALL_CASE(hash_map_insert),
               CALL_CASE(hash_map_remove));
-    ADD_SUITE(1, hash_map_iter, CALL_CASE(hash_map_iter_next));
+    ADD_SUITE(2,
+              hash_map_iter,
+              CALL_CASE(hash_map_iter_next),
+              CALL_CASE(hash_map_iter_next_pair));
     ADD_SUITE(1, hash_set, CALL_CASE(hash_set_new));
     ADD_SUITE(4,
               itoa,
