@@ -3727,7 +3727,7 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunctionGen, const CIDeclFunctionGen *self)
       "CIDeclFunctionGen{{ function = {Sr}, name = {S}, "
       "called_generic_params = {Sr}, return_data_type = {Sr} }",
       to_string__Debug__CIDeclFunction(self->function),
-      self->name,
+      GET_PTR_RC(String, self->name),
       to_string__Debug__CIGenericParams(self->called_generic_params),
       to_string__Debug__CIDataType(self->return_data_type));
 }
@@ -3735,7 +3735,7 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunctionGen, const CIDeclFunctionGen *self)
 
 DESTRUCTOR(CIDeclFunctionGen, const CIDeclFunctionGen *self)
 {
-    FREE(String, self->name);
+    FREE_RC(String, self->name);
     FREE(CIGenericParams, self->called_generic_params);
     FREE(CIDataType, self->return_data_type);
 }
@@ -3836,7 +3836,7 @@ IMPL_FOR_DEBUG(to_string, CIDeclStructGen, const CIDeclStructGen *self)
 
 DESTRUCTOR(CIDeclStructGen, const CIDeclStructGen *self)
 {
-    FREE(String, self->name);
+    FREE_RC(String, self->name);
     FREE(CIGenericParams, self->called_generic_params);
 
     if (self->fields) {
@@ -3906,7 +3906,7 @@ IMPL_FOR_DEBUG(to_string, CIDeclTypedefGen, const CIDeclTypedefGen *self)
       "CIDeclTypedefGen{{ typedef_ = {Sr}, name = {S}, called_generic_params = "
       "{Sr}, data_type = {Sr}, size_info = {Sr} }",
       to_string__Debug__CIDeclTypedef(self->typedef_),
-      self->name,
+      GET_PTR_RC(String, self->name),
       to_string__Debug__CIGenericParams(self->called_generic_params),
       to_string__Debug__CIDataType(self->data_type),
       to_string__Debug__CISizeInfo(&self->size_info));
@@ -3915,7 +3915,7 @@ IMPL_FOR_DEBUG(to_string, CIDeclTypedefGen, const CIDeclTypedefGen *self)
 
 DESTRUCTOR(CIDeclTypedefGen, const CIDeclTypedefGen *self)
 {
-    FREE(String, self->name);
+    FREE_RC(String, self->name);
     FREE(CIGenericParams, self->called_generic_params);
     FREE(CIDataType, self->data_type);
 }
@@ -3991,7 +3991,7 @@ IMPL_FOR_DEBUG(to_string, CIDeclUnionGen, const CIDeclUnionGen *self)
       "CIDeclUnionGen{{ union_ = {Sr}, name = {S}, called_generic_params = "
       "{Sr}, fields = {Sr}, size_info = {Sr} }",
       to_string__Debug__CIDeclUnion(self->union_),
-      self->name,
+      GET_PTR_RC(String, self->name),
       to_string__Debug__CIGenericParams(self->called_generic_params),
       self->fields ? to_string__Debug__CIDeclStructFields(self->fields)
                    : from__String("NULL"),
@@ -4001,7 +4001,7 @@ IMPL_FOR_DEBUG(to_string, CIDeclUnionGen, const CIDeclUnionGen *self)
 
 DESTRUCTOR(CIDeclUnionGen, const CIDeclUnionGen *self)
 {
-    FREE(String, self->name);
+    FREE_RC(String, self->name);
     FREE(CIGenericParams, self->called_generic_params);
 
     if (self->fields) {
@@ -4115,8 +4115,11 @@ VARIANT_CONSTRUCTOR(CIDecl *,
       function_decl->storage_class_flag | CI_STORAGE_CLASS_STATIC;
     self->is_prototype = false;
     self->ref_count = 0;
-    self->function_gen =
-      NEW(CIDeclFunctionGen, f, name, called_generic_params, return_data_type);
+    self->function_gen = NEW(CIDeclFunctionGen,
+                             f,
+                             NEW(Rc, name),
+                             called_generic_params,
+                             return_data_type);
 
     return self;
 }
@@ -4168,7 +4171,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->is_prototype = false;
     self->ref_count = 0;
     self->struct_gen =
-      NEW(CIDeclStructGen, s, name, called_generic_params, fields);
+      NEW(CIDeclStructGen, s, NEW(Rc, name), called_generic_params, fields);
 
     return self;
 }
@@ -4202,7 +4205,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->is_prototype = true;
     self->ref_count = 0;
     self->typedef_gen =
-      NEW(CIDeclTypedefGen, t, name, called_generic_params, data_type);
+      NEW(CIDeclTypedefGen, t, NEW(Rc, name), called_generic_params, data_type);
 
     return self;
 }
@@ -4241,7 +4244,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->is_prototype = false;
     self->ref_count = 0;
     self->union_gen =
-      NEW(CIDeclUnionGen, u, name, called_generic_params, fields);
+      NEW(CIDeclUnionGen, u, NEW(Rc, name), called_generic_params, fields);
 
     return self;
 }
@@ -4296,40 +4299,45 @@ get_generic_params__CIDecl(const CIDecl *self)
     }
 }
 
-String *
-get_name__CIDecl(const CIDecl *self)
+Rc *
+get_name_rc__CIDecl(const CIDecl *self)
 {
     switch (self->kind) {
         case CI_DECL_KIND_ENUM:
-            return self->enum_.name ? GET_PTR_RC(String, self->enum_.name)
-                                    : NULL;
+            return self->enum_.name;
         case CI_DECL_KIND_ENUM_VARIANT:
-            return GET_PTR_RC(String, self->enum_variant->name);
+            return self->enum_variant->name;
         case CI_DECL_KIND_FUNCTION:
-            return GET_PTR_RC(String, self->function.name);
+            return self->function.name;
         case CI_DECL_KIND_FUNCTION_GEN:
             return self->function_gen.name;
         case CI_DECL_KIND_LABEL:
-            return GET_PTR_RC(String, self->label.name);
+            return self->label.name;
         case CI_DECL_KIND_STRUCT:
-            return self->struct_.name ? GET_PTR_RC(String, self->struct_.name)
-                                      : NULL;
+            return self->struct_.name;
         case CI_DECL_KIND_STRUCT_GEN:
             return self->struct_gen.name;
         case CI_DECL_KIND_TYPEDEF:
-            return GET_PTR_RC(String, self->typedef_.name);
+            return self->typedef_.name;
         case CI_DECL_KIND_TYPEDEF_GEN:
             return self->typedef_gen.name;
         case CI_DECL_KIND_UNION:
-            return self->union_.name ? GET_PTR_RC(String, self->union_.name)
-                                     : NULL;
+            return self->union_.name;
         case CI_DECL_KIND_UNION_GEN:
             return self->union_gen.name;
         case CI_DECL_KIND_VARIABLE:
-            return GET_PTR_RC(String, self->variable.name);
+            return self->variable.name;
         default:
             UNREACHABLE("unknown variant");
     }
+}
+
+String *
+get_name__CIDecl(const CIDecl *self)
+{
+    Rc *name_rc = get_name_rc__CIDecl(self);
+
+    return name_rc ? GET_PTR_RC(String, name_rc) : NULL;
 }
 
 bool
@@ -4536,6 +4544,19 @@ set_function_body__CIDecl(CIDecl *self, CIDeclFunctionBody *body)
 
     self->is_prototype = false;
     self->function.body = body;
+}
+
+const CIDeclFunctionBody *
+get_function_body__CIDecl(const CIDecl *self)
+{
+    switch (self->kind) {
+        case CI_DECL_KIND_FUNCTION:
+            return self->function.body;
+        case CI_DECL_KIND_FUNCTION_GEN:
+            return self->function_gen.function->body;
+        default:
+            UNREACHABLE("expected to have function or function gen");
+    }
 }
 
 #ifdef ENV_DEBUG

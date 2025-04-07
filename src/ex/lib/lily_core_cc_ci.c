@@ -288,7 +288,7 @@ eq_generic_params__CIDeclFunction(const CIDeclFunction *self,
 extern inline CONSTRUCTOR(CIDeclFunctionGen,
                           CIDeclFunctionGen,
                           const CIDeclFunction *function,
-                          String *name,
+                          Rc *name,
                           CIGenericParams *called_generic_params,
                           CIDataType *return_data_type);
 
@@ -307,7 +307,7 @@ eq_generic_params__CIDeclStruct(const CIDeclStruct *self,
 extern inline CONSTRUCTOR(CIDeclStructGen,
                           CIDeclStructGen,
                           const CIDeclStruct *struct_,
-                          String *name,
+                          Rc *name,
                           CIGenericParams *called_generic_params,
                           CIDeclStructFields *fields);
 
@@ -326,7 +326,7 @@ eq_generic_params__CIDeclTypedef(const CIDeclTypedef *self,
 extern inline CONSTRUCTOR(CIDeclTypedefGen,
                           CIDeclTypedefGen,
                           const CIDeclTypedef *typedef_,
-                          String *name,
+                          Rc *name,
                           CIGenericParams *called_generic_params,
                           CIDataType *data_type);
 
@@ -343,7 +343,7 @@ eq_generic_params__CIDeclUnion(const CIDeclUnion *self,
 extern inline CONSTRUCTOR(CIDeclUnionGen,
                           CIDeclUnionGen,
                           const CIDeclUnion *union_,
-                          String *name,
+                          Rc *name,
                           CIGenericParams *called_generic_params,
                           CIDeclStructFields *fields);
 
@@ -731,7 +731,7 @@ extern inline CONSTRUCTOR(CIStateCheckerState, CIStateCheckerState, int flags);
 extern inline CONSTRUCTOR(CIStateCheckerValueFunction,
                           CIStateCheckerValueFunction,
                           Rc *name,
-                          HashMap *final_params_state,
+                          OrderedHashMap *final_params_state,
                           struct CIStateCheckerValue *return_value);
 
 extern inline CONSTRUCTOR(CIStateCheckerValueFunctionPtr,
@@ -749,15 +749,31 @@ extern inline CONSTRUCTOR(CIStateCheckerValueStruct,
                           CIStateCheckerValueStruct,
                           Rc *name,
                           HashMap *values,
-                          CIStateCheckerState state);
+                          CIStateCheckerState state,
+                          bool is_anonymous);
 
 extern inline CONSTRUCTOR(CIStateCheckerValueVariable,
                           CIStateCheckerValueVariable,
                           Rc *name,
                           struct CIStateCheckerValue *value);
 
+extern inline void
+set_inherit_of_parent_scope_owner__CIStateCheckerValueVariable(
+  CIStateCheckerValueVariable *self);
+
+extern inline void
+set_disable_scope_owner__CIStateCheckerValueVariable(
+  CIStateCheckerValueVariable *self);
+
+extern inline void
+set_scope_owner__CIStateCheckerValueVariable(CIStateCheckerValueVariable *self,
+                                             Usize scope_owner);
+
 extern inline CIStateCheckerValue *
 ref__CIStateCheckerValue(CIStateCheckerValue *self);
+
+extern inline CONSTRUCTOR(CIStateCheckerAnonymousNameGenerator,
+                          CIStateCheckerAnonymousNameGenerator);
 
 extern inline CONSTRUCTOR(CIStateChecker,
                           CIStateChecker,

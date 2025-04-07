@@ -489,13 +489,10 @@ resolve_struct_data_type__CIResolverDataType(
             FAILED("struct is not found");
         }
 
-        Rc *struct_name = NEW(Rc, clone__String(struct_decl->struct_gen.name));
-        CIDataType *res = NEW_VARIANT(
-          CIDataType, struct, NEW(CIDataTypeStruct, struct_name, NULL, NULL));
-
-        FREE_RC(String, struct_name);
-
-        return res;
+        return NEW_VARIANT(
+          CIDataType,
+          struct,
+          NEW(CIDataTypeStruct, struct_decl->struct_gen.name, NULL, NULL));
     }
 
     return ref__CIDataType(data_type);
@@ -559,13 +556,10 @@ resolve_union_data_type__CIResolverDataType(
             FAILED("union declaration is not found");
         }
 
-        Rc *union_name = NEW(Rc, clone__String(union_decl->union_gen.name));
-        CIDataType *res = NEW_VARIANT(
-          CIDataType, union, NEW(CIDataTypeUnion, union_name, NULL, NULL));
-
-        FREE_RC(String, union_name);
-
-        return res;
+        return NEW_VARIANT(
+          CIDataType,
+          union,
+          NEW(CIDataTypeUnion, union_decl->union_gen.name, NULL, NULL));
     }
 
     return ref__CIDataType(data_type);

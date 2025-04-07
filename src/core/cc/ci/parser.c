@@ -1943,7 +1943,7 @@ valid_data_type_context__CIParser(CIParser *self, int context_flag)
     static enum CIDataTypeContext
       rejected_context_when_realloc_is_present[] = {};
     static enum CIDataTypeContext rejected_context_when_drop_is_present[] = {
-        CI_DATA_TYPE_CONTEXT_TRACE, CI_DATA_TYPE_CONTEXT_FREE
+        CI_DATA_TYPE_CONTEXT_FREE
     };
     static enum CIDataTypeContext
       rejected_context_when_dropped_is_present[] = {};
@@ -1951,7 +1951,7 @@ valid_data_type_context__CIParser(CIParser *self, int context_flag)
       rejected_context_when_static_is_present[] = {};
     static enum CIDataTypeContext rejected_context_when_owned_is_present[] = {};
     static enum CIDataTypeContext rejected_context_when_free_is_present[] = {
-        CI_DATA_TYPE_CONTEXT_DROP, CI_DATA_TYPE_CONTEXT_FREE
+        CI_DATA_TYPE_CONTEXT_DROP, CI_DATA_TYPE_CONTEXT_TRACE
     };
     static enum CIDataTypeContext rejected_context_when_freed_is_present[] = {};
     static enum CIDataTypeContext

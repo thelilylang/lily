@@ -2293,7 +2293,8 @@ generate_function_gen_prototype__CIGenerator(
       function_gen->called_generic_params);
     generate_data_type__CIGenerator(self,
                                     function_gen->function->return_data_type);
-    write_String__CIGenerator(self, format__String(" {S}", function_gen->name));
+    write_String__CIGenerator(
+      self, format__String(" {S}", GET_PTR_RC(String, function_gen->name)));
     generate_function_params__CIGenerator(self, function_gen->function->params);
     reset_current_generic_params__CIGenerator(self);
 }
@@ -2401,8 +2402,8 @@ void
 generate_struct_gen_prototype__CIGenerator(CIGenerator *self,
                                            const CIDeclStructGen *struct_gen)
 {
-    write_String__CIGenerator(self,
-                              format__String("struct {S}", struct_gen->name));
+    write_String__CIGenerator(
+      self, format__String("struct {S}", GET_PTR_RC(String, struct_gen->name)));
 }
 
 void
@@ -2412,7 +2413,8 @@ generate_struct_gen_decl__CIGenerator(CIGenerator *self,
     set_current_generic_params__CIGenerator(self,
                                             struct_gen->struct_->generic_params,
                                             struct_gen->called_generic_params);
-    generate_struct__CIGenerator(self, struct_gen->name, struct_gen->fields);
+    generate_struct__CIGenerator(
+      self, GET_PTR_RC(String, struct_gen->name), struct_gen->fields);
     reset_current_generic_params__CIGenerator(self);
 }
 
@@ -2441,8 +2443,8 @@ generate_typedef_gen_decl__CIGenerator(CIGenerator *self,
     generate_data_type__CIGenerator(self, typedef_gen->typedef_->data_type);
 
     if (!has_variable_name__CIDataType(typedef_gen->data_type)) {
-        write_String__CIGenerator(self,
-                                  format__String(" {S}", typedef_gen->name));
+        write_String__CIGenerator(
+          self, format__String(" {S}", GET_PTR_RC(String, typedef_gen->name)));
     }
 
     reset_current_generic_params__CIGenerator(self);
@@ -2485,8 +2487,8 @@ void
 generate_union_gen_prototype__CIGenerator(CIGenerator *self,
                                           const CIDeclUnionGen *union_gen)
 {
-    write_String__CIGenerator(self,
-                              format__String("union {S}", union_gen->name));
+    write_String__CIGenerator(
+      self, format__String("union {S}", GET_PTR_RC(String, union_gen->name)));
 }
 
 void
@@ -2496,7 +2498,8 @@ generate_union_gen_decl__CIGenerator(CIGenerator *self,
     set_current_generic_params__CIGenerator(self,
                                             union_gen->union_->generic_params,
                                             union_gen->called_generic_params);
-    generate_union__CIGenerator(self, union_gen->name, union_gen->fields);
+    generate_union__CIGenerator(
+      self, GET_PTR_RC(String, union_gen->name), union_gen->fields);
     reset_current_generic_params__CIGenerator(self);
 }
 

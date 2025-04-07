@@ -57,22 +57,23 @@ enum CIStateCheckerValueKind
 
 typedef struct CIStateCheckerValueFunction
 {
-    Rc *name;                    // Rc<String*>*
-    HashMap *final_params_state; // HashMap<CIStateCheckerValue*>*
+    Rc *name;                           // Rc<String*>*
+    OrderedHashMap *final_params_state; // OrderedHashMap<CIStateCheckerValue*>*
     struct CIStateCheckerValue *return_value;
 } CIStateCheckerValueFunction;
 
 /**
  *
  * @brief Construct CIStateCheckerValueFunction type.
+ * @param name Rc<String*>* (&)
  */
 inline CONSTRUCTOR(CIStateCheckerValueFunction,
                    CIStateCheckerValueFunction,
                    Rc *name,
-                   HashMap *final_params_state,
+                   OrderedHashMap *final_params_state,
                    struct CIStateCheckerValue *return_value)
 {
-    return (CIStateCheckerValueFunction){ .name = name,
+    return (CIStateCheckerValueFunction){ .name = ref__Rc(name),
                                           .final_params_state =
                                             final_params_state,
                                           .return_value = return_value };
@@ -147,6 +148,7 @@ typedef struct CIStateCheckerValueStruct
     // 0: the struct is not dropable
     // 1: the struct is dropable
     int is_dropable;
+    bool is_anonymous;
 } CIStateCheckerValueStruct;
 
 /**
@@ -158,13 +160,24 @@ inline CONSTRUCTOR(CIStateCheckerValueStruct,
                    CIStateCheckerValueStruct,
                    Rc *name,
                    HashMap *values,
-                   CIStateCheckerState state)
+                   CIStateCheckerState state,
+                   bool is_anonymous)
 {
     return (CIStateCheckerValueStruct){ .name = name ? ref__Rc(name) : NULL,
                                         .values = values,
                                         .state = state,
-                                        .is_dropable = -1 };
+                                        .is_dropable = -1,
+                                        .is_anonymous = is_anonymous };
 }
+
+/**
+ *
+ * @brief Set `is_dropable` field.
+ * @param CIStateCheckerValueStruct* (&)
+ */
+void
+set_is_dropable__CIStateCheckerValueStruct(CIStateCheckerValueStruct *self,
+                                           int is_dropable);
 
 /**
  *
@@ -176,6 +189,13 @@ typedef struct CIStateCheckerValueVariable
 {
     Rc *name; // Rc<String*>*
     struct CIStateCheckerValue *value;
+    // In some cases, we want to inherit the scope owner from the parent, as in
+    // the case of `fields`.
+    bool inherit_of_parent_scope_owner;
+    // In some cases, we don't want to have `scope_owner`, as in the case of
+    // final params state.
+    bool disable_scope_owner;
+    Usize scope_owner;
 } CIStateCheckerValueVariable;
 
 /**
@@ -189,8 +209,52 @@ inline CONSTRUCTOR(CIStateCheckerValueVariable,
                    struct CIStateCheckerValue *value)
 {
     return (CIStateCheckerValueVariable){ .name = ref__Rc(name),
-                                          .value = value };
+                                          .value = value,
+                                          .inherit_of_parent_scope_owner =
+                                            false,
+                                          .disable_scope_owner = false,
+                                          .scope_owner = 0 };
 }
+
+/**
+ *
+ * @brief Set `self->inherit_of_parent_scope_owner` to `true`.
+ */
+inline void
+set_inherit_of_parent_scope_owner__CIStateCheckerValueVariable(
+  CIStateCheckerValueVariable *self)
+{
+    self->inherit_of_parent_scope_owner = true;
+}
+
+/**
+ *
+ * @brief Set `self->disable_scope_owner` to `true`.
+ */
+inline void
+set_disable_scope_owner__CIStateCheckerValueVariable(
+  CIStateCheckerValueVariable *self)
+{
+    self->disable_scope_owner = true;
+}
+
+/**
+ *
+ * @brief Set `self->scope_owner`.
+ */
+inline void
+set_scope_owner__CIStateCheckerValueVariable(CIStateCheckerValueVariable *self,
+                                             Usize scope_owner)
+{
+    self->scope_owner = scope_owner;
+}
+
+/**
+ *
+ * @brief Free CIStateCheckerValueVariable type.
+ */
+DESTRUCTOR(CIStateCheckerValueVariable,
+           const CIStateCheckerValueVariable *self);
 
 typedef struct CIStateCheckerValue
 {
@@ -299,13 +363,6 @@ get_name__CIStateCheckerValue(CIStateCheckerValue *self);
 
 /**
  *
- * @brief Build value from data type.
- */
-CIStateCheckerValue *
-build_from_data_type__CIStateCheckerValue(CIDataType *data_type);
-
-/**
- *
  * @brief Get return state from value.
  * @return CIStateCheckerState* (&)
  */
@@ -332,8 +389,10 @@ DESTRUCTOR(CIStateCheckerValue, CIStateCheckerValue *self);
 
 typedef struct CIStateCheckerScope
 {
+    Usize id;
     struct CIStateCheckerScope *parent; // struct CIStateCheckerScope*? (&)
-    HashMap *values;                    // HashMap<CIStateCheckerValue*>*
+    // can contains structs, enums, unions or functions
+    HashMap *values; // HashMap<CIStateCheckerValue*>*
 } CIStateCheckerScope;
 
 /**
@@ -355,6 +414,7 @@ add__CIStateCheckerScope(CIStateCheckerScope *self, CIStateCheckerValue *value);
 /**
  *
  * @brief Get value from name.
+ * @return CIStateCheckerValue*? (&)
  */
 CIStateCheckerValue *
 get__CIStateCheckerScope(CIStateCheckerScope *self, Rc *name);
@@ -365,11 +425,45 @@ get__CIStateCheckerScope(CIStateCheckerScope *self, Rc *name);
  */
 DESTRUCTOR(CIStateCheckerScope, CIStateCheckerScope *self);
 
+typedef struct CIStateCheckerAnonymousNameGenerator
+{
+    Usize count;
+    Vec *names; // Vec<Rc<String*>*>*
+} CIStateCheckerAnonymousNameGenerator;
+
+/**
+ *
+ * @brief Construct CIStateCheckerAnonymousNameGenerator type.
+ */
+inline CONSTRUCTOR(CIStateCheckerAnonymousNameGenerator,
+                   CIStateCheckerAnonymousNameGenerator)
+{
+    return (CIStateCheckerAnonymousNameGenerator){ .count = 0,
+                                                   .names = NEW(Vec) };
+}
+
+/**
+ *
+ * @brief Generate anonymous name.
+ * @return Rc<String*>* (&)
+ */
+Rc *
+run__CIStateCheckerAnonymousNameGenerator(
+  CIStateCheckerAnonymousNameGenerator *self);
+
+/**
+ *
+ * @brief Free CIStateCheckerAnonymousNameGenerator type.
+ */
+DESTRUCTOR(CIStateCheckerAnonymousNameGenerator,
+           const CIStateCheckerAnonymousNameGenerator *self);
+
 typedef struct CIStateChecker
 {
     const CIResult *result;             // const CIResult* (&)
     const CIResultFile *file;           // const CIResultFile*? (&)
     CIStateCheckerScope *current_scope; // CIStateCheckerScope*?
+    CIStateCheckerAnonymousNameGenerator anonymous_name_generator;
 } CIStateChecker;
 
 /**
@@ -378,8 +472,11 @@ typedef struct CIStateChecker
  */
 inline CONSTRUCTOR(CIStateChecker, CIStateChecker, const CIResult *result)
 {
-    return (
-      CIStateChecker){ .result = result, .file = NULL, .current_scope = NULL };
+    return (CIStateChecker){ .result = result,
+                             .file = NULL,
+                             .current_scope = NULL,
+                             .anonymous_name_generator =
+                               NEW(CIStateCheckerAnonymousNameGenerator) };
 }
 
 /**
@@ -388,5 +485,11 @@ inline CONSTRUCTOR(CIStateChecker, CIStateChecker, const CIResult *result)
  */
 void
 run__CIStateChecker(CIStateChecker *self);
+
+/**
+ *
+ * @brief Free CIStateChecker type.
+ */
+DESTRUCTOR(CIStateChecker, const CIStateChecker *self);
 
 #endif // LILY_CORE_CC_CI_STATE_CHECKER_H

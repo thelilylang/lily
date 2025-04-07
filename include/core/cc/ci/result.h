@@ -589,6 +589,7 @@ search_data_type__CIResultFile(const CIResultFile *self, const String *name);
  * @brief Search function from the given name, if function_generic_params is
  * NULL otherwise, it serializes the given name and searches generic function
  * with this serialized name.
+ * @param name const String* (&)
  * @param function_generic_params CIGenericParams*? (&)
  * @param called_generic_params CIGenericParams*? (&)
  * @param decl_generic_params CIGenericParams*? (&)
@@ -607,6 +608,7 @@ search_function_in_generic_context__CIResultFile(
  * @brief Search struct from the given name, if struct_generic_params is NULL
  * otherwise, it serializes the given name and searches generic struct with
  * this serialized name.
+ * @param name const String* (&)
  * @param struct_generic_params CIGenericParams*? (&)
  * @param called_generic_params CIGenericParams*? (&)
  * @param decl_generic_params CIGenericParams*? (&)
@@ -625,6 +627,7 @@ search_struct_in_generic_context__CIResultFile(
  * @brief Search typedef from the given name, if typedef_generic_params is NULL
  * otherwise, it serializes the given name and searches generic typedef with
  * this serialized name.
+ * @param name const String* (&)
  * @param typedef_generic_params CIGenericParams*? (&)
  * @param called_generic_params CIGenericParams*? (&)
  * @param decl_generic_params CIGenericParams*? (&)
@@ -643,6 +646,7 @@ search_typedef_in_generic_context__CIResultFile(
  * @brief Search union from the given name, if union_generic_params is NULL
  * otherwise, it serializes the given name and searches generic union with this
  * serialized name.
+ * @param name const String* (&)
  * @param union_generic_params CIGenericParams*? (&)
  * @param called_generic_params CIGenericParams*? (&)
  * @param decl_generic_params CIGenericParams*? (&)
