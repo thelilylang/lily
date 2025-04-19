@@ -4292,10 +4292,12 @@ get_generic_params__CIDecl(const CIDecl *self)
             return self->function.generic_params;
         case CI_DECL_KIND_STRUCT:
             return self->struct_.generic_params;
+        case CI_DECL_KIND_TYPEDEF:
+            return self->typedef_.generic_params;
         case CI_DECL_KIND_UNION:
             return self->union_.generic_params;
         default:
-            UNREACHABLE("cannot get `generic_params`");
+            return NULL;
     }
 }
 

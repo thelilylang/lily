@@ -1997,7 +1997,9 @@ check_variable__CIStateChecker(CIStateChecker *self, const CIDecl *decl)
 void
 check_global_decl__CIStateChecker(CIStateChecker *self, const CIDecl *decl)
 {
-    if (is_local__CIDecl(decl)) {
+    CIGenericParams *generic_params = get_generic_params__CIDecl(decl);
+
+    if (is_local__CIDecl(decl) || generic_params) {
         return;
     }
 

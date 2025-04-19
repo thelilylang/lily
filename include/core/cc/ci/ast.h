@@ -3057,7 +3057,7 @@ get_fields__CIDecl(const CIDecl *self);
 /**
  *
  * @brief Get `generic_params` from decl.
- * @return CIGenericParams* (&)
+ * @return CIGenericParams*? (&)
  */
 CIGenericParams *
 get_generic_params__CIDecl(const CIDecl *self);
