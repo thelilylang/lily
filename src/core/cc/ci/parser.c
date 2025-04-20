@@ -1216,7 +1216,8 @@ substitute_generic_params__CIParser(
                 CIDataType *subs_param = substitute_data_type__CIParser(
                   get__Vec(unresolved_generic_params->params, i),
                   (CIGenericParams *)generic_params,
-                  (CIGenericParams *)called_generic_params);
+                  (CIGenericParams *)called_generic_params,
+                  NULL);
 
                 if (subs_param) {
                     push__Vec(subs_params, subs_param);
@@ -1241,7 +1242,7 @@ substitute_field_member__CIParser(CIDeclStructFields *subs_fields,
                                   CIGenericParams *called_generic_params)
 {
     CIDataType *subs_field_dt = substitute_data_type__CIParser(
-      field->member.data_type, generic_params, called_generic_params);
+      field->member.data_type, generic_params, called_generic_params, NULL);
 
     CIDeclStructField *subs_field = NEW_VARIANT(
       CIDeclStructField,
@@ -1348,16 +1349,26 @@ substitute_struct_or_union_fields__CIParser(
 CIDataType *
 substitute_data_type__CIParser(CIDataType *data_type,
                                CIGenericParams *generic_params,
-                               CIGenericParams *called_generic_params)
+                               CIGenericParams *called_generic_params,
+                               String *serialized_name)
 {
     CIDataType *res = NULL;
 
     switch (data_type->kind) {
         case CI_DATA_TYPE_KIND_ARRAY: {
-            CIDataType *subs = substitute_data_type__CIParser(
-              data_type, generic_params, called_generic_params);
+            CIDataType *subs =
+              substitute_data_type__CIParser(data_type,
+                                             generic_params,
+                                             called_generic_params,
+                                             serialized_name);
 
             if (subs) {
+                Rc *new_array_dt_name =
+                  data_type->array.name
+                    ? serialized_name ? NEW(Rc, clone__String(serialized_name))
+                                      : ref__Rc(data_type->array.name)
+                    : NULL; // Rc<String*>*?
+
                 switch (data_type->array.kind) {
                     case CI_DATA_TYPE_ARRAY_KIND_SIZED:
                         res = NEW_VARIANT(
@@ -1366,7 +1377,7 @@ substitute_data_type__CIParser(CIDataType *data_type,
                           NEW_VARIANT(CIDataTypeArray,
                                       sized,
                                       subs,
-                                      data_type->array.name,
+                                      new_array_dt_name,
                                       data_type->array.size,
                                       ref__CIExpr(data_type->array.size_expr),
                                       data_type->array.is_static,
@@ -1380,7 +1391,7 @@ substitute_data_type__CIParser(CIDataType *data_type,
                           NEW_VARIANT(CIDataTypeArray,
                                       none,
                                       subs,
-                                      data_type->array.name,
+                                      new_array_dt_name,
                                       ref__CIExpr(data_type->array.size_expr),
                                       data_type->array.is_static,
                                       data_type->array.qualifier));
@@ -1388,6 +1399,10 @@ substitute_data_type__CIParser(CIDataType *data_type,
                         break;
                     default:
                         UNREACHABLE("unknown variant");
+                }
+
+                if (new_array_dt_name) {
+                    FREE_RC(String, new_array_dt_name);
                 }
             } else {
                 return ref__CIDataType(data_type);
@@ -1408,7 +1423,8 @@ substitute_data_type__CIParser(CIDataType *data_type,
                         CIDataType *subs_data_type =
                           substitute_data_type__CIParser(param->data_type,
                                                          generic_params,
-                                                         called_generic_params);
+                                                         called_generic_params,
+                                                         NULL);
 
                         if (subs_data_type) {
                             push__Vec(subs_params,
@@ -1433,9 +1449,10 @@ substitute_data_type__CIParser(CIDataType *data_type,
             CIDataType *subs_return_data_type = substitute_data_type__CIParser(
               data_type->function.return_data_type,
               generic_params,
-              called_generic_params);
+              called_generic_params,
+              serialized_name);
 
-            if (subs_return_data_type) {
+            if (!subs_return_data_type) {
                 FREE_BUFFER_ITEMS(
                   subs_params->buffer, subs_params->len, CIDataType);
                 FREE(Vec, subs_params);
@@ -1443,14 +1460,24 @@ substitute_data_type__CIParser(CIDataType *data_type,
                 return ref__CIDataType(data_type);
             }
 
+            Rc *new_function_dt_name =
+              data_type->function.name
+                ? serialized_name ? NEW(Rc, clone__String(serialized_name))
+                                  : ref__Rc(data_type->function.name)
+                : NULL; // Rc<String*>*?
+
             res = NEW_VARIANT(CIDataType,
                               function,
                               NEW(CIDataTypeFunction,
-                                  NULL,
+                                  new_function_dt_name,
                                   NEW(CIDeclFunctionParams, subs_params),
                                   subs_return_data_type,
                                   NULL,
                                   NULL));
+
+            if (new_function_dt_name) {
+                FREE_RC(String, new_function_dt_name);
+            }
 
             break;
         }
@@ -1467,14 +1494,25 @@ substitute_data_type__CIParser(CIDataType *data_type,
             return NULL;
         }
         case CI_DATA_TYPE_KIND_PTR: {
-            CIDataType *subs = substitute_data_type__CIParser(
-              data_type->ptr.data_type, generic_params, called_generic_params);
+            CIDataType *subs =
+              substitute_data_type__CIParser(data_type->ptr.data_type,
+                                             generic_params,
+                                             called_generic_params,
+                                             serialized_name);
 
             if (subs) {
-                res =
-                  NEW_VARIANT(CIDataType,
-                              ptr,
-                              NEW(CIDataTypePtr, data_type->ptr.name, subs));
+                Rc *new_ptr_name =
+                  data_type->ptr.name
+                    ? serialized_name ? NEW(Rc, clone__String(serialized_name))
+                                      : ref__Rc(data_type->ptr.name)
+                    : NULL;
+
+                res = NEW_VARIANT(
+                  CIDataType, ptr, NEW(CIDataTypePtr, new_ptr_name, subs));
+
+                if (new_ptr_name) {
+                    FREE_RC(String, new_ptr_name);
+                }
             } else {
                 return ref__CIDataType(data_type);
             }
