@@ -136,12 +136,16 @@ substitute_generic_params__CIParser(
  *
  * @brief Substitute data type (with generic).
  * @param data_type CIDataType* (&)
+ * @param serialized_name String*? (&) - In some cases, we need to give the
+ * option of passing a `serialized_name`, to be used in place of the original
+ * defined name (in the data type), if both are non-null.
  * @return CIDataType*
  */
 CIDataType *
 substitute_data_type__CIParser(CIDataType *data_type,
                                CIGenericParams *generic_params,
-                               CIGenericParams *called_generic_params);
+                               CIGenericParams *called_generic_params,
+                               String *serialized_name);
 
 /**
  *

@@ -84,12 +84,14 @@ generate_from_data_type__CIVisitor(CIVisitor *self,
                                    CIGenericParams *called_generic_params,
                                    CIGenericParams *decl_generic_params);
 
+/// @param serialized_name String*? (&)
 static CIDataType *
 substitute_and_generate_from_data_type__CIVisitor(
   CIVisitor *self,
   CIDataType *data_type,
   CIGenericParams *generic_params,
-  CIGenericParams *called_generic_params);
+  CIGenericParams *called_generic_params,
+  String *serialized_name);
 
 /// @param current_field CIDeclStructField*? (&)* (&)
 /// @param prev_gen_field CIDeclStructField*? (&)* (&)
@@ -122,13 +124,15 @@ visit_non_generic_struct_or_union__CIVisitor(CIVisitor *self,
                                              const CIDecl *decl);
 
 /// @brief If the typedef is not generic, this function will return NULL.
+/// @param serialized_name String*? (&)
 /// @return the generated data type.
 /// e.g. typedef <data_type> <name>;
 /// @return CIDataType*?
 static CIDataType *
 visit_typedef__CIVisitor(CIVisitor *self,
                          const CIDecl *decl,
-                         CIGenericParams *called_generic_params);
+                         CIGenericParams *called_generic_params,
+                         String *serialized_name);
 
 static inline void
 visit_non_generic_typedef__CIVisitor(CIVisitor *self, const CIDecl *decl);
@@ -366,7 +370,8 @@ generate_function_gen__CIVisitor(CIVisitor *self,
                   substitute_data_type__CIParser(
                     function_decl->function.return_data_type,
                     function_decl->function.generic_params,
-                    resolved_generic_params);
+                    resolved_generic_params,
+                    NULL);
 
                 visit_function__CIVisitor(
                   self, function_decl, resolved_generic_params);
@@ -476,8 +481,11 @@ generate_type_gen__CIVisitor(CIVisitor *self,
                         return;
                     }
                     case CI_DECL_KIND_TYPEDEF: {
-                        CIDataType *data_type = visit_typedef__CIVisitor(
-                          self, decl, resolved_generic_params);
+                        CIDataType *data_type =
+                          visit_typedef__CIVisitor(self,
+                                                   decl,
+                                                   resolved_generic_params,
+                                                   serialized_called_decl_name);
 
                         if (data_type) {
                             decl_gen = NEW_VARIANT(
@@ -635,10 +643,11 @@ substitute_and_generate_from_data_type__CIVisitor(
   CIVisitor *self,
   CIDataType *data_type,
   CIGenericParams *generic_params,
-  CIGenericParams *called_generic_params)
+  CIGenericParams *called_generic_params,
+  String *serialized_name)
 {
     CIDataType *subs_data_type = substitute_data_type__CIParser(
-      data_type, generic_params, called_generic_params);
+      data_type, generic_params, called_generic_params, serialized_name);
 
     generate_from_data_type__CIVisitor(
       self, subs_data_type, called_generic_params, generic_params);
@@ -662,7 +671,7 @@ visit_struct_or_union_field__CIVisitor(CIVisitor *self,
             CIDataType *field_dt = current_field->member.data_type;
             CIDataType *subs_field_dt =
               substitute_and_generate_from_data_type__CIVisitor(
-                self, field_dt, generic_params, called_generic_params);
+                self, field_dt, generic_params, called_generic_params, NULL);
 
             if (subs_field_dt) {
                 CIDeclStructField *gen_field =
@@ -806,7 +815,8 @@ visit_non_generic_struct_or_union__CIVisitor(CIVisitor *self,
 CIDataType *
 visit_typedef__CIVisitor(CIVisitor *self,
                          const CIDecl *decl,
-                         CIGenericParams *called_generic_params)
+                         CIGenericParams *called_generic_params,
+                         String *serialized_name)
 {
     ASSERT(decl->kind == CI_DECL_KIND_TYPEDEF);
 
@@ -815,7 +825,8 @@ visit_typedef__CIVisitor(CIVisitor *self,
                  self,
                  decl->typedef_.data_type,
                  decl->typedef_.generic_params,
-                 called_generic_params)
+                 called_generic_params,
+                 serialized_name)
              : NULL;
 }
 

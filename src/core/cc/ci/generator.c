@@ -830,7 +830,8 @@ substitute_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type)
     return substitute_data_type__CIParser(
       data_type,
       self->content.last_session->inherit_props.current_generic_params,
-      self->content.last_session->inherit_props.current_called_generic_params);
+      self->content.last_session->inherit_props.current_called_generic_params,
+      NULL);
 }
 
 void
@@ -2440,7 +2441,7 @@ generate_typedef_gen_decl__CIGenerator(CIGenerator *self,
       typedef_gen->typedef_->generic_params,
       typedef_gen->called_generic_params);
     write_str__CIGenerator(self, "typedef ");
-    generate_data_type__CIGenerator(self, typedef_gen->typedef_->data_type);
+    generate_data_type__CIGenerator(self, typedef_gen->data_type);
 
     if (!has_variable_name__CIDataType(typedef_gen->data_type)) {
         write_String__CIGenerator(
