@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.12.0 - 2025-04-24
+
+### Changed
+
+- Continue and improve the state checker [#737](https://github.com/thelilylang/lily/pull/737)
+- Continue to implement the state checker (2) [#739](https://github.com/thelilylang/lily/pull/739)
+
+### Fixed
+
+- Fix lack of check on `fclose` call [#738](https://github.com/thelilylang/lily/pull/738)
+- Fix data type substitution bug in context of typedef [#742](https://github.com/thelilylang/lily/pull/742)
+- Stop to check generic declaration in the state checker [#741](https://github.com/thelilylang/lily/pull/741)
+
 ## 0.11.0 - 2025-03-21
 
 ### Added
