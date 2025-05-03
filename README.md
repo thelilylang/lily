@@ -39,8 +39,13 @@ You can access to the release schedule [here](docs/release_schedule.md).
 
 ## Projects
 
-- The compiler and other tools of the [Lily](src/core/lily/README.md) programming language 
+- The compiler and other tools of the [Lily](src/core/lily/README.md) programming language
 - The transpiler of the [CImproved (CI)](src/core/cc/ci/README.md) programming language
+
+## Examples
+
+- [Lily](examples/core/lily)
+- [CImproved](examples/core/cc/ci)
 
 ## Dependencies
 
