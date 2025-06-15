@@ -22,6 +22,7 @@ find src -name "*.c" >> $FILE
 find src -name "CMakeLists.txt" >> $FILE
 find tests -name "*.c" $EXCLUDE_TESTS_DIRECTORIES >> $FILE
 find tests -name "CMakeLists.txt" $EXCLUDE_TESTS_DIRECTORIES >> $FILE
+echo './CMakeLists.txt' >> $FILE
 
 FILE_CONTENT=$(cat $FILE)
 NB_LINES=$(echo "$FILE_CONTENT" | wc -l)
