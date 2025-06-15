@@ -989,9 +989,7 @@ run_inst__LilyInterpreterVM(LilyInterpreterVM *self)
         [LILY_INTERPRETER_VALUE_KIND_UNIT] = &&label__unknown_i##inst,        \
     };
 
-#define INT_INST_START(inst, inst_kind) \
-    {                                   \
-        goto *inst##_lookup[inst_kind]
+#define INT_INST_START(inst, inst_kind) { goto * inst##_lookup[inst_kind]
 #define INT_INST_TYPE(value_kind, inst) label__##value_kind##_i##inst:
 #define INT_INST_DEFAULT(inst) label__unknown_i##inst:
 #define INT_INST_END() }
