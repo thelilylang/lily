@@ -74,6 +74,8 @@ cc/ci
 
 cpp
 
+docker/dev
+
 ex
 
 lib/builtin
