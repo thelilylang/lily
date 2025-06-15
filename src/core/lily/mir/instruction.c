@@ -2323,7 +2323,7 @@ VARIANT_CONSTRUCTOR(LilyMirInstruction *,
 
     self->kind = LILY_MIR_INSTRUCTION_KIND_NOT;
     self->debug_info = NULL;
-    self->not = not;
+    self->not= not;
 
     return self;
 }
