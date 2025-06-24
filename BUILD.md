@@ -1,5 +1,13 @@
 # Build
 
+## Foreword
+
+> [!TIP]
+> You can also build `Lily` on a docker image instead of doing it
+> directly on your computer. Please follow this
+> [documentation](docker/dev/README.md) to be able to run the
+> docker image.
+
 ## Introduction
 
 First, you need to load the git submodules.
