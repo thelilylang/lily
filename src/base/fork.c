@@ -29,6 +29,14 @@
 #include <stdlib.h>
 
 #ifdef LILY_UNIX_OS
+static inline Fork
+wait_base__Fork(Fork pid,
+                int *exit_status,
+                int *kill_signal,
+                int *stop_signal,
+                bool allow_w_err,
+                int wait_options);
+
 void
 use__Fork(Fork pid,
           void (*child_process)(void),
@@ -48,14 +56,15 @@ use__Fork(Fork pid,
 }
 
 Fork
-wait__Fork(Fork pid,
-           int *exit_status,
-           int *kill_signal,
-           int *stop_signal,
-           bool allow_w_err)
+wait_base__Fork(Fork pid,
+                int *exit_status,
+                int *kill_signal,
+                int *stop_signal,
+                bool allow_w_err,
+                int wait_options)
 {
     int wstatus;
-    Fork w = waitpid(pid, &wstatus, 0);
+    Fork w = waitpid(pid, &wstatus, wait_options);
 
     if (w == -1) {
         if (allow_w_err) {
@@ -72,6 +81,28 @@ wait__Fork(Fork pid,
     }
 
     return w;
+}
+
+Fork
+wait__Fork(Fork pid,
+           int *exit_status,
+           int *kill_signal,
+           int *stop_signal,
+           bool allow_w_err)
+{
+    return wait_base__Fork(
+      pid, exit_status, kill_signal, stop_signal, allow_w_err, 0);
+}
+
+Fork
+wait_or_run__Fork(Fork pid,
+                  int *exit_status,
+                  int *kill_signal,
+                  int *stop_signal,
+                  bool allow_w_err)
+{
+    return wait_base__Fork(
+      pid, exit_status, kill_signal, stop_signal, allow_w_err, WNOHANG);
 }
 #else
 #error "this OS is not yet supported"

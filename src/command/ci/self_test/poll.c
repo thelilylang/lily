@@ -26,6 +26,7 @@
 #include <base/fd.h>
 #include <base/fork.h>
 #include <base/macros.h>
+#include <base/new.h>
 #include <base/print.h>
 #include <base/std_fileno.h>
 
@@ -40,27 +41,45 @@ void
 run__CISelfTestPoll(Vec *process_units, Usize *n_test_failed)
 {
     for (Usize i = 0; i < process_units->len; ++i) {
+        int exit_status;
+        int kill_signal;
+        int stop_signal;
         CISelfTestProcessUnit *process_unit = get__Vec(process_units, i);
-        int exit_status = -1;
-        int kill_signal = -1;
-        int stop_signal = -1;
+        FdReadResult pipe_read_buffer_len;
+        char pipe_read_buffer[256];
+        String *output = NEW(String);
 
-        if (wait__Fork(process_unit->pid,
-                       &exit_status,
-                       &kill_signal,
-                       &stop_signal,
-                       true) > 0) {
-            FdReadResult bytes_read;
-            char buffer[256];
+    read_again:
+        exit_status = -1;
+        kill_signal = -1;
+        stop_signal = -1;
 
-            while ((bytes_read = try_read__Fd(
-                      process_unit->read_fd, buffer, sizeof(buffer) - 1)) > 0) {
-                buffer[bytes_read] = '\0';
-                write__Fd(LILY_STDOUT_FILENO, buffer, bytes_read);
-            }
+        // We must drain the pipe before using `waitpid`, because the pipe
+        // buffer is only 4096 bytes under Linux (pipe(7)). Thus, if we reach
+        // the end of this buffer, write to stdout is blocked (and this will
+        // block the child process).
+        while ((pipe_read_buffer_len =
+                  try_read__Fd(process_unit->read_fd,
+                               pipe_read_buffer,
+                               sizeof(pipe_read_buffer) - 1)) > 0) {
+            pipe_read_buffer[pipe_read_buffer_len] = '\0';
+            push_str_with_len__String(
+              output, pipe_read_buffer, pipe_read_buffer_len);
+        }
 
-            if ((exit_status != -1 && exit_status != EXIT_OK) ||
-                kill_signal != -1 || stop_signal != -1) {
+        Fork wait_pid = wait_or_run__Fork(
+          process_unit->pid, &exit_status, &kill_signal, &stop_signal, true);
+
+        if (wait_pid > 0) {
+            bool has_err = (exit_status != -1 && exit_status != EXIT_OK) ||
+                           kill_signal != -1 || stop_signal != -1;
+
+            if (has_err) {
+                // Only write the stdout of the child process in case of error.
+                if (output->len > 0) {
+                    write__Fd(LILY_STDOUT_FILENO, output->buffer, output->len);
+                }
+
                 ++(*n_test_failed);
 
                 display_failed_test_output__CISelfTestDiagnostic(
@@ -69,6 +88,10 @@ run__CISelfTestPoll(Vec *process_units, Usize *n_test_failed)
                   kill_signal,
                   stop_signal);
             }
+        } else {
+            goto read_again;
         }
+
+        FREE(String, output);
     }
 }
