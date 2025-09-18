@@ -71,15 +71,14 @@ run__CISelfTestPoll(Vec *process_units, Usize *n_test_failed)
           process_unit->pid, &exit_status, &kill_signal, &stop_signal, true);
 
         if (wait_pid > 0) {
+            if (output->len > 0) {
+                write__Fd(LILY_STDOUT_FILENO, output->buffer, output->len);
+            }
+
             bool has_err = (exit_status != -1 && exit_status != EXIT_OK) ||
                            kill_signal != -1 || stop_signal != -1;
 
             if (has_err) {
-                // Only write the stdout of the child process in case of error.
-                if (output->len > 0) {
-                    write__Fd(LILY_STDOUT_FILENO, output->buffer, output->len);
-                }
-
                 ++(*n_test_failed);
 
                 display_failed_test_output__CISelfTestDiagnostic(
