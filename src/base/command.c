@@ -42,7 +42,7 @@ run__Command(const char *cmd)
 }
 
 String *
-save__Command(const char *cmd)
+save__Command(const char *cmd, int *exit_status)
 {
 #ifdef LILY_WINDOWS_OS
     FILE *file = _popen(cmd, "r");
@@ -68,10 +68,16 @@ save__Command(const char *cmd)
     ASSERT(feof(file) != 0);
 
 #ifdef LILY_WINDOWS_OS
-    _pclose(file);
+    int pclose_res = _pclose(file);
 #else
-    pclose(file);
+    int pclose_res = pclose(file);
 #endif
 
+    if (exit_status) {
+        *exit_status = pclose_res;
+    }
+
     return output;
+
+#undef TEMP_BUFFER_LEN
 }

@@ -81,11 +81,13 @@ run__CISelfTestPoll(Vec *process_units, Usize *n_test_failed)
             if (has_err) {
                 ++(*n_test_failed);
 
-                display_failed_test_output__CISelfTestDiagnostic(
-                  process_unit->path->buffer,
-                  exit_status,
-                  kill_signal,
-                  stop_signal);
+                if (exit_status != EXIT_ERR) {
+                    display_failed_test_output__CISelfTestDiagnostic(
+                      process_unit->path->buffer,
+                      exit_status,
+                      kill_signal,
+                      stop_signal);
+                }
             }
         } else {
             goto read_again;

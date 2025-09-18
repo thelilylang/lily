@@ -98,7 +98,16 @@ handler_result__CISelfTestRun(void *entity,
     String *bin_dir_result =
       get_dir_result__CIResultFile(file, CI_DIR_RESULT_PURPOSE_BIN);
     String *command = format__String("{Sr}/{s}", bin_dir_result, bin->name);
-    String *command_output = save__Command(command->buffer);
+    String *command_output = NULL;
+
+    if (!exists__File(command->buffer)) {
+        display_failed_binary_not_exist__CISelfTestDiagnostic(
+          command, file->file_input.name);
+
+        goto exit;
+    }
+
+    command_output = save__Command(command->buffer, NULL);
 
     if (metadata->expected_stdout && strcmp(metadata->expected_stdout->buffer,
                                             command_output->buffer) != 0) {
@@ -109,8 +118,12 @@ handler_result__CISelfTestRun(void *entity,
           file->file_input.name, (double)(clock() - start) / CLOCKS_PER_SEC);
     }
 
+exit:
     FREE(String, command);
-    FREE(String, command_output);
+
+    if (command_output) {
+        FREE(String, command_output);
+    }
 }
 
 void
@@ -158,14 +171,17 @@ run__CISelfTestRun(String *path)
 {
     Pipefd pipefd;
 
-    create__Pipe(pipefd);
+    create__Pipe(
+      pipefd); // Two pipes? One for redirect stderr and stdout for debug at
+               // least. And one for diagnostic, sounds a good plan.
 
     const Fork pid = run__Fork();
 
     switch (pid) {
         case 0: {
-            // Redirect stdout to the pipe.
+            // Redirect stdout and stderr to the pipe.
             run2__Dup(pipefd[PIPE_WRITE_FD], LILY_STDOUT_FILENO);
+            run2__Dup(pipefd[PIPE_WRITE_FD], LILY_STDERR_FILENO);
             close__Pipe(pipefd);
 
             CISelfTestMetadata metadata = NEW(CISelfTestMetadata);

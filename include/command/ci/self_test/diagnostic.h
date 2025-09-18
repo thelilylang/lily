@@ -58,4 +58,12 @@ display_failed_expected_stdout_assertion_output__CISelfTestDiagnostic(
   String *actual_stdout,
   const char *filename);
 
+/**
+ * @param binary_path String* (&)
+ * @param filename const char* (&)
+ */
+void
+display_failed_binary_not_exist__CISelfTestDiagnostic(String *binary_path,
+                                                      const char *filename);
+
 #endif // LILY_COMMAND_CI_SELF_TEST_DIAGNOSTIC_H

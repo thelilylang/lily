@@ -98,4 +98,16 @@ display_failed_expected_stdout_assertion_output__CISelfTestDiagnostic(
 
     FREE(String, disabled_escapes_expected_stdout);
     FREE(String, disabled_escapes_actual_stdout);
+
+    exit(EXIT_ERR);
+}
+
+void
+display_failed_binary_not_exist__CISelfTestDiagnostic(String *binary_path,
+                                                      const char *filename)
+{
+    display_failed_test_output__CISelfTestDiagnostic(filename, -1, -1, -1);
+    printf("\x1b[31mThe following binary file does not exist: %s\n\x1b[0m",
+           binary_path->buffer);
+    exit(EXIT_ERR);
 }

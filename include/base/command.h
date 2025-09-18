@@ -37,8 +37,9 @@ run__Command(const char *cmd);
 /**
  *
  * @brief Run & capture the output of SHELL command.
+ * @param exit_status - int*? (&)
  */
 String *
-save__Command(const char *cmd);
+save__Command(const char *cmd, int *exit_status);
 
 #endif // LILY_BASE_COMMAND_H
