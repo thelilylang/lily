@@ -32,7 +32,8 @@ typedef struct CISelfTestProcessUnit
 {
     Fork pid;
     String *path;
-    int read_fd;
+    int read_out_fd;
+    int read_diagnostic_fd;
 } CISelfTestProcessUnit;
 
 /**
@@ -43,7 +44,8 @@ CONSTRUCTOR(CISelfTestProcessUnit *,
             CISelfTestProcessUnit,
             Fork pid,
             String *path,
-            int read_fd);
+            int read_out_fd,
+            int read_diagnostic_fd);
 
 /**
  *

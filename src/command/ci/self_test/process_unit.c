@@ -36,13 +36,15 @@ CONSTRUCTOR(CISelfTestProcessUnit *,
             CISelfTestProcessUnit,
             Fork pid,
             String *path,
-            int read_fd)
+            int read_out_fd,
+            int read_diagnostic_fd)
 {
     CISelfTestProcessUnit *self = lily_malloc(sizeof(CISelfTestProcessUnit));
 
     self->pid = pid;
     self->path = path;
-    self->read_fd = read_fd;
+    self->read_out_fd = read_out_fd;
+    self->read_diagnostic_fd = read_diagnostic_fd;
 
     return self;
 }
@@ -50,6 +52,7 @@ CONSTRUCTOR(CISelfTestProcessUnit *,
 DESTRUCTOR(CISelfTestProcessUnit, CISelfTestProcessUnit *self)
 {
     FREE(String, self->path);
-    close__Fd(self->read_fd);
+    close__Fd(self->read_out_fd);
+    close__Fd(self->read_diagnostic_fd);
     lily_free(self);
 }

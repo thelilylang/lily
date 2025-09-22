@@ -37,6 +37,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static void
+read_pipe__CISelfTestPoll(String *buffer, int read_fd);
+
+void
+read_pipe__CISelfTestPoll(String *buffer, int read_fd)
+{
+    FdReadResult pipe_read_buffer_len;
+    char pipe_read_buffer[1024];
+
+    while ((pipe_read_buffer_len = try_read__Fd(
+              read_fd, pipe_read_buffer, sizeof(pipe_read_buffer) - 1)) > 0) {
+        pipe_read_buffer[pipe_read_buffer_len] = '\0';
+        push_str_with_len__String(
+          buffer, pipe_read_buffer, pipe_read_buffer_len);
+    }
+}
+
 void
 run__CISelfTestPoll(Vec *process_units, Usize *n_test_failed)
 {
@@ -45,8 +62,6 @@ run__CISelfTestPoll(Vec *process_units, Usize *n_test_failed)
         int kill_signal;
         int stop_signal;
         CISelfTestProcessUnit *process_unit = get__Vec(process_units, i);
-        FdReadResult pipe_read_buffer_len;
-        char pipe_read_buffer[256];
         String *output = NEW(String);
 
     read_again:
@@ -58,37 +73,48 @@ run__CISelfTestPoll(Vec *process_units, Usize *n_test_failed)
         // buffer is only 4096 bytes under Linux (pipe(7)). Thus, if we reach
         // the end of this buffer, write to stdout is blocked (and this will
         // block the child process).
-        while ((pipe_read_buffer_len =
-                  try_read__Fd(process_unit->read_fd,
-                               pipe_read_buffer,
-                               sizeof(pipe_read_buffer) - 1)) > 0) {
-            pipe_read_buffer[pipe_read_buffer_len] = '\0';
-            push_str_with_len__String(
-              output, pipe_read_buffer, pipe_read_buffer_len);
-        }
+        read_pipe__CISelfTestPoll(output, process_unit->read_out_fd);
 
         Fork wait_pid = wait_or_run__Fork(
           process_unit->pid, &exit_status, &kill_signal, &stop_signal, true);
 
         if (wait_pid > 0) {
-            if (output->len > 0) {
-                write__Fd(LILY_STDOUT_FILENO, output->buffer, output->len);
-            }
+            String *diagnostic = NEW(String);
 
+            // What we write on the diagnosic pipe is quite small, so it should
+            // never block, because the (pipe) buffer limit is reached.
+            read_pipe__CISelfTestPoll(diagnostic,
+                                      process_unit->read_diagnostic_fd);
+
+            bool has_diagnostic = diagnostic->len > 0;
             bool has_err = (exit_status != -1 && exit_status != EXIT_OK) ||
                            kill_signal != -1 || stop_signal != -1;
 
             if (has_err) {
                 ++(*n_test_failed);
 
-                if (exit_status != EXIT_ERR) {
+                if (output->len > 0) {
+                    write__Fd(LILY_STDOUT_FILENO, output->buffer, output->len);
+                }
+
+                if (!has_diagnostic || (has_err && exit_status != EXIT_ERR)) {
+                    has_diagnostic = false;
+
                     display_failed_test_output__CISelfTestDiagnostic(
+                      LILY_STDOUT_FILENO,
                       process_unit->path->buffer,
                       exit_status,
                       kill_signal,
                       stop_signal);
                 }
             }
+
+            if (has_diagnostic) {
+                write__Fd(
+                  LILY_STDOUT_FILENO, diagnostic->buffer, diagnostic->len);
+            }
+
+            FREE(String, diagnostic);
         } else {
             goto read_again;
         }
