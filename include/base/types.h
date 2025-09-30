@@ -52,4 +52,6 @@ typedef double Float64;
 
 typedef uintptr_t Uptr;
 
+#define Atomic(T) _Atomic T
+
 #endif // LILY_BASE_TYPES_H

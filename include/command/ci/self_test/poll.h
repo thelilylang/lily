@@ -27,13 +27,16 @@
 
 #include <base/vec.h>
 
+#include <command/ci/self_test/process_unit.h>
+
 /**
  *
- * @brief Poll all child processes.
- * @param process_units Vec<CISelfTestProcessUnit*>*
- * @param n_test_failed Usize* (&)
+ * @brief Poll a child process.
+ * @param process_units const CISelfTestProcessUnit* (&)
+ * @param n_test_failed Atomic(Usize)* (&)
  */
 void
-run__CISelfTestPoll(Vec *process_units, Usize *n_test_failed);
+run__CISelfTestPoll(const CISelfTestProcessUnit *process_unit,
+                    Atomic(Usize) * n_test_failed);
 
 #endif // LILY_COMMAND_CI_SELF_TEST_POLL_H

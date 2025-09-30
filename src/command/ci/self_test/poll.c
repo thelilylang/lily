@@ -22,6 +22,9 @@
  * SOFTWARE.
  */
 
+#define _GNU_SOURCE
+
+#include <base/assert.h>
 #include <base/color.h>
 #include <base/fd.h>
 #include <base/fork.h>
@@ -34,8 +37,10 @@
 #include <command/ci/self_test/poll.h>
 #include <command/ci/self_test/process_unit.h>
 
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 static void
 read_pipe__CISelfTestPoll(String *buffer, int read_fd);
@@ -55,16 +60,18 @@ read_pipe__CISelfTestPoll(String *buffer, int read_fd)
 }
 
 void
-run__CISelfTestPoll(Vec *process_units, Usize *n_test_failed)
+run__CISelfTestPoll(const CISelfTestProcessUnit *process_unit,
+                    Atomic(Usize) * n_test_failed)
 {
-    for (Usize i = 0; i < process_units->len; ++i) {
-        int exit_status;
-        int kill_signal;
-        int stop_signal;
-        CISelfTestProcessUnit *process_unit = get__Vec(process_units, i);
-        String *output = NEW(String);
+#define POLL_TIMEOUT 2 * CLOCKS_PER_SEC
 
-    read_again:
+    int exit_status;
+    int kill_signal;
+    int stop_signal;
+    String *output = NEW(String);
+    clock_t start = clock();
+
+    while ((double)(clock() - start) < POLL_TIMEOUT) {
         exit_status = -1;
         kill_signal = -1;
         stop_signal = -1;
@@ -115,10 +122,17 @@ run__CISelfTestPoll(Vec *process_units, Usize *n_test_failed)
             }
 
             FREE(String, diagnostic);
-        } else {
-            goto read_again;
-        }
 
-        FREE(String, output);
+            goto end;
+        }
     }
+
+    ASSERT(kill(process_unit->pid, 0) == 0);
+    display_failed_timeout__CISelfTestDiagnostic(LILY_STDOUT_FILENO,
+                                                 process_unit->path->buffer);
+
+end:
+    FREE(String, output);
+
+#undef POLL_TIMEOUT
 }

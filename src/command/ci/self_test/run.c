@@ -183,7 +183,7 @@ run_cic__CISelfTestRun(const String *path,
     FREE(Vec, args_string);
 }
 
-CISelfTestProcessUnit *
+CISelfTestProcessUnit
 run__CISelfTestRun(String *path)
 {
     Pipefd child_out_pipefd;

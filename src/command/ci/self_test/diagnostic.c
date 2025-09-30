@@ -119,3 +119,12 @@ display_failed_binary_not_exist__CISelfTestDiagnostic(int fd,
             binary_path->buffer);
     exit(EXIT_ERR);
 }
+
+void
+display_failed_timeout__CISelfTestDiagnostic(int fd, const char *filename)
+{
+    dprintf(
+      fd,
+      "\r\x1b[37m\x1b[41mFAILED\x1b[0m \x1b[30m%s (? s)\x1b[0m [TIMEOUT]\n",
+      filename);
+}

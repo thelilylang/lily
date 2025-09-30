@@ -70,4 +70,7 @@ display_failed_binary_not_exist__CISelfTestDiagnostic(int fd,
                                                       String *binary_path,
                                                       const char *filename);
 
+void
+display_failed_timeout__CISelfTestDiagnostic(int fd, const char *filename);
+
 #endif // LILY_COMMAND_CI_SELF_TEST_DIAGNOSTIC_H
