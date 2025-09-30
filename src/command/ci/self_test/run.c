@@ -51,13 +51,15 @@ struct CIHandlerOtherArgs
 {
     const CISelfTestMetadata *metadata; // const CISelfTestMetadata* (&)
     clock_t start;
+    int write_diagnostic_fd;
 };
 
 /// @brief Construct CIHandlerOtherArgs type.
 static inline CONSTRUCTOR(struct CIHandlerOtherArgs,
                           CIHandlerOtherArgs,
                           const CISelfTestMetadata *metadata,
-                          clock_t start);
+                          clock_t start,
+                          int write_diagnostic_fd);
 
 /// @brief Handler of pass_through_result__CIResult`` function.
 /// @param other_args  void* (&) (const struct CIHandlerOtherArgs* (&))
@@ -74,14 +76,20 @@ handler__CISelfTestRun(const CIResult *result, void *other_args);
 /// @brief Run cic command with a custom handler.
 /// @param path const String* (&)
 static void
-run_cic__CISelfTestRun(const String *path, const CISelfTestMetadata *metadata);
+run_cic__CISelfTestRun(const String *path,
+                       int write_diagnostic_fd,
+                       const CISelfTestMetadata *metadata);
 
 CONSTRUCTOR(struct CIHandlerOtherArgs,
             CIHandlerOtherArgs,
             const CISelfTestMetadata *metadata,
-            clock_t start)
+            clock_t start,
+            int write_diagnostic_fd)
 {
-    return (struct CIHandlerOtherArgs){ .metadata = metadata, .start = start };
+    return (struct CIHandlerOtherArgs){ .metadata = metadata,
+                                        .start = start,
+                                        .write_diagnostic_fd =
+                                          write_diagnostic_fd };
 }
 
 void
@@ -98,19 +106,39 @@ handler_result__CISelfTestRun(void *entity,
     String *bin_dir_result =
       get_dir_result__CIResultFile(file, CI_DIR_RESULT_PURPOSE_BIN);
     String *command = format__String("{Sr}/{s}", bin_dir_result, bin->name);
-    String *command_output = save__Command(command->buffer);
+    String *command_output = NULL;
+
+    if (!exists__File(command->buffer)) {
+        display_failed_binary_not_exist__CISelfTestDiagnostic(
+          other_args_casted->write_diagnostic_fd,
+          command,
+          file->file_input.name);
+
+        goto exit;
+    }
+
+    command_output = save__Command(command->buffer, NULL);
 
     if (metadata->expected_stdout && strcmp(metadata->expected_stdout->buffer,
                                             command_output->buffer) != 0) {
         display_failed_expected_stdout_assertion_output__CISelfTestDiagnostic(
-          metadata->expected_stdout, command_output, file->file_input.name);
+          other_args_casted->write_diagnostic_fd,
+          metadata->expected_stdout,
+          command_output,
+          file->file_input.name);
     } else {
         display_pass_test_output__CISelfTestDiagnostic(
-          file->file_input.name, (double)(clock() - start) / CLOCKS_PER_SEC);
+          other_args_casted->write_diagnostic_fd,
+          file->file_input.name,
+          (double)(clock() - start) / CLOCKS_PER_SEC);
     }
 
+exit:
     FREE(String, command);
-    FREE(String, command_output);
+
+    if (command_output) {
+        FREE(String, command_output);
+    }
 }
 
 void
@@ -121,7 +149,9 @@ handler__CISelfTestRun(const CIResult *result, void *other_args)
 }
 
 void
-run_cic__CISelfTestRun(const String *path, const CISelfTestMetadata *metadata)
+run_cic__CISelfTestRun(const String *path,
+                       int write_diagnostic_fd,
+                       const CISelfTestMetadata *metadata)
 {
     Vec *args_string =
       init__Vec(6,
@@ -143,7 +173,7 @@ run_cic__CISelfTestRun(const String *path, const CISelfTestMetadata *metadata)
 
     CliArgs args = build_from_string_args__CliArgs(args_string);
     struct CIHandlerOtherArgs other_args =
-      NEW(CIHandlerOtherArgs, metadata, clock());
+      NEW(CIHandlerOtherArgs, metadata, clock(), write_diagnostic_fd);
 
     RUN__CLI_ENTRY(args, build__CliCIc, CIcConfig, run__CIcParseConfig, {
         run__CIc(&config, &handler__CISelfTestRun, &other_args);
@@ -153,37 +183,49 @@ run_cic__CISelfTestRun(const String *path, const CISelfTestMetadata *metadata)
     FREE(Vec, args_string);
 }
 
-CISelfTestProcessUnit *
+CISelfTestProcessUnit
 run__CISelfTestRun(String *path)
 {
-    Pipefd pipefd;
+    Pipefd child_out_pipefd;
+    Pipefd diagnostic_pipefd;
 
-    create__Pipe(pipefd);
+    create__Pipe(child_out_pipefd);
+    create__Pipe(diagnostic_pipefd);
 
     const Fork pid = run__Fork();
 
     switch (pid) {
         case 0: {
-            // Redirect stdout to the pipe.
-            run2__Dup(pipefd[PIPE_WRITE_FD], LILY_STDOUT_FILENO);
-            close__Pipe(pipefd);
+            // Redirect stdout and stderr to the pipe.
+            run2__Dup(child_out_pipefd[PIPE_WRITE_FD], LILY_STDOUT_FILENO);
+            run2__Dup(child_out_pipefd[PIPE_WRITE_FD], LILY_STDERR_FILENO);
+
+            close__Pipe(child_out_pipefd);
+            close_read__Pipe(diagnostic_pipefd);
 
             CISelfTestMetadata metadata = NEW(CISelfTestMetadata);
 
             run__CISelfTestMetadataScanner(path, &metadata);
-            run_cic__CISelfTestRun(path, &metadata);
+            run_cic__CISelfTestRun(
+              path, diagnostic_pipefd[PIPE_WRITE_FD], &metadata);
 
             FREE(CISelfTestMetadata, &metadata);
 
             fflush(stdout);
+            close_write__Pipe(diagnostic_pipefd);
 
             exit(EXIT_OK);
         }
         case -1:
             UNREACHABLE("failed to fork process");
         default:
-            close_write__Pipe(pipefd);
+            close_write__Pipe(child_out_pipefd);
+            close_write__Pipe(diagnostic_pipefd);
 
-            return NEW(CISelfTestProcessUnit, pid, path, pipefd[PIPE_READ_FD]);
+            return NEW(CISelfTestProcessUnit,
+                       pid,
+                       path,
+                       child_out_pipefd[PIPE_READ_FD],
+                       diagnostic_pipefd[PIPE_READ_FD]);
     }
 }

@@ -27,6 +27,7 @@
 
 #include <command/ci/compile/compile.h>
 #include <command/ci/self_test/metadata.h>
+#include <command/ci/self_test/process_unit.h>
 
 // <command/ci/compile.h>
 extern inline void
@@ -34,5 +35,13 @@ run__CICompile(CIConfig *config);
 
 // <command/ci/self_test/metadata.h>
 extern inline CONSTRUCTOR(CISelfTestMetadata, CISelfTestMetadata);
+
+// <command/ci/self_test/process_unit.h>
+extern inline CONSTRUCTOR(CISelfTestProcessUnit,
+                          CISelfTestProcessUnit,
+                          Fork pid,
+                          String *path,
+                          int read_out_fd,
+                          int read_diagnostic_fd);
 
 #endif // LILY_EX_LIB_CI_COMMAND_C

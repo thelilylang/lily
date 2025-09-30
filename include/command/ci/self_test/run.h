@@ -38,7 +38,7 @@
  * @brief Run one self-test.
  * @param path const String*
  */
-CISelfTestProcessUnit *
+CISelfTestProcessUnit
 run__CISelfTestRun(String *path);
 
 #endif // LILY_COMMAND_CI_SELF_TEST_RUN_H

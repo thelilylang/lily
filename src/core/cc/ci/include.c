@@ -44,7 +44,13 @@ init_include_dirs__CIInclude(const String *compiler_command,
     char *command =
       format("echo | {S} -E -Wp,-v - 2>&1 | grep \"^ \" | sed 's/^ *//'",
              compiler_command);
-    String *include_dirs_s = save__Command(command);
+    int command_exit_status;
+    String *include_dirs_s = save__Command(command, &command_exit_status);
+
+    if (command_exit_status != EXIT_OK) {
+        FAILED("failed to fetch default include paths");
+    }
+
     Vec *split_include_dirs_s = split__String(include_dirs_s, '\n');
 
     include_dirs = init__Vec(1, from__String((char *)base_path));

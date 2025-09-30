@@ -36,7 +36,68 @@
 #include <core/cc/ci/file.h>
 #include <core/cc/ci/project_config.h>
 
+#include <pthread.h>
 #include <time.h>
+
+static Atomic(Usize) n_test = 0;
+static Atomic(Usize) n_test_failed = 0;
+
+#define MAX_THREADS 5
+
+static pthread_t threads[MAX_THREADS] = { 0 };
+static Usize threads_count = 0;
+
+/// @brief A thread-function that run and poll the test.
+/// @param args void* (String*)
+static void *
+run_process_thread__CISelfTest(void *args);
+
+static void
+wait_threads__CISelfTest();
+
+static void
+start_thread__CISelfTest(String *path);
+
+void *
+run_process_thread__CISelfTest(void *args)
+{
+    String *path = args;
+
+    ++n_test;
+
+    CISelfTestProcessUnit process_unit = run__CISelfTestRun(path);
+
+    run__CISelfTestPoll(&process_unit, &n_test_failed);
+
+    FREE(CISelfTestProcessUnit, &process_unit);
+    FREE(String, path);
+
+    return NULL;
+}
+
+void
+wait_threads__CISelfTest()
+{
+    for (Usize i = 0; i < threads_count; ++i) {
+        pthread_join(threads[i], NULL);
+    }
+}
+
+void
+start_thread__CISelfTest(String *path)
+{
+    if (threads_count >= MAX_THREADS) {
+        wait_threads__CISelfTest();
+        memset(threads, 0, sizeof(pthread_t) * MAX_THREADS);
+
+        threads_count = 0;
+    }
+
+    pthread_create(&threads[threads_count++],
+                   NULL,
+                   &run_process_thread__CISelfTest,
+                   (void *)path);
+}
 
 void
 run__CISelfTest(const CIConfig *config)
@@ -50,9 +111,6 @@ run__CISelfTest(const CIConfig *config)
     }
 
     if (project_config.self_tests) {
-        Vec *process_units = NEW(Vec); // Vec<CISelfTestProcessUnit*>*
-        Usize n_test = 0;
-        Usize n_test_failed = 0;
         clock_t start = clock();
 
         for (Usize i = 0; i < project_config.self_tests->len; ++i) {
@@ -66,12 +124,7 @@ run__CISelfTest(const CIConfig *config)
 
                 while ((current = next__VecIter(&iter))) {
                     if (is_source__CIFile(current->buffer)) {
-                        ++n_test;
-
-                        CISelfTestProcessUnit *process_unit =
-                          run__CISelfTestRun(current);
-
-                        push__Vec(process_units, process_unit);
+                        start_thread__CISelfTest(current);
                     } else {
                         FREE(String, current);
                     }
@@ -79,16 +132,11 @@ run__CISelfTest(const CIConfig *config)
 
                 FREE(Vec, files);
             } else {
-                ++n_test;
-
-                CISelfTestProcessUnit *process_unit =
-                  run__CISelfTestRun(clone__String(self_test->path));
-
-                push__Vec(process_units, process_unit);
+                start_thread__CISelfTest(clone__String(self_test->path));
             }
         }
 
-        run__CISelfTestPoll(process_units, &n_test_failed);
+        wait_threads__CISelfTest();
 
         PRINT("\n\x1b[30mTest:\x1b[0m \x1b[32m{zu} passed,\x1b[0m \x1b[31m{zu} "
               "failed,\x1b[0m \x1b[30m{zu} total\n\x1b[0m",
@@ -98,10 +146,6 @@ run__CISelfTest(const CIConfig *config)
 
         printf("\x1b[30mTime: %.2fs\n\x1b[0m",
                (double)(clock() - start) / CLOCKS_PER_SEC);
-
-        FREE_BUFFER_ITEMS(
-          process_units->buffer, process_units->len, CISelfTestProcessUnit);
-        FREE(Vec, process_units);
     }
 
     FREE(CIProjectConfig, &project_config);

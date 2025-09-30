@@ -34,16 +34,19 @@
 #include <string.h>
 
 void
-display_pass_test_output__CISelfTestDiagnostic(const char *filename,
+display_pass_test_output__CISelfTestDiagnostic(int fd,
+                                               const char *filename,
                                                double time)
 {
-    printf("\r\x1b[37m\x1b[42mPASS\x1b[0m \x1b[30m%s (%.2f s)\n\x1b[0m",
-           filename,
-           time);
+    dprintf(fd,
+            "\r\x1b[37m\x1b[42mPASS\x1b[0m \x1b[30m%s (%.2f s)\n\x1b[0m",
+            filename,
+            time);
 }
 
 void
-display_failed_test_output__CISelfTestDiagnostic(const char *filename,
+display_failed_test_output__CISelfTestDiagnostic(int fd,
+                                                 const char *filename,
                                                  int exit_status,
                                                  int kill_signal,
                                                  int stop_signal)
@@ -57,12 +60,13 @@ display_failed_test_output__CISelfTestDiagnostic(const char *filename,
                  strsignal(kill_signal == -1 ? stop_signal : kill_signal))
         : NULL;
 
-    printf("\r\x1b[37m\x1b[41mFAILED\x1b[0m \x1b[30m%s (? s)\x1b[0m%s%s%s\n",
-           filename,
-           exit_status == -1 && kill_signal == -1 && stop_signal == -1 ? ""
-                                                                       : " ",
-           exit_status_msg ? exit_status_msg : "",
-           signal_msg ? signal_msg : "");
+    dprintf(fd,
+            "\r\x1b[37m\x1b[41mFAILED\x1b[0m \x1b[30m%s (? s)\x1b[0m%s%s%s\n",
+            filename,
+            exit_status == -1 && kill_signal == -1 && stop_signal == -1 ? ""
+                                                                        : " ",
+            exit_status_msg ? exit_status_msg : "",
+            signal_msg ? signal_msg : "");
 
     if (exit_status_msg) {
         lily_free(exit_status_msg);
@@ -75,6 +79,7 @@ display_failed_test_output__CISelfTestDiagnostic(const char *filename,
 
 void
 display_failed_expected_stdout_assertion_output__CISelfTestDiagnostic(
+  int fd,
   String *expected_stdout,
   String *actual_stdout,
   const char *filename)
@@ -87,15 +92,39 @@ display_failed_expected_stdout_assertion_output__CISelfTestDiagnostic(
 
     disable_constant_escapes__String(disabled_escapes_actual_stdout);
 
-    display_failed_test_output__CISelfTestDiagnostic(filename, -1, -1, -1);
+    display_failed_test_output__CISelfTestDiagnostic(fd, filename, -1, -1, -1);
 
-    printf("\x1b[31m@expected_stdout assertion failed:\n\x1b[0m");
-    printf("\x1b[32m  - Expected: %s\n\x1b[0m",
-           disabled_escapes_expected_stdout->buffer);
-    printf("\x1b[31m  - Actual: %s\n\x1b[0m",
-           disabled_escapes_actual_stdout->buffer);
-    puts("");
+    dprintf(fd, "\x1b[31m@expected_stdout assertion failed:\n\x1b[0m");
+    dprintf(fd,
+            "\x1b[32m  - Expected: %s\n\x1b[0m",
+            disabled_escapes_expected_stdout->buffer);
+    dprintf(fd,
+            "\x1b[31m  - Actual: %s\n\x1b[0m\n",
+            disabled_escapes_actual_stdout->buffer);
 
     FREE(String, disabled_escapes_expected_stdout);
     FREE(String, disabled_escapes_actual_stdout);
+
+    exit(EXIT_ERR);
+}
+
+void
+display_failed_binary_not_exist__CISelfTestDiagnostic(int fd,
+                                                      String *binary_path,
+                                                      const char *filename)
+{
+    display_failed_test_output__CISelfTestDiagnostic(fd, filename, -1, -1, -1);
+    dprintf(fd,
+            "\x1b[31mThe following binary file does not exist: %s\n\x1b[0m",
+            binary_path->buffer);
+    exit(EXIT_ERR);
+}
+
+void
+display_failed_timeout__CISelfTestDiagnostic(int fd, const char *filename)
+{
+    dprintf(
+      fd,
+      "\r\x1b[37m\x1b[41mFAILED\x1b[0m \x1b[30m%s (? s)\x1b[0m [TIMEOUT]\n",
+      filename);
 }

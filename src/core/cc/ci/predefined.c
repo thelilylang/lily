@@ -48,7 +48,12 @@ generate__CIPreDefined(const CIProjectConfig *config)
     char *command = format("{S} -dM -E -std={s} - < /dev/null",
                            config->compiler.command,
                            std[config->standard]);
-    String *builtin_h = save__Command(command);
+    int command_exit_status;
+    String *builtin_h = save__Command(command, &command_exit_status);
+
+    if (command_exit_status != EXIT_OK) {
+        FAILED("failed to fetch builtin macros");
+    }
 
     lily_free(command);
 

@@ -31,24 +31,32 @@
 typedef struct CISelfTestProcessUnit
 {
     Fork pid;
-    String *path;
-    int read_fd;
+    String *path; // String* (&)
+    int read_out_fd;
+    int read_diagnostic_fd;
 } CISelfTestProcessUnit;
 
 /**
  *
  * @brief Construct CISelfTestProcessUnit type.
  */
-CONSTRUCTOR(CISelfTestProcessUnit *,
-            CISelfTestProcessUnit,
-            Fork pid,
-            String *path,
-            int read_fd);
+inline CONSTRUCTOR(CISelfTestProcessUnit,
+                   CISelfTestProcessUnit,
+                   Fork pid,
+                   String *path,
+                   int read_out_fd,
+                   int read_diagnostic_fd)
+{
+    return (CISelfTestProcessUnit){ .pid = pid,
+                                    .path = path,
+                                    .read_out_fd = read_out_fd,
+                                    .read_diagnostic_fd = read_diagnostic_fd };
+}
 
 /**
  *
  * @brief Free CISelfTestProcessUnit type.
  */
-DESTRUCTOR(CISelfTestProcessUnit, CISelfTestProcessUnit *self);
+DESTRUCTOR(CISelfTestProcessUnit, const CISelfTestProcessUnit *self);
 
 #endif // LILY_COMMAND_CI_SELF_TEST_PROCESS_UNIT_H

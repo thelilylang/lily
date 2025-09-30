@@ -33,7 +33,8 @@
  * @param time Time in seconds.
  */
 void
-display_pass_test_output__CISelfTestDiagnostic(const char *filename,
+display_pass_test_output__CISelfTestDiagnostic(int fd,
+                                               const char *filename,
                                                double time);
 
 /**
@@ -41,7 +42,8 @@ display_pass_test_output__CISelfTestDiagnostic(const char *filename,
  * @param filename const char* (&)
  */
 void
-display_failed_test_output__CISelfTestDiagnostic(const char *filename,
+display_failed_test_output__CISelfTestDiagnostic(int fd,
+                                                 const char *filename,
                                                  int exit_status,
                                                  int kill_signal,
                                                  int stop_signal);
@@ -54,8 +56,21 @@ display_failed_test_output__CISelfTestDiagnostic(const char *filename,
  */
 void
 display_failed_expected_stdout_assertion_output__CISelfTestDiagnostic(
+  int fd,
   String *expected_stdout,
   String *actual_stdout,
   const char *filename);
+
+/**
+ * @param binary_path String* (&)
+ * @param filename const char* (&)
+ */
+void
+display_failed_binary_not_exist__CISelfTestDiagnostic(int fd,
+                                                      String *binary_path,
+                                                      const char *filename);
+
+void
+display_failed_timeout__CISelfTestDiagnostic(int fd, const char *filename);
 
 #endif // LILY_COMMAND_CI_SELF_TEST_DIAGNOSTIC_H
