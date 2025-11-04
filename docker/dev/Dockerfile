@@ -3,9 +3,17 @@ FROM archlinux:latest
 RUN pacman -Syu --noconfirm && \
 	pacman -S --noconfirm base base-devel clang git llvm18 cmake ninja lld18
 
-RUN pacman -Scc --noconfirm
+RUN useradd -m user && echo "user ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+USER user 
+WORKDIR /home/user
 
-RUN useradd user
+RUN git clone https://aur.archlinux.org/cmake-format.git
+RUN cd cmake-format && makepkg -si --noconfirm
+RUN rm -rf cmake-format
+
+USER root
+
+RUN pacman -Scc --noconfirm
 
 ENV CC=clang
 ENV CXX=clang++
