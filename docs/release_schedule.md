@@ -23,7 +23,7 @@
 | v0.18.0 | Implement contract oriented programming                          | 2026-04-27   |
 | v0.19.0 | Continue to write Std library                                    | 2026-05-27   |
 | v0.20.0 | Continue to write Std library (Containers)                       | 2026-06-27   |
-| v0.21.0 | Implement C mode                                                 | 2026-08-27   |
+| v0.21.0 | Implement C mode                                                 | 2026-07-27   |
 | v0.22.0 | Implement C++ mode                                               | 2026-08-27   |
 | v0.23.0 | ASM features                                                     | 2026-09-21   |
 | v0.24.0 | Thread + Future data type                                        | 2026-12-21   |
