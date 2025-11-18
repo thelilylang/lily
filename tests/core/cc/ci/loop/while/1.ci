@@ -1,0 +1,12 @@
+//@expected_stdout PASS\n
+
+#include <helper.h>
+
+int main() {
+	int i = 0;
+
+	while (i < 1) {
+		printf("PASS\n");
+		++i;
+	}
+}

@@ -1,0 +1,12 @@
+//@expected_stdout PASS\n
+
+#include <helper.h>
+
+int main() {
+	int a = 20;
+	int x = a == 20 ? a * 2 : a / 2;
+
+	if (x == 40) {
+		printf("PASS\n");
+	}
+}

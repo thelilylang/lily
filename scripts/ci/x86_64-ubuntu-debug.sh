@@ -13,9 +13,6 @@ sudo apt-get install liblld-18-dev
 # Download & Install Ninja
 sudo apt-get install ninja-build
 
-# Download & Install python requirements
-pip install -r requirements.txt
-
 # Load & Setup submodules
 make submodules_without_llvm
 
@@ -32,7 +29,7 @@ cmake \
 	-DCMAKE_CXX_COMPILER=clang++-18
 
 # Build
-cmake --build build/Debug
+ninja -C build/Debug
 
 # Test
-./scripts/full_test.sh
+ninja test -C build/Debug

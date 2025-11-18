@@ -76,6 +76,11 @@ if(BSD)
   set(LILY_BSD 1)
 endif()
 
+if(LILY_DEBUG)
+  enable_testing()
+  list(APPEND CMAKE_CTEST_ARGUMENTS "--verbose")
+endif()
+
 add_subdirectory(${CMAKE_SOURCE_DIR}/lib)
 add_subdirectory(${CMAKE_SOURCE_DIR}/src)
 add_subdirectory(${CMAKE_SOURCE_DIR}/tests)
@@ -98,6 +103,4 @@ if(LILY_DEBUG)
   else()
     move_tests_dir()
   endif()
-
-  enable_testing()
 endif()

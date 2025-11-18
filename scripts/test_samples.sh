@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+set -e
+set -o pipefail
+
 COMMAND="./bin/Debug/lilyc"
 FILES_EXCLUDED=("./tests/samples/package/a.lily" "./tests/samples/package/b.lily")
 SAMPLES_DIRS=./tests/samples/**
@@ -42,6 +45,11 @@ done
 # Run all samples
 for dir in $SAMPLES_DIRS
 do
+	if [[ ! -d $dir ]]
+	then
+		continue
+	fi
+
 	for samples_file in $dir/*.lily
 	do
 		is_excluded=false
@@ -57,6 +65,8 @@ do
 
 		if ! $is_excluded
 		then
+			set +e
+
 			$COMMAND $samples_file > /dev/null
 
 			command_status=$?
@@ -68,6 +78,8 @@ do
 				echo "Failed on $samples_file"
 				let "FAILED+=1"
 			fi
+
+			set -e
 		fi
 	done
 done

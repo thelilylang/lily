@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+if [[ ! -d "build/Debug" ]]
+then
+	echo 'Skipping pre-commit. Expected to have `build/Debug`. Please configure the project by running `make debug`.'
+	exit 0
+fi
+
 # Check build
 cd patches && patch -r ../include/base/macros.h disable_debug.patch > /dev/null
 cd ..
@@ -7,12 +13,11 @@ patch_status=$?
 
 ninja -C build/Debug
 
-# Format all files 
+# Format all files
 make format
 
-# Run all samples
-# NOTE: If you can't run `./scripts/test_samples.sh`, replace with `./scripts/test_samples.py`.
-./scripts/test_samples.sh
+# Run tests
+ninja test -C build/Debug
 
 # Revert to patch modification
 if [ $patch_status -eq 0 ]
