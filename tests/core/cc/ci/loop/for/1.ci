@@ -1,0 +1,9 @@
+//@expected_stdout PASS\n
+
+#include <helper.h>
+
+int main() {
+	for (int i = 0; i < 1; ++i) {
+		printf("PASS\n");
+	}
+}
