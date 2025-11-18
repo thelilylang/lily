@@ -32,7 +32,7 @@ cmake \
 	-DCMAKE_CXX_COMPILER=clang++-18
 
 # Build
-cmake --build build/Debug
+ninja -C build/Debug
 
 # Test
-./scripts/full_test.sh
+ninja test -C build/Debug
