@@ -5,5 +5,5 @@ if(LILY_DEBUG)
   target_link_libraries(test_base PRIVATE lily_base)
   target_include_directories(test_base PRIVATE ${LILY_INCLUDE})
 
-  add_test(NAME test_base COMMAND test_base)
+  add_test(NAME test_base COMMAND test_base WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 endif()

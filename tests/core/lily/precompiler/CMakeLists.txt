@@ -8,5 +8,5 @@ if(LILY_DEBUG)
                         PRIVATE lily_core_lily_precompiler)
   target_include_directories(test_core_precompiler PRIVATE ${LILY_INCLUDE})
 
-  add_test(NAME test_core_precompiler COMMAND test_core_precompiler)
+  add_test(NAME test_core_precompiler COMMAND test_core_precompiler WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 endif()
