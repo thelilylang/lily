@@ -3928,13 +3928,12 @@ parse_while_stmt__CIParser(CIParser *self, bool in_switch)
         default: {
             CIDeclFunctionItem *item =
               parse_function_body_item__CIParser(self, true, in_switch);
+            CIScope *scope = add_scope__CIResultFile(
+              self->file, current_scope->scope_id, true);
+
+            body = NEW(CIDeclFunctionBody, scope->scope_id);
 
             if (item) {
-                CIScope *scope = add_scope__CIResultFile(
-                  self->file, current_scope->scope_id, true);
-
-                body = NEW(CIDeclFunctionBody, scope->scope_id);
-
                 add__CIDeclFunctionBody(body, item);
             }
         }
