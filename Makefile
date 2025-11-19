@@ -35,6 +35,10 @@ libyaml_submodule:
 submodules_without_llvm: libyaml_submodule
 submodules: llvm_submodule libyaml_submodule
 
+test:
+	cmake --build build/Debug -j 4
+	cd build/Debug && ctest --verbose
+
 format:
 	./scripts/format.sh
 

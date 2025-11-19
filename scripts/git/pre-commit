@@ -17,7 +17,7 @@ ninja -C build/Debug
 make format
 
 # Run tests
-ninja test -C build/Debug
+make test
 
 # Revert to patch modification
 if [ $patch_status -eq 0 ]
