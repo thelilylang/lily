@@ -1,0 +1,11 @@
+//@expected_stdout PASS\n
+
+#include <helper.h>
+
+int main() {
+	int i = 0;
+
+	while (0);
+
+	printf("PASS\n");
+}

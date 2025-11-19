@@ -1,0 +1,22 @@
+//@expected_stdout PASS\n
+
+#include <helper.h>
+
+int main() {
+	int a = 10;
+
+	switch (a)
+		case 10: {
+			printf("PASS\n");
+			break;
+		case 1:
+		default:
+			printf("FAIL\n");
+			break;
+		}
+
+	int b = 10;
+
+	switch (b)
+		case 10:;
+}
