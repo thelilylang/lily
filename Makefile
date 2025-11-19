@@ -1,25 +1,26 @@
 CLANG_FORMAT = @clang-format -i
 CMAKE_FORMAT = @cmake-format -i
+BUILDER_GENERATOR ?= Ninja
 
 hooks:
 	./scripts/patches/enable_local.sh
 	cd .git/hooks && ln -sf ../../scripts/git/pre-commit . && ln -sf ../../scripts/git/post-commit .
 
 build:
-	cmake --build  build/
-	cmake --build  build/Debug
+	cmake --build build -j 4
+	cmake --build build/Debug -j 4
 
 configure:
-	mkdir -p build && cd build && cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
+	mkdir -p build && cd build && cmake .. -G $(BUILDER_GENERATOR) -DCMAKE_BUILD_TYPE=Release
 
 configure_with_llvm:
-	mkdir -p build && cd build && cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DLILY_BUILD_LLVM=ON -DLLVM_ENABLE_PROJECTS="lld"
+	mkdir -p build && cd build && cmake .. -G $(BUILDER_GENERATOR) -DCMAKE_BUILD_TYPE=Release -DLILY_BUILD_LLVM=ON -DLLVM_ENABLE_PROJECTS="lld"
 
 debug:
-	mkdir -p build && cd build && cmake -H. -BDebug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_EXPORT_COMPILE_COMMANDS=YES .. -G Ninja && ln -sf Debug/compile_commands.json .
+	mkdir -p build && cd build && cmake -H. -BDebug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_EXPORT_COMPILE_COMMANDS=YES .. -G $(BUILDER_GENERATOR) && ln -sf Debug/compile_commands.json .
 
 debug_with_llvm:
-	mkdir -p build && cd build && cmake -H. -BDebug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DLILY_BUILD_LLVM=ON -DLLVM_ENABLE_PROJECTS="lld" -DCMAKE_EXPORT_COMPILE_COMMANDS=YES .. -G Ninja && ln -sf Debug/compile_commands.json .
+	mkdir -p build && cd build && cmake -H. -BDebug -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DLILY_BUILD_LLVM=ON -DLLVM_ENABLE_PROJECTS="lld" -DCMAKE_EXPORT_COMPILE_COMMANDS=YES .. -G $(BUILDER_GENERATOR) && ln -sf Debug/compile_commands.json .
 
 llvm_submodule:
 	git submodule init
