@@ -1,0 +1,15 @@
+//@expected_stdout PASS\nPASS\n
+
+#include <helper.h>
+
+int main() {
+	if (1)
+		printf("PASS\n");
+	else
+		printf("FAIL\n");
+
+	if (0)
+		printf("FAIL\n");
+	else
+		printf("PASS\n");
+}

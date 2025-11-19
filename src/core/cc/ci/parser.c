@@ -448,6 +448,7 @@ parse_function_body__CIParser(CIParser *self,
 static inline CIDeclFunctionBody *
 parse_function_block__CIParser(CIParser *self, bool in_loop, bool in_switch);
 
+/// @return CIDeclFunctionItem*?
 static CIDeclFunctionItem *
 parse_function_body_item__CIParser(CIParser *self,
                                    bool in_loop,
@@ -3928,13 +3929,12 @@ parse_while_stmt__CIParser(CIParser *self, bool in_switch)
         default: {
             CIDeclFunctionItem *item =
               parse_function_body_item__CIParser(self, true, in_switch);
+            CIScope *scope = add_scope__CIResultFile(
+              self->file, current_scope->scope_id, true);
+
+            body = NEW(CIDeclFunctionBody, scope->scope_id);
 
             if (item) {
-                CIScope *scope = add_scope__CIResultFile(
-                  self->file, current_scope->scope_id, true);
-
-                body = NEW(CIDeclFunctionBody, scope->scope_id);
-
                 add__CIDeclFunctionBody(body, item);
             }
         }
@@ -3973,12 +3973,30 @@ parse_switch_stmt__CIParser(CIParser *self, bool in_loop)
               parse_function_body_item__CIParser(self, in_loop, true);
             CIScope *scope = add_scope__CIResultFile(
               self->file, current_scope->scope_id, true);
+            bool was_parsed_after_in_label = false;
 
             body = NEW(CIDeclFunctionBody, scope->scope_id);
 
+        add_item:
             if (item) {
                 add__CIDeclFunctionBody(body, item);
+
+                if (was_parsed_after_in_label) {
+                    goto after_add_item;
+                }
+
+                // If we're in a label such as a `case` or `default`, we should
+                // parse the next body item.
+                if (in_label) {
+                    item =
+                      parse_function_body_item__CIParser(self, in_loop, true);
+                    was_parsed_after_in_label = true;
+
+                    goto add_item;
+                }
             }
+
+        after_add_item:
         }
     }
 
@@ -4012,7 +4030,7 @@ parse_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
                 return NEW_VARIANT(
                   CIDeclFunctionItem, stmt, NEW_VARIANT(CIStmt, break));
             } else {
-                FAILED("break is not expected outside of a loop");
+                FAILED("break is not expected outside of a loop or a switch");
             }
         case CI_TOKEN_KIND_KEYWORD_CASE:
             if (in_switch) {
