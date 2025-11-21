@@ -1,0 +1,31 @@
+//@expected_stdout PASS\nPASS\n
+
+#include <helper.h>
+
+void
+goto_thing(void)
+{
+	if (0) {
+		goto not_print;
+	} else {
+		goto print;
+	}
+
+print:
+	printf("PASS\n");
+
+	return;
+not_print:
+	printf("FAIL\n");
+}
+
+int main() {
+	goto_thing();
+	
+	goto print;
+
+	if (0) {
+print:
+		printf("PASS\n");
+	}
+}
