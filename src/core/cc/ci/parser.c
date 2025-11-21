@@ -625,7 +625,7 @@ parse_storage_class_specifiers__CIParser(CIParser *self,
 static Vec *names_error = NULL; // Vec<Rc<String*>*>*
 static Usize name_error_count = 0;
 // The `data_type_as_expression` variable is used to keep the `DataType`
-// pointer, when in `parse_decl__CIParser`, when `in_function_body` is true is
+// pointer, when in `parse_decl__CIParser`, when `IN_FUNCTION_BODY` is true is
 // that the following (current) token is not a `=`, `;` or `(`. Then, in the
 // `parse_expr__CIParser` function, if `data_type_as_expression` is not NULL,
 // the data type is returned as an expression.
@@ -656,6 +656,14 @@ static bool in_label = false;
 // Represent the `scope` of the current block being analyzed.
 static CIScope *current_scope = NULL; // CIScope*?
 
+// Represent the first layer `scope` of a function.
+static CIScope *first_layer_function_scope = NULL; // CIScope*? (&)
+
+#define SET_FIRST_LAYER_FUNCTION_SCOPE(scope) \
+    first_layer_function_scope = scope;
+#define UNSET_FIRST_LAYER_FUNCTION_SCOPE() first_layer_function_scope = NULL;
+#define IN_FUNCTION_BODY ((bool)first_layer_function_scope)
+
 // Represent the `body` of the current block being analyzed.
 static CIDeclFunctionBody *current_body = NULL; // CIDeclFunctionBody*?
 
@@ -675,13 +683,6 @@ static const CIFeature *tokens_feature = NULL; // CIFeature* (&)
 
 #define HAS_REACH_EOF(token) (token->kind == CI_TOKEN_KIND_EOF)
 #define HAS_REACH_EOT(token) (token->kind == CI_TOKEN_KIND_EOT)
-
-// The function is set to true if the parse is currently parseing the body of a
-// function.
-static bool in_function_body = false;
-
-#define SET_IN_FUNCTION_BODY() in_function_body = true;
-#define UNSET_IN_FUNCTION_BODY() in_function_body = false;
 
 // In some situations we don't want to eat the `;` token, for example when
 // parsing variable declarations in a `for` loop.
@@ -2344,7 +2345,7 @@ parse_pre_data_type__CIParser(CIParser *self)
                                                     &enum_decl,
                                                     current_scope,
                                                     true,
-                                                    in_function_body)) {
+                                                    IN_FUNCTION_BODY)) {
                         break;
                     }
 
@@ -2424,7 +2425,7 @@ parse_pre_data_type__CIParser(CIParser *self)
                                                     &struct_decl,
                                                     current_scope,
                                                     true,
-                                                    in_function_body)) {
+                                                    IN_FUNCTION_BODY)) {
                         break;
                     }
 
@@ -2449,7 +2450,7 @@ parse_pre_data_type__CIParser(CIParser *self)
                                                     &union_decl,
                                                     current_scope,
                                                     true,
-                                                    in_function_body)) {
+                                                    IN_FUNCTION_BODY)) {
                         break;
                     }
 
@@ -4193,6 +4194,7 @@ parse_function_body_base__CIParser(CIParser *self,
       parent_function_scope
         ? *parent_function_scope
         : add_scope__CIResultFile(self->file, current_scope->scope_id, true);
+
     current_body = NEW(CIDeclFunctionBody, current_scope->scope_id);
 
     while (self->current_token->kind != CI_TOKEN_KIND_RBRACE &&
@@ -4273,7 +4275,7 @@ parse_function__CIParser(CIParser *self,
             *can_have_list = true;
 
             add_decl_to_scope__CIParser(
-              self, &res, current_scope, true, in_function_body);
+              self, &res, current_scope, true, IN_FUNCTION_BODY);
 
             break;
         case CI_TOKEN_KIND_SEMICOLON:
@@ -4289,10 +4291,13 @@ parse_function__CIParser(CIParser *self,
 
             next_token__CIParser(self);
 
-            SET_IN_FUNCTION_BODY();
-
             CIScope *parent_function_scope =
               function_data_type->function.parent_scope;
+
+            first_layer_function_scope = parent_function_scope;
+
+            SET_FIRST_LAYER_FUNCTION_SCOPE(first_layer_function_scope);
+
             CIDeclFunctionBody *body = parse_function_body__CIParser(
               self, false, false, &parent_function_scope);
 
@@ -4302,7 +4307,7 @@ parse_function__CIParser(CIParser *self,
                 FREE(CIDeclFunctionBody, body);
             }
 
-            UNSET_IN_FUNCTION_BODY();
+            UNSET_FIRST_LAYER_FUNCTION_SCOPE();
 
             break;
         default:
@@ -4827,7 +4832,7 @@ parse_variable__CIParser(CIParser *self,
     }
 
     if (*can_have_list) {
-        if (in_function_body) {
+        if (IN_FUNCTION_BODY) {
             ASSERT(current_body);
 
             add__CIDeclFunctionBody(current_body,
@@ -4835,7 +4840,7 @@ parse_variable__CIParser(CIParser *self,
         }
 
         add_decl_to_scope__CIParser(
-          self, &res, current_scope, true, in_function_body);
+          self, &res, current_scope, true, IN_FUNCTION_BODY);
     }
 
     return res;
@@ -4844,7 +4849,7 @@ parse_variable__CIParser(CIParser *self,
 CIDecl *
 parse_label__CIParser(CIParser *self)
 {
-    if (in_function_body) {
+    if (IN_FUNCTION_BODY) {
         switch (self->current_token->kind) {
             case CI_TOKEN_KIND_IDENTIFIER: {
                 Rc *identifier = self->current_token->identifier;
@@ -4872,8 +4877,11 @@ parse_decl__CIParser(CIParser *self)
 {
     CIDataType *pre_data_type = NULL;
     CIDecl *res = NULL;
+    CIScope *decl_scope = NULL;
 
     if ((res = parse_label__CIParser(self))) {
+        decl_scope = first_layer_function_scope;
+
         goto exit;
     }
 
@@ -4927,7 +4935,7 @@ loop: {
                                            data_type,
                                            name.generic_params,
                                            &name.value,
-                                           in_function_body,
+                                           IN_FUNCTION_BODY,
                                            &can_have_list);
     }
 
@@ -4940,10 +4948,12 @@ loop: {
     FREE(CIDataType, pre_data_type);
 }
 
+    decl_scope = current_scope;
+
 exit:
     if (res) {
         add_decl_to_scope__CIParser(
-          self, &res, current_scope, true, in_function_body);
+          self, &res, decl_scope, true, IN_FUNCTION_BODY);
     }
 
     return res;
