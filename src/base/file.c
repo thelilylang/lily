@@ -366,19 +366,12 @@ exists_rec__File(const char *path, const char *filename)
 bool
 getdelim__File(String **line_ref, int delim, FILE *stream)
 {
-#define ADVANCE() fseek(stream, 1, SEEK_CUR);
-
     ASSERT(stream);
 
     String *line = NULL;
-    long default_position = ftell(stream);
     char current;
 
     flockfile(stream);
-
-    if (default_position != 0) {
-        ADVANCE();
-    }
 
     while ((current = fgetc(stream)) != EOF) {
         if (!line) {
@@ -401,8 +394,6 @@ getdelim__File(String **line_ref, int delim, FILE *stream)
     }
 
     return false;
-
-#undef ADVANCE
 }
 
 bool

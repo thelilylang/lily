@@ -91,7 +91,7 @@ bool
 metadata_is_duplicatable__CISelfTestMetadataScanner(Int32 metadata_kind)
 {
 #define MATCHES_EXPECTED_STDOUT 0
-#define MATCHES_COMPILE_OPTIONS 2
+#define MATCHES_COMPILE_OPTIONS 1
 
     switch (metadata_kind) {
         case MATCHES_EXPECTED_STDOUT:
@@ -159,16 +159,16 @@ get_metadata_from_line__CISelfTestMetadataScanner(
 #define MATCHES_EXPECTED_STDOUT_S "@expected_stdout" MATCHES_SPACE_S
 #define MATCHES_EXPECTED_STDERR_S "@expected_stderr" MATCHES_SPACE_S
 #define MATCHES_COMPILE_OPTIONS_S "@compile_options" MATCHES_SPACE_S
-    const char *matches[] = {
+    static const char *matches[] = {
         [MATCHES_EXPECTED_STDOUT] = MATCHES_EXPECTED_STDOUT_S,
         [MATCHES_COMPILE_OPTIONS] = MATCHES_COMPILE_OPTIONS_S,
     };
-    const Int32 matches_len[] = {
+    static const Int32 matches_len[] = {
         [MATCHES_EXPECTED_STDOUT] = sizeof(MATCHES_EXPECTED_STDOUT_S) - 1,
         [MATCHES_COMPILE_OPTIONS] = sizeof(MATCHES_COMPILE_OPTIONS_S) - 1,
     };
-    const Usize matches_n = LEN(matches, *matches);
-    const Usize matches_len_n = LEN(matches_len, *matches_len);
+    static const Usize matches_n = LEN(matches, *matches);
+    static const Usize matches_len_n = LEN(matches_len, *matches_len);
 
     static_assert(matches_len_n == matches_len_n);
 
