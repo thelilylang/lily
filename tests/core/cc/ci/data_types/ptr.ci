@@ -1,0 +1,9 @@
+//@expected_stdout PASS\n
+
+#include <helper.h>
+
+int main() {
+	void *ptr = NULL;
+
+	printf("PASS\n");
+}

@@ -1,0 +1,13 @@
+//@expected_stdout PASS: 0\n
+
+#include <helper.h>
+
+struct X {
+	int a : 1;
+};
+
+int main() {
+	struct X x = { .a = 0 };
+
+	printf("PASS: %d\n", x.a);
+}
