@@ -157,7 +157,6 @@ get_metadata_from_line__CISelfTestMetadataScanner(
 
 #define MATCHES_SPACE_S " "
 #define MATCHES_EXPECTED_STDOUT_S "@expected_stdout" MATCHES_SPACE_S
-#define MATCHES_EXPECTED_STDERR_S "@expected_stderr" MATCHES_SPACE_S
 #define MATCHES_COMPILE_OPTIONS_S "@compile_options" MATCHES_SPACE_S
     static const char *matches[] = {
         [MATCHES_EXPECTED_STDOUT] = MATCHES_EXPECTED_STDOUT_S,
@@ -210,7 +209,7 @@ get_metadata_from_line__CISelfTestMetadataScanner(
         case MATCHES_NOT_FOUND:
             emit_error__CISelfTestMetadataScanner(
               ctx,
-              "expected `@expected_stdout`, `@expected_stderr` or "
+              "expected `@expected_stdout`, or "
               "`@compile_options` as flag");
 
             break;
