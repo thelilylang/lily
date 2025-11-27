@@ -1,4 +1,4 @@
-//@expected_stdout PASS: 1, 2, 3\nPASS: 1, 2\n
+//@expected_bin_stdout PASS: 1, 2, 3\nPASS: 1, 2\n
 
 #include <helper.h>
 

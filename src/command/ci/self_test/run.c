@@ -119,11 +119,12 @@ handler_result__CISelfTestRun(void *entity,
 
     command_output = save__Command(command->buffer, NULL);
 
-    if (metadata->expected_stdout && strcmp(metadata->expected_stdout->buffer,
-                                            command_output->buffer) != 0) {
+    if (metadata->expected_bin_stdout &&
+        strcmp(metadata->expected_bin_stdout->buffer, command_output->buffer) !=
+          0) {
         display_failed_expected_stdout_assertion_output__CISelfTestDiagnostic(
           other_args_casted->write_diagnostic_fd,
-          metadata->expected_stdout,
+          metadata->expected_bin_stdout,
           command_output,
           file->file_input.name);
     } else {

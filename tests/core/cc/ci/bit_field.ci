@@ -1,4 +1,4 @@
-//@expected_stdout PASS: 0\n
+//@expected_bin_stdout PASS: 0\n
 
 #include <helper.h>
 

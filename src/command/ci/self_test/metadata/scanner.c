@@ -90,11 +90,11 @@ CONSTRUCTOR(struct CISelfTestMetadataScannerContext,
 bool
 metadata_is_duplicatable__CISelfTestMetadataScanner(Int32 metadata_kind)
 {
-#define MATCHES_EXPECTED_STDOUT 0
+#define MATCHES_EXPECTED_BIN_STDOUT 0
 #define MATCHES_COMPILE_OPTIONS 1
 
     switch (metadata_kind) {
-        case MATCHES_EXPECTED_STDOUT:
+        case MATCHES_EXPECTED_BIN_STDOUT:
             return true;
         case MATCHES_COMPILE_OPTIONS:
             return false;
@@ -112,8 +112,8 @@ set_metadata__CISelfTestMetadataScanner(
     String **metadata_ctx_value = NULL; // String* (&)* (&)
 
     switch (metadata_kind) {
-        case MATCHES_EXPECTED_STDOUT:
-            metadata_ctx_value = &ctx->metadata->expected_stdout;
+        case MATCHES_EXPECTED_BIN_STDOUT:
+            metadata_ctx_value = &ctx->metadata->expected_bin_stdout;
 
             break;
         case MATCHES_COMPILE_OPTIONS:
@@ -156,14 +156,15 @@ get_metadata_from_line__CISelfTestMetadataScanner(
 #define MATCHES_NOT_FOUND -1
 
 #define MATCHES_SPACE_S " "
-#define MATCHES_EXPECTED_STDOUT_S "@expected_stdout" MATCHES_SPACE_S
+#define MATCHES_EXPECTED_BIN_STDOUT_S "@expected_bin_stdout" MATCHES_SPACE_S
 #define MATCHES_COMPILE_OPTIONS_S "@compile_options" MATCHES_SPACE_S
     static const char *matches[] = {
-        [MATCHES_EXPECTED_STDOUT] = MATCHES_EXPECTED_STDOUT_S,
+        [MATCHES_EXPECTED_BIN_STDOUT] = MATCHES_EXPECTED_BIN_STDOUT_S,
         [MATCHES_COMPILE_OPTIONS] = MATCHES_COMPILE_OPTIONS_S,
     };
     static const Int32 matches_len[] = {
-        [MATCHES_EXPECTED_STDOUT] = sizeof(MATCHES_EXPECTED_STDOUT_S) - 1,
+        [MATCHES_EXPECTED_BIN_STDOUT] =
+          sizeof(MATCHES_EXPECTED_BIN_STDOUT_S) - 1,
         [MATCHES_COMPILE_OPTIONS] = sizeof(MATCHES_COMPILE_OPTIONS_S) - 1,
     };
     static const Usize matches_n = LEN(matches, *matches);
@@ -176,7 +177,7 @@ get_metadata_from_line__CISelfTestMetadataScanner(
     strstr_list__Str(line, matches, matches_n, &match_at);
 
     switch (match_at) {
-        case MATCHES_EXPECTED_STDOUT:
+        case MATCHES_EXPECTED_BIN_STDOUT:
         case MATCHES_COMPILE_OPTIONS: {
             line += matches_len[match_at];
 
@@ -209,7 +210,7 @@ get_metadata_from_line__CISelfTestMetadataScanner(
         case MATCHES_NOT_FOUND:
             emit_error__CISelfTestMetadataScanner(
               ctx,
-              "expected `@expected_stdout`, or "
+              "expected `@expected_bin_stdout`, or "
               "`@compile_options` as flag");
 
             break;
@@ -217,11 +218,11 @@ get_metadata_from_line__CISelfTestMetadataScanner(
             UNREACHABLE("unknown variant");
     }
 
-#undef MATCHES_EXPECTED_STDOUT
+#undef MATCHES_EXPECTED_BIN_STDOUT
 #undef MATCHES_COMPILE_OPTIONS
 
 #undef MATCHES_SPACE_S
-#undef MATCHES_EXPECTED_STDOUT_S
+#undef MATCHES_EXPECTED_BIN_STDOUT_S
 #undef MATCHES_COMPILE_OPTIONS_S
 }
 

@@ -32,7 +32,7 @@ DESTRUCTOR(CISelfTestMetadata, const CISelfTestMetadata *self)
         FREE(String, self->compile_options);
     }
 
-    if (self->expected_stdout) {
-        FREE(String, self->expected_stdout);
+    if (self->expected_bin_stdout) {
+        FREE(String, self->expected_bin_stdout);
     }
 }
