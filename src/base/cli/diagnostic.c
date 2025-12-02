@@ -35,11 +35,11 @@ print_detail__CliDiagnostic(const CliDiagnostic *self);
 void
 print_detail__CliDiagnostic(const CliDiagnostic *self)
 {
-    PRINTLN("\x1b[1m{Sr}\x1b[0m",
-            repeat__String("-", self->full_command->len + 2));
-    PRINTLN("{sa}", BOLD(">"));
-    PRINTLN("{sa}\x1b[1m{S}\x1b[0m", BOLD("> "), self->full_command);
-    PRINT("\x1b[1m> ");
+    EPRINTLN("\x1b[1m{Sr}\x1b[0m",
+             repeat__String("-", self->full_command->len + 2));
+    EPRINTLN("{sa}", BOLD(">"));
+    EPRINTLN("{sa}\x1b[1m{S}\x1b[0m", BOLD("> "), self->full_command);
+    EPRINT("\x1b[1m> ");
 
     {
         Usize count_space = 0;
@@ -50,12 +50,12 @@ print_detail__CliDiagnostic(const CliDiagnostic *self)
 
             if (current) {
                 if (current == ' ') {
-                    PRINT(" ");
+                    EPRINT(" ");
                     count_space += 1;
                 } else if (self->arg_count == count_space + 1) {
-                    PRINT("^");
+                    EPRINT("^");
                 } else {
-                    PRINT(" ");
+                    EPRINT(" ");
                 }
             } else {
                 break;
@@ -63,9 +63,9 @@ print_detail__CliDiagnostic(const CliDiagnostic *self)
         }
     }
 
-    PRINTLN("\x1b[0m");
-    PRINTLN("\x1b[1m{Sr}\x1b[0m",
-            repeat__String("-", self->full_command->len + 2));
+    EPRINTLN("\x1b[0m");
+    EPRINTLN("\x1b[1m{Sr}\x1b[0m",
+             repeat__String("-", self->full_command->len + 2));
 }
 
 void
@@ -73,28 +73,28 @@ emit__CliDiagnostic(const CliDiagnostic *self)
 {
     switch (self->kind) {
         case CLI_DIAGNOSTIC_KIND_ERROR:
-            PRINTLN("{sa}{sa}\x1b[1m{s}\x1b[0m",
-                    RED_BOLD("error"),
-                    BOLD(": "),
-                    self->msg);
+            EPRINTLN("{sa}{sa}\x1b[1m{s}\x1b[0m",
+                     RED_BOLD("error"),
+                     BOLD(": "),
+                     self->msg);
             break;
         case CLI_DIAGNOSTIC_KIND_NOTE:
-            PRINTLN("{sa}{sa}\x1b[1m{s}\x1b[0m",
-                    CYAN_BOLD("note"),
-                    BOLD(": "),
-                    self->msg);
+            EPRINTLN("{sa}{sa}\x1b[1m{s}\x1b[0m",
+                     CYAN_BOLD("note"),
+                     BOLD(": "),
+                     self->msg);
             break;
         case CLI_DIAGNOSTIC_KIND_WARNING:
-            PRINTLN("{sa}{sa}\x1b[1m{s}\x1b[0m",
-                    YELLOW_BOLD("warning"),
-                    BOLD(": "),
-                    self->msg);
+            EPRINTLN("{sa}{sa}\x1b[1m{s}\x1b[0m",
+                     YELLOW_BOLD("warning"),
+                     BOLD(": "),
+                     self->msg);
             break;
         default:
             UNREACHABLE("unknown variant");
     }
 
-    PRINTLN("{sa}\n", CYAN_BOLD("---> at(cli)"));
+    EPRINTLN("{sa}\n", CYAN_BOLD("---> at(cli)"));
     print_detail__CliDiagnostic(self);
 
     switch (self->kind) {

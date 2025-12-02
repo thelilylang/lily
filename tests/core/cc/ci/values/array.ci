@@ -1,0 +1,18 @@
+//@expected_bin_stdout PASS: 1, 2, 3\nPASS: 1, 2\n
+
+#include <helper.h>
+
+int main() {
+	int a[] = { 1, 2, 3 };
+	int b[2] = { 1, 2 };
+
+	int a0 = a[0];
+	int a1 = a[1];
+	int a2 = a[2];
+
+	int b0 = b[0];
+	int b1 = b[1];
+
+	printf("PASS: %d, %d, %d\n", a0, a1, a2);
+	printf("PASS: %d, %d\n", b0, b1);
+}

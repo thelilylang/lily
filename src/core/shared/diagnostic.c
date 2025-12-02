@@ -1429,7 +1429,7 @@ emit_warning__Diagnostic(Diagnostic self,
 
     *count_warning += 1;
 
-    PRINTLN("{Sr}", to_string__Diagnostic(&self));
+    EPRINTLN("{Sr}", to_string__Diagnostic(&self));
 
     FREE(Diagnostic, &self);
 }
@@ -1447,7 +1447,7 @@ emit_note__Diagnostic(Diagnostic self)
             UNREACHABLE("expected note diagnostic level");
     }
 
-    PRINTLN("{Sr}", to_string__Diagnostic(&self));
+    EPRINTLN("{Sr}", to_string__Diagnostic(&self));
 
     FREE(Diagnostic, &self);
 }
@@ -1466,7 +1466,7 @@ emit__Diagnostic(Diagnostic self, Usize *count_error)
             UNREACHABLE("expected error diagnostic level");
     }
 
-    PRINTLN("{Sr}", to_string__Diagnostic(&self));
+    EPRINTLN("{Sr}", to_string__Diagnostic(&self));
 
     FREE(Diagnostic, &self);
 }

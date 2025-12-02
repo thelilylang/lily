@@ -33,8 +33,7 @@
  * @param time Time in seconds.
  */
 void
-display_pass_test_output__CISelfTestDiagnostic(int fd,
-                                               const char *filename,
+display_pass_test_output__CISelfTestDiagnostic(const char *filename,
                                                double time);
 
 /**
@@ -50,15 +49,27 @@ display_failed_test_output__CISelfTestDiagnostic(int fd,
 
 /**
  *
- * @param expected_stdout String* (&)
- * @param actual_stdout String* (&)
+ * @param expected_stdout String*? (&)
+ * @param actual_stdout String*? (&)
  * @param filename const char* (&)
  */
 void
-display_failed_expected_stdout_assertion_output__CISelfTestDiagnostic(
+display_failed_expected_bin_stdout_assertion_output__CISelfTestDiagnostic(
   int fd,
   String *expected_stdout,
   String *actual_stdout,
+  const char *filename);
+
+/**
+ *
+ * @param expected_compiler_error String*? (&)
+ * @param actual_compiler_error String*? (&)
+ * @param filename const char* (&)
+ */
+void
+display_failed_expected_compiler_error_assertion_output__CISelfTestDiagnostic(
+  String *expected_compiler_error,
+  String *actual_compiler_error,
   const char *filename);
 
 /**

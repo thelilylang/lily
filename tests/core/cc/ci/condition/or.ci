@@ -3,9 +3,7 @@
 #include <helper.h>
 
 int main() {
-	int i = 0;
-
-	while (0);
-
-	printf("PASS\n");
+	if (0 || 1) {
+		printf("PASS\n");
+	}
 }
