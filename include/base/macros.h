@@ -177,16 +177,16 @@
         exit(0);                                               \
     }
 
-#define FAILED(msg)                                              \
-    {                                                            \
-        printf("FAILED: %s (%s:%d)\n", msg, __FILE__, __LINE__); \
-        exit(1);                                                 \
+#define FAILED(msg)                                                       \
+    {                                                                     \
+        fprintf(stderr, "FAILED: %s (%s:%d)\n", msg, __FILE__, __LINE__); \
+        exit(1);                                                          \
     }
 
-#define UNREACHABLE(msg)                                              \
-    {                                                                 \
-        printf("UNREACHABLE: %s (%s:%d)\n", msg, __FILE__, __LINE__); \
-        exit(1);                                                      \
+#define UNREACHABLE(msg)                                                       \
+    {                                                                          \
+        fprintf(stderr, "UNREACHABLE: %s (%s:%d)\n", msg, __FILE__, __LINE__); \
+        exit(1);                                                               \
     }
 
 #define ALIGNMENT_COEFF 2

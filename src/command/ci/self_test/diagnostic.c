@@ -134,7 +134,7 @@ display_failed_expected_compiler_error_assertion_output__CISelfTestDiagnostic(
   const char *filename)
 {
     display_string_assertion_failed__CISelfTestDiagnostic(
-      LILY_STDOUT_FILENO,
+      LILY_STDERR_FILENO,
       "expected_compiler_error",
       expected_compiler_error,
       actual_compiler_error,
