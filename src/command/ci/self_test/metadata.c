@@ -28,11 +28,15 @@
 
 DESTRUCTOR(CISelfTestMetadata, const CISelfTestMetadata *self)
 {
+    if (self->expected_bin_stdout) {
+        FREE(String, self->expected_bin_stdout);
+    }
+
     if (self->compile_options) {
         FREE(String, self->compile_options);
     }
 
-    if (self->expected_bin_stdout) {
-        FREE(String, self->expected_bin_stdout);
+    if (self->expected_compiler_error) {
+        FREE(String, self->expected_compiler_error);
     }
 }

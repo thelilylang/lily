@@ -29,13 +29,32 @@
 
 #include <core/cc/ci/project_config.h>
 
+enum CISelfTestMetadataScannerError
+{
+    CI_SELF_TEST_METADATA_SCANNER_ERROR_NONE,
+    CI_SELF_TEST_METADATA_SCANNER_ERROR_FAILED_TO_READ_FILE,
+    CI_SELF_TEST_METADATA_SCANNER_ERROR_FAILED_TO_SCAN_LINE,
+    CI_SELF_TEST_METADATA_SCANNER_ERROR_UNEXPECTED_FLAG,
+    CI_SELF_TEST_METADATA_SCANNER_ERROR_EXPECTED_NEW_LINE_OR_CLOSING_COMMENT,
+    CI_SELF_TEST_METADATA_SCANNER_ERROR_CANNOT_BE_DUPLICATED
+};
+
 /**
  *
  * @brief Scan self-test metadata.
  * @param path const String* (&)
  */
-void
+enum CISelfTestMetadataScannerError
 run__CISelfTestMetadataScanner(const String *path,
                                CISelfTestMetadata *metadata);
+
+/**
+ *
+ * @brief Convert error code to an error message.
+ * @return const char* (&)
+ */
+const char *
+get_error_message__CISelfTestMetadataScanner(
+  enum CISelfTestMetadataScannerError error);
 
 #endif // LILY_COMMAND_CI_SELF_TEST_METADATA_SCANNER_H

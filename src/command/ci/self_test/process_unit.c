@@ -36,4 +36,6 @@ DESTRUCTOR(CISelfTestProcessUnit, const CISelfTestProcessUnit *self)
 {
     close__Fd(self->read_out_fd);
     close__Fd(self->read_diagnostic_fd);
+    close__Fd(self->read_compiler_error_fd);
+    FREE(CISelfTestMetadata, &self->metadata);
 }

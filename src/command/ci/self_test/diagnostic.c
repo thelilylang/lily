@@ -27,21 +27,28 @@
 #include <base/alloc.h>
 #include <base/format.h>
 #include <base/new.h>
+#include <base/std_fileno.h>
 
 #include <command/ci/self_test/diagnostic.h>
 
 #include <stdio.h>
 #include <string.h>
 
+/// @param flag const char* (&) - e.g. expected_stdout, compiler_error
+static void
+display_string_assertion_failed__CISelfTestDiagnostic(int fd,
+                                                      const char *flag,
+                                                      String *expected,
+                                                      String *actual,
+                                                      const char *filename);
+
 void
-display_pass_test_output__CISelfTestDiagnostic(int fd,
-                                               const char *filename,
+display_pass_test_output__CISelfTestDiagnostic(const char *filename,
                                                double time)
 {
-    dprintf(fd,
-            "\r\x1b[37m\x1b[42mPASS\x1b[0m \x1b[30m%s (%.2f s)\n\x1b[0m",
-            filename,
-            time);
+    printf("\r\x1b[37m\x1b[42mPASS\x1b[0m \x1b[30m%s (%.2f s)\n\x1b[0m",
+           filename,
+           time);
 }
 
 void
@@ -78,34 +85,60 @@ display_failed_test_output__CISelfTestDiagnostic(int fd,
 }
 
 void
-display_failed_expected_stdout_assertion_output__CISelfTestDiagnostic(
+display_string_assertion_failed__CISelfTestDiagnostic(int fd,
+                                                      const char *flag,
+                                                      String *expected,
+                                                      String *actual,
+                                                      const char *filename)
+{
+    String *disabled_escapes_expected =
+      expected ? clone__String(expected) : NEW(String);
+
+    disable_constant_escapes__String(disabled_escapes_expected);
+
+    String *disabled_escapes_actual =
+      actual ? clone__String(actual) : NEW(String);
+
+    disable_constant_escapes__String(disabled_escapes_actual);
+
+    display_failed_test_output__CISelfTestDiagnostic(fd, filename, -1, -1, -1);
+
+    dprintf(fd, "\x1b[31m@%s assertion failed:\n\x1b[0m", flag);
+    dprintf(fd,
+            "\x1b[32m  - Expected: %s\n\x1b[0m",
+            disabled_escapes_expected->buffer);
+    dprintf(
+      fd, "\x1b[31m  - Actual: %s\n\x1b[0m\n", disabled_escapes_actual->buffer);
+
+    FREE(String, disabled_escapes_expected);
+    FREE(String, disabled_escapes_actual);
+}
+
+void
+display_failed_expected_bin_stdout_assertion_output__CISelfTestDiagnostic(
   int fd,
   String *expected_stdout,
   String *actual_stdout,
   const char *filename)
 {
-    String *disabled_escapes_expected_stdout = clone__String(expected_stdout);
-
-    disable_constant_escapes__String(disabled_escapes_expected_stdout);
-
-    String *disabled_escapes_actual_stdout = clone__String(actual_stdout);
-
-    disable_constant_escapes__String(disabled_escapes_actual_stdout);
-
-    display_failed_test_output__CISelfTestDiagnostic(fd, filename, -1, -1, -1);
-
-    dprintf(fd, "\x1b[31m@expected_stdout assertion failed:\n\x1b[0m");
-    dprintf(fd,
-            "\x1b[32m  - Expected: %s\n\x1b[0m",
-            disabled_escapes_expected_stdout->buffer);
-    dprintf(fd,
-            "\x1b[31m  - Actual: %s\n\x1b[0m\n",
-            disabled_escapes_actual_stdout->buffer);
-
-    FREE(String, disabled_escapes_expected_stdout);
-    FREE(String, disabled_escapes_actual_stdout);
+    display_string_assertion_failed__CISelfTestDiagnostic(
+      fd, "expected_stdout", expected_stdout, actual_stdout, filename);
 
     exit(EXIT_ERR);
+}
+
+void
+display_failed_expected_compiler_error_assertion_output__CISelfTestDiagnostic(
+  String *expected_compiler_error,
+  String *actual_compiler_error,
+  const char *filename)
+{
+    display_string_assertion_failed__CISelfTestDiagnostic(
+      LILY_STDOUT_FILENO,
+      "expected_compiler_error",
+      expected_compiler_error,
+      actual_compiler_error,
+      filename);
 }
 
 void

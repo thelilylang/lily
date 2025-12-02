@@ -40,6 +40,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 static void
@@ -69,6 +70,7 @@ run__CISelfTestPoll(const CISelfTestProcessUnit *process_unit,
     int kill_signal;
     int stop_signal;
     String *output = NEW(String);
+    String *compiler_error = NEW(String);
     clock_t start = clock();
 
     while ((double)(clock() - start) < POLL_TIMEOUT) {
@@ -81,6 +83,8 @@ run__CISelfTestPoll(const CISelfTestProcessUnit *process_unit,
         // the end of this buffer, write to stdout is blocked (and this will
         // block the child process).
         read_pipe__CISelfTestPoll(output, process_unit->read_out_fd);
+        read_pipe__CISelfTestPoll(compiler_error,
+                                  process_unit->read_compiler_error_fd);
 
         Fork wait_pid = wait_or_run__Fork(
           process_unit->pid, &exit_status, &kill_signal, &stop_signal, true);
@@ -92,8 +96,22 @@ run__CISelfTestPoll(const CISelfTestProcessUnit *process_unit,
             // never block, because the (pipe) buffer limit is reached.
             read_pipe__CISelfTestPoll(diagnostic,
                                       process_unit->read_diagnostic_fd);
-
             bool has_diagnostic = diagnostic->len > 0;
+
+            if (!has_diagnostic &&
+                process_unit->metadata.expected_compiler_error &&
+                strcmp(
+                  compiler_error->buffer,
+                  process_unit->metadata.expected_compiler_error->buffer) !=
+                  0) {
+                display_failed_expected_compiler_error_assertion_output__CISelfTestDiagnostic(
+                  process_unit->metadata.expected_compiler_error,
+                  compiler_error,
+                  process_unit->path->buffer);
+
+                goto clean_wait;
+            }
+
             bool has_err = (exit_status != -1 && exit_status != EXIT_OK) ||
                            kill_signal != -1 || stop_signal != -1;
 
@@ -101,38 +119,44 @@ run__CISelfTestPoll(const CISelfTestProcessUnit *process_unit,
                 ++(*n_test_failed);
 
                 if (output->len > 0) {
-                    write__Fd(LILY_STDOUT_FILENO, output->buffer, output->len);
+                    write__Fd(LILY_STDERR_FILENO, output->buffer, output->len);
                 }
 
-                if (!has_diagnostic || (has_err && exit_status != EXIT_ERR)) {
-                    has_diagnostic = false;
-
+                if (!has_diagnostic && (has_err && exit_status != EXIT_ERR)) {
                     display_failed_test_output__CISelfTestDiagnostic(
-                      LILY_STDOUT_FILENO,
+                      LILY_STDERR_FILENO,
                       process_unit->path->buffer,
                       exit_status,
                       kill_signal,
                       stop_signal);
+
+                    goto clean_wait;
                 }
             }
 
             if (has_diagnostic) {
                 write__Fd(
-                  LILY_STDOUT_FILENO, diagnostic->buffer, diagnostic->len);
+                  LILY_STDERR_FILENO, diagnostic->buffer, diagnostic->len);
+            } else {
+                display_pass_test_output__CISelfTestDiagnostic(
+                  process_unit->path->buffer,
+                  (double)(clock() - process_unit->start) / CLOCKS_PER_SEC);
             }
 
+        clean_wait:
             FREE(String, diagnostic);
 
-            goto end;
+            goto done;
         }
     }
 
     ASSERT(kill(process_unit->pid, 0) == 0);
-    display_failed_timeout__CISelfTestDiagnostic(LILY_STDOUT_FILENO,
+    display_failed_timeout__CISelfTestDiagnostic(LILY_STDERR_FILENO,
                                                  process_unit->path->buffer);
 
-end:
+done:
     FREE(String, output);
+    FREE(String, compiler_error);
 
 #undef POLL_TIMEOUT
 }

@@ -51,28 +51,22 @@ static bool
 metadata_is_duplicatable__CISelfTestMetadataScanner(Int32 metadata_kind);
 
 /// @param metadata_value String*
-static void
+static enum CISelfTestMetadataScannerError
 set_metadata__CISelfTestMetadataScanner(
   struct CISelfTestMetadataScannerContext *ctx,
   Int32 metadata_kind,
   String *metadata_value);
 
-/// @param msg const char* (&)
-[[noreturn]] static void
-emit_error__CISelfTestMetadataScanner(
-  const struct CISelfTestMetadataScannerContext *ctx,
-  const char *msg);
-
 /// @param line const char* (&)
 /// @param end_match const char* (&)
-static void
+static int
 get_metadata_from_line__CISelfTestMetadataScanner(
   const char *line,
   const char *end_match,
   struct CISelfTestMetadataScannerContext *ctx);
 
 /// @param line_ref String** (&)
-static bool
+static int
 scan_line__CISelfTestMetadataScanner(
   String **line_ref,
   struct CISelfTestMetadataScannerContext *ctx);
@@ -92,18 +86,20 @@ metadata_is_duplicatable__CISelfTestMetadataScanner(Int32 metadata_kind)
 {
 #define MATCHES_EXPECTED_BIN_STDOUT 0
 #define MATCHES_COMPILE_OPTIONS 1
+#define MATCHES_EXPECTED_COMPILER_ERROR 2
 
     switch (metadata_kind) {
         case MATCHES_EXPECTED_BIN_STDOUT:
             return true;
         case MATCHES_COMPILE_OPTIONS:
+        case MATCHES_EXPECTED_COMPILER_ERROR:
             return false;
         default:
             UNREACHABLE("unknown variant");
     }
 }
 
-void
+enum CISelfTestMetadataScannerError
 set_metadata__CISelfTestMetadataScanner(
   struct CISelfTestMetadataScannerContext *ctx,
   Int32 metadata_kind,
@@ -120,6 +116,10 @@ set_metadata__CISelfTestMetadataScanner(
             metadata_ctx_value = &ctx->metadata->compile_options;
 
             break;
+        case MATCHES_EXPECTED_COMPILER_ERROR:
+            metadata_ctx_value = &ctx->metadata->expected_compiler_error;
+
+            break;
         default:
             UNREACHABLE("unknown variant");
     }
@@ -130,21 +130,13 @@ set_metadata__CISelfTestMetadataScanner(
                  metadata_kind)) {
         APPEND_AND_FREE(*metadata_ctx_value, metadata_value);
     } else {
-        emit_error__CISelfTestMetadataScanner(
-          ctx, "this metadata cannot be duplicated");
+        return CI_SELF_TEST_METADATA_SCANNER_ERROR_CANNOT_BE_DUPLICATED;
     }
+
+    return CI_SELF_TEST_METADATA_SCANNER_ERROR_NONE;
 }
 
-void
-emit_error__CISelfTestMetadataScanner(
-  const struct CISelfTestMetadataScannerContext *ctx,
-  const char *msg)
-{
-    EMIT_ERROR_FMT("{S}:{zu}: {s}", ctx->path, ctx->line_count, msg);
-    exit(1);
-}
-
-void
+int
 get_metadata_from_line__CISelfTestMetadataScanner(
   const char *line,
   const char *end_match,
@@ -158,14 +150,19 @@ get_metadata_from_line__CISelfTestMetadataScanner(
 #define MATCHES_SPACE_S " "
 #define MATCHES_EXPECTED_BIN_STDOUT_S "@expected_bin_stdout" MATCHES_SPACE_S
 #define MATCHES_COMPILE_OPTIONS_S "@compile_options" MATCHES_SPACE_S
+#define MATCHES_EXPECTED_COMPILER_ERROR_S \
+    "@expected_compiler_error" MATCHES_SPACE_S
     static const char *matches[] = {
         [MATCHES_EXPECTED_BIN_STDOUT] = MATCHES_EXPECTED_BIN_STDOUT_S,
         [MATCHES_COMPILE_OPTIONS] = MATCHES_COMPILE_OPTIONS_S,
+        [MATCHES_EXPECTED_COMPILER_ERROR] = MATCHES_EXPECTED_COMPILER_ERROR_S,
     };
     static const Int32 matches_len[] = {
         [MATCHES_EXPECTED_BIN_STDOUT] =
           sizeof(MATCHES_EXPECTED_BIN_STDOUT_S) - 1,
         [MATCHES_COMPILE_OPTIONS] = sizeof(MATCHES_COMPILE_OPTIONS_S) - 1,
+        [MATCHES_EXPECTED_COMPILER_ERROR] =
+          sizeof(MATCHES_EXPECTED_COMPILER_ERROR_S) - 1,
     };
     static const Usize matches_n = LEN(matches, *matches);
     static const Usize matches_len_n = LEN(matches_len, *matches_len);
@@ -178,7 +175,8 @@ get_metadata_from_line__CISelfTestMetadataScanner(
 
     switch (match_at) {
         case MATCHES_EXPECTED_BIN_STDOUT:
-        case MATCHES_COMPILE_OPTIONS: {
+        case MATCHES_COMPILE_OPTIONS:
+        case MATCHES_EXPECTED_COMPILER_ERROR: {
             line += matches_len[match_at];
 
             const char *current = line;
@@ -196,37 +194,31 @@ get_metadata_from_line__CISelfTestMetadataScanner(
 
             if (!*current) {
             error:
-                emit_error__CISelfTestMetadataScanner(
-                  ctx, "expected new line or `*/` before the end of line");
+                return CI_SELF_TEST_METADATA_SCANNER_ERROR_EXPECTED_NEW_LINE_OR_CLOSING_COMMENT;
             }
 
             enable_constant_escapes__String(metadata_value);
 
-            set_metadata__CISelfTestMetadataScanner(
+            return set_metadata__CISelfTestMetadataScanner(
               ctx, match_at, metadata_value);
-
-            break;
         }
         case MATCHES_NOT_FOUND:
-            emit_error__CISelfTestMetadataScanner(
-              ctx,
-              "expected `@expected_bin_stdout`, or "
-              "`@compile_options` as flag");
-
-            break;
+            return CI_SELF_TEST_METADATA_SCANNER_ERROR_UNEXPECTED_FLAG;
         default:
             UNREACHABLE("unknown variant");
     }
 
 #undef MATCHES_EXPECTED_BIN_STDOUT
 #undef MATCHES_COMPILE_OPTIONS
+#undef MATCHES_EXPECTED_COMPILER_ERROR
 
 #undef MATCHES_SPACE_S
 #undef MATCHES_EXPECTED_BIN_STDOUT_S
 #undef MATCHES_COMPILE_OPTIONS_S
+#undef MATCHES_EXPECTED_COMPILER_ERROR_S
 }
 
-bool
+int
 scan_line__CISelfTestMetadataScanner(
   String **line_ref,
   struct CISelfTestMetadataScannerContext *ctx)
@@ -243,13 +235,14 @@ scan_line__CISelfTestMetadataScanner(
     Isize match_at;
     char *begin = find_sub_over_many__String(
       line, matches, matches_n, &match_at); // char*? (&)
-    bool res = false;
+    enum CISelfTestMetadataScannerError res =
+      CI_SELF_TEST_METADATA_SCANNER_ERROR_FAILED_TO_SCAN_LINE;
 
     if (line->buffer == begin) {
         get_metadata_from_line__CISelfTestMetadataScanner(
           line->buffer + 2 /* 2 = `//` or `/\*` */, end_matches[match_at], ctx);
 
-        res = true;
+        res = CI_SELF_TEST_METADATA_SCANNER_ERROR_NONE;
     }
 
     FREE(String, line);
@@ -262,7 +255,7 @@ scan_line__CISelfTestMetadataScanner(
 #undef MATCHES_NOT_FOUND
 }
 
-void
+enum CISelfTestMetadataScannerError
 run__CISelfTestMetadataScanner(const String *path, CISelfTestMetadata *metadata)
 {
     FILE *f = open__File(path->buffer, "r");
@@ -271,16 +264,51 @@ run__CISelfTestMetadataScanner(const String *path, CISelfTestMetadata *metadata)
       NEW(CISelfTestMetadataScannerContext, path, metadata);
 
     if (!f) {
-        emit_error__CISelfTestMetadataScanner(&ctx, "cannot read the file");
+        return CI_SELF_TEST_METADATA_SCANNER_ERROR_FAILED_TO_READ_FILE;
     }
 
     while (getline__File(&line, f)) {
-        if (!scan_line__CISelfTestMetadataScanner(&line, &ctx)) {
-            break;
+        enum CISelfTestMetadataScannerError error =
+          scan_line__CISelfTestMetadataScanner(&line, &ctx);
+
+        switch (error) {
+            case CI_SELF_TEST_METADATA_SCANNER_ERROR_NONE:
+                continue;
+            case CI_SELF_TEST_METADATA_SCANNER_ERROR_FAILED_TO_SCAN_LINE:
+                goto out;
+            default:
+                return error;
         }
 
         ++ctx.line_count;
     }
 
+out:
+
     close__File(f);
+
+    return CI_SELF_TEST_METADATA_SCANNER_ERROR_NONE;
+}
+
+const char *
+get_error_message__CISelfTestMetadataScanner(
+  enum CISelfTestMetadataScannerError error)
+{
+    switch (error) {
+        case CI_SELF_TEST_METADATA_SCANNER_ERROR_NONE:
+            return "";
+        case CI_SELF_TEST_METADATA_SCANNER_ERROR_FAILED_TO_READ_FILE:
+            return "cannot read the file";
+        case CI_SELF_TEST_METADATA_SCANNER_ERROR_FAILED_TO_SCAN_LINE:
+            UNREACHABLE("this error should never be returned");
+        case CI_SELF_TEST_METADATA_SCANNER_ERROR_UNEXPECTED_FLAG:
+            return "expected `@expected_bin_stdout`, or `@compile_options` as "
+                   "flag";
+        case CI_SELF_TEST_METADATA_SCANNER_ERROR_EXPECTED_NEW_LINE_OR_CLOSING_COMMENT:
+            return "expected new line or `*/` before the end of line";
+        case CI_SELF_TEST_METADATA_SCANNER_ERROR_CANNOT_BE_DUPLICATED:
+            return "this metadata cannot be duplicated";
+        default:
+            UNREACHABLE("unknown variant");
+    }
 }

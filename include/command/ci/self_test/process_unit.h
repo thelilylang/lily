@@ -28,12 +28,19 @@
 #include <base/fork.h>
 #include <base/string.h>
 
+#include <command/ci/self_test/metadata.h>
+
+#include <time.h>
+
 typedef struct CISelfTestProcessUnit
 {
     Fork pid;
     String *path; // String* (&)
     int read_out_fd;
     int read_diagnostic_fd;
+    int read_compiler_error_fd;
+    CISelfTestMetadata metadata;
+    clock_t start;
 } CISelfTestProcessUnit;
 
 /**
@@ -45,12 +52,19 @@ inline CONSTRUCTOR(CISelfTestProcessUnit,
                    Fork pid,
                    String *path,
                    int read_out_fd,
-                   int read_diagnostic_fd)
+                   int read_diagnostic_fd,
+                   int read_compiler_error_fd,
+                   CISelfTestMetadata metadata,
+                   clock_t start)
 {
     return (CISelfTestProcessUnit){ .pid = pid,
                                     .path = path,
                                     .read_out_fd = read_out_fd,
-                                    .read_diagnostic_fd = read_diagnostic_fd };
+                                    .read_diagnostic_fd = read_diagnostic_fd,
+                                    .read_compiler_error_fd =
+                                      read_compiler_error_fd,
+                                    .metadata = metadata,
+                                    .start = start };
 }
 
 /**

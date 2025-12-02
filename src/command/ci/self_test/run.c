@@ -50,7 +50,6 @@
 struct CIHandlerOtherArgs
 {
     const CISelfTestMetadata *metadata; // const CISelfTestMetadata* (&)
-    clock_t start;
     int write_diagnostic_fd;
 };
 
@@ -58,7 +57,6 @@ struct CIHandlerOtherArgs
 static inline CONSTRUCTOR(struct CIHandlerOtherArgs,
                           CIHandlerOtherArgs,
                           const CISelfTestMetadata *metadata,
-                          clock_t start,
                           int write_diagnostic_fd);
 
 /// @brief Handler of pass_through_result__CIResult`` function.
@@ -83,11 +81,9 @@ run_cic__CISelfTestRun(const String *path,
 CONSTRUCTOR(struct CIHandlerOtherArgs,
             CIHandlerOtherArgs,
             const CISelfTestMetadata *metadata,
-            clock_t start,
             int write_diagnostic_fd)
 {
     return (struct CIHandlerOtherArgs){ .metadata = metadata,
-                                        .start = start,
                                         .write_diagnostic_fd =
                                           write_diagnostic_fd };
 }
@@ -102,7 +98,6 @@ handler_result__CISelfTestRun(void *entity,
     const CIResultBin *bin = entity;
     const struct CIHandlerOtherArgs *other_args_casted = other_args;
     const CISelfTestMetadata *metadata = other_args_casted->metadata;
-    const clock_t start = other_args_casted->start;
     String *bin_dir_result =
       get_dir_result__CIResultFile(file, CI_DIR_RESULT_PURPOSE_BIN);
     String *command = format__String("{Sr}/{s}", bin_dir_result, bin->name);
@@ -122,16 +117,11 @@ handler_result__CISelfTestRun(void *entity,
     if (metadata->expected_bin_stdout &&
         strcmp(metadata->expected_bin_stdout->buffer, command_output->buffer) !=
           0) {
-        display_failed_expected_stdout_assertion_output__CISelfTestDiagnostic(
+        display_failed_expected_bin_stdout_assertion_output__CISelfTestDiagnostic(
           other_args_casted->write_diagnostic_fd,
           metadata->expected_bin_stdout,
           command_output,
           file->file_input.name);
-    } else {
-        display_pass_test_output__CISelfTestDiagnostic(
-          other_args_casted->write_diagnostic_fd,
-          file->file_input.name,
-          (double)(clock() - start) / CLOCKS_PER_SEC);
     }
 
 exit:
@@ -174,7 +164,7 @@ run_cic__CISelfTestRun(const String *path,
 
     CliArgs args = build_from_string_args__CliArgs(args_string);
     struct CIHandlerOtherArgs other_args =
-      NEW(CIHandlerOtherArgs, metadata, clock(), write_diagnostic_fd);
+      NEW(CIHandlerOtherArgs, metadata, write_diagnostic_fd);
 
     RUN__CLI_ENTRY(args, build__CliCIc, CIcConfig, run__CIcParseConfig, {
         run__CIc(&config, &handler__CISelfTestRun, &other_args);
@@ -189,10 +179,16 @@ run__CISelfTestRun(String *path)
 {
     Pipefd child_out_pipefd;
     Pipefd diagnostic_pipefd;
+    Pipefd compiler_error_pipefd;
 
     create__Pipe(child_out_pipefd);
     create__Pipe(diagnostic_pipefd);
+    create__Pipe(compiler_error_pipefd);
 
+    CISelfTestMetadata metadata = NEW(CISelfTestMetadata);
+    enum CISelfTestMetadataScannerError metadata_scanner_error =
+      run__CISelfTestMetadataScanner(path, &metadata);
+    const clock_t start = clock();
     const Fork pid = run__Fork();
 
     switch (pid) {
@@ -204,15 +200,28 @@ run__CISelfTestRun(String *path)
             close__Pipe(child_out_pipefd);
             close_read__Pipe(diagnostic_pipefd);
 
-            CISelfTestMetadata metadata = NEW(CISelfTestMetadata);
+            if (metadata_scanner_error !=
+                CI_SELF_TEST_METADATA_SCANNER_ERROR_NONE) {
+                const char *error_message =
+                  get_error_message__CISelfTestMetadataScanner(
+                    metadata_scanner_error);
 
-            run__CISelfTestMetadataScanner(path, &metadata);
+                fprintf(stderr, "%s: %s", path->buffer, error_message);
+                exit(EXIT_ERR);
+            }
+
+            // Redirect stderr to the pipe (compiler_error).
+            run2__Dup(compiler_error_pipefd[PIPE_WRITE_FD], LILY_STDERR_FILENO);
+
+            close__Pipe(compiler_error_pipefd);
+
             run_cic__CISelfTestRun(
               path, diagnostic_pipefd[PIPE_WRITE_FD], &metadata);
 
             FREE(CISelfTestMetadata, &metadata);
 
             fflush(stdout);
+            fflush(stderr);
             close_write__Pipe(diagnostic_pipefd);
 
             exit(EXIT_OK);
@@ -222,11 +231,15 @@ run__CISelfTestRun(String *path)
         default:
             close_write__Pipe(child_out_pipefd);
             close_write__Pipe(diagnostic_pipefd);
+            close_write__Pipe(compiler_error_pipefd);
 
             return NEW(CISelfTestProcessUnit,
                        pid,
                        path,
                        child_out_pipefd[PIPE_READ_FD],
-                       diagnostic_pipefd[PIPE_READ_FD]);
+                       diagnostic_pipefd[PIPE_READ_FD],
+                       compiler_error_pipefd[PIPE_READ_FD],
+                       metadata,
+                       start);
     }
 }

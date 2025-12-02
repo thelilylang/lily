@@ -42,6 +42,9 @@ extern inline CONSTRUCTOR(CISelfTestProcessUnit,
                           Fork pid,
                           String *path,
                           int read_out_fd,
-                          int read_diagnostic_fd);
+                          int read_diagnostic_fd,
+                          int read_compiler_error_fd,
+                          CISelfTestMetadata metadata,
+                          clock_t start);
 
 #endif // LILY_EX_LIB_CI_COMMAND_C
