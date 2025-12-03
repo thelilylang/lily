@@ -7,7 +7,6 @@
 /out
 /src/core/cc/comptime_gen/target
 /target
-/out.lily
 /bin
 /lib/local/include
 /html
