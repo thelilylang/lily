@@ -3521,9 +3521,17 @@ get_token__CIScanner(CIScanner *self,
                 CIToken *token = NEW(CIToken,
                                      CI_TOKEN_KIND_COMMENT_LINE,
                                      clone__Location(&self->base.location));
-                skip_comment_line__CIScanner(self);
 
-                return token;
+                CI_CHECK_STANDARD_SINCE(
+                  self->config->standard, CI_STANDARD_99, {
+                      FAILED("single line comment is not available before C99");
+                  })
+                else
+                {
+                    skip_comment_line__CIScanner(self);
+
+                    return token;
+                }
             } else if (c1 == (char *)'=') {
                 return NEW(CIToken,
                            CI_TOKEN_KIND_SLASH_EQ,
