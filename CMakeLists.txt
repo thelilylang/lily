@@ -16,6 +16,9 @@ else()
   add_compile_options(-DLILY_BIN_PATH_AVAILABLE)
 endif()
 
+# Avoid to get `__FILE__`, with an absolute path.
+add_compile_options(-ffile-prefix-map=${CMAKE_SOURCE_DIR}=./)
+
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})
 
 set(CMAKE_C_STANDARD 23)
