@@ -1,0 +1,13 @@
+//@expected_bin_stdout PASS\n
+
+#include <stddef.h>
+#include <helper.h>
+
+int main() {
+	void *ptr = NULL;
+	ptrdiff_t j = 0;
+	size_t i = 0;
+	wchar_t k = 0;
+	
+	printf("PASS\n");
+}

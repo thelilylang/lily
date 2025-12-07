@@ -46,6 +46,41 @@
 static void
 read_pipe__CISelfTestPoll(String *buffer, int read_fd);
 
+enum CISelfTestPollHandleFlagReturnStatus
+{
+    CI_SELF_TEST_POLL_HANDLE_FLAG_RETURN_STATUS_SKIP,
+    CI_SELF_TEST_POLL_HANDLE_FLAG_RETURN_STATUS_FAILED,
+    CI_SELF_TEST_POLL_HANDLE_FLAG_RETURN_STATUS_SUCCESS
+};
+
+/// @param expected String*? (&)
+/// @param actual String* (&)
+static enum CISelfTestPollHandleFlagReturnStatus
+handle_expected_compiler_error__CISelfTestPoll(
+  const CISelfTestProcessUnit *process_unit,
+  String *expected,
+  String *actual);
+
+enum CISelfTestPollHandleFlagReturnStatus
+handle_expected_compiler_error__CISelfTestPoll(
+  const CISelfTestProcessUnit *process_unit,
+  String *expected,
+  String *actual)
+{
+    if (!expected) {
+        return CI_SELF_TEST_POLL_HANDLE_FLAG_RETURN_STATUS_SKIP;
+    }
+
+    if (strcmp(actual->buffer, expected->buffer)) {
+        display_failed_expected_compiler_error_assertion_output__CISelfTestDiagnostic(
+          expected, actual, process_unit->path->buffer);
+
+        return CI_SELF_TEST_POLL_HANDLE_FLAG_RETURN_STATUS_FAILED;
+    }
+
+    return CI_SELF_TEST_POLL_HANDLE_FLAG_RETURN_STATUS_SUCCESS;
+}
+
 void
 read_pipe__CISelfTestPoll(String *buffer, int read_fd)
 {
@@ -98,22 +133,28 @@ run__CISelfTestPoll(const CISelfTestProcessUnit *process_unit,
                                       process_unit->read_diagnostic_fd);
             bool has_diagnostic = diagnostic->len > 0;
 
-            if (!has_diagnostic &&
-                process_unit->metadata.expected_compiler_error &&
-                strcmp(
-                  compiler_error->buffer,
-                  process_unit->metadata.expected_compiler_error->buffer) !=
-                  0) {
-                display_failed_expected_compiler_error_assertion_output__CISelfTestDiagnostic(
-                  process_unit->metadata.expected_compiler_error,
-                  compiler_error,
-                  process_unit->path->buffer);
-
-                goto clean_wait;
+            if (has_diagnostic) {
+                goto write_diagnostic;
             }
 
             bool has_err = (exit_status != -1 && exit_status != EXIT_OK) ||
                            kill_signal != -1 || stop_signal != -1;
+            enum CISelfTestPollHandleFlagReturnStatus return_status;
+
+            return_status = handle_expected_compiler_error__CISelfTestPoll(
+              process_unit,
+              process_unit->metadata.expected_compiler_error,
+              compiler_error);
+
+            if (return_status ==
+                CI_SELF_TEST_POLL_HANDLE_FLAG_RETURN_STATUS_FAILED) {
+                ++(*n_test_failed);
+
+                goto clean_wait;
+            } else if (return_status ==
+                       CI_SELF_TEST_POLL_HANDLE_FLAG_RETURN_STATUS_SUCCESS) {
+                has_err = false;
+            }
 
             if (has_err) {
                 ++(*n_test_failed);
@@ -122,26 +163,28 @@ run__CISelfTestPoll(const CISelfTestProcessUnit *process_unit,
                     write__Fd(LILY_STDERR_FILENO, output->buffer, output->len);
                 }
 
-                if (!has_diagnostic && (has_err && exit_status != EXIT_ERR)) {
-                    display_failed_test_output__CISelfTestDiagnostic(
-                      LILY_STDERR_FILENO,
-                      process_unit->path->buffer,
-                      exit_status,
-                      kill_signal,
-                      stop_signal);
-
-                    goto clean_wait;
-                }
-            }
-
-            if (has_diagnostic) {
-                write__Fd(
-                  LILY_STDERR_FILENO, diagnostic->buffer, diagnostic->len);
-            } else {
-                display_pass_test_output__CISelfTestDiagnostic(
+                display_failed_test_output__CISelfTestDiagnostic(
+                  LILY_STDERR_FILENO,
                   process_unit->path->buffer,
-                  (double)(clock() - process_unit->start) / CLOCKS_PER_SEC);
+                  exit_status,
+                  kill_signal,
+                  stop_signal);
+
+                goto clean_wait;
             }
+
+            goto display_pass;
+
+        write_diagnostic:
+            ++(*n_test_failed);
+            write__Fd(LILY_STDERR_FILENO, diagnostic->buffer, diagnostic->len);
+
+            goto clean_wait;
+
+        display_pass:
+            display_pass_test_output__CISelfTestDiagnostic(
+              process_unit->path->buffer,
+              (double)(clock() - process_unit->start) / CLOCKS_PER_SEC);
 
         clean_wait:
             FREE(String, diagnostic);

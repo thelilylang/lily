@@ -1,0 +1,13 @@
+//@expected_bin_stdout PASS: 1\n
+//@expected_bin_stdout PASS: 1\n
+
+#include <ctype.h>
+#include <helper.h>
+
+int main() {
+	int res_is_digit = isdigit('1');
+	int res_is_lower = islower('a');
+
+	printf("PASS: %d\n", res_is_digit ? 1 : 0);
+	printf("PASS: %d\n", res_is_lower ? 1 : 0);
+}

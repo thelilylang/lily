@@ -39,6 +39,7 @@ int
 main(int argc, char **argv)
 {
     CliArgs args = build__CliArgs(argc, argv);
+    int status = 0;
 
     RUN__CLI_ENTRY(args, build__CliCI, CIConfig, run__CIParseConfig, {
         switch (config.kind) {
@@ -47,7 +48,7 @@ main(int argc, char **argv)
 
                 break;
             case CI_CONFIG_KIND_SELF_TEST:
-                run__CISelfTest(&config);
+                status = run__CISelfTest(&config);
 
                 break;
             default:
@@ -55,5 +56,5 @@ main(int argc, char **argv)
         }
     });
 
-    return 0;
+    return status;
 }

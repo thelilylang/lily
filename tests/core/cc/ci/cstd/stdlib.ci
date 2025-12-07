@@ -1,0 +1,12 @@
+//@expected_bin_stdout PASS\n
+
+#include <stdlib.h>
+#include <helper.h>
+
+int main() {
+	char *s = malloc(sizeof(char) * 5);
+
+	free(s);
+
+	printf("PASS\n");
+}

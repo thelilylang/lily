@@ -99,7 +99,7 @@ start_thread__CISelfTest(String *path)
                    (void *)path);
 }
 
-void
+int
 run__CISelfTest(const CIConfig *config)
 {
     CIProjectConfig project_config;
@@ -149,4 +149,6 @@ run__CISelfTest(const CIConfig *config)
     }
 
     FREE(CIProjectConfig, &project_config);
+
+    return n_test_failed > 0 ? EXIT_ERR : EXIT_OK;
 }
