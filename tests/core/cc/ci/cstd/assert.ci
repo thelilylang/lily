@@ -1,0 +1,10 @@
+//@expected_bin_stdout PASS\n
+
+#include <assert.h>
+#include <helper.h>
+
+int main() {
+#ifdef assert
+	printf("PASS\n");
+#endif
+}

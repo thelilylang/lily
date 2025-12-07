@@ -1,0 +1,32 @@
+//@expected_bin_stdout PASS\nPASS\nPASS\n
+
+#include <helper.h>
+
+enum Letter {
+	A = 0,
+	B = 1,
+	C = 2,
+	D = 3,
+	E = 10,
+	F,
+	G = A + 12
+};
+
+enum Animal {
+	Cat,
+	Dog
+};
+
+int main() {
+	if (A == 0) {
+		printf("PASS\n");
+	}
+
+	if (E == 10) {
+		printf("PASS\n");
+	}
+
+	if (G == 12) {
+		printf("PASS\n");
+	}
+}

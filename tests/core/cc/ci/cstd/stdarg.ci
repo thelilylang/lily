@@ -1,0 +1,8 @@
+//@expected_bin_stdout PASS: 10, 20, 30\n
+
+#include <stdarg.h>
+#include <helper.h>
+
+int main() {
+	printf("PASS: %d, %d, %d\n", 10, 20, 30);
+}

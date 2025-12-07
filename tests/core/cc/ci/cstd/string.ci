@@ -1,0 +1,10 @@
+//@expected_bin_stdout PASS: 5\n
+
+#include <string.h>
+#include <helper.h>
+
+int main() {
+	char *s = "Hello";
+
+	printf("PASS: %zu\n", strlen(s));
+}

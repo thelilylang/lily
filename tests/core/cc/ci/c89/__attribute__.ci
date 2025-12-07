@@ -1,5 +1,5 @@
-//@compile_options -s c89
-//@expected_bin_stdout PASS\n
+/*@compile_options -s c89*/
+/*@expected_bin_stdout PASS\n*/
 
 #include <helper.h>
 

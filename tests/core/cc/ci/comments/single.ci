@@ -1,0 +1,9 @@
+//@expected_bin_stdout PASS\n
+
+#include <helper.h>
+
+int main() {
+	// This is a comment
+
+	printf("PASS\n");
+}

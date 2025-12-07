@@ -1,0 +1,7 @@
+//@expected_bin_stdout PASS\n
+
+#include <stdio.h>
+
+int main() {
+	puts("PASS");
+}
