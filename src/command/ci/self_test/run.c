@@ -145,11 +145,13 @@ run_cic__CISelfTestRun(const String *path,
                        const CISelfTestMetadata *metadata)
 {
     Vec *args_string =
-      init__Vec(6,
+      init__Vec(8,
                 from__String(CIC_BIN_PATH),
                 from__String("--no-state-check"), // NOTE: Disable the state
                                                   // check as is not yet ready
-                from__String("-I"),
+                from__String("--include0"),
+                from__String("lib/cc/std/include"),
+                from__String("--include0"),
                 from__String("tests/core/cc/ci/include"),
                 from__String("-f"),
                 clone__String((String *)path)); // Vec<String*>*
