@@ -30,8 +30,9 @@
 /**
  *
  * @param config CIConfig* (&)
+ * @return Return 1 if it fails, otherwise return 0.
  */
-void
+int
 run__CISelfTest(const CIConfig *config);
 
 #endif // LILY_COMMAND_CI_SELF_TEST_SELF_TEST_H

@@ -148,6 +148,8 @@ run__CISelfTestPoll(const CISelfTestProcessUnit *process_unit,
 
             if (return_status ==
                 CI_SELF_TEST_POLL_HANDLE_FLAG_RETURN_STATUS_FAILED) {
+                ++(*n_test_failed);
+
                 goto clean_wait;
             } else if (return_status ==
                        CI_SELF_TEST_POLL_HANDLE_FLAG_RETURN_STATUS_SUCCESS) {
@@ -174,6 +176,7 @@ run__CISelfTestPoll(const CISelfTestProcessUnit *process_unit,
             goto display_pass;
 
         write_diagnostic:
+            ++(*n_test_failed);
             write__Fd(LILY_STDERR_FILENO, diagnostic->buffer, diagnostic->len);
 
             goto clean_wait;
