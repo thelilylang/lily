@@ -1,0 +1,12 @@
+//@expected_bin_stdout PASS\n
+
+#include <helper.h>
+
+int main() {
+	int a = 30;
+	float b = (float)a;
+
+	(void)b;
+
+	printf("PASS\n");
+}

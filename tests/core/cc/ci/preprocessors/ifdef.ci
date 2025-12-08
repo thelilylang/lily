@@ -1,0 +1,10 @@
+//@expected_bin_stdout PASS\n
+
+#include <helper.h>
+
+int main() {
+#define X 10
+#ifdef X
+printf("PASS\n");
+#endif
+}

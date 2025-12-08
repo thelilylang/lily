@@ -1,0 +1,21 @@
+//@expected_bin_stdout PASS: 10\nPASS: 20\nPASS: 30\n
+
+#include <helper.h>
+
+#define MERGE(a, b) a##b
+#define J a
+#define MERGE_WITH_J(a) a##J
+
+int main() {
+	int xy = 10;
+	int a = MERGE(x, y);
+	int b = a + MERGE(1, 0);
+	int MERGE_WITH_J(x) = 30;
+	int *xJp = &xJ;
+
+	printf("PASS: %d\n", a);
+	printf("PASS: %d\n", b);
+	printf("PASS: %d\n", xJ);
+
+	return 0;
+}

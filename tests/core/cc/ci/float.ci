@@ -1,0 +1,12 @@
+//@expected_bin_stdout PASS\n
+
+#include <helper.h>
+
+int main() {
+	float f = 3.333;
+	float g = 2e+3;
+	float h = 2e-3;
+	float i = 2e-5;
+
+	printf("PASS\n");
+}
