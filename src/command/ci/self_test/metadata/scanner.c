@@ -199,6 +199,22 @@ get_metadata_from_line__CISelfTestMetadataScanner(
 
             enable_constant_escapes__String(metadata_value);
 
+            // Replace (e.g.) @path by its value.
+            {
+                static const char *subs[] = { "@path" }; // const char* (&)* (&)
+                const char *replacements[] = {
+                    ctx->path->buffer,
+                }; // const char* (&)* (&)
+                const Usize subs_len = sizeof(subs) / sizeof(*subs);
+                const Usize replacements_len =
+                  sizeof(replacements) / sizeof(*replacements);
+
+                static_assert(subs_len == replacements_len);
+
+                replace_many_sub__String(
+                  metadata_value, subs, replacements, subs_len);
+            }
+
             return set_metadata__CISelfTestMetadataScanner(
               ctx, match_at, metadata_value);
         }
