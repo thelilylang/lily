@@ -1,0 +1,11 @@
+//@expected_bin_stdout PASS\n
+
+#include <helper.h>
+
+void do_something(char* restrict);
+
+int main() {
+	char *__restrict s = "Hello";
+
+	printf("PASS\n");
+}
