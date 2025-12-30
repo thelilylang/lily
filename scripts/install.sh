@@ -101,6 +101,7 @@ echo "$LATEST_VERSION" > $INSTALL_LATEST_DIR_PATH/.version
 cp $LOCAL_BIN_DIR/lily $INSTALL_LATEST_BIN_DIR_PATH
 cp $LOCAL_BIN_DIR/lilyc $INSTALL_LATEST_BIN_DIR_PATH
 cp $LOCAL_BIN_DIR/ci $INSTALL_LATEST_BIN_DIR_PATH
+cp $LOCAL_BIN_DIR/cic $INSTALL_LATEST_BIN_DIR_PATH
 
 # Copy `liblily_sys.so/dylib` and `liblily_builtin.so/dylib` to $INSTALL_LATEST_LIB_DIR_PATH.
 if [[ $TARGET =~ darwin.* ]]
