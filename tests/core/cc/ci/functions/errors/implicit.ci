@@ -1,0 +1,5 @@
+//@expected_compiler_error FAILED: declaration is not found (src/core/cc/ci/result.c:1029)\n
+
+int main() {
+	printf("PASS\n");
+}

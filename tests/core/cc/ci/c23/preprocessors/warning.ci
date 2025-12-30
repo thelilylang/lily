@@ -1,0 +1,5 @@
+//@expected_compiler_error @path:4:1: \e[33mwarning\e[0m[0002]: "X"\n  \e[34m|\e[0m\n\e[34m4 |\e[0m #warning "X"\n  \e[34m|\e[0m \e[33m^^^^^^^^^^^^^\e[0m\n\n
+
+int main() {
+#warning "X"
+}

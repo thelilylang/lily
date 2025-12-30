@@ -1,0 +1,15 @@
+/*@compile_options -s c89*/
+/*@expected_bin_stdout PASS\n*/
+
+#include <helper.h>
+
+/* from stdlib.h */
+__extension__ typedef struct
+  {
+    long long int quot;     /* Quotient.  */
+    long long int rem;      /* Remainder.  */
+  } lldiv_t;
+
+int main() {
+	printf("PASS\n");
+}

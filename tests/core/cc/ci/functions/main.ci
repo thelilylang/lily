@@ -1,0 +1,7 @@
+//@expected_bin_stdout PASS\n
+
+#include <helper.h>
+
+int main() {
+	printf("PASS\n");
+}

@@ -13,4 +13,6 @@ extern int printf(const char *s, ...);
 extern void *malloc(size_t size);
 extern void free(void *ptr); 
 
+extern void exit(int status);
+
 #endif /* LILY_TESTS_CORE_CC_CI_HELPER_H */

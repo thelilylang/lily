@@ -1,0 +1,3 @@
+//@expected_bin_stdout PASS\n
+
+#include "../preprocessors/undef.ci"
