@@ -821,7 +821,9 @@ generate_data_type_qualifier__CIGenerator(CIGenerator *self,
                                           const int *data_type_qualifier)
 {
     write_String__CIGenerator(
-      self, to_string__CIDataTypeQualifier(*data_type_qualifier));
+      self,
+      to_string__CIDataTypeQualifier(*data_type_qualifier,
+                                     self->file->config->standard));
 }
 
 CIDataType *

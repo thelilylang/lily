@@ -1529,7 +1529,8 @@ enum CIDataTypeQualifier
  * @return String*
  */
 String *
-to_string__CIDataTypeQualifier(int data_type_qualifier_flag);
+to_string__CIDataTypeQualifier(int data_type_qualifier_flag,
+                               enum CIStandard standard);
 
 /**
  *

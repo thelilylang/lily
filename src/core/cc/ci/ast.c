@@ -1987,10 +1987,13 @@ DESTRUCTOR(CIDataTypeUnion, const CIDataTypeUnion *self)
 }
 
 String *
-to_string__CIDataTypeQualifier(int data_type_qualifier_flag)
+to_string__CIDataTypeQualifier(int data_type_qualifier_flag,
+                               enum CIStandard standard)
 {
-    static char *data_type_qualifiers[] = {
-        "", "const", "volatile", "restrict", "_Atomic", "_Noreturn"
+    char *data_type_qualifiers[] = {
+        "",         "const",
+        "volatile", standard < CI_STANDARD_99 ? "__restrict__" : "restrict",
+        "_Atomic",  "_Noreturn"
     };
     static_assert(data_type_qualifier_ids_count ==
                     sizeof(data_type_qualifiers) /
