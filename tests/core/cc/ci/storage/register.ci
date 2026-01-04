@@ -1,0 +1,9 @@
+//@expected_bin_stdout PASS: 30\n
+
+#include <helper.h>
+
+int main() {
+	register int x = 30;
+
+	printf("PASS: %d\n", x);
+}

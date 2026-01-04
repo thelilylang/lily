@@ -1,0 +1,44 @@
+//@expected_bin_stdout a.x = 10\n
+//@expected_bin_stdout a2.x = 10\n
+//@expected_bin_stdout a3.x = 10\n
+//@expected_bin_stdout b.x = 20\n
+//@expected_bin_stdout b2.x = 20\n
+//@expected_bin_stdout b3.x = 30\n
+//@expected_bin_stdout PASS\n
+
+#include <helper.h>
+
+union A {
+	int x;
+};
+
+typedef union B {
+	int x;
+} B;
+
+int main() {
+	union A a = { .x = 10 };
+
+	printf("a.x = %d\n", a.x);
+
+	union A a2 = { 10 };
+
+	printf("a2.x = %d\n", a2.x);
+
+	union A a3 = (union A){ 10 };
+
+	printf("a3.x = %d\n", a3.x);
+
+	B b = { .x = 20 };
+
+	printf("b.x = %d\n", b.x);
+
+	B b2 = { 20 };
+
+	printf("b2.x = %d\n", b2.x);
+
+	B b3 = (B){ 30 };
+
+	printf("b3.x = %d\n", b3.x);
+	printf("PASS\n");
+}

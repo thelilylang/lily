@@ -1,0 +1,19 @@
+//@expected_bin_stdout PASS: 1\n
+
+#include <helper.h>
+
+int f() {
+	return 1;
+}
+
+void f2() {
+	return;
+}
+
+int main() {
+	int f_res = f();
+
+	f2();
+
+	printf("PASS: %d\n", f_res);
+}
