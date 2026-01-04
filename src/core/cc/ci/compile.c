@@ -41,6 +41,13 @@ handler__CICompile(void *entity,
                    const CIResultFile *file,
                    [[maybe_unused]] void *other_args);
 
+static const char *standard_options[] = {
+    [CI_STANDARD_NONE] = "",        [CI_STANDARD_KR] = "",
+    [CI_STANDARD_89] = " -std=c89", [CI_STANDARD_95] = " -std=c90",
+    [CI_STANDARD_99] = " -std=c99", [CI_STANDARD_11] = " -std=c11",
+    [CI_STANDARD_17] = " -std=c17", [CI_STANDARD_23] = " -std=c23"
+};
+
 String *
 build_bin_compile_command__CICompile(const CIResultBin *bin,
                                      const CIResultFile *file)
@@ -55,9 +62,10 @@ build_bin_compile_command__CICompile(const CIResultBin *bin,
       get_dir_result__CIResultFile(file, CI_DIR_RESULT_PURPOSE_C_GEN);
     String *gen_file = format__String(
       "{Sr}/{S}", gen_c_dir_result, file->entity.filename_result);
-    String *command = format__String("{S} {Sr} -o {Sr}/{s}",
+    String *command = format__String("{S} {Sr}{s} -o {Sr}/{s}",
                                      file->config->compiler.command,
                                      gen_file,
+                                     standard_options[file->config->standard],
                                      bin_dir_result,
                                      bin->name);
 
@@ -78,9 +86,10 @@ build_lib_compile_command__CICompile(const CIResultLib *lib,
       get_dir_result__CIResultFile(file, CI_DIR_RESULT_PURPOSE_C_GEN);
     String *gen_file = format__String(
       "{Sr}/{S}", gen_c_dir_result, file->entity.filename_result);
-    String *command = format__String("{S} {Sr} -static -o {Sr}/{s}",
+    String *command = format__String("{S} {Sr}{s} -static -o {Sr}/{s}",
                                      file->config->compiler.command,
                                      gen_file,
+                                     standard_options[file->config->standard],
                                      lib_dir_result,
                                      lib->name);
 
