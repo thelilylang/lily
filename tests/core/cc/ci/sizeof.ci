@@ -1,0 +1,16 @@
+//@expected_bin_stdout int_size = 4\ng_size = 4\nPASS\n
+
+#include <helper.h>
+
+int main() {
+	int int_size = sizeof(int);
+
+	printf("int_size = %d\n", int_size);
+
+	int g = 30;
+	int g_size = sizeof(g);
+
+	printf("g_size = %d\n", g_size);
+
+	printf("PASS\n");
+}

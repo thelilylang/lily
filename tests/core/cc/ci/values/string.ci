@@ -1,0 +1,16 @@
+//@expected_bin_stdout Hello Hi abcdef\nPASS\n
+
+#include <helper.h>
+
+int main() {
+	char *s = "Hello";
+	char s2[] = "Hi";
+	// NOTE: It seems that Clang does not add a null character by
+	// default if we specify a size of 6, because I assume there
+	// is no space left relative to the size we specify,
+	// but GCC and TCC do. This is a very dangerous behaviour.
+	char s3[7] = "abcdef";
+
+	printf("%s %s %s\n", s, s2, s3);
+	printf("PASS\n");
+}

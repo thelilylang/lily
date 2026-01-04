@@ -1,0 +1,7 @@
+//@expected_bin_stdout PASS\n
+
+extern int printf(const char *, ...);
+
+int main() {
+	printf("PASS\n");
+}

@@ -1,0 +1,21 @@
+//@expected_bin_stdout BREAK\nPASS\n
+
+#include <helper.h>
+
+int main() {
+	int i = 0;
+
+	while (1) {
+		if (i == 1) {
+			continue;
+		}
+
+		++i;
+
+		printf("BREAK\n");
+
+		break;
+	}
+
+	printf("PASS\n");
+}

@@ -1,0 +1,32 @@
+//@expected_bin_stdout q.x = 20, q.y = 10\n
+//@expected_bin_stdout q2.x = 20, q2.y = 10\n
+//@expected_bin_stdout r.x = 10, r.y = 10\n
+//@expected_bin_stdout r2.x = 10, r2.y = 10\n
+//@expected_bin_stdout PASS\n
+
+#include <helper.h>
+
+struct Q {
+	int x;
+	int y;
+};
+
+typedef struct R {
+	int x;
+	int y;
+} R;
+
+int main() {
+	struct Q q = { .x = 20, .y = 10 };
+	struct Q q2 = {20, 10};
+
+	printf("q.x = %d, q.y = %d\n", q.x, q.y);
+	printf("q2.x = %d, q2.y = %d\n", q2.x, q2.y);
+
+	R r = {10, 10};
+	R r2 = { .x = 10, .y = 10 };
+
+	printf("r.x = %d, r.y = %d\n", r.x, r.y);
+	printf("r2.x = %d, r2.y = %d\n", r2.x, r2.y);
+	printf("PASS\n");
+}

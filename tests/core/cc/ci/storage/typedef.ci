@@ -1,0 +1,13 @@
+//@expected_bin_stdout PASS\n
+
+#include <helper.h>
+
+typedef struct A_T A;
+typedef struct B_T *B;
+typedef struct A_T A;
+
+int main() {
+	B a = (void*)0;
+
+	printf("PASS\n");
+}

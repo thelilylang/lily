@@ -1,0 +1,10 @@
+//@compile_options -s c23
+//@expected_bin_stdout PASS\n
+
+#include <helper.h>
+
+int main() {
+	nullptr_t x = nullptr;
+
+	printf("PASS\n");
+}

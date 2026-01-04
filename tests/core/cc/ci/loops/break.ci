@@ -1,0 +1,12 @@
+//@expected_bin_stdout PASS\n
+
+#include <helper.h>
+
+int main() {
+	while (1) {
+		break;
+		printf("ERROR\n");
+	}
+
+	printf("PASS\n");
+}
