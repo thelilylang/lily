@@ -240,9 +240,8 @@ scan_line__CISelfTestMetadataScanner(
   struct CISelfTestMetadataScannerContext *ctx)
 {
     String *line = *line_ref;
-    const char *matches[] = {
-        [MATCHES_SINGLE_LINE] = "//@", [MATCHES_MULTI_LINE] = "/*@"
-    };
+    const char *matches[] = { [MATCHES_SINGLE_LINE] = "//@",
+                              [MATCHES_MULTI_LINE] = "/*@" };
     const Int32 matches_n = LEN(matches, *matches);
     const char *end_matches[] = {
         [MATCHES_SINGLE_LINE] = "\n",
