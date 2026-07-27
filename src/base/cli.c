@@ -96,6 +96,7 @@ CONSTRUCTOR(Cli, Cli, const Vec *args, const char *name)
                       .author = NULL,
                       .value = NULL,
                       .about = NULL,
+                      .version = NULL,
                       .full_command = full_command,
                       .args = args,
                       .args_iter = NEW(VecIter, args),
