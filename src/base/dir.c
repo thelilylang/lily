@@ -30,6 +30,7 @@
 #include <base/string.h>
 #include <base/sys.h>
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -65,10 +66,14 @@
 void
 create__Dir(const char *path, [[maybe_unused]] enum DirMode mode)
 {
+    // NOTE: An already existing directory is not an error. The callers check
+    // for existence before creating, but that check and the creation are not
+    // atomic: two processes creating the same tree (as the CI self test does,
+    // one process per test file) both see it missing and both create it.
 #ifdef LILY_WINDOWS_OS
-    ASSERT(_mkdir(path) != -1);
+    ASSERT(_mkdir(path) != -1 || errno == EEXIST);
 #else
-    ASSERT(!mkdir(path, mode));
+    ASSERT(!mkdir(path, mode) || errno == EEXIST);
 #endif
 }
 
