@@ -26,57 +26,11 @@
 #include <base/cli/result.h>
 
 #include <cli/emit.h>
+#include <cli/lilyc/lilyc.h>
 #include <cli/lilyc/parse_config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
-
-// NOTE: The following options, are builtin:
-/*
-#define H_OPTION 0
-#define HELP_OPTION 1
-#define V_OPTION 2
-#define VERSION_OPTION 3
-*/
-#define B_OPTION 4
-#define BUILD_OPTION 5
-#define DUMP_SCANNER_OPTION 6
-#define DUMP_PREPARSER_OPTION 7
-#define DUMP_PRECOMPILER_OPTION 8
-#define DUMP_PARSER_OPTION 9
-#define DUMP_ANALYSIS_OPTION 10
-#define DUMP_MIR_OPTION 11
-#define DUMP_IR_OPTION 12
-#define RUN_SCANNER_OPTION 13
-#define RUN_PREPARSER_OPTION 14
-#define RUN_PRECOMPILER_OPTION 15
-#define RUN_PARSER_OPTION 16
-#define RUN_ANALYSIS_OPTION 17
-#define RUN_MIR_OPTION 18
-#define RUN_IR_OPTION 19
-#define L_OPTION 20
-#define LIB_OPTION 21
-#define STATIC_OPTION 22
-#define DYNAMIC_OPTION 23
-#define LLVM_IR_OPTION 24
-#define CC_IR_OPTION 25
-#define CPP_IR_OPTION 26
-#define JS_IR_OPTION 27
-#define WASM_IR_OPTION 28
-#define TARGET_OPTION 29
-#define ODEBUG_OPTION 30
-#define ORELEASE_OPTION 31
-#define OSIZE_OPTION 32
-#define O0_OPTION 33
-#define O1_OPTION 34
-#define O2_OPTION 35
-#define O3_OPTION 36
-#define OZ_OPTION 37
-#define O_OPTION 38
-#define OUTPUT_OPTION 39
-#define VERBOSE_OPTION 40
-#define R_OPTION 41
-#define RUN_OPTION 42
 
 LilycConfig
 run__LilycParseConfig(const Vec *results)
@@ -111,79 +65,76 @@ run__LilycParseConfig(const Vec *results)
                 break;
             case CLI_RESULT_KIND_OPTION:
                 switch (current->option->id) {
-                    // 0, 1, 2 and 3 id are used by help and version option
-                    case B_OPTION:
-                    case BUILD_OPTION:
+                    case LILYC_OPTION_ID_BUILD:
                         build = true;
                         break;
-                    case DUMP_SCANNER_OPTION:
+                    case LILYC_OPTION_ID_DUMP_SCANNER:
                         dump_scanner = true;
                         break;
-                    case DUMP_PREPARSER_OPTION:
+                    case LILYC_OPTION_ID_DUMP_PREPARSER:
                         dump_preparser = true;
                         break;
-                    case DUMP_PRECOMPILER_OPTION:
+                    case LILYC_OPTION_ID_DUMP_PRECOMPILER:
                         dump_precompiler = true;
                         break;
-                    case DUMP_PARSER_OPTION:
+                    case LILYC_OPTION_ID_DUMP_PARSER:
                         dump_parser = true;
                         break;
-                    case DUMP_ANALYSIS_OPTION:
+                    case LILYC_OPTION_ID_DUMP_ANALYSIS:
                         dump_analysis = true;
                         break;
-                    case DUMP_MIR_OPTION:
+                    case LILYC_OPTION_ID_DUMP_MIR:
                         dump_mir = true;
                         break;
-                    case DUMP_IR_OPTION:
+                    case LILYC_OPTION_ID_DUMP_IR:
                         dump_ir = true;
                         break;
-                    case RUN_SCANNER_OPTION:
+                    case LILYC_OPTION_ID_RUN_SCANNER:
                         run_scanner = true;
                         break;
-                    case RUN_PREPARSER_OPTION:
+                    case LILYC_OPTION_ID_RUN_PREPARSER:
                         run_preparser = true;
                         break;
-                    case RUN_PRECOMPILER_OPTION:
+                    case LILYC_OPTION_ID_RUN_PRECOMPILER:
                         run_precompiler = true;
                         break;
-                    case RUN_PARSER_OPTION:
+                    case LILYC_OPTION_ID_RUN_PARSER:
                         run_parser = true;
                         break;
-                    case RUN_ANALYSIS_OPTION:
+                    case LILYC_OPTION_ID_RUN_ANALYSIS:
                         run_analysis = true;
                         break;
-                    case RUN_MIR_OPTION:
+                    case LILYC_OPTION_ID_RUN_MIR:
                         run_mir = true;
                         break;
-                    case RUN_IR_OPTION:
+                    case LILYC_OPTION_ID_RUN_IR:
                         run_ir = true;
                         break;
-                    case L_OPTION:
-                    case LIB_OPTION:
+                    case LILYC_OPTION_ID_LIB:
                         lib = true;
                         break;
-                    case STATIC_OPTION:
+                    case LILYC_OPTION_ID_STATIC:
                         static_ = true;
                         break;
-                    case DYNAMIC_OPTION:
+                    case LILYC_OPTION_ID_DYNAMIC:
                         dynamic = true;
                         break;
-                    case LLVM_IR_OPTION:
+                    case LILYC_OPTION_ID_LLVM_IR:
                         llvm_ir = true;
                         break;
-                    case CC_IR_OPTION:
+                    case LILYC_OPTION_ID_CC_IR:
                         cc_ir = true;
                         break;
-                    case CPP_IR_OPTION:
+                    case LILYC_OPTION_ID_CPP_IR:
                         cpp_ir = true;
                         break;
-                    case JS_IR_OPTION:
+                    case LILYC_OPTION_ID_JS_IR:
                         js_ir = true;
                         break;
-                    case WASM_IR_OPTION:
+                    case LILYC_OPTION_ID_WASM_IR:
                         wasm_ir = true;
                         break;
-                    case TARGET_OPTION:
+                    case LILYC_OPTION_ID_TARGET:
                         ASSERT(current->option->value);
                         ASSERT(current->option->value->kind ==
                                CLI_RESULT_VALUE_KIND_SINGLE);
@@ -191,33 +142,31 @@ run__LilycParseConfig(const Vec *results)
                         target = current->option->value->single;
 
                         break;
-                    case ODEBUG_OPTION:
-                    case O0_OPTION:
+                    case LILYC_OPTION_ID_ODEBUG:
+                    case LILYC_OPTION_ID_O0:
                         o0 = true;
                         break;
-                    case ORELEASE_OPTION:
-                    case O3_OPTION:
+                    case LILYC_OPTION_ID_ORELEASE:
+                    case LILYC_OPTION_ID_O3:
                         o3 = true;
                         break;
-                    case OSIZE_OPTION:
-                    case OZ_OPTION:
+                    case LILYC_OPTION_ID_OSIZE:
+                    case LILYC_OPTION_ID_OZ:
                         oz = true;
                         break;
-                    case O1_OPTION:
+                    case LILYC_OPTION_ID_O1:
                         o1 = true;
                         break;
-                    case O2_OPTION:
+                    case LILYC_OPTION_ID_O2:
                         o2 = true;
                         break;
-                    case O_OPTION:
-                    case OUTPUT_OPTION:
+                    case LILYC_OPTION_ID_OUTPUT:
                         output = current->option->value->single;
                         break;
-                    case VERBOSE_OPTION:
+                    case LILYC_OPTION_ID_VERBOSE:
                         verbose = true;
                         break;
-                    case R_OPTION:
-                    case RUN_OPTION:
+                    case LILYC_OPTION_ID_RUN:
                         run = true;
                         break;
                     default:

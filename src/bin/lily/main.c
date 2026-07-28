@@ -44,37 +44,39 @@ int
 main(int argc, char **argv)
 {
     CliArgs args = build__CliArgs(argc, argv);
+    int status = 0;
 
-    RUN__CLI_ENTRY(args, build__CliLily, LilyConfig, run__LilyParseConfig, {
-        switch (config.kind) {
-            case LILY_CONFIG_KIND_BUILD:
-                break;
-            case LILY_CONFIG_KIND_CC:
-                break;
-            case LILY_CONFIG_KIND_COMPILE:
-                run__LilyCompile(args);
+    RUN__CLI_ENTRY(
+      args, build__CliLily, LilyConfig, run__LilyParseConfig, status, {
+          switch (config.kind) {
+              case LILY_CONFIG_KIND_BUILD:
+                  break;
+              case LILY_CONFIG_KIND_CC:
+                  break;
+              case LILY_CONFIG_KIND_COMPILE:
+                  run__LilyCompile(args);
 
-                break;
-            case LILY_CONFIG_KIND_CPP:
-                break;
-            case LILY_CONFIG_KIND_INIT:
-                break;
-            case LILY_CONFIG_KIND_NEW:
-                break;
-            case LILY_CONFIG_KIND_RUN:
-                run__LilyRun(&config);
+                  break;
+              case LILY_CONFIG_KIND_CPP:
+                  break;
+              case LILY_CONFIG_KIND_INIT:
+                  break;
+              case LILY_CONFIG_KIND_NEW:
+                  break;
+              case LILY_CONFIG_KIND_RUN:
+                  run__LilyRun(&config);
 
-                break;
-            case LILY_CONFIG_KIND_TEST:
-                break;
-            case LILY_CONFIG_KIND_TO:
-                break;
-            default:
-                UNREACHABLE("unknown variant");
-        }
-    });
+                  break;
+              case LILY_CONFIG_KIND_TEST:
+                  break;
+              case LILY_CONFIG_KIND_TO:
+                  break;
+              default:
+                  UNREACHABLE("unknown variant");
+          }
+      });
 
     LLVMShutdown();
 
-    return 0;
+    return status;
 }

@@ -31,7 +31,7 @@ build__CliArgs(int argc, char **argv)
 {
     Vec *args = NEW(Vec);
 
-    for (Usize i = 0; i < argc; ++i) {
+    for (int i = 0; i < argc; ++i) {
         push__Vec(args, argv[i]);
     }
 

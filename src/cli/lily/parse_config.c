@@ -29,54 +29,11 @@
 #include <base/new.h>
 
 #include <cli/emit.h>
+#include <cli/lily/lily.h>
 #include <cli/lily/parse_config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
-
-// NOTE: The following options, are builtin:
-/*
-#define H_OPTION 0
-#define HELP_OPTION 1
-#define V_OPTION 2
-#define VERSION_OPTION 3
-*/
-#define BUILD_COMMAND 0
-#define CC_COMMAND 1
-#define COMPILE_COMMAND 2
-#define CPP_COMMAND 3
-#define INIT_COMMAND 4
-#define NEW_COMMAND 5
-#define RUN_COMMAND 6
-#define TEST_COMMAND 7
-#define TO_COMMAND 8
-
-// NOTE: The following options, are builtin:
-/*
-#define BUILD_H_OPTION 0
-#define BUILD_HELP_OPTION 1
-*/
-#define BUILD_VERBOSE_OPTION 2
-
-// NOTE: The following options, are builtin:
-/*
-#define RUN_H_OPTION 0
-#define RUN_HELP_OPTION 1
-*/
-#define RUN_V_OPTION 2
-#define RUN_VERBOSE_OPTION 3
-#define RUN_ARGS_OPTION 4
-#define RUN_MAX_STACK_OPTION 5
-#define RUN_MAX_HEAP_OPTION 6
-
-// NOTE: The following options, are builtin:
-/*
-#define TO_H_OPTION 0
-#define TO_HELP_OPTION 1
-*/
-#define TO_CC_OPTION 2
-#define TO_CPP_OPTION 3
-#define TO_JS_OPTION 4
 
 // Parse build config.
 static LilyConfig
@@ -124,7 +81,7 @@ parse_build__LilyParseConfig(const Vec *results)
         ASSERT(current->kind == CLI_RESULT_KIND_OPTION);
 
         switch (current->option->id) {
-            case BUILD_VERBOSE_OPTION:
+            case LILY_BUILD_OPTION_ID_VERBOSE:
                 verbose = true;
                 break;
             default:
@@ -285,17 +242,16 @@ parse_run__LilyParseConfig(const Vec *results)
                 break;
             case CLI_RESULT_KIND_OPTION:
                 switch (current->option->id) {
-                    case RUN_V_OPTION:
-                    case RUN_VERBOSE_OPTION:
+                    case LILY_RUN_OPTION_ID_VERBOSE:
                         verbose = true;
                         break;
-                    case RUN_ARGS_OPTION:
+                    case LILY_RUN_OPTION_ID_ARGS:
                         append__Vec(args, current->option->value->multiple);
                         break;
-                    case RUN_MAX_STACK_OPTION:
+                    case LILY_RUN_OPTION_ID_MAX_STACK:
                         max_stack = current->option->value->single;
                         break;
-                    case RUN_MAX_HEAP_OPTION:
+                    case LILY_RUN_OPTION_ID_MAX_HEAP:
                         max_heap = current->option->value->single;
                         break;
                     default:
@@ -384,13 +340,13 @@ parse_to__LilyParseConfig(const Vec *results)
             case CLI_RESULT_KIND_OPTION:
                 switch (current->option->id) {
                     // 0 and 1 id are used by help option
-                    case TO_CC_OPTION:
+                    case LILY_TO_OPTION_ID_CC:
                         cc = true;
                         break;
-                    case TO_CPP_OPTION:
+                    case LILY_TO_OPTION_ID_CPP:
                         cpp = true;
                         break;
-                    case TO_JS_OPTION:
+                    case LILY_TO_OPTION_ID_JS:
                         js = true;
                         break;
                     default:
@@ -415,23 +371,23 @@ run__LilyParseConfig(const Vec *results)
     ASSERT(command->kind == CLI_RESULT_KIND_COMMAND);
 
     switch (command->command.id) {
-        case BUILD_COMMAND:
+        case LILY_COMMAND_ID_BUILD:
             return parse_build__LilyParseConfig(results);
-        case CC_COMMAND:
+        case LILY_COMMAND_ID_CC:
             return parse_cc__LilyParseConfig(results);
-        case COMPILE_COMMAND:
+        case LILY_COMMAND_ID_COMPILE:
             return NEW_VARIANT(LilyConfig, compile);
-        case CPP_COMMAND:
+        case LILY_COMMAND_ID_CPP:
             return parse_cpp__LilyParseConfig(results);
-        case INIT_COMMAND:
+        case LILY_COMMAND_ID_INIT:
             return parse_init__LilyParseConfig(results);
-        case NEW_COMMAND:
+        case LILY_COMMAND_ID_NEW:
             return parse_new__LilyParseConfig(results);
-        case RUN_COMMAND:
+        case LILY_COMMAND_ID_RUN:
             return parse_run__LilyParseConfig(results);
-        case TEST_COMMAND:
+        case LILY_COMMAND_ID_TEST:
             return parse_test__LilyParseConfig(results);
-        case TO_COMMAND:
+        case LILY_COMMAND_ID_TO:
             return parse_to__LilyParseConfig(results);
         default:
             UNREACHABLE("unknown command");

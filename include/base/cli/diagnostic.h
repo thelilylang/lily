@@ -62,7 +62,9 @@ inline CONSTRUCTOR(CliDiagnostic,
 
 /**
  *
- * @brief Emit a diagnostic (can exit(1) when it emits an error).
+ * @brief Emit a diagnostic on stderr.
+ * @note This only prints; it is up to the caller to stop the parse and to pick
+ * an exit status.
  */
 void
 emit__CliDiagnostic(const CliDiagnostic *self);

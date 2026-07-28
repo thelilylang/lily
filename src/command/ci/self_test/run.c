@@ -168,9 +168,16 @@ run_cic__CISelfTestRun(const String *path,
     struct CIHandlerOtherArgs other_args =
       NEW(CIHandlerOtherArgs, metadata, write_diagnostic_fd);
 
-    RUN__CLI_ENTRY(args, build__CliCIc, CIcConfig, run__CIcParseConfig, {
-        run__CIc(&config, &handler__CISelfTestRun, &other_args);
-    });
+    // The arguments are built here, not taken from the command line, so a
+    // parse failure would be a bug rather than a user error.
+    int status = 0;
+
+    RUN__CLI_ENTRY(
+      args, build__CliCIc, CIcConfig, run__CIcParseConfig, status, {
+          run__CIc(&config, &handler__CISelfTestRun, &other_args);
+      });
+
+    ASSERT(status == 0);
 
     FREE_BUFFER_ITEMS(args_string->buffer, args_string->len, String);
     FREE(Vec, args_string);

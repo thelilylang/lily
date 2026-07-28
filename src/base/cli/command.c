@@ -31,25 +31,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static CliCommand *
-option__CliCommand(CliCommand *self, CliOption *option);
-
-static CliCommand *
-help__CliCommand(CliCommand *self, char *help);
-
-static CliCommand *
-value__CliCommand(CliCommand *self, CliValue *value);
-
-static CliCommand *
-default_action__CliCommand(CliCommand *self, CliDefaultAction *default_action);
-
-static CliCommand *
-defer__CliCommand(CliCommand *self, CliCommand *(*deferred)(CliCommand *));
-
-CONSTRUCTOR(CliCommand *, CliCommand, const char *name)
+CONSTRUCTOR(CliCommand *, CliCommand, Usize id, const char *name)
 {
     CliCommand *self = lily_malloc(sizeof(CliCommand));
 
+    self->id = id;
     self->name = name;
     self->options = NEW(OrderedHashMap);
     self->help = NULL;
@@ -57,21 +43,16 @@ CONSTRUCTOR(CliCommand *, CliCommand, const char *name)
     self->default_action = NULL;
     self->deferred = NULL;
 
-    self->$option = &option__CliCommand;
-    self->$help = &help__CliCommand;
-    self->$value = &value__CliCommand;
-    self->$default_action = &default_action__CliCommand;
-    self->$defer = &defer__CliCommand;
-
     // Add default option
     {
-        CliOption *help = NEW(CliOption, "--help");
+        CliOption *help = NEW(CliOption, CLI_OPTION_ID_HELP, "--help");
 
-        help->$help(help, "Print the command help")
-          ->$default_action(
-            help, NEW_VARIANT(CliDefaultAction, help, &generate_help__CliHelp))
-          ->$short_name(help, "-h");
-        self->$option(self, help);
+        help__CliOption(help, "Print the command help");
+        default_action__CliOption(
+          help, NEW_VARIANT(CliDefaultAction, help, &generate_help__CliHelp));
+        short_name__CliOption(help, "-h");
+
+        option__CliCommand(self, help);
     }
 
     return self;

@@ -32,12 +32,12 @@ build__CliCIc(Vec *args)
 {
     Cli cli = NEW(Cli, args, "cic");
 
-    cli.$version(&cli, VERSION)
-      ->$author(&cli, "ArthurPV")
-      ->$about(&cli, "The CI transpiler tool")
-      ->$single_value(&cli, "PROJECT_PATH | FILE_PATH", true);
+    version__Cli(&cli, VERSION);
+    author__Cli(&cli, "ArthurPV");
+    about__Cli(&cli, "The CI transpiler tool");
+    single_value__Cli(&cli, "PROJECT_PATH | FILE_PATH", true);
 
-    CIC_OPTIONS((&cli));
+    CIC_OPTIONS((&cli), option__Cli);
 
     return cli;
 }

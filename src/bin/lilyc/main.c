@@ -37,12 +37,14 @@ int
 main(int argc, char **argv)
 {
     CliArgs args = build__CliArgs(argc, argv);
+    int status = 0;
 
-    RUN__CLI_ENTRY(args, build__CliLilyc, LilycConfig, run__LilycParseConfig, {
-        run__Lilyc(&config);
-    });
+    RUN__CLI_ENTRY(
+      args, build__CliLilyc, LilycConfig, run__LilycParseConfig, status, {
+          run__Lilyc(&config);
+      });
 
     LLVMShutdown();
 
-    return 0;
+    return status;
 }

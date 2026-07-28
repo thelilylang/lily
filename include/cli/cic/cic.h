@@ -27,43 +27,62 @@
 
 #include <base/cli.h>
 
-#define CIC_OPTIONS(self)                                                     \
-    CliOption *mode = NEW(CliOption, "--mode");                               \
-    CliOption *file = NEW(CliOption, "--file");                               \
-    CliOption *standard = NEW(CliOption, "--std");                            \
-    CliOption *include = NEW(CliOption, "--include");                         \
-    CliOption *include0 = NEW(CliOption, "--include0");                       \
-    CliOption *no_state_check = NEW(CliOption, "--no-state-check");           \
-                                                                              \
-    mode->$help(mode, "Specify transpilation mode (DEBUG | RELEASE)")         \
-      ->$value(mode, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "MODE", true));     \
-    file->$help(file, "Allow to pass a file instead of a project path")       \
-      ->$short_name(file, "-f");                                              \
-    standard                                                                  \
-      ->$help(                                                                \
-        standard,                                                             \
-        "Pass the standard to use (values: kr | c89 | c95 | c99 | c11 | "     \
-        "c17 | c23, default: c99)")                                           \
-      ->$value(standard, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "STD", true))   \
-      ->$short_name(standard, "-s");                                          \
-    include                                                                   \
-      ->$help(include,                                                        \
-              "Add directory to the end of the list of include search paths") \
-      ->$value(include, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "DIR", true))    \
-      ->$short_name(include, "-I");                                           \
-    include0                                                                  \
-      ->$help(                                                                \
-        include0,                                                             \
-        "Add directory to the begin of the list of include search paths")     \
-      ->$value(include0, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "DIR", true));  \
-    no_state_check->$help(no_state_check, "Disable the state checker");       \
-                                                                              \
-    self->$option(self, mode)                                                 \
-      ->$option(self, file)                                                   \
-      ->$option(self, standard)                                               \
-      ->$option(self, include)                                                \
-      ->$option(self, include0)                                               \
-      ->$option(self, no_state_check);
+// Identifiers of the `cic` options. Because `CIC_OPTIONS` is shared between the
+// `cic` program (which owns `--help` and `--version`) and the `ci compile`
+// command (which only owns `--help`), these must not depend on how many options
+// the library adds by itself — hence the explicit identifiers.
+enum CIcOptionId
+{
+    CIC_OPTION_ID_MODE,
+    CIC_OPTION_ID_FILE,
+    CIC_OPTION_ID_STD,
+    CIC_OPTION_ID_INCLUDE,
+    CIC_OPTION_ID_INCLUDE0,
+    CIC_OPTION_ID_NO_STATE_CHECK
+};
+
+#define CIC_OPTIONS(self, add_option)                                          \
+    CliOption *mode = NEW(CliOption, CIC_OPTION_ID_MODE, "--mode");            \
+    CliOption *file = NEW(CliOption, CIC_OPTION_ID_FILE, "--file");            \
+    CliOption *standard = NEW(CliOption, CIC_OPTION_ID_STD, "--std");          \
+    CliOption *include = NEW(CliOption, CIC_OPTION_ID_INCLUDE, "--include");   \
+    CliOption *include0 =                                                      \
+      NEW(CliOption, CIC_OPTION_ID_INCLUDE0, "--include0");                    \
+    CliOption *no_state_check =                                                \
+      NEW(CliOption, CIC_OPTION_ID_NO_STATE_CHECK, "--no-state-check");        \
+                                                                               \
+    value__CliOption(                                                          \
+      help__CliOption(mode, "Specify transpilation mode (DEBUG | RELEASE)"),   \
+      NEW(CliValue, CLI_VALUE_KIND_SINGLE, "MODE", true));                     \
+    short_name__CliOption(                                                     \
+      help__CliOption(file, "Allow to pass a file instead of a project path"), \
+      "-f");                                                                   \
+    help__CliOption(                                                           \
+      standard,                                                                \
+      "Pass the standard to use (values: kr | c89 | c95 | c99 | c11 | "        \
+      "c17 | c23, default: c99)");                                             \
+    value__CliOption(standard,                                                 \
+                     NEW(CliValue, CLI_VALUE_KIND_SINGLE, "STD", true));       \
+    short_name__CliOption(standard, "-s");                                     \
+    help__CliOption(include,                                                   \
+                    "Add directory to the end of the list of include search "  \
+                    "paths");                                                  \
+    value__CliOption(include,                                                  \
+                     NEW(CliValue, CLI_VALUE_KIND_SINGLE, "DIR", true));       \
+    short_name__CliOption(include, "-I");                                      \
+    help__CliOption(include0,                                                  \
+                    "Add directory to the begin of the list of include "       \
+                    "search paths");                                           \
+    value__CliOption(include0,                                                 \
+                     NEW(CliValue, CLI_VALUE_KIND_SINGLE, "DIR", true));       \
+    help__CliOption(no_state_check, "Disable the state checker");              \
+                                                                               \
+    add_option(self, mode);                                                    \
+    add_option(self, file);                                                    \
+    add_option(self, standard);                                                \
+    add_option(self, include);                                                 \
+    add_option(self, include0);                                                \
+    add_option(self, no_state_check);
 
 Cli
 build__CliCIc(Vec *args);

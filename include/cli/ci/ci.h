@@ -27,6 +27,14 @@
 
 #include <base/cli.h>
 
+// Identifiers of the `ci` commands, attached at construction and returned
+// as-is in the parse results.
+enum CICommandId
+{
+    CI_COMMAND_ID_COMPILE,
+    CI_COMMAND_ID_SELF_TEST
+};
+
 Cli
 build__CliCI(Vec *args);
 

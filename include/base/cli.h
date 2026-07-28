@@ -32,6 +32,17 @@
 #include <base/string.h>
 #include <base/vec.h>
 
+enum CliParseStatus
+{
+    // The arguments were parsed, the results are usable.
+    CLI_PARSE_STATUS_OK,
+    // A default action (`--help`, `--version`) has been printed. There is
+    // nothing left to run, but this is not a failure.
+    CLI_PARSE_STATUS_DONE,
+    // A diagnostic has been emitted on stderr.
+    CLI_PARSE_STATUS_ERROR
+};
+
 typedef struct Cli
 {
     const char *name;
@@ -44,16 +55,7 @@ typedef struct Cli
     String *full_command;
     const Vec *args; // const Vec<char*>* (&)
     VecIter args_iter;
-
-    struct Cli *(*$author)(struct Cli *, char *);
-    struct Cli *(*$about)(struct Cli *, char *);
-    struct Cli *(*$version)(struct Cli *, char *);
-    struct Cli *(*$subcommand)(struct Cli *, CliCommand *);
-    struct Cli *(*$option)(struct Cli *, CliOption *);
-    struct Cli *(*$single_value)(struct Cli *, char *, bool);
-    struct Cli *(*$multiple_value)(struct Cli *, char *, bool);
-    struct Cli *(*$multiple_inf_value)(struct Cli *, char *, bool);
-    struct Vec *(*$parse)(struct Cli *);
+    enum CliParseStatus status;
 } Cli;
 
 /**
@@ -61,6 +63,93 @@ typedef struct Cli
  * @brief Construct Cli type.
  */
 CONSTRUCTOR(Cli, Cli, const Vec *args, const char *name);
+
+/**
+ *
+ * @brief Set the author of the program.
+ * @return Cli* (&) self, to allow the calls to be nested.
+ */
+Cli *
+author__Cli(Cli *self, char *author);
+
+/**
+ *
+ * @brief Set the description of the program.
+ * @return Cli* (&) self, to allow the calls to be nested.
+ */
+Cli *
+about__Cli(Cli *self, char *about);
+
+/**
+ *
+ * @brief Set the version of the program. This also adds the `--version`
+ * option.
+ * @return Cli* (&) self, to allow the calls to be nested.
+ */
+Cli *
+version__Cli(Cli *self, char *version);
+
+/**
+ *
+ * @brief Add a subcommand to the program.
+ * @return Cli* (&) self, to allow the calls to be nested.
+ */
+Cli *
+subcommand__Cli(Cli *self, CliCommand *subcommand);
+
+/**
+ *
+ * @brief Add an option to the program.
+ * @return Cli* (&) self, to allow the calls to be nested.
+ */
+Cli *
+option__Cli(Cli *self, CliOption *option);
+
+/**
+ *
+ * @brief Expect a single value.
+ * @return Cli* (&) self, to allow the calls to be nested.
+ */
+Cli *
+single_value__Cli(Cli *self, char *name, bool is_required);
+
+/**
+ *
+ * @brief Expect one or more values.
+ * @return Cli* (&) self, to allow the calls to be nested.
+ */
+Cli *
+multiple_value__Cli(Cli *self, char *name, bool is_required);
+
+/**
+ *
+ * @brief Expect one or more values, options included.
+ * @return Cli* (&) self, to allow the calls to be nested.
+ */
+Cli *
+multiple_inf_value__Cli(Cli *self, char *name, bool is_required);
+
+/**
+ *
+ * @brief Parse the arguments given to the constructor.
+ * @note This never terminates the process. When NULL is returned,
+ * `self->status` tells whether that is an error or a default action that has
+ * already been printed.
+ * @return Vec<CliResult*>*? — NULL when `self->status != CLI_PARSE_STATUS_OK`.
+ */
+Vec *
+parse__Cli(Cli *self);
+
+/**
+ *
+ * @brief Get the status code the program is expected to exit with, based on the
+ * result of the last parse.
+ */
+inline int
+exit_status__Cli(const Cli *self)
+{
+    return self->status == CLI_PARSE_STATUS_ERROR ? 1 : 0;
+}
 
 /**
  *

@@ -33,44 +33,42 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static Cli *
-author__Cli(Cli *self, char *author);
-
-static Cli *
-about__Cli(Cli *self, char *about);
-
-static Cli *
-version__Cli(Cli *self, char *about);
-
-static Cli *
-subcommand__Cli(Cli *self, CliCommand *subcommand);
-
-static Cli *
-option__Cli(Cli *self, CliOption *option);
-
-static Cli *
-single_value__Cli(Cli *self, char *name, bool is_required);
-
-static Cli *
-multiple_value__Cli(Cli *self, char *name, bool is_required);
-
-static Cli *
-multiple_inf_value__Cli(Cli *self, char *name, bool is_required);
-
-/// @return Vec<CliResult*>*
+/// @return Vec<CliResult*>*? — NULL when an error has been emitted.
 static Vec *
-parse__Cli(Cli *self);
+parse_command__Cli(Cli *self, CliCommand *cmd);
 
-/// @return Vec<CliResult*>*
-static Vec *
-parse_command__Cli(Cli *self, CliCommand *cmd, const Usize *cmd_id);
-
-/// @return Vec<CliResult*>*
+/// @return Vec<CliResult*>*? — NULL when an error has been emitted.
 static Vec *
 parse_option__Cli(Cli *self);
 
+/// @return CliResultValue*? — NULL when the value is absent or on error. Check
+/// `self->status` to tell both apart.
 static CliResultValue *
 parse_value__Cli(Cli *self, const CliValue *value);
+
+// Emit an error diagnostic on `self` and record it in `self->status`. The `_F`
+// variant takes ownership of a `format`-allocated message.
+#define EMIT_ERROR(msg, count)                             \
+    {                                                      \
+        CliDiagnostic err = NEW(CliDiagnostic,             \
+                                CLI_DIAGNOSTIC_KIND_ERROR, \
+                                msg,                       \
+                                count,                     \
+                                self->full_command);       \
+                                                           \
+        emit__CliDiagnostic(&err);                         \
+                                                           \
+        self->status = CLI_PARSE_STATUS_ERROR;             \
+    }
+
+#define EMIT_ERROR_F(msg, count)          \
+    {                                     \
+        char *formatted_msg = msg;        \
+                                          \
+        EMIT_ERROR(formatted_msg, count); \
+                                          \
+        lily_free(formatted_msg);         \
+    }
 
 CONSTRUCTOR(Cli, Cli, const Vec *args, const char *name)
 {
@@ -100,25 +98,18 @@ CONSTRUCTOR(Cli, Cli, const Vec *args, const char *name)
                       .full_command = full_command,
                       .args = args,
                       .args_iter = NEW(VecIter, args),
-                      .$author = &author__Cli,
-                      .$about = &about__Cli,
-                      .$version = &version__Cli,
-                      .$subcommand = &subcommand__Cli,
-                      .$option = &option__Cli,
-                      .$single_value = &single_value__Cli,
-                      .$multiple_value = &multiple_value__Cli,
-                      .$multiple_inf_value = &multiple_inf_value__Cli,
-                      .$parse = &parse__Cli };
+                      .status = CLI_PARSE_STATUS_OK };
 
     // Add default option
     {
-        CliOption *help = NEW(CliOption, "--help");
-        help->$help(help, "Print the help")
-          ->$default_action(
-            help, NEW_VARIANT(CliDefaultAction, help, &generate_help__CliHelp))
-          ->$short_name(help, "-h");
+        CliOption *help = NEW(CliOption, CLI_OPTION_ID_HELP, "--help");
 
-        self.$option(&self, help);
+        help__CliOption(help, "Print the help");
+        default_action__CliOption(
+          help, NEW_VARIANT(CliDefaultAction, help, &generate_help__CliHelp));
+        short_name__CliOption(help, "-h");
+
+        option__Cli(&self, help);
     }
 
     return self;
@@ -151,13 +142,14 @@ version__Cli(Cli *self, char *version)
 
     // Add version option
     {
-        CliOption *version = NEW(CliOption, "--version");
-        version->$help(version, "Print the version")
-          ->$default_action(
-            version, NEW_VARIANT(CliDefaultAction, version, self->version))
-          ->$short_name(version, "-v");
+        CliOption *option = NEW(CliOption, CLI_OPTION_ID_VERSION, "--version");
 
-        self->$option(self, version);
+        help__CliOption(option, "Print the version");
+        default_action__CliOption(
+          option, NEW_VARIANT(CliDefaultAction, version, self->version));
+        short_name__CliOption(option, "-v");
+
+        option__Cli(self, option);
     }
 
     return self;
@@ -221,19 +213,14 @@ parse__Cli(Cli *self)
     if (self->args->len == 1 && self->subcommands->len > 0) {
         PRINTLN("{Sr}", generate_help__CliHelp(self, NULL));
 
-        CliDiagnostic err = NEW(CliDiagnostic,
-                                CLI_DIAGNOSTIC_KIND_ERROR,
-                                "expected command",
-                                self->args_iter.count,
-                                self->full_command);
+        EMIT_ERROR("expected command", self->args_iter.count);
 
-        emit__CliDiagnostic(&err);
+        return NULL;
     }
 
     // Skip program name
     next__VecIter(&self->args_iter);
 
-    Usize *cmd_id = NULL;
     CliCommand *current_cmd = NULL;
     char *current_arg = next__VecIter(&self->args_iter);
 
@@ -241,24 +228,17 @@ parse__Cli(Cli *self)
         if (self->subcommands->len > 0 && current_arg[0] != '-') {
             current_cmd = get__OrderedHashMap(self->subcommands, current_arg);
 
-            if (current_cmd) {
-                cmd_id = (Usize *)get_id__OrderedHashMap(self->subcommands,
-                                                         current_arg);
-            } else {
+            if (!current_cmd) {
                 if (!self->value) {
-                    char *msg = format("command not found: `{s}`", current_arg);
+                    EMIT_ERROR_F(
+                      format("command not found: `{s}`", current_arg),
+                      self->args_iter.count);
 
-                    CliDiagnostic err = NEW(CliDiagnostic,
-                                            CLI_DIAGNOSTIC_KIND_ERROR,
-                                            msg,
-                                            self->args_iter.count,
-                                            self->full_command);
-
-                    emit__CliDiagnostic(&err);
-                } else {
-                    // Return to the previous arg.
-                    --self->args_iter.count;
+                    return NULL;
                 }
+
+                // Return to the previous arg.
+                --self->args_iter.count;
             }
         } else {
             // Return to the previous arg.
@@ -267,16 +247,16 @@ parse__Cli(Cli *self)
     }
 
     if (current_cmd) {
-        return parse_command__Cli(self, current_cmd, cmd_id);
+        return parse_command__Cli(self, current_cmd);
     }
 
     return parse_option__Cli(self);
 }
 
 Vec *
-parse_command__Cli(Cli *self, CliCommand *cmd, const Usize *cmd_id)
+parse_command__Cli(Cli *self, CliCommand *cmd)
 {
-    ASSERT(cmd && cmd_id);
+    ASSERT(cmd);
 
     if (cmd->deferred) {
         cmd->deferred(cmd);
@@ -306,8 +286,18 @@ parse_command__Cli(Cli *self, CliCommand *cmd, const Usize *cmd_id)
     Vec *res = init__Vec(
       1,
       NEW_VARIANT(
-        CliResult, command, NEW(CliResultCommand, *cmd_id, res_cmd_value)));
+        CliResult, command, NEW(CliResultCommand, cmd->id, res_cmd_value)));
     char *current = NULL;
+
+// Give up on the current parse, after an error has been emitted or a default
+// action has been printed.
+#define PARSE_COMMAND_ABORT()                                \
+    {                                                        \
+        FREE_BUFFER_ITEMS(res->buffer, res->len, CliResult); \
+        FREE(Vec, res);                                      \
+                                                             \
+        return NULL;                                         \
+    }
 
     while ((current = next__VecIter(&self->args_iter))) {
         if (current[0] == '-') {
@@ -316,56 +306,48 @@ parse_command__Cli(Cli *self, CliCommand *cmd, const Usize *cmd_id)
             if (option) {
                 if (option->default_action) {
                     print__CliDefaultAction(option->default_action, self, cmd);
+
+                    self->status = CLI_PARSE_STATUS_DONE;
+
+                    PARSE_COMMAND_ABORT();
                 }
 
-                const Usize *option_id =
-                  get_id__OrderedHashMap(cmd->options, current);
+                CliResultValue *option_value = NULL;
 
                 if (option->value) {
-                    push__Vec(
-                      res,
-                      NEW_VARIANT(CliResult,
-                                  option,
-                                  NEW(CliResultOption,
-                                      *option_id,
-                                      parse_value__Cli(self, option->value))));
-                } else {
-                    push__Vec(
-                      res,
-                      NEW_VARIANT(CliResult,
-                                  option,
-                                  NEW(CliResultOption, *option_id, NULL)));
+                    option_value = parse_value__Cli(self, option->value);
+
+                    if (self->status != CLI_PARSE_STATUS_OK) {
+                        PARSE_COMMAND_ABORT();
+                    }
                 }
+
+                push__Vec(
+                  res,
+                  NEW_VARIANT(CliResult,
+                              option,
+                              NEW(CliResultOption, option->id, option_value)));
             } else {
-                char *msg = format("unknown option: `{s}`", current);
+                EMIT_ERROR_F(format("unknown option: `{s}`", current),
+                             self->args_iter.count);
 
-                CliDiagnostic err = NEW(CliDiagnostic,
-                                        CLI_DIAGNOSTIC_KIND_ERROR,
-                                        msg,
-                                        self->args_iter.count,
-                                        self->full_command);
-
-                emit__CliDiagnostic(&err);
+                PARSE_COMMAND_ABORT();
             }
         } else {
             if (cmd->value) {
                 switch (res_cmd_value->kind) {
                     case CLI_RESULT_VALUE_KIND_SINGLE:
-                        if (!res_cmd_value->single) {
-                            res_cmd_value->single = current;
-                        } else {
-                            char *msg = format(
-                              "expected one value for this command: `{s}`",
-                              cmd->name);
+                        if (res_cmd_value->single) {
+                            EMIT_ERROR_F(
+                              format(
+                                "expected one value for this command: `{s}`",
+                                cmd->name),
+                              self->args_iter.count);
 
-                            CliDiagnostic err = NEW(CliDiagnostic,
-                                                    CLI_DIAGNOSTIC_KIND_ERROR,
-                                                    msg,
-                                                    self->args_iter.count,
-                                                    self->full_command);
-
-                            emit__CliDiagnostic(&err);
+                            PARSE_COMMAND_ABORT();
                         }
+
+                        res_cmd_value->single = current;
 
                         break;
                     case CLI_RESULT_VALUE_KIND_MULTIPLE:
@@ -380,48 +362,36 @@ parse_command__Cli(Cli *self, CliCommand *cmd, const Usize *cmd_id)
                         UNREACHABLE("unknown variant");
                 }
             } else {
-                char *msg = format(
-                  "no values are expected for this comand: `{s}`", cmd->name);
+                EMIT_ERROR_F(
+                  format("no values are expected for this comand: `{s}`",
+                         cmd->name),
+                  self->args_iter.count);
 
-                CliDiagnostic err = NEW(CliDiagnostic,
-                                        CLI_DIAGNOSTIC_KIND_ERROR,
-                                        msg,
-                                        self->args_iter.count,
-                                        self->full_command);
-
-                emit__CliDiagnostic(&err);
+                PARSE_COMMAND_ABORT();
             }
         }
     }
 
     if (res_cmd_value) {
-#define PARSE_COMMAND_CHECK_MULTIPLE_VALUE(multiple)                         \
-    if (multiple->len == 0) {                                                \
-        char *msg = format(                                                  \
-          "expected one or more values for this command: `{s}`", cmd->name); \
-                                                                             \
-        CliDiagnostic err = NEW(CliDiagnostic,                               \
-                                CLI_DIAGNOSTIC_KIND_ERROR,                   \
-                                msg,                                         \
-                                self->args_iter.count - 1,                   \
-                                self->full_command);                         \
-                                                                             \
-        emit__CliDiagnostic(&err);                                           \
+#define PARSE_COMMAND_CHECK_MULTIPLE_VALUE(multiple)                    \
+    if (multiple->len == 0) {                                           \
+        EMIT_ERROR_F(                                                   \
+          format("expected one or more values for this command: `{s}`", \
+                 cmd->name),                                            \
+          self->args_iter.count - 1);                                   \
+                                                                        \
+        PARSE_COMMAND_ABORT();                                          \
     }
 
         switch (res_cmd_value->kind) {
             case CLI_VALUE_KIND_SINGLE:
                 if (!res_cmd_value->single) {
-                    char *msg = format("expected value for this command: `{s}`",
-                                       cmd->name);
+                    EMIT_ERROR_F(
+                      format("expected value for this command: `{s}`",
+                             cmd->name),
+                      self->args_iter.count - 1);
 
-                    CliDiagnostic err = NEW(CliDiagnostic,
-                                            CLI_DIAGNOSTIC_KIND_ERROR,
-                                            msg,
-                                            self->args_iter.count - 1,
-                                            self->full_command);
-
-                    emit__CliDiagnostic(&err);
+                    PARSE_COMMAND_ABORT();
                 }
 
                 break;
@@ -434,7 +404,11 @@ parse_command__Cli(Cli *self, CliCommand *cmd, const Usize *cmd_id)
             default:
                 UNREACHABLE("unknown variant");
         }
+
+#undef PARSE_COMMAND_CHECK_MULTIPLE_VALUE
     }
+
+#undef PARSE_COMMAND_ABORT
 
     return res;
 }
@@ -442,15 +416,14 @@ parse_command__Cli(Cli *self, CliCommand *cmd, const Usize *cmd_id)
 CliResultValue *
 parse_value__Cli(Cli *self, const CliValue *value)
 {
-#define PARSE_VALUE_CHECK_MULTIPLE_VALUE(multiple)                        \
-    if (multiple->len == 0) {                                             \
-        CliDiagnostic err = NEW(CliDiagnostic,                            \
-                                CLI_DIAGNOSTIC_KIND_ERROR,                \
-                                "expected value after option or command", \
-                                self->args_iter.count,                    \
-                                self->full_command);                      \
-                                                                          \
-        emit__CliDiagnostic(&err);                                        \
+#define PARSE_VALUE_CHECK_MULTIPLE_VALUE(multiple)           \
+    if (multiple->len == 0) {                                \
+        EMIT_ERROR("expected value after option or command", \
+                   self->args_iter.count);                   \
+                                                             \
+        FREE(Vec, multiple);                                 \
+                                                             \
+        return NULL;                                         \
     }
 
     switch (value->kind) {
@@ -458,36 +431,25 @@ parse_value__Cli(Cli *self, const CliValue *value)
             char *current = next__VecIter(&self->args_iter);
 
             if (current) {
-                if (current[0] == '-') {
-                    if (value->is_required) {
-                        CliDiagnostic err =
-                          NEW(CliDiagnostic,
-                              CLI_DIAGNOSTIC_KIND_ERROR,
-                              "expected value after option or command",
-                              self->args_iter.count,
-                              self->full_command);
-
-                        emit__CliDiagnostic(&err);
-                    } else {
-                        --self->args_iter.count;
-
-                        return NULL;
-                    }
-                } else {
+                if (current[0] != '-') {
                     return NEW_VARIANT(
                       CliResultValue, single, value->name, current);
                 }
-            } else if (value->is_required) {
-                CliDiagnostic err =
-                  NEW(CliDiagnostic,
-                      CLI_DIAGNOSTIC_KIND_ERROR,
-                      "expected value after option or command",
-                      self->args_iter.count,
-                      self->full_command);
 
-                emit__CliDiagnostic(&err);
+                if (value->is_required) {
+                    EMIT_ERROR("expected value after option or command",
+                               self->args_iter.count);
+
+                    return NULL;
+                }
+            } else if (value->is_required) {
+                EMIT_ERROR("expected value after option or command",
+                           self->args_iter.count);
+
+                return NULL;
             }
 
+            // Back to the previous element
             --self->args_iter.count;
 
             return NULL;
@@ -536,6 +498,8 @@ parse_value__Cli(Cli *self, const CliValue *value)
         default:
             UNREACHABLE("unknown variant");
     }
+
+#undef PARSE_VALUE_CHECK_MULTIPLE_VALUE
 }
 
 Vec *
@@ -544,6 +508,16 @@ parse_option__Cli(Cli *self)
     Vec *res = NEW(Vec); // Vec<CliResult*>*
     char *current = NULL;
 
+// Give up on the current parse, after an error has been emitted or a default
+// action has been printed.
+#define PARSE_OPTION_ABORT()                                 \
+    {                                                        \
+        FREE_BUFFER_ITEMS(res->buffer, res->len, CliResult); \
+        FREE(Vec, res);                                      \
+                                                             \
+        return NULL;                                         \
+    }
+
     while ((current = next__VecIter(&self->args_iter))) {
         if (current[0] == '-') {
             CliOption *option = get__OrderedHashMap(self->options, current);
@@ -551,36 +525,32 @@ parse_option__Cli(Cli *self)
             if (option) {
                 if (option->default_action) {
                     print__CliDefaultAction(option->default_action, self, NULL);
+
+                    self->status = CLI_PARSE_STATUS_DONE;
+
+                    PARSE_OPTION_ABORT();
                 }
 
-                const Usize *option_id =
-                  get_id__OrderedHashMap(self->options, current);
+                CliResultValue *option_value = NULL;
 
                 if (option->value) {
-                    push__Vec(
-                      res,
-                      NEW_VARIANT(CliResult,
-                                  option,
-                                  NEW(CliResultOption,
-                                      *option_id,
-                                      parse_value__Cli(self, option->value))));
-                } else {
-                    push__Vec(
-                      res,
-                      NEW_VARIANT(CliResult,
-                                  option,
-                                  NEW(CliResultOption, *option_id, NULL)));
+                    option_value = parse_value__Cli(self, option->value);
+
+                    if (self->status != CLI_PARSE_STATUS_OK) {
+                        PARSE_OPTION_ABORT();
+                    }
                 }
+
+                push__Vec(
+                  res,
+                  NEW_VARIANT(CliResult,
+                              option,
+                              NEW(CliResultOption, option->id, option_value)));
             } else {
-                char *msg = format("unknown option: `{s}`", current);
+                EMIT_ERROR_F(format("unknown option: `{s}`", current),
+                             self->args_iter.count);
 
-                CliDiagnostic err = NEW(CliDiagnostic,
-                                        CLI_DIAGNOSTIC_KIND_ERROR,
-                                        msg,
-                                        self->args_iter.count,
-                                        self->full_command);
-
-                emit__CliDiagnostic(&err);
+                PARSE_OPTION_ABORT();
             }
         } else {
             if (self->value) {
@@ -592,65 +562,45 @@ parse_option__Cli(Cli *self)
                                                   self->value->name,
                                                   current)));
             } else {
-                CliDiagnostic err = NEW(CliDiagnostic,
-                                        CLI_DIAGNOSTIC_KIND_ERROR,
-                                        "no values are expected",
-                                        self->args_iter.count,
-                                        self->full_command);
+                EMIT_ERROR("no values are expected", self->args_iter.count);
 
-                emit__CliDiagnostic(&err);
+                PARSE_OPTION_ABORT();
             }
         }
     }
 
     // Check whether the number of values corresponds to the expected value type
     // (SINGLE, MULTIPLE, MULTIPLE_INF).
-    if (self->value) {
+    if (self->value && self->value->is_required) {
         VecIter iter = NEW(VecIter, res);
-        CliResult *current = NULL;
+        CliResult *current_res = NULL;
         Usize count_value = 0;
 
-        while ((current = next__VecIter(&iter))) {
-            if (current->kind == CLI_RESULT_KIND_VALUE) {
+        while ((current_res = next__VecIter(&iter))) {
+            if (current_res->kind == CLI_RESULT_KIND_VALUE) {
                 ++count_value;
             }
         }
 
         switch (self->value->kind) {
             case CLI_VALUE_KIND_SINGLE:
-                if (self->value->is_required) {
-                    if (count_value == 0) {
-                        CliDiagnostic err = NEW(CliDiagnostic,
-                                                CLI_DIAGNOSTIC_KIND_ERROR,
-                                                "expected one value",
-                                                0,
-                                                self->full_command);
+                if (count_value == 0) {
+                    EMIT_ERROR("expected one value", 0);
 
-                        emit__CliDiagnostic(&err);
-                    } else if (count_value > 1) {
-                        CliDiagnostic err = NEW(CliDiagnostic,
-                                                CLI_DIAGNOSTIC_KIND_ERROR,
-                                                "too many values are given",
-                                                0,
-                                                self->full_command);
+                    PARSE_OPTION_ABORT();
+                } else if (count_value > 1) {
+                    EMIT_ERROR("too many values are given", 0);
 
-                        emit__CliDiagnostic(&err);
-                    }
+                    PARSE_OPTION_ABORT();
                 }
 
                 break;
             case CLI_VALUE_KIND_MULTIPLE:
             case CLI_VALUE_KIND_MULTIPLE_INF:
-                if (self->value->is_required) {
-                    if (count_value == 0) {
-                        CliDiagnostic err = NEW(CliDiagnostic,
-                                                CLI_DIAGNOSTIC_KIND_ERROR,
-                                                "expected one or more values",
-                                                0,
-                                                self->full_command);
+                if (count_value == 0) {
+                    EMIT_ERROR("expected one or more values", 0);
 
-                        emit__CliDiagnostic(&err);
-                    }
+                    PARSE_OPTION_ABORT();
                 }
 
                 break;
@@ -658,6 +608,8 @@ parse_option__Cli(Cli *self)
                 UNREACHABLE("unknown variant");
         }
     }
+
+#undef PARSE_OPTION_ABORT
 
     return res;
 }

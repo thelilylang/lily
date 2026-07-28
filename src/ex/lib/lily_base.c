@@ -26,6 +26,7 @@
 #define LILY_EX_LIB_LILY_BASE_C
 
 #include <base/allocator.h>
+#include <base/cli.h>
 #include <base/cli/args.h>
 #include <base/cli/default_action.h>
 #include <base/cli/diagnostic.h>
@@ -214,6 +215,10 @@ get_node_from_id__YAML(YAMLLoadRes *self, Usize document_id, Int32 node_id);
 
 extern inline YAMLNode *
 get_root_node__YAML(YAMLLoadRes *self, Usize document_id);
+
+// <base/cli.h>
+extern inline int
+exit_status__Cli(const Cli *self);
 
 // <base/cli/args.h>
 extern inline CONSTRUCTOR(CliArgs, CliArgs);

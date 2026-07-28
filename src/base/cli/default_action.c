@@ -74,6 +74,4 @@ print__CliDefaultAction(const CliDefaultAction *self,
         default:
             UNREACHABLE("unknown variant");
     }
-
-    exit(0);
 }

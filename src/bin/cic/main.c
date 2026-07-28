@@ -35,10 +35,12 @@ int
 main(int argc, char **argv)
 {
     CliArgs args = build__CliArgs(argc, argv);
+    int status = 0;
 
-    RUN__CLI_ENTRY(args, build__CliCIc, CIcConfig, run__CIcParseConfig, {
-        run__CIc(&config, NULL, NULL);
-    });
+    RUN__CLI_ENTRY(
+      args, build__CliCIc, CIcConfig, run__CIcParseConfig, status, {
+          run__CIc(&config, NULL, NULL);
+      });
 
-    return 0;
+    return status;
 }

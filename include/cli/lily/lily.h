@@ -27,6 +27,42 @@
 
 #include <base/cli.h>
 
+// Identifiers of the `lily` commands and of the options of each command. They
+// are attached at construction and returned as-is in the parse results. Option
+// identifiers only have to be unique within their own command.
+enum LilyCommandId
+{
+    LILY_COMMAND_ID_BUILD,
+    LILY_COMMAND_ID_CC,
+    LILY_COMMAND_ID_CPP,
+    LILY_COMMAND_ID_COMPILE,
+    LILY_COMMAND_ID_INIT,
+    LILY_COMMAND_ID_NEW,
+    LILY_COMMAND_ID_RUN,
+    LILY_COMMAND_ID_TEST,
+    LILY_COMMAND_ID_TO
+};
+
+enum LilyBuildOptionId
+{
+    LILY_BUILD_OPTION_ID_VERBOSE
+};
+
+enum LilyRunOptionId
+{
+    LILY_RUN_OPTION_ID_VERBOSE,
+    LILY_RUN_OPTION_ID_ARGS,
+    LILY_RUN_OPTION_ID_MAX_STACK,
+    LILY_RUN_OPTION_ID_MAX_HEAP
+};
+
+enum LilyToOptionId
+{
+    LILY_TO_OPTION_ID_CC,
+    LILY_TO_OPTION_ID_CPP,
+    LILY_TO_OPTION_ID_JS
+};
+
 Cli
 build__CliLily(Vec *args);
 

@@ -29,28 +29,66 @@
 #include <base/cli/value.h>
 #include <base/macros.h>
 #include <base/string.h>
+#include <base/types.h>
+
+// Identifiers of the options added by the library itself. User identifiers are
+// expected to start at 0, so reserving the top of the range keeps both sets
+// disjoint without the user having to know how many builtins there are.
+#define CLI_OPTION_ID_BUILTIN_BASE ((Usize) - 16)
+#define CLI_OPTION_ID_HELP (CLI_OPTION_ID_BUILTIN_BASE + 0)
+#define CLI_OPTION_ID_VERSION (CLI_OPTION_ID_BUILTIN_BASE + 1)
 
 typedef struct CliOption
 {
+    // Caller-defined identifier, forwarded as-is to `CliResultOption`. It is
+    // never derived from the declaration order, so options can be reordered or
+    // given a short name without changing how results are matched.
+    Usize id;
     const char *name;                 // NOTE: this is the long name (--<name>)
     char *short_name;                 // char*? (-<letter>)
     CliValue *value;                  // CliValue*?
     char *help;                       // char*?
     CliDefaultAction *default_action; // CliDefaultAction*?
     Usize ref_count;
-
-    struct CliOption *(*$short_name)(struct CliOption *, char *);
-    struct CliOption *(*$value)(struct CliOption *, CliValue *value);
-    struct CliOption *(*$help)(struct CliOption *, char *);
-    struct CliOption *(*$default_action)(struct CliOption *,
-                                         CliDefaultAction *);
 } CliOption;
 
 /**
  *
  * @brief Construct CliOption type.
  */
-CONSTRUCTOR(CliOption *, CliOption, const char *name);
+CONSTRUCTOR(CliOption *, CliOption, Usize id, const char *name);
+
+/**
+ *
+ * @brief Set the short name (-<letter>) of the option.
+ * @return CliOption* (&) self, to allow the calls to be nested.
+ */
+CliOption *
+short_name__CliOption(CliOption *self, char *name);
+
+/**
+ *
+ * @brief Set the value expected by the option.
+ * @return CliOption* (&) self, to allow the calls to be nested.
+ */
+CliOption *
+value__CliOption(CliOption *self, CliValue *value);
+
+/**
+ *
+ * @brief Set the help description of the option.
+ * @return CliOption* (&) self, to allow the calls to be nested.
+ */
+CliOption *
+help__CliOption(CliOption *self, char *help);
+
+/**
+ *
+ * @brief Set the action run when the option is passed.
+ * @return CliOption* (&) self, to allow the calls to be nested.
+ */
+CliOption *
+default_action__CliOption(CliOption *self, CliDefaultAction *default_action);
 
 /**
  *

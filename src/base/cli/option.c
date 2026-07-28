@@ -31,35 +31,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-static CliOption *
-short_name__CliOption(CliOption *self, char *name);
-
-static CliOption *
-value__CliOption(CliOption *self, CliValue *value);
-
-static CliOption *
-help__CliOption(CliOption *self, char *help);
-
-static CliOption *
-default_action__CliOption(CliOption *self, CliDefaultAction *default_action);
-
-CONSTRUCTOR(CliOption *, CliOption, const char *name)
+CONSTRUCTOR(CliOption *, CliOption, Usize id, const char *name)
 {
     ASSERT(name[0] == '-' && strlen(name) > 2);
 
     CliOption *self = lily_malloc(sizeof(CliOption));
 
+    self->id = id;
     self->name = name;
     self->short_name = NULL;
     self->value = NULL;
     self->help = NULL;
     self->default_action = NULL;
     self->ref_count = 0;
-
-    self->$short_name = &short_name__CliOption;
-    self->$value = &value__CliOption;
-    self->$help = &help__CliOption;
-    self->$default_action = &default_action__CliOption;
 
     return self;
 }

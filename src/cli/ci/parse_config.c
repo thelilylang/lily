@@ -26,21 +26,12 @@
 #include <base/cli/result.h>
 #include <base/macros.h>
 
+#include <cli/ci/ci.h>
 #include <cli/ci/parse_config.h>
 #include <cli/cic/parse_config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
-
-// NOTE: The following options, are builtin:
-/*
-#define H_OPTION 0
-#define HELP_OPTION 1
-#define V_OPTION 2
-#define VERSION_OPTION 3
-*/
-#define COMPILE_COMMAND 0
-#define SELF_TEST_COMMAND 1
 
 /// @brief Parse compile config.
 static inline CIConfig
@@ -92,9 +83,9 @@ run__CIParseConfig(const Vec *results)
     ASSERT(command->kind == CLI_RESULT_KIND_COMMAND);
 
     switch (command->command.id) {
-        case COMPILE_COMMAND:
+        case CI_COMMAND_ID_COMPILE:
             return parse_compile__CIParseConfig(results);
-        case SELF_TEST_COMMAND:
+        case CI_COMMAND_ID_SELF_TEST:
             return parse_self_test__CIParseConfig(results);
         default:
             UNREACHABLE("unknown command");

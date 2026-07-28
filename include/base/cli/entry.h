@@ -25,20 +25,40 @@
 #ifndef LILY_CLI_ENTRY_H
 #define LILY_CLI_ENTRY_H
 
-#define RUN__CLI_ENTRY(args, build_cli, config_t, run_config, block) \
-    {                                                                \
-        Cli cli = build_cli(args);                                   \
-        Vec *res = cli.$parse(&cli);                                 \
-        config_t config = run_config(res);                           \
-                                                                     \
-        FREE_BUFFER_ITEMS(res->buffer, res->len, CliResult);         \
-        FREE(Vec, res);                                              \
-        FREE(Cli, &cli);                                             \
-                                                                     \
-        block;                                                       \
-                                                                     \
-        FREE(CliArgs, args);                                         \
-        FREE(config_t, &config);                                     \
+#include <base/cli.h>
+#include <base/cli/args.h>
+#include <base/cli/result.h>
+
+/**
+ *
+ * @brief Build the CLI, parse `args` and run `block` on the resulting config.
+ * @param status An `int` lvalue. It is set to the status the program is
+ * expected to exit with when the parse does not produce a config (an error was
+ * emitted, or `--help`/`--version` was printed). It is left untouched when
+ * `block` runs, so `block` is free to set it itself.
+ */
+#define RUN__CLI_ENTRY(args, build_cli, config_t, run_config, status, block) \
+    {                                                                        \
+        Cli cli = build_cli(args);                                           \
+        Vec *res = parse__Cli(&cli);                                         \
+                                                                             \
+        if (res) {                                                           \
+            config_t config = run_config(res);                               \
+                                                                             \
+            FREE_BUFFER_ITEMS(res->buffer, res->len, CliResult);             \
+            FREE(Vec, res);                                                  \
+            FREE(Cli, &cli);                                                 \
+                                                                             \
+            block;                                                           \
+                                                                             \
+            FREE(CliArgs, args);                                             \
+            FREE(config_t, &config);                                         \
+        } else {                                                             \
+            status = exit_status__Cli(&cli);                                 \
+                                                                             \
+            FREE(Cli, &cli);                                                 \
+            FREE(CliArgs, args);                                             \
+        }                                                                    \
     }
 
 #endif // LILY_CLI_ENTRY_H

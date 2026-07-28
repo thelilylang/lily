@@ -31,11 +31,12 @@ build__CliLilyc(Vec *args)
 {
     Cli cli = NEW(Cli, args, "lilyc");
 
-    cli.$version(&cli, VERSION)
-      ->$author(&cli, "ArthurPV")
-      ->$about(&cli, "The Lily compiler tool")
-      ->$single_value(&cli, "FILE", true);
-    LILYC_OPTIONS((&cli));
+    version__Cli(&cli, VERSION);
+    author__Cli(&cli, "ArthurPV");
+    about__Cli(&cli, "The Lily compiler tool");
+    single_value__Cli(&cli, "FILE", true);
+
+    LILYC_OPTIONS((&cli), option__Cli);
 
     return cli;
 }

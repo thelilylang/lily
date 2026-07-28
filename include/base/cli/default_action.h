@@ -71,7 +71,8 @@ VARIANT_CONSTRUCTOR(CliDefaultAction *,
  * @brief Print something based on the action.
  * @param cli const Cli*? (&)
  * @param cmd const CliCommand*? (&)
- * @note Run exit(0)
+ * @note This only prints; the parse is stopped by the caller, which reports it
+ * with `CLI_PARSE_STATUS_DONE`.
  */
 void
 print__CliDefaultAction(const CliDefaultAction *self,

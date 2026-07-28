@@ -96,11 +96,4 @@ emit__CliDiagnostic(const CliDiagnostic *self)
 
     EPRINTLN("{sa}\n", CYAN_BOLD("---> at(cli)"));
     print_detail__CliDiagnostic(self);
-
-    switch (self->kind) {
-        case CLI_DIAGNOSTIC_KIND_ERROR:
-            exit(1);
-        default:
-            break;
-    }
 }

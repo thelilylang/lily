@@ -83,9 +83,10 @@ to_options__CliLily(CliCommand *cmd);
 CliCommand *
 build_command__CliLily()
 {
-    CliCommand *cmd = NEW(CliCommand, "build");
+    CliCommand *cmd = NEW(CliCommand, LILY_COMMAND_ID_BUILD, "build");
 
-    cmd->$help(cmd, "Build project")->$defer(cmd, &build_options__CliLily);
+    help__CliCommand(cmd, "Build project");
+    defer__CliCommand(cmd, &build_options__CliLily);
 
     return cmd;
 }
@@ -93,11 +94,11 @@ build_command__CliLily()
 CliCommand *
 cc_command__CliLily()
 {
-    CliCommand *cmd = NEW(CliCommand, "cc");
+    CliCommand *cmd = NEW(CliCommand, LILY_COMMAND_ID_CC, "cc");
 
-    cmd->$help(cmd, "C compiler")
-      ->$value(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE", true))
-      ->$defer(cmd, &cc_options__CliLily);
+    help__CliCommand(cmd, "C compiler");
+    value__CliCommand(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE", true));
+    defer__CliCommand(cmd, &cc_options__CliLily);
 
     return cmd;
 }
@@ -105,11 +106,11 @@ cc_command__CliLily()
 CliCommand *
 cpp_command__CliLily()
 {
-    CliCommand *cmd = NEW(CliCommand, "c++");
+    CliCommand *cmd = NEW(CliCommand, LILY_COMMAND_ID_CPP, "c++");
 
-    cmd->$help(cmd, "C++ compiler")
-      ->$value(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE", true))
-      ->$defer(cmd, &cpp_options__CliLily);
+    help__CliCommand(cmd, "C++ compiler");
+    value__CliCommand(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE", true));
+    defer__CliCommand(cmd, &cpp_options__CliLily);
 
     return cmd;
 }
@@ -117,11 +118,11 @@ cpp_command__CliLily()
 CliCommand *
 compile_command__CliLily()
 {
-    CliCommand *cmd = NEW(CliCommand, "compile");
+    CliCommand *cmd = NEW(CliCommand, LILY_COMMAND_ID_COMPILE, "compile");
 
-    cmd->$help(cmd, "Compile file")
-      ->$value(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE", true))
-      ->$defer(cmd, &compile_options__CliLily);
+    help__CliCommand(cmd, "Compile file");
+    value__CliCommand(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE", true));
+    defer__CliCommand(cmd, &compile_options__CliLily);
 
     return cmd;
 }
@@ -129,11 +130,11 @@ compile_command__CliLily()
 CliCommand *
 init_command__CliLily()
 {
-    CliCommand *cmd = NEW(CliCommand, "init");
+    CliCommand *cmd = NEW(CliCommand, LILY_COMMAND_ID_INIT, "init");
 
-    cmd->$help(cmd, "Init project")
-      ->$value(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "PATH", true))
-      ->$defer(cmd, &init_options__CliLily);
+    help__CliCommand(cmd, "Init project");
+    value__CliCommand(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "PATH", true));
+    defer__CliCommand(cmd, &init_options__CliLily);
 
     return cmd;
 }
@@ -141,11 +142,11 @@ init_command__CliLily()
 CliCommand *
 new_command__CliLily()
 {
-    CliCommand *cmd = NEW(CliCommand, "new");
+    CliCommand *cmd = NEW(CliCommand, LILY_COMMAND_ID_NEW, "new");
 
-    cmd->$help(cmd, "New project")
-      ->$value(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "NAME", true))
-      ->$defer(cmd, &new_options__CliLily);
+    help__CliCommand(cmd, "New project");
+    value__CliCommand(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "NAME", true));
+    defer__CliCommand(cmd, &new_options__CliLily);
 
     return cmd;
 }
@@ -153,11 +154,11 @@ new_command__CliLily()
 CliCommand *
 run_command__CliLily()
 {
-    CliCommand *cmd = NEW(CliCommand, "run");
+    CliCommand *cmd = NEW(CliCommand, LILY_COMMAND_ID_RUN, "run");
 
-    cmd->$help(cmd, "Run file (interpreter)")
-      ->$value(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE", true))
-      ->$defer(cmd, &run_options__CliLily);
+    help__CliCommand(cmd, "Run file (interpreter)");
+    value__CliCommand(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE", true));
+    defer__CliCommand(cmd, &run_options__CliLily);
 
     return cmd;
 }
@@ -165,11 +166,11 @@ run_command__CliLily()
 CliCommand *
 test_command__CliLily()
 {
-    CliCommand *cmd = NEW(CliCommand, "test");
+    CliCommand *cmd = NEW(CliCommand, LILY_COMMAND_ID_TEST, "test");
 
-    cmd->$help(cmd, "Test a file")
-      ->$value(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE", true))
-      ->$defer(cmd, &test_options__CliLily);
+    help__CliCommand(cmd, "Test a file");
+    value__CliCommand(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE", true));
+    defer__CliCommand(cmd, &test_options__CliLily);
 
     return cmd;
 }
@@ -177,11 +178,11 @@ test_command__CliLily()
 CliCommand *
 to_command__CliLily()
 {
-    CliCommand *cmd = NEW(CliCommand, "to");
+    CliCommand *cmd = NEW(CliCommand, LILY_COMMAND_ID_TO, "to");
 
-    cmd->$help(cmd, "Transpile to...")
-      ->$value(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE", true))
-      ->$defer(cmd, &to_options__CliLily);
+    help__CliCommand(cmd, "Transpile to...");
+    value__CliCommand(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE", true));
+    defer__CliCommand(cmd, &to_options__CliLily);
 
     return cmd;
 }
@@ -189,11 +190,12 @@ to_command__CliLily()
 CliCommand *
 build_options__CliLily(CliCommand *cmd)
 {
-    CliOption *verbose = NEW(CliOption, "--verbose");
+    CliOption *verbose =
+      NEW(CliOption, LILY_BUILD_OPTION_ID_VERBOSE, "--verbose");
 
-    verbose->$short_name(verbose, "-v");
+    short_name__CliOption(verbose, "-v");
 
-    return cmd->$option(cmd, verbose);
+    return option__CliCommand(cmd, verbose);
 }
 
 CliCommand *
@@ -211,7 +213,7 @@ cpp_options__CliLily(CliCommand *cmd)
 CliCommand *
 compile_options__CliLily(CliCommand *cmd)
 {
-    LILYC_OPTIONS(cmd);
+    LILYC_OPTIONS(cmd, option__CliCommand);
 
     return cmd;
 }
@@ -231,29 +233,32 @@ new_options__CliLily(CliCommand *cmd)
 CliCommand *
 run_options__CliLily(CliCommand *cmd)
 {
-    CliOption *verbose = NEW(CliOption, "--verbose");
-    CliOption *args = NEW(CliOption, "---");
-    CliOption *max_stack = NEW(CliOption, "--max-stack");
-    CliOption *max_heap = NEW(CliOption, "--max-heap");
+    CliOption *verbose =
+      NEW(CliOption, LILY_RUN_OPTION_ID_VERBOSE, "--verbose");
+    CliOption *args = NEW(CliOption, LILY_RUN_OPTION_ID_ARGS, "---");
+    CliOption *max_stack =
+      NEW(CliOption, LILY_RUN_OPTION_ID_MAX_STACK, "--max-stack");
+    CliOption *max_heap =
+      NEW(CliOption, LILY_RUN_OPTION_ID_MAX_HEAP, "--max-heap");
 
-    verbose->$short_name(verbose, "-v")
-      ->$help(verbose, "Enable log step of the interpreter");
-    args
-      ->$value(args, NEW(CliValue, CLI_VALUE_KIND_MULTIPLE_INF, "ARGS", false))
-      ->$help(args, "Pass argument(s) to the program");
-    max_stack
-      ->$value(max_stack,
-               NEW(CliValue, CLI_VALUE_KIND_SINGLE, "CAPACITY", false))
-      ->$help(max_stack, "Set a max stack capacity in BYTES");
-    max_heap
-      ->$value(max_heap,
-               NEW(CliValue, CLI_VALUE_KIND_SINGLE, "CAPACITY", false))
-      ->$help(max_heap, "Set a max heap capacity in BYTES");
+    short_name__CliOption(verbose, "-v");
+    help__CliOption(verbose, "Enable log step of the interpreter");
+    value__CliOption(args,
+                     NEW(CliValue, CLI_VALUE_KIND_MULTIPLE_INF, "ARGS", false));
+    help__CliOption(args, "Pass argument(s) to the program");
+    value__CliOption(max_stack,
+                     NEW(CliValue, CLI_VALUE_KIND_SINGLE, "CAPACITY", false));
+    help__CliOption(max_stack, "Set a max stack capacity in BYTES");
+    value__CliOption(max_heap,
+                     NEW(CliValue, CLI_VALUE_KIND_SINGLE, "CAPACITY", false));
+    help__CliOption(max_heap, "Set a max heap capacity in BYTES");
 
-    return cmd->$option(cmd, verbose)
-      ->$option(cmd, args)
-      ->$option(cmd, max_stack)
-      ->$option(cmd, max_heap);
+    option__CliCommand(cmd, verbose);
+    option__CliCommand(cmd, args);
+    option__CliCommand(cmd, max_stack);
+    option__CliCommand(cmd, max_heap);
+
+    return cmd;
 }
 
 CliCommand *
@@ -265,15 +270,19 @@ test_options__CliLily(CliCommand *cmd)
 CliCommand *
 to_options__CliLily(CliCommand *cmd)
 {
-    CliOption *cc = NEW(CliOption, "--cc");
-    CliOption *cpp = NEW(CliOption, "--cpp");
-    CliOption *js = NEW(CliOption, "--js");
+    CliOption *cc = NEW(CliOption, LILY_TO_OPTION_ID_CC, "--cc");
+    CliOption *cpp = NEW(CliOption, LILY_TO_OPTION_ID_CPP, "--cpp");
+    CliOption *js = NEW(CliOption, LILY_TO_OPTION_ID_JS, "--js");
 
-    cc->$help(cc, "Transpile to C");
-    cpp->$help(cpp, "Transpile to C++");
-    js->$help(js, "Transpile to JS");
+    help__CliOption(cc, "Transpile to C");
+    help__CliOption(cpp, "Transpile to C++");
+    help__CliOption(js, "Transpile to JS");
 
-    return cmd->$option(cmd, cc)->$option(cmd, cpp)->$option(cmd, js);
+    option__CliCommand(cmd, cc);
+    option__CliCommand(cmd, cpp);
+    option__CliCommand(cmd, js);
+
+    return cmd;
 }
 
 Cli
@@ -281,18 +290,19 @@ build__CliLily(Vec *args)
 {
     Cli cli = NEW(Cli, args, "lily");
 
-    cli.$version(&cli, VERSION)
-      ->$author(&cli, "ArthurPV")
-      ->$about(&cli, "The Lily programming language")
-      ->$subcommand(&cli, build_command__CliLily())
-      ->$subcommand(&cli, cc_command__CliLily())
-      ->$subcommand(&cli, compile_command__CliLily())
-      ->$subcommand(&cli, cpp_command__CliLily())
-      ->$subcommand(&cli, init_command__CliLily())
-      ->$subcommand(&cli, new_command__CliLily())
-      ->$subcommand(&cli, run_command__CliLily())
-      ->$subcommand(&cli, test_command__CliLily())
-      ->$subcommand(&cli, to_command__CliLily());
+    version__Cli(&cli, VERSION);
+    author__Cli(&cli, "ArthurPV");
+    about__Cli(&cli, "The Lily programming language");
+
+    subcommand__Cli(&cli, build_command__CliLily());
+    subcommand__Cli(&cli, cc_command__CliLily());
+    subcommand__Cli(&cli, compile_command__CliLily());
+    subcommand__Cli(&cli, cpp_command__CliLily());
+    subcommand__Cli(&cli, init_command__CliLily());
+    subcommand__Cli(&cli, new_command__CliLily());
+    subcommand__Cli(&cli, run_command__CliLily());
+    subcommand__Cli(&cli, test_command__CliLily());
+    subcommand__Cli(&cli, to_command__CliLily());
 
     return cli;
 }

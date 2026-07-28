@@ -41,7 +41,7 @@ main(int argc, char **argv)
     CliArgs args = build__CliArgs(argc, argv);
     int status = 0;
 
-    RUN__CLI_ENTRY(args, build__CliCI, CIConfig, run__CIParseConfig, {
+    RUN__CLI_ENTRY(args, build__CliCI, CIConfig, run__CIParseConfig, status, {
         switch (config.kind) {
             case CI_CONFIG_KIND_COMPILE:
                 run__CICompile(&config);

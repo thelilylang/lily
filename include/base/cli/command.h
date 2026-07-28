@@ -31,6 +31,9 @@
 
 typedef struct CliCommand
 {
+    // Caller-defined identifier, forwarded as-is to `CliResultCommand`. See the
+    // note on `CliOption::id`.
+    Usize id;
     const char *name;
     OrderedHashMap *options;          // OrderedHashMap<CliOption*>*
     char *help;                       // char*?
@@ -38,21 +41,53 @@ typedef struct CliCommand
     CliDefaultAction *default_action; // CliDefaultAction*?
     struct CliCommand *(*deferred)(
       struct CliCommand *); // struct CliCommand*(struct CliCommand*)*?
-
-    struct CliCommand *(*$option)(struct CliCommand *, CliOption *option);
-    struct CliCommand *(*$help)(struct CliCommand *, char *);
-    struct CliCommand *(*$value)(struct CliCommand *, CliValue *);
-    struct CliCommand *(*$default_action)(struct CliCommand *,
-                                          CliDefaultAction *);
-    struct CliCommand *(*$defer)(struct CliCommand *,
-                                 struct CliCommand *(struct CliCommand *));
 } CliCommand;
 
 /**
  *
  * @brief Construct CliCommand type.
  */
-CONSTRUCTOR(CliCommand *, CliCommand, const char *name);
+CONSTRUCTOR(CliCommand *, CliCommand, Usize id, const char *name);
+
+/**
+ *
+ * @brief Add an option to the command.
+ * @return CliCommand* (&) self, to allow the calls to be nested.
+ */
+CliCommand *
+option__CliCommand(CliCommand *self, CliOption *option);
+
+/**
+ *
+ * @brief Set the help description of the command.
+ * @return CliCommand* (&) self, to allow the calls to be nested.
+ */
+CliCommand *
+help__CliCommand(CliCommand *self, char *help);
+
+/**
+ *
+ * @brief Set the value expected by the command.
+ * @return CliCommand* (&) self, to allow the calls to be nested.
+ */
+CliCommand *
+value__CliCommand(CliCommand *self, CliValue *value);
+
+/**
+ *
+ * @brief Set the action run when the command is passed.
+ * @return CliCommand* (&) self, to allow the calls to be nested.
+ */
+CliCommand *
+default_action__CliCommand(CliCommand *self, CliDefaultAction *default_action);
+
+/**
+ *
+ * @brief Defer the construction of the command options until it is parsed.
+ * @return CliCommand* (&) self, to allow the calls to be nested.
+ */
+CliCommand *
+defer__CliCommand(CliCommand *self, CliCommand *(*deferred)(CliCommand *));
 
 /**
  *

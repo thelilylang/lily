@@ -41,13 +41,13 @@ self_test_options__CliCI(CliCommand *cmd);
 CliCommand *
 compile_command__CliCI()
 {
-    CliCommand *cmd = NEW(CliCommand, "compile");
+    CliCommand *cmd = NEW(CliCommand, CI_COMMAND_ID_COMPILE, "compile");
 
-    cmd->$help(cmd, "Compile a file or a project")
-      ->$value(
-        cmd,
-        NEW(CliValue, CLI_VALUE_KIND_SINGLE, "PROJECT_PATH | FILE_PATH", true))
-      ->$defer(cmd, &compile_options__CliCI);
+    help__CliCommand(cmd, "Compile a file or a project");
+    value__CliCommand(
+      cmd,
+      NEW(CliValue, CLI_VALUE_KIND_SINGLE, "PROJECT_PATH | FILE_PATH", true));
+    defer__CliCommand(cmd, &compile_options__CliCI);
 
     return cmd;
 }
@@ -55,11 +55,12 @@ compile_command__CliCI()
 CliCommand *
 self_test_command__CliCI()
 {
-    CliCommand *cmd = NEW(CliCommand, "self-test");
+    CliCommand *cmd = NEW(CliCommand, CI_COMMAND_ID_SELF_TEST, "self-test");
 
-    cmd->$help(cmd, "Self test the compiler")
-      ->$value(cmd, NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE_PATH", true))
-      ->$defer(cmd, &self_test_options__CliCI);
+    help__CliCommand(cmd, "Self test the compiler");
+    value__CliCommand(cmd,
+                      NEW(CliValue, CLI_VALUE_KIND_SINGLE, "FILE_PATH", true));
+    defer__CliCommand(cmd, &self_test_options__CliCI);
 
     return cmd;
 }
@@ -67,7 +68,7 @@ self_test_command__CliCI()
 CliCommand *
 compile_options__CliCI(CliCommand *cmd)
 {
-    CIC_OPTIONS(cmd);
+    CIC_OPTIONS(cmd, option__CliCommand);
 
     return cmd;
 }
@@ -83,11 +84,11 @@ build__CliCI(Vec *args)
 {
     Cli cli = NEW(Cli, args, "ci");
 
-    cli.$version(&cli, VERSION)
-      ->$author(&cli, "ArthurPV")
-      ->$about(&cli, "The CI programming language")
-      ->$subcommand(&cli, compile_command__CliCI())
-      ->$subcommand(&cli, self_test_command__CliCI());
+    version__Cli(&cli, VERSION);
+    author__Cli(&cli, "ArthurPV");
+    about__Cli(&cli, "The CI programming language");
+    subcommand__Cli(&cli, compile_command__CliCI());
+    subcommand__Cli(&cli, self_test_command__CliCI());
 
     return cli;
 }

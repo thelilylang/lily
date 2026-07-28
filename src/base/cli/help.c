@@ -28,8 +28,21 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define MAX_SPACE 30
+
+// Number of spaces to insert between an entry and its description, for an entry
+// that is `used` characters wide. Always at least one, so that an entry wider
+// than MAX_SPACE does not underflow the subtraction.
+static Usize
+padding__CliHelp(Usize used);
+
+Usize
+padding__CliHelp(Usize used)
+{
+    return used < MAX_SPACE ? MAX_SPACE - used : 1;
+}
 
 #define GENERATE_USAGE(options, cmd, cmd_value)                                  \
     {                                                                            \
@@ -55,58 +68,61 @@
         push_str__String(res, "\n\n");                                           \
     }
 
-#define GENERATE_OPTIONS(ops)                                            \
-    if (ops->len > 0) {                                                  \
-        String *options = from__String("Options:\n\n");                  \
-        OrderedHashMapIter iter = NEW(OrderedHashMapIter, ops);          \
-        CliOption *current = NULL;                                       \
-                                                                         \
-        while ((current = next__OrderedHashMapIter(&iter))) {            \
-            /* Determine if is a short option (to avoid duplication) */  \
-            {                                                            \
-                OrderedHashMapPair *pair =                               \
-                  get_pair_from_id__OrderedHashMap(ops, iter.count - 1); \
-                                                                         \
-                ASSERT(pair);                                            \
-                                                                         \
-                if (strlen(pair->key) == 2) {                            \
-                    continue;                                            \
-                }                                                        \
-            }                                                            \
-                                                                         \
-            String *value = NULL;                                        \
-                                                                         \
-            if (current->value) {                                        \
-                value = format__CliValue(current->value);                \
-            } else {                                                     \
-                value = from__String("");                                \
-            }                                                            \
-                                                                         \
-            String *option = format__String(                             \
-              "  {s}{s}{s}{s}{S}{Sr}",                                   \
-              current->name,                                             \
-              current->short_name ? ", " : "",                           \
-              current->short_name ? current->short_name : "",            \
-              current->value ? " " : "",                                 \
-              value,                                                     \
-              repeat__String(" ",                                        \
-                             MAX_SPACE - strlen(current->name) -         \
-                               (value->len == 0 ? 0 : value->len + 1) -  \
-                               (current->short_name                      \
-                                  ? strlen(current->short_name) + 2      \
-                                  : 0)));                                \
-                                                                         \
-            FREE(String, value);                                         \
-                                                                         \
-            if (current->help) {                                         \
-                push_str__String(option, current->help);                 \
-                push__String(option, '\n');                              \
-            }                                                            \
-                                                                         \
-            APPEND_AND_FREE(options, option);                            \
-        }                                                                \
-                                                                         \
-        APPEND_AND_FREE(res, options);                                   \
+#define GENERATE_OPTIONS(ops)                                             \
+    if (ops->len > 0) {                                                   \
+        String *options = from__String("Options:\n\n");                   \
+        OrderedHashMapIter iter = NEW(OrderedHashMapIter, ops);           \
+        CliOption *current = NULL;                                        \
+                                                                          \
+        while ((current = next__OrderedHashMapIter(&iter))) {             \
+            /* An option with a short name is inserted twice, under its   \
+               long name and under its short name. Skip the latter, so    \
+               that it is only listed once. */                            \
+            {                                                             \
+                OrderedHashMapPair *pair =                                \
+                  get_pair_from_id__OrderedHashMap(ops, iter.count - 1);  \
+                                                                          \
+                ASSERT(pair);                                             \
+                                                                          \
+                if (strcmp(pair->key, current->name)) {                   \
+                    continue;                                             \
+                }                                                         \
+            }                                                             \
+                                                                          \
+            String *value = NULL;                                         \
+                                                                          \
+            if (current->value) {                                         \
+                value = format__CliValue(current->value);                 \
+            } else {                                                      \
+                value = from__String("");                                 \
+            }                                                             \
+                                                                          \
+            String *option = format__String(                              \
+              "  {s}{s}{s}{s}{S}{Sr}",                                    \
+              current->name,                                              \
+              current->short_name ? ", " : "",                            \
+              current->short_name ? current->short_name : "",             \
+              current->value ? " " : "",                                  \
+              value,                                                      \
+              repeat__String(                                             \
+                " ",                                                      \
+                padding__CliHelp(strlen(current->name) +                  \
+                                 (value->len == 0 ? 0 : value->len + 1) + \
+                                 (current->short_name                     \
+                                    ? strlen(current->short_name) + 2     \
+                                    : 0))));                              \
+                                                                          \
+            FREE(String, value);                                          \
+                                                                          \
+            if (current->help) {                                          \
+                push_str__String(option, current->help);                  \
+                push__String(option, '\n');                               \
+            }                                                             \
+                                                                          \
+            APPEND_AND_FREE(options, option);                             \
+        }                                                                 \
+                                                                          \
+        APPEND_AND_FREE(res, options);                                    \
     }
 
 String *
@@ -131,7 +147,7 @@ generate_help__CliHelp(const Cli *cli, const CliCommand *cmd)
                 String *subcommand = format__String(
                   "  {s}{Sr}",
                   current->name,
-                  repeat__String(" ", MAX_SPACE - strlen(current->name)));
+                  repeat__String(" ", padding__CliHelp(strlen(current->name))));
 
                 if (current->help) {
                     push_str__String(subcommand, current->help);
