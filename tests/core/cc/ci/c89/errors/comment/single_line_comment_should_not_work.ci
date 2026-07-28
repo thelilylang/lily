@@ -1,5 +1,5 @@
 /*@compile_options -s c89*/
-/*@expected_compiler_error FAILED: single line comment is not available before C99 (src/core/cc/ci/scanner.c:3527)\n*/
+/*@expected_compiler_error error\e[0m[0153]: a single line comment is not available before C99*/
 
 int main() {
 	// This is a comment

@@ -24,10 +24,19 @@
 
 #include <base/assert.h>
 
+#include <core/cc/ci/diagnostic/emit.h>
 #include <core/cc/ci/resolver/data_type.h>
 #include <core/cc/ci/resolver/expr.h>
 #include <core/cc/ci/result.h>
 #include <core/cc/ci/state_checker.h>
+
+// Emit a located error and count it, without stopping the state checker: the
+// caller returns from the current check so that the sibling checks still run.
+#define FAILED__CIStateChecker(self, node, error_kind) \
+    EMIT_ERROR__CI(&(self)->file->file_input,          \
+                   &(node)->location,                  \
+                   NEW(CIError, error_kind),           \
+                   &(self)->file->file_analysis->count_error)
 
 enum CIStateCheckerExpr
 {
@@ -969,24 +978,41 @@ check_if_value_is_accesible__CIStateChecker(CIStateChecker *self,
     CIStateCheckerState *state = get_return_state__CIStateCheckerValue(value);
 
     if (state->flags & CI_DATA_TYPE_CONTEXT_UNDEFINED) {
-        FAILED("not expected to access to a undefined value");
+        FAILED__CIStateChecker(
+          self, self->current_decl, CI_ERROR_KIND_ACCESS_TO_UNDEFINED_VALUE);
+
+        return;
     }
 
     switch (value->kind) {
         case CI_STATE_CHECKER_VALUE_KIND_PTR:
             if (!(state->flags & CI_DATA_TYPE_CONTEXT_NON_NULL)) {
-                FAILED("not expected to access to a nullable pointer");
+                FAILED__CIStateChecker(
+                  self,
+                  self->current_decl,
+                  CI_ERROR_KIND_ACCESS_TO_NULLABLE_POINTER);
+
+                return;
             }
 
             if (state->flags & CI_DATA_TYPE_CONTEXT_FREED) {
-                FAILED("not expected to access to a freed pointer");
+                FAILED__CIStateChecker(self,
+                                       self->current_decl,
+                                       CI_ERROR_KIND_ACCESS_TO_FREED_POINTER);
+
+                return;
             }
 
             break;
         case CI_STATE_CHECKER_VALUE_KIND_STRUCT:
         case CI_STATE_CHECKER_VALUE_KIND_UNION:
             if (state->flags & CI_DATA_TYPE_CONTEXT_DROPPED) {
-                FAILED("not expected to access to a dropped struct or union");
+                FAILED__CIStateChecker(
+                  self,
+                  self->current_decl,
+                  CI_ERROR_KIND_ACCESS_TO_DROPPED_STRUCT_OR_UNION);
+
+                return;
             }
 
             break;
@@ -1010,7 +1036,12 @@ check_function_expr_array_access__CIStateChecker(
       get_return_state__CIStateCheckerValue(array_access_state_value);
 
     if (!(array_access_state->flags & CI_DATA_TYPE_CONTEXT_INDEX)) {
-        FAILED("expected to have index context flag on return value");
+        FAILED__CIStateChecker(
+          self,
+          array_access->array,
+          CI_ERROR_KIND_EXPECTED_INDEX_CONTEXT_ON_RETURN_VALUE);
+
+        return NULL;
     }
 
     check_if_value_is_accesible__CIStateChecker(self, array_state_value);
@@ -1174,15 +1205,24 @@ check_function_expr_identifier_read_state__CIStateChecker(
     ASSERT(state);
 
     if (state->flags & CI_DATA_TYPE_CONTEXT_FREED) {
-        FAILED("you cannot read an identifier that has already been freed");
+        FAILED__CIStateChecker(
+          self, self->current_decl, CI_ERROR_KIND_READ_OF_FREED_IDENTIFIER);
+
+        return;
     }
 
     if (state->flags & CI_DATA_TYPE_CONTEXT_DROPPED) {
-        FAILED("you cannot read an identifier that has already been dropped");
+        FAILED__CIStateChecker(
+          self, self->current_decl, CI_ERROR_KIND_READ_OF_DROPPED_IDENTIFIER);
+
+        return;
     }
 
     if (state->flags & CI_DATA_TYPE_CONTEXT_UNDEFINED) {
-        FAILED("you cannot read an identifier with undefined value");
+        FAILED__CIStateChecker(
+          self, self->current_decl, CI_ERROR_KIND_READ_OF_UNDEFINED_IDENTIFIER);
+
+        return;
     }
 }
 
@@ -1498,6 +1538,8 @@ check_function_stmt__CIStateChecker(CIStateChecker *self, const CIStmt *stmt)
 void
 check_function_decl__CIStateChecker(CIStateChecker *self, const CIDecl *decl)
 {
+    self->current_decl = decl;
+
     switch (decl->kind) {
         case CI_DECL_KIND_FUNCTION:
             check_function__CIStateChecker(self, decl);
@@ -1731,21 +1773,32 @@ check_if_value_is_destroyed__CIStateChecker(CIStateChecker *self,
         case CI_STATE_CHECKER_VALUE_KIND_PTR:
             if (value->ptr.state.flags & CI_DATA_TYPE_CONTEXT_HEAP &&
                 !(value->ptr.state.flags & CI_DATA_TYPE_CONTEXT_FREED)) {
-                FAILED("direct memory leak detected");
+                FAILED__CIStateChecker(
+                  self, self->current_decl, CI_ERROR_KIND_DIRECT_MEMORY_LEAK);
+
+                return;
             }
 
             break;
         case CI_STATE_CHECKER_VALUE_KIND_STRUCT:
             if (!(value->struct_.state.flags & CI_DATA_TYPE_CONTEXT_DROPPED) &&
                 check_if_struct_is_dropable__CIStateCheckerValue(value)) {
-                FAILED("direct memory leak detected");
+                FAILED__CIStateChecker(
+                  self, self->current_decl, CI_ERROR_KIND_DIRECT_MEMORY_LEAK);
+
+                return;
             }
 
             break;
         case CI_STATE_CHECKER_VALUE_KIND_UNION:
             if (!(value->union_.state.flags & CI_DATA_TYPE_CONTEXT_DROPPED) &&
                 check_if_union_is_dropable__CIStateCheckerValue(value)) {
-                FAILED("potential direct memory leak detected");
+                FAILED__CIStateChecker(
+                  self,
+                  self->current_decl,
+                  CI_ERROR_KIND_POTENTIAL_DIRECT_MEMORY_LEAK);
+
+                return;
             }
 
             break;
@@ -1782,7 +1835,10 @@ check_state_according_expr__CIStateChecker(CIStateChecker *self,
 
     if (state->flags & CI_DATA_TYPE_CONTEXT_NON_NULL &&
         is_null__CIResolverExpr(expr)) {
-        FAILED("expected non null expression");
+        FAILED__CIStateChecker(
+          self, expr, CI_ERROR_KIND_EXPECTED_NON_NULL_EXPRESSION);
+
+        return;
     }
 }
 

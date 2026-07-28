@@ -955,6 +955,15 @@ build__CIResult(CIResult *self);
 
 /**
  *
+ * @brief Total number of errors emitted on every file of the result.
+ * @note Used at the stage boundaries: a stage reports as many errors as it can,
+ * and the pipeline stops before the next stage when this is non-zero.
+ */
+Usize
+count_error__CIResult(const CIResult *self);
+
+/**
+ *
  * @brief Pass through bins and libraries.
  */
 void

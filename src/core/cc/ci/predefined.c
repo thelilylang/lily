@@ -29,6 +29,7 @@
 #include <base/new.h>
 
 #include <core/cc/ci/builtin.h>
+#include <core/cc/ci/diagnostic/emit.h>
 #include <core/cc/ci/result.h>
 
 // https://gcc.gnu.org/onlinedocs/gcc/Standards.html
@@ -52,7 +53,8 @@ generate__CIPreDefined(const CIProjectConfig *config)
     String *builtin_h = save__Command(command, &command_exit_status);
 
     if (command_exit_status != EXIT_OK) {
-        FAILED("failed to fetch builtin macros");
+        FATAL_ERROR__CI(
+          NEW(CIError, CI_ERROR_KIND_FAILED_TO_FETCH_BUILTIN_MACROS));
     }
 
     lily_free(command);

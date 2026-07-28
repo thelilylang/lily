@@ -24,7 +24,21 @@
 
 #include <base/assert.h>
 
+#include <core/cc/ci/diagnostic/emit.h>
 #include <core/cc/ci/infer.h>
+
+// Emit a located error on `node` and count it, without stopping the inference:
+// the caller carries on with a poisoned data type so that a single pass reports
+// more than one error.
+#define FAILED__CIInfer(file, node, error_kind) \
+    EMIT_ERROR__CI(&(file)->file_input,         \
+                   &(node)->location,           \
+                   NEW(CIError, error_kind),    \
+                   &(file)->file_analysis->count_error)
+
+// Data type an inference function returns after having emitted an error.
+#define POISONED_DATA_TYPE__CIInfer(node) \
+    NEW(CIDataType, clone__Location(&(node)->location), CI_DATA_TYPE_KIND_ANY)
 #include <core/cc/ci/resolver/data_type.h>
 #include <core/cc/ci/resolver/data_type_access.h>
 
@@ -137,7 +151,10 @@ infer_expr_access_data_type_array_access__CIInfer(
             file, array_dt, called_generic_params, decl_generic_params));
     } else {
         *current_infer_dt = NULL;
-        FAILED("expected array or pointer");
+        FAILED__CIInfer(
+          file, expr_access, CI_ERROR_KIND_EXPECTED_ARRAY_OR_POINTER);
+
+        return;
     }
 
     FREE(CIDataType, array_dt);
@@ -209,7 +226,9 @@ infer_expr_access_data_type_identifier__CIInfer(
       fields, expr_access->identifier.value);
 
     if (!field) {
-        FAILED("the field is not found");
+        FAILED__CIInfer(file, expr_access, CI_ERROR_KIND_FIELD_IS_NOT_FOUND);
+
+        return;
     }
 
     *current_infer_dt =
@@ -272,7 +291,9 @@ infer_expr_access_data_type__CIInfer(
 
 exit:
     if (!current_infer_dt) {
-        FAILED("there are something wrong during the inference of path");
+        FAILED__CIInfer(file, expr_access, CI_ERROR_KIND_CANNOT_INFER_PATH);
+
+        return POISONED_DATA_TYPE__CIInfer(expr_access);
     }
 
     return current_infer_dt;
@@ -413,12 +434,17 @@ infer_expr_binary_data_type__CIInfer(
     FREE(CIDataType, right_dt);
 
     if (left_dt_is_float || right_dt_is_float) {
-        return NEW(CIDataType, CI_DATA_TYPE_KIND_FLOAT);
+        return NEW(CIDataType,
+                   clone__Location(&expr->location),
+                   CI_DATA_TYPE_KIND_FLOAT);
     } else if (left_dt_is_integer && right_dt_is_integer) {
-        return NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
+        return NEW(
+          CIDataType, clone__Location(&expr->location), CI_DATA_TYPE_KIND_INT);
     }
 
-    FAILED("this kind of operation is not possible");
+    FAILED__CIInfer(file, expr, CI_ERROR_KIND_OPERATION_IS_NOT_POSSIBLE);
+
+    return POISONED_DATA_TYPE__CIInfer(expr);
 }
 
 CIDataType *
@@ -457,7 +483,10 @@ infer_expr_identifier_data_type__CIInfer(
                 goto label;
             }
 
-            FAILED("cannot infer on unknown identifier");
+            FAILED__CIInfer(
+              file, expr, CI_ERROR_KIND_CANNOT_INFER_ON_UNKNOWN_IDENTIFIER);
+
+            return POISONED_DATA_TYPE__CIInfer(expr);
 
             break;
         }
@@ -474,7 +503,9 @@ infer_expr_identifier_data_type__CIInfer(
                 return ref__CIDataType(enum_data_type);
             }
 
-            return NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
+            return NEW(CIDataType,
+                       clone__Location(&expr->location),
+                       CI_DATA_TYPE_KIND_INT);
         }
         case CI_EXPR_IDENTIFIER_ID_KIND_FUNCTION: {
             // TODO: Call generic function is not yet implemented
@@ -496,6 +527,7 @@ infer_expr_identifier_data_type__CIInfer(
             return NEW_VARIANT(
               CIDataType,
               function,
+              clone__Location(&expr->location),
               NEW(CIDataTypeFunction,
                   NULL,
                   function_params ? ref__CIDeclFunctionParams(function_params)
@@ -543,7 +575,8 @@ infer_expr_function_call_data_type__CIInfer(
           (CIDataType *)get_return_data_type__CIDecl(function_decl));
     }
 
-    return NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
+    return NEW(
+      CIDataType, clone__Location(&expr->location), CI_DATA_TYPE_KIND_INT);
 }
 
 CIDataType *
@@ -565,20 +598,27 @@ infer_expr_literal_data_type__CIInfer(const CIResultFile *file,
     // TODO: Probably improve the inference of literal expression
     switch (literal->kind) {
         case CI_EXPR_LITERAL_KIND_BOOL:
-            return NEW(CIDataType, CI_DATA_TYPE_KIND_BOOL);
+            return NEW(
+              CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_BOOL);
         case CI_EXPR_LITERAL_KIND_CHAR:
-            return NEW(CIDataType, CI_DATA_TYPE_KIND_CHAR);
+            return NEW(
+              CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_CHAR);
         case CI_EXPR_LITERAL_KIND_FLOAT:
-            return NEW(CIDataType, CI_DATA_TYPE_KIND_FLOAT);
+            return NEW(
+              CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_FLOAT);
         case CI_EXPR_LITERAL_KIND_SIGNED_INT:
-            return NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
+            return NEW(
+              CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_INT);
         case CI_EXPR_LITERAL_KIND_STRING: {
             CIDataType *string_dt =
               NEW_VARIANT(CIDataType,
                           array,
+                          SYNTHETIC_LOCATION__CI(),
                           NEW_VARIANT(CIDataTypeArray,
                                       sized,
-                                      NEW(CIDataType, CI_DATA_TYPE_KIND_CHAR),
+                                      NEW(CIDataType,
+                                          SYNTHETIC_LOCATION__CI(),
+                                          CI_DATA_TYPE_KIND_CHAR),
                                       NULL,
                                       GET_PTR_RC(String, literal->string)->len,
                                       NULL,
@@ -590,7 +630,9 @@ infer_expr_literal_data_type__CIInfer(const CIResultFile *file,
             return string_dt;
         }
         case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:
-            return NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_INT);
+            return NEW(CIDataType,
+                       SYNTHETIC_LOCATION__CI(),
+                       CI_DATA_TYPE_KIND_UNSIGNED_INT);
         default:
             UNREACHABLE("unknown variant");
     }
@@ -650,7 +692,9 @@ infer_expr_data_type__CIInfer(const CIResultFile *file,
         case CI_EXPR_KIND_ALIGNOF:
         case CI_EXPR_KIND_SIZEOF:
             // NOTE: Get 32 bits version of size_t
-            return NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT);
+            return NEW(CIDataType,
+                       clone__Location(&expr->location),
+                       CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT);
         case CI_EXPR_KIND_ARRAY_ACCESS: {
             CIDataType *array_dt =
               infer_expr_data_type__CIInfer(file,
@@ -694,11 +738,15 @@ infer_expr_data_type__CIInfer(const CIResultFile *file,
               called_generic_params,
               decl_generic_params);
         case CI_EXPR_KIND_INITIALIZER:
-            FAILED("cannot give initializer to infer");
+            FAILED__CIInfer(file, expr, CI_ERROR_KIND_CANNOT_INFER_INITIALIZER);
+
+            return POISONED_DATA_TYPE__CIInfer(expr);
         case CI_EXPR_KIND_LITERAL:
             return infer_expr_literal_data_type__CIInfer(file, &expr->literal);
         case CI_EXPR_KIND_NULLPTR:
-            return NEW(CIDataType, CI_DATA_TYPE_KIND_NULLPTR_T);
+            return NEW(CIDataType,
+                       clone__Location(&expr->location),
+                       CI_DATA_TYPE_KIND_NULLPTR_T);
         case CI_EXPR_KIND_TERNARY:
             return infer_expr_data_type__CIInfer(file,
                                                  expr->ternary.if_,

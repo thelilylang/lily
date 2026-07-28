@@ -507,35 +507,68 @@ extern inline CONSTRUCTOR(CIStmtWhile,
                           CIExpr *cond,
                           CIDeclFunctionBody *body);
 
-extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, block, CIStmtBlock block);
+extern inline VARIANT_CONSTRUCTOR(CIStmt,
+                                  CIStmt,
+                                  block,
+                                  Location location,
+                                  CIStmtBlock block);
 
-extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, break);
+extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, break, Location location);
 
-extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, case, CIStmtSwitchCase case_);
+extern inline VARIANT_CONSTRUCTOR(CIStmt,
+                                  CIStmt,
+                                  case,
+                                  Location location,
+                                  CIStmtSwitchCase case_);
 
-extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, default);
+extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, default, Location location);
 
-extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, continue);
+extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, continue, Location location);
 
 extern inline VARIANT_CONSTRUCTOR(CIStmt,
                                   CIStmt,
                                   do_while,
+                                  Location location,
                                   CIStmtDoWhile do_while);
 
 extern
-inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, for, CIStmtFor for_);
+inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, for, Location location, CIStmtFor for_);
 
-extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, goto, Rc *goto_);
+extern inline VARIANT_CONSTRUCTOR(CIStmt,
+                                  CIStmt,
+                                  goto,
+                                  Location location,
+                                  Rc *goto_);
 
-extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, if, CIStmtIf if_);
+extern inline VARIANT_CONSTRUCTOR(CIStmt,
+                                  CIStmt,
+                                  if,
+                                  Location location,
+                                  CIStmtIf if_);
 
-extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, label, String *label);
+extern inline VARIANT_CONSTRUCTOR(CIStmt,
+                                  CIStmt,
+                                  label,
+                                  Location location,
+                                  String *label);
 
-extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, return, CIExpr *return_);
+extern inline VARIANT_CONSTRUCTOR(CIStmt,
+                                  CIStmt,
+                                  return,
+                                  Location location,
+                                  CIExpr *return_);
 
-extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, switch, CIStmtSwitch switch_);
+extern inline VARIANT_CONSTRUCTOR(CIStmt,
+                                  CIStmt,
+                                  switch,
+                                  Location location,
+                                  CIStmtSwitch switch_);
 
-extern inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, while, CIStmtWhile while_);
+extern inline VARIANT_CONSTRUCTOR(CIStmt,
+                                  CIStmt,
+                                  while,
+                                  Location location,
+                                  CIStmtWhile while_);
 
 // <core/cc/ci/file.h>
 extern inline bool
@@ -643,6 +676,8 @@ extern inline CONSTRUCTOR(CIResolverExpr,
                           CIResolverExpr,
                           const CIParser *parser,
                           const CIScope *scope,
+                          const CIResultFile *file,
+                          Usize *count_error,
                           bool at_preprocessor_time);
 
 // <core/cc/ci/result.h>

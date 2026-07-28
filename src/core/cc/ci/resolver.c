@@ -26,8 +26,19 @@
 #include <base/dir.h>
 #include <base/format.h>
 
+#include <core/cc/ci/diagnostic/emit.h>
 #include <core/cc/ci/include.h>
 #include <core/cc/ci/resolver.h>
+
+// Emit a located error on the token the resolver is on and count it, without
+// stopping the resolve: the caller carries on so that a single run reports more
+// than one error. The stage boundary in `run_file__CIResult` stops the
+// pipeline.
+#define FAILED__CIResolver(self, error_kind)         \
+    EMIT_ERROR__CI(&(self)->file->file_input,        \
+                   &(self)->current_token->location, \
+                   NEW(CIError, error_kind),         \
+                   (self)->count_error)
 #include <core/cc/ci/resolver/expr.h>
 #include <core/cc/ci/result.h>
 #include <core/shared/diagnostic.h>
@@ -478,7 +489,10 @@ loop:
 
                 return;
             } else {
-                FAILED("`)`, `}` or `]` is not expected");
+                FAILED__CIResolver(self,
+                                   CI_ERROR_KIND_UNEXPECTED_CLOSING_DELIMITER);
+
+                break;
             }
 
             break;
@@ -561,9 +575,11 @@ parse_macro_call_params__CIResolver(CIResolver *self,
 {
 #define NEXT(ct) ct = ct->kind != CI_TOKEN_KIND_EOF ? ct->next : ct
 #define PEEK(ct) ct->next
-#define EXPECT(ct, k)               \
-    if (ct->kind != k) {            \
-        FAILED("unexpected token"); \
+#define EXPECT(ct, k)                                             \
+    if (ct->kind != k) {                                          \
+        FAILED__CIResolver(self, CI_ERROR_KIND_UNEXPECTED_TOKEN); \
+                                                                  \
+        return NULL;                                              \
     }
 #define CURRENT(ct) ct
 
@@ -601,8 +617,9 @@ parse_macro_call_params__CIResolver(CIResolver *self,
     EXPECT((*current_token), CI_TOKEN_KIND_RPAREN);
 
     if (macro_param_count != macro_params_length) {
-        FAILED("The count of the number of macro parameters does not "
-               "correspond to its declaration.");
+        FAILED__CIResolver(self, CI_ERROR_KIND_MACRO_PARAMS_COUNT_MISMATCH);
+
+        return NULL;
     }
 
     return macro_call;
@@ -643,9 +660,10 @@ resolve_macro_call__CIResolver(CIResolver *self,
             default:
             empty_macro_call:
                 if (macro_params_length != 0) {
-                    FAILED("The count of the number of macro parameters "
-                           "does not "
-                           "correspond to its declaration.");
+                    FAILED__CIResolver(
+                      self, CI_ERROR_KIND_MACRO_PARAMS_COUNT_MISMATCH);
+
+                    return;
                 }
 
                 macro_call = NEW_VARIANT(CIResolverMacroCall, is_empty);
@@ -665,7 +683,9 @@ resolve_macro_call__CIResolver(CIResolver *self,
         return;
     }
 
-    FAILED("expected to have at least EOF");
+    FAILED__CIResolver(self, CI_ERROR_KIND_EXPECTED_AT_LEAST_EOF);
+
+    return;
 
 #undef NEXT
 #undef PEEK
@@ -792,11 +812,12 @@ resolve_preprocessor_if_cond__CIResolver(CIResolver *self, CITokens *cond)
         CIExpr *cond_expr = parse_expr__CIParser(&parser_cond);
 
         if (!has_reach_end__CIParser(&parser_cond)) {
-            FAILED("expected only one expression");
+            FAILED__CIResolver(self,
+                               CI_ERROR_KIND_EXPECTED_ONLY_ONE_EXPRESSION);
         }
 
         const CIResolverExpr resolver_expr =
-          NEW(CIResolverExpr, NULL, NULL, true);
+          NEW(CIResolverExpr, NULL, NULL, self->file, self->count_error, true);
 
         resolved_cond_expr = run__CIResolverExpr(&resolver_expr, cond_expr);
 
@@ -852,7 +873,9 @@ resolve_preprocessor_if__CIResolver(CIResolver *self,
     {
         CIExpr *cond_expr =
           resolve_preprocessor_if_cond__CIResolver(self, cond);
-        bool cond_res = is_true__CIResolverExpr(cond_expr);
+        CIResolverExpr resolver_expr =
+          NEW(CIResolverExpr, NULL, NULL, self->file, self->count_error, true);
+        bool cond_res = is_true__CIResolverExpr(&resolver_expr, cond_expr);
 
         FREE(CIExpr, cond_expr);
 
@@ -1032,7 +1055,9 @@ resolve_preprocessor_embed__CIResolver(CIResolver *self,
         }
     }
 
-    FAILED("failed to open embed path");
+    FAILED__CIResolver(self, CI_ERROR_KIND_FAILED_TO_OPEN_EMBED_PATH);
+
+    goto exit;
 
 exit:
     FREE(String, embed_dirs[0]);
@@ -1122,7 +1147,9 @@ resolve_preprocessor_include__CIResolver(CIResolver *self,
         return;
     }
 
-    FAILED("the include file is not found");
+    FAILED__CIResolver(self, CI_ERROR_KIND_INCLUDE_FILE_IS_NOT_FOUND);
+
+    return;
 }
 
 void
@@ -1369,7 +1396,9 @@ get_merged_id_lhs_content__CIResolver(CIResolver *self, CIToken *lhs)
                 return to_string__CIToken(lhs);
             }
 
-            FAILED("not expected to be lhs of `##`");
+            FAILED__CIResolver(self, CI_ERROR_KIND_UNEXPECTED_LHS_OF_MERGE);
+
+            return NULL;
     }
 }
 
@@ -1387,7 +1416,9 @@ get_merged_id_rhs_content__CIResolver(CIResolver *self, CIToken *rhs)
                 return to_string__CIToken(rhs);
             }
 
-            FAILED("not expected to be rhs of `##`");
+            FAILED__CIResolver(self, CI_ERROR_KIND_UNEXPECTED_RHS_OF_MERGE);
+
+            return NULL;
     }
 }
 
@@ -1492,7 +1523,9 @@ resolve_merged_id__CIResolver(CIResolver *self)
 
         if (last_token_index + 1 >=
             count__CIResolvedTokens(self->resolved_tokens)) {
-            FAILED("expected right parameter to `##`");
+            FAILED__CIResolver(self, CI_ERROR_KIND_EXPECTED_RHS_OF_MERGE);
+
+            return;
         }
 
         CIToken *merged_id_rhs =
@@ -1556,7 +1589,9 @@ resolve_merged_id__CIResolver(CIResolver *self)
         return;
     }
 
-    FAILED("## is not expected at start");
+    FAILED__CIResolver(self, CI_ERROR_KIND_MERGE_AT_START);
+
+    return;
 }
 
 void
@@ -1647,9 +1682,11 @@ run__CIResolver(CIResolver *self, CIResolvedTokens *resolved_tokens)
         resolve_token__CIResolver(self);
     }
 
-    if (*self->count_error > 0) {
-        exit(1);
-    }
+    // NOTE: The error count is deliberately not checked here: `run__CIResolver`
+    // is also used for nested resolves (a `#if` condition, a macro call, ...),
+    // and stopping in one of those would hide the errors of the conditionals
+    // that follow. The check belongs to the stage boundary, in
+    // `run_file__CIResult`.
 }
 
 DESTRUCTOR(CIResolver, const CIResolver *self)

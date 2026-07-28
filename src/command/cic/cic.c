@@ -63,6 +63,19 @@ run__CIc(const CIcConfig *config,
     run__CIVisitor(&visitor);
     run__CITypecheck(&typecheck);
     run__CIStateChecker(&state_checker);
+
+    // Stage boundary: the analysis stages report as many errors as they can,
+    // but nothing should be generated or compiled from a program that did not
+    // pass them.
+    if (count_error__CIResult(&result) > 0) {
+        FREE(CIResult, &result);
+        FREE(CIBuiltin, &builtin);
+        FREE(CIProjectConfig, &project_config);
+        FREE(CIStateChecker, &state_checker);
+
+        exit(1);
+    }
+
     run__CIGenerator(&result);
 
     exec__CICompile(&result);

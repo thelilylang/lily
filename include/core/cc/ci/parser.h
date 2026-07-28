@@ -115,7 +115,8 @@ parse_expr__CIParser(CIParser *self);
  * @return CIDataType* (&)
  */
 CIDataType *
-substitute_generic__CIParser(const String *generic_name,
+substitute_generic__CIParser(const CIResultFile *file,
+                             const String *generic_name,
                              CIGenericParams *generic_params,
                              CIGenericParams *called_generic_params);
 
@@ -128,6 +129,7 @@ substitute_generic__CIParser(const String *generic_name,
  */
 CIGenericParams *
 substitute_generic_params__CIParser(
+  const CIResultFile *file,
   CIGenericParams *unresolved_generic_params,
   const CIGenericParams *generic_params,
   const CIGenericParams *called_generic_params);
@@ -142,7 +144,8 @@ substitute_generic_params__CIParser(
  * @return CIDataType*
  */
 CIDataType *
-substitute_data_type__CIParser(CIDataType *data_type,
+substitute_data_type__CIParser(const CIResultFile *file,
+                               CIDataType *data_type,
                                CIGenericParams *generic_params,
                                CIGenericParams *called_generic_params,
                                String *serialized_name);

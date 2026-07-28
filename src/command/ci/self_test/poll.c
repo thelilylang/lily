@@ -71,7 +71,11 @@ handle_expected_compiler_error__CISelfTestPoll(
         return CI_SELF_TEST_POLL_HANDLE_FLAG_RETURN_STATUS_SKIP;
     }
 
-    if (strcmp(actual->buffer, expected->buffer)) {
+    // NOTE: The assertion is a containment check, not an equality one. A
+    // diagnostic embeds the absolute path of the file it points at, which
+    // depends on where the test suite is run from, so a fixture can only assert
+    // the stable part of the message (the error code and its text).
+    if (!strstr(actual->buffer, expected->buffer)) {
         display_failed_expected_compiler_error_assertion_output__CISelfTestDiagnostic(
           expected, actual, process_unit->path->buffer);
 

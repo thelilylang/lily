@@ -38,6 +38,9 @@ typedef struct CIScanner
     CITokens tokens;
     Scanner base;
     const CIProjectConfig *config; // const CIProjectConfig* (&)
+    // Warnings the scanner emits are counted here. Errors are counted by
+    // `base.count_error`.
+    Usize *count_warning; // Usize*? (&)
     /// A field indicating whether or not the file being scanned is predefined.
     /// This makes it possible to define standard macros such as `__STDC__`,
     /// `__STDC_HOSTED__`, `__STDC_VERSION__`, without error.
@@ -57,6 +60,7 @@ inline CONSTRUCTOR(CIScanner,
     return (CIScanner){ .tokens = NEW(CITokens),
                         .base = NEW(Scanner, source, count_error),
                         .config = config,
+                        .count_warning = NULL,
                         .is_predefined = false };
 }
 

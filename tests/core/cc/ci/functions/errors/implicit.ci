@@ -1,4 +1,4 @@
-//@expected_compiler_error FAILED: declaration is not found (src/core/cc/ci/result.c:1029)\n
+//@expected_compiler_error error\e[0m[0040]: the declaration is not found
 
 int main() {
 	printf("PASS\n");

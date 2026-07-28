@@ -36,6 +36,10 @@ to_msg__CIWarning(const CIWarning *self)
     switch (self->kind) {
         case CI_WARNING_KIND_UNUSED:
             return "unused";
+        case CI_WARNING_KIND_DUPLICATE_STORAGE_CLASS_SPECIFIER:
+            return "duplicate storage class specifier";
+        case CI_WARNING_KIND_SPACE_AFTER_LINE_CONTINUATION:
+            return "a space is not expected after `\\`";
         case CI_WARNING_KIND_PREPROCESSOR_WARNING:
             return self->preprocessor_warning;
         default:
@@ -49,6 +53,10 @@ to_code__CIWarning(const CIWarning *self)
     switch (self->kind) {
         case CI_WARNING_KIND_UNUSED:
             return "0001";
+        case CI_WARNING_KIND_DUPLICATE_STORAGE_CLASS_SPECIFIER:
+            return "0003";
+        case CI_WARNING_KIND_SPACE_AFTER_LINE_CONTINUATION:
+            return "0004";
         case CI_WARNING_KIND_PREPROCESSOR_WARNING:
             return "0002";
         default:

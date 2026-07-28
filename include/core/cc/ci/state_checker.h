@@ -460,8 +460,12 @@ DESTRUCTOR(CIStateCheckerAnonymousNameGenerator,
 
 typedef struct CIStateChecker
 {
-    const CIResult *result;             // const CIResult* (&)
-    const CIResultFile *file;           // const CIResultFile*? (&)
+    const CIResult *result;   // const CIResult* (&)
+    const CIResultFile *file; // const CIResultFile*? (&)
+    // Declaration currently being checked. Used to locate the diagnostics of
+    // the checks that work on a `CIStateCheckerValue`, which carries no
+    // location of its own.
+    const CIDecl *current_decl;         // const CIDecl*? (&)
     CIStateCheckerScope *current_scope; // CIStateCheckerScope*?
     CIStateCheckerAnonymousNameGenerator anonymous_name_generator;
 } CIStateChecker;
@@ -474,6 +478,7 @@ inline CONSTRUCTOR(CIStateChecker, CIStateChecker, const CIResult *result)
 {
     return (CIStateChecker){ .result = result,
                              .file = NULL,
+                             .current_decl = NULL,
                              .current_scope = NULL,
                              .anonymous_name_generator =
                                NEW(CIStateCheckerAnonymousNameGenerator) };

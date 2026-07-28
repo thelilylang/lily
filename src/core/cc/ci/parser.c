@@ -27,10 +27,36 @@
 #include <base/atoi.h>
 #include <base/format.h>
 
+#include <core/cc/ci/diagnostic/emit.h>
 #include <core/cc/ci/diagnostic/error.h>
 #include <core/cc/ci/include.h>
 #include <core/cc/ci/infer.h>
 #include <core/cc/ci/parser.h>
+
+// Emit a located error on the token the parser is on and count it, without
+// stopping the parse: the caller returns a poisoned value so that a single pass
+// reports more than one error. The stage boundary in `run_file__CIResult` stops
+// the pipeline before the analysis stages run.
+#define FAILED__CIParser(self, error)                \
+    EMIT_ERROR__CI(&(self)->file->file_input,        \
+                   &(self)->current_token->location, \
+                   error,                            \
+                   (self)->count_error)
+
+// Same, but located on a data type rather than on the current token (used by
+// the substitution helpers, which run outside of the token stream).
+#define FAILED_ON_DATA_TYPE__CIParser(file, data_type, error) \
+    EMIT_ERROR__CI(&(file)->file_input,                       \
+                   &(data_type)->location,                    \
+                   error,                                     \
+                   &(file)->file_analysis->count_error)
+
+#define WARNING__CIParser(self, warning)               \
+    EMIT_WARNING__CI(&(self)->file->file_input,        \
+                     &(self)->current_token->location, \
+                     warning,                          \
+                     NULL,                             \
+                     (self)->count_warning)
 #include <core/cc/ci/resolver/expr.h>
 #include <core/cc/ci/result.h>
 #include <core/shared/diagnostic.h>
@@ -98,6 +124,19 @@ set_current_scope__CIParser(CIParser *self);
 static CIToken *
 peek_token__CIParser(CIParser *self, Usize n);
 
+/// @brief Get the location of the token the parser is currently on.
+static inline Location
+current_location__CIParser(const CIParser *self);
+
+/// @brief Get the location of the last token the parser consumed.
+static inline Location
+previous_location__CIParser(const CIParser *self);
+
+/// @brief Build the location of a construct that starts at `begin` and ends at
+/// the last token the parser consumed.
+static Location
+location_from__CIParser(const CIParser *self, const Location *begin);
+
 /// @brief Check if the current token has the same kind than passed in
 /// parameter.
 static bool
@@ -144,7 +183,8 @@ is_data_type_qualifier__CIParser(CIParser *self);
 
 /// @param parent_subs_field CIDeclStructField*? (&)
 static void
-substitute_field_member__CIParser(CIDeclStructFields *subs_fields,
+substitute_field_member__CIParser(const CIResultFile *file,
+                                  CIDeclStructFields *subs_fields,
                                   CIDeclStructField *field,
                                   CIDeclStructField *parent_subs_field,
                                   CIDeclStructField **prev_subs_field,
@@ -153,7 +193,8 @@ substitute_field_member__CIParser(CIDeclStructFields *subs_fields,
 
 /// @param parent_subs_field CIDeclStructField*? (&)
 static void
-substitute_field_parent__CIParser(CIDeclStructFields *subs_fields,
+substitute_field_parent__CIParser(const CIResultFile *file,
+                                  CIDeclStructFields *subs_fields,
                                   CIDeclStructField **field,
                                   CIDeclStructField *parent_subs_field,
                                   CIDeclStructField **prev_subs_field,
@@ -164,6 +205,7 @@ substitute_field_parent__CIParser(CIDeclStructFields *subs_fields,
 /// @param parent_subs_field CIDeclStructField*? (&)
 static void
 substitute_struct_or_union_fields_base__CIParser(
+  const CIResultFile *file,
   CIDeclStructField **field,
   CIDeclStructField *parent,
   CIDeclStructField *parent_subs_field,
@@ -177,6 +219,7 @@ substitute_struct_or_union_fields_base__CIParser(
 /// @param called_generic_params CIGenericParams*? (&)
 static CIDeclStructFields *
 substitute_struct_or_union_fields__CIParser(
+  const CIResultFile *file,
   CIDeclStructFields *fields,
   CIGenericParams *generic_params,
   CIGenericParams *called_generic_params);
@@ -984,7 +1027,10 @@ skip_paren__CIParser(CIParser *self)
 
                 break;
             case CI_TOKEN_KIND_EOF:
-                FAILED("unexpected EOF, expected `)`");
+                FAILED__CIParser(self,
+                                 NEW(CIError, CI_ERROR_KIND_UNEXPECTED_EOF));
+
+                return;
             default:
                 break;
         }
@@ -994,6 +1040,28 @@ skip_paren__CIParser(CIParser *self)
 
 exit:
     next_token__CIParser(self);
+}
+
+Location
+current_location__CIParser(const CIParser *self)
+{
+    return clone__Location(&self->current_token->location);
+}
+
+Location
+previous_location__CIParser(const CIParser *self)
+{
+    return clone__Location(&self->previous_token->location);
+}
+
+Location
+location_from__CIParser(const CIParser *self, const Location *begin)
+{
+    Location res = clone__Location(begin);
+
+    END_LOCATION(&res, self->previous_token->location);
+
+    return res;
 }
 
 CIToken *
@@ -1022,7 +1090,9 @@ expect__CIParser(CIParser *self, enum CITokenKind kind, bool emit_error)
     }
 
     if (emit_error) {
-        FAILED("expected: ...");
+        FAILED__CIParser(
+          self,
+          NEW_VARIANT(CIError, expected_token, to_spelling__CITokenKind(kind)));
     }
 
     return false;
@@ -1065,7 +1135,7 @@ expect_with_list__CIParser(CIParser *self, Usize n, ...)
 
     va_end(vl);
 
-    FAILED("expected ...");
+    FAILED__CIParser(self, NEW(CIError, CI_ERROR_KIND_UNEXPECTED_TOKEN));
 }
 
 void
@@ -1172,7 +1242,8 @@ is_data_type_qualifier__CIParser(CIParser *self)
 }
 
 CIDataType *
-substitute_generic__CIParser(const String *generic_name,
+substitute_generic__CIParser(const CIResultFile *file,
+                             const String *generic_name,
                              CIGenericParams *generic_params,
                              CIGenericParams *called_generic_params)
 {
@@ -1191,11 +1262,19 @@ substitute_generic__CIParser(const String *generic_name,
 
                 break;
             default:
-                FAILED("expected only generic data type for the moment");
+                FAILED_ON_DATA_TYPE__CIParser(
+                  file,
+                  generic_param,
+                  NEW(CIError, CI_ERROR_KIND_EXPECTED_ONLY_GENERIC_DATA_TYPE));
+
+                return NULL;
         }
     }
 
-    FAILED("generic param name not found");
+    FAILED_ON_DATA_TYPE__CIParser(
+      file,
+      CAST(CIDataType *, get__Vec(generic_params->params, 0)),
+      NEW(CIError, CI_ERROR_KIND_GENERIC_PARAM_NAME_NOT_FOUND));
 
     return NULL;
 
@@ -1205,6 +1284,7 @@ exit_loop:
 
 CIGenericParams *
 substitute_generic_params__CIParser(
+  const CIResultFile *file,
   CIGenericParams *unresolved_generic_params,
   const CIGenericParams *generic_params,
   const CIGenericParams *called_generic_params)
@@ -1216,6 +1296,7 @@ substitute_generic_params__CIParser(
 
             for (Usize i = 0; i < unresolved_generic_params->params->len; ++i) {
                 CIDataType *subs_param = substitute_data_type__CIParser(
+                  file,
                   get__Vec(unresolved_generic_params->params, i),
                   (CIGenericParams *)generic_params,
                   (CIGenericParams *)called_generic_params,
@@ -1236,15 +1317,20 @@ substitute_generic_params__CIParser(
 }
 
 void
-substitute_field_member__CIParser(CIDeclStructFields *subs_fields,
+substitute_field_member__CIParser(const CIResultFile *file,
+                                  CIDeclStructFields *subs_fields,
                                   CIDeclStructField *field,
                                   CIDeclStructField *parent_subs_field,
                                   CIDeclStructField **prev_subs_field,
                                   CIGenericParams *generic_params,
                                   CIGenericParams *called_generic_params)
 {
-    CIDataType *subs_field_dt = substitute_data_type__CIParser(
-      field->member.data_type, generic_params, called_generic_params, NULL);
+    CIDataType *subs_field_dt =
+      substitute_data_type__CIParser(file,
+                                     field->member.data_type,
+                                     generic_params,
+                                     called_generic_params,
+                                     NULL);
 
     CIDeclStructField *subs_field = NEW_VARIANT(
       CIDeclStructField,
@@ -1260,7 +1346,8 @@ substitute_field_member__CIParser(CIDeclStructFields *subs_fields,
 }
 
 void
-substitute_field_parent__CIParser(CIDeclStructFields *subs_fields,
+substitute_field_parent__CIParser(const CIResultFile *file,
+                                  CIDeclStructFields *subs_fields,
                                   CIDeclStructField **field,
                                   CIDeclStructField *parent_subs_field,
                                   CIDeclStructField **prev_subs_field,
@@ -1280,7 +1367,8 @@ substitute_field_parent__CIParser(CIDeclStructFields *subs_fields,
 
     *field = (*field)->next;
 
-    substitute_struct_or_union_fields_base__CIParser(field,
+    substitute_struct_or_union_fields_base__CIParser(file,
+                                                     field,
                                                      parent,
                                                      subs_field,
                                                      prev_subs_field,
@@ -1291,6 +1379,7 @@ substitute_field_parent__CIParser(CIDeclStructFields *subs_fields,
 
 void
 substitute_struct_or_union_fields_base__CIParser(
+  const CIResultFile *file,
   CIDeclStructField **field,
   CIDeclStructField *parent,
   CIDeclStructField *parent_subs_field,
@@ -1306,7 +1395,8 @@ substitute_struct_or_union_fields_base__CIParser(
     while (*field && (*field)->parent == parent) {
         switch ((*field)->kind) {
             case CI_DECL_STRUCT_FIELD_KIND_MEMBER:
-                substitute_field_member__CIParser(*subs_fields,
+                substitute_field_member__CIParser(file,
+                                                  *subs_fields,
                                                   *field,
                                                   parent_subs_field,
                                                   prev_subs_field,
@@ -1317,7 +1407,8 @@ substitute_struct_or_union_fields_base__CIParser(
 
                 break;
             default:
-                substitute_field_parent__CIParser(*subs_fields,
+                substitute_field_parent__CIParser(file,
+                                                  *subs_fields,
                                                   field,
                                                   parent_subs_field,
                                                   prev_subs_field,
@@ -1329,6 +1420,7 @@ substitute_struct_or_union_fields_base__CIParser(
 
 CIDeclStructFields *
 substitute_struct_or_union_fields__CIParser(
+  const CIResultFile *file,
   CIDeclStructFields *fields,
   CIGenericParams *generic_params,
   CIGenericParams *called_generic_params)
@@ -1337,7 +1429,8 @@ substitute_struct_or_union_fields__CIParser(
     CIDeclStructField *prev_subs_field = NULL;
     CIDeclStructFields *subs_fields = NULL;
 
-    substitute_struct_or_union_fields_base__CIParser(&current_field,
+    substitute_struct_or_union_fields_base__CIParser(file,
+                                                     &current_field,
                                                      NULL,
                                                      NULL,
                                                      &prev_subs_field,
@@ -1349,7 +1442,8 @@ substitute_struct_or_union_fields__CIParser(
 }
 
 CIDataType *
-substitute_data_type__CIParser(CIDataType *data_type,
+substitute_data_type__CIParser(const CIResultFile *file,
+                               CIDataType *data_type,
                                CIGenericParams *generic_params,
                                CIGenericParams *called_generic_params,
                                String *serialized_name)
@@ -1359,7 +1453,8 @@ substitute_data_type__CIParser(CIDataType *data_type,
     switch (data_type->kind) {
         case CI_DATA_TYPE_KIND_ARRAY: {
             CIDataType *subs =
-              substitute_data_type__CIParser(data_type,
+              substitute_data_type__CIParser(file,
+                                             data_type,
                                              generic_params,
                                              called_generic_params,
                                              serialized_name);
@@ -1376,6 +1471,7 @@ substitute_data_type__CIParser(CIDataType *data_type,
                         res = NEW_VARIANT(
                           CIDataType,
                           array,
+                          clone__Location(&data_type->location),
                           NEW_VARIANT(CIDataTypeArray,
                                       sized,
                                       subs,
@@ -1390,6 +1486,7 @@ substitute_data_type__CIParser(CIDataType *data_type,
                         res = NEW_VARIANT(
                           CIDataType,
                           array,
+                          clone__Location(&data_type->location),
                           NEW_VARIANT(CIDataTypeArray,
                                       none,
                                       subs,
@@ -1423,7 +1520,8 @@ substitute_data_type__CIParser(CIDataType *data_type,
                 switch (param->kind) {
                     case CI_DECL_FUNCTION_PARAM_KIND_NORMAL: {
                         CIDataType *subs_data_type =
-                          substitute_data_type__CIParser(param->data_type,
+                          substitute_data_type__CIParser(file,
+                                                         param->data_type,
                                                          generic_params,
                                                          called_generic_params,
                                                          NULL);
@@ -1449,6 +1547,7 @@ substitute_data_type__CIParser(CIDataType *data_type,
             }
 
             CIDataType *subs_return_data_type = substitute_data_type__CIParser(
+              file,
               data_type->function.return_data_type,
               generic_params,
               called_generic_params,
@@ -1470,6 +1569,7 @@ substitute_data_type__CIParser(CIDataType *data_type,
 
             res = NEW_VARIANT(CIDataType,
                               function,
+                              clone__Location(&data_type->location),
                               NEW(CIDataTypeFunction,
                                   new_function_dt_name,
                                   NEW(CIDeclFunctionParams, subs_params),
@@ -1485,6 +1585,7 @@ substitute_data_type__CIParser(CIDataType *data_type,
         }
         case CI_DATA_TYPE_KIND_GENERIC: {
             CIDataType *res_generic = substitute_generic__CIParser(
+              file,
               GET_PTR_RC(String, data_type->generic),
               generic_params,
               called_generic_params);
@@ -1497,7 +1598,8 @@ substitute_data_type__CIParser(CIDataType *data_type,
         }
         case CI_DATA_TYPE_KIND_PTR: {
             CIDataType *subs =
-              substitute_data_type__CIParser(data_type->ptr.data_type,
+              substitute_data_type__CIParser(file,
+                                             data_type->ptr.data_type,
                                              generic_params,
                                              called_generic_params,
                                              serialized_name);
@@ -1509,8 +1611,10 @@ substitute_data_type__CIParser(CIDataType *data_type,
                                       : ref__Rc(data_type->ptr.name)
                     : NULL;
 
-                res = NEW_VARIANT(
-                  CIDataType, ptr, NEW(CIDataTypePtr, new_ptr_name, subs));
+                res = NEW_VARIANT(CIDataType,
+                                  ptr,
+                                  clone__Location(&data_type->location),
+                                  NEW(CIDataTypePtr, new_ptr_name, subs));
 
                 if (new_ptr_name) {
                     FREE_RC(String, new_ptr_name);
@@ -1528,6 +1632,7 @@ substitute_data_type__CIParser(CIDataType *data_type,
                                                                               \
         if (data_type->decl_name.fields) {                                    \
             subs_fields = substitute_struct_or_union_fields__CIParser(        \
+              file,                                                           \
               data_type->decl_name.fields,                                    \
               generic_params,                                                 \
               called_generic_params);                                         \
@@ -1535,9 +1640,11 @@ substitute_data_type__CIParser(CIDataType *data_type,
                                                                               \
         res = NEW_VARIANT(CIDataType,                                         \
                           variant,                                            \
+                          clone__Location(&data_type->location),              \
                           NEW(decl_ty,                                        \
                               data_type->decl_name.name,                      \
                               substitute_generic_params__CIParser(            \
+                                file,                                         \
                                 data_type->decl_name.generic_params,          \
                                 generic_params,                               \
                                 called_generic_params),                       \
@@ -1554,9 +1661,11 @@ substitute_data_type__CIParser(CIDataType *data_type,
             if (data_type->typedef_.generic_params) {
                 res = NEW_VARIANT(CIDataType,
                                   typedef,
+                                  clone__Location(&data_type->location),
                                   NEW(CIDataTypeTypedef,
                                       data_type->typedef_.name,
                                       substitute_generic_params__CIParser(
+                                        file,
                                         data_type->typedef_.generic_params,
                                         generic_params,
                                         called_generic_params)));
@@ -1611,9 +1720,11 @@ parse_data_type_contexts__CIParser(CIParser *self)
                   CTX_IDS_LEN);
 
                 if (current_ctx == -1) {
-                    FAILED("expected only !heap, !non_null, !stack, !trace, "
-                           "!index, !realloc, !drop, !static or !free "
-                           "as data type context");
+                    FAILED__CIParser(
+                      self,
+                      NEW(CIError, CI_ERROR_KIND_EXPECTED_DATA_TYPE_CONTEXT));
+
+                    return 0;
                 } else {
                     data_type_ctx |= current_ctx;
                 }
@@ -1625,8 +1736,13 @@ parse_data_type_contexts__CIParser(CIParser *self)
                 break;
             }
             default:
-                FAILED(
-                  "expected identifier after data type context, e.g. !<id>");
+                FAILED__CIParser(
+                  self,
+                  NEW(
+                    CIError,
+                    CI_ERROR_KIND_EXPECTED_IDENTIFIER_AFTER_DATA_TYPE_CONTEXT));
+
+                return 0;
         }
     }
 
@@ -1645,11 +1761,16 @@ parse_post_data_type__CIParser(CIParser *self,
       self, name_ref, data_type, in_function_prototype);
 
     if (name_is_required && !name_ref->value) {
-        FAILED("expected to have name");
+        FAILED__CIParser(self, NEW(CIError, CI_ERROR_KIND_EXPECTED_NAME));
+
+        return NULL;
     }
 
     if (!generic_params_is_expected && name_ref->generic_params) {
-        FAILED("not expected to have generic params");
+        FAILED__CIParser(self,
+                         NEW(CIError, CI_ERROR_KIND_UNEXPECTED_GENERIC_PARAMS));
+
+        return NULL;
     }
 
     return data_type;
@@ -1737,17 +1858,26 @@ parse_array_declarator__CIParser(CIParser *self,
     Isize size = 0;
 
     if (expr) {
-        CIResolverExpr resolver_expr =
-          NEW(CIResolverExpr, self, current_scope, false);
+        CIResolverExpr resolver_expr = NEW(CIResolverExpr,
+                                           self,
+                                           current_scope,
+                                           self->file,
+                                           self->count_error,
+                                           false);
         CIExpr *resolved_array_expr = run__CIResolverExpr(&resolver_expr, expr);
 
         switch (resolved_array_expr->kind) {
             case CI_EXPR_KIND_LITERAL:
-                size =
-                  to_literal_integer_value__CIResolverExpr(resolved_array_expr);
+                size = to_literal_integer_value__CIResolverExpr(
+                  &resolver_expr, resolved_array_expr);
 
                 if (size < 0) {
-                    FAILED("expected to have positive integer value");
+                    FAILED__CIParser(
+                      self,
+                      NEW(CIError,
+                          CI_ERROR_KIND_EXPECTED_POSITIVE_INTEGER_VALUE));
+
+                    return NULL;
                 }
 
                 is_unsized = false;
@@ -1761,7 +1891,12 @@ parse_array_declarator__CIParser(CIParser *self,
     }
 
     if (name_ref->generic_params) {
-        FAILED("generic params is not expected in this context");
+        FAILED__CIParser(
+          self,
+          NEW(CIError,
+              CI_ERROR_KIND_GENERIC_PARAMS_NOT_EXPECTED_IN_THIS_CONTEXT));
+
+        return NULL;
     }
 
     Rc *name = has_new_name ? name_ref->value : NULL;
@@ -1776,11 +1911,13 @@ parse_array_declarator__CIParser(CIParser *self,
         res = NEW_VARIANT(
           CIDataType,
           array,
+          previous_location__CIParser(self),
           NEW_VARIANT(
             CIDataTypeArray, none, res, name, expr, is_static, qualifier));
     } else {
         res = NEW_VARIANT(CIDataType,
                           array,
+                          previous_location__CIParser(self),
                           NEW_VARIANT(CIDataTypeArray,
                                       sized,
                                       res,
@@ -1805,7 +1942,10 @@ parse_ptr_declarator__CIParser(CIParser *self, CIDataType *pre_data_type)
         int qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
         int context = CI_DATA_TYPE_CONTEXT_NONE;
 
-        res = NEW_VARIANT(CIDataType, ptr, NEW(CIDataTypePtr, NULL, res));
+        res = NEW_VARIANT(CIDataType,
+                          ptr,
+                          previous_location__CIParser(self),
+                          NEW(CIDataTypePtr, NULL, res));
 
         switch (self->current_token->kind) {
             case CI_TOKEN_KIND_BANG:
@@ -1838,6 +1978,7 @@ parse_function_declarator__CIParser(CIParser *self,
 
     return NEW_VARIANT(CIDataType,
                        function,
+                       previous_location__CIParser(self),
                        NEW(CIDataTypeFunction,
                            has_new_name ? name_ref->value : NULL,
                            params,
@@ -1914,7 +2055,10 @@ parse_declarator__CIParser(CIParser *self,
         }
         case CI_TOKEN_KIND_IDENTIFIER:
             if (name_ref->value) {
-                FAILED("name is already defined");
+                FAILED__CIParser(
+                  self, NEW(CIError, CI_ERROR_KIND_NAME_IS_ALREADY_DEFINED));
+
+                return NULL;
             }
 
             Rc *identifier = self->current_token->identifier;
@@ -1933,7 +2077,13 @@ parse_declarator__CIParser(CIParser *self,
 
                 if (name_ref->generic_params &&
                     !HAS_TYPEDEF_STORAGE_CLASS_FLAG()) {
-                    FAILED("generic params is not expected in this context");
+                    FAILED__CIParser(
+                      self,
+                      NEW(
+                        CIError,
+                        CI_ERROR_KIND_GENERIC_PARAMS_NOT_EXPECTED_IN_THIS_CONTEXT));
+
+                    return NULL;
                 }
             }
 
@@ -2059,7 +2209,12 @@ valid_data_type_context__CIParser(CIParser *self, int context_flag)
 
             for (Usize j = 0; j < rejected_context_item->len; ++j) {
                 if (context_flag & rejected_context_item->buffer[j]) {
-                    FAILED("incompatible data type context");
+                    FAILED__CIParser(
+                      self,
+                      NEW(CIError,
+                          CI_ERROR_KIND_INCOMPATIBLE_DATA_TYPE_CONTEXT));
+
+                    return;
                 }
             }
         }
@@ -2090,7 +2245,10 @@ add_flag__CIDataTypeCombination(CIParser *self,
             *flags &= ~CI_DATA_TYPE_COMBINATION_LONG;
             *flags |= CI_DATA_TYPE_COMBINATION_LONG_LONG;
         } else {
-            FAILED("flag already set");
+            FAILED__CIParser(self,
+                             NEW(CIError, CI_ERROR_KIND_FLAG_IS_ALREADY_SET));
+
+            return;
         }
     }
 }
@@ -2266,6 +2424,7 @@ parse_pre_data_type__CIParser(CIParser *self)
                   GET_PTR_RC(String, self->previous_token->identifier))) {
                 res = NEW_VARIANT(CIDataType,
                                   builtin,
+                                  previous_location__CIParser(self),
                                   get_id__CIBuiltinType(GET_PTR_RC(
                                     String, self->previous_token->identifier)));
 
@@ -2277,12 +2436,17 @@ parse_pre_data_type__CIParser(CIParser *self)
                 if (!strcmp(GET_PTR_RC(String, self->previous_token->identifier)
                               ->buffer,
                             BUILTIN_NULLPTR_T_S)) {
-                    res = NEW(CIDataType, CI_DATA_TYPE_KIND_NULLPTR_T);
+                    res = NEW(CIDataType,
+                              previous_location__CIParser(self),
+                              CI_DATA_TYPE_KIND_NULLPTR_T);
 
                     break;
                 }
 
-                FAILED("expected type");
+                FAILED__CIParser(self,
+                                 NEW(CIError, CI_ERROR_KIND_EXPECTED_TYPE));
+
+                return NULL;
             }
 
             Rc *name = self->previous_token->identifier; // Rc<String*>* (&)
@@ -2291,6 +2455,7 @@ parse_pre_data_type__CIParser(CIParser *self)
 
             res = NEW_VARIANT(CIDataType,
                               typedef,
+                              previous_location__CIParser(self),
                               NEW(CIDataTypeTypedef, name, generic_params));
 
             break;
@@ -2304,13 +2469,16 @@ parse_pre_data_type__CIParser(CIParser *self)
                 generic = generate_name_error__CIParser();
             }
 
-            res = NEW_VARIANT(CIDataType, generic, generic);
+            res = NEW_VARIANT(
+              CIDataType, generic, previous_location__CIParser(self), generic);
 
             break;
         }
         case CI_TOKEN_KIND_KEYWORD_BOOL:
         case CI_TOKEN_KIND_KEYWORD__BOOL:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_BOOL);
+            res = NEW(CIDataType,
+                      previous_location__CIParser(self),
+                      CI_DATA_TYPE_KIND_BOOL);
 
             break;
         case CI_TOKEN_KIND_KEYWORD_ENUM: {
@@ -2331,8 +2499,10 @@ parse_pre_data_type__CIParser(CIParser *self)
                     break;
             }
 
-            res = NEW_VARIANT(
-              CIDataType, enum, NEW(CIDataTypeEnum, name, NULL, NULL));
+            res = NEW_VARIANT(CIDataType,
+                              enum,
+                              previous_location__CIParser(self),
+                              NEW(CIDataTypeEnum, name, NULL, NULL));
 
             switch (self->current_token->kind) {
                 case CI_TOKEN_KIND_COLON:
@@ -2398,6 +2568,7 @@ parse_pre_data_type__CIParser(CIParser *self)
                     res = NEW_VARIANT(
                       CIDataType,
                       struct,
+                      previous_location__CIParser(self),
                       NEW(CIDataTypeStruct, name, generic_params, NULL));
 
                     break;
@@ -2405,6 +2576,7 @@ parse_pre_data_type__CIParser(CIParser *self)
                     res = NEW_VARIANT(
                       CIDataType,
                       union,
+                      previous_location__CIParser(self),
                       NEW(CIDataTypeUnion, name, generic_params, NULL));
 
                     break;
@@ -2507,29 +2679,41 @@ parse_pre_data_type__CIParser(CIParser *self)
             break;
         }
         case CI_TOKEN_KIND_KEYWORD_VOID:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_VOID);
+            res = NEW(CIDataType,
+                      previous_location__CIParser(self),
+                      CI_DATA_TYPE_KIND_VOID);
 
             break;
         case CI_TOKEN_KIND_KEYWORD__DECIMAL128:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND__DECIMAL128);
+            res = NEW(CIDataType,
+                      previous_location__CIParser(self),
+                      CI_DATA_TYPE_KIND__DECIMAL128);
 
             break;
         case CI_TOKEN_KIND_KEYWORD__DECIMAL32:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND__DECIMAL32);
+            res = NEW(CIDataType,
+                      previous_location__CIParser(self),
+                      CI_DATA_TYPE_KIND__DECIMAL32);
 
             break;
         case CI_TOKEN_KIND_KEYWORD__DECIMAL64:
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND__DECIMAL64);
+            res = NEW(CIDataType,
+                      previous_location__CIParser(self),
+                      CI_DATA_TYPE_KIND__DECIMAL64);
 
             break;
         default: {
             int data_type_kind = parse_data_type_combination__CIParser(self);
 
             if (data_type_kind == -1) {
-                FAILED("expected data type");
+                FAILED__CIParser(
+                  self, NEW(CIError, CI_ERROR_KIND_EXPECTED_DATA_TYPE));
+
+                return NULL;
             }
 
-            res = NEW(CIDataType, data_type_kind);
+            res = NEW(
+              CIDataType, previous_location__CIParser(self), data_type_kind);
         }
     }
 
@@ -2570,8 +2754,12 @@ parse_enum_variants__CIParser(CIParser *self,
                 next_token__CIParser(self);
 
                 CIExpr *custom_expr = parse_expr__CIParser(self);
-                CIResolverExpr resolver_expr =
-                  NEW(CIResolverExpr, self, current_scope, false);
+                CIResolverExpr resolver_expr = NEW(CIResolverExpr,
+                                                   self,
+                                                   current_scope,
+                                                   self->file,
+                                                   self->count_error,
+                                                   false);
                 CIExpr *resolved_custom_expr =
                   run__CIResolverExpr(&resolver_expr, custom_expr);
                 Isize custom_value = 0;
@@ -2579,13 +2767,16 @@ parse_enum_variants__CIParser(CIParser *self,
                 switch (resolved_custom_expr->kind) {
                     case CI_EXPR_KIND_LITERAL:
                         custom_value = to_literal_integer_value__CIResolverExpr(
-                          resolved_custom_expr);
+                          &resolver_expr, resolved_custom_expr);
 
                         break;
                     default:
-                        FAILED(
-                          "expected literal expression (passing a constant or "
-                          "enum variant is not yet supported).");
+                        FAILED__CIParser(
+                          self,
+                          NEW(CIError,
+                              CI_ERROR_KIND_EXPECTED_LITERAL_EXPRESSION));
+
+                        return NULL;
                 }
 
                 precedent_value = custom_value;
@@ -2613,10 +2804,12 @@ parse_enum_variants__CIParser(CIParser *self,
         }
 
         {
-            CIDecl *variant_decl = NEW_VARIANT(CIDecl,
-                                               enum_variant,
-                                               CI_STORAGE_CLASS_NONE,
-                                               ref__CIDeclEnumVariant(variant));
+            CIDecl *variant_decl =
+              NEW_VARIANT(CIDecl,
+                          enum_variant,
+                          previous_location__CIParser(self),
+                          CI_STORAGE_CLASS_NONE,
+                          ref__CIDeclEnumVariant(variant));
 
             add_decl_to_scope__CIParser(
               self, &variant_decl, current_scope, true, false);
@@ -2630,7 +2823,10 @@ parse_enum_variants__CIParser(CIParser *self,
     expect__CIParser(self, CI_TOKEN_KIND_RBRACE, true);
 
     if (variants->len == 0) {
-        FAILED("expected one or many variants");
+        FAILED__CIParser(
+          self, NEW(CIError, CI_ERROR_KIND_EXPECTED_ONE_OR_MANY_VARIANTS));
+
+        return NULL;
     }
 
     return variants;
@@ -2663,15 +2859,20 @@ parse_enum__CIParser(CIParser *self, int storage_class_flag, Rc *name)
         case CI_TOKEN_KIND_SEMICOLON:
             return NEW_VARIANT(CIDecl,
                                enum,
+                               previous_location__CIParser(self),
                                storage_class_flag,
                                true,
                                NEW(CIDeclEnum, name, NULL, data_type));
         default:
-            FAILED("expected `{` or `;`");
+            FAILED__CIParser(
+              self, NEW_VARIANT(CIError, expected_token, "`{` or `;`"));
+
+            return NULL;
     }
 
     return NEW_VARIANT(CIDecl,
                        enum,
+                       previous_location__CIParser(self),
                        storage_class_flag,
                        false,
                        NEW(CIDeclEnum,
@@ -2719,6 +2920,7 @@ parse_function_params__CIParser(CIParser *self, CIScope *parent_function_scope)
                     CIDecl *param_decl =
                       NEW_VARIANT(CIDecl,
                                   variable,
+                                  previous_location__CIParser(self),
                                   CI_STORAGE_CLASS_NONE,
                                   false,
                                   NEW(CIDeclVariable,
@@ -2739,7 +2941,9 @@ parse_function_params__CIParser(CIParser *self, CIScope *parent_function_scope)
     }
 
     if (self->current_token->kind == CI_TOKEN_KIND_EOF) {
-        FAILED("hit EOF");
+        FAILED__CIParser(self, NEW(CIError, CI_ERROR_KIND_UNEXPECTED_EOF));
+
+        return NULL;
     } else {
         next_token__CIParser(self); // skip `)`
     }
@@ -2788,7 +2992,11 @@ parse_generic_params__CIParser(CIParser *self)
     }
 
     if (params->len == 0) {
-        FAILED("expected at least one generic param");
+        FAILED__CIParser(
+          self,
+          NEW(CIError, CI_ERROR_KIND_EXPECTED_AT_LEAST_ONE_GENERIC_PARAM));
+
+        return NULL;
     }
 
     switch (self->current_token->kind) {
@@ -2797,7 +3005,9 @@ parse_generic_params__CIParser(CIParser *self)
 
             break;
         case CI_TOKEN_KIND_EOF:
-            FAILED("unexpected EOF");
+            FAILED__CIParser(self, NEW(CIError, CI_ERROR_KIND_UNEXPECTED_EOF));
+
+            return NULL;
         default:
             UNREACHABLE("expected `]` or `EOF`");
     }
@@ -2810,6 +3020,8 @@ parse_function_call__CIParser(CIParser *self,
                               Rc *identifier,
                               CIGenericParams *generic_params)
 {
+    Location begin = previous_location__CIParser(self);
+
     next_token__CIParser(self); // skip `(`
 
     Vec *params = NEW(Vec); // Vec<CIExpr*>*
@@ -2833,6 +3045,7 @@ parse_function_call__CIParser(CIParser *self,
         return NEW_VARIANT(
           CIExpr,
           function_call_builtin,
+          location_from__CIParser(self, &begin),
           NEW(CIExprFunctionCallBuiltin,
               get_id__CIBuiltinFunction(GET_PTR_RC(String, identifier)),
               params));
@@ -2841,6 +3054,7 @@ parse_function_call__CIParser(CIParser *self,
     return NEW_VARIANT(
       CIExpr,
       function_call,
+      location_from__CIParser(self, &begin),
       NEW(CIExprFunctionCall, identifier, params, generic_params));
 }
 
@@ -2871,11 +3085,15 @@ parse_literal_expr__CIParser(CIParser *self)
 {
     switch (self->previous_token->kind) {
         case CI_TOKEN_KIND_KEYWORD_TRUE:
-            return NEW_VARIANT(
-              CIExpr, literal, NEW_VARIANT(CIExprLiteral, bool, true));
+            return NEW_VARIANT(CIExpr,
+                               literal,
+                               previous_location__CIParser(self),
+                               NEW_VARIANT(CIExprLiteral, bool, true));
         case CI_TOKEN_KIND_KEYWORD_FALSE:
-            return NEW_VARIANT(
-              CIExpr, literal, NEW_VARIANT(CIExprLiteral, bool, false));
+            return NEW_VARIANT(CIExpr,
+                               literal,
+                               previous_location__CIParser(self),
+                               NEW_VARIANT(CIExprLiteral, bool, false));
         case CI_TOKEN_KIND_LITERAL_CONSTANT_INT:
         case CI_TOKEN_KIND_LITERAL_CONSTANT_OCTAL:
         case CI_TOKEN_KIND_LITERAL_CONSTANT_HEX:
@@ -2912,21 +3130,29 @@ parse_literal_expr__CIParser(CIParser *self)
             if (is_none__Optional(res_op)) {
                 FREE(Optional, res_op);
 
-                FAILED("bad integer");
+                FAILED__CIParser(
+                  self, NEW(CIError, CI_ERROR_KIND_BAD_INTEGER_LITERAL));
+
+                return NULL;
             }
 
             Isize res = (Isize)(Uptr)get__Optional(res_op);
 
             FREE(Optional, res_op);
 
-            return NEW_VARIANT(
-              CIExpr, literal, NEW_VARIANT(CIExprLiteral, signed_int, res));
+            return NEW_VARIANT(CIExpr,
+                               literal,
+                               previous_location__CIParser(self),
+                               NEW_VARIANT(CIExprLiteral, signed_int, res));
         }
         case CI_TOKEN_KIND_LITERAL_CONSTANT_FLOAT:
             if (!is_valid_literal_constant_float__CIParser(
                   self, self->previous_token->literal_constant_float.value)) {
-                FAILED("in a float literal it is forbidden to add more than "
-                       "one `.`");
+                FAILED__CIParser(
+                  self,
+                  NEW(CIError, CI_ERROR_KIND_TOO_MANY_DOTS_IN_FLOAT_LITERAL));
+
+                return NULL;
             }
 
             // TODO: Check if the float is overflow/underflow.
@@ -2934,6 +3160,7 @@ parse_literal_expr__CIParser(CIParser *self)
             return NEW_VARIANT(
               CIExpr,
               literal,
+              previous_location__CIParser(self),
               NEW_VARIANT(
                 CIExprLiteral,
                 float,
@@ -2943,6 +3170,7 @@ parse_literal_expr__CIParser(CIParser *self)
             return NEW_VARIANT(
               CIExpr,
               literal,
+              previous_location__CIParser(self),
               NEW_VARIANT(CIExprLiteral,
                           char,
                           self->previous_token->literal_constant_character));
@@ -2950,6 +3178,7 @@ parse_literal_expr__CIParser(CIParser *self)
             return NEW_VARIANT(
               CIExpr,
               literal,
+              previous_location__CIParser(self),
               NEW_VARIANT(CIExprLiteral,
                           string,
                           self->previous_token->literal_constant_string));
@@ -2961,6 +3190,7 @@ parse_literal_expr__CIParser(CIParser *self)
 CIExpr *
 parse_initializer__CIParser(CIParser *self)
 {
+    Location begin = current_location__CIParser(self);
     Vec *items = NEW(Vec);
 
     next_token__CIParser(self); // skip `{`
@@ -3000,24 +3230,31 @@ parse_initializer__CIParser(CIParser *self)
 
     expect__CIParser(self, CI_TOKEN_KIND_RBRACE, true);
 
-    return NEW_VARIANT(CIExpr, initializer, NEW(CIExprInitializer, items));
+    return NEW_VARIANT(CIExpr,
+                       initializer,
+                       location_from__CIParser(self, &begin),
+                       NEW(CIExprInitializer, items));
 }
 
 CIExpr *
 parse_primary_expr__CIParser(CIParser *self)
 {
+    Location begin = current_location__CIParser(self);
+
     if (data_type_as_expression) {
         CIDataType *data_type = data_type_as_expression;
 
         data_type_as_expression = NULL;
 
-        return NEW_VARIANT(CIExpr, data_type, data_type);
+        return NEW_VARIANT(
+          CIExpr, data_type, location_from__CIParser(self, &begin), data_type);
     } else if (is_data_type__CIParser(self)) {
         struct CIName name = { 0 };
         CIDataType *data_type =
           parse_data_type__CIParser(self, &name, false, false, false);
 
-        return NEW_VARIANT(CIExpr, data_type, data_type);
+        return NEW_VARIANT(
+          CIExpr, data_type, location_from__CIParser(self, &begin), data_type);
     }
 
     next_token__CIParser(self);
@@ -3029,7 +3266,10 @@ parse_primary_expr__CIParser(CIParser *self)
             CIExpr *alignof_expr = parse_expr__CIParser(self);
 
             if (alignof_expr) {
-                res = NEW_VARIANT(CIExpr, alignof, alignof_expr);
+                res = NEW_VARIANT(CIExpr,
+                                  alignof,
+                                  location_from__CIParser(self, &begin),
+                                  alignof_expr);
                 break;
             }
 
@@ -3042,7 +3282,11 @@ parse_primary_expr__CIParser(CIParser *self)
                   parse_data_type__CIParser(self, &name, false, false, false);
 
                 if (name.value) {
-                    FAILED("name is not expected here");
+                    FAILED__CIParser(
+                      self,
+                      NEW(CIError, CI_ERROR_KIND_NAME_IS_NOT_EXPECTED_HERE));
+
+                    return NULL;
                 }
 
                 expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
@@ -3066,8 +3310,10 @@ parse_primary_expr__CIParser(CIParser *self)
                 check_for_initialization_expr__CIParser(
                   (CIParser *)self, data_type, expr);
 
-                res =
-                  NEW_VARIANT(CIExpr, cast, NEW(CIExprCast, data_type, expr));
+                res = NEW_VARIANT(CIExpr,
+                                  cast,
+                                  location_from__CIParser(self, &begin),
+                                  NEW(CIExprCast, data_type, expr));
 
                 break;
             }
@@ -3076,7 +3322,8 @@ parse_primary_expr__CIParser(CIParser *self)
 
             expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
 
-            res = NEW_VARIANT(CIExpr, grouping, expr);
+            res = NEW_VARIANT(
+              CIExpr, grouping, location_from__CIParser(self, &begin), expr);
 
             break;
         }
@@ -3101,7 +3348,10 @@ parse_primary_expr__CIParser(CIParser *self)
             }
 
             if (sizeof_expr) {
-                res = NEW_VARIANT(CIExpr, sizeof, sizeof_expr);
+                res = NEW_VARIANT(CIExpr,
+                                  sizeof,
+                                  location_from__CIParser(self, &begin),
+                                  sizeof_expr);
 
                 break;
             }
@@ -3127,6 +3377,7 @@ parse_primary_expr__CIParser(CIParser *self)
                     res = NEW_VARIANT(
                       CIExpr,
                       identifier,
+                      previous_location__CIParser(self),
                       NEW(CIExprIdentifier, identifier, id, generic_params));
             }
 
@@ -3164,6 +3415,7 @@ parse_primary_expr__CIParser(CIParser *self)
                     res = NEW_VARIANT(
                       CIExpr,
                       unary,
+                      previous_location__CIParser(self),
                       NEW(CIExprUnary, CI_EXPR_UNARY_KIND_NOT, expr));
 
                     break;
@@ -3171,6 +3423,7 @@ parse_primary_expr__CIParser(CIParser *self)
                     res = NEW_VARIANT(
                       CIExpr,
                       unary,
+                      previous_location__CIParser(self),
                       NEW(CIExprUnary, CI_EXPR_UNARY_KIND_REF, expr));
 
                     break;
@@ -3178,6 +3431,7 @@ parse_primary_expr__CIParser(CIParser *self)
                     res = NEW_VARIANT(
                       CIExpr,
                       unary,
+                      previous_location__CIParser(self),
                       NEW(CIExprUnary, CI_EXPR_UNARY_KIND_NEGATIVE, expr));
 
                     break;
@@ -3185,6 +3439,7 @@ parse_primary_expr__CIParser(CIParser *self)
                     res = NEW_VARIANT(
                       CIExpr,
                       unary,
+                      previous_location__CIParser(self),
                       NEW(CIExprUnary, CI_EXPR_UNARY_KIND_POSITIVE, expr));
 
                     break;
@@ -3192,6 +3447,7 @@ parse_primary_expr__CIParser(CIParser *self)
                     res = NEW_VARIANT(
                       CIExpr,
                       unary,
+                      previous_location__CIParser(self),
                       NEW(CIExprUnary, CI_EXPR_UNARY_KIND_BIT_NOT, expr));
 
                     break;
@@ -3199,6 +3455,7 @@ parse_primary_expr__CIParser(CIParser *self)
                     res = NEW_VARIANT(
                       CIExpr,
                       unary,
+                      previous_location__CIParser(self),
                       NEW(CIExprUnary, CI_EXPR_UNARY_KIND_DEREFERENCE, expr));
 
                     break;
@@ -3206,6 +3463,7 @@ parse_primary_expr__CIParser(CIParser *self)
                     res = NEW_VARIANT(
                       CIExpr,
                       unary,
+                      previous_location__CIParser(self),
                       NEW(CIExprUnary, CI_EXPR_UNARY_KIND_PRE_INCREMENT, expr));
 
                     break;
@@ -3213,6 +3471,7 @@ parse_primary_expr__CIParser(CIParser *self)
                     res = NEW_VARIANT(
                       CIExpr,
                       unary,
+                      previous_location__CIParser(self),
                       NEW(CIExprUnary, CI_EXPR_UNARY_KIND_PRE_DECREMENT, expr));
 
                     break;
@@ -3223,7 +3482,8 @@ parse_primary_expr__CIParser(CIParser *self)
             break;
         }
         case CI_TOKEN_KIND_KEYWORD_NULLPTR:
-            return NEW(CIExpr, CI_EXPR_KIND_NULLPTR);
+            return NEW(
+              CIExpr, previous_location__CIParser(self), CI_EXPR_KIND_NULLPTR);
         case CI_TOKEN_KIND_BUILTIN_MACRO___HAS_FEATURE: {
             bool has_feature = false;
 
@@ -3254,8 +3514,10 @@ parse_primary_expr__CIParser(CIParser *self)
                     UNREACHABLE("unknown variant");
             }
 
-            res = NEW_VARIANT(
-              CIExpr, literal, NEW_VARIANT(CIExprLiteral, bool, has_feature));
+            res = NEW_VARIANT(CIExpr,
+                              literal,
+                              previous_location__CIParser(self),
+                              NEW_VARIANT(CIExprLiteral, bool, has_feature));
 
             break;
         }
@@ -3267,8 +3529,10 @@ parse_primary_expr__CIParser(CIParser *self)
                   clone__String(
                     self->previous_token->standard_predefined_macro___date__));
 
-            res = NEW_VARIANT(
-              CIExpr, literal, NEW_VARIANT(CIExprLiteral, string, date_rc));
+            res = NEW_VARIANT(CIExpr,
+                              literal,
+                              previous_location__CIParser(self),
+                              NEW_VARIANT(CIExprLiteral, string, date_rc));
 
             FREE_RC(String, date_rc);
 
@@ -3278,8 +3542,10 @@ parse_primary_expr__CIParser(CIParser *self)
             Rc *file_rc = NEW(
               Rc, from__String(self->file->file_input.name)); // Rc<String*>*
 
-            res = NEW_VARIANT(
-              CIExpr, literal, NEW_VARIANT(CIExprLiteral, string, file_rc));
+            res = NEW_VARIANT(CIExpr,
+                              literal,
+                              previous_location__CIParser(self),
+                              NEW_VARIANT(CIExprLiteral, string, file_rc));
 
             FREE_RC(String, file_rc);
 
@@ -3288,6 +3554,7 @@ parse_primary_expr__CIParser(CIParser *self)
         case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__:
             res = NEW_VARIANT(CIExpr,
                               literal,
+                              location_from__CIParser(self, &begin),
                               NEW_VARIANT(CIExprLiteral,
                                           unsigned_int,
                                           self->previous_span.line));
@@ -3300,15 +3567,20 @@ parse_primary_expr__CIParser(CIParser *self)
                     self->previous_token
                       ->standard_predefined_macro___time__)); // Rc<String*>*
 
-            res = NEW_VARIANT(
-              CIExpr, literal, NEW_VARIANT(CIExprLiteral, string, time_rc));
+            res = NEW_VARIANT(CIExpr,
+                              literal,
+                              previous_location__CIParser(self),
+                              NEW_VARIANT(CIExprLiteral, string, time_rc));
 
             FREE_RC(String, time_rc);
 
             break;
         }
         default:
-            FAILED("unexpected token");
+            FAILED__CIParser(self,
+                             NEW(CIError, CI_ERROR_KIND_UNEXPECTED_TOKEN));
+
+            return NULL;
     }
 
     return parse_post_expr__CIParser(self, res);
@@ -3389,6 +3661,7 @@ parse_binary_expr__CIParser(CIParser *self, CIExpr *expr)
               stack,
               NEW_VARIANT(CIExpr,
                           binary,
+                          previous_location__CIParser(self),
                           NEW(CIExprBinary, top_op, top_left, top_right)));
         }
 
@@ -3404,7 +3677,10 @@ parse_binary_expr__CIParser(CIParser *self, CIExpr *expr)
         CIExpr *lhs = pop__Vec(stack);
 
         push__Vec(stack,
-                  NEW_VARIANT(CIExpr, binary, NEW(CIExprBinary, op, lhs, rhs)));
+                  NEW_VARIANT(CIExpr,
+                              binary,
+                              previous_location__CIParser(self),
+                              NEW(CIExprBinary, op, lhs, rhs)));
     }
 
     CIExpr *res = pop__Vec(stack);
@@ -3429,6 +3705,7 @@ loop:
             expr = NEW_VARIANT(
               CIExpr,
               unary,
+              previous_location__CIParser(self),
               NEW(CIExprUnary, CI_EXPR_UNARY_KIND_POST_INCREMENT, expr));
 
             goto loop;
@@ -3438,6 +3715,7 @@ loop:
             expr = NEW_VARIANT(
               CIExpr,
               unary,
+              previous_location__CIParser(self),
               NEW(CIExprUnary, CI_EXPR_UNARY_KIND_POST_DECREMENT, expr));
 
             goto loop;
@@ -3449,8 +3727,10 @@ loop:
 
             expect__CIParser(self, CI_TOKEN_KIND_RHOOK, true);
 
-            expr = NEW_VARIANT(
-              CIExpr, array_access, NEW(CIExprArrayAccess, expr, access));
+            expr = NEW_VARIANT(CIExpr,
+                               array_access,
+                               previous_location__CIParser(self),
+                               NEW(CIExprArrayAccess, expr, access));
 
             goto loop;
         }
@@ -3459,6 +3739,7 @@ loop:
 
             expr = NEW_VARIANT(CIExpr,
                                binary,
+                               previous_location__CIParser(self),
                                NEW(CIExprBinary,
                                    CI_EXPR_BINARY_KIND_DOT,
                                    expr,
@@ -3470,6 +3751,7 @@ loop:
 
             expr = NEW_VARIANT(CIExpr,
                                binary,
+                               previous_location__CIParser(self),
                                NEW(CIExprBinary,
                                    CI_EXPR_BINARY_KIND_ARROW,
                                    expr,
@@ -3487,8 +3769,13 @@ parse_expr__CIParser(CIParser *self)
     switch (self->current_token->kind) {
         case CI_TOKEN_KIND_LBRACE: {
             if (!allow_initialization) {
-                FAILED("cannot declare array, struct call or union call "
-                       "outside of variable initialization");
+                FAILED__CIParser(
+                  self,
+                  NEW(
+                    CIError,
+                    CI_ERROR_KIND_DECLARATION_OUTSIDE_OF_VARIABLE_INITIALIZATION));
+
+                return NULL;
             }
 
             return parse_initializer__CIParser(self);
@@ -3559,8 +3846,10 @@ loop:
                 return expr;
             }
 
-            return NEW_VARIANT(
-              CIExpr, ternary, NEW(CIExprTernary, expr, expr_if, expr_else));
+            return NEW_VARIANT(CIExpr,
+                               ternary,
+                               previous_location__CIParser(self),
+                               NEW(CIExprTernary, expr, expr_if, expr_else));
         default:
             return parse_post_expr__CIParser(self, expr);
     }
@@ -3576,7 +3865,10 @@ search_decl__CIParser(const CIParser *self,
     CIDecl *base_decl = search_decl(self->file, name);
 
     if (!base_decl) {
-        FAILED("declaration is not found");
+        FAILED__CIParser(self,
+                         NEW(CIError, CI_ERROR_KIND_DECLARATION_IS_NOT_FOUND));
+
+        return NULL;
     }
 
     if (called_generic_params) {
@@ -3673,10 +3965,12 @@ parse_do_while_stmt__CIParser(CIParser *self, bool in_switch)
     expect_many__CIParser(
       self, 2, CI_TOKEN_KIND_RPAREN, CI_TOKEN_KIND_SEMICOLON);
 
-    return NEW_VARIANT(
-      CIDeclFunctionItem,
-      stmt,
-      NEW_VARIANT(CIStmt, do_while, NEW(CIStmtDoWhile, body, cond)));
+    return NEW_VARIANT(CIDeclFunctionItem,
+                       stmt,
+                       NEW_VARIANT(CIStmt,
+                                   do_while,
+                                   previous_location__CIParser(self),
+                                   NEW(CIStmtDoWhile, body, cond)));
 }
 
 CIDeclFunctionItem *
@@ -3694,7 +3988,10 @@ parse_case__CIParser(CIParser *self)
 
     return NEW_VARIANT(CIDeclFunctionItem,
                        stmt,
-                       NEW_VARIANT(CIStmt, case, NEW(CIStmtSwitchCase, expr)));
+                       NEW_VARIANT(CIStmt,
+                                   case,
+                                   previous_location__CIParser(self),
+                                   NEW(CIStmtSwitchCase, expr)));
 }
 
 CIDeclFunctionItem *
@@ -3721,11 +4018,21 @@ parse_for_stmt__CIParser(CIParser *self, bool in_switch)
                   parse_function_body_item__CIParser(self, false, false);
 
                 if (!is_for_init_clause__CIDeclFunctionItem(init_clause)) {
-                    FAILED("expected valid for init-clause");
+                    FAILED__CIParser(
+                      self,
+                      NEW(CIError,
+                          CI_ERROR_KIND_EXPECTED_VALID_FOR_INIT_CLAUSE));
+
+                    return NULL;
                 } else if (is_variable__CIDeclFunctionItem(init_clause) &&
                            self->file->config->standard < CI_STANDARD_99) {
-                    FAILED("it is impossible to have a variable declaration in "
-                           "an `init clause` before C99");
+                    FAILED__CIParser(
+                      self,
+                      NEW(
+                        CIError,
+                        CI_ERROR_KIND_VARIABLE_DECLARATION_IN_INIT_CLAUSE_BEFORE_C99));
+
+                    return NULL;
                 }
 
                 push__Vec(init_clauses, init_clause);
@@ -3798,7 +4105,7 @@ parse_for_stmt__CIParser(CIParser *self, bool in_switch)
         }
     }
 
-    return NEW_VARIANT(CIDeclFunctionItem, stmt, NEW_VARIANT(CIStmt, for, NEW(CIStmtFor, body, init_clauses, expr1, exprs2)));
+    return NEW_VARIANT(CIDeclFunctionItem, stmt, NEW_VARIANT(CIStmt, for, previous_location__CIParser(self), NEW(CIStmtFor, body, init_clauses, expr1, exprs2)));
 }
 
 CIStmtIfBranch *
@@ -3810,7 +4117,10 @@ parse_if_branch__CIParser(CIParser *self, bool in_loop, bool in_switch)
     CIDeclFunctionBody *body = NULL;
 
     if (!cond) {
-        FAILED("expected if condition");
+        FAILED__CIParser(self,
+                         NEW(CIError, CI_ERROR_KIND_EXPECTED_IF_CONDITION));
+
+        return NULL;
     }
 
     expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
@@ -3901,10 +4211,12 @@ parse_if_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
             break;
     }
 
-    return NEW_VARIANT(
-      CIDeclFunctionItem,
-      stmt,
-      NEW_VARIANT(CIStmt, if, NEW(CIStmtIf, if_, else_ifs, else_)));
+    return NEW_VARIANT(CIDeclFunctionItem,
+                       stmt,
+                       NEW_VARIANT(CIStmt,
+                                   if,
+                                   previous_location__CIParser(self),
+                                   NEW(CIStmtIf, if_, else_ifs, else_)));
 }
 
 CIDeclFunctionItem *
@@ -3941,10 +4253,12 @@ parse_while_stmt__CIParser(CIParser *self, bool in_switch)
         }
     }
 
-    return NEW_VARIANT(
-      CIDeclFunctionItem,
-      stmt,
-      NEW_VARIANT(CIStmt, while, NEW(CIStmtWhile, cond, body)));
+    return NEW_VARIANT(CIDeclFunctionItem,
+                       stmt,
+                       NEW_VARIANT(CIStmt,
+                                   while,
+                                   previous_location__CIParser(self),
+                                   NEW(CIStmtWhile, cond, body)));
 }
 
 CIDeclFunctionItem *
@@ -4001,10 +4315,12 @@ parse_switch_stmt__CIParser(CIParser *self, bool in_loop)
         }
     }
 
-    return NEW_VARIANT(
-      CIDeclFunctionItem,
-      stmt,
-      NEW_VARIANT(CIStmt, switch, NEW(CIStmtSwitch, expr, body)));
+    return NEW_VARIANT(CIDeclFunctionItem,
+                       stmt,
+                       NEW_VARIANT(CIStmt,
+                                   switch,
+                                   previous_location__CIParser(self),
+                                   NEW(CIStmtSwitch, expr, body)));
 }
 
 CIDeclFunctionItem *
@@ -4015,7 +4331,10 @@ parse_block_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
 
     return NEW_VARIANT(CIDeclFunctionItem,
                        stmt,
-                       NEW_VARIANT(CIStmt, block, NEW(CIStmtBlock, body)));
+                       NEW_VARIANT(CIStmt,
+                                   block,
+                                   previous_location__CIParser(self),
+                                   NEW(CIStmtBlock, body)));
 }
 
 CIDeclFunctionItem *
@@ -4029,24 +4348,40 @@ parse_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
 
             if (in_loop || in_switch) {
                 return NEW_VARIANT(
-                  CIDeclFunctionItem, stmt, NEW_VARIANT(CIStmt, break));
+                  CIDeclFunctionItem,
+                  stmt,
+                  NEW_VARIANT(
+                    CIStmt, break, previous_location__CIParser(self)));
             } else {
-                FAILED("break is not expected outside of a loop or a switch");
+                FAILED__CIParser(
+                  self,
+                  NEW(CIError, CI_ERROR_KIND_BREAK_OUTSIDE_OF_LOOP_OR_SWITCH));
+
+                return NULL;
             }
         case CI_TOKEN_KIND_KEYWORD_CASE:
             if (in_switch) {
                 return parse_case__CIParser(self);
             } else {
-                FAILED("case is not expected outside of a switch");
+                FAILED__CIParser(
+                  self, NEW(CIError, CI_ERROR_KIND_CASE_OUTSIDE_OF_SWITCH));
+
+                return NULL;
             }
         case CI_TOKEN_KIND_KEYWORD_CONTINUE:
             expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
 
             if (in_loop) {
                 return NEW_VARIANT(
-                  CIDeclFunctionItem, stmt, NEW_VARIANT(CIStmt, continue));
+                  CIDeclFunctionItem,
+                  stmt,
+                  NEW_VARIANT(
+                    CIStmt, continue, previous_location__CIParser(self)));
             } else {
-                FAILED("continue is not expected outside of a loop");
+                FAILED__CIParser(
+                  self, NEW(CIError, CI_ERROR_KIND_CONTINUE_OUTSIDE_OF_LOOP));
+
+                return NULL;
             }
         case CI_TOKEN_KIND_KEYWORD_DEFAULT:
             expect__CIParser(self, CI_TOKEN_KIND_COLON, true);
@@ -4055,9 +4390,15 @@ parse_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
 
             if (in_switch) {
                 return NEW_VARIANT(
-                  CIDeclFunctionItem, stmt, NEW_VARIANT(CIStmt, default));
+                  CIDeclFunctionItem,
+                  stmt,
+                  NEW_VARIANT(
+                    CIStmt, default, previous_location__CIParser(self)));
             } else {
-                FAILED("default is not expected outside of a switch");
+                FAILED__CIParser(
+                  self, NEW(CIError, CI_ERROR_KIND_DEFAULT_OUTSIDE_OF_SWITCH));
+
+                return NULL;
             }
         case CI_TOKEN_KIND_KEYWORD_DO:
             return parse_do_while_stmt__CIParser(self, in_switch);
@@ -4074,16 +4415,23 @@ parse_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
 
             return NEW_VARIANT(CIDeclFunctionItem,
                                stmt,
-                               NEW_VARIANT(CIStmt, goto, label_identifier));
+                               NEW_VARIANT(CIStmt,
+                                           goto,
+                                           previous_location__CIParser(self),
+                                           label_identifier));
         }
         case CI_TOKEN_KIND_KEYWORD_IF:
             return parse_if_stmt__CIParser(self, in_loop, in_switch);
         case CI_TOKEN_KIND_KEYWORD_RETURN: {
             switch (self->current_token->kind) {
                 case CI_TOKEN_KIND_SEMICOLON:
-                    return NEW_VARIANT(CIDeclFunctionItem,
-                                       stmt,
-                                       NEW_VARIANT(CIStmt, return, NULL));
+                    return NEW_VARIANT(
+                      CIDeclFunctionItem,
+                      stmt,
+                      NEW_VARIANT(CIStmt,
+                                  return,
+                                  previous_location__CIParser(self),
+                                  NULL));
                 default: {
                     ENABLE_ALLOW_INITIALIZATION();
 
@@ -4094,12 +4442,19 @@ parse_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
                     if (expr) {
                         expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
 
-                        return NEW_VARIANT(CIDeclFunctionItem,
-                                           stmt,
-                                           NEW_VARIANT(CIStmt, return, expr));
+                        return NEW_VARIANT(
+                          CIDeclFunctionItem,
+                          stmt,
+                          NEW_VARIANT(CIStmt,
+                                      return,
+                                      previous_location__CIParser(self),
+                                      expr));
                     }
 
-                    FAILED("expected expression");
+                    FAILED__CIParser(
+                      self, NEW(CIError, CI_ERROR_KIND_EXPECTED_EXPRESSION));
+
+                    return NULL;
                 }
             }
         }
@@ -4255,6 +4610,7 @@ parse_function__CIParser(CIParser *self,
     CIDecl *res = NEW_VARIANT(
       CIDecl,
       function,
+      previous_location__CIParser(self),
       storage_class_flag,
       true,
       NEW(CIDeclFunction,
@@ -4284,9 +4640,17 @@ parse_function__CIParser(CIParser *self,
             break;
         case CI_TOKEN_KIND_LBRACE:
             if (HAS_TYPEDEF_STORAGE_CLASS_FLAG()) {
-                FAILED("not expected to have a body when typedef is passed");
+                FAILED__CIParser(
+                  self,
+                  NEW(CIError, CI_ERROR_KIND_UNEXPECTED_BODY_WITH_TYPEDEF));
+
+                return NULL;
             } else if (is__CIBuiltinFunction(GET_PTR_RC(String, name))) {
-                FAILED("cannot redefine a builtin function");
+                FAILED__CIParser(
+                  self,
+                  NEW(CIError, CI_ERROR_KIND_CANNOT_REDEFINE_BUILTIN_FUNCTION));
+
+                return NULL;
             }
 
             next_token__CIParser(self);
@@ -4311,7 +4675,10 @@ parse_function__CIParser(CIParser *self,
 
             break;
         default:
-            FAILED("expected `{`, `,` or `;`");
+            FAILED__CIParser(
+              self, NEW_VARIANT(CIError, expected_token, "`{`, `,` or `;`"));
+
+            return NULL;
     }
 
     return res;
@@ -4332,7 +4699,10 @@ parse_field_name_and_data_type__CIParser(CIParser *self,
             case CI_DATA_TYPE_KIND_UNION:
                 break;
             default:
-                FAILED("expected identifier");
+                FAILED__CIParser(
+                  self, NEW(CIError, CI_ERROR_KIND_EXPECTED_IDENTIFIER));
+
+                return;
         }
     }
 }
@@ -4345,18 +4715,25 @@ parse_field_bit__CIParser(CIParser *self, Uint8 *bit_ref)
             next_token__CIParser(self);
 
             CIExpr *bit_expr = parse_expr__CIParser(self);
-            CIResolverExpr bit_expr_resolver =
-              NEW(CIResolverExpr, self, current_scope, false);
+            CIResolverExpr bit_expr_resolver = NEW(CIResolverExpr,
+                                                   self,
+                                                   current_scope,
+                                                   self->file,
+                                                   self->count_error,
+                                                   false);
             CIExpr *resolved_bit_expr =
               run__CIResolverExpr(&bit_expr_resolver, bit_expr);
 
             // TODO: Check that the bit field value does not
             // overflow/underflow.
-            Uint8 bit =
-              to_literal_integer_value__CIResolverExpr(resolved_bit_expr);
+            Uint8 bit = to_literal_integer_value__CIResolverExpr(
+              &bit_expr_resolver, resolved_bit_expr);
 
             if (bit < 0) {
-                FAILED("bit field cannot be negative");
+                FAILED__CIParser(
+                  self, NEW(CIError, CI_ERROR_KIND_NEGATIVE_BIT_FIELD));
+
+                return;
             }
 
             *bit_ref = bit;
@@ -4389,7 +4766,9 @@ add_member_to_fields__CIParser(CIParser *self,
                   NEW(CIDeclStructFieldMember, data_type, bit));
 
     if (!add__CIDeclStructFields(fields, current_field, *prev_field_ref)) {
-        FAILED("duplicate field");
+        FAILED__CIParser(self, NEW(CIError, CI_ERROR_KIND_DUPLICATE_FIELD));
+
+        return;
     }
 
     *prev_field_ref = current_field;
@@ -4450,7 +4829,9 @@ add_struct_or_union_to_fields__CIParser(CIParser *self,
     }
 
     if (!add__CIDeclStructFields(fields, current_field, *prev_field_ref)) {
-        FAILED("duplicated field");
+        FAILED__CIParser(self, NEW(CIError, CI_ERROR_KIND_DUPLICATE_FIELD));
+
+        return;
     }
 
     *prev_field_ref = current_field;
@@ -4579,7 +4960,10 @@ parse_fields__CIParser(CIParser *self)
 
                 break;
             default:
-                FAILED("expected `,` or `;`");
+                FAILED__CIParser(
+                  self, NEW_VARIANT(CIError, expected_token, "`,` or `;`"));
+
+                return NULL;
         }
     }
     }
@@ -4613,6 +4997,7 @@ parse_struct__CIParser(CIParser *self,
 
     return NEW_VARIANT(CIDecl,
                        struct,
+                       previous_location__CIParser(self),
                        storage_class_flag,
                        fields ? false : true,
                        NEW(CIDeclStruct, name, generic_params, fields));
@@ -4625,8 +5010,12 @@ parse_typedef__CIParser(CIParser *self,
 {
     if ((storage_class_flag & ~CI_STORAGE_CLASS_TYPEDEF) !=
         CI_STORAGE_CLASS_NONE) {
-        FAILED(
-          "cannot combine other storage class specifier(s) with `typedef`");
+        FAILED__CIParser(
+          self,
+          NEW(CIError,
+              CI_ERROR_KIND_CANNOT_COMBINE_STORAGE_CLASS_WITH_TYPEDEF));
+
+        return NULL;
     }
 
     String *decl_name = get_name__CIDecl(aliased_decl);
@@ -4638,6 +5027,7 @@ parse_typedef__CIParser(CIParser *self,
         CIDecl *_res =                                             \
           NEW_VARIANT(CIDecl,                                      \
                       typedef,                                     \
+                      previous_location__CIParser(self),           \
                       NEW(CIDeclTypedef,                           \
                           _decl_name_rc,                           \
                           generic_params && need_ref               \
@@ -4660,6 +5050,7 @@ parse_typedef__CIParser(CIParser *self,
               NEW_VARIANT(
                 CIDataType,
                 function,
+                previous_location__CIParser(self),
                 NEW(
                   CIDataTypeFunction,
                   aliased_decl->function.name,
@@ -4692,6 +5083,7 @@ parse_union__CIParser(CIParser *self,
 
     return NEW_VARIANT(CIDecl,
                        union,
+                       previous_location__CIParser(self),
                        storage_class_flag,
                        fields ? false : true,
                        NEW(CIDeclUnion, name, generic_params, fields));
@@ -4736,7 +5128,11 @@ check_for_initialization_expr__CIParser(CIParser *self,
     if (is_only_initialization_compatible_data_type__CIParser(self,
                                                               data_type) &&
         !is_initialization_expr__CIParser(self, expr)) {
-        FAILED("need initialization expression for array data type");
+        FAILED__CIParser(
+          self,
+          NEW(CIError, CI_ERROR_KIND_EXPECTED_ARRAY_INITIALIZATION_EXPRESSION));
+
+        return;
     }
 }
 
@@ -4754,7 +5150,10 @@ parse_variable__CIParser(CIParser *self,
     ASSERT(name);
 
     if (in_label) {
-        FAILED("Don't accept variable declaration in label");
+        FAILED__CIParser(
+          self, NEW(CIError, CI_ERROR_KIND_VARIABLE_DECLARATION_IN_LABEL));
+
+        return NULL;
     }
 
     CIDecl *res = NULL;
@@ -4766,6 +5165,7 @@ parse_variable__CIParser(CIParser *self,
             res =
               NEW_VARIANT(CIDecl,
                           variable,
+                          previous_location__CIParser(self),
                           storage_class_flag,
                           false,
                           NEW(CIDeclVariable, data_type, name, NULL, is_local));
@@ -4773,7 +5173,12 @@ parse_variable__CIParser(CIParser *self,
             break;
         case CI_TOKEN_KIND_EQ: {
             if (HAS_TYPEDEF_STORAGE_CLASS_FLAG()) {
-                FAILED("expression is not expected with typedef storage class");
+                FAILED__CIParser(
+                  self,
+                  NEW(CIError,
+                      CI_ERROR_KIND_UNEXPECTED_EXPRESSION_WITH_TYPEDEF));
+
+                return NULL;
             }
 
             next_token__CIParser(self);
@@ -4789,6 +5194,7 @@ parse_variable__CIParser(CIParser *self,
             res =
               NEW_VARIANT(CIDecl,
                           variable,
+                          previous_location__CIParser(self),
                           storage_class_flag,
                           false,
                           NEW(CIDeclVariable, data_type, name, expr, is_local));
@@ -4805,7 +5211,10 @@ parse_variable__CIParser(CIParser *self,
 
                     break;
                 default:
-                    FAILED("expected `,` or `;`");
+                    FAILED__CIParser(
+                      self, NEW_VARIANT(CIError, expected_token, "`,` or `;`"));
+
+                    return NULL;
             }
 
             break;
@@ -4814,6 +5223,7 @@ parse_variable__CIParser(CIParser *self,
             res =
               NEW_VARIANT(CIDecl,
                           variable,
+                          previous_location__CIParser(self),
                           storage_class_flag,
                           false,
                           NEW(CIDeclVariable, data_type, name, NULL, is_local));
@@ -4824,7 +5234,10 @@ parse_variable__CIParser(CIParser *self,
 
             break;
         default:
-            FAILED("expected `,`, `=` or `;`");
+            FAILED__CIParser(
+              self, NEW_VARIANT(CIError, expected_token, "`,`, `=` or `;`"));
+
+            return NULL;
     }
 
     if (HAS_TYPEDEF_STORAGE_CLASS_FLAG()) {
@@ -4858,8 +5271,10 @@ parse_label__CIParser(CIParser *self)
                 if (peeked_token && peeked_token->kind == CI_TOKEN_KIND_COLON) {
                     jump__CIParser(self, 2);
 
-                    return NEW_VARIANT(
-                      CIDecl, label, NEW(CIDeclLabel, identifier));
+                    return NEW_VARIANT(CIDecl,
+                                       label,
+                                       previous_location__CIParser(self),
+                                       NEW(CIDeclLabel, identifier));
                 }
 
                 return NULL;
@@ -4926,8 +5341,12 @@ loop: {
         default:
         parse_variable:
             if (name.generic_params && !HAS_TYPEDEF_STORAGE_CLASS_FLAG()) {
-                FAILED(
-                  "not expected to have generic params in variable context");
+                FAILED__CIParser(
+                  self,
+                  NEW(CIError,
+                      CI_ERROR_KIND_GENERIC_PARAMS_IN_VARIABLE_CONTEXT));
+
+                return NULL;
             }
 
             res = parse_variable__CIParser(self,
@@ -4989,7 +5408,12 @@ parse_attribute__CIParser(CIParser *self)
 
                             break;
                         default:
-                            FAILED("expected string value");
+                            FAILED__CIParser(
+                              self,
+                              NEW(CIError,
+                                  CI_ERROR_KIND_EXPECTED_STRING_VALUE));
+
+                            return NULL;
                     }
 
                     expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
@@ -5028,7 +5452,10 @@ parse_attribute__CIParser(CIParser *self)
             return res;
         }
         default:
-            FAILED("expected attribute identifier");
+            FAILED__CIParser(
+              self, NEW(CIError, CI_ERROR_KIND_EXPECTED_ATTRIBUTE_IDENTIFIER));
+
+            return NULL;
     }
 
     return NULL;
@@ -5101,7 +5528,10 @@ parse_data_type_qualifiers__CIParser(CIParser *self,
         next_token__CIParser(self);
 
         if (old_data_type_qualifier_flag == *data_type_qualifier_flag) {
-            FAILED("warning: duplicate storage class specifier");
+            WARNING__CIParser(
+              self,
+              NEW(CIWarning,
+                  CI_WARNING_KIND_DUPLICATE_STORAGE_CLASS_SPECIFIER));
         }
 
         old_data_type_qualifier_flag = *data_type_qualifier_flag;
@@ -5153,7 +5583,10 @@ parse_storage_class_specifiers__CIParser(CIParser *self,
         next_token__CIParser(self);
 
         if (old_storage_class_flag == *storage_class_flag) {
-            FAILED("warning: duplicate storage class specifier");
+            WARNING__CIParser(
+              self,
+              NEW(CIWarning,
+                  CI_WARNING_KIND_DUPLICATE_STORAGE_CLASS_SPECIFIER));
         }
 
         old_storage_class_flag = *storage_class_flag;

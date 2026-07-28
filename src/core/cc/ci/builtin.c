@@ -99,36 +99,53 @@ load__CIBuiltinFunction()
       NEW_VARIANT(
         CIDataType,
         ptr,
-        NEW(CIDataTypePtr, NULL, NEW(CIDataType, CI_DATA_TYPE_KIND_VOID))),
+        SYNTHETIC_LOCATION__CI(),
+        NEW(CIDataTypePtr,
+            NULL,
+            NEW(CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_VOID))),
       2,
       NEW_VARIANT(
         CIDataType,
         ptr,
-        NEW(CIDataTypePtr, NULL, NEW(CIDataType, CI_DATA_TYPE_KIND_VOID))),
-      NEW(CIDataType, CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT));
+        SYNTHETIC_LOCATION__CI(),
+        NEW(CIDataTypePtr,
+            NULL,
+            NEW(CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_VOID))),
+      NEW(CIDataType,
+          SYNTHETIC_LOCATION__CI(),
+          CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT));
     builtins[CI_BUILTIN_FUNCTION_VA_START] = CI_BUILTIN_FUNCTION(
       CI_BUILTIN_FUNCTION_VA_START,
-      NEW(CIDataType, CI_DATA_TYPE_KIND_VOID),
+      NEW(CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_VOID),
       2,
-      NEW_VARIANT(CIDataType, builtin, CI_BUILTIN_TYPE_VA_LIST),
-      NEW(CIDataType, CI_DATA_TYPE_KIND_ANY));
+      NEW_VARIANT(
+        CIDataType, builtin, SYNTHETIC_LOCATION__CI(), CI_BUILTIN_TYPE_VA_LIST),
+      NEW(CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_ANY));
     builtins[CI_BUILTIN_FUNCTION_VA_END] = CI_BUILTIN_FUNCTION(
       CI_BUILTIN_FUNCTION_VA_END,
-      NEW(CIDataType, CI_DATA_TYPE_KIND_VOID),
+      NEW(CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_VOID),
       1,
-      NEW_VARIANT(CIDataType, builtin, CI_BUILTIN_TYPE_VA_LIST));
+      NEW_VARIANT(CIDataType,
+                  builtin,
+                  SYNTHETIC_LOCATION__CI(),
+                  CI_BUILTIN_TYPE_VA_LIST));
     builtins[CI_BUILTIN_FUNCTION_VA_ARG] = CI_BUILTIN_FUNCTION(
       CI_BUILTIN_FUNCTION_VA_ARG,
-      NEW(CIDataType, CI_DATA_TYPE_KIND_TYPE_INFO),
+      NEW(CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_TYPE_INFO),
       2,
-      NEW_VARIANT(CIDataType, builtin, CI_BUILTIN_TYPE_VA_LIST),
-      NEW(CIDataType, CI_DATA_TYPE_KIND_TYPE_INFO));
+      NEW_VARIANT(
+        CIDataType, builtin, SYNTHETIC_LOCATION__CI(), CI_BUILTIN_TYPE_VA_LIST),
+      NEW(CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_TYPE_INFO));
     builtins[CI_BUILTIN_FUNCTION_VA_COPY] = CI_BUILTIN_FUNCTION(
       CI_BUILTIN_FUNCTION_VA_COPY,
-      NEW(CIDataType, CI_DATA_TYPE_KIND_VOID),
+      NEW(CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_VOID),
       2,
-      NEW_VARIANT(CIDataType, builtin, CI_BUILTIN_TYPE_VA_LIST),
-      NEW_VARIANT(CIDataType, builtin, CI_BUILTIN_TYPE_VA_LIST));
+      NEW_VARIANT(
+        CIDataType, builtin, SYNTHETIC_LOCATION__CI(), CI_BUILTIN_TYPE_VA_LIST),
+      NEW_VARIANT(CIDataType,
+                  builtin,
+                  SYNTHETIC_LOCATION__CI(),
+                  CI_BUILTIN_TYPE_VA_LIST));
 
     return builtins;
 }

@@ -28,9 +28,18 @@
 #include <base/dir_separator.h>
 #include <base/macros.h>
 
+#include <core/cc/ci/diagnostic/emit.h>
 #include <core/cc/ci/file.h>
 #include <core/cc/ci/resolver.h>
 #include <core/cc/ci/result.h>
+
+// Emit a located error on `node` and count it, without stopping the pass: the
+// caller carries on so that a single run reports more than one error.
+#define FAILED__CIResultFile(self, node, error_kind) \
+    EMIT_ERROR__CI(&(self)->file_input,              \
+                   &(node)->location,                \
+                   NEW(CIError, error_kind),         \
+                   &(self)->file_analysis->count_error)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -290,6 +299,7 @@ set_file_analysis__CIResultFile(CIResultFile *self,
     self->file_analysis = file_analysis;
     self->scope_base = self->file_analysis->scope_base;
     self->scanner.base.count_error = &self->file_analysis->count_error;
+    self->scanner.count_warning = &self->file_analysis->count_warning;
 }
 
 void
@@ -302,6 +312,7 @@ destroy_file_analysis__CIResultFile(CIResultFile *self)
     self->file_analysis = NULL;
     self->scope_base = NULL;
     self->scanner.base.count_error = NULL;
+    self->scanner.count_warning = NULL;
 
     reset__CIResultEntity(&self->entity);
 }
@@ -624,7 +635,8 @@ add_decl_to_scope__CIResultFile(const CIResultFile *self,
             if ((res = (CIDecl *)add_enum__CIResultFile(self, decl))) {
                 // See `add_enum__CIResultFile` prototype.
                 if (decl != res) {
-                    FAILED("enum is already defined");
+                    FAILED__CIResultFile(
+                      self, decl, CI_ERROR_KIND_ENUM_IS_ALREADY_DEFINED);
                 }
 
                 goto free;
@@ -635,7 +647,10 @@ add_decl_to_scope__CIResultFile(const CIResultFile *self,
             if ((res = (CIDecl *)add_enum_variant__CIResultFile(self, decl))) {
                 // See `add_enum_variant__CIResultFile` prototype.
                 if (decl != res) {
-                    FAILED("enum variant is already defined");
+                    FAILED__CIResultFile(
+                      self,
+                      decl,
+                      CI_ERROR_KIND_ENUM_VARIANT_IS_ALREADY_DEFINED);
                 }
 
                 goto free;
@@ -647,7 +662,8 @@ add_decl_to_scope__CIResultFile(const CIResultFile *self,
             if ((res = (CIDecl *)add_function__CIResultFile(self, decl))) {
                 // See `add_function__CIResultFile` prototype.
                 if (decl != res) {
-                    FAILED("function is already defined");
+                    FAILED__CIResultFile(
+                      self, decl, CI_ERROR_KIND_FUNCTION_IS_ALREADY_DEFINED);
                 }
 
                 goto free;
@@ -659,7 +675,8 @@ add_decl_to_scope__CIResultFile(const CIResultFile *self,
                    self, scope, ref__CIDecl(decl)))) {
                 // See `add_label__CIResultFile` prototype.
                 if (decl != res) {
-                    FAILED("label is already defined");
+                    FAILED__CIResultFile(
+                      self, decl, CI_ERROR_KIND_LABEL_IS_ALREADY_DEFINED);
                 }
 
                 goto free;
@@ -671,7 +688,8 @@ add_decl_to_scope__CIResultFile(const CIResultFile *self,
             if ((res = (CIDecl *)add_struct__CIResultFile(self, decl))) {
                 // See `add_struct__CIResultFile` prototype.
                 if (decl != res) {
-                    FAILED("struct is already defined");
+                    FAILED__CIResultFile(
+                      self, decl, CI_ERROR_KIND_STRUCT_IS_ALREADY_DEFINED);
                 }
 
                 goto free;
@@ -683,7 +701,8 @@ add_decl_to_scope__CIResultFile(const CIResultFile *self,
             if ((res = (CIDecl *)add_typedef__CIResultFile(self, decl))) {
                 // See `add_typedef__CIResultFile` prototype.
                 if (decl != res) {
-                    FAILED("typedef is already defined");
+                    FAILED__CIResultFile(
+                      self, decl, CI_ERROR_KIND_TYPEDEF_IS_ALREADY_DEFINED);
                 }
 
                 goto free;
@@ -695,7 +714,8 @@ add_decl_to_scope__CIResultFile(const CIResultFile *self,
             if ((res = (CIDecl *)add_union__CIResultFile(self, decl))) {
                 // See `add_union__CIResultFile` prototype.
                 if (decl != res) {
-                    FAILED("union is already defined");
+                    FAILED__CIResultFile(
+                      self, decl, CI_ERROR_KIND_UNION_IS_ALREADY_DEFINED);
                 }
 
                 goto free;
@@ -707,7 +727,8 @@ add_decl_to_scope__CIResultFile(const CIResultFile *self,
                    self, scope, in_function_body ? ref__CIDecl(decl) : decl))) {
                 // See `add_variable__CIResultFile` prototype.
                 if (decl != res) {
-                    FAILED("variable is already defined");
+                    FAILED__CIResultFile(
+                      self, decl, CI_ERROR_KIND_VARIABLE_IS_ALREADY_DEFINED);
                 }
 
                 goto free;
@@ -1026,14 +1047,15 @@ search_decl_in_generic_context__CIResultFile(
     CIDecl *base_decl = search_decl(self, name);
 
     if (!base_decl) {
-        FAILED("declaration is not found");
+        FATAL_ERROR__CI(NEW(CIError, CI_ERROR_KIND_DECLARATION_IS_NOT_FOUND));
     }
 
     if (gen_decl_generic_params &&
         ((called_generic_params && decl_generic_params) ||
          !has_generic__CIGenericParams(gen_decl_generic_params))) {
         CIGenericParams *substituted_generic_params =
-          substitute_generic_params__CIParser(gen_decl_generic_params,
+          substitute_generic_params__CIParser(self,
+                                              gen_decl_generic_params,
                                               decl_generic_params,
                                               called_generic_params);
 
@@ -1276,7 +1298,7 @@ include_content__CIResultFile(const CIResultFile *self, CIResultFile *other)
                   : true) &&
             add_define__CIResultFile(self,
                                      ref__CIResultDefine(current_define))) {
-            FAILED("duplicate #define name");
+            FATAL_ERROR__CI(NEW(CIError, CI_ERROR_KIND_DUPLICATE_DEFINE_NAME));
         }
     }
 
@@ -1453,7 +1475,7 @@ search_enum_from_id__CIResult(const CIResult *self, const CIEnumID *enum_id)
     CIResultFile *result_file = NEW(CIResultFile, file_input, kind, standard); \
                                                                                \
     if (insert__OrderedHashMap(hm, filename_result->buffer, result_file)) {    \
-        FAILED("duplicate input "s);                                           \
+        FATAL_ERROR__CI(NEW(CIError, CI_ERROR_KIND_DUPLICATE_INPUT));          \
     }                                                                          \
                                                                                \
     return result_file;
@@ -1475,7 +1497,7 @@ add_header__CIResult(const CIResult *self,
 
     if (insert__OrderedHashMap(
           self->headers, filename_result->buffer, result_file)) {
-        FAILED("duplicate input header");
+        FATAL_ERROR__CI(NEW(CIError, CI_ERROR_KIND_DUPLICATE_INPUT_HEADER));
     }
 
     return result_file;
@@ -1487,7 +1509,7 @@ add_bin__CIResult(const CIResult *self, char *name)
     CIResultBin *bin = NEW(CIResultBin, name);
 
     if (insert__OrderedHashMap(self->bins, name, bin)) {
-        FAILED("duplicate input binary");
+        FATAL_ERROR__CI(NEW(CIError, CI_ERROR_KIND_DUPLICATE_INPUT_BINARY));
     }
 
     return bin;
@@ -1500,7 +1522,7 @@ add_lib__CIResult(const CIResult *self, char *name)
       NEW(CIResultLib, name, self->libs->len, self, self->config);
 
     if (insert__OrderedHashMap(self->libs, name, lib)) {
-        FAILED("duplicate input library");
+        FATAL_ERROR__CI(NEW(CIError, CI_ERROR_KIND_DUPLICATE_INPUT_LIBRARY));
     }
 
     return lib;
@@ -1554,7 +1576,7 @@ scan_file__CIResult(const CIResult *self,
     } else {
         FREE(String, filename_result);
 
-        FAILED("unknown extension, expected `.ci`, `.c`, `.hci` or `.h`");
+        FATAL_ERROR__CI(NEW(CIError, CI_ERROR_KIND_UNKNOWN_FILE_EXTENSION));
 
         return NULL;
     }
@@ -1602,6 +1624,15 @@ run_file__CIResult(const CIResult *self,
                               &result_file->file_analysis->count_warning);
 
     run__CIResolver(&resolver, NULL);
+
+    // Stage boundary: the resolver reports as many errors as it can, but the
+    // parser cannot run on tokens that failed to resolve.
+    if (result_file->file_analysis->count_error > 0) {
+        FREE(CIResolver, &resolver);
+
+        exit(1);
+    }
+
     run__CIParser(&result_file->file_analysis->parser,
                   resolver.resolved_tokens);
 
@@ -1711,6 +1742,29 @@ build__CIResult(CIResult *self)
             add_and_run_bin__CIResult(self, get__Vec(self->config->bins, i));
         }
     }
+}
+
+Usize
+count_error__CIResult(const CIResult *self)
+{
+    Usize res = 0;
+    OrderedHashMapIter iter_headers = NEW(OrderedHashMapIter, self->headers);
+    OrderedHashMapIter iter_sources = NEW(OrderedHashMapIter, self->sources);
+    CIResultFile *current = NULL;
+
+    while ((current = next__OrderedHashMapIter(&iter_headers))) {
+        if (current->file_analysis) {
+            res += current->file_analysis->count_error;
+        }
+    }
+
+    while ((current = next__OrderedHashMapIter(&iter_sources))) {
+        if (current->file_analysis) {
+            res += current->file_analysis->count_error;
+        }
+    }
+
+    return res;
 }
 
 void

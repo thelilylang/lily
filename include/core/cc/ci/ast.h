@@ -34,8 +34,15 @@
 #include <base/vec.h>
 
 #include <core/cc/ci/features.h>
+#include <core/shared/location.h>
 
 #define MAX_CI_EXPR_PRECEDENCE 100
+
+// Location of an AST node the transpiler synthesizes itself (builtin
+// signatures, cloned fields, ...) rather than parsing from a user source file.
+// Such a node is never the target of a diagnostic, so it has no real location
+// to carry.
+#define SYNTHETIC_LOCATION__CI() default__Location("<builtin>")
 
 typedef struct CIResultFile CIResultFile;
 typedef struct CIToken CIToken;
@@ -1545,6 +1552,10 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeQualifier, int data_type_qualifier_flag);
 typedef struct CIDataType
 {
     enum CIDataTypeKind kind;
+    // Location of the data type in the source file it was parsed from. Used by
+    // the stages that report on the AST (resolver, typecheck, infer, ...).
+    Location location;
+
     int ctx;
     int qualifier;
     Usize ref_count;
@@ -1566,19 +1577,31 @@ typedef struct CIDataType
  *
  * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_ARRAY).
  */
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, array, CIDataTypeArray array);
+VARIANT_CONSTRUCTOR(CIDataType *,
+                    CIDataType,
+                    array,
+                    Location location,
+                    CIDataTypeArray array);
 
 /**
  *
  * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_BUILTIN).
  */
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, builtin, Usize builtin);
+VARIANT_CONSTRUCTOR(CIDataType *,
+                    CIDataType,
+                    builtin,
+                    Location location,
+                    Usize builtin);
 
 /**
  *
  * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_ENUM).
  */
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, enum, CIDataTypeEnum enum_);
+VARIANT_CONSTRUCTOR(CIDataType *,
+                    CIDataType,
+                    enum,
+                    Location location,
+                    CIDataTypeEnum enum_);
 
 /**
  *
@@ -1587,6 +1610,7 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, enum, CIDataTypeEnum enum_);
 VARIANT_CONSTRUCTOR(CIDataType *,
                     CIDataType,
                     function,
+                    Location location,
                     CIDataTypeFunction function);
 
 /**
@@ -1594,19 +1618,31 @@ VARIANT_CONSTRUCTOR(CIDataType *,
  * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_GENERIC).
  * @param generic Rc<String*>* (&)
  */
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, generic, Rc *generic);
+VARIANT_CONSTRUCTOR(CIDataType *,
+                    CIDataType,
+                    generic,
+                    Location location,
+                    Rc *generic);
 
 /**
  *
  * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_PTR).
  */
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, ptr, CIDataTypePtr ptr);
+VARIANT_CONSTRUCTOR(CIDataType *,
+                    CIDataType,
+                    ptr,
+                    Location location,
+                    CIDataTypePtr ptr);
 
 /**
  *
  * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_STRUCT).
  */
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, struct, CIDataTypeStruct struct_);
+VARIANT_CONSTRUCTOR(CIDataType *,
+                    CIDataType,
+                    struct,
+                    Location location,
+                    CIDataTypeStruct struct_);
 
 /**
  *
@@ -1615,19 +1651,27 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, struct, CIDataTypeStruct struct_);
 VARIANT_CONSTRUCTOR(CIDataType *,
                     CIDataType,
                     typedef,
+                    Location location,
                     CIDataTypeTypedef typedef_);
 
 /**
  *
  * @brief Construct CIDataType type (CI_DATA_TYPE_KIND_UNION).
  */
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, union, CIDataTypeUnion union_);
+VARIANT_CONSTRUCTOR(CIDataType *,
+                    CIDataType,
+                    union,
+                    Location location,
+                    CIDataTypeUnion union_);
 
 /**
  *
  * @brief Construct CIDataType type.
  */
-CONSTRUCTOR(CIDataType *, CIDataType, enum CIDataTypeKind kind);
+CONSTRUCTOR(CIDataType *,
+            CIDataType,
+            Location location,
+            enum CIDataTypeKind kind);
 
 /**
  *
@@ -2899,6 +2943,10 @@ DESTRUCTOR(CIDeclVariable, const CIDeclVariable *self);
 typedef struct CIDecl
 {
     enum CIDeclKind kind;
+    // Location of the declaration in the source file it was parsed from. Used
+    // by the stages that report on the AST (resolver, typecheck, infer, ...).
+    Location location;
+
     int storage_class_flag;
     bool is_prototype;
     Usize ref_count;
@@ -2926,6 +2974,7 @@ typedef struct CIDecl
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     enum,
+                    Location location,
                     int storage_class_flag,
                     bool is_prototype,
                     CIDeclEnum enum_);
@@ -2937,6 +2986,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     enum_variant,
+                    Location location,
                     int storage_class_flag,
                     CIDeclEnumVariant *enum_variant);
 
@@ -2947,6 +2997,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     function,
+                    Location location,
                     int storage_class_flag,
                     bool is_prototype,
                     CIDeclFunction function);
@@ -2959,6 +3010,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     function_gen,
+                    Location location,
                     CIDecl *function_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
@@ -2968,7 +3020,11 @@ VARIANT_CONSTRUCTOR(CIDecl *,
  *
  * @brief Construct CIDecl type (CI_DECL_KIND_LABEL).
  */
-VARIANT_CONSTRUCTOR(CIDecl *, CIDecl, label, CIDeclLabel label);
+VARIANT_CONSTRUCTOR(CIDecl *,
+                    CIDecl,
+                    label,
+                    Location location,
+                    CIDeclLabel label);
 
 /**
  *
@@ -2977,6 +3033,7 @@ VARIANT_CONSTRUCTOR(CIDecl *, CIDecl, label, CIDeclLabel label);
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     struct,
+                    Location location,
                     int storage_class_flag,
                     bool is_prototype,
                     CIDeclStruct struct_);
@@ -2989,6 +3046,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     struct_gen,
+                    Location location,
                     CIDecl *struct_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
@@ -2998,7 +3056,11 @@ VARIANT_CONSTRUCTOR(CIDecl *,
  *
  * @brief Construct CIDecl type (CI_DECL_KIND_TYPEDEF).
  */
-VARIANT_CONSTRUCTOR(CIDecl *, CIDecl, typedef, CIDeclTypedef typedef_);
+VARIANT_CONSTRUCTOR(CIDecl *,
+                    CIDecl,
+                    typedef,
+                    Location location,
+                    CIDeclTypedef typedef_);
 
 /**
  *
@@ -3007,6 +3069,7 @@ VARIANT_CONSTRUCTOR(CIDecl *, CIDecl, typedef, CIDeclTypedef typedef_);
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     typedef_gen,
+                    Location location,
                     CIDecl *typedef_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
@@ -3019,6 +3082,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     union,
+                    Location location,
                     int storage_class_flag,
                     bool is_prototype,
                     CIDeclUnion union_);
@@ -3031,6 +3095,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     union_gen,
+                    Location location,
                     CIDecl *union_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
@@ -3043,6 +3108,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     variable,
+                    Location location,
                     int storage_class_flag,
                     bool is_prototype,
                     CIDeclVariable variable);
@@ -3966,6 +4032,9 @@ IMPL_FOR_DEBUG(to_string, CIExprKind, enum CIExprKind self);
 struct CIExpr
 {
     enum CIExprKind kind;
+    // Location of the expression in the source file it was parsed from. Used
+    // by the stages that report on the AST (resolver, typecheck, infer, ...).
+    Location location;
     Usize ref_count;
     union
     {
@@ -3990,13 +4059,17 @@ struct CIExpr
  *
  * @brief Construct CIExpr type.
  */
-CONSTRUCTOR(CIExpr *, CIExpr, enum CIExprKind kind);
+CONSTRUCTOR(CIExpr *, CIExpr, Location location, enum CIExprKind kind);
 
 /**
  *
  * @brief Construct CIExpr type (CI_EXPR_KIND_ALIGNOF).
  */
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, alignof, CIExpr *alignof_);
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    alignof,
+                    Location location,
+                    CIExpr *alignof_);
 
 /**
  *
@@ -4005,25 +4078,34 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, alignof, CIExpr *alignof_);
 VARIANT_CONSTRUCTOR(CIExpr *,
                     CIExpr,
                     array_access,
+                    Location location,
                     CIExprArrayAccess array_access);
 
 /**
  *
  * @brief Construct CIExpr type (CI_EXPR_KIND_BINARY).
  */
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, binary, CIExprBinary binary);
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    binary,
+                    Location location,
+                    CIExprBinary binary);
 
 /**
  *
  * @brief Construct CIExpr type (CI_EXPR_KIND_CAST).
  */
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, cast, CIExprCast cast);
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, cast, Location location, CIExprCast cast);
 
 /**
  *
  * @brief Construct CIExpr type (CI_EXPR_KIND_DATA_TYPE).
  */
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, data_type, CIDataType *data_type);
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    data_type,
+                    Location location,
+                    CIDataType *data_type);
 
 /**
  *
@@ -4032,6 +4114,7 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, data_type, CIDataType *data_type);
 VARIANT_CONSTRUCTOR(CIExpr *,
                     CIExpr,
                     function_call,
+                    Location location,
                     CIExprFunctionCall function_call);
 
 /**
@@ -4041,19 +4124,28 @@ VARIANT_CONSTRUCTOR(CIExpr *,
 VARIANT_CONSTRUCTOR(CIExpr *,
                     CIExpr,
                     function_call_builtin,
+                    Location location,
                     CIExprFunctionCallBuiltin function_call_builtin);
 
 /**
  *
  * @brief Construct CIExpr type (CI_EXPR_KIND_GROUPING).
  */
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, grouping, CIExpr *grouping);
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    grouping,
+                    Location location,
+                    CIExpr *grouping);
 
 /**
  *
  * @brief Construct CIExpr type (CI_EXPR_KIND_IDENTIFIER).
  */
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, identifier, CIExprIdentifier identifier);
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    identifier,
+                    Location location,
+                    CIExprIdentifier identifier);
 
 /**
  *
@@ -4062,31 +4154,48 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, identifier, CIExprIdentifier identifier);
 VARIANT_CONSTRUCTOR(CIExpr *,
                     CIExpr,
                     initializer,
+                    Location location,
                     CIExprInitializer initializer);
 
 /**
  *
  * @brief Construct CIExpr type (CI_EXPR_KIND_LITERAL).
  */
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, literal, CIExprLiteral literal);
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    literal,
+                    Location location,
+                    CIExprLiteral literal);
 
 /**
  *
  * @brief Construct CIExpr type (CI_EXPR_KIND_SIZEOF).
  */
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, sizeof, CIExpr *sizeof_);
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    sizeof,
+                    Location location,
+                    CIExpr *sizeof_);
 
 /**
  *
  * @brief Construct CIExpr type (CI_EXPR_KIND_TERNARY).
  */
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, ternary, CIExprTernary ternary);
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    ternary,
+                    Location location,
+                    CIExprTernary ternary);
 
 /**
  *
  * @brief Construct CIExpr type (CI_EXPR_KIND_UNARY).
  */
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, unary, CIExprUnary unary);
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    unary,
+                    Location location,
+                    CIExprUnary unary);
 
 /**
  *
@@ -4425,6 +4534,10 @@ DESTRUCTOR(CIStmtWhile, const CIStmtWhile *self);
 typedef struct CIStmt
 {
     enum CIStmtKind kind;
+    // Location of the statement in the source file it was parsed from. Used by
+    // the stages that report on the AST (resolver, typecheck, infer, ...).
+    Location location;
+
     union
     {
         CIStmtBlock block;
@@ -4443,63 +4556,82 @@ typedef struct CIStmt
  *
  * @brief Construct CIStmt type (CI_STMT_KIND_BLOCK).
  */
-inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, block, CIStmtBlock block)
+inline VARIANT_CONSTRUCTOR(CIStmt,
+                           CIStmt,
+                           block,
+                           Location location,
+                           CIStmtBlock block)
 {
-    return (CIStmt){ .kind = CI_STMT_KIND_BLOCK, .block = block };
+    return (CIStmt){ .location = location,
+                     .kind = CI_STMT_KIND_BLOCK,
+                     .block = block };
 }
 
 /**
  *
  * @brief Construct CIStmt type (CI_STMT_KIND_BREAK).
  */
-inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, break)
+inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, break, Location location)
 {
-    return (CIStmt){ .kind = CI_STMT_KIND_BREAK };
+    return (CIStmt){ .location = location, .kind = CI_STMT_KIND_BREAK };
 }
 
 /**
  *
  * @brief Construct CIStmt type (CI_STMT_KIND_CASE).
  */
-inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, case, CIStmtSwitchCase case_)
+inline VARIANT_CONSTRUCTOR(CIStmt,
+                           CIStmt,
+                           case,
+                           Location location,
+                           CIStmtSwitchCase case_)
 {
-    return (CIStmt){ .kind = CI_STMT_KIND_CASE, .case_ = case_ };
+    return (CIStmt){ .location = location,
+                     .kind = CI_STMT_KIND_CASE,
+                     .case_ = case_ };
 }
 
 /**
  *
  * @brief Construct CIStmt type (CI_STMT_KIND_DEFAULT).
  */
-inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, default)
+inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, default, Location location)
 {
-    return (CIStmt){ .kind = CI_STMT_KIND_DEFAULT };
+    return (CIStmt){ .location = location, .kind = CI_STMT_KIND_DEFAULT };
 }
 
 /**
  *
  * @brief Construct CIStmt type (CI_STMT_KIND_CONTINUE).
  */
-inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, continue)
+inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, continue, Location location)
 {
-    return (CIStmt){ .kind = CI_STMT_KIND_CONTINUE };
+    return (CIStmt){ .location = location, .kind = CI_STMT_KIND_CONTINUE };
 }
 
 /**
  *
  * @brief Construct CIStmt type (CI_STMT_KIND_DO_WHILE).
  */
-inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, do_while, CIStmtDoWhile do_while)
+inline VARIANT_CONSTRUCTOR(CIStmt,
+                           CIStmt,
+                           do_while,
+                           Location location,
+                           CIStmtDoWhile do_while)
 {
-    return (CIStmt){ .kind = CI_STMT_KIND_DO_WHILE, .do_while = do_while };
+    return (CIStmt){ .location = location,
+                     .kind = CI_STMT_KIND_DO_WHILE,
+                     .do_while = do_while };
 }
 
 /**
  *
  * @brief Construct CIStmt type (CI_STMT_KIND_FOR).
  */
-inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, for, CIStmtFor for_)
+inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, for, Location location, CIStmtFor for_)
 {
-    return (CIStmt){ .kind = CI_STMT_KIND_FOR, .for_ = for_ };
+    return (
+      CIStmt){ .location = location, .kind = CI_STMT_KIND_FOR, .for_ = for_ };
 }
 
 /**
@@ -4507,45 +4639,66 @@ inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, for, CIStmtFor for_)
  * @brief Construct CIStmt type (CI_STMT_KIND_GOTO).
  * @param goto_ Rc<String*>* (&)
  */
-inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, goto, Rc *goto_)
+inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, goto, Location location, Rc *goto_)
 {
-    return (CIStmt){ .kind = CI_STMT_KIND_GOTO, .goto_ = ref__Rc(goto_) };
+    return (CIStmt){ .location = location,
+                     .kind = CI_STMT_KIND_GOTO,
+                     .goto_ = ref__Rc(goto_) };
 }
 
 /**
  *
  * @brief Construct CIStmt type (CI_STMT_KIND_IF).
  */
-inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, if, CIStmtIf if_)
+inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, if, Location location, CIStmtIf if_)
 {
-    return (CIStmt){ .kind = CI_STMT_KIND_IF, .if_ = if_ };
+    return (
+      CIStmt){ .location = location, .kind = CI_STMT_KIND_IF, .if_ = if_ };
 }
 
 /**
  *
  * @brief Construct CIStmt type (CI_STMT_KIND_RETURN).
  */
-inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, return, CIExpr *return_)
+inline VARIANT_CONSTRUCTOR(CIStmt,
+                           CIStmt,
+                           return,
+                           Location location,
+                           CIExpr *return_)
 {
-    return (CIStmt){ .kind = CI_STMT_KIND_RETURN, .return_ = return_ };
+    return (CIStmt){ .location = location,
+                     .kind = CI_STMT_KIND_RETURN,
+                     .return_ = return_ };
 }
 
 /**
  *
  * @brief Construct CIStmt type (CI_STMT_KIND_SWITCH).
  */
-inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, switch, CIStmtSwitch switch_)
+inline VARIANT_CONSTRUCTOR(CIStmt,
+                           CIStmt,
+                           switch,
+                           Location location,
+                           CIStmtSwitch switch_)
 {
-    return (CIStmt){ .kind = CI_STMT_KIND_SWITCH, .switch_ = switch_ };
+    return (CIStmt){ .location = location,
+                     .kind = CI_STMT_KIND_SWITCH,
+                     .switch_ = switch_ };
 }
 
 /**
  *
  * @brief Construct CIStmt type (CI_STMT_KIND_WHILE).
  */
-inline VARIANT_CONSTRUCTOR(CIStmt, CIStmt, while, CIStmtWhile while_)
+inline VARIANT_CONSTRUCTOR(CIStmt,
+                           CIStmt,
+                           while,
+                           Location location,
+                           CIStmtWhile while_)
 {
-    return (CIStmt){ .kind = CI_STMT_KIND_WHILE, .while_ = while_ };
+    return (CIStmt){ .location = location,
+                     .kind = CI_STMT_KIND_WHILE,
+                     .while_ = while_ };
 }
 
 /**

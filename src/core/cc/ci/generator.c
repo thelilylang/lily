@@ -802,6 +802,7 @@ substitute_and_serialize_generic_params__CIGenerator(
 
         CIGenericParams *resolved_generic_params =
           substitute_generic_params__CIParser(
+            self->file,
             unresolved_generic_params,
             self->content.last_session->inherit_props.current_generic_params,
             self->content.last_session->inherit_props
@@ -834,6 +835,7 @@ CIDataType *
 substitute_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type)
 {
     return substitute_data_type__CIParser(
+      self->file,
       data_type,
       self->content.last_session->inherit_props.current_generic_params,
       self->content.last_session->inherit_props.current_called_generic_params,

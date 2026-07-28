@@ -26,8 +26,17 @@
 #include <base/vec.h>
 
 #include <core/cc/ci/ast.h>
+#include <core/cc/ci/diagnostic/emit.h>
 #include <core/cc/ci/typecheck.h>
 #include <core/cc/ci/visitor.h>
+
+// Emit a located error and count it, without stopping the visitor: the caller
+// returns from the current check so that the rest of the pass still runs.
+#define FAILED__CIVisitor(self, node, error_kind) \
+    EMIT_ERROR__CI(&(self)->file->file_input,     \
+                   &(node)->location,             \
+                   NEW(CIError, error_kind),      \
+                   &(self)->file->file_analysis->count_error)
 
 inline bool
 is_in_function_body__CIVisitor(CIVisitor *self);
@@ -344,18 +353,25 @@ generate_function_gen__CIVisitor(CIVisitor *self,
       search_function__CIResultFile(self->file, function_name);
 
     if (!function_decl) {
-        FAILED("unknown function, impossible to call unknown function");
+        FAILED__CIVisitor(
+          self, self->current_decl, CI_ERROR_KIND_CALL_TO_UNKNOWN_FUNCTION);
+
+        return;
     }
 
     // Generate gen function declaration
     if (unresolved_generic_params) {
         if (is_prototype__CIDecl(function_decl)) {
-            FAILED("expected to have the definition of the declaration at this "
-                   "point");
+            FAILED__CIVisitor(self,
+                              function_decl,
+                              CI_ERROR_KIND_EXPECTED_DECLARATION_DEFINITION);
+
+            return;
         } else {
             CIGenericParams *resolved_generic_params =
               has_generic__CIGenericParams(unresolved_generic_params)
-                ? substitute_generic_params__CIParser(unresolved_generic_params,
+                ? substitute_generic_params__CIParser(self->file,
+                                                      unresolved_generic_params,
                                                       decl_generic_params,
                                                       called_generic_params)
                 : ref__CIGenericParams(unresolved_generic_params);
@@ -368,6 +384,7 @@ generate_function_gen__CIVisitor(CIVisitor *self,
             if (!function_gen) {
                 CIDataType *subs_return_data_type =
                   substitute_data_type__CIParser(
+                    self->file,
                     function_decl->function.return_data_type,
                     function_decl->function.generic_params,
                     resolved_generic_params,
@@ -379,6 +396,7 @@ generate_function_gen__CIVisitor(CIVisitor *self,
                 CIDecl *function_gen_decl =
                   NEW_VARIANT(CIDecl,
                               function_gen,
+                              clone__Location(&function_decl->location),
                               (CIDecl *)function_decl,
                               ref__CIGenericParams(resolved_generic_params),
                               serialized_called_function_name,
@@ -415,19 +433,26 @@ generate_type_gen__CIVisitor(CIVisitor *self,
     CIDecl *decl = search_decl(self->file, name);
 
     if (!decl) {
-        FAILED("struct, typedef or union not found");
+        FAILED__CIVisitor(self,
+                          self->current_decl,
+                          CI_ERROR_KIND_STRUCT_TYPEDEF_OR_UNION_NOT_FOUND);
+
+        return;
     }
 
     ASSERT(kind == decl->kind);
 
     if (unresolved_generic_params) {
         if (is_prototype__CIDecl(decl)) {
-            FAILED("expected to have the definition of the declaration at this "
-                   "point");
+            FAILED__CIVisitor(
+              self, decl, CI_ERROR_KIND_EXPECTED_DECLARATION_DEFINITION);
+
+            return;
         } else {
             CIGenericParams *resolved_generic_params =
               has_generic__CIGenericParams(unresolved_generic_params)
-                ? substitute_generic_params__CIParser(unresolved_generic_params,
+                ? substitute_generic_params__CIParser(self->file,
+                                                      unresolved_generic_params,
                                                       decl_generic_params,
                                                       called_generic_params)
                 : ref__CIGenericParams(unresolved_generic_params);
@@ -467,6 +492,7 @@ generate_type_gen__CIVisitor(CIVisitor *self,
                             decl_gen = NEW_VARIANT(
                               CIDecl,
                               struct_gen,
+                              clone__Location(&decl->location),
                               decl,
                               ref__CIGenericParams(resolved_generic_params),
                               serialized_called_decl_name,
@@ -491,6 +517,7 @@ generate_type_gen__CIVisitor(CIVisitor *self,
                             decl_gen = NEW_VARIANT(
                               CIDecl,
                               typedef_gen,
+                              clone__Location(&decl->location),
                               decl,
                               ref__CIGenericParams(resolved_generic_params),
                               serialized_called_decl_name,
@@ -513,6 +540,7 @@ generate_type_gen__CIVisitor(CIVisitor *self,
                             decl_gen = NEW_VARIANT(
                               CIDecl,
                               union_gen,
+                              clone__Location(&decl->location),
                               decl,
                               ref__CIGenericParams(resolved_generic_params),
                               serialized_called_decl_name,
@@ -646,8 +674,12 @@ substitute_and_generate_from_data_type__CIVisitor(
   CIGenericParams *called_generic_params,
   String *serialized_name)
 {
-    CIDataType *subs_data_type = substitute_data_type__CIParser(
-      data_type, generic_params, called_generic_params, serialized_name);
+    CIDataType *subs_data_type =
+      substitute_data_type__CIParser(self->file,
+                                     data_type,
+                                     generic_params,
+                                     called_generic_params,
+                                     serialized_name);
 
     generate_from_data_type__CIVisitor(
       self, subs_data_type, called_generic_params, generic_params);
@@ -833,6 +865,8 @@ visit_typedef__CIVisitor(CIVisitor *self,
 void
 visit_non_generic_typedef__CIVisitor(CIVisitor *self, const CIDecl *decl)
 {
+    self->current_decl = decl;
+
     ASSERT(decl->kind == CI_DECL_KIND_TYPEDEF);
 
     generate_from_data_type__CIVisitor(
@@ -950,6 +984,8 @@ visit_variable__CIVisitor(CIVisitor *self,
 void
 visit_non_generic_variable__CIVisitor(CIVisitor *self, const CIDecl *decl)
 {
+    self->current_decl = decl;
+
     visit_variable__CIVisitor(self, decl, NULL, NULL);
 }
 
@@ -1464,6 +1500,8 @@ visit_function__CIVisitor(CIVisitor *self,
 void
 visit_non_generic_function__CIVisitor(CIVisitor *self, const CIDecl *decl)
 {
+    self->current_decl = decl;
+
     ASSERT(decl->kind == CI_DECL_KIND_FUNCTION);
 
     visit_function_return_data_type__CIVisitor(self, decl, NULL);

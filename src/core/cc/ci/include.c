@@ -28,6 +28,7 @@
 #include <base/new.h>
 #include <base/path.h>
 
+#include <core/cc/ci/diagnostic/emit.h>
 #include <core/cc/ci/include.h>
 
 #include <stdio.h>
@@ -48,7 +49,8 @@ init_include_dirs__CIInclude(const String *compiler_command,
     String *include_dirs_s = save__Command(command, &command_exit_status);
 
     if (command_exit_status != EXIT_OK) {
-        FAILED("failed to fetch default include paths");
+        FATAL_ERROR__CI(
+          NEW(CIError, CI_ERROR_KIND_FAILED_TO_FETCH_DEFAULT_INCLUDE_PATHS));
     }
 
     Vec *split_include_dirs_s = split__String(include_dirs_s, '\n');

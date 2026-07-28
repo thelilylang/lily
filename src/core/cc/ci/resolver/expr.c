@@ -28,8 +28,30 @@
 #include <core/cc/ci/infer.h>
 #include <core/cc/ci/resolver/expr.h>
 #include <core/cc/ci/result.h>
+#include <core/shared/diagnostic.h>
 
 #include <stdio.h>
+
+// Emit an error located on `expr` and record it in the file's error count,
+// without stopping the resolve: the caller carries on with a poisoned value, so
+// that a single run can report more than one error.
+#define FAILED__CIResolverExpr(self, expr, error_kind)      \
+    emit__Diagnostic(NEW_VARIANT(Diagnostic,                \
+                                 simple_ci_error,           \
+                                 &(self)->file->file_input, \
+                                 &(expr)->location,         \
+                                 NEW(CIError, error_kind),  \
+                                 NULL,                      \
+                                 NULL,                      \
+                                 NULL),                     \
+                     (self)->count_error)
+
+// Value a resolve function returns after having emitted an error.
+#define POISONED_EXPR__CIResolverExpr(expr)         \
+    NEW_VARIANT(CIExpr,                             \
+                literal,                            \
+                clone__Location(&(expr)->location), \
+                NEW_VARIANT(CIExprLiteral, signed_int, 0))
 
 struct DataTypeInfoAlignment
 {
@@ -84,75 +106,111 @@ resolve_alignof_expr__CIResolverExpr(const CIResolverExpr *self,
 
 /// @brief lhs + rhs
 static CIExpr *
-resolve_add_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs);
+resolve_add_expr__CIResolverExpr(const CIResolverExpr *self,
+                                 CIExpr *lhs,
+                                 CIExpr *rhs);
 
 /// @brief lhs - rhs
 static CIExpr *
-resolve_sub_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs);
+resolve_sub_expr__CIResolverExpr(const CIResolverExpr *self,
+                                 CIExpr *lhs,
+                                 CIExpr *rhs);
 
 /// @brief lhs * rhs
 static CIExpr *
-resolve_mul_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs);
+resolve_mul_expr__CIResolverExpr(const CIResolverExpr *self,
+                                 CIExpr *lhs,
+                                 CIExpr *rhs);
 
 /// @brief lhs / rhs
 static CIExpr *
-resolve_div_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs);
+resolve_div_expr__CIResolverExpr(const CIResolverExpr *self,
+                                 CIExpr *lhs,
+                                 CIExpr *rhs);
 
 /// @brief lhs % rhs
 static CIExpr *
-resolve_mod_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs);
+resolve_mod_expr__CIResolverExpr(const CIResolverExpr *self,
+                                 CIExpr *lhs,
+                                 CIExpr *rhs);
 
 /// @brief lhs & rhs
 static CIExpr *
-resolve_bit_and_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs);
+resolve_bit_and_expr__CIResolverExpr(const CIResolverExpr *self,
+                                     CIExpr *lhs,
+                                     CIExpr *rhs);
 
 /// @brief lhs | rhs
 static CIExpr *
-resolve_bit_or_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs);
+resolve_bit_or_expr__CIResolverExpr(const CIResolverExpr *self,
+                                    CIExpr *lhs,
+                                    CIExpr *rhs);
 
 /// @brief lhs ^ rhs
 static CIExpr *
-resolve_bit_xor_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs);
+resolve_bit_xor_expr__CIResolverExpr(const CIResolverExpr *self,
+                                     CIExpr *lhs,
+                                     CIExpr *rhs);
 
 /// @brief lhs << rhs
 static CIExpr *
-resolve_bit_lshift_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs);
+resolve_bit_lshift_expr__CIResolverExpr(const CIResolverExpr *self,
+                                        CIExpr *lhs,
+                                        CIExpr *rhs);
 
 /// @brief lhs >> rhs
 static CIExpr *
-resolve_bit_rshift_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs);
+resolve_bit_rshift_expr__CIResolverExpr(const CIResolverExpr *self,
+                                        CIExpr *lhs,
+                                        CIExpr *rhs);
 
 /// @brief lhs && rhs
 static CIExpr *
-resolve_logical_and_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs);
+resolve_logical_and_expr__CIResolverExpr(const CIResolverExpr *self,
+                                         CIExpr *lhs,
+                                         CIExpr *rhs);
 
 /// @brief lhs || rhs
 static CIExpr *
-resolve_logical_or_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs);
+resolve_logical_or_expr__CIResolverExpr(const CIResolverExpr *self,
+                                        CIExpr *lhs,
+                                        CIExpr *rhs);
 
 /// @brief lhs == rhs
 static CIExpr *
-resolve_eq_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs);
+resolve_eq_expr__CIResolverExpr(const CIResolverExpr *self,
+                                CIExpr *lhs,
+                                CIExpr *rhs);
 
 /// @brief lhs != rhs
 static CIExpr *
-resolve_ne_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs);
+resolve_ne_expr__CIResolverExpr(const CIResolverExpr *self,
+                                CIExpr *lhs,
+                                CIExpr *rhs);
 
 /// @brief lhs < rhs
 static CIExpr *
-resolve_lt_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs);
+resolve_lt_expr__CIResolverExpr(const CIResolverExpr *self,
+                                CIExpr *lhs,
+                                CIExpr *rhs);
 
 /// @brief lhs <= rhs
 static CIExpr *
-resolve_le_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs);
+resolve_le_expr__CIResolverExpr(const CIResolverExpr *self,
+                                CIExpr *lhs,
+                                CIExpr *rhs);
 
 /// @brief lhs > rhs
 static CIExpr *
-resolve_gt_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs);
+resolve_gt_expr__CIResolverExpr(const CIResolverExpr *self,
+                                CIExpr *lhs,
+                                CIExpr *rhs);
 
 /// @brief lhs >= rhs
 static CIExpr *
-resolve_ge_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs);
+resolve_ge_expr__CIResolverExpr(const CIResolverExpr *self,
+                                CIExpr *lhs,
+                                CIExpr *rhs);
 
 static CIExpr *
 determine_enum_variant_value__CIResolver(const CIResolverExpr *self,
@@ -204,50 +262,54 @@ resolve_sizeof_expr__CIResolverExpr(const CIResolverExpr *self,
 
 /// @brief Resolve: ++rhs
 static CIExpr *
-resolve_pre_increment_expr__CIResolverExpr(CIExpr *rhs);
+resolve_pre_increment_expr__CIResolverExpr(const CIResolverExpr *self,
+                                           CIExpr *rhs);
 
 /// @brief Resolve: --rhs
 static CIExpr *
-resolve_pre_decrement_expr__CIResolverExpr(CIExpr *rhs);
+resolve_pre_decrement_expr__CIResolverExpr(const CIResolverExpr *self,
+                                           CIExpr *rhs);
 
 /// @brief Resolve: rhs++
 static CIExpr *
-resolve_post_increment_expr__CIResolverExpr(CIExpr *rhs);
+resolve_post_increment_expr__CIResolverExpr(const CIResolverExpr *self,
+                                            CIExpr *rhs);
 
 /// @brief Resolve: rhs--
 static CIExpr *
-resolve_post_decrement_expr__CIResolverExpr(CIExpr *rhs);
+resolve_post_decrement_expr__CIResolverExpr(const CIResolverExpr *self,
+                                            CIExpr *rhs);
 
 /// @brief Resolve: +rhs
 static CIExpr *
-resolve_positive_expr__CIResolverExpr(CIExpr *rhs);
+resolve_positive_expr__CIResolverExpr(const CIResolverExpr *self, CIExpr *rhs);
 
 /// @brief Resolve: -rhs
 static CIExpr *
-resolve_negative_expr__CIResolverExpr(CIExpr *rhs);
+resolve_negative_expr__CIResolverExpr(const CIResolverExpr *self, CIExpr *rhs);
 
 /// @brief Resolve: ~rhs
 static CIExpr *
-resolve_bit_not_expr__CIResolverExpr(CIExpr *rhs);
+resolve_bit_not_expr__CIResolverExpr(const CIResolverExpr *self, CIExpr *rhs);
 
 /// @brief Resolve: !rhs
 static CIExpr *
-resolve_not_expr__CIResolverExpr(CIExpr *rhs);
+resolve_not_expr__CIResolverExpr(const CIResolverExpr *self, CIExpr *rhs);
 
 /// @brief Resolve: *rhs
 static CIExpr *
-resolve_dereference__CIResolverExpr(CIExpr *rhs);
+resolve_dereference__CIResolverExpr(const CIResolverExpr *self, CIExpr *rhs);
 
 /// @brief Resolve: &rhs
 static CIExpr *
-resolve_ref__CIResolverExpr(CIExpr *rhs);
+resolve_ref__CIResolverExpr(const CIResolverExpr *self, CIExpr *rhs);
 
 /// @brief Resolve unary operator.
 static CIExpr *
 resolve_unary_expr__CIResolverExpr(const CIResolverExpr *self, CIExpr *expr);
 
 bool
-is_true__CIResolverExpr(CIExpr *expr)
+is_true__CIResolverExpr(const CIResolverExpr *self, CIExpr *expr)
 {
     ASSERT(expr);
 
@@ -263,8 +325,11 @@ is_true__CIResolverExpr(CIExpr *expr)
                 case CI_EXPR_LITERAL_KIND_SIGNED_INT:
                     return expr->literal.signed_int;
                 case CI_EXPR_LITERAL_KIND_STRING:
-                    FAILED("not expected to have a string as result at "
-                           "preprocessor-time");
+                    FAILED__CIResolverExpr(
+                      self,
+                      expr,
+                      CI_ERROR_KIND_UNEXPECTED_STRING_AT_PREPROCESSOR_TIME);
+                    return false;
                 case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:
                     return expr->literal.unsigned_int;
                 default:
@@ -304,7 +369,8 @@ is_null__CIResolverExpr(CIExpr *expr)
 }
 
 Isize
-to_literal_integer_value__CIResolverExpr(CIExpr *expr)
+to_literal_integer_value__CIResolverExpr(const CIResolverExpr *self,
+                                         CIExpr *expr)
 {
     ASSERT(expr);
 
@@ -320,10 +386,16 @@ to_literal_integer_value__CIResolverExpr(CIExpr *expr)
                 case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:
                     return expr->literal.unsigned_int;
                 default:
-                    FAILED("expected to have integer literal compatible value");
+                    FAILED__CIResolverExpr(
+                      self,
+                      expr,
+                      CI_ERROR_KIND_EXPECTED_INTEGER_LITERAL_COMPATIBLE_VALUE);
+                    return 0;
             }
         default:
-            FAILED("expected to have expression resolvable at compile-time");
+            FAILED__CIResolverExpr(
+              self, expr, CI_ERROR_KIND_EXPECTED_COMPILE_TIME_EXPRESSION);
+            return 0;
     }
 }
 
@@ -340,6 +412,7 @@ to_literal_integer_value__CIResolverExpr(CIExpr *expr)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             signed_int,                                        \
@@ -348,6 +421,7 @@ to_literal_integer_value__CIResolverExpr(CIExpr *expr)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             signed_int,                                        \
@@ -356,6 +430,7 @@ to_literal_integer_value__CIResolverExpr(CIExpr *expr)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             float,                                             \
@@ -364,16 +439,22 @@ to_literal_integer_value__CIResolverExpr(CIExpr *expr)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             signed_int,                                        \
                             lhs->literal.bool_ op rhs->literal.signed_int));   \
                     case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_UNSURE_OPERATION_AT_COMPILE_TIME);     \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             unsigned_int,                                      \
@@ -387,6 +468,7 @@ to_literal_integer_value__CIResolverExpr(CIExpr *expr)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             signed_int,                                        \
@@ -395,6 +477,7 @@ to_literal_integer_value__CIResolverExpr(CIExpr *expr)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             signed_int,                                        \
@@ -403,16 +486,22 @@ to_literal_integer_value__CIResolverExpr(CIExpr *expr)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             float,                                             \
                             lhs->literal.char_ op rhs->literal.float_));       \
                     case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_UNSURE_OPERATION_AT_COMPILE_TIME);     \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             signed_int,                                        \
@@ -421,6 +510,7 @@ to_literal_integer_value__CIResolverExpr(CIExpr *expr)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             unsigned_int,                                      \
@@ -434,6 +524,7 @@ to_literal_integer_value__CIResolverExpr(CIExpr *expr)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             float,                                             \
@@ -442,6 +533,7 @@ to_literal_integer_value__CIResolverExpr(CIExpr *expr)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             float,                                             \
@@ -450,16 +542,22 @@ to_literal_integer_value__CIResolverExpr(CIExpr *expr)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             float,                                             \
                             lhs->literal.float_ op rhs->literal.float_));      \
                     case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_UNSURE_OPERATION_AT_COMPILE_TIME);     \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             float,                                             \
@@ -468,6 +566,7 @@ to_literal_integer_value__CIResolverExpr(CIExpr *expr)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(CIExprLiteral,                           \
                                       float,                                   \
                                       lhs->literal.float_ op                   \
@@ -481,6 +580,7 @@ to_literal_integer_value__CIResolverExpr(CIExpr *expr)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             signed_int,                                        \
@@ -489,6 +589,7 @@ to_literal_integer_value__CIResolverExpr(CIExpr *expr)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             signed_int,                                        \
@@ -497,6 +598,7 @@ to_literal_integer_value__CIResolverExpr(CIExpr *expr)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             float,                                             \
@@ -505,16 +607,22 @@ to_literal_integer_value__CIResolverExpr(CIExpr *expr)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(CIExprLiteral,                           \
                                       signed_int,                              \
                                       lhs->literal.signed_int op               \
                                         rhs->literal.signed_int));             \
                     case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_UNSURE_OPERATION_AT_COMPILE_TIME);     \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(CIExprLiteral,                           \
                                       signed_int,                              \
                                       lhs->literal.signed_int op               \
@@ -523,13 +631,16 @@ to_literal_integer_value__CIResolverExpr(CIExpr *expr)
                         UNREACHABLE("unknown variant");                        \
                 }                                                              \
             case CI_EXPR_LITERAL_KIND_STRING:                                  \
-                FAILED("this operation is unsure at compile-time");            \
+                FAILED__CIResolverExpr(                                        \
+                  self, lhs, CI_ERROR_KIND_UNSURE_OPERATION_AT_COMPILE_TIME);  \
+                return POISONED_EXPR__CIResolverExpr(lhs);                     \
             case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                            \
                 switch (rhs->literal.kind) {                                   \
                     case CI_EXPR_LITERAL_KIND_BOOL:                            \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             unsigned_int,                                      \
@@ -538,6 +649,7 @@ to_literal_integer_value__CIResolverExpr(CIExpr *expr)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             unsigned_int,                                      \
@@ -546,16 +658,22 @@ to_literal_integer_value__CIResolverExpr(CIExpr *expr)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(CIExprLiteral,                           \
                                       float,                                   \
                                       lhs->literal.unsigned_int op             \
                                         rhs->literal.float_));                 \
                     case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_UNSURE_OPERATION_AT_COMPILE_TIME);     \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(CIExprLiteral,                           \
                                       unsigned_int,                            \
                                       lhs->literal.unsigned_int op             \
@@ -564,6 +682,7 @@ to_literal_integer_value__CIResolverExpr(CIExpr *expr)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(CIExprLiteral,                           \
                                       unsigned_int,                            \
                                       lhs->literal.unsigned_int op             \
@@ -573,7 +692,11 @@ to_literal_integer_value__CIResolverExpr(CIExpr *expr)
                 }                                                              \
         }                                                                      \
     } else {                                                                   \
-        FAILED("This expression is not resolvable at preprocessor-time");      \
+        FAILED__CIResolverExpr(                                                \
+          self,                                                                \
+          lhs,                                                                 \
+          CI_ERROR_KIND_EXPRESSION_NOT_RESOLVABLE_AT_PREPROCESSOR_TIME);       \
+        return POISONED_EXPR__CIResolverExpr(lhs);                             \
     }
 
 Usize
@@ -730,7 +853,9 @@ resolve_data_type_alignment__CIResolverExpr(const CIResolverExpr *self,
                     self, GET_PTR_RC(String, data_type->enum_.name));
 
                 if (enum_alignment_info.is_incomplete) {
-                    FAILED("enum type is incomplete");
+                    FAILED__CIResolverExpr(
+                      self, data_type, CI_ERROR_KIND_INCOMPLETE_ENUM_TYPE);
+                    return 0;
                 }
 
                 return enum_alignment_info.alignment;
@@ -779,7 +904,9 @@ resolve_data_type_alignment__CIResolverExpr(const CIResolverExpr *self,
               resolve_struct_alignment__CIResolverExpr(self, data_type);
 
             if (struct_alignment_info.is_incomplete) {
-                FAILED("struct type is incomplete");
+                FAILED__CIResolverExpr(
+                  self, data_type, CI_ERROR_KIND_INCOMPLETE_STRUCT_TYPE);
+                return 0;
             }
 
             return struct_alignment_info.alignment;
@@ -795,10 +922,14 @@ resolve_data_type_alignment__CIResolverExpr(const CIResolverExpr *self,
                   self, get_typedef_data_type__CIDecl(decl));
             }
 
-            FAILED("type of typedef is incomplete");
+            FAILED__CIResolverExpr(
+              self, data_type, CI_ERROR_KIND_INCOMPLETE_TYPEDEF_TYPE);
+            return 0;
         }
         case CI_DATA_TYPE_KIND_TYPE_INFO:
-            FAILED("cannot resolve the size of type info data type");
+            FAILED__CIResolverExpr(
+              self, data_type, CI_ERROR_KIND_CANNOT_RESOLVE_SIZE_OF_TYPE_INFO);
+            return 0;
         case CI_DATA_TYPE_KIND_UNSIGNED_INT:
             return alignof(unsigned int);
         case CI_DATA_TYPE_KIND_UNSIGNED_CHAR:
@@ -814,7 +945,9 @@ resolve_data_type_alignment__CIResolverExpr(const CIResolverExpr *self,
               resolve_union_alignment__CIResolverExpr(self, data_type);
 
             if (union_alignment_info.is_incomplete) {
-                FAILED("union type is incomplete");
+                FAILED__CIResolverExpr(
+                  self, data_type, CI_ERROR_KIND_INCOMPLETE_UNION_TYPE);
+                return 0;
             }
 
             return union_alignment_info.alignment;
@@ -831,7 +964,10 @@ resolve_alignof_expr__CIResolverExpr(const CIResolverExpr *self,
                                      const CIExpr *expr)
 {
     if (self->is_at_preprocessor_time) {
-        FAILED("alignof is not expected in preprocessor condition");
+        FAILED__CIResolverExpr(
+          self, expr, CI_ERROR_KIND_ALIGNOF_IN_PREPROCESSOR_CONDITION);
+
+        return POISONED_EXPR__CIResolverExpr(expr);
     }
 
     ASSERT(self->scope);
@@ -843,6 +979,7 @@ resolve_alignof_expr__CIResolverExpr(const CIResolverExpr *self,
     CIExpr *res =
       NEW_VARIANT(CIExpr,
                   literal,
+                  clone__Location(&expr->location),
                   NEW_VARIANT(CIExprLiteral,
                               unsigned_int,
                               resolve_data_type_alignment__CIResolverExpr(
@@ -854,25 +991,33 @@ resolve_alignof_expr__CIResolverExpr(const CIResolverExpr *self,
 }
 
 CIExpr *
-resolve_add_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
+resolve_add_expr__CIResolverExpr(const CIResolverExpr *self,
+                                 CIExpr *lhs,
+                                 CIExpr *rhs)
 {
     RESOLVE_BASIC_BINARY_ARITHMETIC_EXPR(+, CI_EXPR_BINARY_KIND_ADD);
 }
 
 CIExpr *
-resolve_sub_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
+resolve_sub_expr__CIResolverExpr(const CIResolverExpr *self,
+                                 CIExpr *lhs,
+                                 CIExpr *rhs)
 {
     RESOLVE_BASIC_BINARY_ARITHMETIC_EXPR(-, CI_EXPR_BINARY_KIND_SUB);
 }
 
 CIExpr *
-resolve_mul_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
+resolve_mul_expr__CIResolverExpr(const CIResolverExpr *self,
+                                 CIExpr *lhs,
+                                 CIExpr *rhs)
 {
     RESOLVE_BASIC_BINARY_ARITHMETIC_EXPR(*, CI_EXPR_BINARY_KIND_MUL);
 }
 
 CIExpr *
-resolve_div_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
+resolve_div_expr__CIResolverExpr(const CIResolverExpr *self,
+                                 CIExpr *lhs,
+                                 CIExpr *rhs)
 {
     RESOLVE_BASIC_BINARY_ARITHMETIC_EXPR(/, CI_EXPR_BINARY_KIND_DIV);
 }
@@ -891,6 +1036,7 @@ resolve_div_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             signed_int,                                        \
@@ -899,27 +1045,37 @@ resolve_div_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             signed_int,                                        \
                             lhs->literal.bool_ op rhs->literal.char_));        \
                     case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        FAILED("cannot perform this operation with "           \
-                               "no-castable to int types");                    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_OPERATION_ON_NON_INT_CASTABLE_TYPES);  \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             signed_int,                                        \
                             lhs->literal.bool_ op rhs->literal.signed_int));   \
                     case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_UNSURE_OPERATION_AT_COMPILE_TIME);     \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             unsigned_int,                                      \
@@ -933,6 +1089,7 @@ resolve_div_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             signed_int,                                        \
@@ -941,19 +1098,28 @@ resolve_div_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             signed_int,                                        \
                             lhs->literal.char_ op rhs->literal.char_));        \
                     case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        FAILED("cannot perform this operation with "           \
-                               "no-castable to int types");                    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_OPERATION_ON_NON_INT_CASTABLE_TYPES);  \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_UNSURE_OPERATION_AT_COMPILE_TIME);     \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             signed_int,                                        \
@@ -962,6 +1128,7 @@ resolve_div_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             unsigned_int,                                      \
@@ -970,14 +1137,18 @@ resolve_div_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         UNREACHABLE("unknown variant");                        \
                 }                                                              \
             case CI_EXPR_LITERAL_KIND_FLOAT:                                   \
-                FAILED("cannot perform this operation with no-castable "       \
-                       "to int types");                                        \
+                FAILED__CIResolverExpr(                                        \
+                  self,                                                        \
+                  lhs,                                                         \
+                  CI_ERROR_KIND_OPERATION_ON_NON_INT_CASTABLE_TYPES);          \
+                return POISONED_EXPR__CIResolverExpr(lhs);                     \
             case CI_EXPR_LITERAL_KIND_SIGNED_INT:                              \
                 switch (rhs->literal.kind) {                                   \
                     case CI_EXPR_LITERAL_KIND_BOOL:                            \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             signed_int,                                        \
@@ -986,19 +1157,28 @@ resolve_div_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             signed_int,                                        \
                             lhs->literal.signed_int op rhs->literal.char_));   \
                     case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        FAILED("cannot perform this operation with "           \
-                               "no-castable to int types");                    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_OPERATION_ON_NON_INT_CASTABLE_TYPES);  \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_UNSURE_OPERATION_AT_COMPILE_TIME);     \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(CIExprLiteral,                           \
                                       signed_int,                              \
                                       lhs->literal.signed_int op               \
@@ -1007,6 +1187,7 @@ resolve_div_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(CIExprLiteral,                           \
                                       unsigned_int,                            \
                                       lhs->literal.signed_int op               \
@@ -1015,13 +1196,16 @@ resolve_div_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         UNREACHABLE("unknown variant");                        \
                 }                                                              \
             case CI_EXPR_LITERAL_KIND_STRING:                                  \
-                FAILED("this operation is unsure at compile-time");            \
+                FAILED__CIResolverExpr(                                        \
+                  self, lhs, CI_ERROR_KIND_UNSURE_OPERATION_AT_COMPILE_TIME);  \
+                return POISONED_EXPR__CIResolverExpr(lhs);                     \
             case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                            \
                 switch (rhs->literal.kind) {                                   \
                     case CI_EXPR_LITERAL_KIND_BOOL:                            \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             unsigned_int,                                      \
@@ -1030,19 +1214,28 @@ resolve_div_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             unsigned_int,                                      \
                             lhs->literal.unsigned_int op rhs->literal.char_)); \
                     case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        FAILED("cannot perform this operation with "           \
-                               "no-castable to int types");                    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_OPERATION_ON_NON_INT_CASTABLE_TYPES);  \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_UNSURE_OPERATION_AT_COMPILE_TIME);     \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(CIExprLiteral,                           \
                                       unsigned_int,                            \
                                       lhs->literal.unsigned_int op             \
@@ -1051,6 +1244,7 @@ resolve_div_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(CIExprLiteral,                           \
                                       unsigned_int,                            \
                                       lhs->literal.unsigned_int op             \
@@ -1060,41 +1254,57 @@ resolve_div_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                 }                                                              \
         }                                                                      \
     } else {                                                                   \
-        FAILED("This expression is not resolvable at preprocessor-time");      \
+        FAILED__CIResolverExpr(                                                \
+          self,                                                                \
+          lhs,                                                                 \
+          CI_ERROR_KIND_EXPRESSION_NOT_RESOLVABLE_AT_PREPROCESSOR_TIME);       \
+        return POISONED_EXPR__CIResolverExpr(lhs);                             \
     }
 
 CIExpr *
-resolve_mod_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
+resolve_mod_expr__CIResolverExpr(const CIResolverExpr *self,
+                                 CIExpr *lhs,
+                                 CIExpr *rhs)
 {
     RESOLVE_BASIC_BINARY_BIT_EXPR(%, CI_EXPR_BINARY_KIND_MOD);
 }
 
 CIExpr *
-resolve_bit_and_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
+resolve_bit_and_expr__CIResolverExpr(const CIResolverExpr *self,
+                                     CIExpr *lhs,
+                                     CIExpr *rhs)
 {
     RESOLVE_BASIC_BINARY_BIT_EXPR(&, CI_EXPR_BINARY_KIND_BIT_AND);
 }
 
 CIExpr *
-resolve_bit_or_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
+resolve_bit_or_expr__CIResolverExpr(const CIResolverExpr *self,
+                                    CIExpr *lhs,
+                                    CIExpr *rhs)
 {
     RESOLVE_BASIC_BINARY_BIT_EXPR(|, CI_EXPR_BINARY_KIND_BIT_OR);
 }
 
 CIExpr *
-resolve_bit_xor_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
+resolve_bit_xor_expr__CIResolverExpr(const CIResolverExpr *self,
+                                     CIExpr *lhs,
+                                     CIExpr *rhs)
 {
     RESOLVE_BASIC_BINARY_BIT_EXPR(^, CI_EXPR_BINARY_KIND_BIT_XOR);
 }
 
 CIExpr *
-resolve_bit_lshift_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
+resolve_bit_lshift_expr__CIResolverExpr(const CIResolverExpr *self,
+                                        CIExpr *lhs,
+                                        CIExpr *rhs)
 {
     RESOLVE_BASIC_BINARY_BIT_EXPR(<<, CI_EXPR_BINARY_KIND_BIT_LSHIFT);
 }
 
 CIExpr *
-resolve_bit_rshift_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
+resolve_bit_rshift_expr__CIResolverExpr(const CIResolverExpr *self,
+                                        CIExpr *lhs,
+                                        CIExpr *rhs)
 {
     RESOLVE_BASIC_BINARY_BIT_EXPR(>>, CI_EXPR_BINARY_KIND_BIT_RSHIFT);
 }
@@ -1112,6 +1322,7 @@ resolve_bit_rshift_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
@@ -1120,27 +1331,37 @@ resolve_bit_rshift_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
                             lhs->literal.bool_ op rhs->literal.char_));        \
                     case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        FAILED("cannot perform this operation with "           \
-                               "no-castable to int types");                    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_OPERATION_ON_NON_INT_CASTABLE_TYPES);  \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
                             lhs->literal.bool_ op rhs->literal.signed_int));   \
                     case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_UNSURE_OPERATION_AT_COMPILE_TIME);     \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
@@ -1154,6 +1375,7 @@ resolve_bit_rshift_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
@@ -1162,19 +1384,28 @@ resolve_bit_rshift_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
                             lhs->literal.char_ op rhs->literal.char_));        \
                     case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        FAILED("cannot perform this operation with "           \
-                               "no-castable to int types");                    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_OPERATION_ON_NON_INT_CASTABLE_TYPES);  \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_UNSURE_OPERATION_AT_COMPILE_TIME);     \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
@@ -1183,6 +1414,7 @@ resolve_bit_rshift_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
@@ -1191,14 +1423,18 @@ resolve_bit_rshift_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         UNREACHABLE("unknown variant");                        \
                 }                                                              \
             case CI_EXPR_LITERAL_KIND_FLOAT:                                   \
-                FAILED("cannot perform this operation with no-castable "       \
-                       "to int types");                                        \
+                FAILED__CIResolverExpr(                                        \
+                  self,                                                        \
+                  lhs,                                                         \
+                  CI_ERROR_KIND_OPERATION_ON_NON_INT_CASTABLE_TYPES);          \
+                return POISONED_EXPR__CIResolverExpr(lhs);                     \
             case CI_EXPR_LITERAL_KIND_SIGNED_INT:                              \
                 switch (rhs->literal.kind) {                                   \
                     case CI_EXPR_LITERAL_KIND_BOOL:                            \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
@@ -1207,19 +1443,28 @@ resolve_bit_rshift_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
                             lhs->literal.signed_int op rhs->literal.char_));   \
                     case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        FAILED("cannot perform this operation with "           \
-                               "no-castable to int types");                    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_OPERATION_ON_NON_INT_CASTABLE_TYPES);  \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_UNSURE_OPERATION_AT_COMPILE_TIME);     \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(CIExprLiteral,                           \
                                       bool,                                    \
                                       lhs->literal.signed_int op               \
@@ -1228,6 +1473,7 @@ resolve_bit_rshift_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(CIExprLiteral,                           \
                                       bool,                                    \
                                       lhs->literal.signed_int op               \
@@ -1236,13 +1482,16 @@ resolve_bit_rshift_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         UNREACHABLE("unknown variant");                        \
                 }                                                              \
             case CI_EXPR_LITERAL_KIND_STRING:                                  \
-                FAILED("this operation is unsure at compile-time");            \
+                FAILED__CIResolverExpr(                                        \
+                  self, lhs, CI_ERROR_KIND_UNSURE_OPERATION_AT_COMPILE_TIME);  \
+                return POISONED_EXPR__CIResolverExpr(lhs);                     \
             case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                            \
                 switch (rhs->literal.kind) {                                   \
                     case CI_EXPR_LITERAL_KIND_BOOL:                            \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
@@ -1251,19 +1500,28 @@ resolve_bit_rshift_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
                             lhs->literal.unsigned_int op rhs->literal.char_)); \
                     case CI_EXPR_LITERAL_KIND_FLOAT:                           \
-                        FAILED("cannot perform this operation with "           \
-                               "no-castable to int types");                    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_OPERATION_ON_NON_INT_CASTABLE_TYPES);  \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_UNSURE_OPERATION_AT_COMPILE_TIME);     \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(CIExprLiteral,                           \
                                       bool,                                    \
                                       lhs->literal.unsigned_int op             \
@@ -1272,6 +1530,7 @@ resolve_bit_rshift_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(CIExprLiteral,                           \
                                       bool,                                    \
                                       lhs->literal.unsigned_int op             \
@@ -1281,17 +1540,25 @@ resolve_bit_rshift_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                 }                                                              \
         }                                                                      \
     } else {                                                                   \
-        FAILED("This expression is not resolvable at preprocessor-time");      \
+        FAILED__CIResolverExpr(                                                \
+          self,                                                                \
+          lhs,                                                                 \
+          CI_ERROR_KIND_EXPRESSION_NOT_RESOLVABLE_AT_PREPROCESSOR_TIME);       \
+        return POISONED_EXPR__CIResolverExpr(lhs);                             \
     }
 
 CIExpr *
-resolve_logical_and_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
+resolve_logical_and_expr__CIResolverExpr(const CIResolverExpr *self,
+                                         CIExpr *lhs,
+                                         CIExpr *rhs)
 {
     RESOLVE_BASIC_BINARY_LOGICAL_EXPR(&&, CI_EXPR_BINARY_KIND_AND);
 }
 
 CIExpr *
-resolve_logical_or_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
+resolve_logical_or_expr__CIResolverExpr(const CIResolverExpr *self,
+                                        CIExpr *lhs,
+                                        CIExpr *rhs)
 {
     RESOLVE_BASIC_BINARY_LOGICAL_EXPR(||, CI_EXPR_BINARY_KIND_OR);
 }
@@ -1308,6 +1575,7 @@ resolve_logical_or_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
@@ -1316,6 +1584,7 @@ resolve_logical_or_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
@@ -1324,6 +1593,7 @@ resolve_logical_or_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
@@ -1332,16 +1602,22 @@ resolve_logical_or_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
                             lhs->literal.bool_ op rhs->literal.signed_int));   \
                     case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_UNSURE_OPERATION_AT_COMPILE_TIME);     \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                    \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
@@ -1355,6 +1631,7 @@ resolve_logical_or_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
@@ -1363,6 +1640,7 @@ resolve_logical_or_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
@@ -1371,16 +1649,22 @@ resolve_logical_or_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
                             lhs->literal.char_ op rhs->literal.float_));       \
                     case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_UNSURE_OPERATION_AT_COMPILE_TIME);     \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
@@ -1389,6 +1673,7 @@ resolve_logical_or_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
@@ -1402,6 +1687,7 @@ resolve_logical_or_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
@@ -1410,6 +1696,7 @@ resolve_logical_or_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
@@ -1418,16 +1705,22 @@ resolve_logical_or_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
                             lhs->literal.float_ op rhs->literal.float_));      \
                     case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_UNSURE_OPERATION_AT_COMPILE_TIME);     \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
@@ -1436,6 +1729,7 @@ resolve_logical_or_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(CIExprLiteral,                           \
                                       bool,                                    \
                                       lhs->literal.float_ op                   \
@@ -1449,6 +1743,7 @@ resolve_logical_or_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
@@ -1457,6 +1752,7 @@ resolve_logical_or_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
@@ -1465,16 +1761,22 @@ resolve_logical_or_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
                             lhs->literal.signed_int op rhs->literal.float_));  \
                     case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_UNSURE_OPERATION_AT_COMPILE_TIME);     \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(CIExprLiteral,                           \
                                       bool,                                    \
                                       lhs->literal.signed_int op               \
@@ -1483,6 +1785,7 @@ resolve_logical_or_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(CIExprLiteral,                           \
                                       bool,                                    \
                                       lhs->literal.signed_int op               \
@@ -1491,13 +1794,16 @@ resolve_logical_or_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         UNREACHABLE("unknown variant");                        \
                 }                                                              \
             case CI_EXPR_LITERAL_KIND_STRING:                                  \
-                FAILED("this operation is unsure at compile-time");            \
+                FAILED__CIResolverExpr(                                        \
+                  self, lhs, CI_ERROR_KIND_UNSURE_OPERATION_AT_COMPILE_TIME);  \
+                return POISONED_EXPR__CIResolverExpr(lhs);                     \
             case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                            \
                 switch (rhs->literal.kind) {                                   \
                     case CI_EXPR_LITERAL_KIND_BOOL:                            \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
@@ -1506,6 +1812,7 @@ resolve_logical_or_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(                                         \
                             CIExprLiteral,                                     \
                             bool,                                              \
@@ -1514,16 +1821,22 @@ resolve_logical_or_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(CIExprLiteral,                           \
                                       bool,                                    \
                                       lhs->literal.unsigned_int op             \
                                         rhs->literal.float_));                 \
                     case CI_EXPR_LITERAL_KIND_STRING:                          \
-                        FAILED("this operation is unsure at compile-time");    \
+                        FAILED__CIResolverExpr(                                \
+                          self,                                                \
+                          lhs,                                                 \
+                          CI_ERROR_KIND_UNSURE_OPERATION_AT_COMPILE_TIME);     \
+                        return POISONED_EXPR__CIResolverExpr(lhs);             \
                     case CI_EXPR_LITERAL_KIND_SIGNED_INT:                      \
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(CIExprLiteral,                           \
                                       bool,                                    \
                                       lhs->literal.unsigned_int op             \
@@ -1532,6 +1845,7 @@ resolve_logical_or_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                         return NEW_VARIANT(                                    \
                           CIExpr,                                              \
                           literal,                                             \
+                          clone__Location(&lhs->location),                     \
                           NEW_VARIANT(CIExprLiteral,                           \
                                       bool,                                    \
                                       lhs->literal.unsigned_int op             \
@@ -1541,41 +1855,57 @@ resolve_logical_or_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
                 }                                                              \
         }                                                                      \
     } else {                                                                   \
-        FAILED("This expression is not resolvable at preprocessor-time");      \
+        FAILED__CIResolverExpr(                                                \
+          self,                                                                \
+          lhs,                                                                 \
+          CI_ERROR_KIND_EXPRESSION_NOT_RESOLVABLE_AT_PREPROCESSOR_TIME);       \
+        return POISONED_EXPR__CIResolverExpr(lhs);                             \
     }
 
 CIExpr *
-resolve_eq_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
+resolve_eq_expr__CIResolverExpr(const CIResolverExpr *self,
+                                CIExpr *lhs,
+                                CIExpr *rhs)
 {
     RESOLVE_BASIC_BINARY_COMPARISON_EXPR(==, CI_EXPR_BINARY_KIND_EQ);
 }
 
 CIExpr *
-resolve_ne_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
+resolve_ne_expr__CIResolverExpr(const CIResolverExpr *self,
+                                CIExpr *lhs,
+                                CIExpr *rhs)
 {
     RESOLVE_BASIC_BINARY_COMPARISON_EXPR(!=, CI_EXPR_BINARY_KIND_NE);
 }
 
 CIExpr *
-resolve_lt_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
+resolve_lt_expr__CIResolverExpr(const CIResolverExpr *self,
+                                CIExpr *lhs,
+                                CIExpr *rhs)
 {
     RESOLVE_BASIC_BINARY_COMPARISON_EXPR(<, CI_EXPR_BINARY_KIND_LESS);
 }
 
 CIExpr *
-resolve_le_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
+resolve_le_expr__CIResolverExpr(const CIResolverExpr *self,
+                                CIExpr *lhs,
+                                CIExpr *rhs)
 {
     RESOLVE_BASIC_BINARY_COMPARISON_EXPR(<=, CI_EXPR_BINARY_KIND_LESS_EQ);
 }
 
 CIExpr *
-resolve_gt_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
+resolve_gt_expr__CIResolverExpr(const CIResolverExpr *self,
+                                CIExpr *lhs,
+                                CIExpr *rhs)
 {
     RESOLVE_BASIC_BINARY_COMPARISON_EXPR(>, CI_EXPR_BINARY_KIND_GREATER);
 }
 
 CIExpr *
-resolve_ge_expr__CIResolverExpr(CIExpr *lhs, CIExpr *rhs)
+resolve_ge_expr__CIResolverExpr(const CIResolverExpr *self,
+                                CIExpr *lhs,
+                                CIExpr *rhs)
 {
     RESOLVE_BASIC_BINARY_COMPARISON_EXPR(>=, CI_EXPR_BINARY_KIND_GREATER_EQ);
 }
@@ -1586,6 +1916,7 @@ determine_enum_variant_value__CIResolver(const CIResolverExpr *self,
 {
     return NEW_VARIANT(CIExpr,
                        literal,
+                       default__Location(self->parser->file->file_input.name),
                        NEW_VARIANT(CIExprLiteral,
                                    signed_int,
                                    enum_variant_decl->enum_variant->value));
@@ -1598,8 +1929,10 @@ resolve_identifier__CIResolver(const CIResolverExpr *self, CIExpr *identifier)
         // NOTE: Return 0 by default if the preprocessor encounters an
         // identifier, since this means that the macro named with this
         // identifier has not been defined.
-        return NEW_VARIANT(
-          CIExpr, literal, NEW_VARIANT(CIExprLiteral, signed_int, 0));
+        return NEW_VARIANT(CIExpr,
+                           literal,
+                           clone__Location(&identifier->location),
+                           NEW_VARIANT(CIExprLiteral, signed_int, 0));
     }
 
     ASSERT(self->parser && self->scope);
@@ -1608,7 +1941,9 @@ resolve_identifier__CIResolver(const CIResolverExpr *self, CIExpr *identifier)
       &identifier->identifier.id, self->parser->file);
 
     if (!identifier_decl) {
-        FAILED("identifier is not found");
+        FAILED__CIResolverExpr(
+          self, identifier, CI_ERROR_KIND_IDENTIFIER_IS_NOT_FOUND);
+        return POISONED_EXPR__CIResolverExpr(identifier);
     }
 
     switch (identifier_decl->kind) {
@@ -1616,7 +1951,9 @@ resolve_identifier__CIResolver(const CIResolverExpr *self, CIExpr *identifier)
             return determine_enum_variant_value__CIResolver(self,
                                                             identifier_decl);
         default:
-            FAILED("cannot use non-comptime value");
+            FAILED__CIResolverExpr(
+              self, identifier, CI_ERROR_KIND_CANNOT_USE_NON_COMPTIME_VALUE);
+            return POISONED_EXPR__CIResolverExpr(identifier);
     }
 }
 
@@ -1791,7 +2128,11 @@ resolve_data_type_size__CIResolverExpr(const CIResolverExpr *self,
     // option for any architecture or OS.
     switch (data_type->kind) {
         case CI_DATA_TYPE_KIND_ANY:
-            FAILED("cannot resolve size of any data type");
+            FAILED__CIResolverExpr(
+              self,
+              data_type,
+              CI_ERROR_KIND_CANNOT_RESOLVE_SIZE_OF_ANY_DATA_TYPE);
+            return 0;
         case CI_DATA_TYPE_KIND_ARRAY:
             ASSERT(data_type->array.kind == CI_DATA_TYPE_ARRAY_KIND_SIZED);
 
@@ -1830,7 +2171,9 @@ resolve_data_type_size__CIResolverExpr(const CIResolverExpr *self,
                     self, GET_PTR_RC(String, data_type->enum_.name));
 
                 if (enum_size_info.is_incomplete) {
-                    FAILED("enum type is incomplete");
+                    FAILED__CIResolverExpr(
+                      self, data_type, CI_ERROR_KIND_INCOMPLETE_ENUM_TYPE);
+                    return 0;
                 }
 
                 return enum_size_info.size;
@@ -1882,7 +2225,9 @@ resolve_data_type_size__CIResolverExpr(const CIResolverExpr *self,
               resolve_struct_size__CIResolverExpr(self, data_type);
 
             if (struct_size_info.is_incomplete) {
-                FAILED("struct type is incomplete");
+                FAILED__CIResolverExpr(
+                  self, data_type, CI_ERROR_KIND_INCOMPLETE_STRUCT_TYPE);
+                return 0;
             }
 
             return struct_size_info.size;
@@ -1898,10 +2243,14 @@ resolve_data_type_size__CIResolverExpr(const CIResolverExpr *self,
                   self, get_typedef_data_type__CIDecl(decl));
             }
 
-            FAILED("typedef type is incomplete");
+            FAILED__CIResolverExpr(
+              self, data_type, CI_ERROR_KIND_INCOMPLETE_TYPEDEF_TYPE);
+            return 0;
         }
         case CI_DATA_TYPE_KIND_TYPE_INFO:
-            FAILED("cannot resolve size of type info data type");
+            FAILED__CIResolverExpr(
+              self, data_type, CI_ERROR_KIND_CANNOT_RESOLVE_SIZE_OF_TYPE_INFO);
+            return 0;
         case CI_DATA_TYPE_KIND_UNSIGNED_INT:
             return sizeof(unsigned int);
         case CI_DATA_TYPE_KIND_UNSIGNED_CHAR:
@@ -1917,7 +2266,9 @@ resolve_data_type_size__CIResolverExpr(const CIResolverExpr *self,
               resolve_union_size__CIResolverExpr(self, data_type);
 
             if (union_size_info.is_incomplete) {
-                FAILED("union type is incomplete");
+                FAILED__CIResolverExpr(
+                  self, data_type, CI_ERROR_KIND_INCOMPLETE_UNION_TYPE);
+                return 0;
             }
 
             return union_size_info.size;
@@ -1934,7 +2285,9 @@ resolve_sizeof_expr__CIResolverExpr(const CIResolverExpr *self,
                                     const CIExpr *expr)
 {
     if (self->is_at_preprocessor_time) {
-        FAILED("sizeof is not expected in preprcoessor condition");
+        FAILED__CIResolverExpr(
+          self, expr, CI_ERROR_KIND_SIZEOF_IN_PREPROCESSOR_CONDITION);
+        return POISONED_EXPR__CIResolverExpr(expr);
     }
 
     ASSERT(expr->kind == CI_EXPR_KIND_SIZEOF);
@@ -1944,6 +2297,7 @@ resolve_sizeof_expr__CIResolverExpr(const CIResolverExpr *self,
             return NEW_VARIANT(
               CIExpr,
               literal,
+              clone__Location(&expr->location),
               NEW_VARIANT(CIExprLiteral,
                           unsigned_int,
                           resolve_data_type_size__CIResolverExpr(
@@ -1959,6 +2313,7 @@ resolve_sizeof_expr__CIResolverExpr(const CIResolverExpr *self,
             CIExpr *res =
               NEW_VARIANT(CIExpr,
                           literal,
+                          clone__Location(&expr->location),
                           NEW_VARIANT(CIExprLiteral,
                                       unsigned_int,
                                       resolve_data_type_size__CIResolverExpr(
@@ -1979,6 +2334,7 @@ resolve_sizeof_expr__CIResolverExpr(const CIResolverExpr *self,
             case CI_EXPR_LITERAL_KIND_BOOL:                                    \
                 return NEW_VARIANT(CIExpr,                                     \
                                    literal,                                    \
+                                   clone__Location(&rhs->location),            \
                                    NEW_VARIANT(CIExprLiteral,                  \
                                                signed_int,                     \
                                                op(Isize) rhs->literal.bool_)); \
@@ -1986,28 +2342,36 @@ resolve_sizeof_expr__CIResolverExpr(const CIResolverExpr *self,
                 return NEW_VARIANT(                                            \
                   CIExpr,                                                      \
                   literal,                                                     \
+                  clone__Location(&rhs->location),                             \
                   NEW_VARIANT(CIExprLiteral, char, op rhs->literal.char_));    \
             case CI_EXPR_LITERAL_KIND_FLOAT:                                   \
                 if (unary_kind == CI_EXPR_UNARY_KIND_BIT_NOT) {                \
-                    FAILED("~ operation is not expected for float");           \
+                    FAILED__CIResolverExpr(                                    \
+                      self, rhs, CI_ERROR_KIND_BIT_NOT_ON_FLOAT);              \
+                    return POISONED_EXPR__CIResolverExpr(rhs);                 \
                 }                                                              \
                                                                                \
                 return NEW_VARIANT(                                            \
                   CIExpr,                                                      \
                   literal,                                                     \
+                  clone__Location(&rhs->location),                             \
                   NEW_VARIANT(                                                 \
                     CIExprLiteral, float, op(Isize) rhs->literal.float_));     \
             case CI_EXPR_LITERAL_KIND_SIGNED_INT:                              \
                 return NEW_VARIANT(CIExpr,                                     \
                                    literal,                                    \
+                                   clone__Location(&rhs->location),            \
                                    NEW_VARIANT(CIExprLiteral,                  \
                                                signed_int,                     \
                                                op rhs->literal.signed_int));   \
             case CI_EXPR_LITERAL_KIND_STRING:                                  \
-                FAILED("this kind of operation is not expected for string");   \
+                FAILED__CIResolverExpr(                                        \
+                  self, rhs, CI_ERROR_KIND_UNEXPECTED_OPERATION_ON_STRING);    \
+                return POISONED_EXPR__CIResolverExpr(rhs);                     \
             case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:                            \
                 return NEW_VARIANT(CIExpr,                                     \
                                    literal,                                    \
+                                   clone__Location(&rhs->location),            \
                                    NEW_VARIANT(CIExprLiteral,                  \
                                                unsigned_int,                   \
                                                op rhs->literal.unsigned_int)); \
@@ -2015,53 +2379,69 @@ resolve_sizeof_expr__CIResolverExpr(const CIResolverExpr *self,
                 UNREACHABLE("unknown variant");                                \
         }                                                                      \
     } else {                                                                   \
-        FAILED("This expression is not resolvable at preprocessor-time");      \
+        FAILED__CIResolverExpr(                                                \
+          self,                                                                \
+          rhs,                                                                 \
+          CI_ERROR_KIND_EXPRESSION_NOT_RESOLVABLE_AT_PREPROCESSOR_TIME);       \
+        return POISONED_EXPR__CIResolverExpr(rhs);                             \
     }
 
 CIExpr *
-resolve_pre_increment_expr__CIResolverExpr(CIExpr *rhs)
+resolve_pre_increment_expr__CIResolverExpr(const CIResolverExpr *self,
+                                           CIExpr *rhs)
 {
-    FAILED("++rhs cannot be resolved at preprocessor-time");
+    FAILED__CIResolverExpr(
+      self, rhs, CI_ERROR_KIND_PRE_INCREMENT_AT_PREPROCESSOR_TIME);
+    return POISONED_EXPR__CIResolverExpr(rhs);
 }
 
 CIExpr *
-resolve_pre_decrement_expr__CIResolverExpr(CIExpr *rhs)
+resolve_pre_decrement_expr__CIResolverExpr(const CIResolverExpr *self,
+                                           CIExpr *rhs)
 {
-    FAILED("--rhs cannot be resolved at preprocessor-time");
+    FAILED__CIResolverExpr(
+      self, rhs, CI_ERROR_KIND_PRE_DECREMENT_AT_PREPROCESSOR_TIME);
+    return POISONED_EXPR__CIResolverExpr(rhs);
 }
 
 CIExpr *
-resolve_post_increment_expr__CIResolverExpr(CIExpr *rhs)
+resolve_post_increment_expr__CIResolverExpr(const CIResolverExpr *self,
+                                            CIExpr *rhs)
 {
-    FAILED("rhs++ cannot be resolved at preprocessor-time");
+    FAILED__CIResolverExpr(
+      self, rhs, CI_ERROR_KIND_POST_INCREMENT_AT_PREPROCESSOR_TIME);
+    return POISONED_EXPR__CIResolverExpr(rhs);
 }
 
 CIExpr *
-resolve_post_decrement_expr__CIResolverExpr(CIExpr *rhs)
+resolve_post_decrement_expr__CIResolverExpr(const CIResolverExpr *self,
+                                            CIExpr *rhs)
 {
-    FAILED("rhs-- cannot be resolved at preprocessor-time");
+    FAILED__CIResolverExpr(
+      self, rhs, CI_ERROR_KIND_POST_DECREMENT_AT_PREPROCESSOR_TIME);
+    return POISONED_EXPR__CIResolverExpr(rhs);
 }
 
 CIExpr *
-resolve_positive_expr__CIResolverExpr(CIExpr *rhs)
+resolve_positive_expr__CIResolverExpr(const CIResolverExpr *self, CIExpr *rhs)
 {
     RESOLVE_BASIC_ARITHMETIC_UNARY_EXPR(+, CI_EXPR_UNARY_KIND_POSITIVE);
 }
 
 CIExpr *
-resolve_negative_expr__CIResolverExpr(CIExpr *rhs)
+resolve_negative_expr__CIResolverExpr(const CIResolverExpr *self, CIExpr *rhs)
 {
     RESOLVE_BASIC_ARITHMETIC_UNARY_EXPR(-, CI_EXPR_UNARY_KIND_NEGATIVE);
 }
 
 CIExpr *
-resolve_bit_not_expr__CIResolverExpr(CIExpr *rhs)
+resolve_bit_not_expr__CIResolverExpr(const CIResolverExpr *self, CIExpr *rhs)
 {
     RESOLVE_BASIC_ARITHMETIC_UNARY_EXPR(~, CI_EXPR_UNARY_KIND_BIT_NOT);
 }
 
 CIExpr *
-resolve_not_expr__CIResolverExpr(CIExpr *rhs)
+resolve_not_expr__CIResolverExpr(const CIResolverExpr *self, CIExpr *rhs)
 {
     ASSERT(rhs);
 
@@ -2072,20 +2452,24 @@ resolve_not_expr__CIResolverExpr(CIExpr *rhs)
                     return NEW_VARIANT(
                       CIExpr,
                       literal,
+                      clone__Location(&rhs->location),
                       NEW_VARIANT(CIExprLiteral, bool, !rhs->literal.bool_));
                 case CI_EXPR_LITERAL_KIND_CHAR:
                     return NEW_VARIANT(
                       CIExpr,
                       literal,
+                      clone__Location(&rhs->location),
                       NEW_VARIANT(CIExprLiteral, char, !rhs->literal.char_));
                 case CI_EXPR_LITERAL_KIND_FLOAT:
                     return NEW_VARIANT(
                       CIExpr,
                       literal,
+                      clone__Location(&rhs->location),
                       NEW_VARIANT(CIExprLiteral, float, !rhs->literal.float_));
                 case CI_EXPR_LITERAL_KIND_SIGNED_INT:
                     return NEW_VARIANT(CIExpr,
                                        literal,
+                                       clone__Location(&rhs->location),
                                        NEW_VARIANT(CIExprLiteral,
                                                    signed_int,
                                                    !rhs->literal.signed_int));
@@ -2094,6 +2478,7 @@ resolve_not_expr__CIResolverExpr(CIExpr *rhs)
                 case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:
                     return NEW_VARIANT(CIExpr,
                                        literal,
+                                       clone__Location(&rhs->location),
                                        NEW_VARIANT(CIExprLiteral,
                                                    unsigned_int,
                                                    !rhs->literal.unsigned_int));
@@ -2103,20 +2488,28 @@ resolve_not_expr__CIResolverExpr(CIExpr *rhs)
             }
         default:
         default_expr_case:
-            FAILED("This expression is not resolvable at preprocessor-time");
+            FAILED__CIResolverExpr(
+              self,
+              rhs,
+              CI_ERROR_KIND_EXPRESSION_NOT_RESOLVABLE_AT_PREPROCESSOR_TIME);
+            return POISONED_EXPR__CIResolverExpr(rhs);
     }
 }
 
 CIExpr *
-resolve_dereference__CIResolverExpr(CIExpr *rhs)
+resolve_dereference__CIResolverExpr(const CIResolverExpr *self, CIExpr *rhs)
 {
-    FAILED("This expression is not resolvable at preprocessor-time");
+    FAILED__CIResolverExpr(
+      self, rhs, CI_ERROR_KIND_EXPRESSION_NOT_RESOLVABLE_AT_PREPROCESSOR_TIME);
+    return POISONED_EXPR__CIResolverExpr(rhs);
 }
 
 CIExpr *
-resolve_ref__CIResolverExpr(CIExpr *rhs)
+resolve_ref__CIResolverExpr(const CIResolverExpr *self, CIExpr *rhs)
 {
-    FAILED("This expression is not resolvable at preprocessor-time");
+    FAILED__CIResolverExpr(
+      self, rhs, CI_ERROR_KIND_EXPRESSION_NOT_RESOLVABLE_AT_PREPROCESSOR_TIME);
+    return POISONED_EXPR__CIResolverExpr(rhs);
 }
 
 CIExpr *
@@ -2127,43 +2520,43 @@ resolve_unary_expr__CIResolverExpr(const CIResolverExpr *self, CIExpr *expr)
 
     switch (expr->unary.kind) {
         case CI_EXPR_UNARY_KIND_PRE_INCREMENT:
-            res = resolve_pre_increment_expr__CIResolverExpr(rhs);
+            res = resolve_pre_increment_expr__CIResolverExpr(self, rhs);
 
             break;
         case CI_EXPR_UNARY_KIND_PRE_DECREMENT:
-            res = resolve_pre_decrement_expr__CIResolverExpr(rhs);
+            res = resolve_pre_decrement_expr__CIResolverExpr(self, rhs);
 
             break;
         case CI_EXPR_UNARY_KIND_POST_INCREMENT:
-            res = resolve_post_increment_expr__CIResolverExpr(rhs);
+            res = resolve_post_increment_expr__CIResolverExpr(self, rhs);
 
             break;
         case CI_EXPR_UNARY_KIND_POST_DECREMENT:
-            res = resolve_post_decrement_expr__CIResolverExpr(rhs);
+            res = resolve_post_decrement_expr__CIResolverExpr(self, rhs);
 
             break;
         case CI_EXPR_UNARY_KIND_POSITIVE:
-            res = resolve_positive_expr__CIResolverExpr(rhs);
+            res = resolve_positive_expr__CIResolverExpr(self, rhs);
 
             break;
         case CI_EXPR_UNARY_KIND_NEGATIVE:
-            res = resolve_negative_expr__CIResolverExpr(rhs);
+            res = resolve_negative_expr__CIResolverExpr(self, rhs);
 
             break;
         case CI_EXPR_UNARY_KIND_BIT_NOT:
-            res = resolve_bit_not_expr__CIResolverExpr(rhs);
+            res = resolve_bit_not_expr__CIResolverExpr(self, rhs);
 
             break;
         case CI_EXPR_UNARY_KIND_NOT:
-            res = resolve_not_expr__CIResolverExpr(rhs);
+            res = resolve_not_expr__CIResolverExpr(self, rhs);
 
             break;
         case CI_EXPR_UNARY_KIND_DEREFERENCE:
-            res = resolve_dereference__CIResolverExpr(rhs);
+            res = resolve_dereference__CIResolverExpr(self, rhs);
 
             break;
         case CI_EXPR_UNARY_KIND_REF:
-            res = resolve_ref__CIResolverExpr(rhs);
+            res = resolve_ref__CIResolverExpr(self, rhs);
 
             break;
         default:
@@ -2209,13 +2602,13 @@ run__CIResolverExpr(const CIResolverExpr *self, CIExpr *expr)
 
             switch (expr->binary.kind) {
                 case CI_EXPR_BINARY_KIND_AND:
-                    if (!is_true__CIResolverExpr(lhs)) {
+                    if (!is_true__CIResolverExpr(self, lhs)) {
                         return lhs;
                     }
 
                     break;
                 case CI_EXPR_BINARY_KIND_OR:
-                    if (is_true__CIResolverExpr(lhs)) {
+                    if (is_true__CIResolverExpr(self, lhs)) {
                         return lhs;
                     }
 
@@ -2229,75 +2622,79 @@ run__CIResolverExpr(const CIResolverExpr *self, CIExpr *expr)
 
             switch (expr->binary.kind) {
                 case CI_EXPR_BINARY_KIND_ADD:
-                    res = resolve_add_expr__CIResolverExpr(lhs, rhs);
+                    res = resolve_add_expr__CIResolverExpr(self, lhs, rhs);
 
                     break;
                 case CI_EXPR_BINARY_KIND_SUB:
-                    res = resolve_sub_expr__CIResolverExpr(lhs, rhs);
+                    res = resolve_sub_expr__CIResolverExpr(self, lhs, rhs);
 
                     break;
                 case CI_EXPR_BINARY_KIND_MUL:
-                    res = resolve_mul_expr__CIResolverExpr(lhs, rhs);
+                    res = resolve_mul_expr__CIResolverExpr(self, lhs, rhs);
 
                     break;
                 case CI_EXPR_BINARY_KIND_DIV:
-                    res = resolve_div_expr__CIResolverExpr(lhs, rhs);
+                    res = resolve_div_expr__CIResolverExpr(self, lhs, rhs);
 
                     break;
                 case CI_EXPR_BINARY_KIND_MOD:
-                    res = resolve_mod_expr__CIResolverExpr(lhs, rhs);
+                    res = resolve_mod_expr__CIResolverExpr(self, lhs, rhs);
 
                     break;
                 case CI_EXPR_BINARY_KIND_BIT_AND:
-                    res = resolve_bit_and_expr__CIResolverExpr(lhs, rhs);
+                    res = resolve_bit_and_expr__CIResolverExpr(self, lhs, rhs);
 
                     break;
                 case CI_EXPR_BINARY_KIND_BIT_OR:
-                    res = resolve_bit_or_expr__CIResolverExpr(lhs, rhs);
+                    res = resolve_bit_or_expr__CIResolverExpr(self, lhs, rhs);
 
                     break;
                 case CI_EXPR_BINARY_KIND_BIT_XOR:
-                    res = resolve_bit_xor_expr__CIResolverExpr(lhs, rhs);
+                    res = resolve_bit_xor_expr__CIResolverExpr(self, lhs, rhs);
 
                     break;
                 case CI_EXPR_BINARY_KIND_BIT_LSHIFT:
-                    res = resolve_bit_lshift_expr__CIResolverExpr(lhs, rhs);
+                    res =
+                      resolve_bit_lshift_expr__CIResolverExpr(self, lhs, rhs);
 
                     break;
                 case CI_EXPR_BINARY_KIND_BIT_RSHIFT:
-                    res = resolve_bit_rshift_expr__CIResolverExpr(lhs, rhs);
+                    res =
+                      resolve_bit_rshift_expr__CIResolverExpr(self, lhs, rhs);
 
                     break;
                 case CI_EXPR_BINARY_KIND_AND:
-                    res = resolve_logical_and_expr__CIResolverExpr(lhs, rhs);
+                    res =
+                      resolve_logical_and_expr__CIResolverExpr(self, lhs, rhs);
 
                     break;
                 case CI_EXPR_BINARY_KIND_OR:
-                    res = resolve_logical_or_expr__CIResolverExpr(lhs, rhs);
+                    res =
+                      resolve_logical_or_expr__CIResolverExpr(self, lhs, rhs);
 
                     break;
                 case CI_EXPR_BINARY_KIND_EQ:
-                    res = resolve_eq_expr__CIResolverExpr(lhs, rhs);
+                    res = resolve_eq_expr__CIResolverExpr(self, lhs, rhs);
 
                     break;
                 case CI_EXPR_BINARY_KIND_NE:
-                    res = resolve_ne_expr__CIResolverExpr(lhs, rhs);
+                    res = resolve_ne_expr__CIResolverExpr(self, lhs, rhs);
 
                     break;
                 case CI_EXPR_BINARY_KIND_LESS:
-                    res = resolve_lt_expr__CIResolverExpr(lhs, rhs);
+                    res = resolve_lt_expr__CIResolverExpr(self, lhs, rhs);
 
                     break;
                 case CI_EXPR_BINARY_KIND_LESS_EQ:
-                    res = resolve_le_expr__CIResolverExpr(lhs, rhs);
+                    res = resolve_le_expr__CIResolverExpr(self, lhs, rhs);
 
                     break;
                 case CI_EXPR_BINARY_KIND_GREATER:
-                    res = resolve_gt_expr__CIResolverExpr(lhs, rhs);
+                    res = resolve_gt_expr__CIResolverExpr(self, lhs, rhs);
 
                     break;
                 case CI_EXPR_BINARY_KIND_GREATER_EQ:
-                    res = resolve_ge_expr__CIResolverExpr(lhs, rhs);
+                    res = resolve_ge_expr__CIResolverExpr(self, lhs, rhs);
 
                     break;
                 default:
@@ -2311,7 +2708,11 @@ run__CIResolverExpr(const CIResolverExpr *self, CIExpr *expr)
         }
         case CI_EXPR_KIND_CAST:
             if (self->is_at_preprocessor_time) {
-                FAILED("cannot resolve cast at preprocessor time");
+                FAILED__CIResolverExpr(
+                  self,
+                  expr,
+                  CI_ERROR_KIND_CANNOT_RESOLVE_CAST_AT_PREPROCESSOR_TIME);
+                return POISONED_EXPR__CIResolverExpr(expr);
             }
 
             return run__CIResolverExpr(self, expr->cast.expr);
@@ -2323,7 +2724,11 @@ run__CIResolverExpr(const CIResolverExpr *self, CIExpr *expr)
             return resolve_identifier__CIResolver(self, expr);
         case CI_EXPR_KIND_INITIALIZER:
             if (self->is_at_preprocessor_time) {
-                FAILED("initializer is not expected at preprocessor time");
+                FAILED__CIResolverExpr(
+                  self,
+                  expr,
+                  CI_ERROR_KIND_UNEXPECTED_INITIALIZER_AT_PREPROCESSOR_TIME);
+                return POISONED_EXPR__CIResolverExpr(expr);
             }
 
             TODO("initializer");
@@ -2337,7 +2742,7 @@ run__CIResolverExpr(const CIResolverExpr *self, CIExpr *expr)
             CIExpr *resolved_cond =
               run__CIResolverExpr(self, expr->ternary.cond);
 
-            if (is_true__CIResolverExpr(resolved_cond)) {
+            if (is_true__CIResolverExpr(self, resolved_cond)) {
                 FREE(CIExpr, resolved_cond);
 
                 return run__CIResolverExpr(self, expr->ternary.if_);

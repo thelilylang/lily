@@ -32,6 +32,10 @@ typedef struct CIResolverExpr
 {
     const CIParser *parser; // const CIParser*? (&)
     const CIScope *scope;   // const CIScope*? (&)
+    // File and error count are held directly, rather than reached through
+    // `parser`, because `parser` is NULL when resolving at preprocessor-time.
+    const CIResultFile *file; // const CIResultFile* (&)
+    Usize *count_error;       // Usize* (&)
     bool is_at_preprocessor_time;
 } CIResolverExpr;
 
@@ -43,10 +47,14 @@ inline CONSTRUCTOR(CIResolverExpr,
                    CIResolverExpr,
                    const CIParser *parser,
                    const CIScope *scope,
+                   const CIResultFile *file,
+                   Usize *count_error,
                    bool is_at_preprocessor_time)
 {
     return (CIResolverExpr){ .parser = parser,
                              .scope = scope,
+                             .file = file,
+                             .count_error = count_error,
                              .is_at_preprocessor_time =
                                is_at_preprocessor_time };
 }
@@ -56,7 +64,7 @@ inline CONSTRUCTOR(CIResolverExpr,
  * @brief Check if the expression is true.
  */
 bool
-is_true__CIResolverExpr(CIExpr *expr);
+is_true__CIResolverExpr(const CIResolverExpr *self, CIExpr *expr);
 
 /**
  *
@@ -70,7 +78,8 @@ is_null__CIResolverExpr(CIExpr *expr);
  * @brief Convert resolved expression to literal integer value.
  */
 Isize
-to_literal_integer_value__CIResolverExpr(CIExpr *expr);
+to_literal_integer_value__CIResolverExpr(const CIResolverExpr *self,
+                                         CIExpr *expr);
 
 /**
  *

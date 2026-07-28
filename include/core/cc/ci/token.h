@@ -1633,7 +1633,16 @@ ref__CIToken(CIToken *self)
 #ifdef ENV_DEBUG
 char *
 IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self);
+
 #endif
+/**
+ *
+ * @brief Get how a token kind is spelled in the source, e.g. "`;`" for
+ * CI_TOKEN_KIND_SEMICOLON.
+ * @return A static string. Kinds with no fixed spelling get a generic name.
+ */
+char *
+to_spelling__CITokenKind(enum CITokenKind self);
 
 /**
  *

@@ -1422,10 +1422,14 @@ build_struct_or_union_data_type__CIDeclStructField(
 
     return parent->kind == CI_DECL_STRUCT_FIELD_KIND_NAMED_STRUCT ||
                parent->kind == CI_DECL_STRUCT_FIELD_KIND_ANONYMOUS_STRUCT
-             ? NEW_VARIANT(
-                 CIDataType, struct, NEW(CIDataTypeStruct, NULL, NULL, fields))
-             : NEW_VARIANT(
-                 CIDataType, union, NEW(CIDataTypeUnion, NULL, NULL, fields));
+             ? NEW_VARIANT(CIDataType,
+                           struct,
+                           SYNTHETIC_LOCATION__CI(),
+                           NEW(CIDataTypeStruct, NULL, NULL, fields))
+             : NEW_VARIANT(CIDataType,
+                           union,
+                           SYNTHETIC_LOCATION__CI(),
+                           NEW(CIDataTypeUnion, NULL, NULL, fields));
 }
 
 CIDataType *
@@ -2055,10 +2059,15 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeQualifier, int data_type_qualifier_flag)
 }
 #endif
 
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, array, CIDataTypeArray array)
+VARIANT_CONSTRUCTOR(CIDataType *,
+                    CIDataType,
+                    array,
+                    Location location,
+                    CIDataTypeArray array)
 {
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
+    self->location = location;
     self->kind = CI_DATA_TYPE_KIND_ARRAY;
     self->ref_count = 0;
     self->array = array;
@@ -2068,10 +2077,15 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, array, CIDataTypeArray array)
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, builtin, Usize builtin)
+VARIANT_CONSTRUCTOR(CIDataType *,
+                    CIDataType,
+                    builtin,
+                    Location location,
+                    Usize builtin)
 {
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
+    self->location = location;
     self->kind = CI_DATA_TYPE_KIND_BUILTIN;
     self->ref_count = 0;
     self->builtin = builtin;
@@ -2081,10 +2095,15 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, builtin, Usize builtin)
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, enum, CIDataTypeEnum enum_)
+VARIANT_CONSTRUCTOR(CIDataType *,
+                    CIDataType,
+                    enum,
+                    Location location,
+                    CIDataTypeEnum enum_)
 {
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
+    self->location = location;
     self->kind = CI_DATA_TYPE_KIND_ENUM;
     self->ref_count = 0;
     self->enum_ = enum_;
@@ -2097,10 +2116,12 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, enum, CIDataTypeEnum enum_)
 VARIANT_CONSTRUCTOR(CIDataType *,
                     CIDataType,
                     function,
+                    Location location,
                     CIDataTypeFunction function)
 {
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
+    self->location = location;
     self->kind = CI_DATA_TYPE_KIND_FUNCTION;
     self->ref_count = 0;
     self->function = function;
@@ -2110,10 +2131,15 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, generic, Rc *generic)
+VARIANT_CONSTRUCTOR(CIDataType *,
+                    CIDataType,
+                    generic,
+                    Location location,
+                    Rc *generic)
 {
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
+    self->location = location;
     self->kind = CI_DATA_TYPE_KIND_GENERIC;
     self->ref_count = 0;
     self->generic = ref__Rc(generic);
@@ -2123,10 +2149,15 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, generic, Rc *generic)
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, ptr, CIDataTypePtr ptr)
+VARIANT_CONSTRUCTOR(CIDataType *,
+                    CIDataType,
+                    ptr,
+                    Location location,
+                    CIDataTypePtr ptr)
 {
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
+    self->location = location;
     self->kind = CI_DATA_TYPE_KIND_PTR;
     self->ref_count = 0;
     self->ptr = ptr;
@@ -2136,10 +2167,15 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, ptr, CIDataTypePtr ptr)
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, struct, CIDataTypeStruct struct_)
+VARIANT_CONSTRUCTOR(CIDataType *,
+                    CIDataType,
+                    struct,
+                    Location location,
+                    CIDataTypeStruct struct_)
 {
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
+    self->location = location;
     self->kind = CI_DATA_TYPE_KIND_STRUCT;
     self->ref_count = 0;
     self->struct_ = struct_;
@@ -2152,10 +2188,12 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, struct, CIDataTypeStruct struct_)
 VARIANT_CONSTRUCTOR(CIDataType *,
                     CIDataType,
                     typedef,
+                    Location location,
                     CIDataTypeTypedef typedef_)
 {
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
+    self->location = location;
     self->kind = CI_DATA_TYPE_KIND_TYPEDEF;
     self->ref_count = 0;
     self->typedef_ = typedef_;
@@ -2165,10 +2203,15 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, union, CIDataTypeUnion union_)
+VARIANT_CONSTRUCTOR(CIDataType *,
+                    CIDataType,
+                    union,
+                    Location location,
+                    CIDataTypeUnion union_)
 {
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
+    self->location = location;
     self->kind = CI_DATA_TYPE_KIND_UNION;
     self->ref_count = 0;
     self->union_ = union_;
@@ -2178,10 +2221,14 @@ VARIANT_CONSTRUCTOR(CIDataType *, CIDataType, union, CIDataTypeUnion union_)
     return self;
 }
 
-CONSTRUCTOR(CIDataType *, CIDataType, enum CIDataTypeKind kind)
+CONSTRUCTOR(CIDataType *,
+            CIDataType,
+            Location location,
+            enum CIDataTypeKind kind)
 {
     CIDataType *self = lily_malloc(sizeof(CIDataType));
 
+    self->location = location;
     self->kind = kind;
     self->ref_count = 0;
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
@@ -2202,6 +2249,7 @@ clone__CIDataType(const CIDataType *self)
                     res = NEW_VARIANT(
                       CIDataType,
                       array,
+                      SYNTHETIC_LOCATION__CI(),
                       NEW_VARIANT(CIDataTypeArray,
                                   none,
                                   clone__CIDataType(self->array.data_type),
@@ -2217,6 +2265,7 @@ clone__CIDataType(const CIDataType *self)
                     res = NEW_VARIANT(
                       CIDataType,
                       array,
+                      SYNTHETIC_LOCATION__CI(),
                       NEW_VARIANT(CIDataTypeArray,
                                   sized,
                                   clone__CIDataType(self->array.data_type),
@@ -2233,7 +2282,8 @@ clone__CIDataType(const CIDataType *self)
 
             break;
         case CI_DATA_TYPE_KIND_BUILTIN:
-            res = NEW_VARIANT(CIDataType, builtin, self->builtin);
+            res = NEW_VARIANT(
+              CIDataType, builtin, SYNTHETIC_LOCATION__CI(), self->builtin);
 
             break;
         case CI_DATA_TYPE_KIND_ENUM: {
@@ -2251,6 +2301,7 @@ clone__CIDataType(const CIDataType *self)
 
             res = NEW_VARIANT(CIDataType,
                               enum,
+                              SYNTHETIC_LOCATION__CI(),
                               NEW(CIDataTypeEnum,
                                   self->enum_.name,
                                   variants,
@@ -2272,6 +2323,7 @@ clone__CIDataType(const CIDataType *self)
             res = NEW_VARIANT(
               CIDataType,
               function,
+              SYNTHETIC_LOCATION__CI(),
               NEW(CIDataTypeFunction,
                   self->function.name,
                   NEW(CIDeclFunctionParams, params),
@@ -2282,12 +2334,14 @@ clone__CIDataType(const CIDataType *self)
             break;
         }
         case CI_DATA_TYPE_KIND_GENERIC:
-            res = NEW_VARIANT(CIDataType, generic, self->generic);
+            res = NEW_VARIANT(
+              CIDataType, generic, SYNTHETIC_LOCATION__CI(), self->generic);
 
             break;
         case CI_DATA_TYPE_KIND_PTR:
             res = NEW_VARIANT(CIDataType,
                               ptr,
+                              SYNTHETIC_LOCATION__CI(),
                               NEW(CIDataTypePtr,
                                   self->ptr.name,
                                   clone__CIDataType(self->ptr.data_type)));
@@ -2303,6 +2357,7 @@ clone__CIDataType(const CIDataType *self)
             res = NEW_VARIANT(
               CIDataType,
               struct,
+              SYNTHETIC_LOCATION__CI(),
               NEW(CIDataTypeStruct,
                   self->struct_.name,
                   self->struct_.generic_params
@@ -2316,6 +2371,7 @@ clone__CIDataType(const CIDataType *self)
             res = NEW_VARIANT(
               CIDataType,
               typedef,
+              SYNTHETIC_LOCATION__CI(),
               NEW(CIDataTypeTypedef,
                   self->typedef_.name,
                   self->typedef_.generic_params
@@ -2333,6 +2389,7 @@ clone__CIDataType(const CIDataType *self)
             res = NEW_VARIANT(
               CIDataType,
               union,
+              SYNTHETIC_LOCATION__CI(),
               NEW(CIDataTypeUnion,
                   self->union_.name,
                   self->union_.generic_params
@@ -2343,7 +2400,7 @@ clone__CIDataType(const CIDataType *self)
             break;
         }
         default:
-            res = NEW(CIDataType, self->kind);
+            res = NEW(CIDataType, SYNTHETIC_LOCATION__CI(), self->kind);
     }
 
     set_context__CIDataType(res, self->ctx);
@@ -2785,8 +2842,10 @@ serialize_name__CIDataType(const CIDataType *self,
 CIDataType *
 wrap_ptr__CIDataType(CIDataType *self, int ptr_ctx)
 {
-    CIDataType *res =
-      NEW_VARIANT(CIDataType, ptr, NEW(CIDataTypePtr, NULL, self));
+    CIDataType *res = NEW_VARIANT(CIDataType,
+                                  ptr,
+                                  SYNTHETIC_LOCATION__CI(),
+                                  NEW(CIDataTypePtr, NULL, self));
 
     set_context__CIDataType(res, ptr_ctx);
 
@@ -4046,12 +4105,14 @@ DESTRUCTOR(CIDeclVariable, const CIDeclVariable *self)
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     enum,
+                    Location location,
                     int storage_class_flag,
                     bool is_prototype,
                     CIDeclEnum enum_)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
 
+    self->location = location;
     self->kind = CI_DECL_KIND_ENUM;
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = is_prototype;
@@ -4064,11 +4125,13 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     enum_variant,
+                    Location location,
                     int storage_class_flag,
                     CIDeclEnumVariant *enum_variant)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
 
+    self->location = location;
     self->kind = CI_DECL_KIND_ENUM_VARIANT;
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = false;
@@ -4081,12 +4144,14 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     function,
+                    Location location,
                     int storage_class_flag,
                     bool is_prototype,
                     CIDeclFunction function)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
 
+    self->location = location;
     self->kind = CI_DECL_KIND_FUNCTION;
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = is_prototype;
@@ -4099,6 +4164,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     function_gen,
+                    Location location,
                     CIDecl *function_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
@@ -4107,6 +4173,9 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     ASSERT(function_decl->kind == CI_DECL_KIND_FUNCTION);
 
     CIDecl *self = lily_malloc(sizeof(CIDecl));
+
+    self->location = location;
+
     const CIDeclFunction *f = &function_decl->function;
 
     self->kind = CI_DECL_KIND_FUNCTION_GEN;
@@ -4127,10 +4196,15 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIDecl *, CIDecl, label, CIDeclLabel label)
+VARIANT_CONSTRUCTOR(CIDecl *,
+                    CIDecl,
+                    label,
+                    Location location,
+                    CIDeclLabel label)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
 
+    self->location = location;
     self->kind = CI_DECL_KIND_LABEL;
     self->storage_class_flag = CI_STORAGE_CLASS_NONE;
     self->is_prototype = false;
@@ -4143,12 +4217,14 @@ VARIANT_CONSTRUCTOR(CIDecl *, CIDecl, label, CIDeclLabel label)
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     struct,
+                    Location location,
                     int storage_class_flag,
                     bool is_prototype,
                     CIDeclStruct struct_)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
 
+    self->location = location;
     self->kind = CI_DECL_KIND_STRUCT;
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = is_prototype;
@@ -4161,12 +4237,16 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     struct_gen,
+                    Location location,
                     CIDecl *struct_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
                     CIDeclStructFields *fields)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
+
+    self->location = location;
+
     const CIDeclStruct *s = &struct_decl->struct_;
 
     self->kind = CI_DECL_KIND_STRUCT_GEN;
@@ -4179,10 +4259,15 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIDecl *, CIDecl, typedef, CIDeclTypedef typedef_)
+VARIANT_CONSTRUCTOR(CIDecl *,
+                    CIDecl,
+                    typedef,
+                    Location location,
+                    CIDeclTypedef typedef_)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
 
+    self->location = location;
     self->kind = CI_DECL_KIND_TYPEDEF;
     self->storage_class_flag = CI_STORAGE_CLASS_NONE;
     self->is_prototype = true;
@@ -4195,12 +4280,16 @@ VARIANT_CONSTRUCTOR(CIDecl *, CIDecl, typedef, CIDeclTypedef typedef_)
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     typedef_gen,
+                    Location location,
                     CIDecl *typedef_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
                     CIDataType *data_type)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
+
+    self->location = location;
+
     const CIDeclTypedef *t = &typedef_decl->typedef_;
 
     self->kind = CI_DECL_KIND_TYPEDEF_GEN;
@@ -4216,12 +4305,14 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     union,
+                    Location location,
                     int storage_class_flag,
                     bool is_prototype,
                     CIDeclUnion union_)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
 
+    self->location = location;
     self->kind = CI_DECL_KIND_UNION;
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = is_prototype;
@@ -4234,12 +4325,16 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     union_gen,
+                    Location location,
                     CIDecl *union_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
                     CIDeclStructFields *fields)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
+
+    self->location = location;
+
     const CIDeclUnion *u = &union_decl->union_;
 
     self->kind = CI_DECL_KIND_UNION_GEN;
@@ -4255,12 +4350,14 @@ VARIANT_CONSTRUCTOR(CIDecl *,
 VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl,
                     variable,
+                    Location location,
                     int storage_class_flag,
                     bool is_prototype,
                     CIDeclVariable variable)
 {
     CIDecl *self = lily_malloc(sizeof(CIDecl));
 
+    self->location = location;
     self->kind = CI_DECL_KIND_VARIABLE;
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = is_prototype;
@@ -5580,20 +5677,26 @@ IMPL_FOR_DEBUG(to_string, CIExprKind, enum CIExprKind self)
 }
 #endif
 
-CONSTRUCTOR(CIExpr *, CIExpr, enum CIExprKind kind)
+CONSTRUCTOR(CIExpr *, CIExpr, Location location, enum CIExprKind kind)
 {
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
+    self->location = location;
     self->kind = kind;
     self->ref_count = 0;
 
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, alignof, CIExpr *alignof_)
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    alignof,
+                    Location location,
+                    CIExpr *alignof_)
 {
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
+    self->location = location;
     self->kind = CI_EXPR_KIND_ALIGNOF;
     self->ref_count = 0;
     self->alignof_ = alignof_;
@@ -5604,10 +5707,12 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, alignof, CIExpr *alignof_)
 VARIANT_CONSTRUCTOR(CIExpr *,
                     CIExpr,
                     array_access,
+                    Location location,
                     CIExprArrayAccess array_access)
 {
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
+    self->location = location;
     self->kind = CI_EXPR_KIND_ARRAY_ACCESS;
     self->ref_count = 0;
     self->array_access = array_access;
@@ -5615,10 +5720,15 @@ VARIANT_CONSTRUCTOR(CIExpr *,
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, binary, CIExprBinary binary)
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    binary,
+                    Location location,
+                    CIExprBinary binary)
 {
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
+    self->location = location;
     self->kind = CI_EXPR_KIND_BINARY;
     self->ref_count = 0;
     self->binary = binary;
@@ -5626,10 +5736,11 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, binary, CIExprBinary binary)
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, cast, CIExprCast cast)
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, cast, Location location, CIExprCast cast)
 {
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
+    self->location = location;
     self->kind = CI_EXPR_KIND_CAST;
     self->ref_count = 0;
     self->cast = cast;
@@ -5637,10 +5748,15 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, cast, CIExprCast cast)
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, data_type, CIDataType *data_type)
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    data_type,
+                    Location location,
+                    CIDataType *data_type)
 {
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
+    self->location = location;
     self->kind = CI_EXPR_KIND_DATA_TYPE;
     self->ref_count = 0;
     self->data_type = data_type;
@@ -5651,10 +5767,12 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, data_type, CIDataType *data_type)
 VARIANT_CONSTRUCTOR(CIExpr *,
                     CIExpr,
                     function_call,
+                    Location location,
                     CIExprFunctionCall function_call)
 {
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
+    self->location = location;
     self->kind = CI_EXPR_KIND_FUNCTION_CALL;
     self->ref_count = 0;
     self->function_call = function_call;
@@ -5665,10 +5783,12 @@ VARIANT_CONSTRUCTOR(CIExpr *,
 VARIANT_CONSTRUCTOR(CIExpr *,
                     CIExpr,
                     function_call_builtin,
+                    Location location,
                     CIExprFunctionCallBuiltin function_call_builtin)
 {
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
+    self->location = location;
     self->kind = CI_EXPR_KIND_FUNCTION_CALL_BUILTIN;
     self->ref_count = 0;
     self->function_call_builtin = function_call_builtin;
@@ -5676,10 +5796,15 @@ VARIANT_CONSTRUCTOR(CIExpr *,
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, grouping, CIExpr *grouping)
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    grouping,
+                    Location location,
+                    CIExpr *grouping)
 {
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
+    self->location = location;
     self->kind = CI_EXPR_KIND_GROUPING;
     self->ref_count = 0;
     self->grouping = grouping;
@@ -5687,10 +5812,15 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, grouping, CIExpr *grouping)
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, identifier, CIExprIdentifier identifier)
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    identifier,
+                    Location location,
+                    CIExprIdentifier identifier)
 {
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
+    self->location = location;
     self->kind = CI_EXPR_KIND_IDENTIFIER;
     self->ref_count = 0;
     self->identifier = identifier;
@@ -5701,10 +5831,12 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, identifier, CIExprIdentifier identifier)
 VARIANT_CONSTRUCTOR(CIExpr *,
                     CIExpr,
                     initializer,
+                    Location location,
                     CIExprInitializer initializer)
 {
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
+    self->location = location;
     self->kind = CI_EXPR_KIND_INITIALIZER;
     self->ref_count = 0;
     self->initializer = initializer;
@@ -5712,10 +5844,15 @@ VARIANT_CONSTRUCTOR(CIExpr *,
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, literal, CIExprLiteral literal)
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    literal,
+                    Location location,
+                    CIExprLiteral literal)
 {
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
+    self->location = location;
     self->kind = CI_EXPR_KIND_LITERAL;
     self->ref_count = 0;
     self->literal = literal;
@@ -5723,10 +5860,15 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, literal, CIExprLiteral literal)
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, sizeof, CIExpr *sizeof_)
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    sizeof,
+                    Location location,
+                    CIExpr *sizeof_)
 {
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
+    self->location = location;
     self->kind = CI_EXPR_KIND_SIZEOF;
     self->ref_count = 0;
     self->sizeof_ = sizeof_;
@@ -5734,10 +5876,15 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, sizeof, CIExpr *sizeof_)
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, ternary, CIExprTernary ternary)
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    ternary,
+                    Location location,
+                    CIExprTernary ternary)
 {
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
+    self->location = location;
     self->kind = CI_EXPR_KIND_TERNARY;
     self->ref_count = 0;
     self->ternary = ternary;
@@ -5745,10 +5892,15 @@ VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, ternary, CIExprTernary ternary)
     return self;
 }
 
-VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, unary, CIExprUnary unary)
+VARIANT_CONSTRUCTOR(CIExpr *,
+                    CIExpr,
+                    unary,
+                    Location location,
+                    CIExprUnary unary)
 {
     CIExpr *self = lily_malloc(sizeof(CIExpr));
 
+    self->location = location;
     self->kind = CI_EXPR_KIND_UNARY;
     self->ref_count = 0;
     self->unary = unary;

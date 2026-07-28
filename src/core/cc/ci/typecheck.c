@@ -24,10 +24,20 @@
 
 #include <base/assert.h>
 
+#include <core/cc/ci/diagnostic/emit.h>
 #include <core/cc/ci/infer.h>
 #include <core/cc/ci/resolver/data_type.h>
 #include <core/cc/ci/resolver/data_type_access.h>
 #include <core/cc/ci/typecheck.h>
+
+// Emit a located error on `node` and count it, without stopping the typecheck:
+// the caller returns from the current check so that the sibling checks still
+// run and a single pass reports more than one error.
+#define FAILED__CITypecheck(self, node, error_kind) \
+    EMIT_ERROR__CI(&(self)->file->file_input,       \
+                   &(node)->location,               \
+                   NEW(CIError, error_kind),        \
+                   &(self)->file->file_analysis->count_error)
 
 struct CurrentSwitch
 {
@@ -276,7 +286,7 @@ typecheck_for_stmt__CITypecheck(const CITypecheck *self,
 /// @param goto_ const String* (&)
 static void
 typecheck_goto_stmt__CITypecheck(const CITypecheck *self,
-                                 const String *goto_,
+                                 const CIStmt *goto_stmt,
                                  struct CITypecheckContext *typecheck_ctx);
 
 /// @param return_ const CIExpr*? (&)
@@ -408,7 +418,10 @@ typecheck_enum_decl__CITypecheck(CITypecheck *self,
           false,
           typecheck_ctx->current_generic_params.called,
           typecheck_ctx->current_generic_params.decl)) {
-        FAILED("expected integer data type");
+        FAILED__CITypecheck(
+          self, enum_decl, CI_ERROR_KIND_EXPECTED_INTEGER_DATA_TYPE);
+
+        return;
     }
 }
 
@@ -567,7 +580,8 @@ perform_typecheck__CITypecheck(const CITypecheck *self,
             FREE(CIDataType, resolved_given_data_type);
 
             if (!can_try) {
-                FAILED("data types don't match");
+                FAILED__CITypecheck(
+                  self, given_data_type, CI_ERROR_KIND_DATA_TYPES_DONT_MATCH);
             }
 
             return false;
@@ -600,14 +614,18 @@ typecheck_array_access_expr__CITypecheck(
           true,
           typecheck_ctx->current_generic_params.called,
           typecheck_ctx->current_generic_params.decl)) {
-        FAILED("expected array compatible data type");
+        FAILED__CITypecheck(self,
+                            array_access_expr->array,
+                            CI_ERROR_KIND_EXPECTED_ARRAY_COMPATIBLE_DATA_TYPE);
+
+        return;
     }
 
     typecheck_expr__CITypecheck(
       self, expected_array_expr_dt, array_access_expr->array, typecheck_ctx);
 
     CIDataType *expected_access_expr_dt =
-      NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
+      NEW(CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_INT);
 
     typecheck_expr__CITypecheck(
       self, expected_access_expr_dt, array_access_expr->access, typecheck_ctx);
@@ -677,8 +695,12 @@ typecheck_binary_arithmetic_expr__CITypecheck(
 {
     if (!typecheck_binary_integer_or_float_compatible_expr__CITypecheck(
           self, left_dt, right_dt, typecheck_ctx)) {
-        FAILED("expected integer or float compatible data type for arithmetic "
-               "operation");
+        FAILED__CITypecheck(
+          self,
+          left_dt,
+          CI_ERROR_KIND_EXPECTED_INTEGER_OR_FLOAT_FOR_ARITHMETIC_OPERATION);
+
+        return;
     }
 }
 
@@ -690,7 +712,10 @@ typecheck_binary_bit_expr__CITypecheck(const CITypecheck *self,
 {
     if (!typecheck_binary_integer_compatible_expr__CITypecheck(
           self, left_dt, right_dt, typecheck_ctx)) {
-        FAILED("expected integer compatible data type for bit operation");
+        FAILED__CITypecheck(
+          self, left_dt, CI_ERROR_KIND_EXPECTED_INTEGER_FOR_BIT_OPERATION);
+
+        return;
     }
 }
 
@@ -703,7 +728,10 @@ typecheck_binary_logical_expr__CITypecheck(
 {
     if (!typecheck_binary_integer_compatible_expr__CITypecheck(
           self, left_dt, right_dt, typecheck_ctx)) {
-        FAILED("expected integer compatible data type for logical operation");
+        FAILED__CITypecheck(
+          self, left_dt, CI_ERROR_KIND_EXPECTED_INTEGER_FOR_LOGICAL_OPERATION);
+
+        return;
     }
 }
 
@@ -716,8 +744,12 @@ typecheck_binary_comparison_expr__CITypecheck(
 {
     if (!typecheck_binary_integer_or_float_compatible_expr__CITypecheck(
           self, left_dt, right_dt, typecheck_ctx)) {
-        FAILED("expected integer or float compatible data type for comparison "
-               "operation");
+        FAILED__CITypecheck(
+          self,
+          left_dt,
+          CI_ERROR_KIND_EXPECTED_INTEGER_OR_FLOAT_FOR_COMPARISON_OPERATION);
+
+        return;
     }
 }
 
@@ -802,7 +834,12 @@ typecheck_binary_expr__CITypecheck(const CITypecheck *self,
                   false,
                   typecheck_ctx->current_generic_params.called,
                   typecheck_ctx->current_generic_params.decl)) {
-                FAILED("cannot assign expression to array data type");
+                FAILED__CITypecheck(
+                  self,
+                  binary->left,
+                  CI_ERROR_KIND_CANNOT_ASSIGN_TO_ARRAY_DATA_TYPE);
+
+                return;
             }
         case CI_EXPR_BINARY_KIND_ASSIGN_ADD:
         case CI_EXPR_BINARY_KIND_ASSIGN_SUB:
@@ -838,7 +875,12 @@ typecheck_initializer_expr_for_array_dt__CITypecheck(
           get__Vec(initializer->items, i);
 
         if (initializer_item->path) {
-            FAILED("path is not expected for the initialization of array");
+            FAILED__CITypecheck(
+              self,
+              expected_data_type,
+              CI_ERROR_KIND_UNEXPECTED_PATH_IN_ARRAY_INITIALIZATION);
+
+            return;
         }
 
         typecheck_expr__CITypecheck(
@@ -865,7 +907,10 @@ typecheck_struct_or_union_initializer_item__CITypecheck(
           typecheck_ctx->current_generic_params.decl);
 
         if (!(*current_field_ref)) {
-            FAILED("field not found");
+            FAILED__CITypecheck(
+              self, initializer_item->value, CI_ERROR_KIND_FIELD_NOT_FOUND);
+
+            return;
         }
 
         current_field_dt =
@@ -878,7 +923,12 @@ typecheck_struct_or_union_initializer_item__CITypecheck(
     }
 
     if (!(*current_field_ref)) {
-        FAILED("excess elements in struct or union initializer");
+        FAILED__CITypecheck(
+          self,
+          initializer_item->value,
+          CI_ERROR_KIND_EXCESS_ELEMENTS_IN_STRUCT_OR_UNION_INITIALIZER);
+
+        return;
     }
 
     if (initializer_item->value->kind != CI_EXPR_KIND_INITIALIZER) {
@@ -888,7 +938,10 @@ typecheck_struct_or_union_initializer_item__CITypecheck(
             : *current_field_ref;
 
         if (!(*current_field_ref)) {
-            FAILED("there are no fields");
+            FAILED__CITypecheck(
+              self, initializer_item->value, CI_ERROR_KIND_NO_FIELDS);
+
+            return;
         }
     }
 
@@ -953,7 +1006,11 @@ typecheck_initializer_expr_for_union_dt__CITypecheck(
   struct CITypecheckContext *typecheck_ctx)
 {
     if (initializer->items->len > 1) {
-        FAILED("excess elements in union initializer");
+        FAILED__CITypecheck(self,
+                            expected_data_type,
+                            CI_ERROR_KIND_EXCESS_ELEMENTS_IN_UNION_INITIALIZER);
+
+        return;
     }
 
     const CIDeclStructFields *fields =
@@ -1009,7 +1066,12 @@ typecheck_initializer_expr__CITypecheck(
 
             break;
         default:
-            FAILED("this data type is not expected with initializer");
+            FAILED__CITypecheck(
+              self,
+              expected_data_type,
+              CI_ERROR_KIND_UNEXPECTED_DATA_TYPE_WITH_INITIALIZER);
+
+            return;
     }
 
     FREE(CIDataType, resolved_expected_data_type);
@@ -1035,7 +1097,10 @@ typecheck_function_call_expr_params__CITypecheck(
     if (decl_function_call_params_len != called_params_len &&
         (is_variadic &&
          called_params_len < decl_function_call_params_len - 1)) {
-        FAILED("number of params don't matched");
+        FAILED__CITypecheck(
+          self, decl_function_call, CI_ERROR_KIND_PARAMS_COUNT_MISMATCH);
+
+        return;
     }
 
     struct CurrentGenericParams old_current_generic_params =
@@ -1066,8 +1131,8 @@ typecheck_function_call_expr_params__CITypecheck(
                 // parameter doesn't require a specific data type, but we do
                 // need to perform a typecheck on the child expression of the
                 // "called_param" expression.
-                CIDataType *expected_data_type =
-                  NEW(CIDataType, CI_DATA_TYPE_KIND_ANY);
+                CIDataType *expected_data_type = NEW(
+                  CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_ANY);
 
                 typecheck_expr__CITypecheck(
                   self, expected_data_type, called_param, typecheck_ctx);
@@ -1126,7 +1191,11 @@ typecheck_function_call_builtin_expr_params__CITypecheck(
   struct CITypecheckContext *typecheck_ctx)
 {
     if (called_params->len != decl_function_call_builtin->params->len) {
-        FAILED("number of params don't matched");
+        FAILED__CITypecheck(self,
+                            typecheck_ctx->current_decl,
+                            CI_ERROR_KIND_PARAMS_COUNT_MISMATCH);
+
+        return;
     }
 
     for (Usize i = 0; i < decl_function_call_builtin->params->len; ++i) {
@@ -1173,7 +1242,10 @@ typecheck_ternary_expr__CITypecheck(const CITypecheck *self,
           true,
           typecheck_ctx->current_generic_params.called,
           typecheck_ctx->current_generic_params.decl)) {
-        FAILED("expected interger");
+        FAILED__CITypecheck(
+          self, ternary->cond, CI_ERROR_KIND_EXPECTED_INTEGER);
+
+        return;
     }
 
     FREE(CIDataType, cond_dt);
@@ -1227,8 +1299,12 @@ typecheck_unary_expr__CITypecheck(const CITypecheck *self,
                     right_dt,
                     typecheck_ctx->current_generic_params.called,
                     typecheck_ctx->current_generic_params.decl))) {
-                FAILED("this operation is not allowed for this data type, "
-                       "expected float or integer");
+                FAILED__CITypecheck(
+                  self,
+                  unary->expr,
+                  CI_ERROR_KIND_OPERATION_EXPECTED_FLOAT_OR_INTEGER);
+
+                return;
             }
 
             break;
@@ -1240,8 +1316,10 @@ typecheck_unary_expr__CITypecheck(const CITypecheck *self,
                   true,
                   typecheck_ctx->current_generic_params.called,
                   typecheck_ctx->current_generic_params.decl)) {
-                FAILED("this operation is not allowed for this data type, "
-                       "expected integer");
+                FAILED__CITypecheck(
+                  self, unary->expr, CI_ERROR_KIND_OPERATION_EXPECTED_INTEGER);
+
+                return;
             }
 
             break;
@@ -1251,8 +1329,10 @@ typecheck_unary_expr__CITypecheck(const CITypecheck *self,
                   right_dt,
                   typecheck_ctx->current_generic_params.called,
                   typecheck_ctx->current_generic_params.decl)) {
-                FAILED("this operation is not allowed for this data type, "
-                       "expected pointer");
+                FAILED__CITypecheck(
+                  self, unary->expr, CI_ERROR_KIND_OPERATION_EXPECTED_POINTER);
+
+                return;
             }
 
             break;
@@ -1301,7 +1381,8 @@ typecheck_expr__CITypecheck(const CITypecheck *self,
             // To allow cast (void) from all types, we expect any data type.
             CIDataType *expected_dt =
               given_expr->cast.data_type->kind == CI_DATA_TYPE_KIND_VOID
-                ? NEW(CIDataType, CI_DATA_TYPE_KIND_ANY)
+                ? NEW(
+                    CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_ANY)
                 : ref__CIDataType(given_expr->cast.data_type);
 
             typecheck_expr__CITypecheck(
@@ -1401,7 +1482,8 @@ typecheck_expr_and_try_discard__CITypecheck(
             // we expect the any type, which is usually only used for
             // builtins, but which has the particularity of accepting
             // all types.
-            expected_dt = NEW(CIDataType, CI_DATA_TYPE_KIND_ANY);
+            expected_dt =
+              NEW(CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_ANY);
 
             break;
         case CI_EXPR_KIND_UNARY:
@@ -1416,7 +1498,8 @@ typecheck_expr_and_try_discard__CITypecheck(
             }
         default:
         expected_void:
-            expected_dt = NEW(CIDataType, CI_DATA_TYPE_KIND_VOID);
+            expected_dt =
+              NEW(CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_VOID);
     }
 
     typecheck_expr__CITypecheck(self, expected_dt, expr, typecheck_ctx);
@@ -1461,7 +1544,12 @@ typecheck_case_stmt__CITypecheck(const CITypecheck *self,
               false,
               typecheck_ctx->current_generic_params.called,
               typecheck_ctx->current_generic_params.decl)) {
-            FAILED("expected integer compatible data type");
+            FAILED__CITypecheck(
+              self,
+              case_->value,
+              CI_ERROR_KIND_EXPECTED_INTEGER_COMPATIBLE_DATA_TYPE);
+
+            return;
         }
 
         FREE(CIDataType, expr_data_type);
@@ -1491,7 +1579,10 @@ typecheck_condition_expr__CITypecheck(const CITypecheck *self,
           true,
           typecheck_ctx->current_generic_params.called,
           typecheck_ctx->current_generic_params.decl)) {
-        FAILED("expected boolean compatible expression data type");
+        FAILED__CITypecheck(
+          self, cond, CI_ERROR_KIND_EXPECTED_BOOLEAN_COMPATIBLE_DATA_TYPE);
+
+        return;
     }
 
     FREE(CIDataType, cond_expr_dt);
@@ -1552,7 +1643,8 @@ typecheck_for_stmt__CITypecheck(const CITypecheck *self,
     }
 
     if (for_->exprs2) {
-        CIDataType *expected_expr2_dt = NEW(CIDataType, CI_DATA_TYPE_KIND_VOID);
+        CIDataType *expected_expr2_dt =
+          NEW(CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_VOID);
 
         for (Usize i = 0; i < for_->exprs2->len; ++i) {
             CIExpr *expr2 = get__Vec(for_->exprs2, i);
@@ -1569,17 +1661,20 @@ typecheck_for_stmt__CITypecheck(const CITypecheck *self,
 
 void
 typecheck_goto_stmt__CITypecheck(const CITypecheck *self,
-                                 const String *goto_,
+                                 const CIStmt *goto_stmt,
                                  struct CITypecheckContext *typecheck_ctx)
 {
     const CIScope *local_current_scope = get_scope_from_id__CIResultFile(
       self->file, typecheck_ctx->current_scope_id);
 
-    CIDecl *label_decl =
-      search_label__CIResultFile(self->file, local_current_scope, goto_);
+    CIDecl *label_decl = search_label__CIResultFile(
+      self->file, local_current_scope, GET_PTR_RC(String, goto_stmt->goto_));
 
     if (!label_decl) {
-        FAILED("the specified label defined in goto doesn't exist");
+        FAILED__CITypecheck(
+          self, goto_stmt, CI_ERROR_KIND_GOTO_LABEL_DOES_NOT_EXIST);
+
+        return;
     }
 }
 
@@ -1598,11 +1693,15 @@ typecheck_return_stmt__CITypecheck(const CITypecheck *self,
           self, (CIDataType *)given_return_data_type, return_, typecheck_ctx);
     } else {
         CIDataType *expected_return_data_type =
-          NEW(CIDataType, CI_DATA_TYPE_KIND_VOID);
+          NEW(CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_VOID);
 
         if (!eq__CIDataType(expected_return_data_type,
                             given_return_data_type)) {
-            FAILED("expected void return data type");
+            FAILED__CITypecheck(self,
+                                typecheck_ctx->current_decl,
+                                CI_ERROR_KIND_EXPECTED_VOID_RETURN_DATA_TYPE);
+
+            return;
         }
 
         FREE(CIDataType, expected_return_data_type);
@@ -1630,7 +1729,12 @@ typecheck_switch_stmt__CITypecheck(const CITypecheck *self,
           false,
           typecheck_ctx->current_generic_params.called,
           typecheck_ctx->current_generic_params.decl)) {
-        FAILED("expected integer compatible data type");
+        FAILED__CITypecheck(
+          self,
+          switch_->expr,
+          CI_ERROR_KIND_EXPECTED_INTEGER_COMPATIBLE_DATA_TYPE);
+
+        return;
     }
 
     typecheck_body__CITypecheck(self, switch_->body, typecheck_ctx);
@@ -1679,7 +1783,7 @@ typecheck_stmt__CITypecheck(const CITypecheck *self,
               self, &given_stmt->for_, typecheck_ctx);
         case CI_STMT_KIND_GOTO:
             return typecheck_goto_stmt__CITypecheck(
-              self, GET_PTR_RC(String, given_stmt->goto_), typecheck_ctx);
+              self, given_stmt, typecheck_ctx);
         case CI_STMT_KIND_IF:
             return typecheck_if_stmt__CITypecheck(
               self, &given_stmt->if_, typecheck_ctx);

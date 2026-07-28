@@ -30,6 +30,7 @@
 #include <base/new.h>
 #include <base/path.h>
 
+#include <core/cc/ci/diagnostic/emit.h>
 #include <core/cc/ci/include.h>
 #include <core/cc/ci/project_config.h>
 
@@ -215,7 +216,7 @@ get_node__CIProjectConfig(struct CIProjectConfigContext *ctx,
     Int32 res = get_optional_node__CIProjectConfig(ctx, mapping_id, key);
 
     if (res == -1) {
-        FAILED("expected to have this key");
+        FATAL_ERROR__CI(NEW(CIError, CI_ERROR_KIND_EXPECTED_KEY));
     }
 
     return res;
@@ -238,7 +239,7 @@ get_scalar_value__CIProjectConfig(struct CIProjectConfigContext *ctx,
       get_optional_scalar_value__CIProjectConfig(ctx, mapping_id, key);
 
     if (!res) {
-        FAILED("expected to have this key");
+        FATAL_ERROR__CI(NEW(CIError, CI_ERROR_KIND_EXPECTED_KEY));
     }
 
     return res;
@@ -273,7 +274,7 @@ get_optional_scalar_value__CIProjectConfig(struct CIProjectConfigContext *ctx,
             return from__String(key_value);
         }
         default:
-            FAILED("expected scalar value");
+            FATAL_ERROR__CI(NEW(CIError, CI_ERROR_KIND_EXPECTED_SCALAR_VALUE));
     }
 }
 
@@ -290,7 +291,7 @@ get_integer_from_scalar_value__CIProjectConfig(
     Int32 res = get_id__Search(value, values, value_ids, values_len);
 
     if (res == -1) {
-        FAILED("invalid value");
+        FATAL_ERROR__CI(NEW(CIError, CI_ERROR_KIND_INVALID_VALUE));
     }
 
     FREE(String, value);
@@ -320,7 +321,7 @@ get_integer_from_optional_scalar_value__CIProjectConfig(
     FREE(String, value);
 
     if (res == -1) {
-        FAILED("invalid value");
+        FATAL_ERROR__CI(NEW(CIError, CI_ERROR_KIND_INVALID_VALUE));
     }
 
     return res;
@@ -335,7 +336,7 @@ get_sequence_value__CIProjectConfig(struct CIProjectConfigContext *ctx,
       get_optional_sequence_value__CIProjectConfig(ctx, mapping_id, key);
 
     if (!res) {
-        FAILED("expected to have this key");
+        FATAL_ERROR__CI(NEW(CIError, CI_ERROR_KIND_EXPECTED_KEY));
     }
 
     return res;
@@ -374,7 +375,8 @@ get_optional_sequence_value__CIProjectConfig(struct CIProjectConfigContext *ctx,
 
             break;
         default:
-            FAILED("expected sequence value");
+            FATAL_ERROR__CI(
+              NEW(CIError, CI_ERROR_KIND_EXPECTED_SEQUENCE_VALUE));
     }
 
     return res;
@@ -393,7 +395,7 @@ iter_on_mapping__CIProjectConfig(
       ctx, mapping_id, key, parse_item);
 
     if (!res) {
-        FAILED("expected to have mapping here");
+        FATAL_ERROR__CI(NEW(CIError, CI_ERROR_KIND_EXPECTED_MAPPING));
     }
 
     return res;
@@ -824,8 +826,7 @@ parse_yaml__CIProjectConfig(const char *config_dir)
                                               CI_CONFIG); // <path>/CI.yaml
 
     if (!path_ci_config) {
-        FAILED("could not find CI.yaml in current working directory or parent "
-               "directory");
+        FATAL_ERROR__CI(NEW(CIError, CI_ERROR_KIND_CI_YAML_NOT_FOUND));
     }
 
     FREE(String, absolute_config_path);

@@ -24,7 +24,23 @@
 
 #include <base/assert.h>
 
+#include <core/cc/ci/diagnostic/emit.h>
 #include <core/cc/ci/resolver/data_type.h>
+
+// Emit a located error on `data_type` and count it, without stopping the
+// resolve: the caller carries on with a poisoned data type, so that a single
+// run reports more than one error.
+#define FAILED__CIResolverDataType(file, data_type, error_kind) \
+    EMIT_ERROR__CI(&(file)->file_input,                         \
+                   &(data_type)->location,                      \
+                   NEW(CIError, error_kind),                    \
+                   &(file)->file_analysis->count_error)
+
+// Data type a resolve function returns after having emitted an error.
+#define POISONED_DATA_TYPE__CIResolverDataType(data_type) \
+    NEW(CIDataType,                                       \
+        clone__Location(&(data_type)->location),          \
+        CI_DATA_TYPE_KIND_ANY)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -252,7 +268,9 @@ is_struct_or_union_data_type__CIResolverDataType(
             return res;
         }
         default:
-            FAILED("expected struct or union");
+            FAILED__CIResolverDataType(
+              file, data_type, CI_ERROR_KIND_EXPECTED_STRUCT_OR_UNION);
+            return false;
     }
 }
 
@@ -421,12 +439,16 @@ resolve_to_integer_data_type__CIResolverDataType(
 
                 res = enum_decl->enum_.data_type
                         ? ref__CIDataType(enum_decl->enum_.data_type)
-                        : NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
+                        : NEW(CIDataType,
+                              clone__Location(&data_type->location),
+                              CI_DATA_TYPE_KIND_INT);
 
                 break;
             }
 
-            res = NEW(CIDataType, CI_DATA_TYPE_KIND_INT);
+            res = NEW(CIDataType,
+                      clone__Location(&data_type->location),
+                      CI_DATA_TYPE_KIND_INT);
 
             break;
         default:
@@ -460,14 +482,18 @@ resolve_generic_data_type__CIResolverDataType(
           decl_generic_params, GET_PTR_RC(String, data_type->generic));
 
         if (generic_params_index == -1) {
-            FAILED("generic params is not found");
+            FAILED__CIResolverDataType(
+              file, data_type, CI_ERROR_KIND_GENERIC_PARAMS_ARE_NOT_FOUND);
+            return POISONED_DATA_TYPE__CIResolverDataType(data_type);
         }
 
         return ref__CIDataType(
           get__Vec(called_generic_params->params, generic_params_index));
     }
 
-    FAILED("expected generic param, to use generic data type");
+    FAILED__CIResolverDataType(
+      file, data_type, CI_ERROR_KIND_EXPECTED_GENERIC_PARAM);
+    return POISONED_DATA_TYPE__CIResolverDataType(data_type);
 }
 
 CIDataType *
@@ -486,12 +512,15 @@ resolve_struct_data_type__CIResolverDataType(
           decl_generic_params);
 
         if (!struct_decl) {
-            FAILED("struct is not found");
+            FAILED__CIResolverDataType(
+              file, data_type, CI_ERROR_KIND_STRUCT_IS_NOT_FOUND);
+            return POISONED_DATA_TYPE__CIResolverDataType(data_type);
         }
 
         return NEW_VARIANT(
           CIDataType,
           struct,
+          clone__Location(&data_type->location),
           NEW(CIDataTypeStruct, struct_decl->struct_gen.name, NULL, NULL));
     }
 
@@ -553,12 +582,15 @@ resolve_union_data_type__CIResolverDataType(
           decl_generic_params);
 
         if (!union_decl) {
-            FAILED("union declaration is not found");
+            FAILED__CIResolverDataType(
+              file, data_type, CI_ERROR_KIND_UNION_DECLARATION_IS_NOT_FOUND);
+            return POISONED_DATA_TYPE__CIResolverDataType(data_type);
         }
 
         return NEW_VARIANT(
           CIDataType,
           union,
+          clone__Location(&data_type->location),
           NEW(CIDataTypeUnion, union_decl->union_gen.name, NULL, NULL));
     }
 
@@ -619,7 +651,9 @@ get_fields_from_data_type__CIResolverDataType(
     }
 
     if (!decl) {
-        FAILED("struct or union is not found");
+        FAILED__CIResolverDataType(
+          file, data_type, CI_ERROR_KIND_STRUCT_OR_UNION_IS_NOT_FOUND);
+        return NULL;
     }
 
     FREE(CIDataType, resolved_data_type);
@@ -664,6 +698,7 @@ run__CIResolverDataType(const CIResultFile *file,
                 res = NEW_VARIANT(
                   CIDataType,
                   ptr,
+                  clone__Location(&data_type->location),
                   NEW(CIDataTypePtr,
                       NULL,
                       run__CIResolverDataType(file,

@@ -2907,3 +2907,34 @@ DESTRUCTOR(CIToken, CIToken *self)
             lily_free(self);
     }
 }
+
+char *
+to_spelling__CITokenKind(enum CITokenKind self)
+{
+    switch (self) {
+        case CI_TOKEN_KIND_COLON:
+            return "`:`";
+        case CI_TOKEN_KIND_COMMA:
+            return "`,`";
+        case CI_TOKEN_KIND_EQ:
+            return "`=`";
+        case CI_TOKEN_KIND_IDENTIFIER:
+            return "an identifier";
+        case CI_TOKEN_KIND_LBRACE:
+            return "`{`";
+        case CI_TOKEN_KIND_RBRACE:
+            return "`}`";
+        case CI_TOKEN_KIND_LHOOK:
+            return "`[`";
+        case CI_TOKEN_KIND_RHOOK:
+            return "`]`";
+        case CI_TOKEN_KIND_LPAREN:
+            return "`(`";
+        case CI_TOKEN_KIND_RPAREN:
+            return "`)`";
+        case CI_TOKEN_KIND_SEMICOLON:
+            return "`;`";
+        default:
+            return "another token";
+    }
+}

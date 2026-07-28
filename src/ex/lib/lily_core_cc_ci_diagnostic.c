@@ -39,6 +39,11 @@ extern inline VARIANT_CONSTRUCTOR(CIError,
                                   preprocessor_error,
                                   char *preprocessor_error);
 
+extern inline VARIANT_CONSTRUCTOR(CIError,
+                                  CIError,
+                                  expected_token,
+                                  char *expected_token);
+
 // <core/cc/ci/diagnostic/warning.h>
 extern inline CONSTRUCTOR(CIWarning, CIWarning, enum CIWarningKind kind);
 

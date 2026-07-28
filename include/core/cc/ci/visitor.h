@@ -29,8 +29,11 @@
 
 typedef struct CIVisitor
 {
-    const CIResult *result;       // const CIResult* (&)
-    const CIResultFile *file;     // const CIResultFile*? (&)
+    const CIResult *result;   // const CIResult* (&)
+    const CIResultFile *file; // const CIResultFile*? (&)
+    // Declaration currently being visited. Used to locate the diagnostics
+    // reported when a declaration a visited one refers to cannot be found.
+    const CIDecl *current_decl;   // const CIDecl*? (&)
     const CIScope *current_scope; // const CIScope*? (&)
 } CIVisitor;
 
@@ -40,7 +43,10 @@ typedef struct CIVisitor
  */
 inline CONSTRUCTOR(CIVisitor, CIVisitor, const CIResult *result)
 {
-    return (CIVisitor){ .result = result, .file = NULL, .current_scope = NULL };
+    return (CIVisitor){ .result = result,
+                        .file = NULL,
+                        .current_decl = NULL,
+                        .current_scope = NULL };
 }
 
 /**
