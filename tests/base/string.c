@@ -217,3 +217,36 @@ CASE(replace_sub5, {
 
     FREE(String, s);
 });
+
+// The replacement contains what is being searched for, so the scan has to
+// resume past it. Resuming any earlier matches the text just written and never
+// terminates.
+CASE(replace_sub6, {
+    String *s = from__String("a\\b");
+
+    replace_sub__String(s, "\\", "\\\\");
+
+    TEST_ASSERT(s->len == 4);
+
+    TEST_ASSERT(s->buffer[0] == 'a');
+    TEST_ASSERT(s->buffer[1] == '\\');
+    TEST_ASSERT(s->buffer[2] == '\\');
+    TEST_ASSERT(s->buffer[3] == 'b');
+
+    FREE(String, s);
+});
+
+// A shorter replacement matching at the very beginning: the cursor must stay
+// inside the buffer.
+CASE(replace_sub7, {
+    String *s = from__String("\\nX");
+
+    replace_sub__String(s, "\\n", "\n");
+
+    TEST_ASSERT(s->len == 2);
+
+    TEST_ASSERT(s->buffer[0] == '\n');
+    TEST_ASSERT(s->buffer[1] == 'X');
+
+    FREE(String, s);
+});

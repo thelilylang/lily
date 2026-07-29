@@ -81,7 +81,7 @@ main()
               CALL_CASE(str_get_slice),
               CALL_CASE(str_replace),
               CALL_CASE(str_count_c));
-    ADD_SUITE(12,
+    ADD_SUITE(14,
               string,
               CALL_CASE(string_new),
               CALL_CASE(string_clone),
@@ -94,7 +94,9 @@ main()
               CALL_CASE(replace_sub2),
               CALL_CASE(replace_sub3),
               CALL_CASE(replace_sub4),
-              CALL_CASE(replace_sub5));
+              CALL_CASE(replace_sub5),
+              CALL_CASE(replace_sub6),
+              CALL_CASE(replace_sub7));
     ADD_SUITE(19,
               vec,
               CALL_CASE(vec_append),

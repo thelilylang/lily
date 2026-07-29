@@ -394,7 +394,13 @@ replace_sub__String(String *self, const char *s, const char *replacement)
                 ++replacement_current;
             }
 
-            Usize replacement_len = replacement_current - replacement - 1;
+            // NOTE: The scan has to resume past the text just written. Counting
+            // one character less than the replacement made it resume on the
+            // replacement itself: with a replacement longer than what it
+            // replaces (`\` by `\\`, say) the match was found again at once and
+            // the loop never ended, and a match at index 0 of a shorter
+            // replacement moved the cursor before the start of the buffer.
+            Usize replacement_len = replacement_current - replacement;
 
             begin = self->buffer;
             current =
