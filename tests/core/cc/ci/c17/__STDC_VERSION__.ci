@@ -1,0 +1,12 @@
+//@compile_options -s c17
+//@expected_bin_stdout c17\n
+
+#include <helper.h>
+
+int main() {
+#if __STDC_VERSION__ == 201710L
+	puts("c17");
+#else
+	puts("FAILED");
+#endif
+}

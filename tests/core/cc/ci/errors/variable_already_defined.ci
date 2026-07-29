@@ -1,0 +1,11 @@
+//@expected_compiler_error :8:10: \e[31merror\e[0m[0190]: this variable is already defined
+//@expected_compiler_error \e[34m8 |\e[0m \tint x = 2;
+
+#include <helper.h>
+
+int main() {
+	int x = 1;
+	int x = 2;
+
+	return x;
+}

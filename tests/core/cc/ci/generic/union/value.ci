@@ -1,0 +1,16 @@
+//@expected_bin_stdout 42\n
+
+#include <helper.h>
+
+union Value.[@T] {
+	@T value;
+	int tag;
+};
+
+int main() {
+	union Value.[int] v;
+
+	v.value = 42;
+
+	printf("%d\n", v.value);
+}

@@ -1,0 +1,15 @@
+//@expected_bin_stdout 0:1\n
+
+#include <helper.h>
+
+struct Node.[@T] {
+	@T value;
+	struct Node.[@T] *next;
+};
+
+int main() {
+	struct Node.[int] second = (struct Node.[int]){ .value = 1, .next = NULL };
+	struct Node.[int] first = (struct Node.[int]){ .value = 0, .next = &second };
+
+	printf("%d:%d\n", first.value, first.next->value);
+}

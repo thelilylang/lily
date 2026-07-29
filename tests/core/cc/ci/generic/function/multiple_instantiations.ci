@@ -1,0 +1,14 @@
+//@expected_bin_stdout 7\n
+//@expected_bin_stdout z\n
+
+#include <helper.h>
+
+@T
+id.[@T](@T x) {
+	return x;
+}
+
+int main() {
+	printf("%d\n", id.[int](7));
+	printf("%c\n", id.[char]('z'));
+}

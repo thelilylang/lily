@@ -1,0 +1,10 @@
+//@expected_compiler_error :9:2: \e[31merror\e[0m[0014]: expected `,` or `;`
+//@expected_compiler_error \e[34m9 |\e[0m \treturn x;
+
+#include <helper.h>
+
+int main() {
+	int x = 1
+
+	return x;
+}

@@ -1,0 +1,9 @@
+//@expected_bin_stdout 1:2:3\n
+
+#include <helper.h>
+
+#define PRINT(fmt, ...) printf(fmt, __VA_ARGS__)
+
+int main() {
+	PRINT("%d:%d:%d\n", 1, 2, 3);
+}

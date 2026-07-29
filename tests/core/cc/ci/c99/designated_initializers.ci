@@ -1,0 +1,15 @@
+//@compile_options -s c99
+//@expected_bin_stdout 1:2\n
+
+#include <helper.h>
+
+struct Point {
+	int x;
+	int y;
+};
+
+int main() {
+	struct Point p = { .y = 2, .x = 1 };
+
+	printf("%d:%d\n", p.x, p.y);
+}

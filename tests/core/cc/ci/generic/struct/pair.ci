@@ -1,0 +1,15 @@
+//@expected_bin_stdout 1:A\n
+
+#include <helper.h>
+
+struct Pair.[@A, @B] {
+	@A first;
+	@B second;
+};
+
+int main() {
+	struct Pair.[int, char] p =
+	  (struct Pair.[int, char]){ .first = 1, .second = 'A' };
+
+	printf("%d:%c\n", p.first, p.second);
+}

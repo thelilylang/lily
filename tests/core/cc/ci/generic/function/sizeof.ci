@@ -1,0 +1,12 @@
+//@expected_bin_stdout 1\n
+
+#include <helper.h>
+
+int
+size_of.[@T]() {
+	return (int)sizeof(@T);
+}
+
+int main() {
+	printf("%d\n", size_of.[char]());
+}

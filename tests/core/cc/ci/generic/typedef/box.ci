@@ -1,0 +1,33 @@
+//@expected_bin_stdout 100\n
+
+#include <helper.h>
+
+typedef struct Box.[@T] {
+	@T *ptr;
+} Box.[@T];
+
+Box.[@T]
+new__Box.[@T](@T value) {
+	@T *ptr = malloc(sizeof(@T));
+
+	if (!ptr) {
+		exit(1);
+	}
+
+	*ptr = value;
+
+	return (Box.[@T]){ .ptr = ptr };
+}
+
+void
+free__Box.[@T](Box.[@T] *self) {
+	free(self->ptr);
+}
+
+int main() {
+	Box.[int] b = new__Box.[int](100);
+
+	printf("%d\n", *b.ptr);
+
+	free__Box.[int](&b);
+}

@@ -1,0 +1,12 @@
+/*@compile_options -s c11*/
+
+#include <stdnoreturn.h>
+#include <helper.h>
+
+noreturn void bye() {
+	exit(0);
+}
+
+int main() {
+	bye();
+}

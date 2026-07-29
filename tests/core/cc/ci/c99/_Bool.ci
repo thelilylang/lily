@@ -1,0 +1,11 @@
+//@compile_options -s c99
+//@expected_bin_stdout 1:0\n
+
+#include <helper.h>
+
+int main() {
+	_Bool t = 1;
+	_Bool f = 0;
+
+	printf("%d:%d\n", (int)t, (int)f);
+}

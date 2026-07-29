@@ -1,0 +1,8 @@
+//@expected_compiler_error :7:9: \e[31merror\e[0m[0028]: cannot infer on an unknown identifier
+//@expected_compiler_error \e[34m7 |\e[0m \treturn undefined_thing;
+
+#include <helper.h>
+
+int main() {
+	return undefined_thing;
+}

@@ -1,0 +1,12 @@
+//@compile_options -s c99
+//@expected_bin_stdout c99\n
+
+#include <helper.h>
+
+int main() {
+#if __STDC_VERSION__ == 199901L
+	puts("c99");
+#else
+	puts("FAILED");
+#endif
+}
