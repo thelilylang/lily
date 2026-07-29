@@ -202,6 +202,12 @@ run__CISelfTestRun(String *path)
 
     switch (pid) {
         case 0: {
+            // Put the child in its own process group, so that a test which
+            // times out can be killed along with everything it started (the
+            // compiled binary being run, most notably). The parent does the
+            // same call on its side, as either process may get there first.
+            setpgid(0, 0);
+
             // Redirect stdout and stderr to the pipe.
             run2__Dup(child_out_pipefd[PIPE_WRITE_FD], LILY_STDOUT_FILENO);
             run2__Dup(child_out_pipefd[PIPE_WRITE_FD], LILY_STDERR_FILENO);
@@ -238,6 +244,11 @@ run__CISelfTestRun(String *path)
         case -1:
             UNREACHABLE("failed to fork process");
         default:
+            // See the matching call in the child branch. This one loses the
+            // race harmlessly if the child already ran it, or if it has already
+            // exited.
+            setpgid(pid, pid);
+
             close_write__Pipe(child_out_pipefd);
             close_write__Pipe(diagnostic_pipefd);
             close_write__Pipe(compiler_error_pipefd);
