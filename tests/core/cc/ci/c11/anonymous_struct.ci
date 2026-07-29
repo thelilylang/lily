@@ -1,0 +1,32 @@
+/*@compile_options -s c11*/
+//@expected_bin_stdout PASS\n
+
+#include <helper.h>
+
+struct X {
+	// An anonymous struct with no field at all used to crash the parser.
+	struct {
+	};
+};
+
+struct Y {
+	struct {
+		int x;
+		int y;
+	};
+
+	union {
+		int a;
+		int b;
+	};
+};
+
+int main() {
+	struct X x;
+	struct Y y;
+
+	(void)x;
+	(void)y;
+
+	printf("PASS\n");
+}
