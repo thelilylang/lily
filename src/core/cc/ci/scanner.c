@@ -4199,6 +4199,16 @@ get_token__CIScanner(CIScanner *self,
             return NULL;
         }
         default:
+            // NOTE: The caller only moves the cursor and ends the location when
+            // a token is returned, so the invalid character is skipped here, to
+            // avoid scanning it again forever, and the location is ended, to
+            // avoid emitting the error on the location of the previous token.
+            end_token__CIScanner(self,
+                                 self->base.source.cursor.line,
+                                 self->base.source.cursor.column,
+                                 self->base.source.cursor.position);
+            next_char__CIScanner(self);
+
             FAILED__CIScanner(self,
                               NEW(CIError, CI_ERROR_KIND_UNEXPECTED_TOKEN));
 
