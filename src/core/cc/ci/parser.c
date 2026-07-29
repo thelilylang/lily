@@ -4843,7 +4843,8 @@ add_struct_or_union_to_fields__CIParser(CIParser *self,
                               &current_field_dt,
                               prev_field_ref,
                               current_field,
-                              current_field_dt->parent);
+                              current_field_dt ? current_field_dt->parent
+                                               : NULL);
 
     FREE(CIDataType, data_type);
 }
