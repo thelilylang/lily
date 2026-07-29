@@ -1,0 +1,14 @@
+//@expected_bin_stdout ok\n
+
+#include <helper.h>
+
+#define A 3
+#define B 4
+
+int main() {
+#if (A + B) * 2 == 14 && A < B
+	puts("ok");
+#else
+	puts("FAILED");
+#endif
+}

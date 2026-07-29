@@ -1,0 +1,7 @@
+//@expected_bin_stdout 6\n
+
+#include <helper.h>
+
+int main() {
+	printf("%d\n", __LINE__);
+}

@@ -1,0 +1,18 @@
+//@expected_bin_stdout inner\n
+
+#include <helper.h>
+
+#define OUTER
+#define INNER
+
+int main() {
+#ifdef OUTER
+#	ifdef INNER
+	puts("inner");
+#	else
+	puts("outer");
+#	endif
+#else
+	puts("none");
+#endif
+}

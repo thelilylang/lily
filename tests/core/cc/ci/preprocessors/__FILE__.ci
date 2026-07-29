@@ -1,0 +1,15 @@
+//@expected_bin_stdout ok\n
+
+#include <helper.h>
+
+int main() {
+	/* The path itself depends on where the suite is run from, so only its
+	   presence can be asserted. */
+	const char *file = __FILE__;
+
+	if (file[0] != '\0') {
+		puts("ok");
+	} else {
+		puts("FAILED");
+	}
+}

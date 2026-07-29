@@ -1,0 +1,12 @@
+//@expected_bin_stdout 1\n
+
+#include <helper.h>
+
+/* The second include must be a no-op, otherwise `once_marker` is defined
+   twice. */
+#include <once.h>
+#include <once.h>
+
+int main() {
+	printf("%d\n", once_marker);
+}

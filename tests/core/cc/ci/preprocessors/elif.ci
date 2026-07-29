@@ -1,0 +1,15 @@
+//@expected_bin_stdout B\n
+
+#include <helper.h>
+
+#define VALUE 2
+
+int main() {
+#if VALUE == 1
+	puts("A");
+#elif VALUE == 2
+	puts("B");
+#else
+	puts("C");
+#endif
+}

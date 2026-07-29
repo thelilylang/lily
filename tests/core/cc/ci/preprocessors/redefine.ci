@@ -1,0 +1,11 @@
+//@expected_bin_stdout 2\n
+
+#include <helper.h>
+
+#define X 1
+#undef X
+#define X 2
+
+int main() {
+	printf("%d\n", X);
+}

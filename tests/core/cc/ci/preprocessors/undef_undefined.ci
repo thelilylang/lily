@@ -1,0 +1,10 @@
+//@expected_bin_stdout ok\n
+
+#include <helper.h>
+
+/* Undefining a macro that was never defined is allowed and does nothing. */
+#undef NEVER_DEFINED
+
+int main() {
+	puts("ok");
+}

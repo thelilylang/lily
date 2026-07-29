@@ -1,0 +1,9 @@
+//@expected_bin_stdout hello:42\n
+
+#include <helper.h>
+
+#define STR(x) #x
+
+int main() {
+	printf("%s:%s\n", STR(hello), STR(42));
+}
