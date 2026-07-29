@@ -1356,9 +1356,18 @@ resolve_stringification__CIResolver(CIResolver *self)
 {
     CIToken *macro_param_token = self->current_token->next;
 
-    ASSERT(macro_param_token &&
-           (macro_param_token->kind == CI_TOKEN_KIND_MACRO_PARAM ||
-            macro_param_token->kind == CI_TOKEN_KIND_MACRO_PARAM_VARIADIC));
+    // NOTE: The scanner already emits this error, but as an error does not stop
+    // the scan, a `#` not followed by a macro param can still reach the
+    // resolver.
+    if (!macro_param_token ||
+        (macro_param_token->kind != CI_TOKEN_KIND_MACRO_PARAM &&
+         macro_param_token->kind != CI_TOKEN_KIND_MACRO_PARAM_VARIADIC)) {
+        FAILED__CIResolver(self,
+                           CI_ERROR_KIND_EXPECTED_MACRO_PARAM_AFTER_STRINGIFY);
+        next_token__CIResolver(self); // Skip `#`
+
+        return;
+    }
 
     CIResolverMacroCallParam *param =
       macro_param_token->kind == CI_TOKEN_KIND_MACRO_PARAM

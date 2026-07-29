@@ -1,0 +1,8 @@
+//@expected_compiler_error :4:1: \e[31merror\e[0m[0088]: expected a macro param after `#`
+//@expected_compiler_error \e[34m4 |\e[0m #$define X()
+
+#$define X()
+
+int main() {
+	return 0;
+}

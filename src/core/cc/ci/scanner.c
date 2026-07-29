@@ -4001,6 +4001,11 @@ get_token__CIScanner(CIScanner *self,
                     push_token__CIScanner(self, ctx, token_id);
                 }
             } else {
+                FAILED__CIScanner(
+                  self,
+                  NEW(CIError,
+                      CI_ERROR_KIND_EXPECTED_MACRO_PARAM_AFTER_STRINGIFY));
+
                 return NULL;
             }
 
