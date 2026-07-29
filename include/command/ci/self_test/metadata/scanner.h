@@ -43,10 +43,14 @@ enum CISelfTestMetadataScannerError
  *
  * @brief Scan self-test metadata.
  * @param path const String* (&)
+ * @param error_line Usize*? (&) - Line the returned error points at. Only
+ * meaningful when the returned error is neither `..._ERROR_NONE` nor
+ * `..._ERROR_FAILED_TO_READ_FILE`.
  */
 enum CISelfTestMetadataScannerError
 run__CISelfTestMetadataScanner(const String *path,
-                               CISelfTestMetadata *metadata);
+                               CISelfTestMetadata *metadata,
+                               Usize *error_line);
 
 /**
  *

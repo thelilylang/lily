@@ -64,33 +64,39 @@ enum CISelfTestPollHandleFlagReturnStatus
     CI_SELF_TEST_POLL_HANDLE_FLAG_RETURN_STATUS_SUCCESS
 };
 
-/// @param expected String*? (&)
+/// @param expected const Vec<String*>*? (&)
 /// @param actual String* (&)
 static enum CISelfTestPollHandleFlagReturnStatus
 handle_expected_compiler_error__CISelfTestPoll(
   const CISelfTestProcessUnit *process_unit,
-  String *expected,
+  const Vec *expected,
   String *actual);
 
 enum CISelfTestPollHandleFlagReturnStatus
 handle_expected_compiler_error__CISelfTestPoll(
   const CISelfTestProcessUnit *process_unit,
-  String *expected,
+  const Vec *expected,
   String *actual)
 {
     if (!expected) {
         return CI_SELF_TEST_POLL_HANDLE_FLAG_RETURN_STATUS_SKIP;
     }
 
-    // NOTE: The assertion is a containment check, not an equality one. A
+    // NOTE: Each assertion is a containment check, not an equality one. A
     // diagnostic embeds the absolute path of the file it points at, which
     // depends on where the test suite is run from, so a fixture can only assert
-    // the stable part of the message (the error code and its text).
-    if (!strstr(actual->buffer, expected->buffer)) {
-        display_failed_expected_compiler_error_assertion_output__CISelfTestDiagnostic(
-          expected, actual, process_unit->path->buffer);
+    // the stable part of the message (the error code and its text). Every
+    // assertion has to hold, and each is looked up on its own, because the
+    // lines they describe are not contiguous in the output.
+    for (Usize i = 0; i < expected->len; ++i) {
+        String *current = get__Vec(expected, i);
 
-        return CI_SELF_TEST_POLL_HANDLE_FLAG_RETURN_STATUS_FAILED;
+        if (!strstr(actual->buffer, current->buffer)) {
+            display_failed_expected_compiler_error_assertion_output__CISelfTestDiagnostic(
+              current, actual, process_unit->path->buffer);
+
+            return CI_SELF_TEST_POLL_HANDLE_FLAG_RETURN_STATUS_FAILED;
+        }
     }
 
     return CI_SELF_TEST_POLL_HANDLE_FLAG_RETURN_STATUS_SUCCESS;
@@ -202,7 +208,7 @@ run__CISelfTestPoll(const CISelfTestProcessUnit *process_unit,
 
             return_status = handle_expected_compiler_error__CISelfTestPoll(
               process_unit,
-              process_unit->metadata.expected_compiler_error,
+              process_unit->metadata.expected_compiler_errors,
               compiler_error);
 
             if (return_status ==

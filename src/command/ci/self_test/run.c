@@ -195,8 +195,10 @@ run__CISelfTestRun(String *path)
     create__Pipe(compiler_error_pipefd);
 
     CISelfTestMetadata metadata = NEW(CISelfTestMetadata);
+    Usize metadata_scanner_error_line = 0;
     enum CISelfTestMetadataScannerError metadata_scanner_error =
-      run__CISelfTestMetadataScanner(path, &metadata);
+      run__CISelfTestMetadataScanner(
+        path, &metadata, &metadata_scanner_error_line);
     const clock_t start = clock();
     const Fork pid = run__Fork();
 
@@ -221,7 +223,11 @@ run__CISelfTestRun(String *path)
                   get_error_message__CISelfTestMetadataScanner(
                     metadata_scanner_error);
 
-                fprintf(stderr, "%s: %s", path->buffer, error_message);
+                fprintf(stderr,
+                        "%s:%zu: %s",
+                        path->buffer,
+                        metadata_scanner_error_line,
+                        error_message);
                 exit(EXIT_ERR);
             }
 

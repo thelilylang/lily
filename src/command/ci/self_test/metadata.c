@@ -36,7 +36,10 @@ DESTRUCTOR(CISelfTestMetadata, const CISelfTestMetadata *self)
         FREE(String, self->compile_options);
     }
 
-    if (self->expected_compiler_error) {
-        FREE(String, self->expected_compiler_error);
+    if (self->expected_compiler_errors) {
+        FREE_BUFFER_ITEMS(self->expected_compiler_errors->buffer,
+                          self->expected_compiler_errors->len,
+                          String);
+        FREE(Vec, self->expected_compiler_errors);
     }
 }

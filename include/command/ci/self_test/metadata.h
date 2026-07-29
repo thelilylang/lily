@@ -26,14 +26,19 @@
 #define LILY_COMMAND_CI_SELF_TEST_METADATA_H
 
 #include <base/string.h>
+#include <base/vec.h>
 
 #include <stddef.h>
 
 typedef struct CISelfTestMetadata
 {
-    String *expected_bin_stdout;     // String*?
-    String *compile_options;         // String*?
-    String *expected_compiler_error; // String*?
+    String *expected_bin_stdout; // String*?
+    String *compile_options;     // String*?
+    // NOTE: Each `@expected_compiler_error` is a standalone assertion, kept as
+    // its own entry rather than concatenated with the others: it is matched by
+    // containment against the compiler output, and the lines such assertions
+    // describe are not contiguous in that output.
+    Vec *expected_compiler_errors; // Vec<String*>*?
 } CISelfTestMetadata;
 
 /**
@@ -44,7 +49,7 @@ inline CONSTRUCTOR(CISelfTestMetadata, CISelfTestMetadata)
 {
     return (CISelfTestMetadata){ .expected_bin_stdout = NULL,
                                  .compile_options = NULL,
-                                 .expected_compiler_error = NULL };
+                                 .expected_compiler_errors = NULL };
 }
 
 /**

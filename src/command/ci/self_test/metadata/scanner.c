@@ -92,7 +92,6 @@ metadata_is_duplicatable__CISelfTestMetadataScanner(Int32 metadata_kind)
         case MATCHES_EXPECTED_BIN_STDOUT:
             return true;
         case MATCHES_COMPILE_OPTIONS:
-        case MATCHES_EXPECTED_COMPILER_ERROR:
             return false;
         default:
             UNREACHABLE("unknown variant");
@@ -105,6 +104,19 @@ set_metadata__CISelfTestMetadataScanner(
   Int32 metadata_kind,
   String *metadata_value)
 {
+    // Unlike the other metadata, this one accumulates: repeating it adds an
+    // assertion instead of extending the previous value. See the note on
+    // `expected_compiler_errors` in `CISelfTestMetadata`.
+    if (metadata_kind == MATCHES_EXPECTED_COMPILER_ERROR) {
+        if (!ctx->metadata->expected_compiler_errors) {
+            ctx->metadata->expected_compiler_errors = NEW(Vec);
+        }
+
+        push__Vec(ctx->metadata->expected_compiler_errors, metadata_value);
+
+        return CI_SELF_TEST_METADATA_SCANNER_ERROR_NONE;
+    }
+
     String **metadata_ctx_value = NULL; // String* (&)* (&)
 
     switch (metadata_kind) {
@@ -114,10 +126,6 @@ set_metadata__CISelfTestMetadataScanner(
             break;
         case MATCHES_COMPILE_OPTIONS:
             metadata_ctx_value = &ctx->metadata->compile_options;
-
-            break;
-        case MATCHES_EXPECTED_COMPILER_ERROR:
-            metadata_ctx_value = &ctx->metadata->expected_compiler_error;
 
             break;
         default:
@@ -254,10 +262,11 @@ scan_line__CISelfTestMetadataScanner(
       CI_SELF_TEST_METADATA_SCANNER_ERROR_FAILED_TO_SCAN_LINE;
 
     if (line->buffer == begin) {
-        get_metadata_from_line__CISelfTestMetadataScanner(
+        // The result must be propagated: a malformed annotation would otherwise
+        // be dropped in silence, and the test would keep passing while
+        // asserting nothing at all.
+        res = get_metadata_from_line__CISelfTestMetadataScanner(
           line->buffer + 2 /* 2 = `//` or `/\*` */, end_matches[match_at], ctx);
-
-        res = CI_SELF_TEST_METADATA_SCANNER_ERROR_NONE;
     }
 
     FREE(String, line);
@@ -271,12 +280,16 @@ scan_line__CISelfTestMetadataScanner(
 }
 
 enum CISelfTestMetadataScannerError
-run__CISelfTestMetadataScanner(const String *path, CISelfTestMetadata *metadata)
+run__CISelfTestMetadataScanner(const String *path,
+                               CISelfTestMetadata *metadata,
+                               Usize *error_line)
 {
     FILE *f = open__File(path->buffer, "r");
     String *line = NULL; // String*?
     struct CISelfTestMetadataScannerContext ctx =
       NEW(CISelfTestMetadataScannerContext, path, metadata);
+    enum CISelfTestMetadataScannerError res =
+      CI_SELF_TEST_METADATA_SCANNER_ERROR_NONE;
 
     if (!f) {
         return CI_SELF_TEST_METADATA_SCANNER_ERROR_FAILED_TO_READ_FILE;
@@ -286,23 +299,29 @@ run__CISelfTestMetadataScanner(const String *path, CISelfTestMetadata *metadata)
         enum CISelfTestMetadataScannerError error =
           scan_line__CISelfTestMetadataScanner(&line, &ctx);
 
-        switch (error) {
-            case CI_SELF_TEST_METADATA_SCANNER_ERROR_NONE:
-                continue;
-            case CI_SELF_TEST_METADATA_SCANNER_ERROR_FAILED_TO_SCAN_LINE:
-                goto out;
-            default:
-                return error;
+        // Not a failure: the line simply carries no annotation, and annotations
+        // are only ever read as a leading block, so there is nothing left to
+        // scan past this point.
+        if (error == CI_SELF_TEST_METADATA_SCANNER_ERROR_FAILED_TO_SCAN_LINE) {
+            break;
+        }
+
+        if (error != CI_SELF_TEST_METADATA_SCANNER_ERROR_NONE) {
+            res = error;
+
+            if (error_line) {
+                *error_line = ctx.line_count;
+            }
+
+            break;
         }
 
         ++ctx.line_count;
     }
 
-out:
-
     close__File(f);
 
-    return CI_SELF_TEST_METADATA_SCANNER_ERROR_NONE;
+    return res;
 }
 
 const char *
@@ -317,8 +336,8 @@ get_error_message__CISelfTestMetadataScanner(
         case CI_SELF_TEST_METADATA_SCANNER_ERROR_FAILED_TO_SCAN_LINE:
             UNREACHABLE("this error should never be returned");
         case CI_SELF_TEST_METADATA_SCANNER_ERROR_UNEXPECTED_FLAG:
-            return "expected `@expected_bin_stdout`, or `@compile_options` as "
-                   "flag";
+            return "expected `@expected_bin_stdout`, `@compile_options`, or "
+                   "`@expected_compiler_error` as flag";
         case CI_SELF_TEST_METADATA_SCANNER_ERROR_EXPECTED_NEW_LINE_OR_CLOSING_COMMENT:
             return "expected new line or `*/` before the end of line";
         case CI_SELF_TEST_METADATA_SCANNER_ERROR_CANNOT_BE_DUPLICATED:
