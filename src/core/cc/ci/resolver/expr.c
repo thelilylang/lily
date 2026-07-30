@@ -2292,7 +2292,12 @@ resolve_sizeof_expr__CIResolverExpr(const CIResolverExpr *self,
 
     ASSERT(expr->kind == CI_EXPR_KIND_SIZEOF);
 
-    switch (expr->kind) {
+    // What is measured is the operand, so it is the kind of the operand that
+    // says how to reach its data type. Switching on the kind of the `sizeof`
+    // itself only ever reached the fallback, which then measured the `sizeof`
+    // expression rather than the operand: the size of a size, not the size of
+    // what was written.
+    switch (expr->sizeof_->kind) {
         case CI_EXPR_KIND_DATA_TYPE:
             return NEW_VARIANT(
               CIExpr,
@@ -2308,8 +2313,12 @@ resolve_sizeof_expr__CIResolverExpr(const CIResolverExpr *self,
             // NOTE: This function is used only to resolve expression in
             // preprocessor, so in this situation it's impossible to have
             // generic cases.
-            CIDataType *expr_data_type = infer_expr_data_type__CIInfer(
-              self->parser->file, expr, self->scope->scope_id, NULL, NULL);
+            CIDataType *operand_data_type =
+              infer_expr_data_type__CIInfer(self->parser->file,
+                                            expr->sizeof_,
+                                            self->scope->scope_id,
+                                            NULL,
+                                            NULL);
             CIExpr *res =
               NEW_VARIANT(CIExpr,
                           literal,
@@ -2317,9 +2326,9 @@ resolve_sizeof_expr__CIResolverExpr(const CIResolverExpr *self,
                           NEW_VARIANT(CIExprLiteral,
                                       unsigned_int,
                                       resolve_data_type_size__CIResolverExpr(
-                                        self, expr_data_type)));
+                                        self, operand_data_type)));
 
-            FREE(CIDataType, expr_data_type);
+            FREE(CIDataType, operand_data_type);
 
             return res;
         }
