@@ -3340,10 +3340,12 @@ get_num__CIScanner(CIScanner *self)
         case '0': {
             char *c1 = peek_char__CIScanner(self, 1);
 
-            if (c1 == (char *)'b') {
+            // The letter a base is written with is read in either case, as
+            // `0B1` is written as much as `0b1` is.
+            if (c1 == (char *)'b' || c1 == (char *)'B') {
                 jump__CIScanner(self, 2);
                 res = scan_bin__CIScanner(self);
-            } else if (c1 == (char *)'x') {
+            } else if (c1 == (char *)'x' || c1 == (char *)'X') {
                 jump__CIScanner(self, 2);
                 res = scan_hex__CIScanner(self);
             } else if (c1 == (char *)'0') {
