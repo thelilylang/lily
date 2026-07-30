@@ -1,0 +1,26 @@
+//@expected_bin_stdout 1:5:5:4\n
+//@expected_bin_stdout 9:7\n
+
+#include <helper.h>
+
+int main() {
+	int a = 1;
+	int b = 0;
+	int c = 1;
+	int d = 2;
+
+	/* A condition binds more tightly than an assignment, so what is written
+	   after the assignment is the whole of the condition. */
+	a = a > 0 ? 1 : 2;
+	b = c = 1 ? 5 : 6;
+	d += 1 ? 2 : 3;
+
+	printf("%d:%d:%d:%d\n", a, b, c, d);
+
+	/* It binds more tightly than a comma as well, and holds another
+	   condition as much as anything else. */
+	int nested = d > 1 ? d > 3 ? 9 : 8 : 7;
+	int after_comma = (a = 0, 1 ? 7 : 8);
+
+	printf("%d:%d\n", nested, after_comma);
+}

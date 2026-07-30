@@ -38,6 +38,10 @@
 
 #define MAX_CI_EXPR_PRECEDENCE 100
 
+// Precedence of an assignment, which everything written with less of it is
+// read around rather than on: a condition, and what a condition holds.
+#define CI_EXPR_ASSIGNMENT_PRECEDENCE 40
+
 // Location of an AST node the transpiler synthesizes itself (builtin
 // signatures, cloned fields, ...) rather than parsing from a user source file.
 // Such a node is never the target of a diagnostic, so it has no real location

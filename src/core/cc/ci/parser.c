@@ -4140,10 +4140,26 @@ loop:
                 return expr;
             }
 
-            return NEW_VARIANT(CIExpr,
-                               ternary,
-                               previous_location__CIParser(self),
-                               NEW(CIExprTernary, expr, expr_if, expr_else));
+            // A condition binds more tightly than an assignment and than a
+            // comma, so what was read as the whole of the left is walked down
+            // to what the condition is really written on.
+            //
+            // e.g. `a = b ? c : d` reads the condition on `b`, not on `a = b`.
+            CIExpr **cond_ref = &expr;
+
+            while ((*cond_ref)->kind == CI_EXPR_KIND_BINARY &&
+                   to_precedence__CIExprBinaryKind((*cond_ref)->binary.kind) <=
+                     CI_EXPR_ASSIGNMENT_PRECEDENCE) {
+                cond_ref = &(*cond_ref)->binary.right;
+            }
+
+            *cond_ref =
+              NEW_VARIANT(CIExpr,
+                          ternary,
+                          previous_location__CIParser(self),
+                          NEW(CIExprTernary, *cond_ref, expr_if, expr_else));
+
+            return expr;
         default:
             return parse_post_expr__CIParser(self, expr);
     }
