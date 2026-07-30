@@ -1,0 +1,28 @@
+//@compile_options -s c11
+//@expected_bin_stdout i:c:d:?\n
+//@expected_bin_stdout 42:1:7:5\n
+
+#include <helper.h>
+
+#define TYPE_OF(x) _Generic((x), int: "i", char: "c", double: "d", default: "?")
+
+int main() {
+	int i = 0;
+	char c = 0;
+	double d = 0.0;
+	short s = 0;
+	int *p = 0;
+
+	/* `short` is written for by no association, so `default` stands in. */
+	printf("%s:%s:%s:%s\n", TYPE_OF(i), TYPE_OF(c), TYPE_OF(d), TYPE_OF(s));
+
+	int arith = _Generic(i, int: 40 + 2, default: 0);
+	int ptr = _Generic(p, int *: 1, int: 2);
+	int nested = _Generic(i, int: _Generic(c, char: 7, default: 0), default: 1);
+	int only = _Generic(s, default: 5);
+
+	_Static_assert(_Generic(i, int: 1, default: 0) == 1, "an int selects int");
+	_Static_assert(_Generic(c, int: 1, default: 9) == 9, "a char falls back");
+
+	printf("%d:%d:%d:%d\n", arith, ptr, nested, only);
+}
