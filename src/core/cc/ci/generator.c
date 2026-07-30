@@ -1678,6 +1678,10 @@ generate_function_binary_expr__CIGenerator(CIGenerator *self,
             s_kind = "->";
 
             break;
+        case CI_EXPR_BINARY_KIND_COMMA:
+            s_kind = ",";
+
+            break;
         default:
             UNREACHABLE("unknown variant");
     }
@@ -1687,6 +1691,12 @@ generate_function_binary_expr__CIGenerator(CIGenerator *self,
         case CI_EXPR_BINARY_KIND_ARROW:
         case CI_EXPR_BINARY_KIND_DOT:
             write_str__CIGenerator(self, s_kind);
+
+            break;
+        // A comma is written against what precedes it, and apart from what
+        // follows it, as it is written by hand.
+        case CI_EXPR_BINARY_KIND_COMMA:
+            write_str__CIGenerator(self, ", ");
 
             break;
         default:

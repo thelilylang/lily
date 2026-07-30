@@ -3381,6 +3381,7 @@ enum CIExprBinaryKind
     CI_EXPR_BINARY_KIND_GREATER_EQ,        // >=
     CI_EXPR_BINARY_KIND_DOT,               // .
     CI_EXPR_BINARY_KIND_ARROW,             // ->
+    CI_EXPR_BINARY_KIND_COMMA,             // ,
 };
 
 /**

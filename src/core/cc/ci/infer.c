@@ -411,6 +411,16 @@ infer_expr_binary_data_type__CIInfer(
     switch (expr->binary.kind) {
         case CI_EXPR_BINARY_KIND_ASSIGN:
             return left_dt;
+        // What is written on the left of a comma is read for what it does, and
+        // what is written on its right is what it gives back.
+        case CI_EXPR_BINARY_KIND_COMMA:
+            FREE(CIDataType, left_dt);
+
+            return infer_expr_data_type__CIInfer(file,
+                                                 expr->binary.right,
+                                                 current_scope_id,
+                                                 called_generic_params,
+                                                 decl_generic_params);
         // What a comparison and a logical operation return is whether it
         // holds, an int, whatever the operands are read as. Left to what
         // follows, an operand written as a float would give a float back,

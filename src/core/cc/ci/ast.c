@@ -5051,6 +5051,8 @@ IMPL_FOR_DEBUG(to_string, CIExprBinaryKind, enum CIExprBinaryKind self)
             return "CI_EXPR_BINARY_KIND_DOT";
         case CI_EXPR_BINARY_KIND_ARROW:
             return "CI_EXPR_BINARY_KIND_ARROW";
+        case CI_EXPR_BINARY_KIND_COMMA:
+            return "CI_EXPR_BINARY_KIND_COMMA";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -5092,6 +5094,10 @@ to_precedence__CIExprBinaryKind(enum CIExprBinaryKind kind)
             return 50;
         case CI_EXPR_BINARY_KIND_OR:
             return 45;
+        // What is written on either side of a comma is read one after the
+        // other, and binds less tightly than anything else does.
+        case CI_EXPR_BINARY_KIND_COMMA:
+            return 35;
         default:
             return 40;
     }
@@ -5101,6 +5107,8 @@ enum CIExprBinaryKind
 from_token__CIExprBinaryKind(const CIToken *token)
 {
     switch (token->kind) {
+        case CI_TOKEN_KIND_COMMA:
+            return CI_EXPR_BINARY_KIND_COMMA;
         case CI_TOKEN_KIND_EQ:
             return CI_EXPR_BINARY_KIND_ASSIGN;
         case CI_TOKEN_KIND_PLUS_EQ:

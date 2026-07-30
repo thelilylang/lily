@@ -756,6 +756,23 @@ static bool eat_semicolon = true;
 #define SET_EAT_SEMICOLON() eat_semicolon = true;
 #define UNSET_EAT_SEMICOLON() eat_semicolon = false;
 
+// A comma separates what is written in a list, the parameters of a call and
+// the items of an initializer alike, as much as it reads what is written on
+// either side of it one after the other. It is only read as an operator where
+// a whole expression is written, so that a list is left as a list.
+//
+// e.g.
+//
+// f(a, b);   two parameters
+// (a, b)     one expression, read for `b`
+static bool allow_comma_operator = false;
+
+#define SET_ALLOW_COMMA_OPERATOR(v)                       \
+    bool old_allow_comma_operator = allow_comma_operator; \
+    allow_comma_operator = v;
+#define RESTORE_ALLOW_COMMA_OPERATOR() \
+    allow_comma_operator = old_allow_comma_operator;
+
 static const SizedStr ci_standard_attributes[CI_N_STANDARD_ATTRIBUTE] = {
     SIZED_STR_FROM_RAW("_Noreturn"),
     SIZED_STR_FROM_RAW("___Noreturn__"),
@@ -3565,7 +3582,13 @@ parse_primary_expr__CIParser(CIParser *self)
                 break;
             }
 
+            // What is written between parentheses is a whole expression, so
+            // a comma written there is read as an operator.
+            SET_ALLOW_COMMA_OPERATOR(true);
+
             CIExpr *expr = parse_expr__CIParser(self);
+
+            RESTORE_ALLOW_COMMA_OPERATOR();
 
             expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
 
@@ -3874,7 +3897,9 @@ parse_binary_expr__CIParser(CIParser *self, CIExpr *expr)
            self->current_token->kind == CI_TOKEN_KIND_LSHIFT ||
            self->current_token->kind == CI_TOKEN_KIND_RSHIFT ||
            self->current_token->kind == CI_TOKEN_KIND_LSHIFT_EQ ||
-           self->current_token->kind == CI_TOKEN_KIND_RSHIFT_EQ) {
+           self->current_token->kind == CI_TOKEN_KIND_RSHIFT_EQ ||
+           (allow_comma_operator &&
+            self->current_token->kind == CI_TOKEN_KIND_COMMA)) {
         enum CIExprBinaryKind op =
           from_token__CIExprBinaryKind(self->current_token);
         Usize precedence = to_precedence__CIExprBinaryKind(op);
@@ -4082,6 +4107,17 @@ loop:
         case CI_TOKEN_KIND_RSHIFT:
         case CI_TOKEN_KIND_LSHIFT_EQ:
         case CI_TOKEN_KIND_RSHIFT_EQ:
+            expr = parse_binary_expr__CIParser(self, expr);
+
+            goto loop;
+        // A comma is only read as an operator where a whole expression is
+        // written; elsewhere it separates what is written in a list and is
+        // left to whoever reads the list.
+        case CI_TOKEN_KIND_COMMA:
+            if (!allow_comma_operator) {
+                return expr;
+            }
+
             expr = parse_binary_expr__CIParser(self, expr);
 
             goto loop;

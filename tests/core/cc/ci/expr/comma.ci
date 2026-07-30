@@ -1,0 +1,26 @@
+//@expected_bin_stdout 2:1:3\n
+//@expected_bin_stdout 3:3:6\n
+
+#include <helper.h>
+
+int
+add(int x, int y)
+{
+	return x + y;
+}
+
+int main() {
+	int a = 0;
+	int b;
+	int c[3] = { 1, 2, 3 };
+
+	/* What is written on the left of a comma is read for what it does, and
+	   what is written on its right is what the whole gives back. */
+	b = (a = 1, a + 1);
+
+	printf("%d:%d:%d\n", b, a, (1, 2, 3));
+
+	/* A comma written in a list separates what the list holds, and is left
+	   as it is. */
+	printf("%d:%d:%d\n", c[2], add(1, 2), add((1, 2), 4));
+}
