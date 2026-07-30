@@ -1,0 +1,35 @@
+//@compile_options -s c11
+//@expected_bin_stdout int:int:int*:fnptr\n
+//@expected_bin_stdout const char*:int const*\n
+
+#include <helper.h>
+
+int
+f(int x)
+{
+	return x;
+}
+
+int main() {
+	const int ci = 0;
+	volatile int vi = 0;
+	int a[4];
+	const char *cp = "";
+	const int *cip = &ci;
+
+	/* The controlling expression is read for the value it holds, so the
+	   qualifiers written on it are dropped, an array is read as a pointer on
+	   what it holds and a function as a pointer on itself. An association
+	   written on a qualified type is never selected. */
+	printf("%s:%s:%s:%s\n",
+	       _Generic(ci, const int: "const int", int: "int", default: "?"),
+	       _Generic(vi, volatile int: "volatile int", int: "int", default: "?"),
+	       _Generic(a, int *: "int*", default: "?"),
+	       _Generic(f, int (*)(int): "fnptr", default: "?"));
+
+	/* Only what is written at the top is dropped: the qualifiers a pointer
+	   holds on what it points to are part of what it is. */
+	printf("%s:%s\n",
+	       _Generic(cp, char *: "char*", const char *: "const char*", default: "?"),
+	       _Generic(cip, int *: "int*", const int *: "int const*", default: "?"));
+}
