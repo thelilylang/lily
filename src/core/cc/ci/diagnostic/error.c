@@ -445,6 +445,9 @@ to_msg__CIError(const CIError *self)
                    "variadic param";
         case CI_ERROR_KIND_PREPROCESSOR_ERROR:
             return self->preprocessor_error;
+        case CI_ERROR_KIND_STATIC_ASSERT_FAILED:
+            return self->static_assert_failed ? self->static_assert_failed
+                                              : "static assertion failed";
         default:
             UNREACHABLE("unknown variant");
     }
@@ -838,6 +841,8 @@ to_code__CIError(const CIError *self)
             return "0191";
         case CI_ERROR_KIND_GENERIC_PARAMS_COUNT_MISMATCH:
             return "0192";
+        case CI_ERROR_KIND_STATIC_ASSERT_FAILED:
+            return "0193";
         default:
             UNREACHABLE("unknown variant");
     }

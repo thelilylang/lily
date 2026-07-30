@@ -184,6 +184,7 @@ enum CIErrorKind
     CI_ERROR_KIND_READ_OF_UNDEFINED_IDENTIFIER,
     CI_ERROR_KIND_SINGLE_LINE_COMMENT_BEFORE_C99,
     CI_ERROR_KIND_SIZEOF_IN_PREPROCESSOR_CONDITION,
+    CI_ERROR_KIND_STATIC_ASSERT_FAILED,
     CI_ERROR_KIND_STRINGIFY_OUTSIDE_OF_MACRO,
     CI_ERROR_KIND_STRUCT_IS_ALREADY_DEFINED,
     CI_ERROR_KIND_STRUCT_IS_NOT_FOUND,
@@ -230,6 +231,9 @@ typedef struct CIError
     {
         char *preprocessor_error; // char* (&)
         char *expected_token;     // char* (&)
+        // The message the assertion was declared with, or NULL when it was
+        // declared without one.
+        char *static_assert_failed; // char*? (&)
     };
 } CIError;
 
@@ -268,6 +272,22 @@ inline VARIANT_CONSTRUCTOR(CIError,
 {
     return (CIError){ .kind = CI_ERROR_KIND_EXPECTED_TOKEN,
                       .expected_token = expected_token };
+}
+
+/**
+ *
+ * @brief Construct CIError type (CI_ERROR_KIND_STATIC_ASSERT_FAILED).
+ * @param static_assert_failed char*? - The message the assertion was declared
+ * with, NULL when it was declared without one. It is borrowed and must outlive
+ * the diagnostic.
+ */
+inline VARIANT_CONSTRUCTOR(CIError,
+                           CIError,
+                           static_assert_failed,
+                           char *static_assert_failed)
+{
+    return (CIError){ .kind = CI_ERROR_KIND_STATIC_ASSERT_FAILED,
+                      .static_assert_failed = static_assert_failed };
 }
 
 /**

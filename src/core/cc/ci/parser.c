@@ -626,6 +626,13 @@ static CIDecl *
 parse_label__CIParser(CIParser *self);
 
 /// @brief Parse declaration.
+/// @brief Parse and check a `_Static_assert` (C11) or `static_assert` (C23)
+/// declaration.
+/// @return Whether the construct was the one found here, told apart from
+/// whether the assertion held.
+static bool
+parse_static_assert__CIParser(CIParser *self);
+
 static CIDecl *
 parse_decl__CIParser(CIParser *self);
 
@@ -4519,6 +4526,17 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
             next_token__CIParser(self);
 
             return NULL;
+        case CI_TOKEN_KIND_KEYWORD__STATIC_ASSERT:
+        case CI_TOKEN_KIND_KEYWORD_STATIC_ASSERT:
+            // Reached on its own, as the construct begins with neither a data
+            // type nor a storage class, which is what sends a body item to the
+            // parse of a declaration. It declares nothing, so the body gains no
+            // item from it.
+            DISABLE_IN_LABEL();
+
+            parse_static_assert__CIParser(self);
+
+            return NULL;
         default:
         default_case: {
             if (is_data_type__CIParser(self) ||
@@ -5305,6 +5323,83 @@ parse_label__CIParser(CIParser *self)
     return NULL;
 }
 
+bool
+parse_static_assert__CIParser(CIParser *self)
+{
+    switch (self->current_token->kind) {
+        case CI_TOKEN_KIND_KEYWORD__STATIC_ASSERT:
+        case CI_TOKEN_KIND_KEYWORD_STATIC_ASSERT:
+            break;
+        default:
+            return false;
+    }
+
+    // The failure is reported against the construct as a whole, rather than
+    // against wherever the parse of its condition happened to stop.
+    const Location location = self->current_token->location;
+
+    next_token__CIParser(self); // skip `_Static_assert` or `static_assert`
+
+    if (!expect__CIParser(self, CI_TOKEN_KIND_LPAREN, true)) {
+        return true;
+    }
+
+    CIExpr *expr = parse_expr__CIParser(self);
+
+    if (!expr) {
+        return true;
+    }
+
+    // The message is only optional since C23. Before that the comma and the
+    // string are both part of the construct, and `expect` reports their
+    // absence.
+    char *msg = NULL; // char*? (&)
+
+    if (self->current_token->kind == CI_TOKEN_KIND_COMMA ||
+        self->file->entity.result->config->standard < CI_STANDARD_23) {
+        expect__CIParser(self, CI_TOKEN_KIND_COMMA, true);
+
+        if (self->current_token->kind ==
+            CI_TOKEN_KIND_LITERAL_CONSTANT_STRING) {
+            msg =
+              GET_PTR_RC(String, self->current_token->literal_constant_string)
+                ->buffer;
+
+            next_token__CIParser(self);
+        } else {
+            FAILED__CIParser(self,
+                             NEW(CIError, CI_ERROR_KIND_EXPECTED_STRING_VALUE));
+        }
+    }
+
+    expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
+    expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
+
+    CIResolverExpr resolver_expr = NEW(CIResolverExpr,
+                                       self,
+                                       current_scope,
+                                       self->file,
+                                       self->count_error,
+                                       false);
+    // The condition has to be folded down to a literal first: the check below
+    // only reads a value, it does not compute one.
+    CIExpr *resolved_expr = run__CIResolverExpr(&resolver_expr, expr);
+
+    if (!is_true__CIResolverExpr(&resolver_expr, resolved_expr)) {
+        EMIT_ERROR__CI(&self->file->file_input,
+                       &location,
+                       NEW_VARIANT(CIError, static_assert_failed, msg),
+                       self->count_error);
+    }
+
+    FREE(CIExpr, resolved_expr);
+    FREE(CIExpr, expr);
+
+    // Nothing is declared: the assertion has been checked here, and there is
+    // nothing left of it to generate.
+    return true;
+}
+
 CIDecl *
 parse_decl__CIParser(CIParser *self)
 {
@@ -5316,6 +5411,12 @@ parse_decl__CIParser(CIParser *self)
         decl_scope = first_layer_function_scope;
 
         goto exit;
+    }
+
+    // Checked on the spot and declaring nothing, so it is handled before
+    // anything tries to read a data type out of it.
+    if (parse_static_assert__CIParser(self)) {
+        return NULL;
     }
 
     Vec *attributes = NULL;
