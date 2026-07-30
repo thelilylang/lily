@@ -1,0 +1,42 @@
+/*@compile_options -s c89*/
+/*@expected_bin_stdout 5:-5:3\n*/
+/*@expected_bin_stdout 0:1:-6:-1\n*/
+/*@expected_bin_stdout 5:1:1\n*/
+/*@expected_bin_stdout 5:7:7\n*/
+/*@expected_bin_stdout 5:3:3\n*/
+
+#include <helper.h>
+
+int main() {
+	int a = 5;
+	int b = -3;
+	int i = 5;
+	int post;
+	int pre;
+	int *p;
+
+	p = &a;
+
+	/* The sign an operand is read with. */
+	printf("%d:%d:%d\n", +a, -a, -b);
+
+	/* What an operand is read as, true or false, and the bits it holds. */
+	printf("%d:%d:%d:%d\n", !a, !0, ~a, ~0);
+
+	/* What the address of an operand points at is the operand, and what it
+	   takes up is measured rather than read. */
+	printf("%d:%d:%d\n", *p, p == &a, (int)(sizeof(a) == sizeof(int)));
+
+	/* An operand is read before it is increased where the increase is written
+	   after it, and after it where it is written before it. */
+	post = i++;
+	pre = ++i;
+
+	printf("%d:%d:%d\n", post, pre, i);
+
+	i = 5;
+	post = i--;
+	pre = --i;
+
+	printf("%d:%d:%d\n", post, pre, i);
+}
