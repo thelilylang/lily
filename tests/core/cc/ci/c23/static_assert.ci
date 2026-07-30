@@ -1,0 +1,14 @@
+//@compile_options -s c23
+//@expected_bin_stdout ok\n
+
+#include <helper.h>
+
+/* Since C23 the keyword is spelled without an underscore, and the message is
+   optional for either spelling. */
+static_assert(1 + 1 == 2, "with a message");
+static_assert(3 > 2);
+_Static_assert(5 % 2 == 1);
+
+int main() {
+	puts("ok");
+}
