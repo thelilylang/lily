@@ -681,8 +681,13 @@ substitute_and_generate_from_data_type__CIVisitor(
                                      called_generic_params,
                                      serialized_name);
 
-    generate_from_data_type__CIVisitor(
-      self, subs_data_type, called_generic_params, generic_params);
+    // The substitution is allowed to fail, having already reported why. There
+    // is nothing to generate from a data type that could not be built, and the
+    // caller skips it in the same way.
+    if (subs_data_type) {
+        generate_from_data_type__CIVisitor(
+          self, subs_data_type, called_generic_params, generic_params);
+    }
 
     return subs_data_type;
 }

@@ -283,6 +283,9 @@ to_msg__CIError(const CIError *self)
             return "this function is already defined";
         case CI_ERROR_KIND_GENERIC_PARAMS_ARE_NOT_FOUND:
             return "the generic params are not found";
+        case CI_ERROR_KIND_GENERIC_PARAMS_COUNT_MISMATCH:
+            return "the number of generic params does not correspond to its "
+                   "declaration";
         case CI_ERROR_KIND_GENERIC_PARAMS_IN_VARIABLE_CONTEXT:
             return "generic params are not expected in a variable context";
         case CI_ERROR_KIND_GENERIC_PARAMS_NOT_EXPECTED_IN_THIS_CONTEXT:
@@ -833,6 +836,8 @@ to_code__CIError(const CIError *self)
             return "0190";
         case CI_ERROR_KIND_VA_ARGS_IN_NON_VARIADIC_MACRO:
             return "0191";
+        case CI_ERROR_KIND_GENERIC_PARAMS_COUNT_MISMATCH:
+            return "0192";
         default:
             UNREACHABLE("unknown variant");
     }

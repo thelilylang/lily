@@ -1249,6 +1249,23 @@ substitute_generic__CIParser(const CIResultFile *file,
 {
     Usize id = 0;
 
+    // The index of the matching declared param is used to reach the param given
+    // at the call site, so both must describe the same number of params.
+    // Otherwise the lookup below would read out of the bounds of what the call
+    // site provided.
+    if (generic_params->params->len != called_generic_params->params->len) {
+        FAILED_ON_DATA_TYPE__CIParser(
+          file,
+          CAST(CIDataType *,
+               get__Vec(called_generic_params->params->len > 0
+                          ? called_generic_params->params
+                          : generic_params->params,
+                        0)),
+          NEW(CIError, CI_ERROR_KIND_GENERIC_PARAMS_COUNT_MISMATCH));
+
+        return NULL;
+    }
+
     for (Usize i = 0; i < generic_params->params->len; ++i) {
         CIDataType *generic_param = get__Vec(generic_params->params, i);
 
