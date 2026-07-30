@@ -411,6 +411,23 @@ infer_expr_binary_data_type__CIInfer(
     switch (expr->binary.kind) {
         case CI_EXPR_BINARY_KIND_ASSIGN:
             return left_dt;
+        // What a comparison and a logical operation return is whether it
+        // holds, an int, whatever the operands are read as. Left to what
+        // follows, an operand written as a float would give a float back,
+        // which is not what a condition is written on.
+        case CI_EXPR_BINARY_KIND_AND:
+        case CI_EXPR_BINARY_KIND_OR:
+        case CI_EXPR_BINARY_KIND_EQ:
+        case CI_EXPR_BINARY_KIND_NE:
+        case CI_EXPR_BINARY_KIND_LESS:
+        case CI_EXPR_BINARY_KIND_GREATER:
+        case CI_EXPR_BINARY_KIND_LESS_EQ:
+        case CI_EXPR_BINARY_KIND_GREATER_EQ:
+            FREE(CIDataType, left_dt);
+
+            return NEW(CIDataType,
+                       clone__Location(&expr->location),
+                       CI_DATA_TYPE_KIND_INT);
         default:
             break;
     }

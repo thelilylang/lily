@@ -1,0 +1,25 @@
+//@expected_bin_stdout 1:1:0:0:1:1\n
+//@expected_bin_stdout 1:1:0:1\n
+
+#include <helper.h>
+
+int main() {
+	int i = 1;
+	int j = 2;
+	double d = 1.5;
+	float f = 1.5f;
+
+	printf("%d:%d:%d:%d:%d:%d\\n",
+	       i < j,
+	       i <= i,
+	       i > j,
+	       i >= j,
+	       i == 1,
+	       i != j);
+
+	/* What a comparison returns is whether it holds, whatever it is written
+	   on, so it is read as a condition as much as an int is. */
+	if (d > 1.0 && f < 2.0f) {
+		printf("%d:%d:%d:%d\\n", d > 1.0, f < 2.0f, d < 1.0, d == 1.5);
+	}
+}
