@@ -1,0 +1,5 @@
+/*@compile_options -s c89 */
+
+int main() {
+	register int x = 30;
+}

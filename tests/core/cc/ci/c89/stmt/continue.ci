@@ -1,0 +1,22 @@
+/*@compile_options -s c89 */
+
+int main() {
+	int i = 0;
+	int n = 0;
+
+	while (1) {
+		++i;
+
+		if (i > 4) {
+			break;
+		}
+
+		if (i % 2 == 0) {
+			continue;
+		}
+
+		++n;
+	}
+
+	return n == 2 ? 0 : 1;
+}

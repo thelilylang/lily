@@ -1,0 +1,6 @@
+/*@compile_options -s c89 */
+
+int main() {
+	goto g;
+g:
+}

@@ -1,0 +1,9 @@
+/*@compile_options -s c89 */
+
+int f() {
+	return 1;
+}
+
+int main() {
+	return 0;
+}

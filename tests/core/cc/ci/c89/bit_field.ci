@@ -1,0 +1,8 @@
+/*@compile_options -s c89 */
+
+struct X {
+	int a : 1;
+};
+
+int main() {
+}

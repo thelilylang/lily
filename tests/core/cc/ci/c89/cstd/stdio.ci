@@ -1,0 +1,7 @@
+/*@compile_options -s c89 */
+
+#include <stdio.h>
+
+int main() {
+	puts("Hello, World!");
+}

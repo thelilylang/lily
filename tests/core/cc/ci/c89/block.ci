@@ -1,0 +1,7 @@
+/*@compile_options -s c89 */
+
+int main() {
+	{
+		int x = 0;
+	}
+}

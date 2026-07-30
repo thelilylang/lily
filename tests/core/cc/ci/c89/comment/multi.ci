@@ -1,0 +1,4 @@
+/*@compile_options -s c89 */
+
+/* This is a multi-comment */
+int main() {}

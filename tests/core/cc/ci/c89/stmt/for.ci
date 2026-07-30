@@ -1,0 +1,37 @@
+/*@compile_options -s c89 */
+
+int main() {
+	int i;
+	int j = 0;
+	int k = 0;
+	int l = 0;
+	int m = 0;
+
+	for (i = 0; i < 10; ++i) {
+	}
+
+	for (; j < 10; ++j) {
+	}
+
+	for (;; ++k) {
+		if (k == 10) {
+			break;
+		}
+	}
+
+	for (l = 10, m = 40;;) {
+		break;
+	}
+
+	for (;; ++l, ++m) {
+		if (l == 20) {
+			break;
+		}
+	}
+
+	for (;;) {
+		break;
+	}
+
+	return 0;
+}

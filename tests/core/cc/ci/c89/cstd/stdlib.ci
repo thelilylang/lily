@@ -1,0 +1,6 @@
+/*@compile_options -s c89 */
+
+#include <stdlib.h>
+
+int main() {
+}
