@@ -840,8 +840,16 @@ perform_typeof__CIInfer(const CIResultFile *file,
                         const CIGenericParams *called_generic_params,
                         const CIGenericParams *decl_generic_params)
 {
-    return infer_expr_data_type__CIInfer(
+    CIDataType *inferred_data_type = infer_expr_data_type__CIInfer(
       file, expr, current_scope_id, called_generic_params, decl_generic_params);
+    // What is inferred is the data type of what `typeof` is written on, and is
+    // shared with it. A copy is returned, as what is written around `typeof` is
+    // set on what it stands for, and what it is written on is left as it is.
+    CIDataType *res = clone__CIDataType(inferred_data_type);
+
+    FREE(CIDataType, inferred_data_type);
+
+    return res;
 }
 
 CIDataType *
@@ -853,11 +861,8 @@ perform_typeof_unqual__CIInfer(const CIResultFile *file,
 {
     CIDataType *res = perform_typeof__CIInfer(
       file, expr, current_scope_id, called_generic_params, decl_generic_params);
-    CIDataType *cloned_res = clone__CIDataType(res);
 
-    set_qualifier__CIDataType(cloned_res, CI_DATA_TYPE_QUALIFIER_NONE);
+    set_qualifier__CIDataType(res, CI_DATA_TYPE_QUALIFIER_NONE);
 
-    FREE(CIDataType, res);
-
-    return cloned_res;
+    return res;
 }

@@ -2757,7 +2757,9 @@ parse_pre_data_type__CIParser(CIParser *self)
     parse_storage_class_specifiers_and_data_type_qualifiers__CIParser(
       self, &data_type_qualifier_flag, &storage_class_flag);
 
-    set_qualifier__CIDataType(res, data_type_qualifier_flag);
+    // The qualifiers are added to the ones the data type already holds, as
+    // `typeof` stands for a data type written with its own.
+    set_qualifier__CIDataType(res, res->qualifier | data_type_qualifier_flag);
 
     RESET_DATA_TYPE_QUALIFIER_FLAG();
 
