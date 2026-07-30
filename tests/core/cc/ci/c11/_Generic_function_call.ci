@@ -1,0 +1,53 @@
+//@compile_options -s c11
+//@expected_bin_stdout f:d:i\n
+//@expected_bin_stdout 3:7\n
+
+#include <helper.h>
+
+const char *
+which_f(float x)
+{
+	return "f";
+}
+
+const char *
+which_d(double x)
+{
+	return "d";
+}
+
+const char *
+which_i(int x)
+{
+	return "i";
+}
+
+int
+add(int x, int y)
+{
+	return x + y;
+}
+
+int
+mul(int x, int y)
+{
+	return x * y;
+}
+
+/* The idiom a generic selection is written for: the association selected is
+   what the call is made on. */
+#define WHICH(x) _Generic((x), float: which_f, double: which_d, default: which_i)(x)
+
+#define OP(x) _Generic((x), int: add, default: mul)
+
+int main() {
+	float f = 1.0f;
+	double d = 1.0;
+	short s = 1;
+
+	printf("%s:%s:%s\n", WHICH(f), WHICH(d), WHICH(s));
+
+	/* A selection is called as well when it is written on its own, the
+	   parentheses of the call standing apart from it. */
+	printf("%d:%d\n", OP(1)(1, 2), OP(f)(7, 1));
+}
