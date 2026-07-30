@@ -1,0 +1,13 @@
+//@compile_options -s c11
+//@expected_compiler_error :9:15: \e[31merror\e[0m[0066]: expected a data type
+
+/* `_Static_assert` is not supported yet: the parser does not recognise the
+   construct, and reports the tokens it cannot read as a data type. It used to
+   crash right after doing so, which is what this fixture guards against.
+   Replace it with a real test of the construct once it is supported. */
+
+_Static_assert(1 == 1, "ok");
+
+int main() {
+	return 0;
+}
