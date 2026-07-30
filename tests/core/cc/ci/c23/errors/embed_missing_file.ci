@@ -1,0 +1,12 @@
+//@compile_options -s c23
+//@expected_compiler_error :8:26: \e[31merror\e[0m[0112]: failed to open the embed path
+
+#include <helper.h>
+
+int main() {
+	int data[] = {
+#embed "missing_file.txt"
+	};
+
+	return data[0];
+}

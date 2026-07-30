@@ -1,0 +1,41 @@
+//@compile_options -s c23
+//@expected_bin_stdout 3:65:66:67\n
+//@expected_bin_stdout ABC\n
+//@expected_bin_stdout 4:65:0:255:128\n
+
+#include <helper.h>
+
+int main() {
+	/* What is embedded stands for the bytes of the file, written one by one
+	   and separated by a comma. */
+	int text[] = {
+#embed "embed_text.txt"
+	};
+
+	printf("%d:%d:%d:%d\n",
+	       (int)(sizeof(text) / sizeof(text[0])),
+	       text[0],
+	       text[1],
+	       text[2]);
+
+	/* They are written wherever a list of values is, so what they are read as
+	   is left to what holds them. */
+	char s[] = {
+#embed "embed_text.txt"
+	, 0 };
+
+	printf("%s\n", s);
+
+	/* A byte holds the value it holds unsigned, and one set to zero is
+	   embedded as much as any other is. */
+	int bytes[] = {
+#embed "embed_bytes.bin"
+	};
+
+	printf("%d:%d:%d:%d:%d\n",
+	       (int)(sizeof(bytes) / sizeof(bytes[0])),
+	       bytes[0],
+	       bytes[1],
+	       bytes[2],
+	       bytes[3]);
+}
