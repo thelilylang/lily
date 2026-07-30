@@ -3422,13 +3422,9 @@ parse_generic_selection_post_expr__CIParser(CIParser *self, CIExpr *expr)
     }
 
     // A generic selection is written where a function name would be as often as
-    // it is written for a value, so what it chose is called when parentheses
-    // follow it. The call is made on the expression itself, as the selection
-    // stands for whatever it chose, a name or not.
-    while (self->current_token->kind == CI_TOKEN_KIND_LPAREN) {
-        expr = parse_function_call__CIParser(self, expr);
-    }
-
+    // it is written for a value, so what it chose is read as any other
+    // expression is: the parentheses written after it call it, as they call
+    // whatever else they are written after.
     return parse_post_expr__CIParser(self, expr);
 }
 
@@ -3942,6 +3938,12 @@ loop:
               unary,
               previous_location__CIParser(self),
               NEW(CIExprUnary, CI_EXPR_UNARY_KIND_POST_DECREMENT, expr));
+
+            goto loop;
+        // Parse a call made on what precedes the parentheses, a name as much
+        // as anything an address of function is read from.
+        case CI_TOKEN_KIND_LPAREN:
+            expr = parse_function_call__CIParser(self, expr);
 
             goto loop;
         // Parse array access

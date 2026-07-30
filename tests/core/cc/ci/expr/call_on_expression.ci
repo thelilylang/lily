@@ -1,0 +1,40 @@
+//@expected_bin_stdout 1:2:5:42\n
+//@expected_bin_stdout 1:6\n
+
+#include <helper.h>
+
+typedef int (*fn)(int);
+
+int
+id(int x)
+{
+	return x;
+}
+
+int
+add1(int x)
+{
+	return x + 1;
+}
+
+fn
+pick(void)
+{
+	return add1;
+}
+
+int main() {
+	int (*p)(int) = id;
+	int (*fps[2])(int) = { id, add1 };
+
+	/* A call is made on whatever an address of function is read from, a name
+	   as much as anything else. */
+	printf("%d:%d:%d:%d\n",
+	       (*p)(1),
+	       fps[1](1),
+	       (1 ? id : add1)(5),
+	       pick()(41));
+
+	/* What a call returns is called in turn where it is a function itself. */
+	printf("%d:%d\n", id(1), pick()(5));
+}
