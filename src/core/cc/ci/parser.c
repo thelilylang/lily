@@ -3244,14 +3244,45 @@ parse_literal_expr__CIParser(CIParser *self)
               NEW_VARIANT(CIExprLiteral,
                           char,
                           self->previous_token->literal_constant_character));
-        case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
-            return NEW_VARIANT(
-              CIExpr,
-              literal,
-              previous_location__CIParser(self),
-              NEW_VARIANT(CIExprLiteral,
-                          string,
-                          self->previous_token->literal_constant_string));
+        case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING: {
+            // The string literals written next to one another are read as the
+            // single string they spell, so the ones that follow are joined to
+            // the first.
+            if (self->current_token->kind !=
+                CI_TOKEN_KIND_LITERAL_CONSTANT_STRING) {
+                return NEW_VARIANT(
+                  CIExpr,
+                  literal,
+                  previous_location__CIParser(self),
+                  NEW_VARIANT(CIExprLiteral,
+                              string,
+                              self->previous_token->literal_constant_string));
+            }
+
+            String *joined_value = clone__String(GET_PTR_RC(
+              String, self->previous_token->literal_constant_string));
+
+            while (self->current_token->kind ==
+                   CI_TOKEN_KIND_LITERAL_CONSTANT_STRING) {
+                append__String(
+                  joined_value,
+                  GET_PTR_RC(String,
+                             self->current_token->literal_constant_string));
+
+                next_token__CIParser(self);
+            }
+
+            Rc *joined_value_rc = NEW(Rc, joined_value); // Rc<String*>*
+            CIExpr *res =
+              NEW_VARIANT(CIExpr,
+                          literal,
+                          previous_location__CIParser(self),
+                          NEW_VARIANT(CIExprLiteral, string, joined_value_rc));
+
+            FREE_RC(String, joined_value_rc);
+
+            return res;
+        }
         default:
             UNREACHABLE("unexpected token");
     }
