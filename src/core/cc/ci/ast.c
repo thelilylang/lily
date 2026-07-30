@@ -2249,7 +2249,7 @@ clone__CIDataType(const CIDataType *self)
                     res = NEW_VARIANT(
                       CIDataType,
                       array,
-                      SYNTHETIC_LOCATION__CI(),
+                      clone__Location(&self->location),
                       NEW_VARIANT(CIDataTypeArray,
                                   none,
                                   clone__CIDataType(self->array.data_type),
@@ -2265,7 +2265,7 @@ clone__CIDataType(const CIDataType *self)
                     res = NEW_VARIANT(
                       CIDataType,
                       array,
-                      SYNTHETIC_LOCATION__CI(),
+                      clone__Location(&self->location),
                       NEW_VARIANT(CIDataTypeArray,
                                   sized,
                                   clone__CIDataType(self->array.data_type),
@@ -2282,8 +2282,10 @@ clone__CIDataType(const CIDataType *self)
 
             break;
         case CI_DATA_TYPE_KIND_BUILTIN:
-            res = NEW_VARIANT(
-              CIDataType, builtin, SYNTHETIC_LOCATION__CI(), self->builtin);
+            res = NEW_VARIANT(CIDataType,
+                              builtin,
+                              clone__Location(&self->location),
+                              self->builtin);
 
             break;
         case CI_DATA_TYPE_KIND_ENUM: {
@@ -2301,7 +2303,7 @@ clone__CIDataType(const CIDataType *self)
 
             res = NEW_VARIANT(CIDataType,
                               enum,
-                              SYNTHETIC_LOCATION__CI(),
+                              clone__Location(&self->location),
                               NEW(CIDataTypeEnum,
                                   self->enum_.name,
                                   variants,
@@ -2323,7 +2325,7 @@ clone__CIDataType(const CIDataType *self)
             res = NEW_VARIANT(
               CIDataType,
               function,
-              SYNTHETIC_LOCATION__CI(),
+              clone__Location(&self->location),
               NEW(CIDataTypeFunction,
                   self->function.name,
                   NEW(CIDeclFunctionParams, params),
@@ -2334,14 +2336,16 @@ clone__CIDataType(const CIDataType *self)
             break;
         }
         case CI_DATA_TYPE_KIND_GENERIC:
-            res = NEW_VARIANT(
-              CIDataType, generic, SYNTHETIC_LOCATION__CI(), self->generic);
+            res = NEW_VARIANT(CIDataType,
+                              generic,
+                              clone__Location(&self->location),
+                              self->generic);
 
             break;
         case CI_DATA_TYPE_KIND_PTR:
             res = NEW_VARIANT(CIDataType,
                               ptr,
-                              SYNTHETIC_LOCATION__CI(),
+                              clone__Location(&self->location),
                               NEW(CIDataTypePtr,
                                   self->ptr.name,
                                   clone__CIDataType(self->ptr.data_type)));
@@ -2357,7 +2361,7 @@ clone__CIDataType(const CIDataType *self)
             res = NEW_VARIANT(
               CIDataType,
               struct,
-              SYNTHETIC_LOCATION__CI(),
+              clone__Location(&self->location),
               NEW(CIDataTypeStruct,
                   self->struct_.name,
                   self->struct_.generic_params
@@ -2371,7 +2375,7 @@ clone__CIDataType(const CIDataType *self)
             res = NEW_VARIANT(
               CIDataType,
               typedef,
-              SYNTHETIC_LOCATION__CI(),
+              clone__Location(&self->location),
               NEW(CIDataTypeTypedef,
                   self->typedef_.name,
                   self->typedef_.generic_params
@@ -2389,7 +2393,7 @@ clone__CIDataType(const CIDataType *self)
             res = NEW_VARIANT(
               CIDataType,
               union,
-              SYNTHETIC_LOCATION__CI(),
+              clone__Location(&self->location),
               NEW(CIDataTypeUnion,
                   self->union_.name,
                   self->union_.generic_params
@@ -2400,7 +2404,7 @@ clone__CIDataType(const CIDataType *self)
             break;
         }
         default:
-            res = NEW(CIDataType, SYNTHETIC_LOCATION__CI(), self->kind);
+            res = NEW(CIDataType, clone__Location(&self->location), self->kind);
     }
 
     set_context__CIDataType(res, self->ctx);
