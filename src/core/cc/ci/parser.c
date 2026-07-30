@@ -3536,7 +3536,14 @@ parse_primary_expr__CIParser(CIParser *self)
                     break;
             }
 
-            CIExpr *sizeof_expr = parse_expr__CIParser(self);
+            // What `sizeof` is written on with no parentheses around it is a
+            // unary expression, so what follows it is left to be read as an
+            // operation made on what it measures: `sizeof x + 1` adds one to
+            // the size of `x`, where what is written between parentheses is
+            // read as a whole.
+            CIExpr *sizeof_expr = has_open_paren
+                                    ? parse_expr__CIParser(self)
+                                    : parse_primary_expr__CIParser(self);
 
             if (has_open_paren) {
                 expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
