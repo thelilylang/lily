@@ -1,0 +1,12 @@
+//@expected_compiler_error :9:12: \e[31merror\e[0m[0197]: this conversion discards the qualifiers of what is pointed to
+//@expected_compiler_error \e[34m9 |\e[0m \tint *p = &ci;
+
+#include <helper.h>
+
+int main() {
+	const int ci = 1;
+
+	int *p = &ci;
+
+	return *p;
+}

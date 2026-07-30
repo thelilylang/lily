@@ -1,0 +1,14 @@
+//@expected_compiler_error :11:15: \e[31merror\e[0m[0197]: this conversion discards the qualifiers of what is pointed to
+//@expected_compiler_error \e[34m11 |\e[0m \ttakes_plain(&ci);
+
+#include <helper.h>
+
+void takes_plain(int *p) { }
+
+int main() {
+	const int ci = 1;
+
+	takes_plain(&ci);
+
+	return ci;
+}
