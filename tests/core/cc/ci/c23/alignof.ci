@@ -1,0 +1,13 @@
+//@compile_options -s c23
+//@expected_bin_stdout 4:1\n
+
+#include <helper.h>
+
+/* Since C23 the keyword is also spelled without an underscore. */
+
+static_assert(alignof(int) == 4, "int");
+static_assert(_Alignof(char) == 1, "char, spelled the older way");
+
+int main() {
+	printf("%d:%d\n", (int)alignof(int), (int)alignof(char));
+}

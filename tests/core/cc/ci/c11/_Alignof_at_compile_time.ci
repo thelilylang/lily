@@ -1,0 +1,28 @@
+//@compile_options -s c11
+//@expected_bin_stdout 1:2:4:8\n
+
+#include <helper.h>
+
+/* The assertions measure `_Alignof` as the translation resolves it, while what
+   is printed is measured by the C that comes out of it. The two have to
+   agree. */
+
+_Static_assert(_Alignof(char) == 1, "char");
+_Static_assert(_Alignof(short) == 2, "short");
+_Static_assert(_Alignof(int) == 4, "int");
+_Static_assert(_Alignof(double) == 8, "double");
+
+int main() {
+	int x = 0;
+	char c = 0;
+
+	/* The operand may be written as an expression rather than as a type. */
+	_Static_assert(_Alignof(x) == 4, "an int variable");
+	_Static_assert(_Alignof(c) == 1, "a char variable");
+
+	printf("%d:%d:%d:%d\n",
+	       (int)_Alignof(char),
+	       (int)_Alignof(short),
+	       (int)_Alignof(int),
+	       (int)_Alignof(double));
+}
