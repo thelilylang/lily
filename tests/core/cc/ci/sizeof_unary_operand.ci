@@ -1,0 +1,35 @@
+//@expected_bin_stdout 1:5:8:4\n
+//@expected_bin_stdout 12:4:4:4\n
+
+#include <helper.h>
+
+struct S
+{
+	int f;
+};
+
+int main() {
+	int a = 5;
+	int arr[3];
+	int *p = &a;
+	struct S s;
+
+	s.f = 1;
+
+	/* What `sizeof` is written on with no parentheses around it stops at the
+	   end of a unary expression, so what follows it is an operation made on
+	   the size it gives rather than on what it measures. */
+	printf("%d:%d:%d:%d\n",
+	       (int)(sizeof a == sizeof(int)),
+	       (int)(sizeof a + 1),
+	       (int)(sizeof a * 2),
+	       (int)sizeof a);
+
+	/* What is written on is read up to the end of a unary expression, the
+	   operators written after an operand included. */
+	printf("%d:%d:%d:%d\n",
+	       (int)sizeof arr,
+	       (int)sizeof *p,
+	       (int)sizeof s.f,
+	       (int)sizeof arr[0]);
+}
