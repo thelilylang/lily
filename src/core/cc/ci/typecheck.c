@@ -102,6 +102,7 @@ static bool
 perform_typecheck__CITypecheck(const CITypecheck *self,
                                CIDataType *expected_data_type,
                                CIDataType *given_data_type,
+                               const Location *given_location,
                                bool can_try,
                                struct CITypecheckContext *typecheck_ctx);
 
@@ -146,6 +147,12 @@ typecheck_binary_logical_expr__CITypecheck(
   CIDataType *left_dt,
   CIDataType *right_dt,
   struct CITypecheckContext *typecheck_ctx);
+
+/// @brief Check whether what is given points at something written with
+/// qualifiers that what is expected is not written with.
+static bool
+discards_qualifiers__CITypecheck(const CIDataType *expected_data_type,
+                                 const CIDataType *given_data_type);
 
 /// @brief Check whether a data type is written as constant, the ones it is
 /// written behind a typedef included.
@@ -575,6 +582,7 @@ bool
 perform_typecheck__CITypecheck(const CITypecheck *self,
                                CIDataType *expected_data_type,
                                CIDataType *given_data_type,
+                               const Location *given_location,
                                bool can_try,
                                struct CITypecheckContext *typecheck_ctx)
 {
@@ -621,6 +629,17 @@ perform_typecheck__CITypecheck(const CITypecheck *self,
             }
 
             return false;
+        }
+
+        // What is pointed to is written with the qualifiers of what points at
+        // it, so a conversion only adds them and never takes them away.
+        if (!can_try &&
+            discards_qualifiers__CITypecheck(resolved_expected_data_type,
+                                             resolved_given_data_type)) {
+            FAILED_WITH_LOCATION__CITypecheck(
+              self,
+              given_location ? given_location : &given_data_type->location,
+              CI_ERROR_KIND_DISCARDED_QUALIFIERS_ON_POINTER_CONVERSION);
         }
     }
 
@@ -769,6 +788,34 @@ typecheck_binary_logical_expr__CITypecheck(
 
         return;
     }
+}
+
+bool
+discards_qualifiers__CITypecheck(const CIDataType *expected_data_type,
+                                 const CIDataType *given_data_type)
+{
+    const CIDataType *expected = expected_data_type;
+    const CIDataType *given = given_data_type;
+
+    // Only what is pointed to is looked at: the qualifiers written at the top
+    // of what is given are dropped where it is read for the value it holds, so
+    // what they are written on is given away by a pointer alone.
+    while (expected->kind == CI_DATA_TYPE_KIND_PTR &&
+           given->kind == CI_DATA_TYPE_KIND_PTR) {
+        expected = get_ptr__CIDataType(expected);
+        given = get_ptr__CIDataType(given);
+
+        if (!expected || !given) {
+            return false;
+        }
+
+        if (given->qualifier & ~expected->qualifier &
+            (CI_DATA_TYPE_QUALIFIER_CONST | CI_DATA_TYPE_QUALIFIER_VOLATILE)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool
@@ -921,8 +968,12 @@ typecheck_binary_expr__CITypecheck(const CITypecheck *self,
                 return;
             }
 
-            perform_typecheck__CITypecheck(
-              self, left_dt, right_dt, false, typecheck_ctx);
+            perform_typecheck__CITypecheck(self,
+                                           left_dt,
+                                           right_dt,
+                                           &binary->right->location,
+                                           false,
+                                           typecheck_ctx);
 
             break;
         default:
@@ -1386,7 +1437,8 @@ typecheck_ternary_expr__CITypecheck(const CITypecheck *self,
       typecheck_ctx->current_generic_params.called,
       typecheck_ctx->current_generic_params.decl);
 
-    perform_typecheck__CITypecheck(self, if_dt, else_dt, false, typecheck_ctx);
+    perform_typecheck__CITypecheck(
+      self, if_dt, else_dt, &ternary->else_->location, false, typecheck_ctx);
 
     FREE(CIDataType, if_dt);
     FREE(CIDataType, else_dt);
@@ -1565,8 +1617,12 @@ typecheck_expr__CITypecheck(const CITypecheck *self,
     // NOTE: Maybe move that check in other place.
     // validate_expr_according_data_type_context__CITypecheck(
     //   self, expected_data_type, given_expr, typecheck_ctx);
-    perform_typecheck__CITypecheck(
-      self, expected_data_type, given_expr_dt, false, typecheck_ctx);
+    perform_typecheck__CITypecheck(self,
+                                   expected_data_type,
+                                   given_expr_dt,
+                                   &given_expr->location,
+                                   false,
+                                   typecheck_ctx);
 
     FREE(CIDataType, given_expr_dt);
 }

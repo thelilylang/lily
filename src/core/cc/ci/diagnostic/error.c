@@ -119,6 +119,9 @@ to_msg__CIError(const CIError *self)
             return "`continue` is not expected outside of a loop";
         case CI_ERROR_KIND_DATA_TYPES_DONT_MATCH:
             return "the data types do not match";
+        case CI_ERROR_KIND_DISCARDED_QUALIFIERS_ON_POINTER_CONVERSION:
+            return "this conversion discards the qualifiers of what is "
+                   "pointed to";
         case CI_ERROR_KIND_DECLARATION_IS_NOT_FOUND:
             return "the declaration is not found";
         case CI_ERROR_KIND_DECLARATION_OUTSIDE_OF_VARIABLE_INITIALIZATION:
@@ -856,6 +859,8 @@ to_code__CIError(const CIError *self)
             return "0195";
         case CI_ERROR_KIND_CANNOT_ASSIGN_TO_CONST_DATA_TYPE:
             return "0196";
+        case CI_ERROR_KIND_DISCARDED_QUALIFIERS_ON_POINTER_CONVERSION:
+            return "0197";
         default:
             UNREACHABLE("unknown variant");
     }
