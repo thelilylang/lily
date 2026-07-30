@@ -1,0 +1,13 @@
+//@expected_compiler_error :10:3: \e[31merror\e[0m[0196]: cannot assign an expression to a constant data type
+//@expected_compiler_error \e[34m10 |\e[0m \t*p = 2;
+
+#include <helper.h>
+
+int main() {
+	const int ci = 1;
+	const int *p = &ci;
+
+	*p = 2;
+
+	return *p;
+}
