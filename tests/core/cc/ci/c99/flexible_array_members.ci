@@ -1,0 +1,18 @@
+//@compile_options -s c99
+//@expected_bin_stdout 1:4\n
+
+#include <helper.h>
+
+struct F
+{
+	int n;
+	int d[];
+};
+
+int main() {
+	struct F f;
+
+	f.n = 1;
+
+	printf("%d:%d\n", f.n, (int)sizeof(struct F));
+}

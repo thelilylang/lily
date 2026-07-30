@@ -1,0 +1,12 @@
+//@compile_options -s c23
+//@expected_bin_stdout ok\n
+
+#include <helper.h>
+
+static_assert(1 == 1, "written as a keyword");
+
+int main() {
+	static_assert(sizeof(int) >= 2, "an int holds two bytes at the least");
+
+	puts("ok");
+}

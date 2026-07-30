@@ -1,0 +1,12 @@
+//@compile_options -s c23
+//@expected_bin_stdout 10:255:0\n
+
+#include <helper.h>
+
+int main() {
+	int a = 0b1010;
+	int b = 0b11111111;
+	int c = 0b0;
+
+	printf("%d:%d:%d\\n", a, b, c);
+}

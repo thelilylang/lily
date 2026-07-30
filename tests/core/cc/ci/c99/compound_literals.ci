@@ -1,0 +1,17 @@
+//@compile_options -s c99
+//@expected_bin_stdout 1:2:5\n
+
+#include <helper.h>
+
+struct P
+{
+	int x;
+	int y;
+};
+
+int main() {
+	struct P p = (struct P){ 1, 2 };
+	int *a = (int[]){ 5, 6 };
+
+	printf("%d:%d:%d\n", p.x, p.y, a[0]);
+}

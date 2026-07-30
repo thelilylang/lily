@@ -1,0 +1,19 @@
+/*@compile_options -s c89*/
+/*@expected_bin_stdout 0:5:6\n*/
+
+#include <helper.h>
+
+enum E
+{
+	A,
+	B = 5,
+	C
+};
+
+int main() {
+	enum E a = A;
+	enum E b = B;
+	enum E c = C;
+
+	printf("%d:%d:%d\n", (int)a, (int)b, (int)c);
+}

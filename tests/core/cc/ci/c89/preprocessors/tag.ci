@@ -1,0 +1,12 @@
+/*@compile_options -s c89*/
+/*@expected_bin_stdout ab:2\n*/
+
+#include <helper.h>
+
+#define STRINGIFY(x) #x
+
+int main() {
+	const char *s = STRINGIFY(ab);
+
+	printf("%s:%d\n", s, (int)(s[0] == 'a') + (int)(s[1] == 'b'));
+}

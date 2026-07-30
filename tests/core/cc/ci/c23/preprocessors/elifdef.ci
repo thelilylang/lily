@@ -1,0 +1,18 @@
+//@compile_options -s c23
+//@expected_bin_stdout ok\n
+
+#include <helper.h>
+
+#define B 1
+
+#ifdef A
+#define RES "no"
+#elifdef B
+#define RES "ok"
+#else
+#define RES "no"
+#endif
+
+int main() {
+	puts(RES);
+}

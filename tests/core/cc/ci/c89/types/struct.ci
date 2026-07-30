@@ -1,0 +1,20 @@
+/*@compile_options -s c89*/
+/*@expected_bin_stdout 1:2\n*/
+
+#include <helper.h>
+
+struct S
+{
+	int a;
+	int b;
+};
+
+int main() {
+	struct S s;
+	struct S *p = &s;
+
+	s.a = 1;
+	p->b = 2;
+
+	printf("%d:%d\n", s.a, s.b);
+}

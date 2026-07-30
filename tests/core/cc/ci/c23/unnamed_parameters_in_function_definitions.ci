@@ -1,0 +1,18 @@
+//@compile_options -s c23
+//@expected_bin_stdout 1:2\n
+
+#include <helper.h>
+
+int ignore(int)
+{
+	return 1;
+}
+
+int ignore_second(int a, int)
+{
+	return a;
+}
+
+int main() {
+	printf("%d:%d\n", ignore(0), ignore_second(2, 0));
+}

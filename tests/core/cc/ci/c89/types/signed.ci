@@ -1,0 +1,11 @@
+/*@compile_options -s c89*/
+/*@expected_bin_stdout -1:1\n*/
+
+#include <helper.h>
+
+int main() {
+	signed int a = -1;
+	signed b = 1;
+
+	printf("%d:%d\n", a, b);
+}

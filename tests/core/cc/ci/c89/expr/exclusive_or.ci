@@ -1,0 +1,13 @@
+/*@compile_options -s c89*/
+/*@expected_bin_stdout 6:9\n*/
+
+#include <helper.h>
+
+int main() {
+	int a = 12;
+	int b = 10;
+
+	a ^= 5;
+
+	printf("%d:%d\n", 12 ^ b, a);
+}

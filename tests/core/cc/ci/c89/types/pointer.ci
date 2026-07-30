@@ -1,0 +1,14 @@
+/*@compile_options -s c89*/
+/*@expected_bin_stdout 2:1:2\n*/
+
+#include <helper.h>
+
+int main() {
+	int a = 1;
+	int *p = &a;
+	int **pp = &p;
+
+	**pp = 2;
+
+	printf("%d:%d:%d\n", *p, p == &a, a);
+}

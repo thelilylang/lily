@@ -1,0 +1,13 @@
+//@compile_options -s c99
+//@expected_bin_stdout 1\n
+
+#include <helper.h>
+
+inline int one(void)
+{
+	return 1;
+}
+
+int main() {
+	printf("%d\n", one());
+}

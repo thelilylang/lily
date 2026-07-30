@@ -1,0 +1,12 @@
+//@compile_options -s c23
+//@expected_bin_stdout ok\n
+
+#include <helper.h>
+
+static_assert(1 == 1);
+
+int main() {
+	static_assert(2 * 2 == 4);
+
+	puts("ok");
+}

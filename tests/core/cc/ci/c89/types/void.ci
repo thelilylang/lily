@@ -1,0 +1,17 @@
+/*@compile_options -s c89*/
+/*@expected_bin_stdout ok\n*/
+
+#include <helper.h>
+
+void f(void)
+{
+	puts("ok");
+}
+
+int main() {
+	void *p = 0;
+
+	f();
+
+	(void)p;
+}

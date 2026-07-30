@@ -1,0 +1,11 @@
+/*@compile_options -s c89*/
+/*@expected_bin_stdout 3:1\n*/
+
+#include <helper.h>
+
+int main() {
+	double d = 1.5;
+	double e = 1.5e0;
+
+	printf("%d:%d\n", (int)(d * 2), (int)(e * 2) == 3);
+}

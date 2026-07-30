@@ -1,0 +1,10 @@
+//@compile_options -s c23
+//@expected_bin_stdout 1\n
+
+#include <helper.h>
+
+thread_local int t = 1;
+
+int main() {
+	printf("%d\n", t);
+}

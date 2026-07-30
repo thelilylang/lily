@@ -1,0 +1,16 @@
+//@compile_options -s c23
+//@expected_bin_stdout 0:0\n
+
+#include <helper.h>
+
+struct S
+{
+	int a;
+};
+
+int main() {
+	int a[3] = {};
+	struct S s = {};
+
+	printf("%d:%d\n", a[0], s.a);
+}

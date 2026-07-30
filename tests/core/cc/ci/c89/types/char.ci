@@ -1,0 +1,13 @@
+/*@compile_options -s c89*/
+/*@expected_bin_stdout A:97:1\n*/
+
+#include <helper.h>
+
+int main() {
+	char c = 'A';
+	char l = 'a';
+	signed char s = -1;
+	unsigned char u = 255;
+
+	printf("%c:%d:%d\n", c, (int)l, (int)s == -1 && (int)u == 255);
+}

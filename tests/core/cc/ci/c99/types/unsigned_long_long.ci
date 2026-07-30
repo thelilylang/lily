@@ -1,0 +1,10 @@
+//@compile_options -s c99
+//@expected_bin_stdout 1:8\n
+
+#include <helper.h>
+
+int main() {
+	unsigned long long l = 1ULL;
+
+	printf("%d:%d\n", (int)l, (int)sizeof(l));
+}

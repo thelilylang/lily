@@ -1,0 +1,8 @@
+//@compile_options -s c17
+//@expected_bin_stdout 201710\n
+
+#include <helper.h>
+
+int main() {
+	printf("%d\n", (int)(__STDC_VERSION__ / 1L));
+}

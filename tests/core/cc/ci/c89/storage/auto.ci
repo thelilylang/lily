@@ -1,0 +1,14 @@
+/*@compile_options -s c89*/
+/*@expected_bin_stdout 1:2\n*/
+
+#include <helper.h>
+
+int main() {
+	auto int a = 1;
+
+	{
+		auto int b = 2;
+
+		printf("%d:%d\n", a, b);
+	}
+}

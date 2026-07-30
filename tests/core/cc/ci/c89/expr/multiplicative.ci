@@ -1,0 +1,11 @@
+/*@compile_options -s c89*/
+/*@expected_bin_stdout 12:4:1\n*/
+
+#include <helper.h>
+
+int main() {
+	int a = 3;
+	int b = 4;
+
+	printf("%d:%d:%d\n", a * b, b * 3 / 3, 13 % b);
+}

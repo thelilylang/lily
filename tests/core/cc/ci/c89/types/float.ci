@@ -1,0 +1,10 @@
+/*@compile_options -s c89*/
+/*@expected_bin_stdout 3:4\n*/
+
+#include <helper.h>
+
+int main() {
+	float f = 1.5f;
+
+	printf("%d:%d\n", (int)(f * 2), (int)sizeof(f));
+}

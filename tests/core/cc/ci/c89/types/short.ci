@@ -1,0 +1,11 @@
+/*@compile_options -s c89*/
+/*@expected_bin_stdout 1:2\n*/
+
+#include <helper.h>
+
+int main() {
+	short s = 1;
+	unsigned short u = 1;
+
+	printf("%d:%d\n", (int)s, (int)sizeof(u));
+}

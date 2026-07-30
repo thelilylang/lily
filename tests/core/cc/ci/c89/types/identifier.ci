@@ -1,0 +1,19 @@
+/*@compile_options -s c89*/
+/*@expected_bin_stdout 1:2\n*/
+
+#include <helper.h>
+
+typedef int my_int;
+typedef struct S
+{
+	int a;
+} S;
+
+int main() {
+	my_int a = 1;
+	S s;
+
+	s.a = 2;
+
+	printf("%d:%d\n", a, s.a);
+}
