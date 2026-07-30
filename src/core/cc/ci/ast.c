@@ -2313,28 +2313,23 @@ clone__CIDataType(const CIDataType *self)
 
             break;
         }
-        case CI_DATA_TYPE_KIND_FUNCTION: {
-            Vec *params = NEW(Vec); // Vec<CIDataType*>*
-
-            for (Usize i = 0; i < self->function.params->content->len; ++i) {
-                push__Vec(params,
-                          clone__CIDataType(
-                            get__Vec(self->function.params->content, i)));
-            }
-
+        case CI_DATA_TYPE_KIND_FUNCTION:
             res = NEW_VARIANT(
               CIDataType,
               function,
               clone__Location(&self->location),
               NEW(CIDataTypeFunction,
                   self->function.name,
-                  NEW(CIDeclFunctionParams, params),
+                  self->function.params
+                    ? clone__CIDeclFunctionParams(self->function.params)
+                    : NULL,
                   clone__CIDataType(self->function.return_data_type),
-                  clone__CIGenericParams(self->function.generic_params),
+                  self->function.generic_params
+                    ? clone__CIGenericParams(self->function.generic_params)
+                    : NULL,
                   self->function.parent_scope));
 
             break;
-        }
         case CI_DATA_TYPE_KIND_GENERIC:
             res = NEW_VARIANT(CIDataType,
                               generic,
