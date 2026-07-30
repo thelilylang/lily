@@ -1471,7 +1471,7 @@ substitute_data_type__CIParser(const CIResultFile *file,
         case CI_DATA_TYPE_KIND_ARRAY: {
             CIDataType *subs =
               substitute_data_type__CIParser(file,
-                                             data_type,
+                                             data_type->array.data_type,
                                              generic_params,
                                              called_generic_params,
                                              serialized_name);
