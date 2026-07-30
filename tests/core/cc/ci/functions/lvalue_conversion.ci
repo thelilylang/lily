@@ -1,0 +1,46 @@
+//@compile_options -s c11
+//@expected_bin_stdout 1:2:7:9\n
+//@expected_bin_stdout abc:fnptr\n
+
+#include <helper.h>
+
+int
+f(int x)
+{
+	return x + 1;
+}
+
+int
+g(int x)
+{
+	return x + 2;
+}
+
+int
+apply(int (*fn)(int), int x)
+{
+	return fn(x);
+}
+
+int
+first(int *xs)
+{
+	return xs[0];
+}
+
+int main() {
+	/* A function is read as a pointer on itself, and an array as a pointer on
+	   what it holds, wherever the value they hold is what is expected. */
+	int (*p)(int) = f;
+	int (*const cp)(int) = g;
+	int a[4] = { 9, 0, 0, 0 };
+	int *ip = a;
+
+	/* What is expected as it is written is left as it is: a string literal
+	   still initializes an array of characters. */
+	char s[] = "abc";
+
+	printf("%d:%d:%d:%d\n", p(0), cp(0), apply(f, 6), first(ip));
+
+	printf("%s:%s\n", s, _Generic(cp, int (*)(int): "fnptr", default: "?"));
+}
