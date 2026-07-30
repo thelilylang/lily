@@ -1956,7 +1956,12 @@ generate_function_expr__CIGenerator(CIGenerator *self, const CIExpr *expr)
 {
     switch (expr->kind) {
         case CI_EXPR_KIND_ALIGNOF:
-            write_str__CIGenerator(self, "alignof(");
+            // `_Alignof` is written rather than `alignof`, the former being
+            // spelled the same way by every standard that has the construct.
+            // The latter only became a keyword in C23, and needs
+            // `<stdalign.h>` before that, so a file generated for an earlier
+            // standard did not compile.
+            write_str__CIGenerator(self, "_Alignof(");
             generate_function_expr__CIGenerator(self, expr->alignof_);
             write_str__CIGenerator(self, ")");
 

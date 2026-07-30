@@ -973,21 +973,41 @@ resolve_alignof_expr__CIResolverExpr(const CIResolverExpr *self,
     ASSERT(self->scope);
     ASSERT(expr->kind == CI_EXPR_KIND_ALIGNOF);
 
-    CIDataType *expr_data_type = infer_expr_data_type__CIInfer(
-      self->parser->file, expr->alignof_, self->scope->scope_id, NULL, NULL);
+    // The data type of the operand was inferred and then dropped, the alignment
+    // being read from a member only an operand written as a data type holds.
+    // Anything else, `alignof(x)` above all, read that member out of an operand
+    // that has no such thing.
+    switch (expr->alignof_->kind) {
+        case CI_EXPR_KIND_DATA_TYPE:
+            return NEW_VARIANT(
+              CIExpr,
+              literal,
+              clone__Location(&expr->location),
+              NEW_VARIANT(CIExprLiteral,
+                          unsigned_int,
+                          resolve_data_type_alignment__CIResolverExpr(
+                            self, expr->alignof_->data_type)));
+        default: {
+            CIDataType *operand_data_type =
+              infer_expr_data_type__CIInfer(self->parser->file,
+                                            expr->alignof_,
+                                            self->scope->scope_id,
+                                            NULL,
+                                            NULL);
+            CIExpr *res = NEW_VARIANT(
+              CIExpr,
+              literal,
+              clone__Location(&expr->location),
+              NEW_VARIANT(CIExprLiteral,
+                          unsigned_int,
+                          resolve_data_type_alignment__CIResolverExpr(
+                            self, operand_data_type)));
 
-    CIExpr *res =
-      NEW_VARIANT(CIExpr,
-                  literal,
-                  clone__Location(&expr->location),
-                  NEW_VARIANT(CIExprLiteral,
-                              unsigned_int,
-                              resolve_data_type_alignment__CIResolverExpr(
-                                self, expr->alignof_->data_type)));
+            FREE(CIDataType, operand_data_type);
 
-    FREE(CIDataType, expr_data_type);
-
-    return res;
+            return res;
+        }
+    }
 }
 
 CIExpr *

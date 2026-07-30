@@ -3286,8 +3286,29 @@ parse_primary_expr__CIParser(CIParser *self)
     CIExpr *res = NULL;
 
     switch (self->previous_token->kind) {
-        case CI_TOKEN_KIND_KEYWORD_ALIGNOF: {
+        case CI_TOKEN_KIND_KEYWORD_ALIGNOF:
+        case CI_TOKEN_KIND_KEYWORD__ALIGNOF: {
+            // The parentheses are taken here, as `sizeof` does, so that what
+            // they hold is read on its own. Left to the parse of an expression,
+            // a data type between them is read as the start of a cast instead.
+            bool has_open_paren = false;
+
+            switch (self->current_token->kind) {
+                case CI_TOKEN_KIND_LPAREN:
+                    has_open_paren = true;
+
+                    next_token__CIParser(self);
+
+                    break;
+                default:
+                    break;
+            }
+
             CIExpr *alignof_expr = parse_expr__CIParser(self);
+
+            if (has_open_paren) {
+                expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
+            }
 
             if (alignof_expr) {
                 res = NEW_VARIANT(CIExpr,
