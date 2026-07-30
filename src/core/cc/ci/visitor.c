@@ -1057,13 +1057,21 @@ visit_function_expr_function_call__CIVisitor(
   CIGenericParams *called_generic_params,
   CIGenericParams *decl_generic_params)
 {
-    if (function_call->generic_params) {
+    const CIExprIdentifier *callee_identifier =
+      get_callee_identifier__CIExprFunctionCall(function_call);
+
+    if (callee_identifier && callee_identifier->generic_params) {
         generate_function_gen__CIVisitor(
           self,
-          GET_PTR_RC(String, function_call->identifier),
-          function_call->generic_params,
+          GET_PTR_RC(String, callee_identifier->value),
+          callee_identifier->generic_params,
           called_generic_params,
           decl_generic_params);
+    } else if (!callee_identifier) {
+        visit_function_expr__CIVisitor(self,
+                                       function_call->callee,
+                                       called_generic_params,
+                                       decl_generic_params);
     }
 
     for (Usize i = 0; i < function_call->params->len; ++i) {

@@ -33,11 +33,14 @@
 // Emit a located error on `node` and count it, without stopping the typecheck:
 // the caller returns from the current check so that the sibling checks still
 // run and a single pass reports more than one error.
-#define FAILED__CITypecheck(self, node, error_kind) \
-    EMIT_ERROR__CI(&(self)->file->file_input,       \
-                   &(node)->location,               \
-                   NEW(CIError, error_kind),        \
+#define FAILED_WITH_LOCATION__CITypecheck(self, location, error_kind) \
+    EMIT_ERROR__CI(&(self)->file->file_input,                         \
+                   location,                                          \
+                   NEW(CIError, error_kind),                          \
                    &(self)->file->file_analysis->count_error)
+
+#define FAILED__CITypecheck(self, node, error_kind) \
+    FAILED_WITH_LOCATION__CITypecheck(self, &(node)->location, error_kind)
 
 struct CurrentSwitch
 {
@@ -190,6 +193,19 @@ typecheck_initializer_expr__CITypecheck(
   const CITypecheck *self,
   const CIExprInitializer *initializer,
   CIDataType *expected_data_type,
+  struct CITypecheckContext *typecheck_ctx);
+
+/// @brief Check the parameters a call is made with against the ones the
+/// function it calls declares.
+/// @param decl_function_call_params const CIDeclFunctionParams*? (&)
+/// @param location The location a mismatch is reported at.
+/// @param called_params Vec<CIExpr*>* (&)
+static void
+typecheck_call_params__CITypecheck(
+  const CITypecheck *self,
+  const CIDeclFunctionParams *decl_function_call_params,
+  const Location *location,
+  const Vec *called_params,
   struct CITypecheckContext *typecheck_ctx);
 
 /// @param decl_params Vec<CIDeclFunctionParam*>* (&)
@@ -1078,14 +1094,13 @@ typecheck_initializer_expr__CITypecheck(
 }
 
 void
-typecheck_function_call_expr_params__CITypecheck(
+typecheck_call_params__CITypecheck(
   const CITypecheck *self,
-  const CIDecl *decl_function_call,
+  const CIDeclFunctionParams *decl_function_call_params,
+  const Location *location,
   const Vec *called_params,
   struct CITypecheckContext *typecheck_ctx)
 {
-    const CIDeclFunctionParams *decl_function_call_params =
-      get_function_params__CIDecl(decl_function_call);
     bool is_variadic =
       decl_function_call_params
         ? is_variadic__CIDeclFunctionParams(decl_function_call_params)
@@ -1097,20 +1112,11 @@ typecheck_function_call_expr_params__CITypecheck(
     if (decl_function_call_params_len != called_params_len &&
         (is_variadic &&
          called_params_len < decl_function_call_params_len - 1)) {
-        FAILED__CITypecheck(
-          self, decl_function_call, CI_ERROR_KIND_PARAMS_COUNT_MISMATCH);
+        FAILED_WITH_LOCATION__CITypecheck(
+          self, location, CI_ERROR_KIND_PARAMS_COUNT_MISMATCH);
 
         return;
     }
-
-    struct CurrentGenericParams old_current_generic_params =
-      decl_function_call->kind == CI_DECL_KIND_FUNCTION_GEN
-        ? set_current_generic_params__CITypecheckContext(
-            typecheck_ctx,
-            NEW(CurrentGenericParams,
-                decl_function_call->function_gen.called_generic_params,
-                decl_function_call->function_gen.function->generic_params))
-        : default__CurrentGenericParams();
 
     for (Usize i = 0; i < called_params_len; ++i) {
         const CIDeclFunctionParam *decl_param = get__Vec(
@@ -1145,6 +1151,30 @@ typecheck_function_call_expr_params__CITypecheck(
                 UNREACHABLE("unknown variant");
         }
     }
+}
+
+void
+typecheck_function_call_expr_params__CITypecheck(
+  const CITypecheck *self,
+  const CIDecl *decl_function_call,
+  const Vec *called_params,
+  struct CITypecheckContext *typecheck_ctx)
+{
+    struct CurrentGenericParams old_current_generic_params =
+      decl_function_call->kind == CI_DECL_KIND_FUNCTION_GEN
+        ? set_current_generic_params__CITypecheckContext(
+            typecheck_ctx,
+            NEW(CurrentGenericParams,
+                decl_function_call->function_gen.called_generic_params,
+                decl_function_call->function_gen.function->generic_params))
+        : default__CurrentGenericParams();
+
+    typecheck_call_params__CITypecheck(
+      self,
+      get_function_params__CIDecl(decl_function_call),
+      &decl_function_call->location,
+      called_params,
+      typecheck_ctx);
 
     if (decl_function_call->kind == CI_DECL_KIND_FUNCTION_GEN) {
         set_current_generic_params__CITypecheckContext(
@@ -1158,10 +1188,44 @@ typecheck_function_call_expr__CITypecheck(
   const CIExprFunctionCall *function_call,
   struct CITypecheckContext *typecheck_ctx)
 {
+    const CIExprIdentifier *callee_identifier =
+      get_callee_identifier__CIExprFunctionCall(function_call);
+
+    // A call made on anything else than the name of a function has no
+    // declaration to be searched for, so its parameters are checked against the
+    // ones of the function the type of what is called holds.
+    if (!callee_identifier) {
+        CIDataType *callee_data_type = infer_expr_data_type__CIInfer(
+          self->file,
+          function_call->callee,
+          typecheck_ctx->current_scope_id,
+          typecheck_ctx->current_generic_params.called,
+          typecheck_ctx->current_generic_params.decl);
+        const CIDataTypeFunction *called_function =
+          get_called_function__CIInfer(callee_data_type);
+
+        if (called_function) {
+            typecheck_call_params__CITypecheck(self,
+                                               called_function->params,
+                                               &function_call->callee->location,
+                                               function_call->params,
+                                               typecheck_ctx);
+        } else {
+            FAILED_WITH_LOCATION__CITypecheck(
+              self,
+              &function_call->callee->location,
+              CI_ERROR_KIND_CALL_ON_NON_FUNCTION);
+        }
+
+        FREE(CIDataType, callee_data_type);
+
+        return;
+    }
+
     CIDecl *function_decl = search_function_in_generic_context__CIResultFile(
       self->file,
-      GET_PTR_RC(String, function_call->identifier),
-      function_call->generic_params,
+      GET_PTR_RC(String, callee_identifier->value),
+      callee_identifier->generic_params,
       typecheck_ctx->current_generic_params.called,
       typecheck_ctx->current_generic_params.decl);
 

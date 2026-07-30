@@ -1717,16 +1717,20 @@ generate_function_call_expr__CIGenerator(
   CIGenerator *self,
   const CIExprFunctionCall *function_call)
 {
-    if (function_call->generic_params) {
+    const CIExprIdentifier *callee_identifier =
+      get_callee_identifier__CIExprFunctionCall(function_call);
+
+    if (callee_identifier && callee_identifier->generic_params) {
         write_String__CIGenerator(
           self,
           substitute_and_serialize_generic_params__CIGenerator(
             self,
-            function_call->generic_params,
-            GET_PTR_RC(String, function_call->identifier)));
+            callee_identifier->generic_params,
+            GET_PTR_RC(String, callee_identifier->value)));
     } else {
-        write_str__CIGenerator(
-          self, GET_PTR_RC(String, function_call->identifier)->buffer);
+        // What is called is written as it stands, a name as much as the
+        // expression an address of function is read from.
+        generate_function_expr__CIGenerator(self, function_call->callee);
     }
 
     generate_function_call_params_expr__CIGenerator(self,

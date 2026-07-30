@@ -3689,30 +3689,30 @@ DESTRUCTOR(CIExprCast, const CIExprCast *self);
 
 typedef struct CIExprFunctionCall
 {
-    Rc *identifier;                  // Rc<String*>*
-    Vec *params;                     // Vec<CIExpr*>*
-    CIGenericParams *generic_params; // CIGenericParams*?
+    // What is called. Most of the time the name of a function, in which case
+    // the identifier it holds is what the call is resolved and serialized on,
+    // but anything an address of function can be read from is accepted, such as
+    // a function pointer or the expression a generic selection chose.
+    CIExpr *callee; // CIExpr*
+    Vec *params;    // Vec<CIExpr*>*
 } CIExprFunctionCall;
 
 /**
  *
  * @brief Construct CIExprFunctionCall type.
- * @param identifier Rc<String*>* (&)
  */
 inline CONSTRUCTOR(CIExprFunctionCall,
                    CIExprFunctionCall,
-                   Rc *identifier,
-                   Vec *params,
-                   CIGenericParams *generic_params)
+                   CIExpr *callee,
+                   Vec *params)
 {
-    return (CIExprFunctionCall){ .identifier = ref__Rc(identifier),
-                                 .params = params,
-                                 .generic_params = generic_params };
+    return (CIExprFunctionCall){ .callee = callee, .params = params };
 }
 
 /**
  *
  * @brief Serialize function call identifier..
+ * @note The call is expected to be made on the name of a function.
  */
 String *
 serialize_name__CIExprFunctionCall(
@@ -3920,6 +3920,17 @@ inline CONSTRUCTOR(CIExprIdentifier,
                                .id = id,
                                .generic_params = generic_params };
 }
+
+/**
+ *
+ * @brief Get the identifier the call is made on, when it is made on the name of
+ * a function. The parentheses the name is written between, if any, are looked
+ * through. A name standing for a variable is not one, as what it holds is
+ * called rather than itself.
+ * @return const CIExprIdentifier*? (&)
+ */
+const CIExprIdentifier *
+get_callee_identifier__CIExprFunctionCall(const CIExprFunctionCall *self);
 
 /**
  *

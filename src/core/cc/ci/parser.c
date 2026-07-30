@@ -387,11 +387,10 @@ static CIGenericParams *
 parse_generic_params__CIParser(CIParser *self);
 
 /// @brief Parser function call.
-/// @param identifier Rc<String*>* (&)
+/// @param callee CIExpr* The expression the call is made on. The parser is
+/// expected to be on the `(` that opens the parameters.
 static CIExpr *
-parse_function_call__CIParser(CIParser *self,
-                              Rc *identifier,
-                              CIGenericParams *generic_params);
+parse_function_call__CIParser(CIParser *self, CIExpr *callee);
 
 /// @brief Check if the given literal constant float is valid.
 /// @param literal_constant_float_value const String* (&)
@@ -411,6 +410,13 @@ parse_literal_expr__CIParser(CIParser *self);
 /// @return The expression of the association selected, NULL when none was.
 static CIExpr *
 parse_generic_selection__CIParser(CIParser *self);
+
+/// @brief Parse what is written after a `_Generic` selection, the call
+/// included.
+/// @param expr CIExpr*? The expression the selection chose.
+/// @return CIExpr*?
+static CIExpr *
+parse_generic_selection_post_expr__CIParser(CIParser *self, CIExpr *expr);
 
 static CIExpr *
 parse_primary_expr__CIParser(CIParser *self);
@@ -3045,11 +3051,11 @@ parse_generic_params__CIParser(CIParser *self)
 }
 
 CIExpr *
-parse_function_call__CIParser(CIParser *self,
-                              Rc *identifier,
-                              CIGenericParams *generic_params)
+parse_function_call__CIParser(CIParser *self, CIExpr *callee)
 {
-    Location begin = previous_location__CIParser(self);
+    // The call starts where what is called does, so that it is reported on as a
+    // whole rather than from its parameters.
+    Location begin = callee->location;
 
     next_token__CIParser(self); // skip `(`
 
@@ -3070,21 +3076,29 @@ parse_function_call__CIParser(CIParser *self,
 
     expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
 
-    if (is__CIBuiltinFunction(GET_PTR_RC(String, identifier))) {
-        return NEW_VARIANT(
-          CIExpr,
-          function_call_builtin,
-          location_from__CIParser(self, &begin),
-          NEW(CIExprFunctionCallBuiltin,
-              get_id__CIBuiltinFunction(GET_PTR_RC(String, identifier)),
-              params));
+    CIExprFunctionCall function_call = NEW(CIExprFunctionCall, callee, params);
+    const CIExprIdentifier *callee_identifier =
+      get_callee_identifier__CIExprFunctionCall(&function_call);
+
+    // A builtin is only ever called by its name, so what is called through
+    // anything else is never one.
+    if (callee_identifier &&
+        is__CIBuiltinFunction(GET_PTR_RC(String, callee_identifier->value))) {
+        Usize builtin_id = get_id__CIBuiltinFunction(
+          GET_PTR_RC(String, callee_identifier->value));
+
+        FREE(CIExpr, callee);
+
+        return NEW_VARIANT(CIExpr,
+                           function_call_builtin,
+                           location_from__CIParser(self, &begin),
+                           NEW(CIExprFunctionCallBuiltin, builtin_id, params));
     }
 
-    return NEW_VARIANT(
-      CIExpr,
-      function_call,
-      location_from__CIParser(self, &begin),
-      NEW(CIExprFunctionCall, identifier, params, generic_params));
+    return NEW_VARIANT(CIExpr,
+                       function_call,
+                       location_from__CIParser(self, &begin),
+                       function_call);
 }
 
 bool
@@ -3368,6 +3382,24 @@ parse_generic_selection__CIParser(CIParser *self)
 }
 
 CIExpr *
+parse_generic_selection_post_expr__CIParser(CIParser *self, CIExpr *expr)
+{
+    if (!expr) {
+        return NULL;
+    }
+
+    // A generic selection is written where a function name would be as often as
+    // it is written for a value, so what it chose is called when parentheses
+    // follow it. The call is made on the expression itself, as the selection
+    // stands for whatever it chose, a name or not.
+    while (self->current_token->kind == CI_TOKEN_KIND_LPAREN) {
+        expr = parse_function_call__CIParser(self, expr);
+    }
+
+    return parse_post_expr__CIParser(self, expr);
+}
+
+CIExpr *
 parse_primary_expr__CIParser(CIParser *self)
 {
     Location begin = current_location__CIParser(self);
@@ -3394,7 +3426,8 @@ parse_primary_expr__CIParser(CIParser *self)
 
     switch (self->previous_token->kind) {
         case CI_TOKEN_KIND_KEYWORD__GENERIC:
-            return parse_generic_selection__CIParser(self);
+            return parse_generic_selection_post_expr__CIParser(
+              self, parse_generic_selection__CIParser(self));
         case CI_TOKEN_KIND_KEYWORD_ALIGNOF:
         case CI_TOKEN_KIND_KEYWORD__ALIGNOF: {
             // The parentheses are taken here, as `sizeof` does, so that what
@@ -3521,18 +3554,16 @@ parse_primary_expr__CIParser(CIParser *self)
             CIGenericParams *generic_params =
               parse_generic_params__CIParser(self); // CIGenericParams*?
 
-            switch (self->current_token->kind) {
-                case CI_TOKEN_KIND_LPAREN:
-                    res = parse_function_call__CIParser(
-                      self, identifier, generic_params);
+            res = NEW_VARIANT(
+              CIExpr,
+              identifier,
+              previous_location__CIParser(self),
+              NEW(CIExprIdentifier, identifier, id, generic_params));
 
-                    break;
-                default:
-                    res = NEW_VARIANT(
-                      CIExpr,
-                      identifier,
-                      previous_location__CIParser(self),
-                      NEW(CIExprIdentifier, identifier, id, generic_params));
+            // A name written before `(` is what the call is made on, as any
+            // other expression would be.
+            if (self->current_token->kind == CI_TOKEN_KIND_LPAREN) {
+                res = parse_function_call__CIParser(self, res);
             }
 
             break;

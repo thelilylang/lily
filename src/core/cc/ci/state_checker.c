@@ -1164,14 +1164,22 @@ check_function_expr_function_call__CIStateChecker(
   CIStateChecker *self,
   const CIExprFunctionCall *function_call)
 {
+    const CIExprIdentifier *callee_identifier =
+      get_callee_identifier__CIExprFunctionCall(function_call);
+    // Only a function written by name is held by the scope, so what is called
+    // through anything else is checked with no value standing for it, as a
+    // builtin is.
     CIStateCheckerValue *function_value =
-      get__CIStateCheckerScope(self->current_scope, function_call->identifier);
+      callee_identifier ? get__CIStateCheckerScope(self->current_scope,
+                                                   callee_identifier->value)
+                        : NULL;
 
     check_function_expr_function_call_params__CIStateChecker(
       self, function_value, function_call->params);
 
-    return get_next_child_value_access__CIStateCheckerValue(function_value,
-                                                            NULL);
+    return function_value ? get_next_child_value_access__CIStateCheckerValue(
+                              function_value, NULL)
+                          : NULL;
 }
 
 CIStateCheckerValue *

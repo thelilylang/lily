@@ -77,6 +77,8 @@ to_msg__CIError(const CIError *self)
             return "the `~` operation is not expected for a float";
         case CI_ERROR_KIND_BREAK_OUTSIDE_OF_LOOP_OR_SWITCH:
             return "`break` is not expected outside of a loop or a switch";
+        case CI_ERROR_KIND_CALL_ON_NON_FUNCTION:
+            return "call made on something that is not a function";
         case CI_ERROR_KIND_CALL_TO_UNKNOWN_FUNCTION:
             return "unknown function, it is impossible to call an unknown "
                    "function";
@@ -848,6 +850,8 @@ to_code__CIError(const CIError *self)
             return "0193";
         case CI_ERROR_KIND_GENERIC_SELECTION_NO_MATCH:
             return "0194";
+        case CI_ERROR_KIND_CALL_ON_NON_FUNCTION:
+            return "0195";
         default:
             UNREACHABLE("unknown variant");
     }

@@ -5354,32 +5354,48 @@ DESTRUCTOR(CIExprCast, const CIExprCast *self)
     FREE(CIExpr, self->expr);
 }
 
+const CIExprIdentifier *
+get_callee_identifier__CIExprFunctionCall(const CIExprFunctionCall *self)
+{
+    const CIExpr *callee = self->callee;
+
+    while (callee->kind == CI_EXPR_KIND_GROUPING) {
+        callee = callee->grouping;
+    }
+
+    if (callee->kind != CI_EXPR_KIND_IDENTIFIER) {
+        return NULL;
+    }
+
+    // A name standing for a variable is not the name of what is called: what
+    // the variable holds is, so the call is resolved on its type instead.
+    return callee->identifier.id.kind == CI_EXPR_IDENTIFIER_ID_KIND_VARIABLE
+             ? NULL
+             : &callee->identifier;
+}
+
 String *
 serialize_name__CIExprFunctionCall(const CIExprFunctionCall *self,
                                    const CIGenericParams *called_generic_params)
 {
-    CI_SERIALIZE_NAME(GET_PTR_RC(String, self->identifier));
+    const CIExprIdentifier *callee_identifier =
+      get_callee_identifier__CIExprFunctionCall(self);
+
+    ASSERT(callee_identifier);
+
+    CI_SERIALIZE_NAME(GET_PTR_RC(String, callee_identifier->value));
 }
 
 #ifdef ENV_DEBUG
 String *
 IMPL_FOR_DEBUG(to_string, CIExprFunctionCall, const CIExprFunctionCall *self)
 {
-    String *res =
-      format__String("CIExprFunctionCall{{ identifier = {S}, params =",
-                     GET_PTR_RC(String, self->identifier));
+    String *res = format__String("CIExprFunctionCall{{ callee = {Sr}, params =",
+                                 to_string__Debug__CIExpr(self->callee));
 
     DEBUG_VEC_STRING(self->params, res, CIExpr);
 
-    {
-        char *s =
-          format(", generic_params = {Sr} }",
-                 self->generic_params
-                   ? to_string__Debug__CIGenericParams(self->generic_params)
-                   : from__String("NULL"));
-
-        PUSH_STR_AND_FREE(res, s);
-    }
+    push_str__String(res, " }");
 
     return res;
 }
@@ -5387,13 +5403,9 @@ IMPL_FOR_DEBUG(to_string, CIExprFunctionCall, const CIExprFunctionCall *self)
 
 DESTRUCTOR(CIExprFunctionCall, const CIExprFunctionCall *self)
 {
-    FREE_RC(String, self->identifier);
+    FREE(CIExpr, self->callee);
     FREE_BUFFER_ITEMS(self->params->buffer, self->params->len, CIExpr);
     FREE(Vec, self->params);
-
-    if (self->generic_params) {
-        FREE(CIGenericParams, self->generic_params);
-    }
 }
 
 #ifdef ENV_DEBUG

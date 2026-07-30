@@ -552,19 +552,61 @@ infer_expr_identifier_data_type__CIInfer(
     }
 }
 
+const CIDataTypeFunction *
+get_called_function__CIInfer(const CIDataType *callee_data_type)
+{
+    const CIDataType *res = callee_data_type;
+
+    // A function is as often called through a pointer on it as on itself, so
+    // the pointers it is reached behind are looked through.
+    while (res && res->kind == CI_DATA_TYPE_KIND_PTR) {
+        res = get_ptr__CIDataType(res);
+    }
+
+    return res && res->kind == CI_DATA_TYPE_KIND_FUNCTION ? &res->function
+                                                          : NULL;
+}
+
 CIDataType *
 infer_expr_function_call_data_type__CIInfer(
   const CIResultFile *file,
   const CIExpr *expr,
+  const CIScopeID *current_scope_id,
   const CIGenericParams *called_generic_params,
   const CIGenericParams *decl_generic_params)
 {
     ASSERT(expr->kind == CI_EXPR_KIND_FUNCTION_CALL);
 
+    const CIExprIdentifier *callee_identifier =
+      get_callee_identifier__CIExprFunctionCall(&expr->function_call);
+
+    // A call made on anything else than the name of a function has no
+    // declaration to be searched for, so what it returns is read from the type
+    // of what it is made on.
+    if (!callee_identifier) {
+        CIDataType *callee_data_type =
+          infer_expr_data_type__CIInfer(file,
+                                        expr->function_call.callee,
+                                        current_scope_id,
+                                        called_generic_params,
+                                        decl_generic_params);
+        const CIDataTypeFunction *called_function =
+          get_called_function__CIInfer(callee_data_type);
+        CIDataType *res = called_function
+                            ? ref__CIDataType(called_function->return_data_type)
+                            : NEW(CIDataType,
+                                  clone__Location(&expr->location),
+                                  CI_DATA_TYPE_KIND_INT);
+
+        FREE(CIDataType, callee_data_type);
+
+        return res;
+    }
+
     CIDecl *function_decl = search_function_in_generic_context__CIResultFile(
       file,
-      GET_PTR_RC(String, expr->function_call.identifier),
-      expr->function_call.generic_params,
+      GET_PTR_RC(String, callee_identifier->value),
+      callee_identifier->generic_params,
       called_generic_params,
       decl_generic_params);
 
@@ -721,7 +763,11 @@ infer_expr_data_type__CIInfer(const CIResultFile *file,
             return ref__CIDataType(expr->data_type);
         case CI_EXPR_KIND_FUNCTION_CALL:
             return infer_expr_function_call_data_type__CIInfer(
-              file, expr, called_generic_params, decl_generic_params);
+              file,
+              expr,
+              current_scope_id,
+              called_generic_params,
+              decl_generic_params);
         case CI_EXPR_KIND_FUNCTION_CALL_BUILTIN:
             return infer_expr_function_call_builtin_data_type__CIInfer(expr);
         case CI_EXPR_KIND_GROUPING:

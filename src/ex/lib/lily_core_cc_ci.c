@@ -433,9 +433,8 @@ extern inline CONSTRUCTOR(CIExprCast,
 
 extern inline CONSTRUCTOR(CIExprFunctionCall,
                           CIExprFunctionCall,
-                          Rc *identifier,
-                          Vec *params,
-                          CIGenericParams *generic_params);
+                          CIExpr *callee,
+                          Vec *params);
 
 extern inline CONSTRUCTOR(CIExprFunctionCallBuiltin,
                           CIExprFunctionCallBuiltin,
