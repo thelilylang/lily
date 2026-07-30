@@ -1,6 +1,6 @@
 //@compile_options -s c23
 //@expected_bin_stdout 42:1:43:42:3\n
-//@expected_bin_stdout int const*:int\n
+//@expected_bin_stdout int const*:int:int const*:int*\n
 //@expected_bin_stdout 0:5\n
 //@expected_bin_stdout 7:8:9:6\n
 
@@ -47,14 +47,29 @@ int main() {
 	   `typeof` stands for them as much as for the rest of it, where
 	   `typeof_unqual` stands for it stripped of the ones written at the top. */
 	typeof(cp) of_qualified_ptr = cp;
+	typeof(ci) of_const = 0;
 	typeof_unqual(ci) of_unqualified = 0;
 
-	printf("%s:%s\n",
+	/* A pointer is what the qualifiers stood for are read on, as the ones
+	   written at the top of what is pointed at are dropped by a generic
+	   selection, where the ones of what is pointed to are kept. */
+	typeof(ci) *ptr_to_of_const = &of_const;
+	typeof_unqual(ci) *ptr_to_of_unqualified = &of_unqualified;
+
+	printf("%s:%s:%s:%s\n",
 	       _Generic(of_qualified_ptr,
 	                const int *: "int const*",
 	                int *: "int*",
 	                default: "?"),
-	       _Generic(of_unqualified, int: "int", default: "?"));
+	       _Generic(of_unqualified, int: "int", default: "?"),
+	       _Generic(ptr_to_of_const,
+	                const int *: "int const*",
+	                int *: "int*",
+	                default: "?"),
+	       _Generic(ptr_to_of_unqualified,
+	                const int *: "int const*",
+	                int *: "int*",
+	                default: "?"));
 
 	/* What `typeof` is written on is measured rather than evaluated, so what
 	   it holds is left undone. */
