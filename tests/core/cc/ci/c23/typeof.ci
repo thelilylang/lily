@@ -1,0 +1,76 @@
+//@compile_options -s c23
+//@expected_bin_stdout 42:1:43:42:3\n
+//@expected_bin_stdout int const*:int\n
+//@expected_bin_stdout 0:5\n
+//@expected_bin_stdout 7:8:9:6\n
+
+#include <helper.h>
+
+/* `typeof` stands for a data type wherever one is written. */
+typedef typeof(1 + 1) my_int;
+
+struct S
+{
+	typeof(1) field;
+};
+
+typeof(1)
+add(typeof(1) x)
+{
+	return x + 1;
+}
+
+int main() {
+	int i = 42;
+	int *p = &i;
+	const int ci = 3;
+	const int *cp = &ci;
+
+	typeof(i) of_identifier = i;
+	typeof(int) of_type_name = 1;
+	typeof(i + 1) of_expr = 43;
+	typeof(p) of_ptr = p;
+	typeof(*p) of_deref = 0;
+	typeof(typeof(i)) of_nested = 0;
+
+	of_deref = 3;
+	of_nested = 0;
+
+	printf("%d:%d:%d:%d:%d\n",
+	       of_identifier,
+	       of_type_name,
+	       of_expr,
+	       *of_ptr,
+	       of_deref);
+
+	/* The qualifiers of what is pointed to are part of the data type, so
+	   `typeof` stands for them as much as for the rest of it, where
+	   `typeof_unqual` stands for it stripped of the ones written at the top. */
+	typeof(cp) of_qualified_ptr = cp;
+	typeof_unqual(ci) of_unqualified = 0;
+
+	printf("%s:%s\n",
+	       _Generic(of_qualified_ptr,
+	                const int *: "int const*",
+	                int *: "int*",
+	                default: "?"),
+	       _Generic(of_unqualified, int: "int", default: "?"));
+
+	/* What `typeof` is written on is measured rather than evaluated, so what
+	   it holds is left undone. */
+	int n = 0;
+	typeof(n++) of_unevaluated = 5;
+
+	printf("%d:%d\n", n, of_unevaluated);
+
+	/* An array is stood for as much as anything else is. */
+	int a[3] = { 1, 2, 3 };
+	typeof(a) of_array = { 4, 5, 6 };
+
+	my_int of_typedef = 7;
+	struct S s;
+
+	s.field = 8;
+
+	printf("%d:%d:%d:%d\n", of_typedef, s.field, add(8), of_array[2]);
+}
