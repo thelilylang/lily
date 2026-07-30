@@ -1,0 +1,22 @@
+//@expected_bin_stdout 10:20:30:4\n
+
+#include <helper.h>
+
+struct Buffer.[@T] {
+	@T items[3];
+	char tag[4];
+};
+
+int main() {
+	struct Buffer.[int] b;
+
+	b.items[0] = 10;
+	b.items[1] = 20;
+	b.items[2] = 30;
+
+	printf("%d:%d:%d:%d\n",
+	       b.items[0],
+	       b.items[1],
+	       b.items[2],
+	       (int)sizeof(b.tag));
+}
