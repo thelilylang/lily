@@ -218,7 +218,11 @@ run__CISelfTestPoll(const CISelfTestProcessUnit *process_unit,
                 goto clean_wait;
             } else if (return_status ==
                        CI_SELF_TEST_POLL_HANDLE_FLAG_RETURN_STATUS_SUCCESS) {
-                has_err = false;
+                // A test asserting a compiler error is expected to exit with a
+                // failing status, so that part is no longer an error. Dying on
+                // a signal is another matter: the compiler must report the
+                // diagnostic and stop, not report it and then crash.
+                has_err = kill_signal != -1 || stop_signal != -1;
             }
 
             if (has_err) {
