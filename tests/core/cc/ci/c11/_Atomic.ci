@@ -1,12 +1,16 @@
 //@compile_options -s c11
-//@expected_bin_stdout 1:2\n
+//@expected_bin_stdout 1:2:3:4\n
 
 #include <helper.h>
 
 _Atomic int g = 2;
+_Atomic(int) s = 3;
 
 int main() {
 	_Atomic int a = 1;
+	_Atomic(int) b = 4;
 
-	printf("%d:%d\\n", (int)a, (int)g);
+	/* `_Atomic` is written on the data type that follows it as much as on the
+	   one given to it between parentheses. */
+	printf("%d:%d:%d:%d\\n", (int)a, (int)g, (int)s, (int)b);
 }

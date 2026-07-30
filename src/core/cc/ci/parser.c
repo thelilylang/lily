@@ -2447,6 +2447,31 @@ parse_pre_data_type__CIParser(CIParser *self)
 {
     CIDataType *res = NULL;
 
+    // `_Atomic` is written on the data type that follows it, as a qualifier
+    // is, as much as it is written on the one given to it between parentheses,
+    // where it stands for that data type itself.
+    if (self->current_token->kind == CI_TOKEN_KIND_KEYWORD__ATOMIC) {
+        CIToken *peeked_token = peek_token__CIParser(self, 1);
+
+        if (peeked_token && peeked_token->kind == CI_TOKEN_KIND_LPAREN) {
+            struct CIName name = { 0 };
+
+            next_token__CIParser(self); // skip `_Atomic`
+            next_token__CIParser(self); // skip `(`
+
+            res = parse_data_type__CIParser(self, &name, false, false, false);
+
+            expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
+
+            if (res) {
+                set_qualifier__CIDataType(
+                  res, res->qualifier | CI_DATA_TYPE_QUALIFIER__ATOMIC);
+            }
+
+            return res;
+        }
+    }
+
     // <storage_class_flag | dt_qualifier> <pre_dt>
     // e.g. static int, const int
     parse_storage_class_specifiers_and_data_type_qualifiers__CIParser(
