@@ -627,8 +627,17 @@ parse_macro_call_params__CIResolver(CIResolver *self,
 
     EXPECT((*current_token), CI_TOKEN_KIND_RPAREN);
 
-    if (macro_param_count != macro_params_length) {
+    // A macro written with a variadic parameter is called with nothing given
+    // for it as often as with something, where `__VA_ARGS__` stands for
+    // nothing, so what is written for it is not counted among the parameters a
+    // call is required to give.
+    bool is_variadic_macro = macro_param_variadic != -1;
+
+    if (macro_param_count != macro_params_length &&
+        !(is_variadic_macro && macro_param_count == macro_params_length - 1)) {
         FAILED__CIResolver(self, CI_ERROR_KIND_MACRO_PARAMS_COUNT_MISMATCH);
+
+        FREE(CIResolverMacroCall, macro_call);
 
         return NULL;
     }
@@ -666,6 +675,12 @@ resolve_macro_call__CIResolver(CIResolver *self,
                                                       macro_param_variadic,
                                                       macro_params_length,
                                                       define);
+
+                // The call is reported on where it cannot be read, so there is
+                // nothing left to expand it with.
+                if (!macro_call) {
+                    return;
+                }
 
                 break;
             default:
