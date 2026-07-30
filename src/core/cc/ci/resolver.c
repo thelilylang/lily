@@ -96,6 +96,12 @@ resolve_macro_call__CIResolver(CIResolver *self,
                                CIToken *identifier_token,
                                const CIResultDefine *define);
 
+/// @brief Whether the expansion of the macro named `name` is the one currently
+/// being resolved, or one this resolution is nested in.
+/// @param name const String* (&)
+static bool
+is_being_expanded__CIResolver(const CIResolver *self, const String *name);
+
 static void
 resolve_identifier__CIResolver(CIResolver *self, CIToken *identifier_token);
 
@@ -243,6 +249,11 @@ next_token__CIResolver(CIResolver *self);
                                    (tokens),                                \
                                    self->count_error,                       \
                                    self->count_warning);                    \
+                                                                            \
+        /* Whatever is resolved from here is still part of the expansions   \
+           already in progress, so a macro among them stays unexpanded. */  \
+        _resolver.expansion = self->expansion;                              \
+                                                                            \
         initializer;                                                        \
                                                                             \
         run__CIResolver(                                                    \
@@ -669,10 +680,18 @@ resolve_macro_call__CIResolver(CIResolver *self,
                 macro_call = NEW_VARIANT(CIResolverMacroCall, is_empty);
         }
 
+        const CIResolverExpansion expansion = {
+            .name = GET_PTR_RC(String, identifier_token->identifier),
+            .parent = self->expansion
+        };
+
         RESOLVE_TOKENS(
           &define->define->tokens,
           NULL,
-          { set_macro_call__CIResolver(&_resolver, macro_call); },
+          {
+              set_macro_call__CIResolver(&_resolver, macro_call);
+              _resolver.expansion = &expansion;
+          },
           {
               merge__CIResolvedTokens(self->resolved_tokens,
                                       _resolver.resolved_tokens);
@@ -693,6 +712,19 @@ resolve_macro_call__CIResolver(CIResolver *self,
 #undef CURRENT
 }
 
+bool
+is_being_expanded__CIResolver(const CIResolver *self, const String *name)
+{
+    for (const CIResolverExpansion *current = self->expansion; current;
+         current = current->parent) {
+        if (!strcmp(current->name->buffer, name->buffer)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void
 resolve_identifier__CIResolver(CIResolver *self, CIToken *identifier_token)
 {
@@ -707,9 +739,13 @@ resolve_identifier__CIResolver(CIResolver *self, CIToken *identifier_token)
     }
 
     const CIResultDefine *define = NULL;
+    const String *identifier = GET_PTR_RC(String, identifier_token->identifier);
 
-    if ((define = get_define__CIResultFile(
-           self->file, GET_PTR_RC(String, identifier_token->identifier)))) {
+    // A macro met again while its own expansion is being resolved is left as a
+    // plain identifier rather than expanded once more, as the standard
+    // requires. Expanding it would not terminate.
+    if ((define = get_define__CIResultFile(self->file, (String *)identifier)) &&
+        !is_being_expanded__CIResolver(self, identifier)) {
         return resolve_macro_call__CIResolver(self, identifier_token, define);
     }
 

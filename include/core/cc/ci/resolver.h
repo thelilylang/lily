@@ -267,6 +267,16 @@ ref__CIResolverMacroCall(CIResolverMacroCall *self)
  */
 DESTRUCTOR(CIResolverMacroCall, CIResolverMacroCall *self);
 
+// A macro whose expansion is currently being resolved, linked to the one whose
+// expansion led to it. A macro found again in this chain is not expanded a
+// second time, which is what stops a macro referring to itself, directly or
+// through another one, from expanding forever.
+typedef struct CIResolverExpansion
+{
+    const String *name;                       // const String* (&)
+    const struct CIResolverExpansion *parent; // const CIResolverExpansion*? (&)
+} CIResolverExpansion;
+
 typedef struct CIResolver
 {
     CIResultFile *file;                // CIResultFile* (&)
@@ -276,6 +286,8 @@ typedef struct CIResolver
     Usize *count_error;                // Usize* (&)
     Usize *count_warning;              // Usize* (&)
     CIResolverMacroCall *macro_call;   // CIResolverMacroCall*?
+    // Macros whose expansion this resolver is part of, innermost first.
+    const CIResolverExpansion *expansion; // const CIResolverExpansion*? (&)
     // This field allows the resolver to determine whether the identifiers it
     // receives are keywords or not.
     bool look_for_keyword;
@@ -300,6 +312,7 @@ inline CONSTRUCTOR(CIResolver,
                          .count_error = count_error,
                          .count_warning = count_warning,
                          .macro_call = NULL,
+                         .expansion = NULL,
                          .look_for_keyword = false };
 }
 
