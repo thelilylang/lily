@@ -8,5 +8,8 @@ if(LILY_DEBUG)
                              ${LILY_LLVM_LIBS} ${LILY_LLD_LIBS})
   target_include_directories(test_core_parser PRIVATE ${LILY_INCLUDE})
 
-  add_test(NAME test_core_parser COMMAND test_core_parser WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+  add_test(
+    NAME test_core_parser
+    COMMAND test_core_parser
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 endif()
