@@ -1,0 +1,27 @@
+//@compile_options -s c11
+//@expected_bin_stdout 1:2:4:8\n
+
+#include <helper.h>
+
+/* The assertions measure `sizeof` as the translation resolves it, while what is
+   printed is measured by the C that comes out of it. The two have to agree. */
+
+_Static_assert(sizeof(char) == 1, "char is one byte");
+_Static_assert(sizeof(short) == 2, "short is two bytes");
+_Static_assert(sizeof(int) == 4, "int is four bytes");
+_Static_assert(sizeof(double) == 8, "double is eight bytes");
+
+int main() {
+	int x = 0;
+	char c = 0;
+
+	_Static_assert(sizeof x == 4, "an int variable");
+	_Static_assert(sizeof c == 1, "a char variable");
+	_Static_assert(sizeof(x + 1) == 4, "an expression");
+
+	printf("%d:%d:%d:%d\n",
+	       (int)sizeof(char),
+	       (int)sizeof(short),
+	       (int)sizeof(int),
+	       (int)sizeof(double));
+}
