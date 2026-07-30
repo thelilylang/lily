@@ -1028,28 +1028,33 @@ load_embed__CIResolver(CIResolver *self,
     bool load_res = false;
 
     if (exists__File(full_include_path)) {
+        // What is embedded is the sequence of bytes the file holds, whose
+        // length is measured rather than read from the content itself: a byte
+        // set to zero is one of them as much as any other is.
+        Usize content_len = get_size__File(full_include_path);
         char *content = read_file__File(full_include_path); // char*
-        char *current = content;                            // char* (&)
 
-        while (*current) {
+        for (Usize i = 0; i < content_len; ++i) {
             add_resolved_token__CIResolver(
               self,
-              NEW_VARIANT(CIToken,
-                          literal_constant_int,
-                          clone__Location(&preprocessor_embed_token->location),
-                          NEW(CITokenLiteralConstantInt,
-                              CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_NONE,
-                              format__String("{zu}", *current))));
+              NEW_VARIANT(
+                CIToken,
+                literal_constant_int,
+                clone__Location(&preprocessor_embed_token->location),
+                NEW(CITokenLiteralConstantInt,
+                    CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_NONE,
+                    // The value of a byte is the one it holds
+                    // unsigned, as what is embedded is read as a
+                    // sequence of them rather than of characters.
+                    format__String("{zu}", (Usize)(Uint8)content[i]))));
 
-            if (*(current + 1)) {
+            if (i + 1 < content_len) {
                 add_resolved_token__CIResolver(
                   self,
                   NEW(CIToken,
                       CI_TOKEN_KIND_COMMA,
                       clone__Location(&preprocessor_embed_token->location)));
             }
-
-            ++current;
         }
 
         lily_free(content);
