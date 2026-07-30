@@ -2413,6 +2413,41 @@ clone__CIDataType(const CIDataType *self)
     return res;
 }
 
+CIDataType *
+apply_lvalue_conversion__CIDataType(const CIDataType *self)
+{
+    switch (self->kind) {
+        case CI_DATA_TYPE_KIND_ARRAY:
+            return NEW_VARIANT(
+              CIDataType,
+              ptr,
+              clone__Location(&self->location),
+              NEW(CIDataTypePtr, NULL, ref__CIDataType(self->array.data_type)));
+        case CI_DATA_TYPE_KIND_FUNCTION:
+            return NEW_VARIANT(
+              CIDataType,
+              ptr,
+              clone__Location(&self->location),
+              NEW(CIDataTypePtr, NULL, ref__CIDataType((CIDataType *)self)));
+        default:
+            // Nothing is read differently from how it is written when no
+            // qualifier is on it, so what is already converted is taken as it
+            // stands.
+            if (self->qualifier == CI_DATA_TYPE_QUALIFIER_NONE) {
+                return ref__CIDataType((CIDataType *)self);
+            }
+
+            CIDataType *res = clone__CIDataType(self);
+
+            // Only the qualifiers written at the top are dropped. The ones a
+            // pointer holds on what it points to are part of what it is, so
+            // they are left as they are.
+            set_qualifier__CIDataType(res, CI_DATA_TYPE_QUALIFIER_NONE);
+
+            return res;
+    }
+}
+
 // FIXME: With the technique currently used for type serialization, there is a
 // risk of name collision. A simple way of reducing this risk would be to
 // generate a random hash each time the program is run, and use it as a prefix

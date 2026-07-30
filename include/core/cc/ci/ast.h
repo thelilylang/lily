@@ -1693,6 +1693,16 @@ clone__CIDataType(const CIDataType *self);
 
 /**
  *
+ * @brief Convert a data type as it is read for the value it holds: the
+ * qualifiers written at the top are dropped, an array becomes a pointer on what
+ * it holds and a function a pointer on itself.
+ * @return CIDataType*
+ */
+CIDataType *
+apply_lvalue_conversion__CIDataType(const CIDataType *self);
+
+/**
+ *
  * @brief Serialize CIDataType.
  * @param self const CIDataType* (&)
  */

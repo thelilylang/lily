@@ -3294,9 +3294,15 @@ parse_generic_selection__CIParser(CIParser *self)
         return NULL;
     }
 
-    CIDataType *controlling_data_type = infer_expr_data_type__CIInfer(
+    CIDataType *inferred_controlling_data_type = infer_expr_data_type__CIInfer(
       self->file, controlling_expr, current_scope->scope_id, NULL, NULL);
+    // The controlling expression is read for the value it holds, so what an
+    // association is written for is the type it is read as: an association
+    // written on a qualified type, an array or a function is never selected.
+    CIDataType *controlling_data_type =
+      apply_lvalue_conversion__CIDataType(inferred_controlling_data_type);
 
+    FREE(CIDataType, inferred_controlling_data_type);
     FREE(CIExpr, controlling_expr);
 
     expect__CIParser(self, CI_TOKEN_KIND_COMMA, true);
