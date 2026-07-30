@@ -1,0 +1,14 @@
+//@expected_compiler_error \e[31merror\e[0m[0192]: the number of generic params does not correspond to its declaration
+
+#include <helper.h>
+
+struct Pair.[@A, @B] {
+	@A a;
+	@B b;
+};
+
+int main() {
+	struct Pair.[int] p;
+
+	return 0;
+}
