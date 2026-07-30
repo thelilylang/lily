@@ -290,6 +290,9 @@ to_msg__CIError(const CIError *self)
             return "generic params are not expected in a variable context";
         case CI_ERROR_KIND_GENERIC_PARAMS_NOT_EXPECTED_IN_THIS_CONTEXT:
             return "generic params are not expected in this context";
+        case CI_ERROR_KIND_GENERIC_SELECTION_NO_MATCH:
+            return "no association of this generic selection matches the type "
+                   "of its controlling expression, and it has no `default`";
         case CI_ERROR_KIND_GENERIC_PARAM_NAME_NOT_FOUND:
             return "the generic param name is not found";
         case CI_ERROR_KIND_GOTO_LABEL_DOES_NOT_EXIST:
@@ -843,6 +846,8 @@ to_code__CIError(const CIError *self)
             return "0192";
         case CI_ERROR_KIND_STATIC_ASSERT_FAILED:
             return "0193";
+        case CI_ERROR_KIND_GENERIC_SELECTION_NO_MATCH:
+            return "0194";
         default:
             UNREACHABLE("unknown variant");
     }

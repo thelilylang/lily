@@ -407,6 +407,11 @@ parse_literal_expr__CIParser(CIParser *self);
 
 /// @brief Parse primary expression.
 /// @return CIExpr*?
+/// @brief Parse a `_Generic` selection and make the selection right away.
+/// @return The expression of the association selected, NULL when none was.
+static CIExpr *
+parse_generic_selection__CIParser(CIParser *self);
+
 static CIExpr *
 parse_primary_expr__CIParser(CIParser *self);
 
@@ -3261,6 +3266,108 @@ parse_initializer__CIParser(CIParser *self)
 }
 
 CIExpr *
+parse_generic_selection__CIParser(CIParser *self)
+{
+    if (!expect__CIParser(self, CI_TOKEN_KIND_LPAREN, true)) {
+        return NULL;
+    }
+
+    // Only the type of the controlling expression is of interest: the standard
+    // leaves it unevaluated, so it is measured and then dropped.
+    CIExpr *controlling_expr = parse_expr__CIParser(self);
+
+    if (!controlling_expr) {
+        return NULL;
+    }
+
+    CIDataType *controlling_data_type = infer_expr_data_type__CIInfer(
+      self->file, controlling_expr, current_scope->scope_id, NULL, NULL);
+
+    FREE(CIExpr, controlling_expr);
+
+    expect__CIParser(self, CI_TOKEN_KIND_COMMA, true);
+
+    CIExpr *selected_expr = NULL; // CIExpr*?
+    CIExpr *default_expr = NULL;  // CIExpr*?
+
+    while (true) {
+        bool is_default =
+          self->current_token->kind == CI_TOKEN_KIND_KEYWORD_DEFAULT;
+        CIDataType *association_data_type = NULL; // CIDataType*?
+
+        if (is_default) {
+            next_token__CIParser(self);
+        } else {
+            struct CIName name = { 0 };
+
+            association_data_type =
+              parse_data_type__CIParser(self, &name, false, false, false);
+
+            if (!association_data_type) {
+                break;
+            }
+        }
+
+        expect__CIParser(self, CI_TOKEN_KIND_COLON, true);
+
+        // Every association is parsed, as each has to be well formed, but only
+        // the one selected is kept: the others are never evaluated.
+        CIExpr *association_expr = parse_expr__CIParser(self);
+
+        if (association_expr) {
+            if (is_default) {
+                if (default_expr) {
+                    FREE(CIExpr, association_expr);
+                } else {
+                    default_expr = association_expr;
+                }
+            } else if (!selected_expr &&
+                       eq__CIDataType(controlling_data_type,
+                                      association_data_type)) {
+                selected_expr = association_expr;
+            } else {
+                FREE(CIExpr, association_expr);
+            }
+        }
+
+        if (association_data_type) {
+            FREE(CIDataType, association_data_type);
+        }
+
+        if (self->current_token->kind != CI_TOKEN_KIND_COMMA) {
+            break;
+        }
+
+        next_token__CIParser(self);
+    }
+
+    expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
+
+    FREE(CIDataType, controlling_data_type);
+
+    // `default` stands in for whatever no association was written for.
+    if (!selected_expr) {
+        selected_expr = default_expr;
+        default_expr = NULL;
+    }
+
+    if (default_expr) {
+        FREE(CIExpr, default_expr);
+    }
+
+    if (!selected_expr) {
+        FAILED__CIParser(
+          self, NEW(CIError, CI_ERROR_KIND_GENERIC_SELECTION_NO_MATCH));
+
+        return NULL;
+    }
+
+    // The selection is made here, so what is left of it is the expression it
+    // chose, and nothing downstream has to know it took place.
+    return selected_expr;
+}
+
+CIExpr *
 parse_primary_expr__CIParser(CIParser *self)
 {
     Location begin = current_location__CIParser(self);
@@ -3286,6 +3393,8 @@ parse_primary_expr__CIParser(CIParser *self)
     CIExpr *res = NULL;
 
     switch (self->previous_token->kind) {
+        case CI_TOKEN_KIND_KEYWORD__GENERIC:
+            return parse_generic_selection__CIParser(self);
         case CI_TOKEN_KIND_KEYWORD_ALIGNOF:
         case CI_TOKEN_KIND_KEYWORD__ALIGNOF: {
             // The parentheses are taken here, as `sizeof` does, so that what
