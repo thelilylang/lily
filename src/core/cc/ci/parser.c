@@ -5329,6 +5329,19 @@ parse_decl__CIParser(CIParser *self)
 
     pre_data_type = parse_pre_data_type__CIParser(self);
 
+    // A data type could not be built, and the reason has already been reported.
+    // There is nothing to declare without one, and going on would clone this
+    // absent type. The token that could not begin a data type has been
+    // consumed, so the caller keeps making progress.
+    if (!pre_data_type) {
+        if (attributes) {
+            FREE_BUFFER_ITEMS(attributes->buffer, attributes->len, CIAttribute);
+            FREE(Vec, attributes);
+        }
+
+        return NULL;
+    }
+
 loop: {
     struct CIName name = { 0 };
     CIDataType *data_type = parse_post_data_type__CIParser(
