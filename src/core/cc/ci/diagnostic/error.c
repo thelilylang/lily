@@ -84,6 +84,8 @@ to_msg__CIError(const CIError *self)
                    "function";
         case CI_ERROR_KIND_CANNOT_ASSIGN_TO_ARRAY_DATA_TYPE:
             return "cannot assign an expression to an array data type";
+        case CI_ERROR_KIND_CANNOT_ASSIGN_TO_CONST_DATA_TYPE:
+            return "cannot assign an expression to a constant data type";
         case CI_ERROR_KIND_CANNOT_COMBINE_STORAGE_CLASS_WITH_TYPEDEF:
             return "cannot combine other storage class specifier(s) with "
                    "`typedef`";
@@ -852,6 +854,8 @@ to_code__CIError(const CIError *self)
             return "0194";
         case CI_ERROR_KIND_CALL_ON_NON_FUNCTION:
             return "0195";
+        case CI_ERROR_KIND_CANNOT_ASSIGN_TO_CONST_DATA_TYPE:
+            return "0196";
         default:
             UNREACHABLE("unknown variant");
     }

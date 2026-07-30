@@ -147,6 +147,13 @@ typecheck_binary_logical_expr__CITypecheck(
   CIDataType *right_dt,
   struct CITypecheckContext *typecheck_ctx);
 
+/// @brief Check whether a data type is written as constant, the ones it is
+/// written behind a typedef included.
+static bool
+is_const__CITypecheck(const CITypecheck *self,
+                      CIDataType *data_type,
+                      struct CITypecheckContext *typecheck_ctx);
+
 static void
 typecheck_binary_comparison_expr__CITypecheck(
   const CITypecheck *self,
@@ -764,6 +771,29 @@ typecheck_binary_logical_expr__CITypecheck(
     }
 }
 
+bool
+is_const__CITypecheck(const CITypecheck *self,
+                      CIDataType *data_type,
+                      struct CITypecheckContext *typecheck_ctx)
+{
+    if (data_type->qualifier & CI_DATA_TYPE_QUALIFIER_CONST) {
+        return true;
+    }
+
+    // What is written as constant is written behind a typedef as well, so the
+    // data type is resolved before it is read from it.
+    CIDataType *resolved_data_type =
+      run__CIResolverDataType(self->file,
+                              data_type,
+                              typecheck_ctx->current_generic_params.called,
+                              typecheck_ctx->current_generic_params.decl);
+    bool res = resolved_data_type->qualifier & CI_DATA_TYPE_QUALIFIER_CONST;
+
+    FREE(CIDataType, resolved_data_type);
+
+    return res;
+}
+
 void
 typecheck_binary_comparison_expr__CITypecheck(
   const CITypecheck *self,
@@ -880,6 +910,17 @@ typecheck_binary_expr__CITypecheck(const CITypecheck *self,
         case CI_EXPR_BINARY_KIND_ASSIGN_XOR:
         case CI_EXPR_BINARY_KIND_ASSIGN_BIT_LSHIFT:
         case CI_EXPR_BINARY_KIND_ASSIGN_BIT_RSHIFT:
+            // What is written as constant is only given a value where it is
+            // declared, so nothing is assigned to it afterwards.
+            if (is_const__CITypecheck(self, left_dt, typecheck_ctx)) {
+                FAILED__CITypecheck(
+                  self,
+                  binary->left,
+                  CI_ERROR_KIND_CANNOT_ASSIGN_TO_CONST_DATA_TYPE);
+
+                return;
+            }
+
             perform_typecheck__CITypecheck(
               self, left_dt, right_dt, false, typecheck_ctx);
 
