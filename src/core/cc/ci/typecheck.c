@@ -584,14 +584,27 @@ perform_typecheck__CITypecheck(const CITypecheck *self,
 
     if (!eq__CIDataType(resolved_expected_data_type,
                         resolved_given_data_type)) {
-        if (!is_valid_implicit_cast__CITypecheck(self,
-                                                 resolved_expected_data_type,
-                                                 resolved_given_data_type,
-                                                 typecheck_ctx) ||
-            !is_valid_implicit_cast__CITypecheck(self,
-                                                 resolved_given_data_type,
-                                                 resolved_expected_data_type,
-                                                 typecheck_ctx)) {
+        // What is given is read for the value it holds when it is not expected
+        // as it is written: an array is then read as a pointer on what it
+        // holds, and a function as a pointer on itself. The conversion is only
+        // tried here, so that what is expected as it is written, such as an
+        // array initialized from a string literal, is left alone.
+        CIDataType *converted_given_data_type =
+          apply_lvalue_conversion__CIDataType(resolved_given_data_type);
+        bool eq_once_converted = eq__CIDataType(resolved_expected_data_type,
+                                                converted_given_data_type);
+
+        FREE(CIDataType, converted_given_data_type);
+
+        if (!eq_once_converted &&
+            (!is_valid_implicit_cast__CITypecheck(self,
+                                                  resolved_expected_data_type,
+                                                  resolved_given_data_type,
+                                                  typecheck_ctx) ||
+             !is_valid_implicit_cast__CITypecheck(self,
+                                                  resolved_given_data_type,
+                                                  resolved_expected_data_type,
+                                                  typecheck_ctx))) {
             FREE(CIDataType, resolved_expected_data_type);
             FREE(CIDataType, resolved_given_data_type);
 
