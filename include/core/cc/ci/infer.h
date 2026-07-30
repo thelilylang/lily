@@ -59,12 +59,17 @@ infer_expr_identifier_data_type__CIInfer(
 
 /**
  *
- * @brief Get the function a call is made through, from the data type of what is
- * called. The pointers the function is reached behind are looked through.
- * @return const CIDataTypeFunction*? (&)
+ * @brief Resolve the data type of what is called down to the function it
+ * denotes. The pointers the function is reached behind are looked through.
+ * @param called_generic_params const CIGenericParams*? (&)
+ * @param decl_generic_params const CIGenericParams*? (&)
+ * @return CIDataType*? The resolved data type, of function kind.
  */
-const CIDataTypeFunction *
-get_called_function__CIInfer(const CIDataType *callee_data_type);
+CIDataType *
+resolve_called_function__CIInfer(const CIResultFile *file,
+                                 CIDataType *callee_data_type,
+                                 const CIGenericParams *called_generic_params,
+                                 const CIGenericParams *decl_generic_params);
 
 /**
  *

@@ -1,8 +1,23 @@
 //@compile_options -s c11
 //@expected_bin_stdout f:d:i\n
 //@expected_bin_stdout 3:7\n
+//@expected_bin_stdout 42:42:42\n
 
 #include <helper.h>
+
+typedef int (*fn)(int);
+
+int
+add1(int x)
+{
+	return x + 1;
+}
+
+fn
+pick(void)
+{
+	return add1;
+}
 
 const char *
 which_f(float x)
@@ -41,6 +56,7 @@ mul(int x, int y)
 #define OP(x) _Generic((x), int: add, default: mul)
 
 int main() {
+	int i = 0;
 	float f = 1.0f;
 	double d = 1.0;
 	short s = 1;
@@ -50,4 +66,15 @@ int main() {
 	/* A selection is called as well when it is written on its own, the
 	   parentheses of the call standing apart from it. */
 	printf("%d:%d\n", OP(1)(1, 2), OP(f)(7, 1));
+
+	/* What a selection chose is called through a pointer on a function as
+	   well, whether it is written as one or behind a typedef, and a call is
+	   made on what a call returned. */
+	int (*raw)(int) = add1;
+	fn tdef = add1;
+
+	printf("%d:%d:%d\n",
+	       _Generic(i, int: raw, default: raw)(41),
+	       _Generic(i, int: tdef, default: tdef)(41),
+	       _Generic(i, int: pick, default: pick)()(41));
 }

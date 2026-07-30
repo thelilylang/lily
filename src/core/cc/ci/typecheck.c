@@ -1214,15 +1214,20 @@ typecheck_function_call_expr__CITypecheck(
           typecheck_ctx->current_scope_id,
           typecheck_ctx->current_generic_params.called,
           typecheck_ctx->current_generic_params.decl);
-        const CIDataTypeFunction *called_function =
-          get_called_function__CIInfer(callee_data_type);
+        CIDataType *called_function = resolve_called_function__CIInfer(
+          self->file,
+          callee_data_type,
+          typecheck_ctx->current_generic_params.called,
+          typecheck_ctx->current_generic_params.decl);
 
         if (called_function) {
             typecheck_call_params__CITypecheck(self,
-                                               called_function->params,
+                                               called_function->function.params,
                                                &function_call->callee->location,
                                                function_call->params,
                                                typecheck_ctx);
+
+            FREE(CIDataType, called_function);
         } else {
             FAILED_WITH_LOCATION__CITypecheck(
               self,

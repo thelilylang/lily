@@ -552,19 +552,37 @@ infer_expr_identifier_data_type__CIInfer(
     }
 }
 
-const CIDataTypeFunction *
-get_called_function__CIInfer(const CIDataType *callee_data_type)
+CIDataType *
+resolve_called_function__CIInfer(const CIResultFile *file,
+                                 CIDataType *callee_data_type,
+                                 const CIGenericParams *called_generic_params,
+                                 const CIGenericParams *decl_generic_params)
 {
-    const CIDataType *res = callee_data_type;
+    CIDataType *res = run__CIResolverDataType(
+      file, callee_data_type, called_generic_params, decl_generic_params);
 
     // A function is as often called through a pointer on it as on itself, so
-    // the pointers it is reached behind are looked through.
+    // the pointers it is reached behind are looked through. Each of them is
+    // resolved in turn, as any of them is written behind a typedef as well.
     while (res && res->kind == CI_DATA_TYPE_KIND_PTR) {
-        res = get_ptr__CIDataType(res);
+        CIDataType *ptr = get_ptr__CIDataType(res);
+        CIDataType *resolved_ptr =
+          ptr ? run__CIResolverDataType(
+                  file, ptr, called_generic_params, decl_generic_params)
+              : NULL;
+
+        FREE(CIDataType, res);
+
+        res = resolved_ptr;
     }
 
-    return res && res->kind == CI_DATA_TYPE_KIND_FUNCTION ? &res->function
-                                                          : NULL;
+    if (res && res->kind != CI_DATA_TYPE_KIND_FUNCTION) {
+        FREE(CIDataType, res);
+
+        return NULL;
+    }
+
+    return res;
 }
 
 CIDataType *
@@ -590,13 +608,18 @@ infer_expr_function_call_data_type__CIInfer(
                                         current_scope_id,
                                         called_generic_params,
                                         decl_generic_params);
-        const CIDataTypeFunction *called_function =
-          get_called_function__CIInfer(callee_data_type);
-        CIDataType *res = called_function
-                            ? ref__CIDataType(called_function->return_data_type)
-                            : NEW(CIDataType,
-                                  clone__Location(&expr->location),
-                                  CI_DATA_TYPE_KIND_INT);
+        CIDataType *called_function = resolve_called_function__CIInfer(
+          file, callee_data_type, called_generic_params, decl_generic_params);
+        CIDataType *res =
+          called_function
+            ? ref__CIDataType(called_function->function.return_data_type)
+            : NEW(CIDataType,
+                  clone__Location(&expr->location),
+                  CI_DATA_TYPE_KIND_INT);
+
+        if (called_function) {
+            FREE(CIDataType, called_function);
+        }
 
         FREE(CIDataType, callee_data_type);
 
