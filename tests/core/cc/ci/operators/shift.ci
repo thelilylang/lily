@@ -1,0 +1,12 @@
+//@expected_bin_stdout 16:2:1\n
+
+#include <helper.h>
+
+int main() {
+	int x = 4;
+	int y = 8;
+
+	x <<= 2;
+
+	printf("%d:%d:%d\n", x, y >> 2, 1 << 0);
+}

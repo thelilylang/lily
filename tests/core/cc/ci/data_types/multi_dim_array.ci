@@ -1,0 +1,15 @@
+//@expected_bin_stdout 1:6:5\n
+
+#include <helper.h>
+
+int main() {
+	int grid[2][3];
+
+	grid[0][0] = 1;
+	grid[1][2] = 6;
+
+	printf("%d:%d:%d\n",
+	       grid[0][0],
+	       grid[1][2],
+	       (int)(sizeof(grid) / sizeof(int)) - 1);
+}

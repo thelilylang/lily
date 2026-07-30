@@ -1,0 +1,10 @@
+//@expected_bin_stdout 8:14:6:-6\n
+
+#include <helper.h>
+
+int main() {
+	int a = 12;
+	int b = 10;
+
+	printf("%d:%d:%d:%d\n", a & b, a | b, a ^ b, ~a + 7);
+}
