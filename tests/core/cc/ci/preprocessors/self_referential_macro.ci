@@ -1,0 +1,13 @@
+//@expected_bin_stdout 7\n
+
+#include <helper.h>
+
+int value = 7;
+
+/* `value` must expand to itself exactly once, and then be left alone: any
+   further expansion would not terminate. */
+#define value value
+
+int main() {
+	printf("%d\n", value);
+}

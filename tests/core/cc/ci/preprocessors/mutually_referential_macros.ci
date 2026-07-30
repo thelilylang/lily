@@ -1,0 +1,14 @@
+//@expected_bin_stdout 3\n
+
+#include <helper.h>
+
+/* `A` expands to `B`, which expands back to `A`. That last one is left alone,
+   as its own expansion is what led there. */
+#define A B
+#define B A
+
+int main() {
+	int A = 3;
+
+	printf("%d\n", A);
+}
