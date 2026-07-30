@@ -150,6 +150,14 @@ static inline DESTRUCTOR(Diagnostic, const Diagnostic *self);
         : location->start_position;                                            \
     Usize end_position = location->end_position;                               \
                                                                                \
+    /* A location on the character a line ends with is on the line it ends,    \
+       so where that line starts is searched for from before it. Left as it    \
+       is, the search would stop where it starts and give a position past the  \
+       end of the location. */                                                 \
+    if (start_position > 0 && file->content[start_position] == '\n') {         \
+        --start_position;                                                      \
+    }                                                                          \
+                                                                               \
     for (; start_position > 0 && file->content[start_position] != '\n';        \
          --start_position)                                                     \
         ;                                                                      \
