@@ -1145,10 +1145,24 @@ scan_and_append_chars__CIScanner(CIScanner *self,
                                  String *res,
                                  bool (*is_valid)(const CIScanner *self))
 {
+    while (is_valid(self)) {
+        next_char__CIScanner(self);
+        push__String(res,
+                     self->base.source.file
+                       ->content[self->base.source.cursor.position - 1]);
+    }
+}
+
+void
+scan_and_append_digits__CIScanner(CIScanner *self,
+                                  String *res,
+                                  bool (*is_valid)(const CIScanner *self))
+{
     while (is_valid(self) ||
-           // A digit separator is written between two digits of a number
+           // A digit separator is written between two digits of a number,
            // whatever the base it is written in, and is left out of the value
-           // the number holds.
+           // the number holds. Only a number is written with one, so a name
+           // written before a character keeps the quote that opens it.
            (self->base.source.cursor.current == '\'' &&
             peek_char__CIScanner(self, 1) &&
             is_valid_at_peek__CIScanner(self, is_valid))) {
@@ -1408,6 +1422,42 @@ scan_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
 
     CIToken *last_token = NULL;
     String *id = scan_identifier__CIScanner(self);
+
+    // A character or a string is written with the encoding it holds before
+    // the quote that opens it. What `u8` holds is what a `char` holds, the
+    // bytes of the text being the same, so what is written after it is read
+    // as it would be written on its own.
+    //
+    // The scan of a name leaves the cursor on its last character, so the quote
+    // is the one written after it.
+    if ((peek_char__CIScanner(self, 1) == (char *)'\'' ||
+         peek_char__CIScanner(self, 1) == (char *)'\"') &&
+        (!strcmp(id->buffer, "u8") || !strcmp(id->buffer, "u") ||
+         !strcmp(id->buffer, "U") || !strcmp(id->buffer, "L"))) {
+        FREE(String, id);
+
+        next_char__CIScanner(self);
+
+        if (self->base.source.cursor.current == '\'') {
+            int res = scan_character__CIScanner(self);
+
+            return res != -1
+                     ? NEW_VARIANT(CIToken,
+                                   literal_constant_character,
+                                   clone__Location(&self->base.location),
+                                   (char)res)
+                     : NULL;
+        }
+
+        String *res = scan_string__CIScanner(self);
+
+        return res ? NEW_VARIANT(CIToken,
+                                 literal_constant_string,
+                                 clone__Location(&self->base.location),
+                                 NEW(Rc, res))
+                   : NULL;
+    }
+
     enum CITokenKind current_kind = get_keyword__CIScanner(id);
 
     switch (current_kind) {
@@ -2195,7 +2245,7 @@ scan_bin__CIScanner(CIScanner *self)
 {
     String *res = NEW(String);
 
-    scan_and_append_chars__CIScanner(self, res, &is_bin__CIScanner);
+    scan_and_append_digits__CIScanner(self, res, &is_bin__CIScanner);
     previous_char__CIScanner(self);
 
     return NEW_VARIANT(CIToken,
@@ -2211,7 +2261,7 @@ scan_hex__CIScanner(CIScanner *self)
 {
     String *res = NEW(String);
 
-    scan_and_append_chars__CIScanner(self, res, &is_hex__CIScanner);
+    scan_and_append_digits__CIScanner(self, res, &is_hex__CIScanner);
 
     // A number written in hexadecimal holds a float where a point or the
     // power of two it is raised to is written on it, and the whole of what is
@@ -2231,7 +2281,7 @@ scan_hex__CIScanner(CIScanner *self)
         if (self->base.source.cursor.current == '.') {
             push__String(float_res, '.');
             next_char__CIScanner(self);
-            scan_and_append_chars__CIScanner(
+            scan_and_append_digits__CIScanner(
               self, float_res, &is_hex__CIScanner);
         }
 
@@ -2246,7 +2296,7 @@ scan_hex__CIScanner(CIScanner *self)
                 next_char__CIScanner(self);
             }
 
-            scan_and_append_chars__CIScanner(
+            scan_and_append_digits__CIScanner(
               self, float_res, &is_digit__CIScanner);
         }
 
@@ -2275,7 +2325,7 @@ scan_oct__CIScanner(CIScanner *self)
 {
     String *res = NEW(String);
 
-    scan_and_append_chars__CIScanner(self, res, &is_oct__CIScanner);
+    scan_and_append_digits__CIScanner(self, res, &is_oct__CIScanner);
     previous_char__CIScanner(self);
 
     return NEW_VARIANT(CIToken,

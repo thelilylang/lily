@@ -1,0 +1,12 @@
+//@compile_options -s c23
+//@expected_bin_stdout 97:1\n
+
+#include <helper.h>
+
+int main() {
+	/* A character is written with the encoding it holds as a string is. */
+	char encoded = u8'a';
+	char plain = 'a';
+
+	printf("%d:%d\n", (int)encoded, encoded == plain);
+}
