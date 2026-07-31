@@ -84,7 +84,119 @@ parse_macro_call_param__CIResolver(CIResolver *self,
 /// @param define const CIResultDefine* (&)
 /// @see `get_variadic_param_index__CITokenPreprocessorDefine` function in
 /// `include/core/cc/ci/token.h`
-static CIResolverMacroCall *
+static /// @brief Split what a macro parameter stands for on the commas written
+       /// at the
+  /// top of it, each part becoming a parameter of the call of its own.
+  ///
+  /// A macro written in the body of another is given the tokens the parameters
+  /// of the latter stand for, and those tokens are read where the body is read
+  /// again, so a comma among them separates what the call is given as much as
+  /// one written by hand does.
+  ///
+  /// e.g. #define VIA(...) TAKE1(__VA_ARGS__, 0)
+  ///      VIA(1, 2) gives TAKE1 three parameters: 1, 2 and 0.
+  ///
+  /// The tokens a macro written on its own stands for are given as they are, as
+  /// what a call is given is split before it is expanded.
+  ///
+  /// e.g. #define PAIR 1, 2
+  ///      TAKE1(PAIR, 0) gives TAKE1 two parameters: PAIR and 0.
+  /// @return The number of parameters the call gained.
+  static Usize
+  add_split_param__CIResolver(CIResolverMacroCallParams *params,
+                              CIResolverMacroCallParam *param)
+{
+    CIResolvedTokens *content = param->resolved_content;
+    Usize content_count = count__CIResolvedTokens(content);
+    Usize depth = 0;
+    bool has_comma = false;
+
+    for (Usize i = 0; i < content_count; ++i) {
+        const CIToken *token = get__CIResolvedTokens(content, i);
+
+        switch (token->kind) {
+            case CI_TOKEN_KIND_LPAREN:
+            case CI_TOKEN_KIND_LHOOK:
+            case CI_TOKEN_KIND_LBRACE:
+                ++depth;
+
+                break;
+            case CI_TOKEN_KIND_RPAREN:
+            case CI_TOKEN_KIND_RHOOK:
+            case CI_TOKEN_KIND_RBRACE:
+                if (depth > 0) {
+                    --depth;
+                }
+
+                break;
+            case CI_TOKEN_KIND_COMMA:
+                if (depth == 0) {
+                    has_comma = true;
+                }
+
+                break;
+            default:
+                break;
+        }
+    }
+
+    if (!has_comma) {
+        add__CIResolverMacroCallParams(params, param);
+
+        return 1;
+    }
+
+    CIResolvedTokens *current = NEW(CIResolvedTokens);
+    Usize added = 0;
+
+    depth = 0;
+
+    for (Usize i = 0; i < content_count; ++i) {
+        CIToken *token = get__CIResolvedTokens(content, i);
+
+        switch (token->kind) {
+            case CI_TOKEN_KIND_LPAREN:
+            case CI_TOKEN_KIND_LHOOK:
+            case CI_TOKEN_KIND_LBRACE:
+                ++depth;
+
+                break;
+            case CI_TOKEN_KIND_RPAREN:
+            case CI_TOKEN_KIND_RHOOK:
+            case CI_TOKEN_KIND_RBRACE:
+                if (depth > 0) {
+                    --depth;
+                }
+
+                break;
+            case CI_TOKEN_KIND_COMMA:
+                if (depth == 0) {
+                    add__CIResolverMacroCallParams(
+                      params, NEW(CIResolverMacroCallParam, current));
+
+                    current = NEW(CIResolvedTokens);
+                    ++added;
+
+                    continue;
+                }
+
+                break;
+            default:
+                break;
+        }
+
+        add__CIResolvedTokens(current, ref__CIToken(token));
+    }
+
+    add__CIResolverMacroCallParams(params,
+                                   NEW(CIResolverMacroCallParam, current));
+
+    FREE(CIResolverMacroCallParam, param);
+
+    return added + 1;
+}
+
+CIResolverMacroCall *
 parse_macro_call_params__CIResolver(CIResolver *self,
                                     CIToken **current_token,
                                     Isize macro_param_variadic,
@@ -603,6 +715,16 @@ parse_macro_call_params__CIResolver(CIResolver *self,
            CURRENT((*current_token))->kind != CI_TOKEN_KIND_EOF) {
         bool is_variadic = macro_param_variadic != -1 &&
                            macro_param_count >= macro_param_variadic;
+        // Whether what is given is written as a parameter of the macro the
+        // call is written in and nothing else, which is what is read again
+        // where the body is.
+        bool is_lone_macro_param =
+          (CURRENT((*current_token))->kind == CI_TOKEN_KIND_MACRO_PARAM ||
+           CURRENT((*current_token))->kind ==
+             CI_TOKEN_KIND_MACRO_PARAM_VARIADIC) &&
+          (PEEK((*current_token)) &&
+           (PEEK((*current_token))->kind == CI_TOKEN_KIND_COMMA ||
+            PEEK((*current_token))->kind == CI_TOKEN_KIND_RPAREN));
         CIResolverMacroCallParam *param = parse_macro_call_param__CIResolver(
           self,
           current_token,
@@ -620,9 +742,18 @@ parse_macro_call_params__CIResolver(CIResolver *self,
             NEXT((*current_token));
         }
 
-        add__CIResolverMacroCallParams(&macro_call->params, param);
+        // What is given is written as a parameter of the macro the call is
+        // written in, or as anything else. The tokens a parameter stands for
+        // are read where the body is read again, so a comma among them
+        // separates what the call is given.
+        if (is_lone_macro_param) {
+            macro_param_count +=
+              add_split_param__CIResolver(&macro_call->params, param);
+        } else {
+            add__CIResolverMacroCallParams(&macro_call->params, param);
 
-        ++macro_param_count;
+            ++macro_param_count;
+        }
     }
 
     EXPECT((*current_token), CI_TOKEN_KIND_RPAREN);
@@ -633,8 +764,11 @@ parse_macro_call_params__CIResolver(CIResolver *self,
     // call is required to give.
     bool is_variadic_macro = macro_param_variadic != -1;
 
-    if (macro_param_count != macro_params_length &&
-        !(is_variadic_macro && macro_param_count == macro_params_length - 1)) {
+    // As many are written for the variadic part as there are, and none at
+    // all, so only what is written for the parameters named before it is
+    // counted.
+    if (is_variadic_macro ? macro_param_count < macro_params_length - 1
+                          : macro_param_count != macro_params_length) {
         FAILED__CIResolver(self, CI_ERROR_KIND_MACRO_PARAMS_COUNT_MISMATCH);
 
         FREE(CIResolverMacroCall, macro_call);

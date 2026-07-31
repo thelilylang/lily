@@ -1,0 +1,28 @@
+//@expected_bin_stdout 1:2:1\n
+//@expected_bin_stdout 7:3:9\n
+
+#include <helper.h>
+
+#define HEAD(a, ...) a
+#define PAIR 1, 2
+#define THROUGH(...) HEAD(__VA_ARGS__, 0)
+#define ADD(a, ...) ((a) + HEAD(__VA_ARGS__, 0))
+#define GUARDED(a, ...) HEAD((a, 9), __VA_ARGS__, 0)
+
+int main() {
+	/* The tokens a parameter stands for are read where the body is read
+	   again, so a comma among them separates what the call is given. */
+	int through[] = { THROUGH(1, 2) };
+
+	/* What a macro written on its own stands for is given as it is, as what
+	   a call is given is told apart before it is expanded. */
+	int written_on_its_own[] = { HEAD(PAIR, 0) };
+
+	printf("%d:%d:%d\n",
+	       written_on_its_own[0],
+	       written_on_its_own[1],
+	       through[0]);
+
+	/* A comma written between parentheses is held by them. */
+	printf("%d:%d:%d\n", HEAD(7, 8, 0), ADD(1, 2), GUARDED(3, 4));
+}
