@@ -1,0 +1,13 @@
+//@compile_options -s c23
+//@expected_compiler_error :9:32: \e[31merror\e[0m[0014]: expected `)`
+//@expected_compiler_error \e[34m9 |\e[0m #embed "embed_text.txt" limit(1
+
+#include <helper.h>
+
+int main() {
+	int data[] = {
+#embed "embed_text.txt" limit(1
+	};
+
+	return data[0];
+}

@@ -1,0 +1,84 @@
+//@compile_options -s c23
+//@expected_bin_stdout 2:65:66\n
+//@expected_bin_stdout 5:0:65:66:67:0\n
+//@expected_bin_stdout 3:65:66:67\n
+//@expected_bin_stdout 1:0\n
+//@expected_bin_stdout 1:9\n
+//@expected_bin_stdout 3:65:66:2\n
+
+#include <helper.h>
+
+#define TWO 2
+
+int main() {
+	/* `limit` is the number of bytes embedded at most, so a resource holding
+	   more than it is read no further. */
+	int limited[] = {
+#embed "embed_text.txt" limit(TWO)
+	};
+
+	printf("%d:%d:%d\n",
+	       (int)(sizeof(limited) / sizeof(limited[0])),
+	       limited[0],
+	       limited[1]);
+
+	/* What `prefix` and `suffix` are written to hold is written around the
+	   bytes, the comma that separates them from the bytes being one of the
+	   tokens they hold. */
+	int surrounded[] = {
+#embed "embed_text.txt" prefix(0,) suffix(, 0)
+	};
+
+	printf("%d:%d:%d:%d:%d:%d\n",
+	       (int)(sizeof(surrounded) / sizeof(surrounded[0])),
+	       surrounded[0],
+	       surrounded[1],
+	       surrounded[2],
+	       surrounded[3],
+	       surrounded[4]);
+
+	/* A `limit` holding more than the resource does leaves it read whole, and
+	   what it is written to hold is a constant expression. */
+	int whole[] = {
+#embed "embed_text.txt" limit(1 + 2)
+	};
+
+	printf("%d:%d:%d:%d\n",
+	       (int)(sizeof(whole) / sizeof(whole[0])),
+	       whole[0],
+	       whole[1],
+	       whole[2]);
+
+	/* A resource holding no byte is embedded as what `if_empty` is written to
+	   hold, and a `limit` of zero is a resource holding no byte. */
+	int empty[] = {
+#embed "embed_text.txt" limit(0) if_empty(0)
+	};
+
+	printf("%d:%d\n", (int)(sizeof(empty) / sizeof(empty[0])), empty[0]);
+
+	/* What surrounds the bytes is written only when there are bytes to
+	   surround, so `prefix` and `suffix` are not written when `if_empty` is. */
+	int empty_surrounded[] = {
+#embed "embed_text.txt" limit(0) prefix(1,) suffix(, 1) if_empty(9)
+	};
+
+	printf("%d:%d\n",
+	       (int)(sizeof(empty_surrounded) / sizeof(empty_surrounded[0])),
+	       empty_surrounded[0]);
+
+	/* The parameters are read in the order they are written, whichever it is,
+	   and a parameter written with nothing between the parentheses that open
+	   and close it holds nothing. A `(` among what one holds is the one a `)`
+	   closes first, so the `)` that closes the parameter is the one written
+	   after them all. */
+	int mixed[] = {
+#embed "embed_text.txt" suffix(, (1 + 1)) limit(2) prefix()
+	};
+
+	printf("%d:%d:%d:%d\n",
+	       (int)(sizeof(mixed) / sizeof(mixed[0])),
+	       mixed[0],
+	       mixed[1],
+	       mixed[2]);
+}

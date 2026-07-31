@@ -297,6 +297,14 @@ static void
 resolve_preprocessor_conditional__CIResolver(CIResolver *self,
                                              CIToken *preprocessor_cond_token);
 
+static void
+resolve_preprocessor_embed_param__CIResolver(CIResolver *self, CITokens *param);
+
+/// @brief Get the number of bytes the `limit` parameter of an `#embed` is
+/// written to hold.
+static Usize
+resolve_preprocessor_embed_limit__CIResolver(CIResolver *self, CITokens *limit);
+
 static bool
 load_embed__CIResolver(CIResolver *self,
                        CIToken *preprocessor_embed_token,
@@ -1343,6 +1351,61 @@ resolve_preprocessor_conditional__CIResolver(CIResolver *self,
     }
 }
 
+void
+resolve_preprocessor_embed_param__CIResolver(CIResolver *self, CITokens *param)
+{
+    // A parameter that is not written holds nothing, so there is nothing to
+    // resolve from it.
+    if (is_empty__CITokens(param)) {
+        return;
+    }
+
+    RESOLVE_TOKENS(param, self->resolved_tokens, {}, {});
+}
+
+Usize
+resolve_preprocessor_embed_limit__CIResolver(CIResolver *self, CITokens *limit)
+{
+    CIExpr *limit_expr = resolve_preprocessor_if_cond__CIResolver(self, limit);
+    Usize res = 0;
+
+    if (!limit_expr) {
+        return res;
+    }
+
+    switch (limit_expr->kind) {
+        case CI_EXPR_KIND_LITERAL:
+            switch (limit_expr->literal.kind) {
+                case CI_EXPR_LITERAL_KIND_SIGNED_INT:
+                    // The number of bytes to embed is a count, so what is
+                    // written as a negative value is not one of them.
+                    if (limit_expr->literal.signed_int < 0) {
+                        goto expected_positive_integer_value;
+                    }
+
+                    res = (Usize)limit_expr->literal.signed_int;
+
+                    break;
+                case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:
+                    res = limit_expr->literal.unsigned_int;
+
+                    break;
+                default:
+                    goto expected_positive_integer_value;
+            }
+
+            break;
+        default:
+        expected_positive_integer_value:
+            FAILED__CIResolver(self,
+                               CI_ERROR_KIND_EXPECTED_POSITIVE_INTEGER_VALUE);
+    }
+
+    FREE(CIExpr, limit_expr);
+
+    return res;
+}
+
 bool
 load_embed__CIResolver(CIResolver *self,
                        CIToken *preprocessor_embed_token,
@@ -1353,11 +1416,40 @@ load_embed__CIResolver(CIResolver *self,
     bool load_res = false;
 
     if (exists__File(full_include_path)) {
+        CITokenPreprocessorEmbed *embed =
+          &preprocessor_embed_token->preprocessor_embed;
         // What is embedded is the sequence of bytes the file holds, whose
         // length is measured rather than read from the content itself: a byte
         // set to zero is one of them as much as any other is.
         Usize content_len = get_size__File(full_include_path);
         char *content = read_file__File(full_include_path); // char*
+
+        // The file is read no further than the number of bytes `limit` is
+        // written to hold.
+        if (!is_empty__CITokens(&embed->limit)) {
+            const Usize limit =
+              resolve_preprocessor_embed_limit__CIResolver(self, &embed->limit);
+
+            if (limit < content_len) {
+                content_len = limit;
+            }
+        }
+
+        // What `if_empty` is written to hold is what an empty resource is
+        // embedded as, so nothing else is when there is no byte to embed.
+        if (!content_len) {
+            resolve_preprocessor_embed_param__CIResolver(self,
+                                                         &embed->if_empty);
+
+            lily_free(content);
+            lily_free(full_include_path);
+
+            return true;
+        }
+
+        // What `prefix` and `suffix` are written to hold surrounds the bytes,
+        // so they are only written when there are bytes to surround.
+        resolve_preprocessor_embed_param__CIResolver(self, &embed->prefix);
 
         for (Usize i = 0; i < content_len; ++i) {
             add_resolved_token__CIResolver(
@@ -1381,6 +1473,8 @@ load_embed__CIResolver(CIResolver *self,
                       clone__Location(&preprocessor_embed_token->location)));
             }
         }
+
+        resolve_preprocessor_embed_param__CIResolver(self, &embed->suffix);
 
         lily_free(content);
 

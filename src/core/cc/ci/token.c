@@ -705,6 +705,23 @@ IMPL_FOR_DEBUG(to_string,
       "CITokenPreprocessorEmbed{{ value = {S}, content =", self->value);
 
     DEBUG_TOKENS(self->content, res);
+
+#define DEBUG_EMBED_PARAM(param)             \
+    push_str__String(res, ", " #param " ="); \
+                                             \
+    if (is_empty__CITokens(&self->param)) {  \
+        push_str__String(res, " NULL");      \
+    } else {                                 \
+        DEBUG_TOKENS(self->param, res);      \
+    }
+
+    DEBUG_EMBED_PARAM(limit);
+    DEBUG_EMBED_PARAM(prefix);
+    DEBUG_EMBED_PARAM(suffix);
+    DEBUG_EMBED_PARAM(if_empty);
+
+#undef DEBUG_EMBED_PARAM
+
     push_str__String(res, " }");
 
     return res;
@@ -715,6 +732,24 @@ DESTRUCTOR(CITokenPreprocessorEmbed, const CITokenPreprocessorEmbed *self)
 {
     FREE(String, self->value);
     FREE(CITokens, &self->content);
+
+    // A parameter that is not written holds nothing, and an empty list is not
+    // something the destructor of `CITokens` accepts.
+    if (!is_empty__CITokens(&self->limit)) {
+        FREE(CITokens, &self->limit);
+    }
+
+    if (!is_empty__CITokens(&self->prefix)) {
+        FREE(CITokens, &self->prefix);
+    }
+
+    if (!is_empty__CITokens(&self->suffix)) {
+        FREE(CITokens, &self->suffix);
+    }
+
+    if (!is_empty__CITokens(&self->if_empty)) {
+        FREE(CITokens, &self->if_empty);
+    }
 }
 
 String *

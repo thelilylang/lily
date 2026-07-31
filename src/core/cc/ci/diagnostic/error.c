@@ -133,6 +133,8 @@ to_msg__CIError(const CIError *self)
             return "direct memory leak detected";
         case CI_ERROR_KIND_DUPLICATE_DEFINE_NAME:
             return "duplicate `#define` name";
+        case CI_ERROR_KIND_DUPLICATE_EMBED_PARAMETER:
+            return "duplicate `#embed` parameter";
         case CI_ERROR_KIND_DUPLICATE_FIELD:
             return "duplicate field";
         case CI_ERROR_KIND_DUPLICATE_INPUT:
@@ -861,6 +863,8 @@ to_code__CIError(const CIError *self)
             return "0196";
         case CI_ERROR_KIND_DISCARDED_QUALIFIERS_ON_POINTER_CONVERSION:
             return "0197";
+        case CI_ERROR_KIND_DUPLICATE_EMBED_PARAMETER:
+            return "0198";
         default:
             UNREACHABLE("unknown variant");
     }

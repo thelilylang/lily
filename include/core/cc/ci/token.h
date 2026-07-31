@@ -691,6 +691,14 @@ typedef struct CITokenPreprocessorEmbed
 {
     String *value;
     CITokens content;
+    // The tokens a parameter of the `#embed` is written to hold. A parameter
+    // written with nothing between the parentheses that open and close it
+    // holds nothing, so a parameter that is not written and one written empty
+    // are both an empty list.
+    CITokens limit;
+    CITokens prefix;
+    CITokens suffix;
+    CITokens if_empty;
 } CITokenPreprocessorEmbed;
 
 /**
@@ -700,9 +708,18 @@ typedef struct CITokenPreprocessorEmbed
 inline CONSTRUCTOR(CITokenPreprocessorEmbed,
                    CITokenPreprocessorEmbed,
                    String *value,
-                   CITokens content)
+                   CITokens content,
+                   CITokens limit,
+                   CITokens prefix,
+                   CITokens suffix,
+                   CITokens if_empty)
 {
-    return (CITokenPreprocessorEmbed){ .value = value, .content = content };
+    return (CITokenPreprocessorEmbed){ .value = value,
+                                       .content = content,
+                                       .limit = limit,
+                                       .prefix = prefix,
+                                       .suffix = suffix,
+                                       .if_empty = if_empty };
 }
 
 /**

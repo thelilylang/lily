@@ -870,7 +870,11 @@ extern inline CONSTRUCTOR(CITokenPreprocessorDefine,
 extern inline CONSTRUCTOR(CITokenPreprocessorEmbed,
                           CITokenPreprocessorEmbed,
                           String *value,
-                          CITokens content);
+                          CITokens content,
+                          CITokens limit,
+                          CITokens prefix,
+                          CITokens suffix,
+                          CITokens if_empty);
 
 extern inline CONSTRUCTOR(CITokenPreprocessorLine,
                           CITokenPreprocessorLine,

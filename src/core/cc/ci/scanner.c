@@ -376,6 +376,19 @@ static CIToken *
 scan_else_preprocessor__CIScanner(CIScanner *self,
                                   CIScannerContext *ctx_parent);
 
+/// @brief Scan the parameters an embed preprocessor is written to hold.
+/// @param limit CITokens* (&)
+/// @param prefix CITokens* (&)
+/// @param suffix CITokens* (&)
+/// @param if_empty CITokens* (&)
+/// @return true if the parameters are scanned, false otherwise.
+static bool
+scan_embed_preprocessor_params__CIScanner(CIScanner *self,
+                                          CITokens *limit,
+                                          CITokens *prefix,
+                                          CITokens *suffix,
+                                          CITokens *if_empty);
+
 /// @brief Scan embed preprocessor.
 static CIToken *
 scan_embed_preprocessor__CIScanner(CIScanner *self);
@@ -3063,6 +3076,157 @@ scan_else_preprocessor__CIScanner(CIScanner *self, CIScannerContext *ctx_parent)
     PREPROCESSOR_FILTER_CURRENT_TOKEN(res);
 }
 
+bool
+scan_embed_preprocessor_params__CIScanner(CIScanner *self,
+                                          CITokens *limit,
+                                          CITokens *prefix,
+                                          CITokens *suffix,
+                                          CITokens *if_empty)
+{
+    // The parameters are written on the rest of the line the `#embed` is
+    // written on, so they are scanned as the content of any preprocessor is,
+    // then split on the name each of them is written with.
+    CITokens params = scan_preprocessor_content__CIScanner(
+      self, CI_SCANNER_CONTEXT_LOCATION_NONE, NULL);
+    CIToken *current = params.first;
+    bool res = false;
+
+    // Releases the token `current` holds and moves onto the one written after
+    // it.
+    //
+    // What is scanned is drained into the list of the parameter it belongs to,
+    // so what stays in `params` is only what is yet to be read: releasing it
+    // is releasing the chain that starts at `current`.
+#define SKIP_TOKEN()                \
+    {                               \
+        CIToken *skipped = current; \
+                                    \
+        current = current->next;    \
+        skipped->next = NULL;       \
+                                    \
+        FREE(CIToken, skipped);     \
+    }
+
+    // The line is scanned whole before it is split, so the location an error is
+    // emitted at is the one of the token it is about rather than the one the
+    // scanner has reached.
+#define FAILED_AT_TOKEN(error)                         \
+    {                                                  \
+        const Location location = self->base.location; \
+                                                       \
+        self->base.location = current->location;       \
+                                                       \
+        FAILED__CIScanner(self, error);                \
+                                                       \
+        self->base.location = location;                \
+                                                       \
+        goto exit;                                     \
+    }
+
+#define FAILED_PARAM(expected) \
+    FAILED_AT_TOKEN(NEW_VARIANT(CIError, expected_token, (expected)))
+
+    while (current->kind != CI_TOKEN_KIND_EOT) {
+        CITokens *param = NULL;
+        bool is_cond = false;
+
+        if (current->kind != CI_TOKEN_KIND_IDENTIFIER) {
+            FAILED_PARAM("`limit`, `prefix`, `suffix` or `if_empty`");
+        }
+
+        {
+            const String *name = GET_PTR_RC(String, current->identifier);
+
+            if (!strcmp(name->buffer, "limit")) {
+                param = limit;
+                // What `limit` is written to hold is a constant expression, as
+                // the number of bytes to embed is the value it is resolved to.
+                is_cond = true;
+            } else if (!strcmp(name->buffer, "prefix")) {
+                param = prefix;
+            } else if (!strcmp(name->buffer, "suffix")) {
+                param = suffix;
+            } else if (!strcmp(name->buffer, "if_empty")) {
+                param = if_empty;
+            } else {
+                FAILED_PARAM("`limit`, `prefix`, `suffix` or `if_empty`");
+            }
+        }
+
+        if (!is_empty__CITokens(param)) {
+            FAILED_AT_TOKEN(
+              NEW(CIError, CI_ERROR_KIND_DUPLICATE_EMBED_PARAMETER));
+        }
+
+        SKIP_TOKEN();
+
+        if (current->kind != CI_TOKEN_KIND_LPAREN) {
+            FAILED_PARAM("`(`");
+        }
+
+        SKIP_TOKEN();
+
+        // What the parameter holds is written up to the `)` that closes it, a
+        // `(` written among them being the one a `)` closes first.
+        for (Usize depth = 0;;) {
+            if (current->kind == CI_TOKEN_KIND_EOT) {
+                FAILED_PARAM("`)`");
+            }
+
+            if (current->kind == CI_TOKEN_KIND_LPAREN) {
+                ++depth;
+            } else if (current->kind == CI_TOKEN_KIND_RPAREN) {
+                if (!depth) {
+                    break;
+                }
+
+                --depth;
+            }
+
+            {
+                CIToken *param_token = current;
+
+                current = current->next;
+                param_token->next = NULL;
+
+                add__CITokens(param, param_token);
+            }
+        }
+
+        SKIP_TOKEN(); // skip `)`
+
+        // The list of a parameter is resolved on its own, so it is written to
+        // end as the content of a preprocessor does.
+        {
+            CIScannerContext ctx =
+              NEW(CIScannerContext, CI_SCANNER_CONTEXT_LOCATION_NONE, param);
+
+            if (is_cond) {
+                add_eof_token__CIScanner(self, &ctx);
+            } else {
+                add_eot_token__CIScanner(
+                  self, &ctx, NEW(CITokenEot, CI_TOKEN_EOT_CONTEXT_OTHER));
+            }
+        }
+    }
+
+    res = true;
+
+exit:
+    // Whatever is left unread is still chained to `current`, the tokens
+    // written before it having been drained already.
+    params.first = current;
+    params.last = current;
+
+    FREE(CITokens, &params);
+
+#undef FAILED_PARAM
+#undef FAILED_AT_TOKEN
+#undef SKIP_TOKEN
+
+    return res;
+}
+
 CIToken *
 scan_embed_preprocessor__CIScanner(CIScanner *self)
 {
@@ -3115,17 +3279,41 @@ scan_embed_preprocessor__CIScanner(CIScanner *self)
             return NULL;
     }
 
-    // TODO: Scan parameters (limit, suffix, prefix, if_empty)
-    // https://en.cppreference.com/w/c/preprocessor/embed
+    CITokens limit = NEW(CITokens);
+    CITokens prefix = NEW(CITokens);
+    CITokens suffix = NEW(CITokens);
+    CITokens if_empty = NEW(CITokens);
+
+    if (!scan_embed_preprocessor_params__CIScanner(
+          self, &limit, &prefix, &suffix, &if_empty)) {
+        const CITokens params[4] = { limit, prefix, suffix, if_empty };
+
+        for (Usize i = 0; i < 4; ++i) {
+            // A parameter that is not written holds nothing, and an empty list
+            // is not something the destructor of `CITokens` accepts.
+            if (!is_empty__CITokens(&params[i])) {
+                FREE(CITokens, &params[i]);
+            }
+        }
+
+        FREE(String, preprocessor_embed_value);
+
+        return NULL;
+    }
 
     add_eot_token__CIScanner(
       self, &embed_ctx, NEW(CITokenEot, CI_TOKEN_EOT_CONTEXT_OTHER));
 
-    return NEW_VARIANT(
-      CIToken,
-      preprocessor_embed,
-      preprocessor_embed_location,
-      NEW(CITokenPreprocessorEmbed, preprocessor_embed_value, content));
+    return NEW_VARIANT(CIToken,
+                       preprocessor_embed,
+                       preprocessor_embed_location,
+                       NEW(CITokenPreprocessorEmbed,
+                           preprocessor_embed_value,
+                           content,
+                           limit,
+                           prefix,
+                           suffix,
+                           if_empty));
 }
 
 CIToken *
