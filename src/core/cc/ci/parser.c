@@ -2559,6 +2559,17 @@ parse_pre_data_type__CIParser(CIParser *self)
     // e.g. static int, const int
     parse_storage_class_specifiers_and_data_type_qualifiers__CIParser(
       self, &data_type_qualifier_flag, &storage_class_flag);
+
+    // `auto` written with no data type after it stands for the data type of
+    // what the variable is given, which is read from it once it is known.
+    //
+    // e.g. auto a = 5;
+    if ((storage_class_flag & CI_STORAGE_CLASS_AUTO) &&
+        !is_data_type__CIParser(self)) {
+        return NEW(
+          CIDataType, current_location__CIParser(self), CI_DATA_TYPE_KIND_ANY);
+    }
+
     next_token__CIParser(self);
 
     switch (self->previous_token->kind) {
@@ -5642,6 +5653,18 @@ parse_variable__CIParser(CIParser *self,
             ENABLE_ALLOW_INITIALIZATION();
 
             CIExpr *expr = parse_expr__CIParser(self);
+
+            // `auto` stands for the data type of what the variable is given,
+            // so it is read from it now that it is known.
+            if (expr && data_type->kind == CI_DATA_TYPE_KIND_ANY &&
+                (storage_class_flag & CI_STORAGE_CLASS_AUTO)) {
+                CIDataType *inferred_data_type = infer_expr_data_type__CIInfer(
+                  self->file, expr, current_scope->scope_id, NULL, NULL);
+
+                FREE(CIDataType, data_type);
+
+                data_type = inferred_data_type;
+            }
 
             check_for_initialization_expr__CIParser(self, data_type, expr);
 

@@ -1,0 +1,17 @@
+//@compile_options -s c23
+//@expected_bin_stdout 5:3:1\n
+
+#include <helper.h>
+
+int main() {
+	/* `auto` written with no data type after it stands for the data type of
+	   what the variable is given. */
+	auto whole = 5;
+	auto fractional = 1.5;
+	auto from_an_operation = 2 > 1;
+
+	printf("%d:%d:%d\n",
+	       whole,
+	       (int)(fractional * 2),
+	       from_an_operation);
+}
