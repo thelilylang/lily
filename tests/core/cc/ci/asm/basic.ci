@@ -1,0 +1,19 @@
+/*@expected_bin_stdout ok\n*/
+
+#include <helper.h>
+
+int main() {
+	/* An `asm` written with no operand only holds the assembly it is
+	   written with. */
+	asm ("nop");
+	asm volatile ("nop");
+
+	/* The assembly is written as the literals next to one another spell
+	   it, as any string is. */
+	asm ("nop\n\t"
+	     "nop");
+
+	puts("ok");
+
+	return 0;
+}

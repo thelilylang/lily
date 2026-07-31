@@ -1,0 +1,22 @@
+//@expected_bin_stdout 0:1\n
+
+#include <helper.h>
+
+/* An `asm goto` is written with the labels it jumps to, after the clobbers. */
+int is_non_zero(int v) {
+	asm goto ("cmpl $0, %0\n\t"
+	          "jne %l[nonzero]"
+	          :
+	          : "r" (v)
+	          : "cc"
+	          : nonzero);
+
+	return 0;
+
+nonzero:
+	return 1;
+}
+
+int main() {
+	printf("%d:%d\n", is_non_zero(0), is_non_zero(7));
+}

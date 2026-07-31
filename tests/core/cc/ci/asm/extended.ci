@@ -1,0 +1,23 @@
+//@expected_bin_stdout 42:42:42\n
+
+#include <helper.h>
+
+int main() {
+	int dst = 0;
+	int src = 41;
+	int named = 0;
+
+	/* An operand is written as the constraint it is held by and the
+	   expression it stands for. */
+	asm volatile ("addl $1, %0" : "+r" (src));
+	asm ("movl %1, %0" : "=r" (dst) : "r" (src));
+
+	/* An operand may be written with a name, which the assembly then
+	   refers to it by, and what the assembly writes over is written last. */
+	asm ("movl %[from], %[to]"
+	     : [to] "=r" (named)
+	     : [from] "r" (src)
+	     : "memory");
+
+	printf("%d:%d:%d\n", src, dst, named);
+}

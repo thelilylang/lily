@@ -1,0 +1,18 @@
+//@expected_bin_stdout 9:2\n
+
+#include <helper.h>
+
+/* The operands of an `asm` are expressions like any other, so what they name
+   follows the instantiation the function is read for. */
+@T
+identity.[@T](@T v) {
+	@T out;
+
+	asm ("movl %1, %0" : "=r" (out) : "r" (v));
+
+	return out;
+}
+
+int main() {
+	printf("%d:%d\n", identity.[int](9), identity.[int](2));
+}

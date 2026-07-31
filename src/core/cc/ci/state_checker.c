@@ -1517,6 +1517,7 @@ check_function_stmt__CIStateChecker(CIStateChecker *self, const CIStmt *stmt)
             return check_function_stmt_block__CIStateChecker(self,
                                                              &stmt->block);
         case CI_STMT_KIND_BREAK:
+        case CI_STMT_KIND_ASM:
         case CI_STMT_KIND_CASE:
         case CI_STMT_KIND_CONTINUE:
         case CI_STMT_KIND_DEFAULT:

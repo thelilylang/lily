@@ -2250,10 +2250,123 @@ generate_function_while_stmt__CIGenerator(CIGenerator *self,
     generate_function_body__CIGenerator(self, while_->body);
 }
 
+/// @brief Write the operands one of the lists of an extended `asm` is written
+/// with.
+/// @param operands const Vec<CIStmtAsmOperand*>*? (&)
+static void
+generate_function_asm_operands__CIGenerator(CIGenerator *self,
+                                            const Vec *operands)
+{
+    for (Usize i = 0; operands && i < operands->len; ++i) {
+        const CIStmtAsmOperand *operand = get__Vec(operands, i);
+
+        if (i > 0) {
+            write_str__CIGenerator(self, ", ");
+        }
+
+        if (operand->name) {
+            write_String__CIGenerator(
+              self,
+              format__String("[{S}] ", GET_PTR_RC(String, operand->name)));
+        }
+
+        write_str__CIGenerator(self, "\"");
+        generate_function_literal_string_expr__CIGenerator(
+          self, GET_PTR_RC(String, operand->constraint));
+        write_str__CIGenerator(self, "\" (");
+        generate_function_expr__CIGenerator(self, operand->value);
+        write_str__CIGenerator(self, ")");
+    }
+}
+
+/// @brief Write the strings one of the lists of an extended `asm` is written
+/// with.
+/// @param strings const Vec<Rc<String*>*>*? (&)
+static void
+generate_function_asm_strings__CIGenerator(CIGenerator *self,
+                                           const Vec *strings)
+{
+    for (Usize i = 0; strings && i < strings->len; ++i) {
+        Rc *string = get__Vec(strings, i); // Rc<String*>*
+
+        write_str__CIGenerator(self, i > 0 ? ", \"" : "\"");
+        generate_function_literal_string_expr__CIGenerator(
+          self, GET_PTR_RC(String, string));
+        write_str__CIGenerator(self, "\"");
+    }
+}
+
+/// @brief Write the labels an `asm goto` is written to jump to.
+/// @param labels const Vec<Rc<String*>*>*? (&)
+static void
+generate_function_asm_labels__CIGenerator(CIGenerator *self, const Vec *labels)
+{
+    for (Usize i = 0; labels && i < labels->len; ++i) {
+        Rc *label = get__Vec(labels, i); // Rc<String*>*
+
+        write_String__CIGenerator(self,
+                                  format__String("{s}{S}",
+                                                 i > 0 ? ", " : "",
+                                                 GET_PTR_RC(String, label)));
+    }
+}
+
+static void
+generate_function_asm_stmt__CIGenerator(CIGenerator *self,
+                                        const CIStmtAsm *asm_)
+{
+    write_str__CIGenerator(self, "__asm__");
+
+    if (asm_->is_volatile) {
+        write_str__CIGenerator(self, " __volatile__");
+    }
+
+    if (asm_->is_inline) {
+        write_str__CIGenerator(self, " __inline__");
+    }
+
+    if (asm_->is_goto) {
+        write_str__CIGenerator(self, " goto");
+    }
+
+    write_str__CIGenerator(self, " (\"");
+    generate_function_literal_string_expr__CIGenerator(
+      self, GET_PTR_RC(String, asm_->template));
+    write_str__CIGenerator(self, "\"");
+
+    // NOTE: Each list is only written where it, or one of those that follow
+    // it, is written, as the `:` is what tells them apart.
+    if (asm_->outputs || asm_->inputs || asm_->clobbers || asm_->labels) {
+        write_str__CIGenerator(self, " : ");
+        generate_function_asm_operands__CIGenerator(self, asm_->outputs);
+    }
+
+    if (asm_->inputs || asm_->clobbers || asm_->labels) {
+        write_str__CIGenerator(self, " : ");
+        generate_function_asm_operands__CIGenerator(self, asm_->inputs);
+    }
+
+    if (asm_->clobbers || asm_->labels) {
+        write_str__CIGenerator(self, " : ");
+        generate_function_asm_strings__CIGenerator(self, asm_->clobbers);
+    }
+
+    if (asm_->labels) {
+        write_str__CIGenerator(self, " : ");
+        generate_function_asm_labels__CIGenerator(self, asm_->labels);
+    }
+
+    write_str__CIGenerator(self, ");");
+}
+
 void
 generate_function_stmt__CIGenerator(CIGenerator *self, const CIStmt *stmt)
 {
     switch (stmt->kind) {
+        case CI_STMT_KIND_ASM:
+            generate_function_asm_stmt__CIGenerator(self, &stmt->asm_);
+
+            break;
         case CI_STMT_KIND_BLOCK:
             generate_function_block_stmt__CIGenerator(self, &stmt->block);
 

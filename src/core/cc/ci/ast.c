@@ -256,6 +256,9 @@ static VARIANT_DESTRUCTOR(CIExpr, ternary, CIExpr *self);
 static VARIANT_DESTRUCTOR(CIExpr, unary, CIExpr *self);
 
 /// @brief Free CIStmt type (CI_STMT_KIND_BLOCK).
+/// @brief Free CIStmt type (CI_STMT_KIND_ASM).
+static inline VARIANT_DESTRUCTOR(CIStmt, asm, const CIStmt *self);
+
 static inline VARIANT_DESTRUCTOR(CIStmt, block, const CIStmt *self);
 
 /// @brief Free CIStmt type (CI_STMT_KIND_CASE).
@@ -6299,6 +6302,8 @@ char *
 IMPL_FOR_DEBUG(to_string, CIStmtKind, enum CIStmtKind self)
 {
     switch (self) {
+        case CI_STMT_KIND_ASM:
+            return "CI_STMT_KIND_ASM";
         case CI_STMT_KIND_BLOCK:
             return "CI_STMT_KIND_BLOCK";
         case CI_STMT_KIND_BREAK:
@@ -6391,6 +6396,123 @@ IMPL_FOR_DEBUG(to_string, CIStmtFor, const CIStmtFor *self)
     return res;
 }
 #endif
+
+CONSTRUCTOR(CIStmtAsmOperand *,
+            CIStmtAsmOperand,
+            Rc *name,
+            Rc *constraint,
+            CIExpr *value)
+{
+    CIStmtAsmOperand *self = lily_malloc(sizeof(CIStmtAsmOperand));
+
+    self->name = name;
+    self->constraint = constraint;
+    self->value = value;
+
+    return self;
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIStmtAsmOperand, const CIStmtAsmOperand *self)
+{
+    String *res = from__String("CIStmtAsmOperand{ name = ");
+
+    if (self->name) {
+        APPEND_AND_FREE(res,
+                        format__String("{S}", GET_PTR_RC(String, self->name)));
+    } else {
+        push_str__String(res, "NULL");
+    }
+
+    APPEND_AND_FREE(res,
+                    format__String(", constraint = {S}, value = {Sr} }",
+                                   GET_PTR_RC(String, self->constraint),
+                                   to_string__Debug__CIExpr(self->value)));
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CIStmtAsmOperand, CIStmtAsmOperand *self)
+{
+    if (self->name) {
+        FREE_RC(String, self->name);
+    }
+
+    FREE_RC(String, self->constraint);
+    FREE(CIExpr, self->value);
+    lily_free(self);
+}
+
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIStmtAsm, const CIStmtAsm *self)
+{
+    String *res =
+      format__String("CIStmtAsm{ template = {S}, is_volatile = {b}, "
+                     "is_inline = {b}, is_goto = {b}, outputs =",
+                     GET_PTR_RC(String, self->template),
+                     self->is_volatile,
+                     self->is_inline,
+                     self->is_goto);
+
+    if (self->outputs) {
+        DEBUG_VEC_STRING(self->outputs, res, CIStmtAsmOperand);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, ", inputs =");
+
+    if (self->inputs) {
+        DEBUG_VEC_STRING(self->inputs, res, CIStmtAsmOperand);
+    } else {
+        push_str__String(res, " NULL");
+    }
+
+    push_str__String(res, " }");
+
+    return res;
+}
+#endif
+
+DESTRUCTOR(CIStmtAsm, const CIStmtAsm *self)
+{
+    FREE_RC(String, self->template);
+
+    if (self->outputs) {
+        FREE_BUFFER_ITEMS(
+          self->outputs->buffer, self->outputs->len, CIStmtAsmOperand);
+        FREE(Vec, self->outputs);
+    }
+
+    if (self->inputs) {
+        FREE_BUFFER_ITEMS(
+          self->inputs->buffer, self->inputs->len, CIStmtAsmOperand);
+        FREE(Vec, self->inputs);
+    }
+
+    if (self->clobbers) {
+        for (Usize i = 0; i < self->clobbers->len; ++i) {
+            Rc *clobber = get__Vec(self->clobbers, i); // Rc<String*>*
+
+            FREE_RC(String, clobber);
+        }
+
+        FREE(Vec, self->clobbers);
+    }
+
+    if (self->labels) {
+        for (Usize i = 0; i < self->labels->len; ++i) {
+            Rc *label = get__Vec(self->labels, i); // Rc<String*>*
+
+            FREE_RC(String, label);
+        }
+
+        FREE(Vec, self->labels);
+    }
+}
 
 DESTRUCTOR(CIStmtFor, const CIStmtFor *self)
 {
@@ -6589,6 +6711,11 @@ IMPL_FOR_DEBUG(to_string, CIStmt, const CIStmt *self)
 }
 #endif
 
+VARIANT_DESTRUCTOR(CIStmt, asm, const CIStmt *self)
+{
+    FREE(CIStmtAsm, &self->asm_);
+}
+
 VARIANT_DESTRUCTOR(CIStmt, block, const CIStmt *self)
 {
     FREE(CIStmtBlock, &self->block);
@@ -6639,6 +6766,9 @@ VARIANT_DESTRUCTOR(CIStmt, while, const CIStmt *self)
 DESTRUCTOR(CIStmt, const CIStmt *self)
 {
     switch (self->kind) {
+        case CI_STMT_KIND_ASM:
+            FREE_VARIANT(CIStmt, asm, self);
+            break;
         case CI_STMT_KIND_BLOCK:
             FREE_VARIANT(CIStmt, block, self);
             break;

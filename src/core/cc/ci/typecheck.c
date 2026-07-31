@@ -283,6 +283,13 @@ typecheck_function_item_decl__CIParser(
   const CIDecl *decl,
   struct CITypecheckContext *typecheck_ctx);
 
+/// @brief Typecheck the operands an `asm` reads and writes. The assembly
+/// itself is left as it is written, so only the expressions are checked.
+static void
+typecheck_asm_stmt__CITypecheck(const CITypecheck *self,
+                                const CIStmtAsm *asm_,
+                                struct CITypecheckContext *typecheck_ctx);
+
 static void
 typecheck_case_stmt__CITypecheck(const CITypecheck *self,
                                  const CIStmtSwitchCase *case_,
@@ -1644,6 +1651,30 @@ typecheck_expr__CITypecheck(const CITypecheck *self,
 }
 
 void
+typecheck_asm_stmt__CITypecheck(const CITypecheck *self,
+                                const CIStmtAsm *asm_,
+                                struct CITypecheckContext *typecheck_ctx)
+{
+    // NOTE: An operand stands for whatever the assembly is written to read or
+    // write, so no type is expected of it. It is still checked, so that what
+    // it names has to exist and be well formed.
+    CIDataType *expected_dt =
+      NEW(CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_ANY);
+    Vec *operands[2] = { asm_->outputs, asm_->inputs };
+
+    for (Usize i = 0; i < 2; ++i) {
+        for (Usize j = 0; operands[i] && j < operands[i]->len; ++j) {
+            const CIStmtAsmOperand *operand = get__Vec(operands[i], j);
+
+            typecheck_expr__CITypecheck(
+              self, expected_dt, operand->value, typecheck_ctx);
+        }
+    }
+
+    FREE(CIDataType, expected_dt);
+}
+
+void
 typecheck_expr_and_try_discard__CITypecheck(
   const CITypecheck *self,
   CIExpr *expr,
@@ -1976,6 +2007,9 @@ typecheck_stmt__CITypecheck(const CITypecheck *self,
         case CI_STMT_KIND_FOR:
             return typecheck_for_stmt__CITypecheck(
               self, &given_stmt->for_, typecheck_ctx);
+        case CI_STMT_KIND_ASM:
+            return typecheck_asm_stmt__CITypecheck(
+              self, &given_stmt->asm_, typecheck_ctx);
         case CI_STMT_KIND_GOTO:
             return typecheck_goto_stmt__CITypecheck(
               self, given_stmt, typecheck_ctx);

@@ -515,6 +515,36 @@ parse_block_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch);
 static CIDeclFunctionItem *
 parse_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch);
 
+/// @brief Parse the string one or more literals written next to one another
+/// spell, which is how the assembly of an `asm` is most often written.
+/// @return Rc<String*>*? NULL where no string is written here.
+static Rc *
+parse_joined_string__CIParser(CIParser *self);
+
+/// @brief Parse the operands one of the lists of an extended `asm` is written
+/// with, up to the `:` or `)` that closes it.
+/// @return Vec<CIStmtAsmOperand*>*
+static Vec *
+parse_asm_operands__CIParser(CIParser *self);
+
+/// @brief Parse the strings a list of an extended `asm` is written with, up to
+/// the `:` or `)` that closes it.
+/// @return Vec<Rc<String*>*>*
+static Vec *
+parse_asm_strings__CIParser(CIParser *self);
+
+/// @brief Parse the labels an `asm goto` is written to jump to.
+/// @return Vec<Rc<String*>*>*
+static Vec *
+parse_asm_labels__CIParser(CIParser *self);
+
+/// @brief Parse an `asm` statement, the assembly it is written to hold along
+/// with the operands it reads and writes.
+/// See https://gcc.gnu.org/onlinedocs/gcc/Using-Assembly-Language-with-C.html
+/// @return CIDeclFunctionItem*?
+static CIDeclFunctionItem *
+parse_asm_stmt__CIParser(CIParser *self);
+
 /// @brief Parse function body (base).
 /// @param parent_function_scope CIScope* (&)*? (&)
 /// @return CIDeclFunctionBody*
@@ -4761,12 +4791,246 @@ parse_block_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
                                    NEW(CIStmtBlock, body)));
 }
 
+Rc *
+parse_joined_string__CIParser(CIParser *self)
+{
+    if (!expect__CIParser(self, CI_TOKEN_KIND_LITERAL_CONSTANT_STRING, true)) {
+        return NULL;
+    }
+
+    Rc *first = self->previous_token->literal_constant_string;
+
+    if (self->current_token->kind != CI_TOKEN_KIND_LITERAL_CONSTANT_STRING) {
+        return ref__Rc(first);
+    }
+
+    String *joined = clone__String(GET_PTR_RC(String, first));
+
+    while (self->current_token->kind == CI_TOKEN_KIND_LITERAL_CONSTANT_STRING) {
+        append__String(
+          joined,
+          GET_PTR_RC(String, self->current_token->literal_constant_string));
+
+        next_token__CIParser(self);
+    }
+
+    return NEW(Rc, joined);
+}
+
+Vec *
+parse_asm_operands__CIParser(CIParser *self)
+{
+    Vec *res = NEW(Vec); // Vec<CIStmtAsmOperand*>*
+
+    while (self->current_token->kind != CI_TOKEN_KIND_COLON &&
+           self->current_token->kind != CI_TOKEN_KIND_RPAREN &&
+           self->current_token->kind != CI_TOKEN_KIND_EOF) {
+        Rc *name = NULL; // Rc<String*>*?
+
+        // The operand may be written with a name, which the assembly then
+        // refers to it by.
+        if (self->current_token->kind == CI_TOKEN_KIND_LHOOK) {
+            next_token__CIParser(self); // skip `[`
+
+            if (expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, true)) {
+                name = ref__Rc(self->previous_token->identifier);
+            }
+
+            expect__CIParser(self, CI_TOKEN_KIND_RHOOK, true);
+        }
+
+        Rc *constraint = parse_joined_string__CIParser(self);
+
+        if (!constraint) {
+            if (name) {
+                FREE_RC(String, name);
+            }
+
+            break;
+        }
+
+        expect__CIParser(self, CI_TOKEN_KIND_LPAREN, true);
+
+        SET_ALLOW_COMMA_OPERATOR(false);
+
+        CIExpr *value = parse_expr__CIParser(self);
+
+        RESTORE_ALLOW_COMMA_OPERATOR();
+
+        expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
+
+        if (value) {
+            push__Vec(res, NEW(CIStmtAsmOperand, name, constraint, value));
+        } else {
+            if (name) {
+                FREE_RC(String, name);
+            }
+
+            FREE_RC(String, constraint);
+        }
+
+        if (self->current_token->kind == CI_TOKEN_KIND_COMMA) {
+            next_token__CIParser(self);
+        } else {
+            break;
+        }
+    }
+
+    return res;
+}
+
+Vec *
+parse_asm_strings__CIParser(CIParser *self)
+{
+    Vec *res = NEW(Vec); // Vec<Rc<String*>*>*
+
+    while (self->current_token->kind != CI_TOKEN_KIND_COLON &&
+           self->current_token->kind != CI_TOKEN_KIND_RPAREN &&
+           self->current_token->kind != CI_TOKEN_KIND_EOF) {
+        Rc *string = parse_joined_string__CIParser(self);
+
+        if (!string) {
+            break;
+        }
+
+        push__Vec(res, string);
+
+        if (self->current_token->kind == CI_TOKEN_KIND_COMMA) {
+            next_token__CIParser(self);
+        } else {
+            break;
+        }
+    }
+
+    return res;
+}
+
+Vec *
+parse_asm_labels__CIParser(CIParser *self)
+{
+    Vec *res = NEW(Vec); // Vec<Rc<String*>*>*
+
+    while (self->current_token->kind != CI_TOKEN_KIND_RPAREN &&
+           self->current_token->kind != CI_TOKEN_KIND_EOF) {
+        if (!expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, true)) {
+            break;
+        }
+
+        push__Vec(res, ref__Rc(self->previous_token->identifier));
+
+        if (self->current_token->kind == CI_TOKEN_KIND_COMMA) {
+            next_token__CIParser(self);
+        } else {
+            break;
+        }
+    }
+
+    return res;
+}
+
+CIDeclFunctionItem *
+parse_asm_stmt__CIParser(CIParser *self)
+{
+    Location begin = previous_location__CIParser(self);
+    bool is_volatile = false;
+    bool is_inline = false;
+    bool is_goto = false;
+
+    // The qualifiers are written in any order, and each of them only once.
+    for (bool reading_qualifiers = true; reading_qualifiers;) {
+        switch (self->current_token->kind) {
+            case CI_TOKEN_KIND_KEYWORD_VOLATILE:
+                is_volatile = true;
+
+                next_token__CIParser(self);
+
+                break;
+            case CI_TOKEN_KIND_KEYWORD_INLINE:
+                is_inline = true;
+
+                next_token__CIParser(self);
+
+                break;
+            case CI_TOKEN_KIND_KEYWORD_GOTO:
+                is_goto = true;
+
+                next_token__CIParser(self);
+
+                break;
+            default:
+                reading_qualifiers = false;
+        }
+    }
+
+    if (!expect__CIParser(self, CI_TOKEN_KIND_LPAREN, true)) {
+        return NULL;
+    }
+
+    Rc *template = parse_joined_string__CIParser(self);
+
+    if (!template) {
+        return NULL;
+    }
+    Vec *outputs = NULL;  // Vec<CIStmtAsmOperand*>*?
+    Vec *inputs = NULL;   // Vec<CIStmtAsmOperand*>*?
+    Vec *clobbers = NULL; // Vec<Rc<String*>*>*?
+    Vec *labels = NULL;   // Vec<Rc<String*>*>*?
+
+    // Each list that follows is written after a `:`, and the ones that are
+    // left out are simply not written.
+    if (self->current_token->kind == CI_TOKEN_KIND_COLON) {
+        next_token__CIParser(self); // skip `:`
+
+        outputs = parse_asm_operands__CIParser(self);
+
+        if (self->current_token->kind == CI_TOKEN_KIND_COLON) {
+            next_token__CIParser(self); // skip `:`
+
+            inputs = parse_asm_operands__CIParser(self);
+
+            if (self->current_token->kind == CI_TOKEN_KIND_COLON) {
+                next_token__CIParser(self); // skip `:`
+
+                clobbers = parse_asm_strings__CIParser(self);
+
+                // The labels an `asm goto` jumps to are written last, after
+                // the clobbers.
+                if (self->current_token->kind == CI_TOKEN_KIND_COLON) {
+                    next_token__CIParser(self); // skip `:`
+
+                    labels = parse_asm_labels__CIParser(self);
+                }
+            }
+        }
+    }
+
+    expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
+    expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
+
+    return NEW_VARIANT(CIDeclFunctionItem,
+                       stmt,
+                       NEW_VARIANT(CIStmt,
+                                   asm,
+                                   location_from__CIParser(self, &begin),
+                                   NEW(CIStmtAsm,
+                                       template,
+                                       outputs,
+                                       inputs,
+                                       clobbers,
+                                       labels,
+                                       is_volatile,
+                                       is_inline,
+                                       is_goto)));
+}
+
 CIDeclFunctionItem *
 parse_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
 {
     next_token__CIParser(self);
 
     switch (self->previous_token->kind) {
+        case CI_TOKEN_KIND_KEYWORD_ASM:
+            return parse_asm_stmt__CIParser(self);
         case CI_TOKEN_KIND_KEYWORD_BREAK:
             expect__CIParser(self, CI_TOKEN_KIND_SEMICOLON, true);
 
@@ -4926,6 +5190,7 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
 
             goto default_case;
         }
+        case CI_TOKEN_KIND_KEYWORD_ASM:
         case CI_TOKEN_KIND_KEYWORD_BREAK:
         case CI_TOKEN_KIND_KEYWORD_CASE:
         case CI_TOKEN_KIND_KEYWORD_CONTINUE:

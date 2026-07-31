@@ -1365,6 +1365,30 @@ visit_function_stmt__CIVisitor(CIVisitor *self,
               self, &stmt->for_, called_generic_params, decl_generic_params);
 
             break;
+        case CI_STMT_KIND_ASM:
+            // The operands of an `asm` are expressions like any other, and
+            // are visited so that what they name is instantiated.
+            for (Usize i = 0; stmt->asm_.outputs && i < stmt->asm_.outputs->len;
+                 ++i) {
+                CIStmtAsmOperand *operand = get__Vec(stmt->asm_.outputs, i);
+
+                visit_function_expr__CIVisitor(self,
+                                               operand->value,
+                                               called_generic_params,
+                                               decl_generic_params);
+            }
+
+            for (Usize i = 0; stmt->asm_.inputs && i < stmt->asm_.inputs->len;
+                 ++i) {
+                CIStmtAsmOperand *operand = get__Vec(stmt->asm_.inputs, i);
+
+                visit_function_expr__CIVisitor(self,
+                                               operand->value,
+                                               called_generic_params,
+                                               decl_generic_params);
+            }
+
+            break;
         case CI_STMT_KIND_GOTO:
             break;
         case CI_STMT_KIND_IF:

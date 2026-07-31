@@ -479,6 +479,17 @@ extern inline CONSTRUCTOR(CIStmtBlock, CIStmtBlock, CIDeclFunctionBody *body);
 
 extern inline DESTRUCTOR(CIStmtBlock, const CIStmtBlock *self);
 
+extern inline CONSTRUCTOR(CIStmtAsm,
+                          CIStmtAsm,
+                          Rc *template,
+                          Vec *outputs,
+                          Vec *inputs,
+                          Vec *clobbers,
+                          Vec *labels,
+                          bool is_volatile,
+                          bool is_inline,
+                          bool is_goto);
+
 extern inline CONSTRUCTOR(CIStmtDoWhile,
                           CIStmtDoWhile,
                           CIDeclFunctionBody *body,
@@ -508,6 +519,12 @@ extern inline CONSTRUCTOR(CIStmtWhile,
                           CIStmtWhile,
                           CIExpr *cond,
                           CIDeclFunctionBody *body);
+
+extern inline VARIANT_CONSTRUCTOR(CIStmt,
+                                  CIStmt,
+                                  asm,
+                                  Location location,
+                                  CIStmtAsm asm_);
 
 extern inline VARIANT_CONSTRUCTOR(CIStmt,
                                   CIStmt,

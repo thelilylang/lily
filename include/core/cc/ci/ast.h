@@ -4290,6 +4290,7 @@ DESTRUCTOR(CIExpr, CIExpr *self);
 
 enum CIStmtKind
 {
+    CI_STMT_KIND_ASM,
     CI_STMT_KIND_BLOCK,
     CI_STMT_KIND_BREAK,
     CI_STMT_KIND_CASE,
@@ -4313,6 +4314,106 @@ enum CIStmtKind
 char *
 IMPL_FOR_DEBUG(to_string, CIStmtKind, enum CIStmtKind self);
 #endif
+
+// An operand of an extended `asm`, written as the constraint it is held by and
+// the expression it stands for, with the name it may be referred to by.
+//
+// e.g.
+//
+// [name] "=r" (value)
+typedef struct CIStmtAsmOperand
+{
+    Rc *name;       // Rc<String*>*?
+    Rc *constraint; // Rc<String*>*
+    CIExpr *value;  // CIExpr*
+} CIStmtAsmOperand;
+
+/**
+ *
+ * @brief Construct CIStmtAsmOperand type.
+ * @param name Rc<String*>*?
+ * @param constraint Rc<String*>*
+ */
+CONSTRUCTOR(CIStmtAsmOperand *,
+            CIStmtAsmOperand,
+            Rc *name,
+            Rc *constraint,
+            CIExpr *value);
+
+/**
+ *
+ * @brief Convert CIStmtAsmOperand in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIStmtAsmOperand, const CIStmtAsmOperand *self);
+#endif
+
+/**
+ *
+ * @brief Free CIStmtAsmOperand type.
+ */
+DESTRUCTOR(CIStmtAsmOperand, CIStmtAsmOperand *self);
+
+// See https://gcc.gnu.org/onlinedocs/gcc/Using-Assembly-Language-with-C.html
+typedef struct CIStmtAsm
+{
+    Rc *template;  // Rc<String*>*
+    Vec *outputs;  // Vec<CIStmtAsmOperand*>*?
+    Vec *inputs;   // Vec<CIStmtAsmOperand*>*?
+    Vec *clobbers; // Vec<Rc<String*>*>*?
+    Vec *labels;   // Vec<Rc<String*>*>*?
+    bool is_volatile;
+    bool is_inline;
+    bool is_goto;
+} CIStmtAsm;
+
+/**
+ *
+ * @brief Construct CIStmtAsm type.
+ * @param template Rc<String*>*
+ * @param outputs Vec<CIStmtAsmOperand*>*?
+ * @param inputs Vec<CIStmtAsmOperand*>*?
+ * @param clobbers Vec<Rc<String*>*>*?
+ * @param labels Vec<Rc<String*>*>*?
+ */
+inline CONSTRUCTOR(CIStmtAsm,
+                   CIStmtAsm,
+                   Rc *template,
+                   Vec *outputs,
+                   Vec *inputs,
+                   Vec *clobbers,
+                   Vec *labels,
+                   bool is_volatile,
+                   bool is_inline,
+                   bool is_goto)
+{
+    return (CIStmtAsm){ .template = template,
+                        .outputs = outputs,
+                        .inputs = inputs,
+                        .clobbers = clobbers,
+                        .labels = labels,
+                        .is_volatile = is_volatile,
+                        .is_inline = is_inline,
+                        .is_goto = is_goto };
+}
+
+/**
+ *
+ * @brief Convert CIStmtAsm in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIStmtAsm, const CIStmtAsm *self);
+#endif
+
+/**
+ *
+ * @brief Free CIStmtAsm type.
+ */
+DESTRUCTOR(CIStmtAsm, const CIStmtAsm *self);
 
 typedef struct CIStmtBlock
 {
@@ -4596,6 +4697,7 @@ typedef struct CIStmt
 
     union
     {
+        CIStmtAsm asm_;
         CIStmtBlock block;
         CIStmtSwitchCase case_;
         CIStmtDoWhile do_while;
@@ -4607,6 +4709,20 @@ typedef struct CIStmt
         CIStmtWhile while_;
     };
 } CIStmt;
+
+/**
+ *
+ * @brief Construct CIStmt type (CI_STMT_KIND_ASM).
+ */
+inline VARIANT_CONSTRUCTOR(CIStmt,
+                           CIStmt,
+                           asm,
+                           Location location,
+                           CIStmtAsm asm_)
+{
+    return (
+      CIStmt){ .location = location, .kind = CI_STMT_KIND_ASM, .asm_ = asm_ };
+}
 
 /**
  *
