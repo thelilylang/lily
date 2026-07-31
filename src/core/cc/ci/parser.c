@@ -262,11 +262,10 @@ parse_array_declarator__CIParser(CIParser *self,
                                  bool in_function_prototype,
                                  bool has_new_name);
 
-static /// @brief Check whether the size of an array is only known while the
-       /// program
-  /// runs, which is what a variable written in it makes it.
-  static bool
-  is_variable_length__CIParser(const CIExpr *expr)
+/// @brief Check whether the size of an array is only known while the program
+/// runs, which is what a variable written in it makes it.
+static bool
+is_variable_length__CIParser(const CIExpr *expr)
 {
     if (!expr) {
         return false;
