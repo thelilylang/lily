@@ -114,11 +114,11 @@ static inline char *
 peek_char__CIScanner(const CIScanner *self, const Usize n);
 
 /// @brief Scan and append characters to res while is_valid return true.
-static // Whether what is written one character further on is read by
-       // `is_valid`.
-  static bool
-  is_valid_at_peek__CIScanner(CIScanner *self,
-                              bool (*is_valid)(const CIScanner *self))
+// Whether what is written one character further on is read by
+// `is_valid`.
+static bool
+is_valid_at_peek__CIScanner(CIScanner *self,
+                            bool (*is_valid)(const CIScanner *self))
 {
     next_char__CIScanner(self);
 
@@ -676,6 +676,10 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                       .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_MACRO_PARAM] = { .since = CI_STANDARD_NONE,
                                     .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_MACRO_PARAM_VARIADIC] = { .since = CI_STANDARD_NONE,
+                                             .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_MACRO_PARAM_VA_OPT] = { .since = CI_STANDARD_23,
+                                           .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_MINUS] = { .since = CI_STANDARD_NONE,
                               .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_MINUS_EQ] = { .since = CI_STANDARD_NONE,
@@ -1511,16 +1515,23 @@ scan_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
                         // it is a name like any other before it.
                         if (!strcmp(GET_PTR_RC(String, last_token->identifier)
                                       ->buffer,
-                                    CI_VA_OPT) &&
-                            self->config->standard >= CI_STANDARD_23) {
-                            res = NEW(CIToken,
-                                      CI_TOKEN_KIND_MACRO_PARAM_VA_OPT,
-                                      last_token->location);
+                                    CI_VA_OPT)) {
+                            CI_CHECK_STANDARD_SINCE(
+                              self->config->standard,
+                              tokens_feature[CI_TOKEN_KIND_MACRO_PARAM_VA_OPT]
+                                .since,
+                              {})
+                            else
+                            {
+                                res = NEW(CIToken,
+                                          CI_TOKEN_KIND_MACRO_PARAM_VA_OPT,
+                                          last_token->location);
 
-                            FREE(CIToken, last_token);
-                            last_token = NULL;
+                                FREE(CIToken, last_token);
+                                last_token = NULL;
 
-                            break;
+                                break;
+                            }
                         }
 
                         if (!strcmp(GET_PTR_RC(String, last_token->identifier)
