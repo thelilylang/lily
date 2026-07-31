@@ -462,6 +462,7 @@ is_valid_implicit_cast__CITypecheck(const CITypecheck *self,
                                     struct CITypecheckContext *typecheck_ctx)
 {
     switch (right->kind) {
+        case CI_DATA_TYPE_KIND__BITINT:
         case CI_DATA_TYPE_KIND_BOOL:
         case CI_DATA_TYPE_KIND_CHAR:
         case CI_DATA_TYPE_KIND_INT:

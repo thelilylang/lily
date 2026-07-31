@@ -821,6 +821,13 @@ resolve_data_type_alignment__CIResolverExpr(const CIResolverExpr *self,
             return resolve_data_type_alignment__CIResolverExpr(
                      self, data_type->array.data_type) *
                    data_type->array.size;
+        // What it is aligned on and what it takes up are read from the bits
+        // it is written to hold, rounded up to whole bytes.
+        case CI_DATA_TYPE_KIND__BITINT:
+            return data_type->bitint <= 8    ? alignof(char)
+                   : data_type->bitint <= 16 ? alignof(short int)
+                   : data_type->bitint <= 32 ? alignof(int)
+                                             : alignof(long long int);
         case CI_DATA_TYPE_KIND_BOOL:
             return alignof(bool);
         case CI_DATA_TYPE_KIND_BUILTIN: {
@@ -2159,6 +2166,11 @@ resolve_data_type_size__CIResolverExpr(const CIResolverExpr *self,
             return resolve_data_type_size__CIResolverExpr(
                      self, data_type->array.data_type) *
                    data_type->array.size;
+        case CI_DATA_TYPE_KIND__BITINT:
+            return data_type->bitint <= 8    ? sizeof(char)
+                   : data_type->bitint <= 16 ? sizeof(short int)
+                   : data_type->bitint <= 32 ? sizeof(int)
+                                             : sizeof(long long int);
         case CI_DATA_TYPE_KIND_BOOL:
             return sizeof(bool);
         case CI_DATA_TYPE_KIND_BUILTIN: {

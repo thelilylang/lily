@@ -1,0 +1,15 @@
+//@compile_options -s c23
+//@expected_bin_stdout 3:5:127\n
+
+#include <helper.h>
+
+/* `_BitInt` is written with the number of bits it holds between parentheses,
+   and holds an integer of exactly that many. */
+_BitInt(8) at_file_scope = 5;
+
+int main() {
+	_BitInt(8) small = 3;
+	_BitInt(32) wide = 127;
+
+	printf("%d:%d:%d\n", (int)small, (int)at_file_scope, (int)wide);
+}

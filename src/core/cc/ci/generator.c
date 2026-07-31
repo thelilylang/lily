@@ -1031,6 +1031,11 @@ generate_data_type_base__CIGenerator(CIGenerator *self,
 
             return;
         }
+        case CI_DATA_TYPE_KIND__BITINT:
+            write_String__CIGenerator(
+              self, format__String("_BitInt({zu})", data_type->bitint));
+
+            break;
         case CI_DATA_TYPE_KIND_BOOL:
             if (self->file->config->standard < CI_STANDARD_23) {
                 write_str__CIGenerator(self, "_Bool");

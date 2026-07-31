@@ -1679,6 +1679,8 @@ IMPL_FOR_DEBUG(to_string, CIDataTypeKind, enum CIDataTypeKind self)
             return "CI_DATA_TYPE_KIND_ANY";
         case CI_DATA_TYPE_KIND_ARRAY:
             return "CI_DATA_TYPE_KIND_ARRAY";
+        case CI_DATA_TYPE_KIND__BITINT:
+            return "CI_DATA_TYPE_KIND__BITINT";
         case CI_DATA_TYPE_KIND_BOOL:
             return "CI_DATA_TYPE_KIND_BOOL";
         case CI_DATA_TYPE_KIND_BUILTIN:
@@ -2080,6 +2082,25 @@ VARIANT_CONSTRUCTOR(CIDataType *,
 
 VARIANT_CONSTRUCTOR(CIDataType *,
                     CIDataType,
+                    bitint,
+                    Location location,
+                    Usize bitint)
+{
+    CIDataType *self = lily_malloc(sizeof(CIDataType));
+
+    self->location = location;
+    self->kind = CI_DATA_TYPE_KIND__BITINT;
+    self->ref_count = 0;
+    self->bitint = bitint;
+    self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
+    self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
+    self->alignment = NULL;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIDataType *,
+                    CIDataType,
                     builtin,
                     Location location,
                     Usize builtin)
@@ -2291,6 +2312,13 @@ clone__CIDataType(const CIDataType *self)
             }
 
             break;
+        case CI_DATA_TYPE_KIND__BITINT:
+            res = NEW_VARIANT(CIDataType,
+                              bitint,
+                              clone__Location(&self->location),
+                              self->bitint);
+
+            break;
         case CI_DATA_TYPE_KIND_BUILTIN:
             res = NEW_VARIANT(CIDataType,
                               builtin,
@@ -2491,6 +2519,10 @@ serialize__CIDataType(const CIDataType *self, String *buffer)
             serialize__CIDataType(self->array.data_type, buffer);
 
             break;
+        case CI_DATA_TYPE_KIND__BITINT:
+            SERIALIZE_FMT_PUSH_TO_BUFFER("{zu}", self->bitint);
+
+            break;
         case CI_DATA_TYPE_KIND_BUILTIN:
             SERIALIZE_FMT_PUSH_TO_BUFFER("{zu}", self->builtin);
 
@@ -2615,6 +2647,8 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
                 default:
                     UNREACHABLE("unknown variant");
             }
+        case CI_DATA_TYPE_KIND__BITINT:
+            return self->bitint == other->bitint;
         case CI_DATA_TYPE_KIND_BUILTIN:
             return self->builtin == other->builtin;
         case CI_DATA_TYPE_KIND_ENUM: {
@@ -2721,6 +2755,7 @@ bool
 is_integer__CIDataType(const CIDataType *self)
 {
     switch (self->kind) {
+        case CI_DATA_TYPE_KIND__BITINT:
         case CI_DATA_TYPE_KIND_BOOL:
         case CI_DATA_TYPE_KIND_CHAR:
         case CI_DATA_TYPE_KIND_INT:
@@ -2934,6 +2969,14 @@ IMPL_FOR_DEBUG(to_string, CIDataType, const CIDataType *self)
               to_string__Debug__CIDataTypeContext(self->ctx),
               to_string__Debug__CIDataTypeQualifier(self->qualifier),
               to_string__Debug__CIDataTypeArray(&self->array));
+        case CI_DATA_TYPE_KIND__BITINT:
+            return format__String(
+              "CIDataType{{ kind = {s}, ctx = {Sr}, qualifier = {Sr}, bitint "
+              "= {zu} }",
+              to_string__Debug__CIDataTypeKind(self->kind),
+              to_string__Debug__CIDataTypeContext(self->ctx),
+              to_string__Debug__CIDataTypeQualifier(self->qualifier),
+              self->bitint);
         case CI_DATA_TYPE_KIND_BUILTIN:
             return format__String(
               "CIDataType{{ kind = {s}, ctx = {Sr}, qualifier = {Sr}, builtin "

@@ -361,6 +361,7 @@ get_integer_rank__CIResolverDataType(const CIResultFile *file,
             res = 2;
 
             break;
+        case CI_DATA_TYPE_KIND__BITINT:
         case CI_DATA_TYPE_KIND_BOOL:
             res = 1;
 

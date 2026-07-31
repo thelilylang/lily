@@ -1150,6 +1150,7 @@ enum CIDataTypeKind
 {
     CI_DATA_TYPE_KIND_ANY, // usually only for the builtin
     CI_DATA_TYPE_KIND_ARRAY,
+    CI_DATA_TYPE_KIND__BITINT,
     CI_DATA_TYPE_KIND_BOOL,
     CI_DATA_TYPE_KIND_BUILTIN,
     CI_DATA_TYPE_KIND_CHAR,
@@ -1568,6 +1569,8 @@ typedef struct CIDataType
     union
     {
         CIDataTypeArray array;
+        // Number of bits `_BitInt` is written to hold.
+        Usize bitint;
         Usize builtin; // id of the builtin
         CIDataTypeEnum enum_;
         CIDataTypeFunction function;
@@ -1588,6 +1591,16 @@ VARIANT_CONSTRUCTOR(CIDataType *,
                     array,
                     Location location,
                     CIDataTypeArray array);
+
+/**
+ *
+ * @brief Construct CIDataType type (CI_DATA_TYPE_KIND__BITINT).
+ */
+VARIANT_CONSTRUCTOR(CIDataType *,
+                    CIDataType,
+                    bitint,
+                    Location location,
+                    Usize bitint);
 
 /**
  *

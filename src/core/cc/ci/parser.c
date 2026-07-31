@@ -1239,6 +1239,7 @@ token_is_data_type__CIParser(CIParser *self, const CIToken *token)
                            BUILTIN_NULLPTR_T_S);
         case CI_TOKEN_KIND_AT: // TODO: check if the next token is an identifier
                                // (not needed for the moment)
+        case CI_TOKEN_KIND_KEYWORD__BITINT:
         case CI_TOKEN_KIND_KEYWORD_BOOL:
         case CI_TOKEN_KIND_KEYWORD_CHAR:
         case CI_TOKEN_KIND_KEYWORD_DOUBLE:
@@ -2568,6 +2569,42 @@ parse_pre_data_type__CIParser(CIParser *self)
         !is_data_type__CIParser(self)) {
         return NEW(
           CIDataType, current_location__CIParser(self), CI_DATA_TYPE_KIND_ANY);
+    }
+
+    // `_BitInt` is written with the number of bits it holds between
+    // parentheses, and holds an integer of exactly that many.
+    //
+    // e.g. _BitInt(8) b;
+    if (self->current_token->kind == CI_TOKEN_KIND_KEYWORD__BITINT) {
+        next_token__CIParser(self);
+        expect__CIParser(self, CI_TOKEN_KIND_LPAREN, true);
+
+        Usize bits = 0;
+
+        if (self->current_token->kind == CI_TOKEN_KIND_LITERAL_CONSTANT_INT) {
+            Optional *op = atoi_safe__Uint64(
+              self->current_token->literal_constant_int.value->buffer, 10);
+
+            if (is_some__Optional(op)) {
+                bits = (Usize)(Uptr)(Usize *)op->some;
+            }
+
+            FREE(Optional, op);
+            next_token__CIParser(self);
+        } else {
+            FAILED__CIParser(self,
+                             NEW(CIError, CI_ERROR_KIND_EXPECTED_INTEGER));
+        }
+
+        expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
+
+        res = NEW_VARIANT(
+          CIDataType, bitint, previous_location__CIParser(self), bits);
+
+        set_qualifier__CIDataType(res, data_type_qualifier_flag);
+        RESET_DATA_TYPE_QUALIFIER_FLAG();
+
+        return res;
     }
 
     next_token__CIParser(self);
