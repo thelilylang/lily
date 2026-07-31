@@ -3163,14 +3163,20 @@ VARIANT_DESTRUCTOR(CIAttributeStandard,
                    deprecated,
                    const CIAttributeStandard *self)
 {
-    FREE_RC(String, self->deprecated);
+    // The attribute is written with the reason it is written for or without
+    // one, and there is nothing to drop in the latter case.
+    if (self->deprecated) {
+        FREE_RC(String, self->deprecated);
+    }
 }
 
 VARIANT_DESTRUCTOR(CIAttributeStandard,
                    nodiscard,
                    const CIAttributeStandard *self)
 {
-    FREE_RC(String, self->nodiscard);
+    if (self->nodiscard) {
+        FREE_RC(String, self->nodiscard);
+    }
 }
 
 DESTRUCTOR(CIAttributeStandard, const CIAttributeStandard *self)

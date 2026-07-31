@@ -1331,12 +1331,19 @@ generate_attribute_standard__CIGenerator(
     write_str__CIGenerator(self, "[[");
 
     switch (attribute_standard->kind) {
+        // The reason an attribute is written for is written between
+        // parentheses where there is one, and the attribute is written on its
+        // own where there is not.
         case CI_ATTRIBUTE_STANDARD_KIND_DEPRECATED:
-            write_String__CIGenerator(
-              self,
-              format__String(
-                "deprecated({S})",
-                GET_PTR_RC(String, attribute_standard->deprecated)));
+            if (attribute_standard->deprecated) {
+                write_String__CIGenerator(
+                  self,
+                  format__String(
+                    "deprecated(\"{S}\")",
+                    GET_PTR_RC(String, attribute_standard->deprecated)));
+            } else {
+                write_str__CIGenerator(self, "deprecated");
+            }
 
             break;
         case CI_ATTRIBUTE_STANDARD_KIND_FALLTHROUGH:
@@ -1348,11 +1355,15 @@ generate_attribute_standard__CIGenerator(
 
             break;
         case CI_ATTRIBUTE_STANDARD_KIND_NODISCARD:
-            write_String__CIGenerator(
-              self,
-              format__String(
-                "nodiscard({S})",
-                GET_PTR_RC(String, attribute_standard->nodiscard)));
+            if (attribute_standard->nodiscard) {
+                write_String__CIGenerator(
+                  self,
+                  format__String(
+                    "nodiscard(\"{S}\")",
+                    GET_PTR_RC(String, attribute_standard->nodiscard)));
+            } else {
+                write_str__CIGenerator(self, "nodiscard");
+            }
 
             break;
         case CI_ATTRIBUTE_STANDARD_KIND_NORETURN:

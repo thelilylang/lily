@@ -4856,6 +4856,26 @@ parse_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
 CIDeclFunctionItem *
 parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
 {
+    // An attribute is written before what it is written on, in the body of a
+    // function as much as outside of it. The ones written here say how what
+    // follows them is to be used rather than what it does, so they are read
+    // and left alone.
+    if (self->current_token->kind == CI_TOKEN_KIND_LHOOK) {
+        CIToken *peeked_token = peek_token__CIParser(self, 1);
+
+        if (peeked_token && peeked_token->kind == CI_TOKEN_KIND_LHOOK) {
+            Vec *attributes = NULL; // Vec<CIAttribute*>*?
+
+            parse_attributes__CIParser(self, &attributes);
+
+            if (attributes) {
+                FREE_BUFFER_ITEMS(
+                  attributes->buffer, attributes->len, CIAttribute);
+                FREE(Vec, attributes);
+            }
+        }
+    }
+
     switch (self->current_token->kind) {
         case CI_TOKEN_KIND_IDENTIFIER: {
             CIToken *peeked = peek_token__CIParser(self, 1);
@@ -5895,14 +5915,30 @@ parse_attribute__CIParser(CIParser *self)
             switch (attr_id) {
                 case CI_ATTRIBUTE_STANDARD_KIND_DEPRECATED:
                 case CI_ATTRIBUTE_STANDARD_KIND_NODISCARD: {
-                    expect__CIParser(self, CI_TOKEN_KIND_LPAREN, true);
-
                     Rc *reason = NULL; // Rc<String*>*? (&)
+
+                    // The reason an attribute is written for is written
+                    // between parentheses or left out, and the attribute is
+                    // written on its own in the latter case.
+                    if (self->current_token->kind != CI_TOKEN_KIND_LPAREN) {
+                        res = NEW_VARIANT(CIAttribute,
+                                          standard,
+                                          NEW(CIAttributeStandard, attr_id));
+
+                        expect__CIParser(self, CI_TOKEN_KIND_RHOOK, true);
+                        expect__CIParser(self, CI_TOKEN_KIND_RHOOK, true);
+
+                        return res;
+                    }
+
+                    expect__CIParser(self, CI_TOKEN_KIND_LPAREN, true);
 
                     switch (self->current_token->kind) {
                         case CI_TOKEN_KIND_LITERAL_CONSTANT_STRING:
                             reason =
                               self->current_token->literal_constant_string;
+
+                            next_token__CIParser(self);
 
                             break;
                         default:
