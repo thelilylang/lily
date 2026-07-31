@@ -3786,23 +3786,27 @@ parse_primary_expr__CIParser(CIParser *self)
 
             return NULL;
         }
+        // `__func__` is declared by the compiler in the body of every
+        // function, and holds the name the function is written with.
+        case CI_TOKEN_KIND_KEYWORD___FUNC__:
+            if (!current_function_name) {
+                FAILED__CIParser(self,
+                                 NEW(CIError, CI_ERROR_KIND_UNEXPECTED_TOKEN));
+
+                return NULL;
+            }
+
+            res = NEW_VARIANT(
+              CIExpr,
+              literal,
+              previous_location__CIParser(self),
+              NEW_VARIANT(CIExprLiteral, string, current_function_name));
+
+            break;
         case CI_TOKEN_KIND_IDENTIFIER: {
             ASSERT(current_scope);
 
             Rc *identifier = self->previous_token->identifier;
-
-            // `__func__` is declared by the compiler in the body of every
-            // function, and holds the name the function is written with.
-            if (current_function_name &&
-                !strcmp(GET_PTR_RC(String, identifier)->buffer, "__func__")) {
-                res = NEW_VARIANT(
-                  CIExpr,
-                  literal,
-                  previous_location__CIParser(self),
-                  NEW_VARIANT(CIExprLiteral, string, current_function_name));
-
-                break;
-            }
 
             CIExprIdentifierID id = search_identifier__CIExprIdentifierID(
               GET_PTR_RC(String, identifier), self->file, current_scope);

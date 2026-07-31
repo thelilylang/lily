@@ -244,6 +244,9 @@ enum CITokenKind
     CI_TOKEN_KIND_KEYWORD___ATTRIBUTE__, // NOTE: #1
     // See https://gcc.gnu.org/onlinedocs/gcc/Alternate-Keywords.html
     CI_TOKEN_KIND_KEYWORD___EXTENSION__,
+    // The name of the function whose body it is written in, which the compiler
+    // declares there.
+    CI_TOKEN_KIND_KEYWORD___FUNC__,
     // See https://gcc.gnu.org/onlinedocs/gcc/Restricted-Pointers.html
     CI_TOKEN_KIND_KEYWORD___RESTRICT,
     CI_TOKEN_KIND_KEYWORD___RESTRICT__,
