@@ -3867,7 +3867,9 @@ get_token__CIScanner(CIScanner *self,
                 // cases: the scan has to keep making progress, otherwise the
                 // caller loops on the same character forever.
                 CI_CHECK_STANDARD_SINCE(
-                  self->config->standard, CI_STANDARD_99, {
+                  self->config->standard,
+                  tokens_feature[CI_TOKEN_KIND_COMMENT_LINE].since,
+                  {
                       FAILED__CIScanner(
                         self,
                         NEW(CIError,
