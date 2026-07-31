@@ -1,0 +1,29 @@
+//@compile_options -s c99
+//@expected_bin_stdout named\n
+//@expected_bin_stdout helper\n
+//@expected_bin_stdout main:1:1\n
+
+#include <helper.h>
+
+void
+named(void)
+{
+	puts(__func__);
+}
+
+int
+helper(void)
+{
+	printf("%s\n", __func__);
+
+	return 0;
+}
+
+int main() {
+	named();
+	helper();
+
+	/* `__func__` holds the name of the function it is written in, and is read
+	   as the array of characters it is. */
+	printf("%s:%d:%d\n", __func__, __func__[0] == 'm', __func__[4] == '\0');
+}

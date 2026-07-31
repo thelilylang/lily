@@ -720,6 +720,9 @@ static CIScope *current_scope = NULL; // CIScope*?
 // Represent the first layer `scope` of a function.
 static CIScope *first_layer_function_scope = NULL; // CIScope*? (&)
 
+// Name of the function whose body is being read, which `__func__` stands for.
+static Rc *current_function_name = NULL; // Rc<String*>*? (&)
+
 #define SET_FIRST_LAYER_FUNCTION_SCOPE(scope) \
     first_layer_function_scope = scope;
 #define UNSET_FIRST_LAYER_FUNCTION_SCOPE() first_layer_function_scope = NULL;
@@ -3639,6 +3642,20 @@ parse_primary_expr__CIParser(CIParser *self)
             ASSERT(current_scope);
 
             Rc *identifier = self->previous_token->identifier;
+
+            // `__func__` is declared by the compiler in the body of every
+            // function, and holds the name the function is written with.
+            if (current_function_name &&
+                !strcmp(GET_PTR_RC(String, identifier)->buffer, "__func__")) {
+                res = NEW_VARIANT(
+                  CIExpr,
+                  literal,
+                  previous_location__CIParser(self),
+                  NEW_VARIANT(CIExprLiteral, string, current_function_name));
+
+                break;
+            }
+
             CIExprIdentifierID id = search_identifier__CIExprIdentifierID(
               GET_PTR_RC(String, identifier), self->file, current_scope);
             CIGenericParams *generic_params =
@@ -4983,8 +5000,14 @@ parse_function__CIParser(CIParser *self,
 
             SET_FIRST_LAYER_FUNCTION_SCOPE(first_layer_function_scope);
 
+            Rc *old_current_function_name = current_function_name;
+
+            current_function_name = name;
+
             CIDeclFunctionBody *body = parse_function_body__CIParser(
               self, false, false, &parent_function_scope);
+
+            current_function_name = old_current_function_name;
 
             if (res) {
                 set_function_body__CIDecl(res, body);
