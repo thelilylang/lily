@@ -3353,7 +3353,27 @@ scan_line_preprocessor__CIScanner(CIScanner *self)
 CIToken *
 scan_pragma_preprocessor__CIScanner(CIScanner *self)
 {
-    TODO("scan #pragma");
+    Location preprocessor_pragma_location =
+      clone__Location(&self->base.location);
+    String *content = NEW(String);
+
+    // What a pragma is written with is read to the end of the line and kept as
+    // it is written, rather than read as if it were code: what is known about
+    // it is read from it, and what is not is passed over.
+    skip_space_and_backslash__CIScanner(self);
+
+    while (!HAS_REACH_END(self) && self->base.source.cursor.current != '\n') {
+        push__String(content, self->base.source.cursor.current);
+        next_char__CIScanner(self);
+    }
+
+    end__Location(&preprocessor_pragma_location,
+                  self->base.source.cursor.line,
+                  self->base.source.cursor.column,
+                  self->base.source.cursor.position);
+
+    return NEW_VARIANT(
+      CIToken, preprocessor_pragma, preprocessor_pragma_location, content);
 }
 
 CIToken *

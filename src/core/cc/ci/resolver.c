@@ -43,6 +43,20 @@
 #include <core/cc/ci/result.h>
 #include <core/shared/diagnostic.h>
 
+// Files written with `#pragma once`, which are included the first time they
+// are written and passed over afterwards.
+static Vec *included_once = NULL; // Vec<String*>*?
+
+/// @brief Whether the file at the given path is written to be included once
+/// and has been already.
+static bool
+is_included_once__CIResolver(const char *path);
+
+/// @brief Record that the file at the given path is written to be included
+/// once.
+static void
+add_included_once__CIResolver(const char *path);
+
 /// @brief Init the CIResolver type.
 static void
 init__CIResolver(CIResolver *self, CIResolvedTokens *resolved_tokens);
@@ -294,7 +308,35 @@ static void
 resolve_preprocessor_include__CIResolver(CIResolver *self,
                                          CIToken *preprocessor_include_token);
 
-static void
+static bool
+is_included_once__CIResolver(const char *path)
+{
+    if (!included_once) {
+        return false;
+    }
+
+    for (Usize i = 0; i < included_once->len; ++i) {
+        if (!strcmp(CAST(String *, get__Vec(included_once, i))->buffer, path)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void
+add_included_once__CIResolver(const char *path)
+{
+    if (!included_once) {
+        included_once = NEW(Vec);
+    }
+
+    if (!is_included_once__CIResolver(path)) {
+        push__Vec(included_once, from__String((char *)path));
+    }
+}
+
+void
 resolve_preprocessor_line__CIResolver(CIResolver *self,
                                       CIToken *preprocessor_line_token);
 
@@ -895,6 +937,44 @@ resolve_identifier__CIResolver(CIResolver *self, CIToken *identifier_token)
     const CIResultDefine *define = NULL;
     const String *identifier = GET_PTR_RC(String, identifier_token->identifier);
 
+    // `_Pragma("...")` says what `#pragma ...` says, written where an
+    // expression is written rather than on a line of its own, so what it is
+    // given is read the same way.
+    if (!strcmp(identifier->buffer, "_Pragma")) {
+        next_token__CIResolver(self); // skip `_Pragma`
+
+        if (self->current_token->kind != CI_TOKEN_KIND_LPAREN) {
+            FAILED__CIResolver(self, CI_ERROR_KIND_EXPECTED_TOKEN);
+
+            return;
+        }
+
+        next_token__CIResolver(self); // skip `(`
+
+        if (self->current_token->kind !=
+            CI_TOKEN_KIND_LITERAL_CONSTANT_STRING) {
+            FAILED__CIResolver(self, CI_ERROR_KIND_EXPECTED_STRING_LITERAL);
+
+            return;
+        }
+
+        if (!strcmp(
+              GET_PTR_RC(String, self->current_token->literal_constant_string)
+                ->buffer,
+              "once")) {
+            add_included_once__CIResolver(
+              self->current_token->location.filename);
+        }
+
+        next_token__CIResolver(self); // skip the string
+
+        if (self->current_token->kind != CI_TOKEN_KIND_RPAREN) {
+            FAILED__CIResolver(self, CI_ERROR_KIND_EXPECTED_TOKEN);
+        }
+
+        return;
+    }
+
     // `__VA_OPT__` stands for what is written between the parentheses that
     // follow it where something is written for the variadic part of the macro
     // it is written in, and for nothing where nothing is.
@@ -1339,6 +1419,14 @@ load_include__CIResolver(CIResolver *self,
     char *full_include_path = format("{S}/{S}", current_dir, include_path);
 
     if (exists__File(full_include_path)) {
+        // A file written with `#pragma once` is included the first time it is
+        // written and passed over afterwards.
+        if (is_included_once__CIResolver(full_include_path)) {
+            lily_free(full_include_path);
+
+            return true;
+        }
+
         CIResultFile *header =
           add_and_run_header__CIResult(self->file->entity.result,
                                        self->file,
@@ -1410,9 +1498,19 @@ void
 resolve_preprocessor_pragma__CIResolver(CIResolver *self,
                                         CIToken *preprocessor_pragma_token)
 {
-    // A pragma nothing is known about is left alone, which is what it is
-    // written to be. The ones something is known about, `once` among them, are
-    // read where they are written.
+    const String *content = preprocessor_pragma_token->preprocessor_pragma;
+
+    // `once` says the file it is written in is included the first time it is
+    // written and passed over afterwards.
+    if (!strcmp(content->buffer, "once")) {
+        add_included_once__CIResolver(
+          preprocessor_pragma_token->location.filename);
+
+        return;
+    }
+
+    // A pragma nothing is known about is written to be passed over, so it is
+    // left alone rather than reported on.
 }
 
 void

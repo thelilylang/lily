@@ -129,6 +129,8 @@ static VARIANT_DESTRUCTOR(CIToken, preprocessor_line, CIToken *self);
 static VARIANT_DESTRUCTOR(CIToken, preprocessor_undef, CIToken *self);
 
 // Free CIToken type (CI_TOKEN_KIND_PREPROCESSOR_WARNING).
+static VARIANT_DESTRUCTOR(CIToken, preprocessor_pragma, CIToken *self);
+
 static VARIANT_DESTRUCTOR(CIToken, preprocessor_warning, CIToken *self);
 
 // Free CIToken type (CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__).
@@ -1527,6 +1529,23 @@ VARIANT_CONSTRUCTOR(CIToken *,
 
 VARIANT_CONSTRUCTOR(CIToken *,
                     CIToken,
+                    preprocessor_pragma,
+                    Location location,
+                    String *preprocessor_pragma)
+{
+    CIToken *self = lily_malloc(sizeof(CIToken));
+
+    self->kind = CI_TOKEN_KIND_PREPROCESSOR_PRAGMA;
+    self->location = location;
+    self->next = NULL;
+    self->ref_count = 0;
+    self->preprocessor_pragma = preprocessor_pragma;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIToken *,
+                    CIToken,
                     preprocessor_warning,
                     Location location,
                     String *preprocessor_warning)
@@ -1904,6 +1923,8 @@ to_string__CIToken(CIToken *self)
             return to_string__CITokenPreprocessorLine(&self->preprocessor_line);
         case CI_TOKEN_KIND_PREPROCESSOR_UNDEF:
             return format__String("#undef {S}", self->preprocessor_undef);
+        case CI_TOKEN_KIND_PREPROCESSOR_PRAGMA:
+            return format__String("#pragma {S}", self->preprocessor_pragma);
         case CI_TOKEN_KIND_PREPROCESSOR_WARNING:
             return format__String("#warning {S}", self->preprocessor_warning);
         case CI_TOKEN_KIND_RBRACE:
@@ -2776,6 +2797,12 @@ VARIANT_DESTRUCTOR(CIToken, preprocessor_undef, CIToken *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(CIToken, preprocessor_pragma, CIToken *self)
+{
+    FREE(String, self->preprocessor_pragma);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(CIToken, preprocessor_warning, CIToken *self)
 {
     FREE(String, self->preprocessor_warning);
@@ -2893,6 +2920,9 @@ DESTRUCTOR(CIToken, CIToken *self)
             break;
         case CI_TOKEN_KIND_PREPROCESSOR_UNDEF:
             FREE_VARIANT(CIToken, preprocessor_undef, self);
+            break;
+        case CI_TOKEN_KIND_PREPROCESSOR_PRAGMA:
+            FREE_VARIANT(CIToken, preprocessor_pragma, self);
             break;
         case CI_TOKEN_KIND_PREPROCESSOR_WARNING:
             FREE_VARIANT(CIToken, preprocessor_warning, self);
