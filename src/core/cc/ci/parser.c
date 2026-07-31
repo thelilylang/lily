@@ -6017,7 +6017,10 @@ parse_storage_class_specifier__CIParser(CIParser *self, int *storage_class_flag)
         case CI_TOKEN_KIND_KEYWORD_STATIC:
             *storage_class_flag |= CI_STORAGE_CLASS_STATIC;
             break;
+        // `_Thread_local` is what C11 names what C23 names `thread_local`,
+        // and both are read the same way.
         case CI_TOKEN_KIND_KEYWORD_THREAD_LOCAL:
+        case CI_TOKEN_KIND_KEYWORD__THREAD_LOCAL:
             *storage_class_flag |= CI_STORAGE_CLASS_THREAD_LOCAL;
             break;
         case CI_TOKEN_KIND_KEYWORD_TYPEDEF:

@@ -1,0 +1,13 @@
+//@compile_options -s c11
+//@expected_bin_stdout 1:2\n
+
+#include <helper.h>
+
+/* `_Thread_local` is what C11 names what C23 names `thread_local`. */
+_Thread_local int at_file_scope = 1;
+
+int main() {
+	static _Thread_local int in_a_block = 2;
+
+	printf("%d:%d\n", at_file_scope, in_a_block);
+}
