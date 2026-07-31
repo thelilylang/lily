@@ -2212,6 +2212,54 @@ scan_hex__CIScanner(CIScanner *self)
     String *res = NEW(String);
 
     scan_and_append_chars__CIScanner(self, res, &is_hex__CIScanner);
+
+    // A number written in hexadecimal holds a float where a point or the
+    // power of two it is raised to is written on it, and the whole of what is
+    // written is kept, the base it is written in included, as that is what
+    // reads it back.
+    //
+    // e.g. 0x1.8p3
+    if (self->base.source.cursor.current == '.' ||
+        self->base.source.cursor.current == 'p' ||
+        self->base.source.cursor.current == 'P') {
+        String *float_res = from__String("0x");
+
+        append__String(float_res, res);
+
+        FREE(String, res);
+
+        if (self->base.source.cursor.current == '.') {
+            push__String(float_res, '.');
+            next_char__CIScanner(self);
+            scan_and_append_chars__CIScanner(
+              self, float_res, &is_hex__CIScanner);
+        }
+
+        if (self->base.source.cursor.current == 'p' ||
+            self->base.source.cursor.current == 'P') {
+            push__String(float_res, 'p');
+            next_char__CIScanner(self);
+
+            if (self->base.source.cursor.current == '-' ||
+                self->base.source.cursor.current == '+') {
+                push__String(float_res, self->base.source.cursor.current);
+                next_char__CIScanner(self);
+            }
+
+            scan_and_append_chars__CIScanner(
+              self, float_res, &is_digit__CIScanner);
+        }
+
+        previous_char__CIScanner(self);
+
+        return NEW_VARIANT(CIToken,
+                           literal_constant_float,
+                           clone__Location(&self->base.location),
+                           NEW(CITokenLiteralConstantFloat,
+                               CI_TOKEN_LITERAL_CONSTANT_FLOAT_SUFFIX_NONE,
+                               float_res));
+    }
+
     previous_char__CIScanner(self);
 
     return NEW_VARIANT(CIToken,

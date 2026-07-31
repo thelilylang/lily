@@ -1,0 +1,25 @@
+//@compile_options -s c99
+//@expected_bin_stdout 16:12:2\n
+//@expected_bin_stdout 255:3\n
+
+#include <helper.h>
+
+int main() {
+	/* A number written in hexadecimal holds a float where a point or the
+	   power of two it is raised to is written on it. */
+	double whole = 0x1p4;
+	double with_a_point = 0x1.8p3;
+	double raised_down = 0x1p-1;
+
+	printf("%d:%d:%d\n",
+	       (int)whole,
+	       (int)with_a_point,
+	       (int)(raised_down * 4));
+
+	/* What is written without either of them is read as the integer it
+	   is. */
+	int as_an_integer = 0xFF;
+	double as_a_decimal = 1.5;
+
+	printf("%d:%d\n", as_an_integer, (int)(as_a_decimal * 2));
+}
