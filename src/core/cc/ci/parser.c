@@ -3318,9 +3318,21 @@ parse_initializer__CIParser(CIParser *self)
 
     while (self->current_token->kind != CI_TOKEN_KIND_RBRACE &&
            self->current_token->kind != CI_TOKEN_KIND_EOF) {
-        Vec *path = NULL; // Vec<Rc<String*>*>*?
+        Vec *path = NULL;     // Vec<Rc<String*>*>*?
+        CIExpr *index = NULL; // CIExpr*?
 
-        if (self->current_token->kind == CI_TOKEN_KIND_DOT) {
+        // An item of an array is written on the index it is held at, as an
+        // item of a struct is written on the field it is held in.
+        //
+        // e.g. int a[3] = { [1] = 5 };
+        if (self->current_token->kind == CI_TOKEN_KIND_LHOOK) {
+            next_token__CIParser(self); // skip `[`
+
+            index = parse_expr__CIParser(self);
+
+            expect__CIParser(self, CI_TOKEN_KIND_RHOOK, true);
+            expect__CIParser(self, CI_TOKEN_KIND_EQ, true);
+        } else if (self->current_token->kind == CI_TOKEN_KIND_DOT) {
             path = NEW(Vec);
 
             while (self->current_token->kind == CI_TOKEN_KIND_DOT) {
@@ -3343,10 +3355,14 @@ parse_initializer__CIParser(CIParser *self)
         if (!value) {
             FREE(Vec, path);
 
+            if (index) {
+                FREE(CIExpr, index);
+            }
+
             continue;
         }
 
-        push__Vec(items, NEW(CIExprInitializerItem, path, value));
+        push__Vec(items, NEW(CIExprInitializerItem, path, index, value));
     }
 
     expect__CIParser(self, CI_TOKEN_KIND_RBRACE, true);

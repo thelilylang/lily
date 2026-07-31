@@ -995,6 +995,9 @@ typecheck_initializer_expr_for_array_dt__CITypecheck(
         const CIExprInitializerItem *initializer_item =
           get__Vec(initializer->items, i);
 
+        // An item of an array is written on the index it is held at, where
+        // the fields a struct holds are what an item of a struct is written
+        // on, and neither is written on the other.
         if (initializer_item->path) {
             FAILED__CITypecheck(
               self,
@@ -1002,6 +1005,18 @@ typecheck_initializer_expr_for_array_dt__CITypecheck(
               CI_ERROR_KIND_UNEXPECTED_PATH_IN_ARRAY_INITIALIZATION);
 
             return;
+        }
+
+        if (initializer_item->index) {
+            CIDataType *expected_index_data_type =
+              NEW(CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_INT);
+
+            typecheck_expr__CITypecheck(self,
+                                        expected_index_data_type,
+                                        initializer_item->index,
+                                        typecheck_ctx);
+
+            FREE(CIDataType, expected_index_data_type);
         }
 
         typecheck_expr__CITypecheck(

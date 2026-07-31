@@ -3965,7 +3965,8 @@ DESTRUCTOR(CIExprIdentifier, const CIExprIdentifier *self);
 
 typedef struct CIExprInitializerItem
 {
-    Vec *path; // Vec<Rc<String*>*>*?
+    Vec *path;     // Vec<Rc<String*>*>*? The fields the item is written on.
+    CIExpr *index; // CIExpr*? The index of an array the item is written on.
     CIExpr *value;
 } CIExprInitializerItem;
 
@@ -3976,6 +3977,7 @@ typedef struct CIExprInitializerItem
 CONSTRUCTOR(CIExprInitializerItem *,
             CIExprInitializerItem,
             Vec *path,
+            CIExpr *index,
             CIExpr *value);
 
 /**

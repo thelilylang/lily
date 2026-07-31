@@ -5612,11 +5612,13 @@ DESTRUCTOR(CIExprIdentifier, const CIExprIdentifier *self)
 CONSTRUCTOR(CIExprInitializerItem *,
             CIExprInitializerItem,
             Vec *path,
+            CIExpr *index,
             CIExpr *value)
 {
     CIExprInitializerItem *self = lily_malloc(sizeof(CIExprInitializerItem));
 
     self->path = path;
+    self->index = index;
     self->value = value;
 
     return self;
@@ -5664,6 +5666,10 @@ DESTRUCTOR(CIExprInitializerItem, CIExprInitializerItem *self)
     if (self->path) {
         FREE_BUFFER_RC_ITEMS(self->path->buffer, self->path->len, String);
         FREE(Vec, self->path);
+    }
+
+    if (self->index) {
+        FREE(CIExpr, self->index);
     }
 
     FREE(CIExpr, self->value);

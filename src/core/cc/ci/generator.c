@@ -1900,6 +1900,12 @@ generate_function_initializer_expr__CIGenerator(
         CIExprInitializerItem *initializer_item =
           get__Vec(initializer->items, i);
 
+        if (initializer_item->index) {
+            write_str__CIGenerator(self, "[");
+            generate_function_expr__CIGenerator(self, initializer_item->index);
+            write_str__CIGenerator(self, "] = ");
+        }
+
         if (initializer_item->path) {
             for (Usize j = 0; j < initializer_item->path->len; ++j) {
                 write_String__CIGenerator(
