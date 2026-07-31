@@ -2551,10 +2551,13 @@ generate_struct_field__CIGenerator(CIGenerator *self,
 
     Usize field_bit = get_bit__CIDeclStructField(field);
 
-    // NOTE: A member written with no name is only ever a bit field, so the
-    // bits it takes up are written even where they are none, which is what
-    // makes the members that follow start on the next unit.
-    if (field_bit != 0 || !field->name) {
+    // NOTE: A member written with no name is a bit field, and is the only kind
+    // of field that is, as a struct or a union written with no name is
+    // anonymous instead. The bits it takes up are written even where they are
+    // none, which is what makes the members that follow start on the next
+    // unit.
+    if (field_bit != 0 ||
+        (!field->name && field->kind == CI_DECL_STRUCT_FIELD_KIND_MEMBER)) {
         write_String__CIGenerator(self, format__String(" : {zu}", field_bit));
     }
 
