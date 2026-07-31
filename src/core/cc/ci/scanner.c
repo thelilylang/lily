@@ -3125,6 +3125,10 @@ scan_line_preprocessor__CIScanner(CIScanner *self)
     Usize lineno = self->base.source.cursor.line;
     String *filename = NULL; // String*?
 
+    // The line the directive is written with is written apart from it, as what
+    // the other directives are written with is.
+    skip_space_and_backslash__CIScanner(self);
+
     if (is_digit__CIScanner(self)) {
         CIToken *token = get_token__CIScanner(self, &ctx, NULL);
 
@@ -3140,6 +3144,10 @@ scan_line_preprocessor__CIScanner(CIScanner *self)
 
                     FREE(Optional, op);
                     lily_free(token);
+
+                    // The scan of the number leaves the cursor on its last
+                    // digit, so what follows it starts one further on.
+                    next_char__CIScanner(self);
 
                     break;
                 }
@@ -3158,7 +3166,15 @@ scan_line_preprocessor__CIScanner(CIScanner *self)
         return NULL;
     }
 
-    if (self->base.source.cursor.current != '\n') {
+    // The name of a file is written after the line or left out, and is written
+    // apart from the line in either case.
+    while (self->base.source.cursor.current == ' ' ||
+           self->base.source.cursor.current == '\t') {
+        next_char__CIScanner(self);
+    }
+
+    if (self->base.source.cursor.current != '\n' &&
+        self->base.source.cursor.current != '\0') {
         switch (self->base.source.cursor.current) {
             case '\"': {
                 CIToken *token_filename =
@@ -3171,6 +3187,11 @@ scan_line_preprocessor__CIScanner(CIScanner *self)
                               String, token_filename->literal_constant_string));
 
                             FREE(CIToken, token_filename);
+
+                            // The scan of the string leaves the cursor on the
+                            // quote that closes it, so what follows it starts
+                            // one further on.
+                            next_char__CIScanner(self);
 
                             break;
                         default:

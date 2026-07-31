@@ -1,0 +1,12 @@
+//@expected_bin_stdout ok\n
+
+#include <helper.h>
+
+/* The line a directive gives is read, written with the name of a file or
+   without one. */
+#line 100
+#line 200 "other.c"
+
+int main() {
+	puts("ok");
+}

@@ -1212,14 +1212,19 @@ void
 resolve_preprocessor_line__CIResolver(CIResolver *self,
                                       CIToken *preprocessor_line_token)
 {
-    TODO("preprocessor line");
+    // TODO: Renumber what follows the directive, and rename the file it is
+    // reported as being written in, so that `__LINE__` and `__FILE__` give
+    // back what the directive says. The directive is read and left alone until
+    // then, rather than stopping the whole of what it is written in.
 }
 
 void
 resolve_preprocessor_pragma__CIResolver(CIResolver *self,
                                         CIToken *preprocessor_pragma_token)
 {
-    TODO("preprocessor pragma");
+    // A pragma nothing is known about is left alone, which is what it is
+    // written to be. The ones something is known about, `once` among them, are
+    // read where they are written.
 }
 
 void
