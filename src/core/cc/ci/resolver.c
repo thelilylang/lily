@@ -503,6 +503,7 @@ CONSTRUCTOR(CIResolverMacroCall *, CIResolverMacroCall)
 
     self->params = NEW(CIResolverMacroCallParams);
     self->is_empty = false;
+    self->has_variadic_param = false;
     self->ref_count = 0;
 
     return self;
@@ -514,6 +515,7 @@ VARIANT_CONSTRUCTOR(CIResolverMacroCall *, CIResolverMacroCall, is_empty)
 
     // self->params = <undefined>
     self->is_empty = true;
+    self->has_variadic_param = false;
     self->ref_count = 0;
 
     return self;
@@ -776,6 +778,9 @@ parse_macro_call_params__CIResolver(CIResolver *self,
         return NULL;
     }
 
+    macro_call->has_variadic_param =
+      is_variadic_macro && macro_param_count > (Usize)macro_param_variadic;
+
     return macro_call;
 }
 
@@ -890,6 +895,47 @@ resolve_identifier__CIResolver(CIResolver *self, CIToken *identifier_token)
     const CIResultDefine *define = NULL;
     const String *identifier = GET_PTR_RC(String, identifier_token->identifier);
 
+    // `__VA_OPT__` stands for what is written between the parentheses that
+    // follow it where something is written for the variadic part of the macro
+    // it is written in, and for nothing where nothing is.
+    //
+    // e.g. #define M(a, ...) f(a __VA_OPT__(,) __VA_ARGS__)
+    if (self->macro_call && !strcmp(identifier->buffer, "__VA_OPT__")) {
+        bool has_variadic = self->macro_call->has_variadic_param;
+        Usize depth = 0;
+
+        next_token__CIResolver(self); // skip `__VA_OPT__`
+
+        if (self->current_token->kind != CI_TOKEN_KIND_LPAREN) {
+            FAILED__CIResolver(self, CI_ERROR_KIND_EXPECTED_TOKEN);
+
+            return;
+        }
+
+        next_token__CIResolver(self); // skip `(`
+
+        while (self->current_token->kind != CI_TOKEN_KIND_EOF &&
+               self->current_token->kind != CI_TOKEN_KIND_EOT) {
+            if (self->current_token->kind == CI_TOKEN_KIND_LPAREN) {
+                ++depth;
+            } else if (self->current_token->kind == CI_TOKEN_KIND_RPAREN) {
+                if (depth == 0) {
+                    break;
+                }
+
+                --depth;
+            }
+
+            if (has_variadic) {
+                resolve_token__CIResolver(self);
+            }
+
+            next_token__CIResolver(self);
+        }
+
+        return;
+    }
+
     // A macro met again while its own expansion is being resolved is left as a
     // plain identifier rather than expanded once more, as the standard
     // requires. Expanding it would not terminate.
@@ -941,6 +987,14 @@ resolve_macro_param_variadic__CIResolver(CIResolver *self,
                                          CIToken *macro_param_variadic_token)
 {
     ASSERT(self->macro_call);
+
+    // `__VA_ARGS__` stands for what is written for the variadic part of the
+    // macro, and for nothing where nothing is written for it. Left to what
+    // follows, it would stand for what is written for the last parameter
+    // named before it.
+    if (!self->macro_call->has_variadic_param) {
+        return;
+    }
 
     CIResolverMacroCallParam *param =
       get_macro_param_variadic__CIResolverMacroCallParams(

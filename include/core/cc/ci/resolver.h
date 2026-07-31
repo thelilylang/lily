@@ -234,6 +234,9 @@ typedef struct CIResolverMacroCall
     // Params of macro call
     CIResolverMacroCallParams params;
     bool is_empty;
+    // Whether something is written for the variadic part of the macro, which
+    // `__VA_OPT__` stands or does not stand for what it holds on.
+    bool has_variadic_param;
     Usize ref_count;
 } CIResolverMacroCall;
 
