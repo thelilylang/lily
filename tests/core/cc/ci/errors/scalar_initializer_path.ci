@@ -1,0 +1,10 @@
+//@compile_options -s c23
+//@expected_compiler_error [0200]: a path is not expected for the initialization of a scalar
+
+#include <helper.h>
+
+int main() {
+	int x = { [0] = 1 };
+
+	printf("%d\n", x);
+}

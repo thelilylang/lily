@@ -203,6 +203,13 @@ typecheck_initializer_expr_for_union_dt__CITypecheck(
   struct CITypecheckContext *typecheck_ctx);
 
 static void
+typecheck_initializer_expr_for_scalar_dt__CITypecheck(
+  const CITypecheck *self,
+  const CIExprInitializer *initializer,
+  CIDataType *expected_data_type,
+  struct CITypecheckContext *typecheck_ctx);
+
+static void
 typecheck_initializer_expr__CITypecheck(
   const CITypecheck *self,
   const CIExprInitializer *initializer,
@@ -1178,6 +1185,48 @@ typecheck_initializer_expr_for_union_dt__CITypecheck(
 }
 
 void
+typecheck_initializer_expr_for_scalar_dt__CITypecheck(
+  const CITypecheck *self,
+  const CIExprInitializer *initializer,
+  CIDataType *expected_data_type,
+  struct CITypecheckContext *typecheck_ctx)
+{
+    // What a scalar is written to hold is a single expression, so nothing more
+    // than one is held between the braces that surround it.
+    if (initializer->items->len > 1) {
+        FAILED__CITypecheck(
+          self,
+          expected_data_type,
+          CI_ERROR_KIND_EXCESS_ELEMENTS_IN_SCALAR_INITIALIZER);
+
+        return;
+    }
+
+    const CIExprInitializerItem *initializer_item =
+      safe_get__Vec(initializer->items, 0);
+
+    // A scalar written to hold nothing is written with the value its type is
+    // zeroed to, so there is nothing to check against it.
+    if (!initializer_item) {
+        return;
+    }
+
+    // A scalar holds no field and no index, so what is written on either is
+    // written on something a scalar does not hold.
+    if (initializer_item->path || initializer_item->index) {
+        FAILED__CITypecheck(
+          self,
+          expected_data_type,
+          CI_ERROR_KIND_UNEXPECTED_PATH_IN_SCALAR_INITIALIZATION);
+
+        return;
+    }
+
+    typecheck_expr__CITypecheck(
+      self, expected_data_type, initializer_item->value, typecheck_ctx);
+}
+
+void
 typecheck_initializer_expr__CITypecheck(
   const CITypecheck *self,
   const CIExprInitializer *initializer,
@@ -1209,13 +1258,48 @@ typecheck_initializer_expr__CITypecheck(
               self, initializer, resolved_expected_data_type, typecheck_ctx);
 
             break;
+        // What is written between braces is what an aggregate is written to
+        // hold, and a scalar is written to hold a single expression the braces
+        // around it are optional on.
+        case CI_DATA_TYPE_KIND__BITINT:
+        case CI_DATA_TYPE_KIND_BOOL:
+        case CI_DATA_TYPE_KIND_CHAR:
+        case CI_DATA_TYPE_KIND__DECIMAL32:
+        case CI_DATA_TYPE_KIND__DECIMAL64:
+        case CI_DATA_TYPE_KIND__DECIMAL128:
+        case CI_DATA_TYPE_KIND_DOUBLE:
+        case CI_DATA_TYPE_KIND_DOUBLE__COMPLEX:
+        case CI_DATA_TYPE_KIND_DOUBLE__IMAGINARY:
+        case CI_DATA_TYPE_KIND_ENUM:
+        case CI_DATA_TYPE_KIND_FLOAT:
+        case CI_DATA_TYPE_KIND_FLOAT__COMPLEX:
+        case CI_DATA_TYPE_KIND_FLOAT__IMAGINARY:
+        case CI_DATA_TYPE_KIND_INT:
+        case CI_DATA_TYPE_KIND_LONG_DOUBLE:
+        case CI_DATA_TYPE_KIND_LONG_DOUBLE__COMPLEX:
+        case CI_DATA_TYPE_KIND_LONG_DOUBLE__IMAGINARY:
+        case CI_DATA_TYPE_KIND_LONG_INT:
+        case CI_DATA_TYPE_KIND_LONG_LONG_INT:
+        case CI_DATA_TYPE_KIND_NULLPTR_T:
+        case CI_DATA_TYPE_KIND_PTR:
+        case CI_DATA_TYPE_KIND_SHORT_INT:
+        case CI_DATA_TYPE_KIND_SIGNED_CHAR:
+        case CI_DATA_TYPE_KIND_UNSIGNED_CHAR:
+        case CI_DATA_TYPE_KIND_UNSIGNED_INT:
+        case CI_DATA_TYPE_KIND_UNSIGNED_LONG_INT:
+        case CI_DATA_TYPE_KIND_UNSIGNED_LONG_LONG_INT:
+        case CI_DATA_TYPE_KIND_UNSIGNED_SHORT_INT:
+            typecheck_initializer_expr_for_scalar_dt__CITypecheck(
+              self, initializer, resolved_expected_data_type, typecheck_ctx);
+
+            break;
         default:
             FAILED__CITypecheck(
               self,
               expected_data_type,
               CI_ERROR_KIND_UNEXPECTED_DATA_TYPE_WITH_INITIALIZER);
 
-            return;
+            break;
     }
 
     FREE(CIDataType, resolved_expected_data_type);

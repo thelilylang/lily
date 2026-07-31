@@ -1,0 +1,18 @@
+/*@compile_options -s c89 */
+/*@expected_bin_stdout 5:1:2\n*/
+
+#include <helper.h>
+
+int main() {
+	/* A scalar is written to hold a single expression, and the braces around
+	   it are the ones it is written with or without. */
+	int braced = { 5 };
+	int plain = 5;
+	/* The comma written after the expression is the one that ends it, so
+	   nothing more is held between the braces. */
+	double trailing = { 2.0, };
+
+	printf("%d:%d:%d\n", braced, braced == plain, (int)trailing);
+
+	return 0;
+}

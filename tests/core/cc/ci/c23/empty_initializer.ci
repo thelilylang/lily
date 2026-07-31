@@ -1,5 +1,6 @@
 //@compile_options -s c23
 //@expected_bin_stdout 0:0\n
+//@expected_bin_stdout 0:1:1\n
 
 #include <helper.h>
 
@@ -13,4 +14,12 @@ int main() {
 	struct S s = {};
 
 	printf("%d:%d\n", a[0], s.a);
+
+	/* A scalar written to hold nothing is written with the value its type is
+	   zeroed to, and what a pointer is zeroed to is null. */
+	int n = {};
+	int *p = {};
+	constexpr int *cp = {};
+
+	printf("%d:%d:%d\n", n, p == nullptr, cp == nullptr);
 }

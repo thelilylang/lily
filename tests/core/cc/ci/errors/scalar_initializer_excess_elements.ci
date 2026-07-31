@@ -1,0 +1,10 @@
+//@compile_options -s c23
+//@expected_compiler_error [0199]: excess elements in the scalar initializer
+
+#include <helper.h>
+
+int main() {
+	int x = { 1, 2 };
+
+	printf("%d\n", x);
+}

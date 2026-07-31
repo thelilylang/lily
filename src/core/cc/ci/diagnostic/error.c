@@ -157,6 +157,8 @@ to_msg__CIError(const CIError *self)
             return "this enum is already defined";
         case CI_ERROR_KIND_ENUM_VARIANT_IS_ALREADY_DEFINED:
             return "this enum variant is already defined";
+        case CI_ERROR_KIND_EXCESS_ELEMENTS_IN_SCALAR_INITIALIZER:
+            return "excess elements in the scalar initializer";
         case CI_ERROR_KIND_EXCESS_ELEMENTS_IN_STRUCT_OR_UNION_INITIALIZER:
             return "excess elements in the struct or union initializer";
         case CI_ERROR_KIND_EXCESS_ELEMENTS_IN_UNION_INITIALIZER:
@@ -428,6 +430,8 @@ to_msg__CIError(const CIError *self)
             return "this kind of operation is not expected for a string";
         case CI_ERROR_KIND_UNEXPECTED_PATH_IN_ARRAY_INITIALIZATION:
             return "a path is not expected for the initialization of an array";
+        case CI_ERROR_KIND_UNEXPECTED_PATH_IN_SCALAR_INITIALIZATION:
+            return "a path is not expected for the initialization of a scalar";
         case CI_ERROR_KIND_UNEXPECTED_RHS_OF_MERGE:
             return "this token is not expected as the rhs of `##`";
         case CI_ERROR_KIND_UNEXPECTED_STRING_AT_PREPROCESSOR_TIME:
@@ -865,6 +869,10 @@ to_code__CIError(const CIError *self)
             return "0197";
         case CI_ERROR_KIND_DUPLICATE_EMBED_PARAMETER:
             return "0198";
+        case CI_ERROR_KIND_EXCESS_ELEMENTS_IN_SCALAR_INITIALIZER:
+            return "0199";
+        case CI_ERROR_KIND_UNEXPECTED_PATH_IN_SCALAR_INITIALIZATION:
+            return "0200";
         default:
             UNREACHABLE("unknown variant");
     }
