@@ -114,7 +114,22 @@ static inline char *
 peek_char__CIScanner(const CIScanner *self, const Usize n);
 
 /// @brief Scan and append characters to res while is_valid return true.
-static void
+static // Whether what is written one character further on is read by
+       // `is_valid`.
+  static bool
+  is_valid_at_peek__CIScanner(CIScanner *self,
+                              bool (*is_valid)(const CIScanner *self))
+{
+    next_char__CIScanner(self);
+
+    bool res = is_valid(self);
+
+    previous_char__CIScanner(self);
+
+    return res;
+}
+
+void
 scan_and_append_chars__CIScanner(CIScanner *self,
                                  String *res,
                                  bool (*is_valid)(const CIScanner *self));
@@ -1130,11 +1145,22 @@ scan_and_append_chars__CIScanner(CIScanner *self,
                                  String *res,
                                  bool (*is_valid)(const CIScanner *self))
 {
-    while (is_valid(self)) {
+    while (is_valid(self) ||
+           // A digit separator is written between two digits of a number
+           // whatever the base it is written in, and is left out of the value
+           // the number holds.
+           (self->base.source.cursor.current == '\'' &&
+            peek_char__CIScanner(self, 1) &&
+            is_valid_at_peek__CIScanner(self, is_valid))) {
+        bool is_separator = self->base.source.cursor.current == '\'';
+
         next_char__CIScanner(self);
-        push__String(res,
-                     self->base.source.file
-                       ->content[self->base.source.cursor.position - 1]);
+
+        if (!is_separator) {
+            push__String(res,
+                         self->base.source.file
+                           ->content[self->base.source.cursor.position - 1]);
+        }
     }
 }
 
@@ -1218,7 +1244,12 @@ is_num__CIScanner(const CIScanner *self)
             peek_char__CIScanner(self, 1) != (char *)'.') ||
            self->base.source.cursor.current == 'e' ||
            self->base.source.cursor.current == 'E' ||
-           self->base.source.cursor.current == '_';
+           self->base.source.cursor.current == '_' ||
+           // A digit separator is written between two digits, and is told
+           // apart from the quote that opens a character by what follows it.
+           (self->base.source.cursor.current == '\'' &&
+            peek_char__CIScanner(self, 1) >= (char *)'0' &&
+            peek_char__CIScanner(self, 1) <= (char *)'9');
 }
 
 #define ADD_K_TOKEN_BASE(tokens, token)                        \
@@ -2274,7 +2305,8 @@ scan_num__CIScanner(CIScanner *self)
             return NULL;
         }
 
-        if (self->base.source.cursor.current != '_') {
+        if (self->base.source.cursor.current != '_' &&
+            self->base.source.cursor.current != '\'') {
             push__String(res, self->base.source.cursor.current);
         }
 

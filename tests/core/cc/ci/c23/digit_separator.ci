@@ -1,0 +1,21 @@
+//@compile_options -s c23
+//@expected_bin_stdout 1000000:170:65535\n
+//@expected_bin_stdout 97:1\n
+
+#include <helper.h>
+
+int main() {
+	/* A digit separator is written between two digits, whatever the base the
+	   number is written in, and is left out of the value it holds. */
+	int decimal = 1'000'000;
+	int binary = 0b1010'1010;
+	int hexadecimal = 0xFF'FF;
+
+	printf("%d:%d:%d\n", decimal, binary, hexadecimal);
+
+	/* The quote that opens a character is told apart from a separator by what
+	   follows it. */
+	char c = 'a';
+
+	printf("%d:%d\n", (int)c, 1'0 == 10);
+}
