@@ -3321,7 +3321,7 @@ to_string__CIStorageClass(int storage_class_flag, enum CIStandard standard)
     char *storage_classes[] = {
         "",
         "auto",
-        "contexpr",
+        "constexpr",
         "extern",
         "inline",
         "register",

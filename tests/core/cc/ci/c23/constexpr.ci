@@ -1,0 +1,13 @@
+//@compile_options -s c23
+//@expected_bin_stdout 5:10\n
+
+#include <helper.h>
+
+int main() {
+	constexpr int n = 5;
+	int a[n];
+
+	a[0] = n * 2;
+
+	printf("%d:%d\n", n, a[0]);
+}
