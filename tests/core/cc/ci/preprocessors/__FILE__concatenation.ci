@@ -1,0 +1,55 @@
+//@expected_bin_stdout 1:1:1:1\n
+
+#include <helper.h>
+
+static int
+starts_with(const char *s, const char *prefix)
+{
+	for (; *prefix; ++s, ++prefix) {
+		if (*s != *prefix) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+static int
+ends_with(const char *s, const char *suffix)
+{
+	const char *s_end = s;
+	const char *suffix_end = suffix;
+
+	while (*s_end) {
+		++s_end;
+	}
+
+	while (*suffix_end) {
+		++suffix_end;
+	}
+
+	while (suffix_end > suffix) {
+		if (s_end == s || *--s_end != *--suffix_end) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+int main() {
+	/* The standard predefined macros that spell a string join with the
+	   string literals written next to them, as any string literal does.
+	   The path itself depends on where the suite is run from, so only
+	   the parts written here can be asserted. */
+	const char *suffixed = __FILE__ ":x";
+	const char *surrounded = "[" __FILE__ "]";
+	const char *dated = "d=" __DATE__ "!";
+	const char *plain = __FILE__;
+
+	printf("%d:%d:%d:%d\n",
+	       starts_with(suffixed, plain) && ends_with(suffixed, ":x"),
+	       starts_with(surrounded, "[") && ends_with(surrounded, "]"),
+	       starts_with(dated, "d=") && ends_with(dated, "!"),
+	       ends_with(plain, ".ci"));
+}

@@ -3411,6 +3411,7 @@ parse_literal_expr__CIParser(CIParser *self)
                               self->previous_token->literal_constant_string));
             }
 
+            Location begin = previous_location__CIParser(self);
             String *joined_value = clone__String(GET_PTR_RC(
               String, self->previous_token->literal_constant_string));
 
@@ -3428,7 +3429,7 @@ parse_literal_expr__CIParser(CIParser *self)
             CIExpr *res =
               NEW_VARIANT(CIExpr,
                           literal,
-                          previous_location__CIParser(self),
+                          location_from__CIParser(self, &begin),
                           NEW_VARIANT(CIExprLiteral, string, joined_value_rc));
 
             FREE_RC(String, joined_value_rc);
@@ -3958,61 +3959,6 @@ parse_primary_expr__CIParser(CIParser *self)
                               literal,
                               previous_location__CIParser(self),
                               NEW_VARIANT(CIExprLiteral, bool, has_feature));
-
-            break;
-        }
-        // NOTE: Standard predefined macro cannot be redefined outside of
-        // builtin file.
-        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__: {
-            Rc *date_rc =
-              NEW(Rc,
-                  clone__String(
-                    self->previous_token->standard_predefined_macro___date__));
-
-            res = NEW_VARIANT(CIExpr,
-                              literal,
-                              previous_location__CIParser(self),
-                              NEW_VARIANT(CIExprLiteral, string, date_rc));
-
-            FREE_RC(String, date_rc);
-
-            break;
-        }
-        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__: {
-            Rc *file_rc = NEW(
-              Rc, from__String(self->file->file_input.name)); // Rc<String*>*
-
-            res = NEW_VARIANT(CIExpr,
-                              literal,
-                              previous_location__CIParser(self),
-                              NEW_VARIANT(CIExprLiteral, string, file_rc));
-
-            FREE_RC(String, file_rc);
-
-            break;
-        }
-        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__:
-            res = NEW_VARIANT(CIExpr,
-                              literal,
-                              location_from__CIParser(self, &begin),
-                              NEW_VARIANT(CIExprLiteral,
-                                          unsigned_int,
-                                          self->previous_span.line));
-
-            break;
-        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__: {
-            Rc *time_rc =
-              NEW(Rc,
-                  clone__String(
-                    self->previous_token
-                      ->standard_predefined_macro___time__)); // Rc<String*>*
-
-            res = NEW_VARIANT(CIExpr,
-                              literal,
-                              previous_location__CIParser(self),
-                              NEW_VARIANT(CIExprLiteral, string, time_rc));
-
-            FREE_RC(String, time_rc);
 
             break;
         }

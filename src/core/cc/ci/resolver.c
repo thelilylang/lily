@@ -365,6 +365,38 @@ static void
 resolve_preprocessor_warning__CIResolver(CIResolver *self,
                                          CIToken *preprocessor_warning_token);
 
+/// @brief Add the string a standard predefined macro stands for, as the string
+/// literal it is replaced by.
+/// @param value String* (the token takes it over)
+static void
+add_resolved_string_token__CIResolver(CIResolver *self,
+                                      const CIToken *token,
+                                      String *value);
+
+/// @brief Replace `__DATE__` by the date it stands for.
+static void
+resolve_standard_predefined_macro_date__CIResolver(
+  CIResolver *self,
+  CIToken *standard_predefined_macro_date_token);
+
+/// @brief Replace `__FILE__` by the name of the file it is written in.
+static void
+resolve_standard_predefined_macro_file__CIResolver(
+  CIResolver *self,
+  CIToken *standard_predefined_macro_file_token);
+
+/// @brief Replace `__LINE__` by the line it is written on.
+static void
+resolve_standard_predefined_macro_line__CIResolver(
+  CIResolver *self,
+  CIToken *standard_predefined_macro_line_token);
+
+/// @brief Replace `__TIME__` by the time it stands for.
+static void
+resolve_standard_predefined_macro_time__CIResolver(
+  CIResolver *self,
+  CIToken *standard_predefined_macro_time_token);
+
 static CIToken *
 perform_stringification__CIResolver(CIResolver *self,
                                     CIResolvedTokens *resolved_tokens);
@@ -1552,11 +1584,29 @@ resolve_preprocessor_warning__CIResolver(CIResolver *self,
 }
 
 void
+add_resolved_string_token__CIResolver(CIResolver *self,
+                                      const CIToken *token,
+                                      String *value)
+{
+    // NOTE: The token takes the reference over, so it is not released here.
+    add_resolved_token__CIResolver(
+      self,
+      NEW_VARIANT(CIToken,
+                  literal_constant_string,
+                  clone__Location(&token->location),
+                  NEW(Rc, value)));
+}
+
+void
 resolve_standard_predefined_macro_date__CIResolver(
   CIResolver *self,
   CIToken *standard_predefined_macro_date_token)
 {
-    TODO("__DATE__");
+    add_resolved_string_token__CIResolver(
+      self,
+      standard_predefined_macro_date_token,
+      clone__String(standard_predefined_macro_date_token
+                      ->standard_predefined_macro___date__));
 }
 
 void
@@ -1564,7 +1614,10 @@ resolve_standard_predefined_macro_file__CIResolver(
   CIResolver *self,
   CIToken *standard_predefined_macro_file_token)
 {
-    TODO("__FILE__");
+    add_resolved_string_token__CIResolver(
+      self,
+      standard_predefined_macro_file_token,
+      from__String(self->file->file_input.name));
 }
 
 void
@@ -1572,31 +1625,17 @@ resolve_standard_predefined_macro_line__CIResolver(
   CIResolver *self,
   CIToken *standard_predefined_macro_line_token)
 {
-    TODO("__LINE__");
-}
-
-void
-resolve_standard_predefined_macro_stdc__CIResolver(
-  CIResolver *self,
-  CIToken *standard_predefined_macro_stdc_token)
-{
-    TODO("__STDC__");
-}
-
-void
-resolve_standard_predefined_macro_stdc_version__CIResolver(
-  CIResolver *self,
-  CIToken *standard_predefined_macro_stdc_version_token)
-{
-    TODO("__STDC_VERSION__");
-}
-
-void
-resolve_standard_predefined_macro_stdc_hosted__CIResolver(
-  CIResolver *self,
-  CIToken *standard_predefined_macro_stdc_hosted_token)
-{
-    TODO("__STDC_HOSTED__");
+    add_resolved_token__CIResolver(
+      self,
+      NEW_VARIANT(
+        CIToken,
+        literal_constant_int,
+        clone__Location(&standard_predefined_macro_line_token->location),
+        NEW(CITokenLiteralConstantInt,
+            CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_NONE,
+            format__String(
+              "{zu}",
+              standard_predefined_macro_line_token->location.start_line))));
 }
 
 void
@@ -1604,7 +1643,11 @@ resolve_standard_predefined_macro_time__CIResolver(
   CIResolver *self,
   CIToken *standard_predefined_macro_time_token)
 {
-    TODO("__TIME__");
+    add_resolved_string_token__CIResolver(
+      self,
+      standard_predefined_macro_time_token,
+      clone__String(standard_predefined_macro_time_token
+                      ->standard_predefined_macro___time__));
 }
 
 CIToken *
@@ -2012,6 +2055,20 @@ resolve_token__CIResolver(CIResolver *self)
                                                           self->current_token);
         case CI_TOKEN_KIND_PREPROCESSOR_WARNING:
             return resolve_preprocessor_warning__CIResolver(
+              self, self->current_token);
+        // NOTE: The standard predefined macros are replaced here, so the parser
+        // reads the literals they stand for, as it does for any other macro.
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___DATE__:
+            return resolve_standard_predefined_macro_date__CIResolver(
+              self, self->current_token);
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___FILE__:
+            return resolve_standard_predefined_macro_file__CIResolver(
+              self, self->current_token);
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___LINE__:
+            return resolve_standard_predefined_macro_line__CIResolver(
+              self, self->current_token);
+        case CI_TOKEN_KIND_STANDARD_PREDEFINED_MACRO___TIME__:
+            return resolve_standard_predefined_macro_time__CIResolver(
               self, self->current_token);
         case CI_TOKEN_KIND_HASHTAG:
             return resolve_stringification__CIResolver(self);
