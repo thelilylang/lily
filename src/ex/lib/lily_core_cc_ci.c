@@ -240,6 +240,9 @@ is_sized_array__CIDataType(CIDataType *self);
 extern inline void
 set_qualifier__CIDataType(CIDataType *self, int qualifier);
 
+extern inline void
+set_alignment__CIDataType(CIDataType *self, struct CIExpr *alignment);
+
 extern inline CONSTRUCTOR(CIAttributeStandard,
                           CIAttributeStandard,
                           enum CIAttributeStandardKind kind);

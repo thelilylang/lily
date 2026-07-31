@@ -1562,6 +1562,8 @@ typedef struct CIDataType
 
     int ctx;
     int qualifier;
+    // Alignment the data type is written with, which `alignas` gives it.
+    struct CIExpr *alignment; // struct CIExpr*?
     Usize ref_count;
     union
     {
@@ -1847,6 +1849,17 @@ is_sized_array__CIDataType(CIDataType *self)
 {
     return self->kind == CI_DATA_TYPE_KIND_ARRAY &&
            self->array.kind == CI_DATA_TYPE_ARRAY_KIND_SIZED;
+}
+
+/**
+ *
+ * @brief Set the alignment a data type is written with.
+ * @param alignment CIExpr*?
+ */
+inline void
+set_alignment__CIDataType(CIDataType *self, struct CIExpr *alignment)
+{
+    self->alignment = alignment;
 }
 
 /**

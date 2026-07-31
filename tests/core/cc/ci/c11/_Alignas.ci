@@ -1,0 +1,16 @@
+//@compile_options -s c11
+//@expected_bin_stdout 1:8\n
+//@expected_bin_stdout 2:16\n
+
+#include <helper.h>
+
+/* What a data type is written to be aligned on is written before it, and is
+   kept as it is written. */
+_Alignas(16) int at_file_scope = 2;
+
+int main() {
+	_Alignas(8) int in_a_block = 1;
+
+	printf("%d:%d\n", in_a_block, (int)_Alignof(long));
+	printf("%d:%d\n", at_file_scope, 16);
+}

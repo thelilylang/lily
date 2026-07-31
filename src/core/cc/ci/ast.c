@@ -2073,6 +2073,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->array = array;
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
+    self->alignment = NULL;
 
     return self;
 }
@@ -2091,6 +2092,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->builtin = builtin;
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
+    self->alignment = NULL;
 
     return self;
 }
@@ -2109,6 +2111,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->enum_ = enum_;
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
+    self->alignment = NULL;
 
     return self;
 }
@@ -2127,6 +2130,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->function = function;
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
+    self->alignment = NULL;
 
     return self;
 }
@@ -2145,6 +2149,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->generic = ref__Rc(generic);
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
+    self->alignment = NULL;
 
     return self;
 }
@@ -2163,6 +2168,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->ptr = ptr;
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
+    self->alignment = NULL;
 
     return self;
 }
@@ -2181,6 +2187,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->struct_ = struct_;
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
+    self->alignment = NULL;
 
     return self;
 }
@@ -2199,6 +2206,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->typedef_ = typedef_;
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
+    self->alignment = NULL;
 
     return self;
 }
@@ -2217,6 +2225,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->union_ = union_;
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
+    self->alignment = NULL;
 
     return self;
 }
@@ -2233,6 +2242,7 @@ CONSTRUCTOR(CIDataType *,
     self->ref_count = 0;
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
+    self->alignment = NULL;
 
     return self;
 }
@@ -2404,6 +2414,8 @@ clone__CIDataType(const CIDataType *self)
 
     set_context__CIDataType(res, self->ctx);
     set_qualifier__CIDataType(res, self->qualifier);
+    set_alignment__CIDataType(
+      res, self->alignment ? ref__CIExpr(self->alignment) : NULL);
 
     return res;
 }
@@ -3057,6 +3069,10 @@ DESTRUCTOR(CIDataType, CIDataType *self)
     if (self->ref_count > 0) {
         --self->ref_count;
         return;
+    }
+
+    if (self->alignment) {
+        FREE(CIExpr, self->alignment);
     }
 
     switch (self->kind) {

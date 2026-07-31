@@ -1297,6 +1297,19 @@ generate_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type)
         subs_data_type = ref__CIDataType(data_type);
     }
 
+    // What a data type is written to be aligned on is written before it, as
+    // it is written by hand.
+    if (subs_data_type->alignment) {
+        // The keyword is written the way the standard the code is generated
+        // for writes it: `_Alignas` before C23, `alignas` from it on.
+        write_str__CIGenerator(self,
+                               self->file->config->standard >= CI_STANDARD_23
+                                 ? "alignas("
+                                 : "_Alignas(");
+        generate_function_expr__CIGenerator(self, subs_data_type->alignment);
+        write_str__CIGenerator(self, ") ");
+    }
+
     CIDataType *function_data_type = get_function__CIDataType(subs_data_type);
 
     if (function_data_type) {

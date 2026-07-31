@@ -735,6 +735,10 @@ static int storage_class_flag = CI_STORAGE_CLASS_NONE;
 #define HAS_TYPEDEF_STORAGE_CLASS_FLAG() \
     (storage_class_flag & CI_STORAGE_CLASS_TYPEDEF)
 
+// Alignment `alignas` gives to the data type being read, which is written
+// before it.
+static CIExpr *alignment = NULL; // CIExpr*?
+
 static int data_type_qualifier_flag = CI_DATA_TYPE_QUALIFIER_NONE;
 
 #define RESET_DATA_TYPE_QUALIFIER_FLAG() \
@@ -2533,6 +2537,24 @@ parse_pre_data_type__CIParser(CIParser *self)
         }
     }
 
+    // What a data type is written to be aligned on is written before it, as a
+    // storage class and a qualifier are.
+    //
+    // e.g. alignas(8) int a;
+    while (self->current_token->kind == CI_TOKEN_KIND_KEYWORD_ALIGNAS ||
+           self->current_token->kind == CI_TOKEN_KIND_KEYWORD__ALIGNAS) {
+        next_token__CIParser(self);
+        expect__CIParser(self, CI_TOKEN_KIND_LPAREN, true);
+
+        if (alignment) {
+            FREE(CIExpr, alignment);
+        }
+
+        alignment = parse_expr__CIParser(self);
+
+        expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
+    }
+
     // <storage_class_flag | dt_qualifier> <pre_dt>
     // e.g. static int, const int
     parse_storage_class_specifiers_and_data_type_qualifiers__CIParser(
@@ -2846,6 +2868,11 @@ parse_pre_data_type__CIParser(CIParser *self)
     // The qualifiers are added to the ones the data type already holds, as
     // `typeof` stands for a data type written with its own.
     set_qualifier__CIDataType(res, res->qualifier | data_type_qualifier_flag);
+
+    if (alignment) {
+        set_alignment__CIDataType(res, alignment);
+        alignment = NULL;
+    }
 
     RESET_DATA_TYPE_QUALIFIER_FLAG();
 
@@ -4917,6 +4944,13 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
             parse_static_assert__CIParser(self);
 
             return NULL;
+        // What a data type is written to be aligned on is written before the
+        // data type, so it starts a declaration as a storage class does.
+        case CI_TOKEN_KIND_KEYWORD_ALIGNAS:
+        case CI_TOKEN_KIND_KEYWORD__ALIGNAS:
+            DISABLE_IN_LABEL();
+
+            goto parse_decl;
         default:
         default_case: {
             if (is_data_type__CIParser(self) ||
