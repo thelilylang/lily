@@ -262,7 +262,44 @@ parse_array_declarator__CIParser(CIParser *self,
                                  bool in_function_prototype,
                                  bool has_new_name);
 
-static CIDataType *
+static /// @brief Check whether the size of an array is only known while the
+       /// program
+  /// runs, which is what a variable written in it makes it.
+  static bool
+  is_variable_length__CIParser(const CIExpr *expr)
+{
+    if (!expr) {
+        return false;
+    }
+
+    switch (expr->kind) {
+        case CI_EXPR_KIND_IDENTIFIER:
+            return expr->identifier.id.kind ==
+                   CI_EXPR_IDENTIFIER_ID_KIND_VARIABLE;
+        case CI_EXPR_KIND_BINARY:
+            return is_variable_length__CIParser(expr->binary.left) ||
+                   is_variable_length__CIParser(expr->binary.right);
+        case CI_EXPR_KIND_UNARY:
+            return is_variable_length__CIParser(expr->unary.expr);
+        case CI_EXPR_KIND_GROUPING:
+            return is_variable_length__CIParser(expr->grouping);
+        case CI_EXPR_KIND_CAST:
+            return is_variable_length__CIParser(expr->cast.expr);
+        case CI_EXPR_KIND_TERNARY:
+            return is_variable_length__CIParser(expr->ternary.cond) ||
+                   is_variable_length__CIParser(expr->ternary.if_) ||
+                   is_variable_length__CIParser(expr->ternary.else_);
+        case CI_EXPR_KIND_ARRAY_ACCESS:
+            return true;
+        case CI_EXPR_KIND_FUNCTION_CALL:
+        case CI_EXPR_KIND_FUNCTION_CALL_BUILTIN:
+            return true;
+        default:
+            return false;
+    }
+}
+
+CIDataType *
 parse_ptr_declarator__CIParser(CIParser *self, CIDataType *pre_data_type);
 
 /// @brief Parse function declarator.
@@ -1912,7 +1949,11 @@ parse_array_declarator__CIParser(CIParser *self,
     bool is_unsized = true;
     Isize size = 0;
 
-    if (expr) {
+    // The size of an array is written on what the program holds while it runs
+    // as much as on what is known before it does. What is only known while it
+    // runs is left as the expression it is written as, and read by the C
+    // compiler the code is given to.
+    if (expr && !is_variable_length__CIParser(expr)) {
         CIResolverExpr resolver_expr = NEW(CIResolverExpr,
                                            self,
                                            current_scope,
