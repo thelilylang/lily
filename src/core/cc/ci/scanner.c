@@ -630,6 +630,8 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                            .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD__NORETURN] = { .since = CI_STANDARD_11,
                                           .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD__PRAGMA] = { .since = CI_STANDARD_99,
+                                        .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD__STATIC_ASSERT] = { .since = CI_STANDARD_11,
                                                .until = CI_STANDARD_23 },
     [CI_TOKEN_KIND_KEYWORD__THREAD_LOCAL] = { .since = CI_STANDARD_11,
@@ -803,6 +805,7 @@ static const SizedStr ci_keywords[CI_N_KEYWORD] = {
     SIZED_STR_FROM_RAW("_Generic"),
     SIZED_STR_FROM_RAW("_Imaginary"),
     SIZED_STR_FROM_RAW("_Noreturn"),
+    SIZED_STR_FROM_RAW("_Pragma"),
     SIZED_STR_FROM_RAW("_Static_assert"),
     SIZED_STR_FROM_RAW("_Thread_local"),
     SIZED_STR_FROM_RAW("__attribute__"),
@@ -871,6 +874,7 @@ static const enum CITokenKind ci_keyword_ids[CI_N_KEYWORD] = {
     CI_TOKEN_KIND_KEYWORD__GENERIC,
     CI_TOKEN_KIND_KEYWORD__IMAGINARY,
     CI_TOKEN_KIND_KEYWORD__NORETURN,
+    CI_TOKEN_KIND_KEYWORD__PRAGMA,
     CI_TOKEN_KIND_KEYWORD__STATIC_ASSERT,
     CI_TOKEN_KIND_KEYWORD__THREAD_LOCAL,
     CI_TOKEN_KIND_KEYWORD___ATTRIBUTE__,
@@ -1500,6 +1504,24 @@ scan_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
 
                     if (param->is_variadic) {
                         has_variadic = true;
+
+                        // `__VA_OPT__` stands for what it holds where
+                        // something is written for the variadic part, and is
+                        // only read as such from the standard it comes with:
+                        // it is a name like any other before it.
+                        if (!strcmp(GET_PTR_RC(String, last_token->identifier)
+                                      ->buffer,
+                                    CI_VA_OPT) &&
+                            self->config->standard >= CI_STANDARD_23) {
+                            res = NEW(CIToken,
+                                      CI_TOKEN_KIND_MACRO_PARAM_VA_OPT,
+                                      last_token->location);
+
+                            FREE(CIToken, last_token);
+                            last_token = NULL;
+
+                            break;
+                        }
 
                         if (!strcmp(GET_PTR_RC(String, last_token->identifier)
                                       ->buffer,

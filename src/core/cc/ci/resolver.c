@@ -245,6 +245,19 @@ static void
 resolve_macro_param_variadic__CIResolver(CIResolver *self,
                                          CIToken *macro_param_variadic_token);
 
+/// @brief Resolve `__VA_OPT__`, which stands for what is written between the
+/// parentheses that follow it where something is written for the variadic part
+/// of the macro it is written in, and for nothing where nothing is.
+static void
+resolve_macro_param_va_opt__CIResolver(CIResolver *self,
+                                       CIToken *macro_param_va_opt_token);
+
+/// @brief Resolve `_Pragma`, which says what a pragma written on a line of its
+/// own says, written where an expression is written.
+static void
+resolve_pragma_operator__CIResolver(CIResolver *self,
+                                    CIToken *pragma_operator_token);
+
 static void
 resolve_preprocessor_define__CIResolver(CIResolver *self,
                                         CIToken *preprocessor_define_token);
@@ -937,85 +950,6 @@ resolve_identifier__CIResolver(CIResolver *self, CIToken *identifier_token)
     const CIResultDefine *define = NULL;
     const String *identifier = GET_PTR_RC(String, identifier_token->identifier);
 
-    // `_Pragma("...")` says what `#pragma ...` says, written where an
-    // expression is written rather than on a line of its own, so what it is
-    // given is read the same way.
-    if (!strcmp(identifier->buffer, "_Pragma")) {
-        next_token__CIResolver(self); // skip `_Pragma`
-
-        if (self->current_token->kind != CI_TOKEN_KIND_LPAREN) {
-            FAILED__CIResolver(self, CI_ERROR_KIND_EXPECTED_TOKEN);
-
-            return;
-        }
-
-        next_token__CIResolver(self); // skip `(`
-
-        if (self->current_token->kind !=
-            CI_TOKEN_KIND_LITERAL_CONSTANT_STRING) {
-            FAILED__CIResolver(self, CI_ERROR_KIND_EXPECTED_STRING_LITERAL);
-
-            return;
-        }
-
-        if (!strcmp(
-              GET_PTR_RC(String, self->current_token->literal_constant_string)
-                ->buffer,
-              "once")) {
-            add_included_once__CIResolver(
-              self->current_token->location.filename);
-        }
-
-        next_token__CIResolver(self); // skip the string
-
-        if (self->current_token->kind != CI_TOKEN_KIND_RPAREN) {
-            FAILED__CIResolver(self, CI_ERROR_KIND_EXPECTED_TOKEN);
-        }
-
-        return;
-    }
-
-    // `__VA_OPT__` stands for what is written between the parentheses that
-    // follow it where something is written for the variadic part of the macro
-    // it is written in, and for nothing where nothing is.
-    //
-    // e.g. #define M(a, ...) f(a __VA_OPT__(,) __VA_ARGS__)
-    if (self->macro_call && !strcmp(identifier->buffer, "__VA_OPT__")) {
-        bool has_variadic = self->macro_call->has_variadic_param;
-        Usize depth = 0;
-
-        next_token__CIResolver(self); // skip `__VA_OPT__`
-
-        if (self->current_token->kind != CI_TOKEN_KIND_LPAREN) {
-            FAILED__CIResolver(self, CI_ERROR_KIND_EXPECTED_TOKEN);
-
-            return;
-        }
-
-        next_token__CIResolver(self); // skip `(`
-
-        while (self->current_token->kind != CI_TOKEN_KIND_EOF &&
-               self->current_token->kind != CI_TOKEN_KIND_EOT) {
-            if (self->current_token->kind == CI_TOKEN_KIND_LPAREN) {
-                ++depth;
-            } else if (self->current_token->kind == CI_TOKEN_KIND_RPAREN) {
-                if (depth == 0) {
-                    break;
-                }
-
-                --depth;
-            }
-
-            if (has_variadic) {
-                resolve_token__CIResolver(self);
-            }
-
-            next_token__CIResolver(self);
-        }
-
-        return;
-    }
-
     // A macro met again while its own expansion is being resolved is left as a
     // plain identifier rather than expanded once more, as the standard
     // requires. Expanding it would not terminate.
@@ -1081,6 +1015,82 @@ resolve_macro_param_variadic__CIResolver(CIResolver *self,
         &self->macro_call->params);
 
     merge__CIResolvedTokens(self->resolved_tokens, param->resolved_content);
+}
+
+void
+resolve_macro_param_va_opt__CIResolver(CIResolver *self,
+                                       CIToken *macro_param_va_opt_token)
+{
+    ASSERT(self->macro_call);
+
+    bool has_variadic = self->macro_call->has_variadic_param;
+    Usize depth = 0;
+
+    next_token__CIResolver(self); // skip `__VA_OPT__`
+
+    if (self->current_token->kind != CI_TOKEN_KIND_LPAREN) {
+        FAILED__CIResolver(self, CI_ERROR_KIND_EXPECTED_TOKEN);
+
+        return;
+    }
+
+    next_token__CIResolver(self); // skip `(`
+
+    while (self->current_token->kind != CI_TOKEN_KIND_EOF &&
+           self->current_token->kind != CI_TOKEN_KIND_EOT) {
+        if (self->current_token->kind == CI_TOKEN_KIND_LPAREN) {
+            ++depth;
+        } else if (self->current_token->kind == CI_TOKEN_KIND_RPAREN) {
+            if (depth == 0) {
+                break;
+            }
+
+            --depth;
+        }
+
+        // What it holds is read where something is written for the variadic
+        // part, and passed over where nothing is.
+        if (has_variadic) {
+            resolve_token__CIResolver(self);
+        }
+
+        next_token__CIResolver(self);
+    }
+}
+
+void
+resolve_pragma_operator__CIResolver(CIResolver *self,
+                                    CIToken *pragma_operator_token)
+{
+    next_token__CIResolver(self); // skip `_Pragma`
+
+    if (self->current_token->kind != CI_TOKEN_KIND_LPAREN) {
+        FAILED__CIResolver(self, CI_ERROR_KIND_EXPECTED_TOKEN);
+
+        return;
+    }
+
+    next_token__CIResolver(self); // skip `(`
+
+    if (self->current_token->kind != CI_TOKEN_KIND_LITERAL_CONSTANT_STRING) {
+        FAILED__CIResolver(self, CI_ERROR_KIND_EXPECTED_STRING_LITERAL);
+
+        return;
+    }
+
+    // What is given says what a pragma written on a line of its own says, so
+    // it is read the same way.
+    if (!strcmp(GET_PTR_RC(String, self->current_token->literal_constant_string)
+                  ->buffer,
+                "once")) {
+        add_included_once__CIResolver(self->current_token->location.filename);
+    }
+
+    next_token__CIResolver(self); // skip what is given
+
+    if (self->current_token->kind != CI_TOKEN_KIND_RPAREN) {
+        FAILED__CIResolver(self, CI_ERROR_KIND_EXPECTED_TOKEN);
+    }
 }
 
 void
@@ -1965,6 +1975,12 @@ resolve_token__CIResolver(CIResolver *self)
             return resolve_macro_defined__CIResolver(self, self->current_token);
         case CI_TOKEN_KIND_MACRO_PARAM:
             return resolve_macro_param__CIResolver(self, self->current_token);
+        case CI_TOKEN_KIND_MACRO_PARAM_VA_OPT:
+            return resolve_macro_param_va_opt__CIResolver(self,
+                                                          self->current_token);
+        case CI_TOKEN_KIND_KEYWORD__PRAGMA:
+            return resolve_pragma_operator__CIResolver(self,
+                                                       self->current_token);
         case CI_TOKEN_KIND_MACRO_PARAM_VARIADIC:
             return resolve_macro_param_variadic__CIResolver(
               self, self->current_token);

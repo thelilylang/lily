@@ -1,0 +1,12 @@
+//@compile_options -s c11
+//@expected_bin_stdout 1\n
+
+#include <helper.h>
+
+int main() {
+	/* `__VA_OPT__` comes with C23, so before it the name is a name like any
+	   other. */
+	int __VA_OPT__ = 1;
+
+	printf("%d\n", __VA_OPT__);
+}

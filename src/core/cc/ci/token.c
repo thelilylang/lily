@@ -1818,6 +1818,8 @@ to_string__CIToken(CIToken *self)
             return from__String("_Imaginary");
         case CI_TOKEN_KIND_KEYWORD__NORETURN:
             return from__String("_Noreturn");
+        case CI_TOKEN_KIND_KEYWORD__PRAGMA:
+            return from__String("_Pragma");
         case CI_TOKEN_KIND_KEYWORD__STATIC_ASSERT:
             return from__String("_Static_assert");
         case CI_TOKEN_KIND_KEYWORD__THREAD_LOCAL:
@@ -2211,6 +2213,8 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_KEYWORD__IMAGINARY";
         case CI_TOKEN_KIND_KEYWORD__NORETURN:
             return "CI_TOKEN_KIND_KEYWORD__NORETURN";
+        case CI_TOKEN_KIND_KEYWORD__PRAGMA:
+            return "CI_TOKEN_KIND_KEYWORD__PRAGMA";
         case CI_TOKEN_KIND_KEYWORD__STATIC_ASSERT:
             return "CI_TOKEN_KIND_KEYWORD__STATIC_ASSERT";
         case CI_TOKEN_KIND_KEYWORD__THREAD_LOCAL:
@@ -2255,6 +2259,8 @@ IMPL_FOR_DEBUG(to_string, CITokenKind, enum CITokenKind self)
             return "CI_TOKEN_KIND_MACRO_DEFINED";
         case CI_TOKEN_KIND_MACRO_PARAM:
             return "CI_TOKEN_KIND_MACRO_PARAM";
+        case CI_TOKEN_KIND_MACRO_PARAM_VA_OPT:
+            return "CI_TOKEN_KIND_MACRO_PARAM_VA_OPT";
         case CI_TOKEN_KIND_MACRO_PARAM_VARIADIC:
             return "CI_TOKEN_KIND_MACRO_PARAM_VARIADIC";
         case CI_TOKEN_KIND_MINUS:
