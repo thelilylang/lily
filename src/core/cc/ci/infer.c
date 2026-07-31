@@ -794,12 +794,17 @@ infer_expr_data_type__CIInfer(const CIResultFile *file,
                                             current_scope_id,
                                             called_generic_params,
                                             decl_generic_params);
-            CIDataType *res = unwrap_implicit_ptr_data_type__CIResolverDataType(
-              file, array_dt, called_generic_params, decl_generic_params);
+            // What is held is taken a reference on before what holds it is
+            // dropped, as it is part of it: a data type built for the access
+            // alone, such as the one of a string literal, is otherwise dropped
+            // with it.
+            CIDataType *res =
+              ref__CIDataType(unwrap_implicit_ptr_data_type__CIResolverDataType(
+                file, array_dt, called_generic_params, decl_generic_params));
 
             FREE(CIDataType, array_dt);
 
-            return ref__CIDataType(res);
+            return res;
         }
         case CI_EXPR_KIND_BINARY:
             return infer_expr_binary_data_type__CIInfer(file,

@@ -1,0 +1,16 @@
+//@expected_bin_stdout 97:98:0\n
+//@expected_bin_stdout 1:1\n
+
+#include <helper.h>
+
+int main() {
+	/* A string literal is read as the array of characters it is, so what is
+	   held at an index of it is a character. */
+	char first = "ab"[0];
+	char second = "ab"[1];
+	char end = "ab"[2];
+
+	printf("%d:%d:%d\n", (int)first, (int)second, (int)end);
+
+	printf("%d:%d\n", "ab"[0] == 'a', "ab"[2] == '\0');
+}
