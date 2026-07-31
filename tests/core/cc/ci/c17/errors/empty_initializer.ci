@@ -1,0 +1,13 @@
+//@compile_options -s c17
+//@expected_compiler_error :10:14: \e[31merror\e[0m[0011]: required C23 or later standard
+//@expected_compiler_error \e[34m10 |\e[0m \tint a[3] = {};
+
+#include <helper.h>
+
+int main() {
+	/* Braces written empty are what an object is zeroed with only since C23,
+	   so before it an initializer is written to hold something. */
+	int a[3] = {};
+
+	return a[0];
+}

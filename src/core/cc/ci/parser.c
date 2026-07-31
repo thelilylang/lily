@@ -3478,6 +3478,16 @@ parse_initializer__CIParser(CIParser *self)
 
     next_token__CIParser(self); // skip `{`
 
+    // An initializer written to hold nothing is what an object is zeroed with,
+    // and the braces are written empty only since C23.
+    if (self->current_token->kind == CI_TOKEN_KIND_RBRACE) {
+        CI_CHECK_STANDARD_SINCE(
+          self->file->entity.result->config->standard, CI_STANDARD_23, {
+              FAILED__CIParser(
+                self, NEW(CIError, CI_ERROR_KIND_REQUIRED_C23_OR_LATER));
+          });
+    }
+
     while (self->current_token->kind != CI_TOKEN_KIND_RBRACE &&
            self->current_token->kind != CI_TOKEN_KIND_EOF) {
         Vec *path = NULL;     // Vec<Rc<String*>*>*?
