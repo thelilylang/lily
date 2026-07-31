@@ -2076,6 +2076,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
     self->alignment = NULL;
+    self->bitint_is_unsigned = false;
 
     return self;
 }
@@ -2095,6 +2096,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
     self->alignment = NULL;
+    self->bitint_is_unsigned = false;
 
     return self;
 }
@@ -2114,6 +2116,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
     self->alignment = NULL;
+    self->bitint_is_unsigned = false;
 
     return self;
 }
@@ -2133,6 +2136,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
     self->alignment = NULL;
+    self->bitint_is_unsigned = false;
 
     return self;
 }
@@ -2152,6 +2156,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
     self->alignment = NULL;
+    self->bitint_is_unsigned = false;
 
     return self;
 }
@@ -2171,6 +2176,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
     self->alignment = NULL;
+    self->bitint_is_unsigned = false;
 
     return self;
 }
@@ -2190,6 +2196,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
     self->alignment = NULL;
+    self->bitint_is_unsigned = false;
 
     return self;
 }
@@ -2209,6 +2216,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
     self->alignment = NULL;
+    self->bitint_is_unsigned = false;
 
     return self;
 }
@@ -2228,6 +2236,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
     self->alignment = NULL;
+    self->bitint_is_unsigned = false;
 
     return self;
 }
@@ -2247,6 +2256,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
     self->alignment = NULL;
+    self->bitint_is_unsigned = false;
 
     return self;
 }
@@ -2264,6 +2274,7 @@ CONSTRUCTOR(CIDataType *,
     self->ctx = CI_DATA_TYPE_CONTEXT_NONE;
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
     self->alignment = NULL;
+    self->bitint_is_unsigned = false;
 
     return self;
 }
@@ -2444,6 +2455,8 @@ clone__CIDataType(const CIDataType *self)
     set_qualifier__CIDataType(res, self->qualifier);
     set_alignment__CIDataType(
       res, self->alignment ? ref__CIExpr(self->alignment) : NULL);
+
+    res->bitint_is_unsigned = self->bitint_is_unsigned;
 
     return res;
 }
@@ -2648,7 +2661,8 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
                     UNREACHABLE("unknown variant");
             }
         case CI_DATA_TYPE_KIND__BITINT:
-            return self->bitint == other->bitint;
+            return self->bitint == other->bitint &&
+                   self->bitint_is_unsigned == other->bitint_is_unsigned;
         case CI_DATA_TYPE_KIND_BUILTIN:
             return self->builtin == other->builtin;
         case CI_DATA_TYPE_KIND_ENUM: {

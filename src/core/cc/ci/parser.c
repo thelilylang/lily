@@ -2575,6 +2575,20 @@ parse_pre_data_type__CIParser(CIParser *self)
     // parentheses, and holds an integer of exactly that many.
     //
     // e.g. _BitInt(8) b;
+    // The sign `_BitInt` is written with is written before it, as it is for
+    // any other integer.
+    bool bitint_is_unsigned = false;
+
+    if ((self->current_token->kind == CI_TOKEN_KIND_KEYWORD_UNSIGNED ||
+         self->current_token->kind == CI_TOKEN_KIND_KEYWORD_SIGNED) &&
+        peek_token__CIParser(self, 1) &&
+        peek_token__CIParser(self, 1)->kind == CI_TOKEN_KIND_KEYWORD__BITINT) {
+        bitint_is_unsigned =
+          self->current_token->kind == CI_TOKEN_KIND_KEYWORD_UNSIGNED;
+
+        next_token__CIParser(self);
+    }
+
     if (self->current_token->kind == CI_TOKEN_KIND_KEYWORD__BITINT) {
         next_token__CIParser(self);
         expect__CIParser(self, CI_TOKEN_KIND_LPAREN, true);
@@ -2600,6 +2614,8 @@ parse_pre_data_type__CIParser(CIParser *self)
 
         res = NEW_VARIANT(
           CIDataType, bitint, previous_location__CIParser(self), bits);
+
+        res->bitint_is_unsigned = bitint_is_unsigned;
 
         set_qualifier__CIDataType(res, data_type_qualifier_flag);
         RESET_DATA_TYPE_QUALIFIER_FLAG();

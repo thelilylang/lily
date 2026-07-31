@@ -1033,7 +1033,11 @@ generate_data_type_base__CIGenerator(CIGenerator *self,
         }
         case CI_DATA_TYPE_KIND__BITINT:
             write_String__CIGenerator(
-              self, format__String("_BitInt({zu})", data_type->bitint));
+              self,
+              format__String(data_type->bitint_is_unsigned
+                               ? "unsigned _BitInt({zu})"
+                               : "_BitInt({zu})",
+                             data_type->bitint));
 
             break;
         case CI_DATA_TYPE_KIND_BOOL:

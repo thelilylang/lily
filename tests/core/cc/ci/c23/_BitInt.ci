@@ -1,5 +1,6 @@
 //@compile_options -s c23
 //@expected_bin_stdout 3:5:127\n
+//@expected_bin_stdout 300:-7\n
 
 #include <helper.h>
 
@@ -12,4 +13,11 @@ int main() {
 	_BitInt(32) wide = 127;
 
 	printf("%d:%d:%d\n", (int)small, (int)at_file_scope, (int)wide);
+
+	/* The sign it is written with is written before it, as it is for any
+	   other integer. */
+	unsigned _BitInt(16) with_no_sign = 300;
+	signed _BitInt(16) with_a_sign = -7;
+
+	printf("%d:%d\n", (int)with_no_sign, (int)with_a_sign);
 }

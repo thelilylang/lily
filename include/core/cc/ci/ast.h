@@ -1565,6 +1565,8 @@ typedef struct CIDataType
     int qualifier;
     // Alignment the data type is written with, which `alignas` gives it.
     struct CIExpr *alignment; // struct CIExpr*?
+    // Whether `_BitInt` is written to hold a value with no sign.
+    bool bitint_is_unsigned;
     Usize ref_count;
     union
     {
