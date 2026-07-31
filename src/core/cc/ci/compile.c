@@ -23,6 +23,7 @@
  */
 
 #include <base/dir.h>
+#include <base/file.h>
 
 #include <core/cc/ci/compile.h>
 #include <core/cc/ci/result.h>
@@ -58,6 +59,13 @@ build_bin_compile_command__CICompile(const CIResultBin *bin,
     create_recursive_dir__Dir(bin_dir_result->buffer,
                               DIR_MODE_RWXU | DIR_MODE_RWXG | DIR_MODE_RWXO);
 
+    String *bin_file = format__String("{S}/{s}", bin_dir_result, bin->name);
+
+    // NOTE: The binary the last run left behind is removed, so that a compile
+    // which fails leaves nothing to be taken for what it was asked to build.
+    remove__File(bin_file->buffer);
+    FREE(String, bin_file);
+
     String *gen_c_dir_result =
       get_dir_result__CIResultFile(file, CI_DIR_RESULT_PURPOSE_C_GEN);
     String *gen_file = format__String(
@@ -81,6 +89,13 @@ build_lib_compile_command__CICompile(const CIResultLib *lib,
 
     create_recursive_dir__Dir(lib_dir_result->buffer,
                               DIR_MODE_RWXU | DIR_MODE_RWXG | DIR_MODE_RWXO);
+
+    String *lib_file = format__String("{S}/{s}", lib_dir_result, lib->name);
+
+    // NOTE: The library the last run left behind is removed, for the same
+    // reason the binary is.
+    remove__File(lib_file->buffer);
+    FREE(String, lib_file);
 
     String *gen_c_dir_result =
       get_dir_result__CIResultFile(file, CI_DIR_RESULT_PURPOSE_C_GEN);

@@ -122,6 +122,15 @@ exists__File(const char *path);
 
 /**
  *
+ * @brief Remove the file, where there is one to remove.
+ * @return Return true where the file is gone, whether it was removed here or
+ * was not there to begin with.
+ */
+bool
+remove__File(const char *path);
+
+/**
+ *
  * @brief Check whether the file exists in the current and previous folders.
  * @return String*?
  */

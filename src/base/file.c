@@ -341,6 +341,16 @@ exists__File(const char *path)
 #endif
 }
 
+bool
+remove__File(const char *path)
+{
+    if (!exists__File(path)) {
+        return true;
+    }
+
+    return remove(path) == 0;
+}
+
 String *
 exists_rec__File(const char *path, const char *filename)
 {
