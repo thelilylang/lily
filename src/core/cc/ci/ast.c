@@ -1246,7 +1246,9 @@ VARIANT_CONSTRUCTOR(CIDeclStructField *,
 {
     CIDeclStructField *self = lily_malloc(sizeof(CIDeclStructField));
 
-    self->name = ref__Rc(name);
+    // NOTE: A member is written with no name where it is a bit field, which
+    // then only stands for the bits it takes up.
+    self->name = name ? ref__Rc(name) : NULL;
     self->kind = CI_DECL_STRUCT_FIELD_KIND_MEMBER;
     self->ref_count = 0;
     self->parent = parent;

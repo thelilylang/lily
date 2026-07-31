@@ -1,0 +1,24 @@
+/*@expected_bin_stdout 1:2:4:5\n*/
+/*@expected_bin_stdout 4:8\n*/
+
+#include <helper.h>
+
+/* A bit field is written with no name where it only stands for the bits it
+   takes up, and a width of zero makes what follows start on the next unit. */
+struct S { unsigned a : 3; unsigned : 2; unsigned b : 3; };
+struct Z { unsigned a : 3; unsigned : 0; unsigned b : 3; };
+
+int main() {
+	struct S s;
+	struct Z z;
+
+	s.a = 1;
+	s.b = 2;
+	z.a = 4;
+	z.b = 5;
+
+	printf("%d:%d:%d:%d\n", s.a, s.b, z.a, z.b);
+	printf("%d:%d\n", (int)sizeof(struct S), (int)sizeof(struct Z));
+
+	return 0;
+}

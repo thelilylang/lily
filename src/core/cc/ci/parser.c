@@ -5167,6 +5167,12 @@ parse_field_name_and_data_type__CIParser(CIParser *self,
             case CI_DATA_TYPE_KIND_UNION:
                 break;
             default:
+                // A member is written with no name where it is a bit field,
+                // which then only stands for the bits it takes up.
+                if (self->current_token->kind == CI_TOKEN_KIND_COLON) {
+                    break;
+                }
+
                 FAILED__CIParser(
                   self, NEW(CIError, CI_ERROR_KIND_EXPECTED_IDENTIFIER));
 
@@ -5402,7 +5408,21 @@ parse_fields__CIParser(CIParser *self)
            self->current_token->kind != CI_TOKEN_KIND_EOF) {
         RESET_DATA_TYPE_QUALIFIER_FLAG();
 
+        // An assertion is written among the fields as much as anywhere else,
+        // and declares nothing of its own.
+        if (parse_static_assert__CIParser(self)) {
+            continue;
+        }
+
         CIDataType *pre_data_type = parse_pre_data_type__CIParser(self);
+
+        // What is written here is no data type, so there is no field to read
+        // from it.
+        if (!pre_data_type) {
+            FAILED__CIParser(self, NEW(CIError, CI_ERROR_KIND_EXPECTED_TYPE));
+
+            return fields;
+        }
 
     loop: {
         struct CIName name = { 0 };

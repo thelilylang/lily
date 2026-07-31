@@ -2438,7 +2438,10 @@ generate_struct_field__CIGenerator(CIGenerator *self,
 
     Usize field_bit = get_bit__CIDeclStructField(field);
 
-    if (field_bit != 0) {
+    // NOTE: A member written with no name is only ever a bit field, so the
+    // bits it takes up are written even where they are none, which is what
+    // makes the members that follow start on the next unit.
+    if (field_bit != 0 || !field->name) {
         write_String__CIGenerator(self, format__String(" : {zu}", field_bit));
     }
 
