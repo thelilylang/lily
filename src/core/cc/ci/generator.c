@@ -1539,6 +1539,34 @@ void
 generate_function_prototype__CIGenerator(CIGenerator *self,
                                          const CIDeclFunction *function)
 {
+    CIDataType *returned_function_data_type =
+      get_function__CIDataType(function->return_data_type);
+
+    // A function giving back a pointer on a function is written with what it
+    // is called with inside the declarator of what it gives back, so that the
+    // parentheses read as they are meant to.
+    //
+    // e.g. int (*pick(void))(int)
+    if (returned_function_data_type) {
+        generate_data_type_base__CIGenerator(
+          self, returned_function_data_type->function.return_data_type, false);
+        write_str__CIGenerator(self, " (");
+        generate_ptr_data_type__CIGenerator(self, function->return_data_type);
+        write_str__CIGenerator(self,
+                               GET_PTR_RC(String, function->name)->buffer);
+        generate_function_params__CIGenerator(self, function->params);
+        write__CIGenerator(self, ')');
+
+        if (returned_function_data_type->function.params) {
+            generate_function_params__CIGenerator(
+              self, returned_function_data_type->function.params);
+        } else {
+            write_str__CIGenerator(self, "()");
+        }
+
+        return;
+    }
+
     generate_data_type__CIGenerator(self, function->return_data_type);
     write_String__CIGenerator(
       self, format__String(" {S}", GET_PTR_RC(String, function->name)));

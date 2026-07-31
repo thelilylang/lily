@@ -1,0 +1,37 @@
+//@expected_bin_stdout 42:6\n
+//@expected_bin_stdout 2:20\n
+
+#include <helper.h>
+
+int
+add1(int x)
+{
+	return x + 1;
+}
+
+int
+twice(int x)
+{
+	return x * 2;
+}
+
+/* A function gives back a pointer on a function as much as anything else, and
+   what it is called with is written inside the declarator of what it gives
+   back. */
+int (*pick(int which))(int)
+{
+	return which ? add1 : twice;
+}
+
+int (*pick_none(void))(int)
+{
+	return add1;
+}
+
+int main() {
+	printf("%d:%d\n", pick(1)(41), pick(0)(3));
+
+	int (*p)(int) = pick_none();
+
+	printf("%d:%d\n", p(1), pick(0)(10));
+}
