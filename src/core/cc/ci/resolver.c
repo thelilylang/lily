@@ -98,27 +98,27 @@ parse_macro_call_param__CIResolver(CIResolver *self,
 /// @param define const CIResultDefine* (&)
 /// @see `get_variadic_param_index__CITokenPreprocessorDefine` function in
 /// `include/core/cc/ci/token.h`
-static /// @brief Split what a macro parameter stands for on the commas written
-       /// at the
-  /// top of it, each part becoming a parameter of the call of its own.
-  ///
-  /// A macro written in the body of another is given the tokens the parameters
-  /// of the latter stand for, and those tokens are read where the body is read
-  /// again, so a comma among them separates what the call is given as much as
-  /// one written by hand does.
-  ///
-  /// e.g. #define VIA(...) TAKE1(__VA_ARGS__, 0)
-  ///      VIA(1, 2) gives TAKE1 three parameters: 1, 2 and 0.
-  ///
-  /// The tokens a macro written on its own stands for are given as they are, as
-  /// what a call is given is split before it is expanded.
-  ///
-  /// e.g. #define PAIR 1, 2
-  ///      TAKE1(PAIR, 0) gives TAKE1 two parameters: PAIR and 0.
-  /// @return The number of parameters the call gained.
-  static Usize
-  add_split_param__CIResolver(CIResolverMacroCallParams *params,
-                              CIResolverMacroCallParam *param)
+/// @brief Split what a macro parameter stands for on the commas written
+/// at the
+/// top of it, each part becoming a parameter of the call of its own.
+///
+/// A macro written in the body of another is given the tokens the parameters
+/// of the latter stand for, and those tokens are read where the body is read
+/// again, so a comma among them separates what the call is given as much as
+/// one written by hand does.
+///
+/// e.g. #define VIA(...) TAKE1(__VA_ARGS__, 0)
+///      VIA(1, 2) gives TAKE1 three parameters: 1, 2 and 0.
+///
+/// The tokens a macro written on its own stands for are given as they are, as
+/// what a call is given is split before it is expanded.
+///
+/// e.g. #define PAIR 1, 2
+///      TAKE1(PAIR, 0) gives TAKE1 two parameters: PAIR and 0.
+/// @return The number of parameters the call gained.
+static Usize
+add_split_param__CIResolver(CIResolverMacroCallParams *params,
+                            CIResolverMacroCallParam *param)
 {
     CIResolvedTokens *content = param->resolved_content;
     Usize content_count = count__CIResolvedTokens(content);
