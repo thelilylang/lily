@@ -1,0 +1,32 @@
+/*@compile_options -s c89 */
+/*@expected_bin_stdout 0:1\n*/
+
+#include <setjmp.h>
+#include <helper.h>
+
+/* C99 7.13: setjmp gives back zero where it saves the environment, and what
+   longjmp was written with where it comes back through it. */
+static jmp_buf env;
+
+/* 7.13.2.1: an automatic object that is written to between the setjmp and the
+   longjmp holds an indeterminate value afterwards unless it is volatile, so
+   what tells the two passes apart is written outside the function. */
+static int first = 1;
+
+int main() {
+	int came_back;
+
+	came_back = setjmp(env);
+
+	if (first) {
+		first = 0;
+
+		printf("%d:", came_back);
+
+		longjmp(env, 1);
+	}
+
+	printf("%d\n", came_back);
+
+	return 0;
+}

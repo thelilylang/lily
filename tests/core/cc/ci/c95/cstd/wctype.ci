@@ -1,0 +1,25 @@
+/*@compile_options -s c95 */
+/*@expected_bin_stdout PASS\n*/
+
+#include <wctype.h>
+#include <helper.h>
+
+/* C99 7.25: <wctype.h> classifies and maps a wide character, either by the
+   function the standard names or through the classification and mapping the
+   locale is asked for by name. */
+int main() {
+	wctype_t alpha = wctype("alpha");
+	wctrans_t to_upper = wctrans("toupper");
+
+	if (iswalpha((wint_t)'a') && !iswdigit((wint_t)'a') &&
+	    iswdigit((wint_t)'7') && iswspace((wint_t)' ') &&
+	    iswupper((wint_t)'A') && !iswupper((wint_t)'a') &&
+	    towupper((wint_t)'a') == (wint_t)'A' &&
+	    towlower((wint_t)'A') == (wint_t)'a' && WEOF == (wint_t)-1 &&
+	    alpha != (wctype_t)0 && iswctype((wint_t)'a', alpha) &&
+	    to_upper != 0 && towctrans((wint_t)'a', to_upper) == (wint_t)'A') {
+		printf("PASS\n");
+	}
+
+	return 0;
+}

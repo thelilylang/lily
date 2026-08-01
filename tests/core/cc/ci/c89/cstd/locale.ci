@@ -1,0 +1,26 @@
+/*@compile_options -s c89 */
+/*@expected_bin_stdout PASS\n*/
+
+#include <limits.h>
+#include <locale.h>
+#include <helper.h>
+
+/* C99 7.11: <locale.h> declares setlocale and localeconv, defines struct lconv
+   and the categories. "C" is the locale a program starts in, where the decimal
+   point is a period and no grouping is written. */
+int main() {
+	struct lconv *lc;
+
+	if (setlocale(LC_ALL, "C") != 0 && LC_NUMERIC != LC_TIME) {
+		lc = localeconv();
+
+		if (lc != 0 && lc->decimal_point[0] == '.' &&
+		    lc->decimal_point[1] == '\0' && lc->grouping[0] == '\0' &&
+		    lc->int_frac_digits == CHAR_MAX &&
+		    lc->currency_symbol[0] == '\0') {
+			printf("PASS\n");
+		}
+	}
+
+	return 0;
+}

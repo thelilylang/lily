@@ -1,0 +1,27 @@
+/*@compile_options -s c89 */
+/*@expected_bin_stdout PASS\n*/
+
+#include <time.h>
+#include <helper.h>
+
+/* C99 7.23: <time.h> defines clock_t, time_t, struct tm and CLOCKS_PER_SEC,
+   and declares the functions a calendar time is broken down and written back
+   with. tm_year counts from 1900, and tm_mon from January. */
+int main() {
+	time_t now = time(0);
+	struct tm *broken_down = localtime(&now);
+	char buffer[8];
+
+	if (now != (time_t)-1 && broken_down != 0 && broken_down->tm_year > 70 &&
+	    broken_down->tm_mon >= 0 && broken_down->tm_mon <= 11 &&
+	    broken_down->tm_mday >= 1 && broken_down->tm_mday <= 31 &&
+	    broken_down->tm_hour >= 0 && broken_down->tm_hour <= 23 &&
+	    CLOCKS_PER_SEC == 1000000 && clock() != (clock_t)-1 &&
+	    difftime(now + 1, now) == 1.0 && mktime(broken_down) != (time_t)-1 &&
+	    strftime(buffer, sizeof(buffer), "%Y", broken_down) == 4 &&
+	    buffer[0] == '2') {
+		printf("PASS\n");
+	}
+
+	return 0;
+}

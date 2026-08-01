@@ -1,0 +1,25 @@
+//@compile_options -s c99
+//@expected_bin_stdout PASS\n
+
+#include <math.h>
+#include <helper.h>
+
+/* C99 7.12: <math.h> gains the float and long double analogs of each function,
+   the classification macros, and the comparisons that hold no exception where
+   an operand is a NaN. */
+int main() {
+	double nan_value = NAN;
+
+	if (fpclassify(1.0) == FP_NORMAL && fpclassify(0.0) == FP_ZERO &&
+	    isnan(nan_value) && isinf(INFINITY) && !isfinite(INFINITY) &&
+	    isnormal(1.0) && !signbit(1.0) && signbit(-1.0) &&
+	    isunordered(nan_value, 1.0) && isgreater(2.0, 1.0) &&
+	    isless(1.0, 2.0) && sqrtf(4.0F) == 2.0F && fabsl(-1.0L) == 1.0L &&
+	    (int)cbrt(27.0) == 3 && (int)hypot(3.0, 4.0) == 5 &&
+	    (int)fmax(1.0, 2.0) == 2 && (int)trunc(2.7) == 2 &&
+	    (int)round(2.5) == 3 && copysign(1.0, -2.0) < 0.0) {
+		printf("PASS\n");
+	}
+
+	return 0;
+}

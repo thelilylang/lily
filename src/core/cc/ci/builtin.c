@@ -41,6 +41,17 @@
         .params = init__Vec(pn, __VA_ARGS__)                        \
     }
 
+/* A builtin written with no parameter at all, which `init__Vec` has no way of
+   being handed. */
+#define CI_BUILTIN_FUNCTION_WITHOUT_PARAMS(n, rt)                   \
+    (CIBuiltinFunction)                                             \
+    {                                                               \
+        .name = &builtin_function_names[n], .return_data_type = rt, \
+        .params = NEW(Vec)                                          \
+    }
+
+#define CI_BUILTIN_DATA_TYPE(k) NEW(CIDataType, SYNTHETIC_LOCATION__CI(), k)
+
 #define CI_BUILTIN_TYPE_FROM_RAW(n)                                    \
     (CIBuiltinType)                                                    \
     {                                                                  \
@@ -53,21 +64,64 @@
 #define CI_BUILTIN_FUNCTION_VA_END 2
 #define CI_BUILTIN_FUNCTION_VA_ARG 3
 #define CI_BUILTIN_FUNCTION_VA_COPY 4
+/* The ones <math.h> is written with: what it classifies a value as, and the
+   values it holds that no constant can be written with (7.12, 7.12.3, 7.12.14).
+ */
+#define CI_BUILTIN_FUNCTION_FPCLASSIFY 5
+#define CI_BUILTIN_FUNCTION_HUGE_VAL 6
+#define CI_BUILTIN_FUNCTION_HUGE_VALF 7
+#define CI_BUILTIN_FUNCTION_HUGE_VALL 8
+#define CI_BUILTIN_FUNCTION_INFF 9
+#define CI_BUILTIN_FUNCTION_ISFINITE 10
+#define CI_BUILTIN_FUNCTION_ISGREATER 11
+#define CI_BUILTIN_FUNCTION_ISGREATEREQUAL 12
+#define CI_BUILTIN_FUNCTION_ISINF 13
+#define CI_BUILTIN_FUNCTION_ISLESS 14
+#define CI_BUILTIN_FUNCTION_ISLESSEQUAL 15
+#define CI_BUILTIN_FUNCTION_ISLESSGREATER 16
+#define CI_BUILTIN_FUNCTION_ISNAN 17
+#define CI_BUILTIN_FUNCTION_ISNORMAL 18
+#define CI_BUILTIN_FUNCTION_ISUNORDERED 19
+#define CI_BUILTIN_FUNCTION_NANF 20
+#define CI_BUILTIN_FUNCTION_SIGNBIT 21
 
 static SizedStr builtin_function_names[CI_BUILTIN_FUNCTION_COUNT] = {
     SIZED_STR_FROM_RAW("__builtin_memcpy"),
     SIZED_STR_FROM_RAW("__builtin_va_start"),
     SIZED_STR_FROM_RAW("__builtin_va_end"),
     SIZED_STR_FROM_RAW("__builtin_va_arg"),
-    SIZED_STR_FROM_RAW("__builtin_va_copy")
+    SIZED_STR_FROM_RAW("__builtin_va_copy"),
+    SIZED_STR_FROM_RAW("__builtin_fpclassify"),
+    SIZED_STR_FROM_RAW("__builtin_huge_val"),
+    SIZED_STR_FROM_RAW("__builtin_huge_valf"),
+    SIZED_STR_FROM_RAW("__builtin_huge_vall"),
+    SIZED_STR_FROM_RAW("__builtin_inff"),
+    SIZED_STR_FROM_RAW("__builtin_isfinite"),
+    SIZED_STR_FROM_RAW("__builtin_isgreater"),
+    SIZED_STR_FROM_RAW("__builtin_isgreaterequal"),
+    SIZED_STR_FROM_RAW("__builtin_isinf"),
+    SIZED_STR_FROM_RAW("__builtin_isless"),
+    SIZED_STR_FROM_RAW("__builtin_islessequal"),
+    SIZED_STR_FROM_RAW("__builtin_islessgreater"),
+    SIZED_STR_FROM_RAW("__builtin_isnan"),
+    SIZED_STR_FROM_RAW("__builtin_isnormal"),
+    SIZED_STR_FROM_RAW("__builtin_isunordered"),
+    SIZED_STR_FROM_RAW("__builtin_nanf"),
+    SIZED_STR_FROM_RAW("__builtin_signbit")
 };
 
 static Int32 builtin_function_ids[CI_BUILTIN_FUNCTION_COUNT] = {
-    CI_BUILTIN_FUNCTION_MEMCPY,
-    CI_BUILTIN_FUNCTION_VA_START,
-    CI_BUILTIN_FUNCTION_VA_END,
-    CI_BUILTIN_FUNCTION_VA_ARG,
-    CI_BUILTIN_FUNCTION_VA_COPY
+    CI_BUILTIN_FUNCTION_MEMCPY,         CI_BUILTIN_FUNCTION_VA_START,
+    CI_BUILTIN_FUNCTION_VA_END,         CI_BUILTIN_FUNCTION_VA_ARG,
+    CI_BUILTIN_FUNCTION_VA_COPY,        CI_BUILTIN_FUNCTION_FPCLASSIFY,
+    CI_BUILTIN_FUNCTION_HUGE_VAL,       CI_BUILTIN_FUNCTION_HUGE_VALF,
+    CI_BUILTIN_FUNCTION_HUGE_VALL,      CI_BUILTIN_FUNCTION_INFF,
+    CI_BUILTIN_FUNCTION_ISFINITE,       CI_BUILTIN_FUNCTION_ISGREATER,
+    CI_BUILTIN_FUNCTION_ISGREATEREQUAL, CI_BUILTIN_FUNCTION_ISINF,
+    CI_BUILTIN_FUNCTION_ISLESS,         CI_BUILTIN_FUNCTION_ISLESSEQUAL,
+    CI_BUILTIN_FUNCTION_ISLESSGREATER,  CI_BUILTIN_FUNCTION_ISNAN,
+    CI_BUILTIN_FUNCTION_ISNORMAL,       CI_BUILTIN_FUNCTION_ISUNORDERED,
+    CI_BUILTIN_FUNCTION_NANF,           CI_BUILTIN_FUNCTION_SIGNBIT
 };
 
 #define CI_BUILTIN_TYPE_VA_LIST 0
@@ -146,6 +200,103 @@ load__CIBuiltinFunction()
                   builtin,
                   SYNTHETIC_LOCATION__CI(),
                   CI_BUILTIN_TYPE_VA_LIST));
+
+    /* 7.12.3.1: the classification the value is given, which is written with
+       the number each class is named by. */
+    builtins[CI_BUILTIN_FUNCTION_FPCLASSIFY] =
+      CI_BUILTIN_FUNCTION(CI_BUILTIN_FUNCTION_FPCLASSIFY,
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_INT),
+                          6,
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_INT),
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_INT),
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_INT),
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_INT),
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_INT),
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_DOUBLE));
+    builtins[CI_BUILTIN_FUNCTION_HUGE_VAL] = CI_BUILTIN_FUNCTION_WITHOUT_PARAMS(
+      CI_BUILTIN_FUNCTION_HUGE_VAL,
+      CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_DOUBLE));
+    builtins[CI_BUILTIN_FUNCTION_HUGE_VALF] =
+      CI_BUILTIN_FUNCTION_WITHOUT_PARAMS(
+        CI_BUILTIN_FUNCTION_HUGE_VALF,
+        CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_FLOAT));
+    builtins[CI_BUILTIN_FUNCTION_HUGE_VALL] =
+      CI_BUILTIN_FUNCTION_WITHOUT_PARAMS(
+        CI_BUILTIN_FUNCTION_HUGE_VALL,
+        CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_LONG_DOUBLE));
+    builtins[CI_BUILTIN_FUNCTION_INFF] = CI_BUILTIN_FUNCTION_WITHOUT_PARAMS(
+      CI_BUILTIN_FUNCTION_INFF, CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_FLOAT));
+    builtins[CI_BUILTIN_FUNCTION_ISFINITE] =
+      CI_BUILTIN_FUNCTION(CI_BUILTIN_FUNCTION_ISFINITE,
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_INT),
+                          1,
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_DOUBLE));
+    builtins[CI_BUILTIN_FUNCTION_ISINF] =
+      CI_BUILTIN_FUNCTION(CI_BUILTIN_FUNCTION_ISINF,
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_INT),
+                          1,
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_DOUBLE));
+    builtins[CI_BUILTIN_FUNCTION_ISNAN] =
+      CI_BUILTIN_FUNCTION(CI_BUILTIN_FUNCTION_ISNAN,
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_INT),
+                          1,
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_DOUBLE));
+    builtins[CI_BUILTIN_FUNCTION_ISNORMAL] =
+      CI_BUILTIN_FUNCTION(CI_BUILTIN_FUNCTION_ISNORMAL,
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_INT),
+                          1,
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_DOUBLE));
+    builtins[CI_BUILTIN_FUNCTION_SIGNBIT] =
+      CI_BUILTIN_FUNCTION(CI_BUILTIN_FUNCTION_SIGNBIT,
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_INT),
+                          1,
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_DOUBLE));
+    builtins[CI_BUILTIN_FUNCTION_ISGREATER] =
+      CI_BUILTIN_FUNCTION(CI_BUILTIN_FUNCTION_ISGREATER,
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_INT),
+                          2,
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_DOUBLE),
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_DOUBLE));
+    builtins[CI_BUILTIN_FUNCTION_ISGREATEREQUAL] =
+      CI_BUILTIN_FUNCTION(CI_BUILTIN_FUNCTION_ISGREATEREQUAL,
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_INT),
+                          2,
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_DOUBLE),
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_DOUBLE));
+    builtins[CI_BUILTIN_FUNCTION_ISLESS] =
+      CI_BUILTIN_FUNCTION(CI_BUILTIN_FUNCTION_ISLESS,
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_INT),
+                          2,
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_DOUBLE),
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_DOUBLE));
+    builtins[CI_BUILTIN_FUNCTION_ISLESSEQUAL] =
+      CI_BUILTIN_FUNCTION(CI_BUILTIN_FUNCTION_ISLESSEQUAL,
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_INT),
+                          2,
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_DOUBLE),
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_DOUBLE));
+    builtins[CI_BUILTIN_FUNCTION_ISLESSGREATER] =
+      CI_BUILTIN_FUNCTION(CI_BUILTIN_FUNCTION_ISLESSGREATER,
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_INT),
+                          2,
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_DOUBLE),
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_DOUBLE));
+    builtins[CI_BUILTIN_FUNCTION_ISUNORDERED] =
+      CI_BUILTIN_FUNCTION(CI_BUILTIN_FUNCTION_ISUNORDERED,
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_INT),
+                          2,
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_DOUBLE),
+                          CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_DOUBLE));
+    builtins[CI_BUILTIN_FUNCTION_NANF] = CI_BUILTIN_FUNCTION(
+      CI_BUILTIN_FUNCTION_NANF,
+      CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_FLOAT),
+      1,
+      NEW_VARIANT(CIDataType,
+                  ptr,
+                  SYNTHETIC_LOCATION__CI(),
+                  NEW(CIDataTypePtr,
+                      NULL,
+                      CI_BUILTIN_DATA_TYPE(CI_DATA_TYPE_KIND_CHAR))));
 
     return builtins;
 }

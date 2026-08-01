@@ -53,6 +53,17 @@ run_command__CICompile(const char *command);
 static void
 handler__CICompile(void *entity, const CIResultFile *file, void *other_args);
 
+/* What <math.h> declares is held in a library of its own on the platforms that
+   still keep it apart from the C library, so it is asked for whatever the file
+   was written with: a linker is given a library it has no use for without
+   complaining, and there is no telling from here whether the file calls one of
+   them. */
+#ifdef LILY_WINDOWS_OS
+#define LIBRARY_OPTIONS ""
+#else
+#define LIBRARY_OPTIONS " -lm"
+#endif
+
 static const char *standard_options[] = {
     [CI_STANDARD_NONE] = "",        [CI_STANDARD_KR] = "",
     [CI_STANDARD_89] = " -std=c89", [CI_STANDARD_95] = " -std=c90",
@@ -81,10 +92,11 @@ build_bin_compile_command__CICompile(const CIResultBin *bin,
       get_dir_result__CIResultFile(file, CI_DIR_RESULT_PURPOSE_C_GEN);
     String *gen_file = format__String(
       "{Sr}/{S}", gen_c_dir_result, file->entity.filename_result);
-    String *command = format__String("{S} {Sr}{s} -o {Sr}/{s}",
+    String *command = format__String("{S} {Sr}{s}{s} -o {Sr}/{s}",
                                      file->config->compiler.command,
                                      gen_file,
                                      standard_options[file->config->standard],
+                                     LIBRARY_OPTIONS,
                                      bin_dir_result,
                                      bin->name);
 
@@ -112,10 +124,11 @@ build_lib_compile_command__CICompile(const CIResultLib *lib,
       get_dir_result__CIResultFile(file, CI_DIR_RESULT_PURPOSE_C_GEN);
     String *gen_file = format__String(
       "{Sr}/{S}", gen_c_dir_result, file->entity.filename_result);
-    String *command = format__String("{S} {Sr}{s} -static -o {Sr}/{s}",
+    String *command = format__String("{S} {Sr}{s}{s} -static -o {Sr}/{s}",
                                      file->config->compiler.command,
                                      gen_file,
                                      standard_options[file->config->standard],
+                                     LIBRARY_OPTIONS,
                                      lib_dir_result,
                                      lib->name);
 
