@@ -98,10 +98,21 @@ is_valid_implicit_cast__CITypecheck(const CITypecheck *self,
                                     CIDataType *right,
                                     struct CITypecheckContext *typecheck_ctx);
 
+/// @brief Check whether the expression is a null pointer constant, which is
+/// what a pointer is allowed to be given in place of one written as such.
+/// @param expr const CIExpr*? (&)
+static bool
+is_null_ptr_constant__CITypecheck(const CIExpr *expr);
+
+/// @param given_expr const CIExpr*? (&) The expression what is given was
+/// inferred from, where the caller has it. What a pointer accepts is not
+/// decided by the given data type alone, since an integer is only a pointer
+/// where it is written as the constant 0.
 static bool
 perform_typecheck__CITypecheck(const CITypecheck *self,
                                CIDataType *expected_data_type,
                                CIDataType *given_data_type,
+                               const CIExpr *given_expr,
                                const Location *given_location,
                                bool can_try,
                                struct CITypecheckContext *typecheck_ctx);
@@ -491,10 +502,13 @@ is_valid_implicit_cast__CITypecheck(const CITypecheck *self,
         case CI_DATA_TYPE_KIND_UNSIGNED_SHORT_INT:
             // NOTE: For the moment, we accept a cast from a float to an integer
             // without emitting a warning/error.
+            //
+            // A pointer is not read as an integer here, which is what the
+            // mirror of the pointer case below rests on.
             return is_integer_data_type__CIResolverDataType(
                      self->file,
                      left,
-                     true,
+                     false,
                      typecheck_ctx->current_generic_params.called,
                      typecheck_ctx->current_generic_params.decl) ||
                    is_float_data_type__CIResolverDataType(
@@ -524,7 +538,7 @@ is_valid_implicit_cast__CITypecheck(const CITypecheck *self,
                    is_integer_data_type__CIResolverDataType(
                      self->file,
                      left,
-                     true,
+                     false,
                      typecheck_ctx->current_generic_params.called,
                      typecheck_ctx->current_generic_params.decl);
         case CI_DATA_TYPE_KIND_TYPEDEF:
@@ -567,19 +581,10 @@ is_valid_implicit_cast__CITypecheck(const CITypecheck *self,
                   self, left_ptr_dt, right_ptr_dt, typecheck_ctx);
             }
 
-            // This case is designed to ensure that a pointer or an array is
-            // compatible with an integer.
-            //
-            // Valid: (void*)0, {1,2,3}, "hello"
-            if (is_integer_data_type__CIResolverDataType(
-                  self->file,
-                  left,
-                  true,
-                  typecheck_ctx->current_generic_params.called,
-                  typecheck_ctx->current_generic_params.decl)) {
-                return true;
-            }
-
+            // An integer is not a pointer. The one exception C makes, the
+            // constant 0, is a property of the expression rather than of the
+            // data type, so it is `perform_typecheck__CITypecheck` that reads
+            // it.
             return false;
         case CI_DATA_TYPE_KIND_ENUM:
             return is_integer_data_type__CIResolverDataType(
@@ -594,9 +599,38 @@ is_valid_implicit_cast__CITypecheck(const CITypecheck *self,
 }
 
 bool
+is_null_ptr_constant__CITypecheck(const CIExpr *expr)
+{
+    if (!expr) {
+        return false;
+    }
+
+    switch (expr->kind) {
+        case CI_EXPR_KIND_LITERAL:
+            switch (expr->literal.kind) {
+                case CI_EXPR_LITERAL_KIND_SIGNED_INT:
+                    return expr->literal.signed_int == 0;
+                case CI_EXPR_LITERAL_KIND_UNSIGNED_INT:
+                    return expr->literal.unsigned_int == 0;
+                default:
+                    return false;
+            }
+        // The constant is still one when it is written with a cast on it, as
+        // `NULL` usually is, or inside parentheses.
+        case CI_EXPR_KIND_CAST:
+            return is_null_ptr_constant__CITypecheck(expr->cast.expr);
+        case CI_EXPR_KIND_GROUPING:
+            return is_null_ptr_constant__CITypecheck(expr->grouping);
+        default:
+            return false;
+    }
+}
+
+bool
 perform_typecheck__CITypecheck(const CITypecheck *self,
                                CIDataType *expected_data_type,
                                CIDataType *given_data_type,
+                               const CIExpr *given_expr,
                                const Location *given_location,
                                bool can_try,
                                struct CITypecheckContext *typecheck_ctx)
@@ -626,7 +660,17 @@ perform_typecheck__CITypecheck(const CITypecheck *self,
 
         FREE(CIDataType, converted_given_data_type);
 
-        if (!eq_once_converted &&
+        // A pointer is also given the constant 0, which is the null pointer
+        // constant, whatever the integer type the constant itself was read as.
+        bool is_null_ptr_assignment =
+          is_ptr_data_type__CIResolverDataType(
+            self->file,
+            resolved_expected_data_type,
+            typecheck_ctx->current_generic_params.called,
+            typecheck_ctx->current_generic_params.decl) &&
+          is_null_ptr_constant__CITypecheck(given_expr);
+
+        if (!eq_once_converted && !is_null_ptr_assignment &&
             (!is_valid_implicit_cast__CITypecheck(self,
                                                   resolved_expected_data_type,
                                                   resolved_given_data_type,
@@ -639,8 +683,13 @@ perform_typecheck__CITypecheck(const CITypecheck *self,
             FREE(CIDataType, resolved_given_data_type);
 
             if (!can_try) {
-                FAILED__CITypecheck(
-                  self, given_data_type, CI_ERROR_KIND_DATA_TYPES_DONT_MATCH);
+                // What was given is only written where the caller says it is:
+                // an inferred data type carries a synthetic location, which
+                // points at the top of the file.
+                FAILED_WITH_LOCATION__CITypecheck(
+                  self,
+                  given_location ? given_location : &given_data_type->location,
+                  CI_ERROR_KIND_DATA_TYPES_DONT_MATCH);
             }
 
             return false;
@@ -986,6 +1035,7 @@ typecheck_binary_expr__CITypecheck(const CITypecheck *self,
             perform_typecheck__CITypecheck(self,
                                            left_dt,
                                            right_dt,
+                                           binary->right,
                                            &binary->right->location,
                                            false,
                                            typecheck_ctx);
@@ -1544,8 +1594,13 @@ typecheck_ternary_expr__CITypecheck(const CITypecheck *self,
       typecheck_ctx->current_generic_params.called,
       typecheck_ctx->current_generic_params.decl);
 
-    perform_typecheck__CITypecheck(
-      self, if_dt, else_dt, &ternary->else_->location, false, typecheck_ctx);
+    perform_typecheck__CITypecheck(self,
+                                   if_dt,
+                                   else_dt,
+                                   ternary->else_,
+                                   &ternary->else_->location,
+                                   false,
+                                   typecheck_ctx);
 
     FREE(CIDataType, if_dt);
     FREE(CIDataType, else_dt);
@@ -1727,6 +1782,7 @@ typecheck_expr__CITypecheck(const CITypecheck *self,
     perform_typecheck__CITypecheck(self,
                                    expected_data_type,
                                    given_expr_dt,
+                                   given_expr,
                                    &given_expr->location,
                                    false,
                                    typecheck_ctx);

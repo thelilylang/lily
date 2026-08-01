@@ -1,0 +1,10 @@
+//@expected_compiler_error :7:11: \e[31merror\e[0m[0039]: the data types do not match
+//@expected_compiler_error \e[34m7 |\e[0m \tint *p = 30;
+
+#include <helper.h>
+
+int main() {
+	int *p = 30;
+
+	return *p;
+}

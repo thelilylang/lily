@@ -1,0 +1,17 @@
+//@expected_bin_stdout PASS\n
+
+#include <helper.h>
+
+int main() {
+	// The constant 0 is the one integer a pointer is given, however it is
+	// written.
+	int *p = 0;
+	void *v = NULL;
+	char *c = (void*)0;
+
+	p = 0;
+
+	if (!p && !v && !c) {
+		printf("PASS\n");
+	}
+}
