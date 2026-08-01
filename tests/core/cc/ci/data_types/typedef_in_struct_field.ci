@@ -1,0 +1,28 @@
+//@expected_bin_stdout 5\n
+
+#include <helper.h>
+
+/* A field written with a typedef is compared as the typedef it is written
+   with, and a typedef carries generic params only where it is written with
+   them: reading the ones it has none of used to crash the typecheck. */
+typedef long my_int;
+
+typedef struct Pair {
+	my_int first;
+	my_int second;
+} Pair;
+
+Pair make(void) {
+	Pair pair;
+
+	pair.first = 2;
+	pair.second = 3;
+
+	return pair;
+}
+
+int main() {
+	Pair pair = make();
+
+	printf("%d\n", (int)(pair.first + pair.second));
+}

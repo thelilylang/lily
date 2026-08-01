@@ -2733,10 +2733,13 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
                    eq__CIDeclStructFields(self_fields, other_fields);
         }
         case CI_DATA_TYPE_KIND_TYPEDEF:
+            // NOTE: A typedef is written with no generic params at all more
+            // often than not, so the two are compared with the operation that
+            // reads them as the nullable pointers they are.
             return !strcmp(GET_PTR_RC(String, self->typedef_.name)->buffer,
                            GET_PTR_RC(String, other->typedef_.name)->buffer) &&
-                   eq__CIGenericParams(self->typedef_.generic_params,
-                                       other->typedef_.generic_params);
+                   eq_op__CIGenericParams(self->typedef_.generic_params,
+                                          other->typedef_.generic_params);
         case CI_DATA_TYPE_KIND_BOOL:
         case CI_DATA_TYPE_KIND_CHAR:
         case CI_DATA_TYPE_KIND_DOUBLE:
