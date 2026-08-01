@@ -27,8 +27,35 @@
 
 #include <string.h>
 
-#define ROTATE_LEFT(value, bits) \
-    (((value) << (bits)) | ((value) >> (64 - (bits))))
+// The state is made of `Usize` words, so everything below is expressed in
+// terms of their width rather than a hardcoded 64.
+#define SIP_WORD_BITS (sizeof(Usize) * 8)
+
+// NOTE: The `% SIP_WORD_BITS` is what keeps a rotation by a whole word — which
+// is the identity, and which the round below asks for on 64 bits — from
+// shifting by the width of the type, which is undefined.
+#define ROTATE_LEFT(value, bits)             \
+    (((value) << ((bits) % SIP_WORD_BITS)) | \
+     ((value) >> ((SIP_WORD_BITS - (bits)) % SIP_WORD_BITS)))
+
+// Rotation constants of a round. A 32-bit `Usize` cannot use the 64-bit ones:
+// half of them are wider than the word. These are SipHash's and HalfSipHash's
+// respectively, which is the same round applied to each width.
+#ifdef PLATFORM_64
+#define SIP_ROTATE_V1_A 13
+#define SIP_ROTATE_V3_A 16
+#define SIP_ROTATE_V0 32
+#define SIP_ROTATE_V1_B 17
+#define SIP_ROTATE_V3_B 21
+#define SIP_ROTATE_V2 32
+#else
+#define SIP_ROTATE_V1_A 5
+#define SIP_ROTATE_V3_A 8
+#define SIP_ROTATE_V0 16
+#define SIP_ROTATE_V1_B 13
+#define SIP_ROTATE_V3_B 7
+#define SIP_ROTATE_V2 16
+#endif
 
 typedef struct
 {
@@ -49,18 +76,18 @@ mix__SipHashState(SipHashState *self)
 {
     self->v0 += self->v1;
     self->v2 += self->v3;
-    self->v1 = ROTATE_LEFT(self->v1, 13);
-    self->v3 = ROTATE_LEFT(self->v3, 16);
+    self->v1 = ROTATE_LEFT(self->v1, SIP_ROTATE_V1_A);
+    self->v3 = ROTATE_LEFT(self->v3, SIP_ROTATE_V3_A);
     self->v1 ^= self->v0;
     self->v3 ^= self->v2;
-    self->v0 = ROTATE_LEFT(self->v0, 32);
+    self->v0 = ROTATE_LEFT(self->v0, SIP_ROTATE_V0);
     self->v2 += self->v1;
     self->v0 += self->v3;
-    self->v1 = ROTATE_LEFT(self->v1, 17);
-    self->v3 = ROTATE_LEFT(self->v3, 21);
+    self->v1 = ROTATE_LEFT(self->v1, SIP_ROTATE_V1_B);
+    self->v3 = ROTATE_LEFT(self->v3, SIP_ROTATE_V3_B);
     self->v1 ^= self->v2;
     self->v3 ^= self->v0;
-    self->v2 = ROTATE_LEFT(self->v2, 32);
+    self->v2 = ROTATE_LEFT(self->v2, SIP_ROTATE_V2);
 }
 
 void
@@ -105,23 +132,30 @@ hash_sip(const void *key, Usize key_len, const Usize k0, const Usize k1)
 #endif
     };
 
+    // NOTE: The key is read a word at a time, not a `Uint64` at a time. Where
+    // `Usize` is 32 bits the latter dropped the upper half of every block on
+    // its way into the state, so the hash never saw half of the key.
     const Uint8 *key_bytes = (const Uint8 *)key;
-    const Uint8 *end = key_bytes + key_len - (key_len % sizeof(uint64_t));
-    const Uint64 *blocks = (const Uint64 *)key_bytes;
+    const Uint8 *end = key_bytes + key_len - (key_len % sizeof(Usize));
 
     while (key_bytes < end) {
-        state.v3 ^= *blocks;
+        Usize block;
+
+        // A key is not guaranteed to be aligned for a `Usize`, which reading
+        // one through a cast would require.
+        memcpy(&block, key_bytes, sizeof(Usize));
+
+        state.v3 ^= block;
         for (int i = 0; i < 2; ++i) {
             mix__SipHashState(&state);
         }
-        state.v0 ^= *blocks;
-        blocks++;
-        key_bytes += sizeof(uint64_t);
+        state.v0 ^= block;
+        key_bytes += sizeof(Usize);
     }
 
-    Uint64 last_block = 0;
+    Usize last_block = 0;
 
-    memcpy(&last_block, key_bytes, key_len % sizeof(uint64_t));
+    memcpy(&last_block, key_bytes, key_len % sizeof(Usize));
 
     state.v3 ^= last_block;
     for (int i = 0; i < 2; ++i) {
