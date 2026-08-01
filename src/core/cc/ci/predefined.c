@@ -27,25 +27,32 @@
 #include <base/command.h>
 #include <base/format.h>
 #include <base/new.h>
+#include <base/platform.h>
 
 #include <core/cc/ci/builtin.h>
 #include <core/cc/ci/diagnostic/emit.h>
 #include <core/cc/ci/result.h>
-
-// https://gcc.gnu.org/onlinedocs/gcc/Standards.html
-static const char *std[CI_STANDARD_23 + 1] = {
-    [CI_STANDARD_NONE] = "",
-    [CI_STANDARD_KR] = "c89", // NOTE: Not real K&R support of GCC, Clang
-    [CI_STANDARD_89] = "c89", [CI_STANDARD_95] = "iso9899:199409",
-    [CI_STANDARD_99] = "c99", [CI_STANDARD_11] = "c11",
-    [CI_STANDARD_17] = "c17", [CI_STANDARD_23] = "c23",
-};
 
 static CIResultFile *predefined_file_ref = NULL; // CIResultFile* (&)
 
 String *
 generate__CIPreDefined(const CIProjectConfig *config)
 {
+#ifdef LILY_WASM_OS
+    // On WASM there is no host compiler to ask for its predefined macros, so
+    // the set starts empty and is only what this function appends below. The
+    // macros the standard itself defines, such as `__STDC__` and
+    // `__STDC_VERSION__`, are token kinds of their own, so they are unaffected.
+    String *builtin_h = NEW(String);
+#else
+    // https://gcc.gnu.org/onlinedocs/gcc/Standards.html
+    static const char *std[CI_STANDARD_23 + 1] = {
+        [CI_STANDARD_NONE] = "",
+        [CI_STANDARD_KR] = "c89", // NOTE: Not real K&R support of GCC, Clang
+        [CI_STANDARD_89] = "c89", [CI_STANDARD_95] = "iso9899:199409",
+        [CI_STANDARD_99] = "c99", [CI_STANDARD_11] = "c11",
+        [CI_STANDARD_17] = "c17", [CI_STANDARD_23] = "c23",
+    };
     char *command = format("{S} -dM -E -std={s} - < /dev/null",
                            config->compiler.command,
                            std[config->standard]);
@@ -58,6 +65,7 @@ generate__CIPreDefined(const CIProjectConfig *config)
     }
 
     lily_free(command);
+#endif
 
     // Add macro:
     // __STRICT_ANSI__

@@ -22,42 +22,25 @@
  * SOFTWARE.
  */
 
-#ifndef LILY_BASE_ENV_H
-#define LILY_BASE_ENV_H
+#include <base/cli/args.h>
+#include <base/cli/entry.h>
+#include <base/cli/result.h>
 
-#include <base/platform.h>
+#include <cli/cic/cic.h>
+#include <cli/cic/parse_config.h>
 
-#if defined(LILY_LINUX_OS) || defined(LILY_BSD_OS) || \
-  defined(LILY_APPLE_OS) || defined(LILY_WASM_OS)
-#define _GNU_SOURCE
-#elifdef LILY_WINDOWS_OS
-#include <windows.h>
-#else
-#error "this OS is not yet supported"
-#endif
+#include <command/cic/cic.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-
-/**
- *
- * @brief Set environment variable.
- */
-void
-set__Env(const char *name, const char *value);
-
-/**
- *
- * @brief Get value of environment variable.
- * @return char*?
- */
-inline char *
-get__Env(const char *name)
+int
+run__WASMCIc(int argc, char **argv)
 {
-    // Unix: https://man7.org/linux/man-pages/man3/getenv.3.html
-    // Windows:
-    // https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/getenv-wgetenv?view=msvc-170
-    return getenv(name);
-}
+    CliArgs args = build__CliArgs(argc, argv);
+    int status = 0;
 
-#endif // LILY_BASE_ENV_H
+    RUN__CLI_ENTRY(
+      args, build__CliCIc, CIcConfig, run__CIcParseConfig, status, {
+          run__CIc(&config, NULL, NULL);
+      });
+
+    return status;
+}

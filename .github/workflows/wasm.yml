@@ -1,0 +1,14 @@
+name: Wasm
+
+on:
+  pull_request:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  wasm32-ubuntu-debug:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build
+      run: ./scripts/ci/wasm32-ubuntu-debug.sh

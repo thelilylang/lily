@@ -79,8 +79,8 @@
 
 // Emit an error that has no source position to point at: a configuration or
 // environment failure (an unreadable `CI.yaml`, missing include paths, a
-// duplicated input file, ...). Such an error is fatal — there is no program to
-// keep analysing — so, unlike the located diagnostics, this one stops the
+// duplicated input file, ...). Such an error is fatal - there is no program to
+// keep analysing - so, unlike the located diagnostics, this one stops the
 // process. It still carries the same code as the located errors.
 #define FATAL_ERROR__CI(error)                              \
     {                                                       \

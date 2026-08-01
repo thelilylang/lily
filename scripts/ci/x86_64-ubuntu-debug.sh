@@ -45,24 +45,24 @@ make submodules_without_llvm
 # Setup for Local
 ./scripts/patches/enable_local.sh
 
+# Enable assertions (ASSERT, ASSERT_EQ, etc).
+# Please look at `include/base/assert.h`.
+./scripts/patches/enable_assert.sh
+
 # Configure CMake
 #
 # NOTE: The package directories are named, so that the LLVM the project is
 # built against is the one it asks for, rather than whichever one the newer
 # install of Clang brought along.
-cmake \
-	-B ./build/Debug \
-	-G Ninja \
-	-DCMAKE_BUILD_TYPE=Debug \
-	-DLILY_DEBUG=ON \
-	-DCMAKE_C_COMPILER="clang-$LLVM_VERSION" \
-	-DCMAKE_CXX_COMPILER="clang++-$LLVM_VERSION" \
-	-DLLVM_DIR="/usr/lib/llvm-$LLVM_VERSION/lib/cmake/llvm" \
-	-DLLD_DIR="/usr/lib/llvm-$LLVM_VERSION/lib/cmake/lld" \
-	-DClang_DIR="/usr/lib/llvm-$LLVM_VERSION/lib/cmake/clang"
+make debug \
+	CC="clang-$LLVM_VERSION" \
+	CXX="clang++-$LLVM_VERSION" \
+	LLVM_DIR="/usr/lib/llvm-$LLVM_VERSION/lib/cmake/llvm" \
+	LLD_DIR="/usr/lib/llvm-$LLVM_VERSION/lib/cmake/lld" \
+	CLANG_DIR="/usr/lib/llvm-$LLVM_VERSION/lib/cmake/clang"
 
-# Build
-ninja -C build/Debug
-
-# Test
-ninja test -C build/Debug
+# Build & Test
+#
+# NOTE: `test` builds first, and runs `ctest` from the native inner build of
+# the superbuild, which is what registers the tests.
+make test

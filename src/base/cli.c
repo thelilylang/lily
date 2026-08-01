@@ -33,15 +33,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/// @return Vec<CliResult*>*? — NULL when an error has been emitted.
+/// @return Vec<CliResult*>*? - NULL when an error has been emitted.
 static Vec *
 parse_command__Cli(Cli *self, CliCommand *cmd);
 
-/// @return Vec<CliResult*>*? — NULL when an error has been emitted.
+/// @return Vec<CliResult*>*? - NULL when an error has been emitted.
 static Vec *
 parse_option__Cli(Cli *self);
 
-/// @return CliResultValue*? — NULL when the value is absent or on error. Check
+/// @return CliResultValue*? - NULL when the value is absent or on error. Check
 /// `self->status` to tell both apart.
 static CliResultValue *
 parse_value__Cli(Cli *self, const CliValue *value);

@@ -20,13 +20,7 @@ make submodules_without_llvm
 ./scripts/patches/enable_local.sh
 
 # Configure CMake
-cmake \
-	-B ./build \
-	-G Ninja \
-	-DCMAKE_BUILD_TYPE=Release \
-	-DLILY_DEBUG=ON \
-	-DCMAKE_C_COMPILER=clang-18 \
-	-DCMAKE_CXX_COMPILER=clang++-18
+make configure CC=clang-18 CXX=clang++-18
 
 # Build
-cmake --build build
+make build

@@ -78,7 +78,11 @@ run__CIc(const CIcConfig *config,
 
     run__CIGenerator(&result);
 
+    // On WASM we cannot (and it useless) compile the generated C with a
+    // compiler through `system(...)`.
+#ifndef LILY_WASM_OS
     exec__CICompile(&result);
+#endif
 
     if (handler) {
         handler(&result, other_args);
