@@ -615,10 +615,11 @@ is_null_ptr_constant__CITypecheck(const CIExpr *expr)
                 default:
                     return false;
             }
-        // The constant is still one when it is written with a cast on it, as
-        // `NULL` usually is, or inside parentheses.
-        case CI_EXPR_KIND_CAST:
-            return is_null_ptr_constant__CITypecheck(expr->cast.expr);
+        // NOTE: A cast is not read through. `(void*)0`, which is how `NULL`
+        // is usually written, is a pointer once it is cast, and it is the data
+        // types that make it compatible with what it is given to. Reading
+        // through the cast would also let `(char*)0` stand for a null pointer
+        // constant, which C does not.
         case CI_EXPR_KIND_GROUPING:
             return is_null_ptr_constant__CITypecheck(expr->grouping);
         default:
