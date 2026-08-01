@@ -81,7 +81,17 @@ run__CIc(const CIcConfig *config,
     // On WASM we cannot (and it useless) compile the generated C with a
     // compiler through `system(...)`.
 #ifndef LILY_WASM_OS
-    exec__CICompile(&result);
+    // Stage boundary: what the compiler rejected was never built, so the
+    // command has failed however well the stages before it went. The compiler
+    // has already said what was wrong with it.
+    if (!exec__CICompile(&result)) {
+        FREE(CIResult, &result);
+        FREE(CIBuiltin, &builtin);
+        FREE(CIProjectConfig, &project_config);
+        FREE(CIStateChecker, &state_checker);
+
+        exit(1);
+    }
 #endif
 
     if (handler) {

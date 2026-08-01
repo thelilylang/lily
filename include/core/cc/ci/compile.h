@@ -27,12 +27,16 @@
 
 #include <core/cc/ci/result.h>
 
+#include <stdbool.h>
+
 /**
  *
  * @brief Compile binaries and libraries.
  * @param result const CIResult* (&)
+ * @return true when every binary and library was compiled, false when the
+ * compiler rejected what was generated for at least one of them.
  */
-void
+bool
 exec__CICompile(const CIResult *result);
 
 #endif // LILY_CORE_CC_CI_COMPILE_H

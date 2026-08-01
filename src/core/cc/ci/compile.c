@@ -24,9 +24,14 @@
 
 #include <base/dir.h>
 #include <base/file.h>
+#include <base/platform.h>
 
 #include <core/cc/ci/compile.h>
 #include <core/cc/ci/result.h>
+
+#ifdef LILY_UNIX_OS
+#include <sys/wait.h>
+#endif
 
 static String *
 build_bin_compile_command__CICompile(const CIResultBin *bin,
@@ -36,11 +41,17 @@ static String *
 build_lib_compile_command__CICompile(const CIResultLib *lib,
                                      const CIResultFile *file);
 
+/// @brief Run a compile command, and read what the compiler exited with.
+/// @return true when the compiler was run and accepted what it was given.
+static bool
+run_command__CICompile(const char *command);
+
 /// @param file const CIResultFile* (&)
+/// @param other_args void* (&) (bool* (&)) Set when a compile failed, so that
+/// the caller of `pass_through_result__CIResult` is told about a compiler the
+/// handler itself cannot report to.
 static void
-handler__CICompile(void *entity,
-                   const CIResultFile *file,
-                   [[maybe_unused]] void *other_args);
+handler__CICompile(void *entity, const CIResultFile *file, void *other_args);
 
 static const char *standard_options[] = {
     [CI_STANDARD_NONE] = "",        [CI_STANDARD_KR] = "",
@@ -111,17 +122,38 @@ build_lib_compile_command__CICompile(const CIResultLib *lib,
     return command;
 }
 
-void
-handler__CICompile(void *entity,
-                   const CIResultFile *file,
-                   [[maybe_unused]] void *other_args)
+bool
+run_command__CICompile(const char *command)
 {
+    int status = system(command);
+
+    if (status == -1) {
+        return false;
+    }
+
+#ifdef LILY_UNIX_OS
+    // A shell is what `system` runs, so what the compiler exited with is read
+    // out of the wait status it hands back. A compiler killed by a signal did
+    // not produce what it was asked for either.
+    return WIFEXITED(status) && WEXITSTATUS(status) == 0;
+#else
+    return status == 0;
+#endif
+}
+
+void
+handler__CICompile(void *entity, const CIResultFile *file, void *other_args)
+{
+    bool *has_failed = other_args;
+
     switch (file->entity.kind) {
         case CI_RESULT_ENTITY_KIND_BIN: {
             const CIResultBin *bin = entity;
             String *command = build_bin_compile_command__CICompile(bin, file);
 
-            system(command->buffer);
+            if (!run_command__CICompile(command->buffer)) {
+                *has_failed = true;
+            }
 
             FREE(String, command);
 
@@ -131,7 +163,9 @@ handler__CICompile(void *entity,
             const CIResultLib *lib = entity;
             String *command = build_lib_compile_command__CICompile(lib, file);
 
-            system(command->buffer);
+            if (!run_command__CICompile(command->buffer)) {
+                *has_failed = true;
+            }
 
             FREE(String, command);
 
@@ -144,8 +178,12 @@ handler__CICompile(void *entity,
     }
 }
 
-void
+bool
 exec__CICompile(const CIResult *result)
 {
-    pass_through_result__CIResult(result, &handler__CICompile, NULL);
+    bool has_failed = false;
+
+    pass_through_result__CIResult(result, &handler__CICompile, &has_failed);
+
+    return !has_failed;
 }
