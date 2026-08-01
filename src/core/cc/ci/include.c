@@ -27,6 +27,7 @@
 #include <base/format.h>
 #include <base/new.h>
 #include <base/path.h>
+#include <base/platform.h>
 
 #include <core/cc/ci/diagnostic/emit.h>
 #include <core/cc/ci/include.h>
@@ -42,6 +43,12 @@ init_include_dirs__CIInclude(const String *compiler_command,
 {
     ASSERT(compiler_command);
 
+#ifdef LILY_WASM_OS
+    // There is no compiler to ask on WASM, and no system include directories
+    // for it to report: what the transpiler can see is exactly what the caller
+    // put in the virtual filesystem, plus whatever `-I` names.
+    include_dirs = init__Vec(1, from__String((char *)base_path));
+#else
     char *command =
       format("echo | {S} -E -Wp,-v - 2>&1 | grep \"^ \" | sed 's/^ *//'",
              compiler_command);
@@ -65,6 +72,7 @@ init_include_dirs__CIInclude(const String *compiler_command,
 
     FREE(String, include_dirs_s);
     FREE(Vec, split_include_dirs_s);
+#endif
 }
 
 void

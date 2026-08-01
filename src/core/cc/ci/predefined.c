@@ -27,6 +27,7 @@
 #include <base/command.h>
 #include <base/format.h>
 #include <base/new.h>
+#include <base/platform.h>
 
 #include <core/cc/ci/builtin.h>
 #include <core/cc/ci/diagnostic/emit.h>
@@ -46,6 +47,13 @@ static CIResultFile *predefined_file_ref = NULL; // CIResultFile* (&)
 String *
 generate__CIPreDefined(const CIProjectConfig *config)
 {
+#ifdef LILY_WASM_OS
+    // On WASM there is no host compiler to ask for its predefined macros, so
+    // the set starts empty and is only what this function appends below. The
+    // macros the standard itself defines, such as `__STDC__` and
+    // `__STDC_VERSION__`, are token kinds of their own, so they are unaffected.
+    String *builtin_h = NEW(String);
+#else
     char *command = format("{S} -dM -E -std={s} - < /dev/null",
                            config->compiler.command,
                            std[config->standard]);
@@ -58,6 +66,7 @@ generate__CIPreDefined(const CIProjectConfig *config)
     }
 
     lily_free(command);
+#endif
 
     // Add macro:
     // __STRICT_ANSI__
