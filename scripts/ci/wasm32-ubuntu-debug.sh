@@ -44,4 +44,4 @@ make build
 # The wasm build produces no native binary and registers no test, so what it
 # has to show for itself is the module: read it back rather than trusting the
 # build to have written it.
-ls -l ./bin/Debug/wasm/cic_wasm.js ./bin/Debug/wasm/cic_wasm.wasm
+ls -l ./bin/Debug/wasm/cic_wasm.js ./bin/Debug/wasm/cic_wasm.wasm ./bin/Debug/wasm/cic_wasm.data
