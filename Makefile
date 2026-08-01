@@ -3,6 +3,14 @@ CMAKE_FORMAT = @cmake-format -i
 BUILDER_GENERATOR ?= Ninja
 JOBS ?= 4
 
+# Resolved rather than named, because make runs a recipe of its own accord when
+# it holds no shell metacharacter, and make before 4.4 execs whatever the PATH
+# search lands on without checking that it is a file. The emsdk directory the
+# wasm job puts on the PATH holds a `cmake` directory, which is enough to turn
+# that into `make: cmake: Permission denied`. `command -v` skips it.
+CMAKE := $(or $(shell command -v cmake),cmake)
+CTEST := $(or $(shell command -v ctest),ctest)
+
 # Build options. Each one is off by default and enabled by setting it to 1 on
 # the `make` command line, in any combination:
 #
@@ -142,17 +150,17 @@ build:
 		exit 1; \
 	fi
 	@if [ -f build/CMakeCache.txt ]; then \
-		cmake --build build -j $(JOBS); \
+		$(CMAKE) --build build -j $(JOBS); \
 	fi
 	@if [ -f build/Debug/CMakeCache.txt ]; then \
-		cmake --build build/Debug -j $(JOBS); \
+		$(CMAKE) --build build/Debug -j $(JOBS); \
 	fi
 
 configure:
-	cmake -S . -B build -G $(BUILDER_GENERATOR) -DCMAKE_BUILD_TYPE=Release $(CMAKE_OPTIONS)
+	$(CMAKE) -S . -B build -G $(BUILDER_GENERATOR) -DCMAKE_BUILD_TYPE=Release $(CMAKE_OPTIONS)
 
 debug:
-	cmake -S . -B build/Debug -G $(BUILDER_GENERATOR) -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_EXPORT_COMPILE_COMMANDS=YES $(CMAKE_OPTIONS)
+	$(CMAKE) -S . -B build/Debug -G $(BUILDER_GENERATOR) -DCMAKE_BUILD_TYPE=Debug -DLILY_DEBUG=1 -DCMAKE_EXPORT_COMPILE_COMMANDS=YES $(CMAKE_OPTIONS)
 	cd build && ln -sf Debug/compile_commands.json .
 
 llvm_submodule:
@@ -172,8 +180,8 @@ submodules: llvm_submodule libyaml_submodule
 # NOTE: The tests are registered by the native inner build, not by the
 # superbuild driver, so `ctest` runs from `build/Debug/native`.
 test:
-	cmake --build build/Debug -j $(JOBS)
-	cd build/Debug/native && ctest --verbose
+	$(CMAKE) --build build/Debug -j $(JOBS)
+	cd build/Debug/native && $(CTEST) --verbose
 
 format:
 	./scripts/format.sh
