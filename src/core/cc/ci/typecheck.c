@@ -577,8 +577,29 @@ is_valid_implicit_cast__CITypecheck(const CITypecheck *self,
                     typecheck_ctx->current_generic_params.called,
                     typecheck_ctx->current_generic_params.decl);
 
-                return is_valid_implicit_cast__CITypecheck(
-                  self, left_ptr_dt, right_ptr_dt, typecheck_ctx);
+                // What is pointed to is given as it is written, so a typedef
+                // behind the pointer is still one here. It is run through the
+                // resolver, since only a resolved data type is compared.
+                CIDataType *resolved_left_ptr_dt = run__CIResolverDataType(
+                  self->file,
+                  left_ptr_dt,
+                  typecheck_ctx->current_generic_params.called,
+                  typecheck_ctx->current_generic_params.decl);
+                CIDataType *resolved_right_ptr_dt = run__CIResolverDataType(
+                  self->file,
+                  right_ptr_dt,
+                  typecheck_ctx->current_generic_params.called,
+                  typecheck_ctx->current_generic_params.decl);
+                bool is_valid =
+                  is_valid_implicit_cast__CITypecheck(self,
+                                                      resolved_left_ptr_dt,
+                                                      resolved_right_ptr_dt,
+                                                      typecheck_ctx);
+
+                FREE(CIDataType, resolved_left_ptr_dt);
+                FREE(CIDataType, resolved_right_ptr_dt);
+
+                return is_valid;
             }
 
             // An integer is not a pointer. The one exception C makes, the

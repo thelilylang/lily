@@ -1,0 +1,21 @@
+//@expected_bin_stdout 3\n
+
+#include <helper.h>
+
+/* An array of a typedef is given to a parameter that points at the typedef,
+   so what is pointed to is compared as the typedef it is written with: it
+   used to reach the typecheck unresolved and stop the compiler. */
+typedef int my_int;
+
+int first_of(const my_int *values) {
+	return (int)values[0];
+}
+
+int main() {
+	my_int values[2];
+
+	values[0] = 3;
+	values[1] = 4;
+
+	printf("%d\n", first_of(values));
+}

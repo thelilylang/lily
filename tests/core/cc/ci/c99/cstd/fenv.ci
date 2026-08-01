@@ -1,0 +1,27 @@
+//@compile_options -s c99
+//@expected_bin_stdout PASS\n
+
+#include <fenv.h>
+#include <helper.h>
+
+/* C99 7.6: <fenv.h> holds the exceptions raised so far and the direction a
+   result is rounded in. What is cleared is no longer raised, and what
+   fesetround is written with is what fegetround gives back. */
+int main() {
+	fenv_t saved;
+	fexcept_t flags;
+
+	if (fegetenv(&saved) == 0 && feclearexcept(FE_ALL_EXCEPT) == 0 &&
+	    fetestexcept(FE_ALL_EXCEPT) == 0 &&
+	    feraiseexcept(FE_INVALID) == 0 &&
+	    (fetestexcept(FE_INVALID) & FE_INVALID) != 0 &&
+	    fegetexceptflag(&flags, FE_ALL_EXCEPT) == 0 &&
+	    feclearexcept(FE_INVALID) == 0 && fetestexcept(FE_INVALID) == 0 &&
+	    fesetround(FE_UPWARD) == 0 && fegetround() == FE_UPWARD &&
+	    fesetround(FE_TONEAREST) == 0 && fegetround() == FE_TONEAREST &&
+	    fesetenv(&saved) == 0) {
+		printf("PASS\n");
+	}
+
+	return 0;
+}
