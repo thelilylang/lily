@@ -36,8 +36,11 @@
 #include <core/lily/package/package.h>
 
 #ifdef ENV_LOCAL
-#define LIB_DIR_BUILD "build"
-#define LIB_DIR_BUILD_DEBUG "build/Debug"
+// The build is split in one `ExternalProject` per toolchain, so the libraries
+// are written to the inner build's binary directory (`<build>/native`), not to
+// `<build>` itself.
+#define LIB_DIR_BUILD "build/native"
+#define LIB_DIR_BUILD_DEBUG "build/Debug/native"
 #endif
 
 void
