@@ -59,6 +59,10 @@
 // On Linux the path limit is defined in the header <linux/limits.h>:
 // #define PATH_MAX        4096    /* # chars in a path name including nul */
 #define PATH_MAX 4096
+#elifdef LILY_WASM_OS
+// Emscripten's MEMFS imposes no path limit of its own, so this only has to be
+// large enough for the paths a project actually mounts.
+#define PATH_MAX 4096
 #else
 #error "this OS is not yet supported"
 #endif

@@ -65,4 +65,7 @@ cmake \
 ninja -C build/Debug
 
 # Test
-ninja test -C build/Debug
+#
+# NOTE: The tests are registered by the native inner build of the superbuild,
+# not by the driver.
+ninja test -C build/Debug/native

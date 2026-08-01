@@ -24,7 +24,8 @@ set(CI_SRC
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/visitor.c)
 
 # lily_core_cc_ci
-add_library(lily_core_cc_ci STATIC ${CI_SRC})
+add_library(lily_core_cc_ci STATIC
+            ${CI_SRC} ${CMAKE_SOURCE_DIR}/src/ex/lib/lily_core_cc_ci.c)
 target_link_libraries(
   lily_core_cc_ci PRIVATE lily_base lily_core_cc_ci_diagnostic
                           lily_core_cc_ci_extensions lily_core_shared)

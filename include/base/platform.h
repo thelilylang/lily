@@ -29,8 +29,8 @@
 #define MIN_MACOS_VERSION \
     "12" // NOTE: maybe upgrade/downgrade the minimum required version of MacOS
 
-#if defined(__x86_64__) || defined(_WIN64) || defined(__arm64__) || \
-  defined(__ppc64__)
+#if defined(__wasm64__) || defined(__x86_64__) || defined(_WIN64) || \
+  defined(__arm64__) || defined(__ppc64__)
 #define PLATFORM_64
 #else
 #define PLATFORM_32
@@ -41,7 +41,10 @@
 #define LILY_UNIX_OS
 #endif
 
-#if defined(__linux__)
+#if defined(__wasm64__) || defined(__wasm32__)
+#define OS_NAME "wasm"
+#define LILY_WASM_OS
+#elif defined(__linux__)
 #define OS_NAME "linux"
 #define LILY_LINUX_OS
 #elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || \
@@ -77,7 +80,11 @@
 #define LILY_UNKNOWN_OS
 #endif
 
-#if defined(__x86_64__)
+#if defined(__wasm32__)
+#define ARCH_NAME "wasm32"
+#elif defined(__wasm64__)
+#define ARCH_NAME "wasm64"
+#elif defined(__x86_64__)
 #define ARCH_NAME "x86_64"
 #define LILY_X86_64_ARCH
 #elif defined(__i386__)
