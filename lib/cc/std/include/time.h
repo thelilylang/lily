@@ -69,6 +69,24 @@ struct tm
 #endif /* _CC_STD_LINUX */
 };
 
+/* C11 7.27.1: a time held as seconds and nanoseconds, and the base
+   timespec_get is written to read it against. */
+#if !defined(__STDC_VERSION__) || __STDC_VERSION__ >= 201112L
+#ifndef _CC_STD_TIMESPEC_DEFINED
+#define _CC_STD_TIMESPEC_DEFINED
+struct timespec
+{
+    time_t tv_sec;
+    long int tv_nsec;
+};
+#endif /* _CC_STD_TIMESPEC_DEFINED */
+
+#define TIME_UTC 1
+
+extern int
+timespec_get(struct timespec *ts, int base);
+#endif /* !defined(__STDC_VERSION__) || __STDC_VERSION__ >= 201112L */
+
 /* 7.23.2 Time manipulation functions */
 extern clock_t
 clock(void);

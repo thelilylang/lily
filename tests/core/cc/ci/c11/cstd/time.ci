@@ -1,0 +1,19 @@
+//@compile_options -s c11
+//@expected_bin_stdout PASS\n
+
+#include <time.h>
+#include <helper.h>
+
+/* C11 7.27.1: <time.h> gains a time held as seconds and nanoseconds, and
+   timespec_get, which gives back the base it read the time against. */
+int main() {
+	struct timespec ts;
+	int base = timespec_get(&ts, TIME_UTC);
+
+	if (base == TIME_UTC && ts.tv_sec > 0 && ts.tv_nsec >= 0 &&
+	    ts.tv_nsec < 1000000000L) {
+		printf("PASS\n");
+	}
+
+	return 0;
+}

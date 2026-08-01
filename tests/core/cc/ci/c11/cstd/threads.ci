@@ -1,0 +1,46 @@
+//@compile_options -s c11
+//@expected_bin_stdout PASS\n
+
+#include <threads.h>
+#include <helper.h>
+
+/* C11 7.26: <threads.h> is what a thread is created and joined with, and what
+   a mutex, a condition and a call made only once are held in. What a function
+   gives back is thrd_success where it did what it was asked. */
+static int counter = 0;
+static mtx_t lock;
+static once_flag flag = ONCE_FLAG_INIT;
+
+static void once(void) {
+	counter += 10;
+}
+
+static int run(void *arg) {
+	int *given = arg;
+
+	mtx_lock(&lock);
+	counter += *given;
+	mtx_unlock(&lock);
+
+	call_once(&flag, &once);
+
+	return thrd_success;
+}
+
+int main() {
+	thrd_t thread;
+	int given = 5;
+	int result = 0;
+
+	if (mtx_init(&lock, mtx_plain) == thrd_success &&
+	    thrd_create(&thread, &run, &given) == thrd_success &&
+	    thrd_join(thread, &result) == thrd_success &&
+	    result == thrd_success && counter == 15 &&
+	    thrd_equal(thrd_current(), thrd_current()) != 0) {
+		mtx_destroy(&lock);
+
+		printf("PASS\n");
+	}
+
+	return 0;
+}
