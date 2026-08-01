@@ -1,0 +1,29 @@
+//@compile_options -s c99
+//@expected_bin_stdout 8:16:32:64:ff:7:3\n
+
+#include <inttypes.h>
+#include <helper.h>
+
+/* C99 7.8: <inttypes.h> is written with what each type of <stdint.h> is
+   printed and read with, and with the functions an intmax_t is read and taken
+   the absolute value of. */
+int main() {
+	int8_t a = 8;
+	int16_t b = 16;
+	int32_t c = 32;
+	int64_t d = 64;
+	uint32_t e = 255;
+	imaxdiv_t divided = imaxdiv((intmax_t)23, (intmax_t)5);
+
+	printf("%" PRId8 ":%" PRId16 ":%" PRId32 ":%" PRId64 ":%" PRIx32
+	       ":%" PRIdMAX ":%" PRIdMAX "\n",
+	       a,
+	       b,
+	       c,
+	       d,
+	       e,
+	       (intmax_t)imaxabs((intmax_t)-7),
+	       divided.rem);
+
+	return 0;
+}

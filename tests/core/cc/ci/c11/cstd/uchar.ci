@@ -1,0 +1,37 @@
+//@compile_options -s c11
+//@expected_bin_stdout PASS\n
+
+#include <string.h>
+#include <uchar.h>
+#include <helper.h>
+
+/* C11 7.28: <uchar.h> holds the types a UTF-16 and a UTF-32 code unit are
+   written in, and reads a multibyte character into one and back out. What is
+   read and written is held in a conversion state of its own. */
+int main() {
+	mbstate_t state;
+	char16_t unit16 = 0;
+	char32_t unit32 = 0;
+	char written[8];
+	size_t read;
+
+	memset(&state, 0, sizeof(state));
+	read = mbrtoc32(&unit32, "A", 1, &state);
+
+	if (read == 1 && unit32 == (char32_t)'A' && sizeof(char16_t) >= 2 &&
+	    sizeof(char32_t) >= 4 && __STDC_UTF_16__ && __STDC_UTF_32__) {
+		memset(&state, 0, sizeof(state));
+		read = mbrtoc16(&unit16, "B", 1, &state);
+
+		if (read == 1 && unit16 == (char16_t)'B') {
+			memset(&state, 0, sizeof(state));
+			read = c32rtomb(written, (char32_t)'C', &state);
+
+			if (read == 1 && written[0] == 'C') {
+				printf("PASS\n");
+			}
+		}
+	}
+
+	return 0;
+}
