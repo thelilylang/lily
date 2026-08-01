@@ -1,0 +1,19 @@
+/*@compile_options -s c89 */
+/*@expected_bin_stdout PASS\n*/
+
+#include <errno.h>
+#include <helper.h>
+
+/* C99 7.5: <errno.h> defines errno, EDOM and ERANGE. errno is written to as a
+   modifiable lvalue, and is zero at program startup. */
+int main() {
+	if (errno == 0) {
+		errno = EDOM;
+
+		if (errno == EDOM && ERANGE != EDOM) {
+			printf("PASS\n");
+		}
+	}
+
+	return 0;
+}

@@ -1,4 +1,7 @@
-/*@compile_options -s c89 */
+//@compile_options -s c99
+
+/* C99 7.1.2: <stdint.h> is one of the headers C99 adds, so it is not written
+   under an earlier standard. */
 
 #include <stdint.h>
 

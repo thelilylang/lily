@@ -1,0 +1,17 @@
+/*@compile_options -s c89 */
+/*@expected_bin_stdout PASS\n*/
+
+#include <limits.h>
+#include <helper.h>
+
+/* C99 5.2.4.2.1: <limits.h> defines the sizes of the integer types. The values
+   the standard gives are the smallest ones an implementation may define. */
+int main() {
+	if (CHAR_BIT >= 8 && SCHAR_MAX >= 127 && UCHAR_MAX >= 255 &&
+	    SHRT_MAX >= 32767 && INT_MAX >= 32767 && LONG_MAX >= 2147483647L &&
+	    INT_MIN <= -32767) {
+		printf("PASS\n");
+	}
+
+	return 0;
+}

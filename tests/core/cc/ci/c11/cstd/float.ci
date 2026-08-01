@@ -1,0 +1,19 @@
+//@compile_options -s c11
+//@expected_bin_stdout PASS\n
+
+#include <float.h>
+#include <helper.h>
+
+/* C11 5.2.4.2.2: <float.h> gains whether a type holds subnormal numbers, the
+   least positive value it holds where it does, and the digits a value of the
+   type is written back with. */
+int main() {
+	if (FLT_HAS_SUBNORM >= 0 && DBL_HAS_SUBNORM >= 0 &&
+	    FLT_TRUE_MIN > 0.0F && DBL_TRUE_MIN > 0.0 &&
+	    FLT_DECIMAL_DIG >= 6 && DBL_DECIMAL_DIG >= FLT_DECIMAL_DIG &&
+	    LDBL_DECIMAL_DIG >= DBL_DECIMAL_DIG) {
+		printf("PASS\n");
+	}
+
+	return 0;
+}

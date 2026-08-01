@@ -1,0 +1,21 @@
+//@compile_options -s c23
+//@expected_bin_stdout PASS\n
+
+#include <limits.h>
+#include <helper.h>
+
+/* C23 5.2.5.3.2: <limits.h> gains the width of each integer type, and the
+   greatest width a bit-precise integer is written with. The width of every
+   character type is CHAR_BIT, and each _MAX holds 2^N - 1 for its width. */
+int main() {
+	if (BOOL_WIDTH == 1 && BOOL_MAX == 1 && CHAR_WIDTH == CHAR_BIT &&
+	    SCHAR_WIDTH == CHAR_BIT && UCHAR_WIDTH == CHAR_BIT &&
+	    USHRT_WIDTH == SHRT_WIDTH && UINT_WIDTH == INT_WIDTH &&
+	    ULONG_WIDTH == LONG_WIDTH && ULLONG_WIDTH == LLONG_WIDTH &&
+	    BITINT_MAXWIDTH >= ULLONG_WIDTH &&
+	    UINT_MAX == (2ULL << (UINT_WIDTH - 1)) - 1) {
+		printf("PASS\n");
+	}
+
+	return 0;
+}

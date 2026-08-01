@@ -1,0 +1,23 @@
+/*@compile_options -s c95 */
+/*@expected_bin_stdout PASS\n*/
+
+#include <iso646.h>
+#include <helper.h>
+
+/* C99 7.9: <iso646.h> spells the operators that are written with punctuation
+   the source character set may not have. */
+int main() {
+	int a = 12;
+	int b = 10;
+
+	if (a not_eq b and (a bitand b) == 8 and (a bitor b) == 14 and
+	    (a xor b) == 6 and not (a == b) and compl 0 == -1) {
+		a and_eq b;
+
+		if (a == 8) {
+			printf("PASS\n");
+		}
+	}
+
+	return 0;
+}

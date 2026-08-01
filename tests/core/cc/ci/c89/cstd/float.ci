@@ -1,0 +1,17 @@
+/*@compile_options -s c89 */
+/*@expected_bin_stdout PASS\n*/
+
+#include <float.h>
+#include <helper.h>
+
+/* C99 5.2.4.2.2: <float.h> defines the characteristics of the floating types.
+   FLT_RADIX is at least 2, and the precision of each type is at least the one
+   of the type before it. */
+int main() {
+	if (FLT_RADIX >= 2 && FLT_DIG >= 6 && DBL_DIG >= FLT_DIG &&
+	    LDBL_DIG >= DBL_DIG && FLT_MAX > 0.0 && DBL_EPSILON > 0.0) {
+		printf("PASS\n");
+	}
+
+	return 0;
+}

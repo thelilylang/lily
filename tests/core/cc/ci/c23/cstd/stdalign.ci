@@ -1,0 +1,17 @@
+//@compile_options -s c23
+//@expected_bin_stdout PASS\n
+
+#include <stdalign.h>
+#include <helper.h>
+
+/* C23 7.15: the header provides no content, since `alignas` and `alignof` are
+   keywords of their own. Including it is still written, and says nothing. */
+int main() {
+	alignas(8) char buffer[8];
+
+	if (alignof(int) >= 1 && ((unsigned long)&buffer[0] & 7UL) == 0) {
+		printf("PASS\n");
+	}
+
+	return 0;
+}

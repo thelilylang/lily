@@ -1,0 +1,19 @@
+//@compile_options -s c11
+//@expected_bin_stdout PASS\n
+
+#include <stdalign.h>
+#include <helper.h>
+
+/* C11 7.15: <stdalign.h> spells `_Alignas` and `_Alignof`, and says so with
+   __alignas_is_defined and __alignof_is_defined. Since C23 the two are
+   keywords and the header provides no content. */
+int main() {
+	alignas(8) char buffer[8];
+
+	if (alignof(int) >= 1 && alignof(char) == 1 && __alignas_is_defined &&
+	    __alignof_is_defined && ((unsigned long)&buffer[0] & 7UL) == 0) {
+		printf("PASS\n");
+	}
+
+	return 0;
+}
