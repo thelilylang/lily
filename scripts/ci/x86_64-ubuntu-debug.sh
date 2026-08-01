@@ -45,6 +45,10 @@ make submodules_without_llvm
 # Setup for Local
 ./scripts/patches/enable_local.sh
 
+# Enable assertions (ASSERT, ASSERT_EQ, etc).
+# Please look at `include/base/assert.h`.
+./scripts/patches/enable_assert.sh
+
 # Configure CMake
 #
 # NOTE: The package directories are named, so that the LLVM the project is
