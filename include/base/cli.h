@@ -135,7 +135,7 @@ multiple_inf_value__Cli(Cli *self, char *name, bool is_required);
  * @note This never terminates the process. When NULL is returned,
  * `self->status` tells whether that is an error or a default action that has
  * already been printed.
- * @return Vec<CliResult*>*? — NULL when `self->status != CLI_PARSE_STATUS_OK`.
+ * @return Vec<CliResult*>*? - NULL when `self->status != CLI_PARSE_STATUS_OK`.
  */
 Vec *
 parse__Cli(Cli *self);

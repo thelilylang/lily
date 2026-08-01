@@ -30,7 +30,7 @@
 // Identifiers of the `cic` options. Because `CIC_OPTIONS` is shared between the
 // `cic` program (which owns `--help` and `--version`) and the `ci compile`
 // command (which only owns `--help`), these must not depend on how many options
-// the library adds by itself — hence the explicit identifiers.
+// the library adds by itself - hence the explicit identifiers.
 enum CIcOptionId
 {
     CIC_OPTION_ID_MODE,

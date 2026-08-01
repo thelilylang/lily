@@ -31,8 +31,8 @@
 // terms of their width rather than a hardcoded 64.
 #define SIP_WORD_BITS (sizeof(Usize) * 8)
 
-// NOTE: The `% SIP_WORD_BITS` is what keeps a rotation by a whole word — which
-// is the identity, and which the round below asks for on 64 bits — from
+// NOTE: The `% SIP_WORD_BITS` is what keeps a rotation by a whole word - which
+// is the identity, and which the round below asks for on 64 bits - from
 // shifting by the width of the type, which is undefined.
 #define ROTATE_LEFT(value, bits)             \
     (((value) << ((bits) % SIP_WORD_BITS)) | \
