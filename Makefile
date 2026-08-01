@@ -178,9 +178,19 @@ submodules_without_llvm: libyaml_submodule
 submodules: llvm_submodule libyaml_submodule
 
 # NOTE: The tests are registered by the native inner build, not by the
-# superbuild driver, so `ctest` runs from `build/Debug/native`.
+# superbuild driver, so `ctest` runs from `build/Debug/native`. An
+# `INNER_BUILD=1` configure has no such directory, and a wasm one registers no
+# test at all, so what is there decides whether this applies.
 test:
+	@if [ ! -f build/Debug/CMakeCache.txt ]; then \
+		echo 'Nothing to test. Please configure the project by running `make debug`.'; \
+		exit 1; \
+	fi
 	$(CMAKE) --build build/Debug -j $(JOBS)
+	@if [ ! -d build/Debug/native ]; then \
+		echo '`build/Debug` was configured with INNER_BUILD=1, which registers no test. Please remove it and run `make debug` again: a configure of its own would keep what the cache holds.'; \
+		exit 1; \
+	fi
 	cd build/Debug/native && $(CTEST) --verbose
 
 format:
