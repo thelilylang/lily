@@ -33,19 +33,13 @@ make submodules_without_llvm
 # Configure CMake
 #
 # The superbuild driver always spawns the native build next to the wasm one, so
-# it is bypassed: the inner build is configured directly with the Emscripten
-# toolchain, which is what turns `LILY_WASM` on and limits the tree to what
-# `cic` needs.
-cmake \
-	-B ./build/wasm \
-	-G Ninja \
-	-DCMAKE_TOOLCHAIN_FILE="$EMSCRIPTEN_DIR/cmake/Modules/Platform/Emscripten.cmake" \
-	-DLILY_INNER_BUILD=ON \
-	-DCMAKE_BUILD_TYPE=Debug \
-	-DLILY_DEBUG=ON
+# `INNER_BUILD=1` is what leaves it out: the wasm toolchain is configured on its
+# own, and it is the Emscripten toolchain file that turns `LILY_WASM` on and
+# limits the tree to what `cic` needs.
+make debug INNER_BUILD=1 BUILD_WASM=1
 
 # Build
-cmake --build ./build/wasm
+make build
 
 # The wasm build produces no native binary and registers no test, so what it
 # has to show for itself is the module: read it back rather than trusting the
