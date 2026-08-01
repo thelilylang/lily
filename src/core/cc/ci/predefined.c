@@ -33,15 +33,6 @@
 #include <core/cc/ci/diagnostic/emit.h>
 #include <core/cc/ci/result.h>
 
-// https://gcc.gnu.org/onlinedocs/gcc/Standards.html
-static const char *std[CI_STANDARD_23 + 1] = {
-    [CI_STANDARD_NONE] = "",
-    [CI_STANDARD_KR] = "c89", // NOTE: Not real K&R support of GCC, Clang
-    [CI_STANDARD_89] = "c89", [CI_STANDARD_95] = "iso9899:199409",
-    [CI_STANDARD_99] = "c99", [CI_STANDARD_11] = "c11",
-    [CI_STANDARD_17] = "c17", [CI_STANDARD_23] = "c23",
-};
-
 static CIResultFile *predefined_file_ref = NULL; // CIResultFile* (&)
 
 String *
@@ -54,6 +45,14 @@ generate__CIPreDefined(const CIProjectConfig *config)
     // `__STDC_VERSION__`, are token kinds of their own, so they are unaffected.
     String *builtin_h = NEW(String);
 #else
+    // https://gcc.gnu.org/onlinedocs/gcc/Standards.html
+    static const char *std[CI_STANDARD_23 + 1] = {
+        [CI_STANDARD_NONE] = "",
+        [CI_STANDARD_KR] = "c89", // NOTE: Not real K&R support of GCC, Clang
+        [CI_STANDARD_89] = "c89", [CI_STANDARD_95] = "iso9899:199409",
+        [CI_STANDARD_99] = "c99", [CI_STANDARD_11] = "c11",
+        [CI_STANDARD_17] = "c17", [CI_STANDARD_23] = "c23",
+    };
     char *command = format("{S} -dM -E -std={s} - < /dev/null",
                            config->compiler.command,
                            std[config->standard]);
