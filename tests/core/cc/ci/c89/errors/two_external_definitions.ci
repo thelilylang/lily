@@ -1,0 +1,17 @@
+/*@compile_options -s c89*/
+/*@expected_compiler_error error\e[0m[0190]: this variable is already defined*/
+
+/* What an object is written to hold is written once (C11 6.9p5), so a second
+   declaration written with an initializer is not a tentative definition. */
+
+#include <helper.h>
+
+int d = 1;
+int d = 2;
+
+int main()
+{
+	printf("%d\n", d);
+
+	return 0;
+}

@@ -101,6 +101,41 @@ replace_union_from_id__CIResultFile(const CIResultFile *self,
                                     const CIUnionID *union_id,
                                     CIDecl *new_union_decl);
 
+/// @param new_variable_decl CIDecl* (&)
+static void
+replace_variable_from_id__CIResultFile(const CIResultFile *self,
+                                       const CIVariableID *variable_id,
+                                       CIDecl *new_variable_decl);
+
+/// @brief What an object is declared to be, for the purpose of declaring it
+/// more than once. Two declarations of the same object have to be written on
+/// compatible types (6.7p4), and an array written with no size is completed
+/// by one written with a size, as the composite of the two is what the object
+/// is written on (6.2.7p3).
+static bool
+eq_object_data_type__CIResultFile(const CIDataType *left,
+                                  const CIDataType *right);
+
+/// @brief Read what the scope keeps of an object already declared in it.
+///
+/// An object declared at file scope is written more than once as a matter of
+/// course: a declaration with no initializer and no storage class, or with
+/// `static`, is a tentative definition, one written `extern` refers to what is
+/// defined elsewhere, and the one written with an initializer is the external
+/// definition (6.9.2p1, 6.9.2p2). Only an object with no linkage is the one
+/// that may be declared a single time (6.7p3), which is what a block holds.
+///
+/// @param res CIDecl*? (&) What the caller gives back, written only when true
+/// is returned.
+/// @return true when the name is already declared, whether that is an error
+/// or not.
+static bool
+merge_variable_decl__CIResultFile(const CIResultFile *self,
+                                  const CIScope *scope,
+                                  const String *name,
+                                  CIDecl *decl,
+                                  CIDecl **res);
+
 /**
  *
  * @brief Search generalizable declaration from the given name, if
@@ -416,59 +451,68 @@ add_include__CIResultFile(const CIResultFile *self)
         }                                              \
     }
 
-#define CHECK_FOR_SYMBOL_REDEFINITION(name, scope, decl)     \
-    if (decl->kind & CI_DECL_KIND_LABEL) {                   \
-        CHECK_FOR_SYMBOL_REDEFINITION_DECL_WITH_SCOPE(       \
-          name, search_label__CIResultFile, scope, decl);    \
-    } else if (decl->kind & CI_DECL_KIND_FUNCTION ||         \
-               decl->kind & CI_DECL_KIND_VARIABLE ||         \
-               decl->kind & CI_DECL_KIND_ENUM_VARIANT) {     \
-        CHECK_FOR_SYMBOL_REDEFINITION_DECL(                  \
-          name,                                              \
-          search_function,                                   \
-          replace_function_from_id__CIResultFile,            \
-          decl,                                              \
-          scope);                                            \
-        CHECK_FOR_SYMBOL_REDEFINITION_DECL(                  \
-          name,                                              \
-          search_enum_variant,                               \
-          replace_enum_variant_from_id__CIResultFile,        \
-          decl,                                              \
-          scope);                                            \
-        CHECK_FOR_SYMBOL_REDEFINITION_DECL_WITH_SCOPE(       \
-          name, search_variable__CIResultFile, scope, decl); \
-    } else {                                                 \
-        if (!(decl->kind & CI_DECL_KIND_TYPEDEF)) {          \
-            CHECK_FOR_SYMBOL_REDEFINITION_DECL(              \
-              name,                                          \
-              search_enum,                                   \
-              replace_enum_from_id__CIResultFile,            \
-              decl,                                          \
-              scope);                                        \
-            CHECK_FOR_SYMBOL_REDEFINITION_DECL(              \
-              name,                                          \
-              search_struct,                                 \
-              replace_struct_from_id__CIResultFile,          \
-              decl,                                          \
-              scope);                                        \
-            CHECK_FOR_SYMBOL_REDEFINITION_DECL(              \
-              name,                                          \
-              search_union,                                  \
-              replace_union_from_id__CIResultFile,           \
-              decl,                                          \
-              scope);                                        \
-        }                                                    \
-                                                             \
-        if (!(decl->kind & CI_DECL_KIND_ENUM ||              \
-              decl->kind & CI_DECL_KIND_STRUCT ||            \
-              decl->kind & CI_DECL_KIND_UNION)) {            \
-            CHECK_FOR_SYMBOL_REDEFINITION_DECL(              \
-              name,                                          \
-              search_typedef,                                \
-              replace_typedef_from_id__CIResultFile,         \
-              decl,                                          \
-              scope);                                        \
-        }                                                    \
+#define CHECK_FOR_VARIABLE_REDEFINITION(name, scope, decl) \
+    {                                                      \
+        CIDecl *res = NULL;                                \
+                                                           \
+        if (merge_variable_decl__CIResultFile(             \
+              self, scope, name, decl, &res)) {            \
+            return res;                                    \
+        }                                                  \
+    }
+
+#define CHECK_FOR_SYMBOL_REDEFINITION(name, scope, decl)    \
+    if (decl->kind & CI_DECL_KIND_LABEL) {                  \
+        CHECK_FOR_SYMBOL_REDEFINITION_DECL_WITH_SCOPE(      \
+          name, search_label__CIResultFile, scope, decl);   \
+    } else if (decl->kind & CI_DECL_KIND_FUNCTION ||        \
+               decl->kind & CI_DECL_KIND_VARIABLE ||        \
+               decl->kind & CI_DECL_KIND_ENUM_VARIANT) {    \
+        CHECK_FOR_SYMBOL_REDEFINITION_DECL(                 \
+          name,                                             \
+          search_function,                                  \
+          replace_function_from_id__CIResultFile,           \
+          decl,                                             \
+          scope);                                           \
+        CHECK_FOR_SYMBOL_REDEFINITION_DECL(                 \
+          name,                                             \
+          search_enum_variant,                              \
+          replace_enum_variant_from_id__CIResultFile,       \
+          decl,                                             \
+          scope);                                           \
+        CHECK_FOR_VARIABLE_REDEFINITION(name, scope, decl); \
+    } else {                                                \
+        if (!(decl->kind & CI_DECL_KIND_TYPEDEF)) {         \
+            CHECK_FOR_SYMBOL_REDEFINITION_DECL(             \
+              name,                                         \
+              search_enum,                                  \
+              replace_enum_from_id__CIResultFile,           \
+              decl,                                         \
+              scope);                                       \
+            CHECK_FOR_SYMBOL_REDEFINITION_DECL(             \
+              name,                                         \
+              search_struct,                                \
+              replace_struct_from_id__CIResultFile,         \
+              decl,                                         \
+              scope);                                       \
+            CHECK_FOR_SYMBOL_REDEFINITION_DECL(             \
+              name,                                         \
+              search_union,                                 \
+              replace_union_from_id__CIResultFile,          \
+              decl,                                         \
+              scope);                                       \
+        }                                                   \
+                                                            \
+        if (!(decl->kind & CI_DECL_KIND_ENUM ||             \
+              decl->kind & CI_DECL_KIND_STRUCT ||           \
+              decl->kind & CI_DECL_KIND_UNION)) {           \
+            CHECK_FOR_SYMBOL_REDEFINITION_DECL(             \
+              name,                                         \
+              search_typedef,                               \
+              replace_typedef_from_id__CIResultFile,        \
+              decl,                                         \
+              scope);                                       \
+        }                                                   \
     }
 
 #define ADD_X_DECL(X, scope, add_scope, v, add_to_owner)           \
@@ -788,6 +832,75 @@ replace_function_from_id__CIResultFile(const CIResultFile *self,
 {
     REPLACE_DECL_FROM_ID__CI_RESULT_FILE(
       self->entity.functions, function_id, new_function_decl);
+}
+
+void
+replace_variable_from_id__CIResultFile(const CIResultFile *self,
+                                       const CIVariableID *variable_id,
+                                       CIDecl *new_variable_decl)
+{
+    REPLACE_DECL_FROM_ID__CI_RESULT_FILE(
+      self->entity.variables, variable_id, new_variable_decl);
+}
+
+bool
+eq_object_data_type__CIResultFile(const CIDataType *left,
+                                  const CIDataType *right)
+{
+    if (left->kind == CI_DATA_TYPE_KIND_ARRAY &&
+        right->kind == CI_DATA_TYPE_KIND_ARRAY &&
+        (left->array.kind == CI_DATA_TYPE_ARRAY_KIND_NONE ||
+         right->array.kind == CI_DATA_TYPE_ARRAY_KIND_NONE)) {
+        return eq_object_data_type__CIResultFile(left->array.data_type,
+                                                 right->array.data_type);
+    }
+
+    return eq__CIDataType(left, right);
+}
+
+bool
+merge_variable_decl__CIResultFile(const CIResultFile *self,
+                                  const CIScope *scope,
+                                  const String *name,
+                                  CIDecl *decl,
+                                  CIDecl **res)
+{
+    CIDecl *is_exist = search_variable__CIResultFile(self, scope, name);
+
+    if (!is_exist) {
+        return false;
+    }
+
+    // What has no linkage is written once, so a block keeps to the one
+    // declaration it is written with.
+    if (is_exist->kind != CI_DECL_KIND_VARIABLE ||
+        is_exist->variable.is_local || decl->variable.is_local ||
+        !eq_object_data_type__CIResultFile(is_exist->variable.data_type,
+                                           decl->variable.data_type)) {
+        *res = is_exist;
+
+        return true;
+    }
+
+    if (decl->variable.expr) {
+        // What the object is written to hold is written once (6.9p5).
+        if (is_exist->variable.expr) {
+            *res = is_exist;
+
+            return true;
+        }
+
+        // The definition is what the object is written to hold, so it is
+        // what the tentative definition read so far is replaced by.
+        replace_variable_from_id__CIResultFile(
+          self, search_variable__CIScope(scope, name), decl);
+    }
+
+    // What is written with no initializer says no more than what is already
+    // known of the object, so what the scope holds is kept as it is.
+    *res = decl;
+
+    return true;
 }
 
 void

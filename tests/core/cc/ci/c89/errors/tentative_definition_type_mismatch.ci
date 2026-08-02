@@ -1,0 +1,17 @@
+/*@compile_options -s c89*/
+/*@expected_compiler_error error\e[0m[0190]: this variable is already defined*/
+
+/* Declarations in the same scope that refer to the same object are written on
+   compatible types (C11 6.7p4). */
+
+#include <helper.h>
+
+int m;
+double m = 2.0;
+
+int main()
+{
+	printf("%d\n", (int)m);
+
+	return 0;
+}

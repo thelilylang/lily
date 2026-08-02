@@ -1,0 +1,50 @@
+/*@compile_options -s c89*/
+/*@expected_bin_stdout 1:2:3:0\n*/
+/*@expected_bin_stdout 4:5:6\n*/
+
+#include <helper.h>
+
+/* An object declared at file scope with no initializer and with no storage
+   class, or with `static`, is a tentative definition, and the one written
+   with an initializer is the external definition (C11 6.9.2p1, 6.9.2p2). The
+   same object is written as many times as it is useful to: what carries no
+   initializer says no more than what is already known of it. */
+
+int defined_after;
+int defined_after = 1;
+
+static int internal;
+static int internal = 2;
+
+int defined_before = 3;
+int defined_before;
+
+/* A tentative definition no external definition is written for still holds
+   what the object is written on, with an initializer equal to 0 (6.9.2p2). */
+int never_defined;
+
+/* `extern` refers to what is defined elsewhere rather than defining it, so
+   the definition is what is written with the initializer. */
+extern int from_extern;
+int from_extern = 4;
+
+/* Repeating it says the same thing again, which is what EXAMPLE 1 of 6.9.2
+   is written to show. */
+extern int from_extern;
+
+/* An array written with no size is completed by the one written with a size,
+   as what the object is written on is the composite of the two (6.2.7p3). */
+extern int table[];
+int table[3] = { 5, 6, 7 };
+
+int main()
+{
+	printf("%d:%d:%d:%d\n",
+	       defined_after,
+	       internal,
+	       defined_before,
+	       never_defined);
+	printf("%d:%d:%d\n", from_extern, table[0], table[1]);
+
+	return 0;
+}

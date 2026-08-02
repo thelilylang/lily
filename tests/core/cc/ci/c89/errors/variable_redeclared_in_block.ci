@@ -1,0 +1,19 @@
+/*@compile_options -s c89*/
+/*@expected_compiler_error error\e[0m[0190]: this variable is already defined*/
+
+/* An identifier with no linkage is declared once in the scope it is written
+   in (C11 6.7p3), so a block is not where a tentative definition is written. */
+
+#include <helper.h>
+
+int main()
+{
+	int b;
+	int b;
+
+	b = 1;
+
+	printf("%d\n", b);
+
+	return 0;
+}
