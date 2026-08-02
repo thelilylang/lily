@@ -2033,6 +2033,35 @@ parse_array_declarator__CIParser(CIParser *self,
         FREE(CIExpr, resolved_array_expr);
     }
 
+    // What is written between the brackets says how long the array is, and an
+    // array whose length is not known before the program runs is a variable
+    // length array (6.7.6.2p4), which is written from C99 on.
+    if (expr && is_unsized) {
+        CI_CHECK_STANDARD_SINCE(
+          self->file->entity.result->config->standard, CI_STANDARD_99, {
+              FAILED__CIParser(
+                self, NEW(CIError, CI_ERROR_KIND_REQUIRED_C99_OR_LATER));
+          });
+
+        // Such an array is written on an identifier with no linkage and with
+        // block scope or function prototype scope, and on none that is
+        // written to last as long as the program does (6.7.6.2p2). A
+        // parameter is written in the scope the declarator holds and carries
+        // no storage class of its own, so what the function it belongs to is
+        // written with says nothing about it.
+        if (!in_function_prototype &&
+            (!IN_FUNCTION_BODY ||
+             storage_class_flag &
+               (CI_STORAGE_CLASS_STATIC | CI_STORAGE_CLASS_EXTERN |
+                CI_STORAGE_CLASS_THREAD_LOCAL))) {
+            FAILED__CIParser(
+              self,
+              NEW(
+                CIError,
+                CI_ERROR_KIND_VARIABLE_LENGTH_ARRAY_WITH_LINKAGE_OR_STATIC_STORAGE));
+        }
+    }
+
     if (name_ref->generic_params) {
         FAILED__CIParser(
           self,

@@ -1,0 +1,32 @@
+/*@compile_options -s c89*/
+/*@expected_bin_stdout 1:9:3\n*/
+
+/* What is written between the brackets is read before the program runs where
+   it can be, and such an array is written in any standard. Only the one whose
+   length is not known before then is written from C99 on (C11 6.7.6.2p4). */
+
+#include <helper.h>
+
+#define LEN 3
+
+static int at_file_scope[LEN];
+
+int main()
+{
+	int a[3];
+	static int with_static_storage[LEN * 3];
+	/* An enumeration constant is written before the program runs as much as
+	   a literal is. */
+	enum { N = 3 };
+	int from_an_enum[N];
+
+	a[0] = 1;
+	at_file_scope[2] = 3;
+
+	printf("%d:%d:%d\n",
+	       a[0],
+	       (int)(sizeof(with_static_storage) / sizeof(int)),
+	       at_file_scope[2] + (int)(sizeof(from_an_enum) / sizeof(int)) - 3);
+
+	return 0;
+}

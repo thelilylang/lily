@@ -1,0 +1,22 @@
+/*@compile_options -s c89*/
+/*@expected_compiler_error error\e[0m[0008]: required C99 or later standard*/
+
+/* An array whose length is not known before the program runs is a variable
+   length array (C11 6.7.6.2p4), which is written from C99 on. What is written
+   with a length known before the program runs is written the same way in any
+   standard. */
+
+#include <helper.h>
+
+int main()
+{
+	int n;
+	int a[n];
+
+	n = 3;
+	a[0] = 1;
+
+	printf("%d\n", a[0]);
+
+	return 0;
+}

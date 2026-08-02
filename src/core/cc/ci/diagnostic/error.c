@@ -456,6 +456,10 @@ to_msg__CIError(const CIError *self)
             return "a variable declaration is not expected in a label";
         case CI_ERROR_KIND_VARIABLE_IS_ALREADY_DEFINED:
             return "this variable is already defined";
+        case CI_ERROR_KIND_VARIABLE_LENGTH_ARRAY_WITH_LINKAGE_OR_STATIC_STORAGE:
+            return "a variable length array is written in a block or in a "
+                   "function prototype, on an identifier with no linkage and "
+                   "with no static storage duration";
         case CI_ERROR_KIND_VA_ARGS_IN_NON_VARIADIC_MACRO:
             return "`__VA_ARGS__` cannot be used in a macro which has no "
                    "variadic param";
@@ -873,6 +877,8 @@ to_code__CIError(const CIError *self)
             return "0199";
         case CI_ERROR_KIND_UNEXPECTED_PATH_IN_SCALAR_INITIALIZATION:
             return "0200";
+        case CI_ERROR_KIND_VARIABLE_LENGTH_ARRAY_WITH_LINKAGE_OR_STATIC_STORAGE:
+            return "0201";
         default:
             UNREACHABLE("unknown variant");
     }

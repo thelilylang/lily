@@ -1,0 +1,17 @@
+//@compile_options -s c99
+//@expected_compiler_error error\e[0m[0201]: a variable length array is written in a block or in a function prototype, on an identifier with no linkage and with no static storage duration
+
+/* An identifier written to be an object that lasts as long as the program
+   does is not written on a variable length array (C11 6.7.6.2p2), whichever
+   scope it is written in. */
+
+#include <helper.h>
+
+int main() {
+	int m = 2;
+	static int e[m];
+
+	e[0] = 1;
+
+	return e[0];
+}
