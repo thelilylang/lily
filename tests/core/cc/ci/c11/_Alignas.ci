@@ -1,16 +1,33 @@
 //@compile_options -s c11
 //@expected_bin_stdout 1:8\n
 //@expected_bin_stdout 2:16\n
+//@expected_bin_stdout 1:1:1:1\n
 
 #include <helper.h>
 
 /* What a data type is written to be aligned on is written before it, and is
-   kept as it is written. */
+   kept as it is written.
+
+   An array is written the same way, and what it is aligned on is what the
+   array is aligned on rather than what its elements are: the alignment is
+   read before the data type, so what the array wraps is what holds it until
+   the array is built around it. The address is read back here, since printing
+   the alignment on its own says nothing about whether the generated C still
+   carries it. */
 _Alignas(16) int at_file_scope = 2;
+_Alignas(16) char array_at_file_scope[8];
+_Alignas(32) char grid_at_file_scope[2][3];
 
 int main() {
 	_Alignas(8) int in_a_block = 1;
+	_Alignas(8) char array_in_a_block[8];
+	_Alignas(32) char grid_in_a_block[2][3];
 
 	printf("%d:%d\n", in_a_block, (int)_Alignof(long));
 	printf("%d:%d\n", at_file_scope, 16);
+	printf("%d:%d:%d:%d\n",
+	       ((unsigned long)&array_at_file_scope[0] & 15UL) == 0,
+	       ((unsigned long)&grid_at_file_scope[0][0] & 31UL) == 0,
+	       ((unsigned long)&array_in_a_block[0] & 7UL) == 0,
+	       ((unsigned long)&grid_in_a_block[0][0] & 31UL) == 0);
 }

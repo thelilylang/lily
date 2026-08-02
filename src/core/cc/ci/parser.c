@@ -2037,6 +2037,15 @@ parse_array_declarator__CIParser(CIParser *self,
           self, name_ref, pre_data_type, in_function_prototype, has_new_name);
     }
 
+    // What the declaration is written to be aligned on is read before the
+    // data type, so it is held by what the array wraps. It is what the object
+    // being declared is aligned on, not what its elements are, so it is moved
+    // onto the array itself: that is where the generator reads it, and where
+    // the outermost array of `char a[2][3]` ends up holding it.
+    CIExpr *wrapped_alignment = res->alignment;
+
+    set_alignment__CIDataType(res, NULL);
+
     if (is_unsized) {
         res = NEW_VARIANT(
           CIDataType,
@@ -2057,6 +2066,8 @@ parse_array_declarator__CIParser(CIParser *self,
                                       is_static,
                                       qualifier));
     }
+
+    set_alignment__CIDataType(res, wrapped_alignment);
 
     return res;
 }
