@@ -2762,7 +2762,20 @@ generate_decl__CIGenerator(CIGenerator *self, const CIDecl *decl)
 
                 break;
             case CI_DECL_KIND_ENUM_VARIANT:
-                // NOTE: We don't want to generate enum variant here.
+                // NOTE: A variant of an enum written with a tag is generated
+                // with the enum itself, which is what names it. An enum
+                // written with no tag is only ever reached through the
+                // constants it declares, since nothing can name it, so the
+                // constant is written with an enum of its own.
+                if (!decl->enum_variant->enum_name) {
+                    write_String__CIGenerator(
+                      self,
+                      format__String(
+                        "enum {{ {S} = {zi} };\n",
+                        GET_PTR_RC(String, decl->enum_variant->name),
+                        decl->enum_variant->value));
+                }
+
                 goto end_session;
             case CI_DECL_KIND_FUNCTION:
                 generate_function_decl__CIGenerator(self, &decl->function);

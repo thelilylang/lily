@@ -143,7 +143,14 @@ is_integer_data_type__CIResolverDataType(
         case CI_DATA_TYPE_KIND_TYPEDEF: {
             CIDataType *resolved_dt = run__CIResolverDataType(
               file, data_type, called_generic_params, decl_generic_params);
-            bool res = is_integer__CIDataType(resolved_dt);
+            // What is behind the typedef is read the same way as what is
+            // written without one, so a pointer behind a typedef is a pointer.
+            bool res =
+              is_integer_data_type__CIResolverDataType(file,
+                                                       resolved_dt,
+                                                       allow_implicit_cast,
+                                                       called_generic_params,
+                                                       decl_generic_params);
 
             FREE(CIDataType, resolved_dt);
 
