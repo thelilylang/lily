@@ -34,10 +34,11 @@
 // the caller returns from the current check so that the sibling checks still
 // run and a single pass reports more than one error.
 #define FAILED_WITH_LOCATION__CITypecheck(self, location, error_kind) \
-    EMIT_ERROR__CI(&(self)->file->file_input,                         \
-                   location,                                          \
-                   NEW(CIError, error_kind),                          \
-                   &(self)->file->file_analysis->count_error)
+    EMIT_ERROR__CI(                                                   \
+      get_file_from_location__CIResultFile((self)->file, location),   \
+      location,                                                       \
+      NEW(CIError, error_kind),                                       \
+      &(self)->file->file_analysis->count_error)
 
 #define FAILED__CITypecheck(self, node, error_kind) \
     FAILED_WITH_LOCATION__CITypecheck(self, &(node)->location, error_kind)

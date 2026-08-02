@@ -556,6 +556,22 @@ search_struct__CIResultFile(const CIResultFile *self, const String *name);
 
 /**
  *
+ * @brief Read the file a location was written in.
+ *
+ * What is reported on is not always written in the file being analysed: an
+ * include is written in one file and read in another, and a macro is written
+ * where it is defined rather than where it is called. The location says which
+ * file it belongs to, so the source that is shown is read from that one.
+ *
+ * @return const File* (&) The file the location names, or the file being
+ * analysed when it names none that is known.
+ */
+const File *
+get_file_from_location__CIResultFile(const CIResultFile *self,
+                                     const Location *location);
+
+/**
+ *
  * @brief Search union declaration in unions map.
  */
 CIDecl *

@@ -143,69 +143,84 @@ to_string__Diagnostic(const Diagnostic *self);
 // Free Diagnostic type.
 static inline DESTRUCTOR(Diagnostic, const Diagnostic *self);
 
+/* The source shown under a diagnostic is read from the file the location was
+   written in, at the positions it holds. A location that names another file,
+   or one whose positions fall outside the file being read, is one no line can
+   be read for: what is written then is the location on its own, which says
+   where the error is without showing something that was never written
+   there. */
+#define HAS_LINES_TO_READ(location, file)                                     \
+    ((file) && (file)->content && (location)->start_position < (file)->len && \
+     (location)->end_position < (file)->len &&                                \
+     (!(location)->filename || !(file)->name ||                               \
+      !strcmp((location)->filename, (file)->name)))
+
 #define LINES(location, file)                                                  \
-    Usize start_position =                                                     \
-      location->start_position == file->len - 1                                \
-        ? location->start_position != 0 ? location->start_position - 1 : 0     \
-        : location->start_position;                                            \
-    Usize end_position = location->end_position;                               \
+    Vec *lines = NEW(Vec);                                                     \
                                                                                \
-    /* A location on the character a line ends with is on the line it ends,    \
-       so where that line starts is searched for from before it. Left as it    \
-       is, the search would stop where it starts and give a position past the  \
-       end of the location. */                                                 \
-    if (start_position > 0 && file->content[start_position] == '\n') {         \
-        --start_position;                                                      \
-    }                                                                          \
+    if (HAS_LINES_TO_READ(location, file)) {                                   \
+        Usize start_position =                                                 \
+          location->start_position == file->len - 1                            \
+            ? location->start_position != 0 ? location->start_position - 1 : 0 \
+            : location->start_position;                                        \
+        Usize end_position = location->end_position;                           \
                                                                                \
-    for (; start_position > 0 && file->content[start_position] != '\n';        \
-         --start_position)                                                     \
-        ;                                                                      \
-    for (;                                                                     \
-         end_position < file->len - 1 &&                                       \
-         (file->content[end_position] != '\n' && file->content[end_position]); \
-         ++end_position)                                                       \
-        ;                                                                      \
-                                                                               \
-    if (start_position + 1 != file->len - 1 && start_position != 0 &&          \
-        end_position != 0)                                                     \
-        ++start_position;                                                      \
-                                                                               \
-    Vec *lines = NULL;                                                         \
-                                                                               \
-    if (location->end_line - location->start_line == 0) {                      \
-        ASSERT(start_position <= end_position);                                \
-                                                                               \
-        if (start_position < end_position) {                                   \
-            char *slice =                                                      \
-              get_slice__Str(file->content, start_position, end_position);     \
-                                                                               \
-            lines = split__Str(slice, '\n');                                   \
-                                                                               \
-            lily_free(slice);                                                  \
-        } else {                                                               \
-            lines = NEW(Vec);                                                  \
+        /* A location on the character a line ends with is on the line it      \
+           ends, so where that line starts is searched for from before it.     \
+           Left as it is, the search would stop where it starts and give a     \
+           position past the end of the location. */                           \
+        if (start_position > 0 && file->content[start_position] == '\n') {     \
+            --start_position;                                                  \
         }                                                                      \
-    } else {                                                                   \
-        String *slice = NEW(String);                                           \
-        Usize position = start_position;                                       \
                                                                                \
-        for (Usize i = location->start_line; i < location->end_line; ++i) {    \
-            while (file->content[position] != '\n' &&                          \
-                   file->content[position]) {                                  \
+        for (; start_position > 0 && file->content[start_position] != '\n';    \
+             --start_position)                                                 \
+            ;                                                                  \
+        for (; end_position < file->len - 1 &&                                 \
+               (file->content[end_position] != '\n' &&                         \
+                file->content[end_position]);                                  \
+             ++end_position)                                                   \
+            ;                                                                  \
+                                                                               \
+        if (start_position + 1 != file->len - 1 && start_position != 0 &&      \
+            end_position != 0)                                                 \
+            ++start_position;                                                  \
+                                                                               \
+        if (location->end_line - location->start_line == 0) {                  \
+            ASSERT(start_position <= end_position);                            \
+                                                                               \
+            if (start_position < end_position) {                               \
+                char *slice =                                                  \
+                  get_slice__Str(file->content, start_position, end_position); \
+                                                                               \
+                FREE(Vec, lines);                                              \
+                lines = split__Str(slice, '\n');                               \
+                                                                               \
+                lily_free(slice);                                              \
+            }                                                                  \
+        } else {                                                               \
+            String *slice = NEW(String);                                       \
+            Usize position = start_position;                                   \
+                                                                               \
+            for (Usize i = location->start_line; i < location->end_line;       \
+                 ++i) {                                                        \
+                while (file->content[position] != '\n' &&                      \
+                       file->content[position]) {                              \
+                    push__String(slice, file->content[position++]);            \
+                }                                                              \
+                                                                               \
+                ++position;                                                    \
+            }                                                                  \
+                                                                               \
+            while (position < end_position) {                                  \
                 push__String(slice, file->content[position++]);                \
             }                                                                  \
                                                                                \
-            ++position;                                                        \
+            FREE(Vec, lines);                                                  \
+            lines = split__Str(slice->buffer, '\n');                           \
+                                                                               \
+            FREE(String, slice);                                               \
         }                                                                      \
-                                                                               \
-        while (position < end_position) {                                      \
-            push__String(slice, file->content[position++]);                    \
-        }                                                                      \
-                                                                               \
-        lines = split__Str(slice->buffer, '\n');                               \
-                                                                               \
-        FREE(String, slice);                                                   \
     }                                                                          \
                                                                                \
     if (lines->len == 0) {                                                     \
@@ -1290,8 +1305,12 @@ to_string__Diagnostic(const Diagnostic *self)
     String *res = NEW(String);
 
     {
+        // The file a location was written in is the one it names, which is
+        // not the file being analysed when what is reported on comes from an
+        // include or from a macro written in one.
         char *s = format("{s}:{d}:{d}: ",
-                         self->file->name,
+                         self->location->filename ? self->location->filename
+                                                  : self->file->name,
                          self->location->start_line,
                          self->location->start_column);
 

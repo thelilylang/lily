@@ -37,25 +37,28 @@
 // stopping the parse: the caller returns a poisoned value so that a single pass
 // reports more than one error. The stage boundary in `run_file__CIResult` stops
 // the pipeline before the analysis stages run.
-#define FAILED__CIParser(self, error)                \
-    EMIT_ERROR__CI(&(self)->file->file_input,        \
-                   &(self)->current_token->location, \
-                   error,                            \
+#define FAILED__CIParser(self, error)                                 \
+    EMIT_ERROR__CI(get_file_from_location__CIResultFile(              \
+                     (self)->file, &(self)->current_token->location), \
+                   &(self)->current_token->location,                  \
+                   error,                                             \
                    (self)->count_error)
 
 // Same, but located on a data type rather than on the current token (used by
 // the substitution helpers, which run outside of the token stream).
-#define FAILED_ON_DATA_TYPE__CIParser(file, data_type, error) \
-    EMIT_ERROR__CI(&(file)->file_input,                       \
-                   &(data_type)->location,                    \
-                   error,                                     \
-                   &(file)->file_analysis->count_error)
+#define FAILED_ON_DATA_TYPE__CIParser(file, data_type, error)               \
+    EMIT_ERROR__CI(                                                         \
+      get_file_from_location__CIResultFile((file), &(data_type)->location), \
+      &(data_type)->location,                                               \
+      error,                                                                \
+      &(file)->file_analysis->count_error)
 
-#define WARNING__CIParser(self, warning)               \
-    EMIT_WARNING__CI(&(self)->file->file_input,        \
-                     &(self)->current_token->location, \
-                     warning,                          \
-                     NULL,                             \
+#define WARNING__CIParser(self, warning)                                \
+    EMIT_WARNING__CI(get_file_from_location__CIResultFile(              \
+                       (self)->file, &(self)->current_token->location), \
+                     &(self)->current_token->location,                  \
+                     warning,                                           \
+                     NULL,                                              \
                      (self)->count_warning)
 #include <core/cc/ci/resolver/expr.h>
 #include <core/cc/ci/result.h>

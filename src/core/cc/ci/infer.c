@@ -30,11 +30,12 @@
 // Emit a located error on `node` and count it, without stopping the inference:
 // the caller carries on with a poisoned data type so that a single pass reports
 // more than one error.
-#define FAILED__CIInfer(file, node, error_kind) \
-    EMIT_ERROR__CI(&(file)->file_input,         \
-                   &(node)->location,           \
-                   NEW(CIError, error_kind),    \
-                   &(file)->file_analysis->count_error)
+#define FAILED__CIInfer(file, node, error_kind)                        \
+    EMIT_ERROR__CI(                                                    \
+      get_file_from_location__CIResultFile((file), &(node)->location), \
+      &(node)->location,                                               \
+      NEW(CIError, error_kind),                                        \
+      &(file)->file_analysis->count_error)
 
 // Data type an inference function returns after having emitted an error.
 #define POISONED_DATA_TYPE__CIInfer(node) \

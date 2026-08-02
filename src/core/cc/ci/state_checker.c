@@ -32,11 +32,12 @@
 
 // Emit a located error and count it, without stopping the state checker: the
 // caller returns from the current check so that the sibling checks still run.
-#define FAILED__CIStateChecker(self, node, error_kind) \
-    EMIT_ERROR__CI(&(self)->file->file_input,          \
-                   &(node)->location,                  \
-                   NEW(CIError, error_kind),           \
-                   &(self)->file->file_analysis->count_error)
+#define FAILED__CIStateChecker(self, node, error_kind)                       \
+    EMIT_ERROR__CI(                                                          \
+      get_file_from_location__CIResultFile((self)->file, &(node)->location), \
+      &(node)->location,                                                     \
+      NEW(CIError, error_kind),                                              \
+      &(self)->file->file_analysis->count_error)
 
 enum CIStateCheckerExpr
 {

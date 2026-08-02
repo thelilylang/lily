@@ -32,11 +32,12 @@
 
 // Emit a located error and count it, without stopping the visitor: the caller
 // returns from the current check so that the rest of the pass still runs.
-#define FAILED__CIVisitor(self, node, error_kind) \
-    EMIT_ERROR__CI(&(self)->file->file_input,     \
-                   &(node)->location,             \
-                   NEW(CIError, error_kind),      \
-                   &(self)->file->file_analysis->count_error)
+#define FAILED__CIVisitor(self, node, error_kind)                            \
+    EMIT_ERROR__CI(                                                          \
+      get_file_from_location__CIResultFile((self)->file, &(node)->location), \
+      &(node)->location,                                                     \
+      NEW(CIError, error_kind),                                              \
+      &(self)->file->file_analysis->count_error)
 
 inline bool
 is_in_function_body__CIVisitor(CIVisitor *self);

@@ -34,10 +34,11 @@
 // stopping the resolve: the caller carries on so that a single run reports more
 // than one error. The stage boundary in `run_file__CIResult` stops the
 // pipeline.
-#define FAILED__CIResolver(self, error_kind)         \
-    EMIT_ERROR__CI(&(self)->file->file_input,        \
-                   &(self)->current_token->location, \
-                   NEW(CIError, error_kind),         \
+#define FAILED__CIResolver(self, error_kind)                          \
+    EMIT_ERROR__CI(get_file_from_location__CIResultFile(              \
+                     (self)->file, &(self)->current_token->location), \
+                   &(self)->current_token->location,                  \
+                   NEW(CIError, error_kind),                          \
                    (self)->count_error)
 #include <core/cc/ci/resolver/expr.h>
 #include <core/cc/ci/result.h>

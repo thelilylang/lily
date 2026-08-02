@@ -1,0 +1,22 @@
+//@compile_options -s c99
+//@expected_compiler_error #define ADD_ONE_FROM_HEADER(x) ((x) + 1)
+
+/* What is reported on is not always written in the file being read: a macro
+   is written where it is defined rather than where it is called. The source
+   shown is read from the file the location was written in, so what is shown
+   is what was written there. */
+
+#include <helper.h>
+#include <macro_in_header.h>
+
+int main() {
+	struct S {
+		int x;
+	} s;
+
+	int v = ADD_ONE_FROM_HEADER(s);
+
+	printf("%d\n", v);
+
+	return 0;
+}

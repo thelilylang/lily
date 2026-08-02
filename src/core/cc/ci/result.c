@@ -35,11 +35,12 @@
 
 // Emit a located error on `node` and count it, without stopping the pass: the
 // caller carries on so that a single run reports more than one error.
-#define FAILED__CIResultFile(self, node, error_kind) \
-    EMIT_ERROR__CI(&(self)->file_input,              \
-                   &(node)->location,                \
-                   NEW(CIError, error_kind),         \
-                   &(self)->file_analysis->count_error)
+#define FAILED__CIResultFile(self, node, error_kind)                   \
+    EMIT_ERROR__CI(                                                    \
+      get_file_from_location__CIResultFile((self), &(node)->location), \
+      &(node)->location,                                               \
+      NEW(CIError, error_kind),                                        \
+      &(self)->file_analysis->count_error)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1101,6 +1102,38 @@ search_variable__CIResultFile(const CIResultFile *self,
                                           search_variable__CIScope,
                                           scope,
                                           get_variable_from_id__CIResultFile);
+}
+
+const File *
+get_file_from_location__CIResultFile(const CIResultFile *self,
+                                     const Location *location)
+{
+    if (!location->filename ||
+        !strcmp(location->filename, self->file_input.name)) {
+        return &self->file_input;
+    }
+
+    // The files the result holds are keyed by the path they were read from,
+    // which is what a location names.
+    const CIResult *result = self->entity.result;
+
+    if (result) {
+        const CIResultFile *files[2] = {
+            get__OrderedHashMap(result->headers, (char *)location->filename),
+            get__OrderedHashMap(result->sources, (char *)location->filename)
+        };
+
+        for (Usize i = 0; i < 2; ++i) {
+            if (files[i]) {
+                return &files[i]->file_input;
+            }
+        }
+    }
+
+    // Nothing is known of the file the location names, so the source it was
+    // written in cannot be shown. What is shown is left to the diagnostic,
+    // which reads no line it has no file for.
+    return NULL;
 }
 
 CIDecl *
