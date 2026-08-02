@@ -1,0 +1,24 @@
+/*@compile_options -s c89*/
+/*@expected_compiler_error error\e[0m[0066]: expected a data type*/
+
+/* The second argument of `va_arg` is a data type rather than a value
+   (4.8.1.2), so a value written there is not what it asks for. */
+
+#include <helper.h>
+#include <stdarg.h>
+
+static void f(int n, ...)
+{
+	va_list ap;
+
+	va_start(ap, n);
+	va_arg(ap, 3);
+	va_end(ap);
+}
+
+int main()
+{
+	f(1, 2);
+
+	return 0;
+}

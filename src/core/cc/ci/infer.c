@@ -680,6 +680,35 @@ infer_expr_function_call_builtin_data_type__CIInfer(const CIExpr *expr)
     const CIBuiltinFunction *builtin_function =
       get_builtin_function__CIBuiltin(builtin, expr->function_call_builtin.id);
 
+    // A builtin written to give back the data type it is given holds
+    // `TYPE_INFO` as the data type it returns, as `__builtin_va_arg` does
+    // (C11 7.16.1.1). What it gives back is read from the argument written
+    // where the parameters hold `TYPE_INFO`.
+    if (builtin_function->return_data_type->kind ==
+        CI_DATA_TYPE_KIND_TYPE_INFO) {
+        const Vec *called_params = expr->function_call_builtin.params;
+
+        for (Usize i = 0; i < builtin_function->params->len; ++i) {
+            const CIDataType *builtin_param =
+              get__Vec(builtin_function->params, i);
+
+            if (builtin_param->kind != CI_DATA_TYPE_KIND_TYPE_INFO ||
+                i >= called_params->len) {
+                continue;
+            }
+
+            const CIExpr *called_param = get__Vec(called_params, i);
+
+            // The argument is only a data type when the call is written the
+            // way the builtin expects. The typechecker is what says so, and
+            // it has not run yet when the size of a declaration is read, so
+            // anything else is left to it to report.
+            if (called_param->kind == CI_EXPR_KIND_DATA_TYPE) {
+                return ref__CIDataType(called_param->data_type);
+            }
+        }
+    }
+
     return ref__CIDataType(builtin_function->return_data_type);
 }
 

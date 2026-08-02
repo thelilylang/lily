@@ -1556,6 +1556,21 @@ typecheck_function_call_builtin_expr_params__CITypecheck(
           get__Vec(decl_function_call_builtin->params, i);
         const CIExpr *called_param = get__Vec(called_params, i);
 
+        // A parameter written as `TYPE_INFO` is given a data type rather than
+        // a value, as the second parameter of `__builtin_va_arg` is (C11
+        // 7.16.1.1). There is no value to check it against: what is expected
+        // of it is that a data type is what is written there.
+        if (builtin_param->kind == CI_DATA_TYPE_KIND_TYPE_INFO) {
+            if (called_param->kind != CI_EXPR_KIND_DATA_TYPE) {
+                FAILED_WITH_LOCATION__CITypecheck(
+                  self,
+                  &called_param->location,
+                  CI_ERROR_KIND_EXPECTED_DATA_TYPE);
+            }
+
+            continue;
+        }
+
         typecheck_expr__CITypecheck(
           self, builtin_param, called_param, typecheck_ctx);
     }
@@ -1718,6 +1733,9 @@ typecheck_expr__CITypecheck(const CITypecheck *self,
     // Typecheck expression content.
     switch (given_expr->kind) {
         case CI_EXPR_KIND_ALIGNOF:
+        // NOTE: A data type written as an expression stands for a type rather
+        // than a value, so there is nothing to check it holds.
+        case CI_EXPR_KIND_DATA_TYPE:
         case CI_EXPR_KIND_IDENTIFIER:
         case CI_EXPR_KIND_LITERAL:
         case CI_EXPR_KIND_NULLPTR:

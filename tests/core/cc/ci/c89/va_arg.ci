@@ -1,0 +1,58 @@
+/*@compile_options -s c89*/
+/*@expected_bin_stdout 6\n*/
+/*@expected_bin_stdout 7:1:65\n*/
+
+#include <helper.h>
+#include <stdarg.h>
+
+/* What `va_arg` gives back is written as its second argument rather than read
+   from what the call holds (4.8.1.2), so the data type it is given is the one
+   the expression it stands for holds. */
+static int sum(int n, ...)
+{
+	va_list ap;
+	int s;
+	int i;
+
+	s = 0;
+
+	va_start(ap, n);
+
+	for (i = 0; i < n; ++i) {
+		s += va_arg(ap, int);
+	}
+
+	va_end(ap);
+
+	return s;
+}
+
+/* A data type of its own is read for each argument, so what is written on one
+   says nothing about what is written on the next. Each is written the data
+   type the argument holds once the default argument promotions have been
+   applied to it, which is what 4.8.1.2 asks of it. */
+static void mixed(int n, ...)
+{
+	va_list ap;
+	int i;
+	double d;
+	const char *s;
+
+	va_start(ap, n);
+
+	i = va_arg(ap, int);
+	d = va_arg(ap, double);
+	s = va_arg(ap, const char *);
+
+	va_end(ap);
+
+	printf("%d:%d:%d\n", i, (int)d, (int)s[0]);
+}
+
+int main()
+{
+	printf("%d\n", sum(3, 1, 2, 3));
+	mixed(3, 7, 1.5, "A");
+
+	return 0;
+}

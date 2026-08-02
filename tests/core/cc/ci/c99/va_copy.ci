@@ -1,0 +1,35 @@
+//@compile_options -s c99
+//@expected_bin_stdout 6:6\n
+
+#include <helper.h>
+#include <stdarg.h>
+
+/* A copy holds what the list it is written from holds (7.15.1.2), so what is
+   read from it is read again from the copy. */
+static int twice(int n, ...) {
+	va_list ap;
+	va_list copy;
+	int a = 0;
+	int b = 0;
+	int i;
+
+	va_start(ap, n);
+	va_copy(copy, ap);
+
+	for (i = 0; i < n; ++i) {
+		a += va_arg(ap, int);
+	}
+
+	for (i = 0; i < n; ++i) {
+		b += va_arg(copy, int);
+	}
+
+	va_end(copy);
+	va_end(ap);
+
+	printf("%d:%d\n", a, b);
+
+	return 0;
+}
+
+int main() { return twice(3, 1, 2, 3); }
