@@ -1,0 +1,49 @@
+/*@compile_options -s c95 */
+/*@expected_bin_stdout PASS\n*/
+
+#include <string.h>
+#include <wchar.h>
+#include <helper.h>
+
+/* C99 7.24: <wchar.h> is what a wide string is copied, compared, searched and
+   measured with, and what a multibyte character is read into a wide one
+   through. WEOF is no wide character at all.
+
+   NOTE: The wide strings are written a character at a time, since a wide
+   string literal is not yet read as one. */
+int main() {
+	wchar_t abc[4];
+	wchar_t copied[8];
+	wchar_t bc[3];
+	wchar_t wide = 0;
+	mbstate_t state;
+	size_t read;
+
+	abc[0] = 'a';
+	abc[1] = 'b';
+	abc[2] = 'c';
+	abc[3] = 0;
+
+	bc[0] = 'b';
+	bc[1] = 'c';
+	bc[2] = 0;
+
+	wcscpy(copied, abc);
+
+	if (wcslen(copied) == 3 && wcscmp(copied, abc) == 0 &&
+	    wcsncmp(copied, bc, 1) != 0 && wcschr(copied, 'b') != 0 &&
+	    wcsrchr(copied, 'c') != 0 && wcsstr(copied, bc) != 0 &&
+	    wcsspn(copied, abc) == 3 && wmemcmp(copied, abc, 3) == 0 &&
+	    WEOF == (wint_t)-1 && WCHAR_MAX > 0 && btowc('a') == (wint_t)'a' &&
+	    wctob((wint_t)'a') == 'a') {
+		memset(&state, 0, sizeof(state));
+
+		read = mbrtowc(&wide, "z", 1, &state);
+
+		if (read == 1 && wide == 'z' && mbsinit(&state)) {
+			printf("PASS\n");
+		}
+	}
+
+	return 0;
+}

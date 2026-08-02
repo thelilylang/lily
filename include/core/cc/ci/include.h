@@ -63,6 +63,24 @@ get_include_dirs__CIInclude();
 
 /**
  *
+ * @brief Look for `include_path` the way `#include` does, and tell whether it
+ * is found. This is what `__has_include` and `__has_include_next` are written
+ * to ask.
+ * @param include_path const String* (&) What the directive names, quotes or
+ * angle brackets left out.
+ * @param current_filename const char* (&) The file the operator is written in,
+ * whose directory is looked into last.
+ * @param is_next Whether the directory the current file was found in, and
+ * everything named before it, is passed over: that is what the `_next` form
+ * asks.
+ */
+bool
+has_include__CIInclude(const String *include_path,
+                       const char *current_filename,
+                       bool is_next);
+
+/**
+ *
  * @brief Free `include_dirs` vector.
  * @see src/core/cc/ci/include.c
  */

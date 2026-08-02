@@ -521,9 +521,15 @@ get_name__CIStateCheckerValue(CIStateCheckerValue *self)
         case CI_STATE_CHECKER_VALUE_KIND_ARRAY:
         case CI_STATE_CHECKER_VALUE_KIND_FUNCTION_PTR:
         case CI_STATE_CHECKER_VALUE_KIND_PTR:
-        case CI_STATE_CHECKER_VALUE_KIND_STRUCT:
-        case CI_STATE_CHECKER_VALUE_KIND_UNION:
             return NULL;
+        // A struct or a union is held in a scope under its tag, so its name is
+        // given back here. What is written with no tag has none.
+        case CI_STATE_CHECKER_VALUE_KIND_STRUCT:
+            return self->struct_.name ? GET_PTR_RC(String, self->struct_.name)
+                                      : NULL;
+        case CI_STATE_CHECKER_VALUE_KIND_UNION:
+            return self->union_.name ? GET_PTR_RC(String, self->union_.name)
+                                     : NULL;
         case CI_STATE_CHECKER_VALUE_KIND_VARIABLE:
             return GET_PTR_RC(String, self->variable.name);
         default:
@@ -1975,6 +1981,13 @@ check_typedef__CIStateChecker(CIStateChecker *self, const CIDecl *decl)
 
     switch (resolved_typedef_dt->kind) {
         case CI_DATA_TYPE_KIND_STRUCT: {
+            // A struct written with no tag, as `typedef struct { ... } t;`
+            // writes it, is declared nowhere else: there is nothing to look
+            // for, and nothing the scope holds it under.
+            if (!resolved_typedef_dt->struct_.name) {
+                break;
+            }
+
             CIDecl *struct_decl =
               search_struct_in_generic_context__CIResultFile(
                 self->file,
@@ -1992,6 +2005,12 @@ check_typedef__CIStateChecker(CIStateChecker *self, const CIDecl *decl)
             UNREACHABLE("struct_decl is not expected to be NULL");
         }
         case CI_DATA_TYPE_KIND_UNION: {
+            // A union written with no tag is declared nowhere else, as an
+            // unnamed struct is.
+            if (!resolved_typedef_dt->union_.name) {
+                break;
+            }
+
             CIDecl *union_decl = search_union_in_generic_context__CIResultFile(
               self->file,
               GET_PTR_RC(String, resolved_typedef_dt->union_.name),

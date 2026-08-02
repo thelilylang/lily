@@ -247,6 +247,11 @@ enum CITokenKind
     // The name of the function whose body it is written in, which the compiler
     // declares there.
     CI_TOKEN_KIND_KEYWORD___FUNC__,
+    // Whether what is named is a header the `#include` search finds. Only
+    // written in the condition of a conditional inclusion directive, where the
+    // scanner reads it and what it names, and gives back what it stands for.
+    CI_TOKEN_KIND_KEYWORD___HAS_INCLUDE,
+    CI_TOKEN_KIND_KEYWORD___HAS_INCLUDE_NEXT,
     // See https://gcc.gnu.org/onlinedocs/gcc/Restricted-Pointers.html
     CI_TOKEN_KIND_KEYWORD___RESTRICT,
     CI_TOKEN_KIND_KEYWORD___RESTRICT__,

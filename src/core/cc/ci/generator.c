@@ -25,6 +25,8 @@
 #include <base/assert.h>
 #include <base/dir.h>
 
+#include <ctype.h>
+
 #include <cli/version.h>
 #include <core/cc/ci/generator.h>
 
@@ -1852,14 +1854,31 @@ generate_function_literal_character_expr__CIGenerator(CIGenerator *self,
         case '\v':
             write_str__CIGenerator(self, "\\v");
             break;
+        case '\a':
+            write_str__CIGenerator(self, "\\a");
+            break;
+        // NOTE: A `\` is written back on its own, not doubled: what follows it
+        // is what makes the escape sequence the generated C holds, which is
+        // why an escape is written `\\n` rather than `\n` in a CI source.
         case '\\':
             write_str__CIGenerator(self, "\\");
             break;
-        case '\0':
-            write_str__CIGenerator(self, "\\0");
-            break;
         default:
-            write__CIGenerator(self, c);
+            // What is not printable is written back as an escape sequence, in
+            // octal rather than in hexadecimal: an octal sequence is three
+            // digits at most, so what follows it is never read as part of it.
+            if (!isprint((unsigned char)c)) {
+                Uint8 value = (Uint8)c;
+                char octal[] = { '\\',
+                                 '0' + (value >> 6),
+                                 '0' + ((value >> 3) & 7),
+                                 '0' + (value & 7),
+                                 '\0' };
+
+                write_str__CIGenerator(self, octal);
+            } else {
+                write__CIGenerator(self, c);
+            }
     }
 }
 
@@ -1867,11 +1886,11 @@ void
 generate_function_literal_string_expr__CIGenerator(CIGenerator *self,
                                                    const String *string)
 {
-    StringIter iter = NEW(StringIter, (String *)string);
-    char current;
-
-    while ((current = next__StringIter(&iter))) {
-        generate_function_literal_character_expr__CIGenerator(self, current);
+    // The string is walked by its length rather than to its first `\0`, a
+    // `\0` being a character a string literal is allowed to hold.
+    for (Usize i = 0; i < string->len; ++i) {
+        generate_function_literal_character_expr__CIGenerator(
+          self, string->buffer[i]);
     }
 }
 

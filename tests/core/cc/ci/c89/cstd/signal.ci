@@ -1,0 +1,40 @@
+/*@compile_options -s c89 --no-state-check */
+/*@expected_bin_stdout PASS\n*/
+
+/* NOTE: The state check is off here because the platform's <signal.h> declares
+   a union, `sigval`, and building a state value out of a struct or a union
+   data type is what `build_struct_from_data_type__CIStateCheckerValue` and
+   `build_union_from_data_type__CIStateCheckerValue` are still written as
+   TODO. Turn it back on once those are written. */
+
+#include <signal.h>
+#include <helper.h>
+
+/* C89 4.7: <signal.h> defines sig_atomic_t, the handlers no function is
+   written as, and the signals. `signal` gives back the handler the signal was
+   written with before, and SIG_ERR where it could not be set, and `raise`
+   sends the signal to the running program.
+
+   NOTE: What `signal` leaves the handler as once the signal is delivered is
+   not something C89 says: the System V semantic puts it back to SIG_DFL, the
+   BSD one leaves it in place, and the platform picks. So what is read back
+   here is only that the handler ran. */
+static volatile sig_atomic_t caught = 0;
+
+static void handler(int sig) {
+	caught = sig;
+}
+
+int main() {
+	if (signal(SIGINT, handler) != SIG_ERR) {
+		raise(SIGINT);
+
+		if (caught == SIGINT) {
+			printf("PASS\\n");
+		}
+
+		signal(SIGINT, SIG_DFL);
+	}
+
+	return 0;
+}

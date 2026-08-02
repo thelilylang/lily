@@ -24,6 +24,7 @@
 
 #include <base/assert.h>
 #include <base/command.h>
+#include <base/file.h>
 #include <base/format.h>
 #include <base/new.h>
 #include <base/path.h>
@@ -99,6 +100,57 @@ get_include_dirs__CIInclude()
     ASSERT(include_dirs);
 
     return include_dirs;
+}
+
+bool
+has_include__CIInclude(const String *include_path,
+                       const char *current_filename,
+                       bool is_next)
+{
+    ASSERT(include_dirs);
+
+    String *current_dir = get_dir__File(current_filename);
+    // The `_next` form passes over everything up to and including the
+    // directory the file it is written in was found in.
+    Usize begin = 0;
+
+    if (is_next) {
+        for (Usize i = 0; i < include_dirs->len; ++i) {
+            const String *include_dir = get__Vec(include_dirs, i);
+
+            if (!strcmp(include_dir->buffer, current_dir->buffer)) {
+                begin = i + 1;
+
+                break;
+            }
+        }
+    }
+
+    bool res = false;
+
+    for (Usize i = begin; i < include_dirs->len && !res; ++i) {
+        const String *include_dir = get__Vec(include_dirs, i);
+        char *full_include_path = format("{S}/{S}", include_dir, include_path);
+
+        res = exists__File(full_include_path);
+
+        lily_free(full_include_path);
+    }
+
+    // The directory the file is written in is looked into last, as
+    // `resolve_preprocessor_include__CIResolver` does, and never by the `_next`
+    // form: that one is written to reach past it.
+    if (!res && !is_next) {
+        char *full_include_path = format("{S}/{S}", current_dir, include_path);
+
+        res = exists__File(full_include_path);
+
+        lily_free(full_include_path);
+    }
+
+    FREE(String, current_dir);
+
+    return res;
 }
 
 void

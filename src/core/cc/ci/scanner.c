@@ -30,6 +30,7 @@
 
 #include <core/cc/ci/ci.h>
 #include <core/cc/ci/diagnostic/emit.h>
+#include <core/cc/ci/include.h>
 #include <core/cc/ci/result.h>
 #include <core/cc/ci/scanner.h>
 
@@ -226,6 +227,12 @@ get_preprocessor__CIScanner(const String *id);
 enum CITokenKind
 standardize_keyword__CIScanner(enum CITokenKind kind);
 
+/// @brief Scan what `__has_include` or `__has_include_next` names, the cursor
+/// being on the last character of the name, and give back what it stands for.
+/// @return CIToken*? An integer literal, 1 or 0.
+static CIToken *
+scan_has_include__CIScanner(CIScanner *self, bool is_next);
+
 /// @brief Scan keyword.
 /// @example long int, long long, unsigned long long, ...
 static CIToken *
@@ -247,6 +254,18 @@ skip_comment_block__CIScanner(CIScanner *self);
 /// @brief Scan comment doc.
 static String *
 scan_comment_doc__CIScanner(CIScanner *self);
+
+/// @brief Scan the digits of a `\x` escape sequence, the `x` being what the
+/// cursor is on. The cursor is left on the last digit read.
+/// @return String*? The one character the sequence stands for.
+static String *
+scan_hex_escape__CIScanner(CIScanner *self, Location *location_error);
+
+/// @brief Scan the digits of an octal escape sequence, the first digit being
+/// what the cursor is on. The cursor is left on the last digit read.
+/// @return String*? The one character the sequence stands for.
+static String *
+scan_octal_escape__CIScanner(CIScanner *self, Location *location_error);
 
 /// @brief Get escape character and other character.
 static String *
@@ -655,6 +674,15 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                               .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD___FUNC__] = { .since = CI_STANDARD_99,
                                          .until = CI_STANDARD_NONE },
+    // NOTE: C23 is the standard `__has_include` is written in (N3220 6.10.1),
+    // but the name is one the implementation reserves in every standard, and
+    // every compiler answers it in every mode. The headers that ask it are the
+    // platform's own, which are read whatever standard the project names, so
+    // it is answered in every standard as well.
+    [CI_TOKEN_KIND_KEYWORD___HAS_INCLUDE] = { .since = CI_STANDARD_NONE,
+                                              .until = CI_STANDARD_NONE },
+    [CI_TOKEN_KIND_KEYWORD___HAS_INCLUDE_NEXT] = { .since = CI_STANDARD_NONE,
+                                                   .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD___RESTRICT] = { .since = CI_STANDARD_NONE,
                                            .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD___RESTRICT__] = { .since = CI_STANDARD_NONE,
@@ -830,6 +858,8 @@ static const SizedStr ci_keywords[CI_N_KEYWORD] = {
     SIZED_STR_FROM_RAW("__attribute__"),
     SIZED_STR_FROM_RAW("__extension__"),
     SIZED_STR_FROM_RAW("__func__"),
+    SIZED_STR_FROM_RAW("__has_include"),
+    SIZED_STR_FROM_RAW("__has_include_next"),
     SIZED_STR_FROM_RAW("__restrict"),
     SIZED_STR_FROM_RAW("__restrict__"),
     SIZED_STR_FROM_RAW("alignas"),
@@ -900,6 +930,8 @@ static const enum CITokenKind ci_keyword_ids[CI_N_KEYWORD] = {
     CI_TOKEN_KIND_KEYWORD___ATTRIBUTE__,
     CI_TOKEN_KIND_KEYWORD___EXTENSION__,
     CI_TOKEN_KIND_KEYWORD___FUNC__,
+    CI_TOKEN_KIND_KEYWORD___HAS_INCLUDE,
+    CI_TOKEN_KIND_KEYWORD___HAS_INCLUDE_NEXT,
     CI_TOKEN_KIND_KEYWORD___RESTRICT,
     CI_TOKEN_KIND_KEYWORD___RESTRICT__,
     CI_TOKEN_KIND_KEYWORD_ALIGNAS,
@@ -1432,6 +1464,87 @@ get_keyword__CIScanner(const String *id)
 }
 
 CIToken *
+scan_has_include__CIScanner(CIScanner *self, bool is_next)
+{
+    // The scan of the name left the cursor on its last character.
+    Location location = clone__Location(&self->base.location);
+
+    next_char__CIScanner(self);
+    skip_space__CIScanner(self);
+
+    if (self->base.source.cursor.current != '(') {
+        FAILED__CIScanner(self, NEW_VARIANT(CIError, expected_token, "`(`"));
+
+        return NULL;
+    }
+
+    next_char__CIScanner(self);
+    skip_space__CIScanner(self);
+
+    char closing;
+
+    switch (self->base.source.cursor.current) {
+        case '<':
+            closing = '>';
+
+            break;
+        case '\"':
+            closing = '\"';
+
+            break;
+        default:
+            FAILED__CIScanner(
+              self, NEW_VARIANT(CIError, expected_token, "`<` or `\"`"));
+
+            return NULL;
+    }
+
+    String *include_path = NEW(String);
+
+    next_char__CIScanner(self);
+
+    while (self->base.source.cursor.current != closing &&
+           !HAS_REACH_END(self)) {
+        push__String(include_path, self->base.source.cursor.current);
+        next_char__CIScanner(self);
+    }
+
+    if (self->base.source.cursor.current != closing) {
+        FREE(String, include_path);
+        FAILED__CIScanner(self,
+                          NEW_VARIANT(CIError,
+                                      expected_token,
+                                      closing == '>' ? "`>`" : "`\"`"));
+
+        return NULL;
+    }
+
+    next_char__CIScanner(self);
+    skip_space__CIScanner(self);
+
+    if (self->base.source.cursor.current != ')') {
+        FREE(String, include_path);
+        FAILED__CIScanner(self, NEW_VARIANT(CIError, expected_token, "`)`"));
+
+        return NULL;
+    }
+
+    bool res = has_include__CIInclude(
+      include_path, self->base.source.file->name, is_next);
+
+    FREE(String, include_path);
+
+    // The cursor is left on the `)`, the last character of what is read here,
+    // as every other scan leaves it on the last character of its token.
+    return NEW_VARIANT(CIToken,
+                       literal_constant_int,
+                       location,
+                       NEW(CITokenLiteralConstantInt,
+                           CI_TOKEN_LITERAL_CONSTANT_INT_SUFFIX_NONE,
+                           from__String(res ? "1" : "0")));
+}
+
+CIToken *
 scan_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
 {
 // This macro allows you to make the final configuration of the
@@ -1486,6 +1599,16 @@ scan_keyword__CIScanner(CIScanner *self, CIScannerContext *ctx)
     enum CITokenKind current_kind = get_keyword__CIScanner(id);
 
     switch (current_kind) {
+        case CI_TOKEN_KIND_KEYWORD___HAS_INCLUDE:
+        case CI_TOKEN_KIND_KEYWORD___HAS_INCLUDE_NEXT:
+            FREE(String, id);
+
+            // What the operator asks is answered here rather than by the
+            // resolver, the header it names being written the way `#include`
+            // writes it and not the way an expression is: the parser only ever
+            // sees what it stands for.
+            return scan_has_include__CIScanner(
+              self, current_kind == CI_TOKEN_KIND_KEYWORD___HAS_INCLUDE_NEXT);
         case CI_TOKEN_KIND_IDENTIFIER:
             last_token = NEW_VARIANT(CIToken,
                                      identifier,
@@ -2018,6 +2141,122 @@ scan_comment_doc__CIScanner(CIScanner *self)
     return res;
 }
 
+/// @brief Emit the diagnostic an escape sequence naming a value no character
+/// can hold gets.
+/// @return String*? Always NULL.
+static String *
+emit_escape_out_of_range__CIScanner(CIScanner *self, Location *location_error)
+{
+    end__Location(location_error,
+                  self->base.source.cursor.line,
+                  self->base.source.cursor.column,
+                  self->base.source.cursor.position);
+
+    emit__Diagnostic(
+      NEW_VARIANT(Diagnostic,
+                  simple_lily_error,
+                  self->base.source.file,
+                  location_error,
+                  NEW(LilyError, LILY_ERROR_KIND_INVALID_ESCAPE),
+                  init__Vec(1,
+                            from__String("this escape sequence names a value "
+                                         "no character can hold")),
+                  NULL,
+                  NULL),
+      self->base.count_error);
+
+    return NULL;
+}
+
+/// @brief Get the value of an hexadecimal digit.
+static Usize
+get_hex_digit_value__CIScanner(char c)
+{
+    if (c >= '0' && c <= '9') {
+        return c - '0';
+    } else if (c >= 'a' && c <= 'f') {
+        return c - 'a' + 10;
+    }
+
+    return c - 'A' + 10;
+}
+
+String *
+scan_hex_escape__CIScanner(CIScanner *self, Location *location_error)
+{
+    Usize value = 0;
+    Usize count = 0;
+
+    // The cursor is on the `x` that opens the sequence. C puts no limit on
+    // how many digits are written, only on the value they name.
+    while (is_valid_at_peek__CIScanner(self, &is_hex__CIScanner)) {
+        next_char__CIScanner(self);
+
+        if (value <= UINT8_MAX) {
+            value = value * 16 + get_hex_digit_value__CIScanner(
+                                   self->base.source.cursor.current);
+        }
+
+        ++count;
+    }
+
+    if (count == 0) {
+        end__Location(location_error,
+                      self->base.source.cursor.line,
+                      self->base.source.cursor.column,
+                      self->base.source.cursor.position);
+
+        emit__Diagnostic(
+          NEW_VARIANT(
+            Diagnostic,
+            simple_lily_error,
+            self->base.source.file,
+            location_error,
+            NEW(LilyError, LILY_ERROR_KIND_INVALID_ESCAPE),
+            init__Vec(1,
+                      from__String("`\\x` is written with at least one digit")),
+            NULL,
+            NULL),
+          self->base.count_error);
+
+        return NULL;
+    } else if (value > UINT8_MAX) {
+        return emit_escape_out_of_range__CIScanner(self, location_error);
+    }
+
+    String *res = NEW(String);
+
+    push__String(res, (char)value);
+
+    return res;
+}
+
+String *
+scan_octal_escape__CIScanner(CIScanner *self, Location *location_error)
+{
+    // The cursor is already on the first digit, and three digits at most are
+    // written.
+    Usize value = self->base.source.cursor.current - '0';
+
+    for (Usize i = 1;
+         i < 3 && is_valid_at_peek__CIScanner(self, &is_oct__CIScanner);
+         ++i) {
+        next_char__CIScanner(self);
+
+        value = value * 8 + (self->base.source.cursor.current - '0');
+    }
+
+    if (value > UINT8_MAX) {
+        return emit_escape_out_of_range__CIScanner(self, location_error);
+    }
+
+    String *res = NEW(String);
+
+    push__String(res, (char)value);
+
+    return res;
+}
+
 String *
 get_character__CIScanner(CIScanner *self, char previous)
 {
@@ -2030,7 +2269,6 @@ get_character__CIScanner(CIScanner *self, char previous)
                     self->base.source.cursor.position);
 
     switch (previous) {
-        // TODO: We're probably missing some escapes characters.
         case '\\':
             switch (self->base.source.cursor.current) {
                 // NOTE: For the moment we're using \\ for some escapes, because
@@ -2040,6 +2278,12 @@ get_character__CIScanner(CIScanner *self, char previous)
                     break;
                 case '\'':
                     res = from__String("'");
+                    break;
+                case '?':
+                    res = from__String("?");
+                    break;
+                case 'a':
+                    res = from__String("\a");
                     break;
                 case 'b':
                     res = from__String("\b");
@@ -2062,8 +2306,28 @@ get_character__CIScanner(CIScanner *self, char previous)
                 case '\\':
                     res = from__String("\\");
                     break;
+                case 'x':
+                    res = scan_hex_escape__CIScanner(self, &location_error);
+
+                    if (!res) {
+                        return NULL;
+                    }
+
+                    break;
                 case '0':
-                    res = from__String("\0");
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                    res = scan_octal_escape__CIScanner(self, &location_error);
+
+                    if (!res) {
+                        return NULL;
+                    }
+
                     break;
                 default:
                     end__Location(&location_error,
