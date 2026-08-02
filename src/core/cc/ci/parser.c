@@ -1948,9 +1948,22 @@ parse_array_declarator__CIParser(CIParser *self,
     CIExpr *expr = NULL;
 
     if (in_function_prototype) {
-#define PARSE_ARRAY_STATIC()                                         \
-    if (self->current_token->kind == CI_TOKEN_KIND_KEYWORD_STATIC) { \
-        is_static = true;                                            \
+        /* `static` is written inside the `[` and `]` of a parameter written as
+           an array (6.7.6.3p7), so it is read here and skipped like any other
+           token the declarator is written with. What the brackets of a
+           declarator are written to hold is a size alone before C99, so the
+           keyword is not one that belongs there then. */
+#define PARSE_ARRAY_STATIC()                                              \
+    if (self->current_token->kind == CI_TOKEN_KIND_KEYWORD_STATIC) {      \
+        CI_CHECK_STANDARD_SINCE(                                          \
+          self->file->entity.result->config->standard, CI_STANDARD_99, {  \
+              FAILED__CIParser(                                           \
+                self, NEW(CIError, CI_ERROR_KIND_REQUIRED_C99_OR_LATER)); \
+          });                                                             \
+                                                                          \
+        is_static = true;                                                 \
+                                                                          \
+        next_token__CIParser(self);                                       \
     }
 
 #define PARSE_ARRAY_QUALIFIER() \
@@ -3151,6 +3164,16 @@ parse_function_params__CIParser(CIParser *self, CIScope *parent_function_scope)
 
     Vec *params = NEW(Vec); // Vec<CIDeclFunctionParam*>*
 
+    // A parameter is written in the scope the function declarator holds until
+    // it ends (6.2.1p4), so a parameter written before this one is what this
+    // one reads, as the size of an array written `int a[n]` is read from the
+    // `n` written before it.
+    CIScope *parent_scope = current_scope;
+
+    if (parent_function_scope) {
+        current_scope = parent_function_scope;
+    }
+
     while (self->current_token->kind != CI_TOKEN_KIND_RPAREN &&
            self->current_token->kind != CI_TOKEN_KIND_EOF) {
         switch (self->current_token->kind) {
@@ -3193,6 +3216,10 @@ parse_function_params__CIParser(CIParser *self, CIScope *parent_function_scope)
             expect__CIParser(self, CI_TOKEN_KIND_COMMA, true);
         }
     }
+
+    // The scope the parameters are written in ends with the declarator they
+    // are written in (6.2.1p4).
+    current_scope = parent_scope;
 
     if (self->current_token->kind == CI_TOKEN_KIND_EOF) {
         FAILED__CIParser(self, NEW(CIError, CI_ERROR_KIND_UNEXPECTED_EOF));

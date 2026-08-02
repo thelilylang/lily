@@ -1,0 +1,38 @@
+//@compile_options -s c99
+//@expected_bin_stdout 3:6\n
+//@expected_bin_stdout 1:9\n
+
+#include <helper.h>
+
+/* A parameter is written in the scope the function declarator holds until it
+   ends (6.2.1p4), so the size of a parameter written as an array is read from
+   a parameter written before it. The array is adjusted to a pointer (6.7.6.3p7),
+   so what is written is how the size is read rather than how much is passed. */
+static int last(int n, int a[n])
+{
+	return a[n - 1];
+}
+
+static int corner(int n, int m, int a[n][m])
+{
+	return a[n - 1][m - 1];
+}
+
+/* The size is read where the parameter is written, so a parameter written
+   after the array is not what its size is read from. */
+static int first_row(int n, int a[n][2], int unused)
+{
+	return a[0][0] + unused;
+}
+
+int main()
+{
+	int flat[3] = { 1, 2, 3 };
+	int grid[2][3] = { { 1, 2, 3 }, { 4, 5, 6 } };
+	int pairs[2][2] = { { 1, 2 }, { 3, 4 } };
+
+	printf("%d:%d\n", last(3, flat), corner(2, 3, grid));
+	printf("%d:%d\n", pairs[0][0], first_row(2, pairs, 8));
+
+	return 0;
+}

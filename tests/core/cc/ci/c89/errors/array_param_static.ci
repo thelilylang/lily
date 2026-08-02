@@ -1,0 +1,24 @@
+/*@compile_options -s c89*/
+/*@expected_compiler_error error\e[0m[0008]: required C99 or later standard*/
+
+/* `static` is written inside the `[` and `]` of a parameter written as an
+   array since C99 (6.7.6.3p7). What the brackets of a declarator are written
+   to hold before it is a size alone. */
+
+#include <helper.h>
+
+static int head(int a[static 3])
+{
+	return a[0];
+}
+
+int main()
+{
+	int a[3];
+
+	a[0] = 1;
+
+	printf("%d\n", head(a));
+
+	return 0;
+}

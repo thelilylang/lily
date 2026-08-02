@@ -942,12 +942,21 @@ generate_array_data_type__CIGenerator(CIGenerator *self, CIDataType *data_type)
     write__CIGenerator(self, '[');
 
     if (data_type->array.is_static) {
-        write_str__CIGenerator(self, "static ");
+        write_str__CIGenerator(self, "static");
     }
 
+    // `GENERATE_DATA_TYPE_QUALIFIER` writes the space that comes before the
+    // qualifier, so what is written before it carries none of its own.
     GENERATE_DATA_TYPE_QUALIFIER(data_type->array.qualifier);
 
     if (data_type->array.size_expr) {
+        // What the size is written as is a word of its own, so it is kept
+        // apart from the `static` and the qualifiers written before it.
+        if (data_type->array.is_static ||
+            data_type->array.qualifier != CI_DATA_TYPE_QUALIFIER_NONE) {
+            write__CIGenerator(self, ' ');
+        }
+
         generate_function_expr__CIGenerator(self, data_type->array.size_expr);
     }
 

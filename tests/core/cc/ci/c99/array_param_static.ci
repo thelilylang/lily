@@ -1,0 +1,43 @@
+//@compile_options -s c99
+//@expected_bin_stdout 1:4\n
+//@expected_bin_stdout 9:7\n
+
+#include <helper.h>
+
+/* `static` and the type qualifiers are written inside the `[` and `]` of a
+   parameter written as an array (6.7.6.3p7). `static` says the argument gives
+   access to at least as many elements as the size is written with, and the
+   qualifiers are the ones the pointer it is adjusted to carries. */
+static int head(int a[static 3])
+{
+	return a[0];
+}
+
+static int tail(int a[static 4])
+{
+	return a[3];
+}
+
+/* The qualifiers are written along with `static`, and the size is read the
+   same way there as anywhere else. */
+static int head_of(int n, int a[const static 1])
+{
+	return a[0] + n - n;
+}
+
+/* What is written with a qualifier alone is read the same way. */
+static int second(int a[const 2])
+{
+	return a[1];
+}
+
+int main()
+{
+	int four[4] = { 1, 2, 3, 4 };
+	int pair[2] = { 9, 7 };
+
+	printf("%d:%d\n", head(four), tail(four));
+	printf("%d:%d\n", head_of(5, pair), second(pair));
+
+	return 0;
+}
