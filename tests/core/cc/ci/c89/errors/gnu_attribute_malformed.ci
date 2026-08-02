@@ -1,0 +1,16 @@
+/*@compile_options -s c89*/
+/*@expected_compiler_error error\e[0m[0014]: expected `(` before `)`*/
+
+/* What `__attribute__` is written with is read up to the `))` that closes it,
+   so what is written with a single `)` closes nothing and is reported. */
+
+#include <helper.h>
+
+__attribute__((unused) static int x = 1;
+
+int main()
+{
+	printf("%d\n", x);
+
+	return 0;
+}

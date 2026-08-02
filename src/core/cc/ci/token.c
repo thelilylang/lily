@@ -367,21 +367,18 @@ IMPL_FOR_DEBUG(to_string, CITokenEot, const CITokenEot *self)
 }
 #endif
 
-CONSTRUCTOR(CITokenGNUAttribute, CITokenGNUAttribute, CITokens content)
+CONSTRUCTOR(CITokenGNUAttribute,
+            CITokenGNUAttribute,
+            CITokens content,
+            String *raw)
 {
-    return (CITokenGNUAttribute){ .content = content };
+    return (CITokenGNUAttribute){ .content = content, .raw = raw };
 }
 
 String *
 to_string__CITokenGNUAttribute(const CITokenGNUAttribute *self)
 {
-    String *res = from__String("__attribute__((");
-
-    TO_STRING_TOKENS(self->content, res);
-
-    push_str__String(res, "))");
-
-    return res;
+    return clone__String(self->raw);
 }
 
 #ifdef ENV_DEBUG
@@ -396,6 +393,7 @@ IMPL_FOR_DEBUG(to_string, CITokenGNUAttribute, const CITokenGNUAttribute *self)
 DESTRUCTOR(CITokenGNUAttribute, const CITokenGNUAttribute *self)
 {
     FREE(CITokens, &self->content);
+    FREE(String, self->raw);
 }
 
 char *

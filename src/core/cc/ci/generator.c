@@ -241,6 +241,12 @@ generate_attributes__CIGenerator(CIGenerator *self, const Vec *attributes);
 static void
 generate_attributes_by_decl__CIGenerator(CIGenerator *self, const CIDecl *decl);
 
+/// @brief Write what `__attribute__` says of the type a declaration defines,
+/// which is written after the fields it is written with.
+static void
+generate_type_attributes_by_decl__CIGenerator(CIGenerator *self,
+                                              const CIDecl *decl);
+
 static inline Usize
 get_decl_id_from_decl__CIGenerator(CIGenerator *self, const CIDecl *decl);
 
@@ -1424,8 +1430,13 @@ generate_attribute__CIGenerator(CIGenerator *self, const CIAttribute *attribute)
     switch (attribute->kind) {
         case CI_ATTRIBUTE_KIND_CLANG:
             TODO("generate Clang attribute");
+        // What `__attribute__` is written with is kept as it is written, so
+        // it is handed to the C compiler the way it was read.
         case CI_ATTRIBUTE_KIND_GNU:
-            TODO("generate GNU attribute");
+            write_str__CIGenerator(self,
+                                   GET_PTR_RC(String, attribute->gnu)->buffer);
+
+            break;
         case CI_ATTRIBUTE_KIND_STANDARD:
             generate_attribute_standard__CIGenerator(self,
                                                      &attribute->standard);
@@ -1453,6 +1464,49 @@ generate_attributes_by_decl__CIGenerator(CIGenerator *self, const CIDecl *decl)
     switch (decl->kind) {
         case CI_DECL_KIND_FUNCTION:
             generate_attributes__CIGenerator(self, decl->function.attributes);
+
+            break;
+        default:
+            break;
+    }
+
+    switch (decl->kind) {
+        // What is written on a struct or a union says how the type is laid
+        // out, and is written after the fields rather than before the
+        // declaration, where it would be read as being written on a
+        // declarator instead. It is written on what defines the type, so
+        // what only declares it carries none of it.
+        case CI_DECL_KIND_STRUCT:
+        case CI_DECL_KIND_STRUCT_GEN:
+        case CI_DECL_KIND_UNION:
+        case CI_DECL_KIND_UNION_GEN:
+            break;
+        default:
+            // What `__attribute__` is written on an object or a function with
+            // is written before the declaration, which is where a C compiler
+            // reads it as being written on what is declared.
+            generate_attributes__CIGenerator(self, decl->attributes);
+    }
+}
+
+void
+generate_type_attributes_by_decl__CIGenerator(CIGenerator *self,
+                                              const CIDecl *decl)
+{
+    switch (decl->kind) {
+        case CI_DECL_KIND_STRUCT:
+        case CI_DECL_KIND_STRUCT_GEN:
+        case CI_DECL_KIND_UNION:
+        case CI_DECL_KIND_UNION_GEN:
+            // The space is written before each of them rather than after, so
+            // that what closes the declaration follows the last one straight
+            // away.
+            for (Usize i = 0; decl->attributes && i < decl->attributes->len;
+                 ++i) {
+                write__CIGenerator(self, ' ');
+                generate_attribute__CIGenerator(self,
+                                                get__Vec(decl->attributes, i));
+            }
 
             break;
         default:
@@ -2784,6 +2838,8 @@ generate_decl__CIGenerator(CIGenerator *self, const CIDecl *decl)
             goto end_session;
         }
 
+        generate_attributes_by_decl__CIGenerator(self, decl);
+
         switch (decl->kind) {
             case CI_DECL_KIND_ENUM:
                 generate_enum_decl__CIGenerator(self, &decl->enum_);
@@ -2853,6 +2909,7 @@ generate_decl__CIGenerator(CIGenerator *self, const CIDecl *decl)
                 UNREACHABLE("unknown variant");
         }
 
+        generate_type_attributes_by_decl__CIGenerator(self, decl);
         write_str__CIGenerator(self, ";\n");
 
     end_session:

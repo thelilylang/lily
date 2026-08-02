@@ -1,0 +1,47 @@
+/*@compile_options -s c89*/
+/*@expected_bin_stdout 5:8\n*/
+/*@expected_bin_stdout 1:1\n*/
+
+/* What `__attribute__` is written with is laid out by the compiler the
+   generated C is given to rather than by the standard, so it is kept as it is
+   written and handed over the same way. What it says of an object is read by
+   that compiler, so a struct written to be packed is one whose size says so. */
+
+#include <helper.h>
+
+struct Packed {
+	char c;
+	int i;
+} __attribute__((packed));
+
+struct Plain {
+	char c;
+	int i;
+};
+
+/* The same thing is written between the keyword and the tag. */
+struct __attribute__((packed)) PackedBefore {
+	char c;
+	int i;
+};
+
+/* An object is written to be aligned the same way. */
+int aligned_object __attribute__((aligned(16)));
+
+/* A function carries what is written before it as well as after it. */
+__attribute__((unused)) static int unused_one(void);
+
+static int unused_one(void)
+{
+	return 0;
+}
+
+int main()
+{
+	printf("%d:%d\n", (int)sizeof(struct Packed), (int)sizeof(struct Plain));
+	printf("%d:%d\n",
+	       (int)(sizeof(struct PackedBefore) == sizeof(struct Packed)),
+	       (int)(((unsigned long)&aligned_object & 15UL) == 0));
+
+	return 0;
+}

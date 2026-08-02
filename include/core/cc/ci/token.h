@@ -394,13 +394,22 @@ typedef struct CITokenGNUAttribute
 {
     // content __attribute__((<X>))
     CITokens content;
+    // What is written from `__attribute__` up to the `))` that closes it,
+    // character for character. What an attribute is written with is the
+    // compiler's to read rather than the standard's, so it is handed over the
+    // way it was read rather than built again from the tokens.
+    String *raw;
 } CITokenGNUAttribute;
 
 /**
  *
  * @brief Construct CITokenGNUAttribute type.
+ * @param raw String* (&)
  */
-CONSTRUCTOR(CITokenGNUAttribute, CITokenGNUAttribute, CITokens content);
+CONSTRUCTOR(CITokenGNUAttribute,
+            CITokenGNUAttribute,
+            CITokens content,
+            String *raw);
 
 /**
  *

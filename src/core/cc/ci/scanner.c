@@ -2987,9 +2987,6 @@ scan_preprocessor_content__CIScanner(CIScanner *self,
     case CI_TOKEN_KIND_COMMENT_BLOCK:                                          \
     /* FIXME: Maybe keep comment doc on some conditions. */                    \
     case CI_TOKEN_KIND_COMMENT_DOC:                                            \
-    /* FIXME: This case has been added temporarily to skip the GNU attribute   \
-     * token, as it is not yet supported. */                                   \
-    case CI_TOKEN_KIND_GNU_ATTRIBUTE:                                          \
         FREE(CIToken, token);                                                  \
         break;                                                                 \
     /* NOTE: For the moment, we're ignoring this token as we don't yet support \
@@ -2998,6 +2995,9 @@ scan_preprocessor_content__CIScanner(CIScanner *self,
         next_char__CIScanner(self);                                            \
         FREE(CIToken, token);                                                  \
         break;                                                                 \
+    /* What `__attribute__` is written with is scanned up to and including the \
+     * `))` that closes it, so there is no character left to step over. */     \
+    case CI_TOKEN_KIND_GNU_ATTRIBUTE:                                          \
     case CI_TOKEN_KIND_PREPROCESSOR_DEFINE:                                    \
     case CI_TOKEN_KIND_PREPROCESSOR_ELIF:                                      \
     case CI_TOKEN_KIND_PREPROCESSOR_ELIFDEF:                                   \
@@ -3984,10 +3984,22 @@ not_closed:
 
     add_eof_token__CIScanner(self, &gnu_attribute_ctx);
 
-    return NEW_VARIANT(CIToken,
-                       gnu_attribute,
-                       gnu_attribute_location,
-                       NEW(CITokenGNUAttribute, gnu_attribute_content));
+    // What `__attribute__` is written with is laid out by the compiler the
+    // generated C is given to rather than by the standard, so it is kept as
+    // it is written, character for character, and handed over that way.
+    String *gnu_attribute_raw = NEW(String);
+
+    for (Usize i = gnu_attribute_location.start_position;
+         i < self->base.source.cursor.position;
+         ++i) {
+        push__String(gnu_attribute_raw, self->base.source.file->content[i]);
+    }
+
+    return NEW_VARIANT(
+      CIToken,
+      gnu_attribute,
+      gnu_attribute_location,
+      NEW(CITokenGNUAttribute, gnu_attribute_content, gnu_attribute_raw));
 }
 
 CIToken *

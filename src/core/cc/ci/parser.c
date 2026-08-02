@@ -2806,6 +2806,14 @@ parse_pre_data_type__CIParser(CIParser *self)
             enum CITokenKind previous_token_kind = self->previous_token->kind;
             Rc *name = NULL; // Rc<String*>*? (&)
 
+            // An attribute is written between the keyword and the tag as much
+            // as after the fields, as
+            // `struct __attribute__((packed)) S { ... };` is written. Both say
+            // the same thing of the struct, so both are read the same way.
+            Vec *leading_attributes = NULL; // Vec<CIAttribute*>*?
+
+            parse_attributes__CIParser(self, &leading_attributes);
+
             // struct <name><generic_params, ...> ...;
             // struct <name><generic_params, ...> { ... } ...;
             // struct { ... } ...;
@@ -2853,6 +2861,11 @@ parse_pre_data_type__CIParser(CIParser *self)
                       generic_params ? ref__CIGenericParams(generic_params)
                                      : NULL);
 
+                    if (leading_attributes) {
+                        add_attributes__CIDecl(struct_decl, leading_attributes);
+                        leading_attributes = NULL;
+                    }
+
                     if (add_decl_to_scope__CIParser(self,
                                                     &struct_decl,
                                                     current_scope,
@@ -2878,6 +2891,11 @@ parse_pre_data_type__CIParser(CIParser *self)
                       generic_params ? ref__CIGenericParams(generic_params)
                                      : NULL);
 
+                    if (leading_attributes) {
+                        add_attributes__CIDecl(union_decl, leading_attributes);
+                        leading_attributes = NULL;
+                    }
+
                     if (add_decl_to_scope__CIParser(self,
                                                     &union_decl,
                                                     current_scope,
@@ -2896,6 +2914,16 @@ parse_pre_data_type__CIParser(CIParser *self)
                 }
                 default:
                     UNREACHABLE("unknown variant");
+            }
+
+            // What is written on a struct or a union that names one already
+            // declared says nothing new of it, so it is dropped rather than
+            // written twice.
+            if (leading_attributes) {
+                FREE_BUFFER_ITEMS(leading_attributes->buffer,
+                                  leading_attributes->len,
+                                  CIAttribute);
+                FREE(Vec, leading_attributes);
             }
 
             break;
@@ -5396,6 +5424,24 @@ parse_function__CIParser(CIParser *self,
           NULL,
           attributes));
 
+    // An attribute is written after the declarator as much as before it, as
+    // `void f() __attribute__((x));` is written, so what is written there is
+    // added to what was read before the declaration.
+    {
+        Vec *trailing_attributes = NULL; // Vec<CIAttribute*>*?
+
+        parse_attributes__CIParser(self, &trailing_attributes);
+
+        if (trailing_attributes) {
+            if (res->function.attributes) {
+                append__Vec(res->function.attributes, trailing_attributes);
+                FREE(Vec, trailing_attributes);
+            } else {
+                res->function.attributes = trailing_attributes;
+            }
+        }
+    }
+
     if (HAS_TYPEDEF_STORAGE_CLASS_FLAG() &&
         self->current_token->kind != CI_TOKEN_KIND_LBRACE) {
         res = parse_typedef__CIParser(self, res, generic_params);
@@ -5789,6 +5835,19 @@ parse_struct_or_union_fields__CIParser(CIParser *self)
     return parse_fields__CIParser(self);
 }
 
+// Read what `__attribute__` is written on the declaration with after what it
+// is written on, and hand it to the declaration.
+#define ATTACH_TRAILING_ATTRIBUTES__CI_PARSER(decl)        \
+    {                                                      \
+        Vec *_attributes = NULL; /* Vec<CIAttribute*>*? */ \
+                                                           \
+        parse_attributes__CIParser(self, &_attributes);    \
+                                                           \
+        if (_attributes) {                                 \
+            add_attributes__CIDecl(decl, _attributes);     \
+        }                                                  \
+    }
+
 CIDecl *
 parse_struct__CIParser(CIParser *self,
                        int storage_class_flag,
@@ -5796,13 +5855,19 @@ parse_struct__CIParser(CIParser *self,
                        CIGenericParams *generic_params)
 {
     CIDeclStructFields *fields = parse_struct_or_union_fields__CIParser(self);
+    CIDecl *res = NEW_VARIANT(CIDecl,
+                              struct,
+                              previous_location__CIParser(self),
+                              storage_class_flag,
+                              fields ? false : true,
+                              NEW(CIDeclStruct, name, generic_params, fields));
 
-    return NEW_VARIANT(CIDecl,
-                       struct,
-                       previous_location__CIParser(self),
-                       storage_class_flag,
-                       fields ? false : true,
-                       NEW(CIDeclStruct, name, generic_params, fields));
+    // An attribute is written on a struct after the fields it is written
+    // with, as `struct S { ... } __attribute__((packed));` is written, and it
+    // says how the struct is laid out.
+    ATTACH_TRAILING_ATTRIBUTES__CI_PARSER(res);
+
+    return res;
 }
 
 CIDecl *
@@ -5882,13 +5947,18 @@ parse_union__CIParser(CIParser *self,
                       CIGenericParams *generic_params)
 {
     CIDeclStructFields *fields = parse_struct_or_union_fields__CIParser(self);
+    CIDecl *res = NEW_VARIANT(CIDecl,
+                              union,
+                              previous_location__CIParser(self),
+                              storage_class_flag,
+                              fields ? false : true,
+                              NEW(CIDeclUnion, name, generic_params, fields));
 
-    return NEW_VARIANT(CIDecl,
-                       union,
-                       previous_location__CIParser(self),
-                       storage_class_flag,
-                       fields ? false : true,
-                       NEW(CIDeclUnion, name, generic_params, fields));
+    // An attribute is written on a union the same way it is written on a
+    // struct, after the fields it is written with.
+    ATTACH_TRAILING_ATTRIBUTES__CI_PARSER(res);
+
+    return res;
 }
 
 bool
@@ -5959,6 +6029,12 @@ parse_variable__CIParser(CIParser *self,
     }
 
     CIDecl *res = NULL;
+    // An attribute is written on the object after the declarator that names
+    // it, as `int x __attribute__((aligned(16)));` is written, so it is read
+    // before what the declaration is written to hold.
+    Vec *attributes = NULL; // Vec<CIAttribute*>*?
+
+    parse_attributes__CIParser(self, &attributes);
 
     switch (self->current_token->kind) {
         case CI_TOKEN_KIND_COMMA:
@@ -6051,7 +6127,17 @@ parse_variable__CIParser(CIParser *self,
             FAILED__CIParser(
               self, NEW_VARIANT(CIError, expected_token, "`,`, `=` or `;`"));
 
+            if (attributes) {
+                FREE_BUFFER_ITEMS(
+                  attributes->buffer, attributes->len, CIAttribute);
+                FREE(Vec, attributes);
+            }
+
             return NULL;
+    }
+
+    if (attributes) {
+        add_attributes__CIDecl(res, attributes);
     }
 
     if (HAS_TYPEDEF_STORAGE_CLASS_FLAG()) {
@@ -6405,6 +6491,26 @@ parse_attributes__CIParser(CIParser *self, Vec **attributes)
                 if (attr) {
                     push__Vec(*attributes, attr);
                 }
+
+                break;
+            }
+            // What `__attribute__` is written with is the compiler's to read
+            // rather than the standard's, so the scanner keeps it as it is
+            // written and it is handed over the same way.
+            case CI_TOKEN_KIND_GNU_ATTRIBUTE: {
+                if (!(*attributes)) {
+                    *attributes = NEW(Vec);
+                }
+
+                String *gnu_attribute = to_string__CITokenGNUAttribute(
+                  &self->current_token->gnu_attribute);
+                Rc *gnu_attribute_rc = NEW(Rc, gnu_attribute);
+
+                push__Vec(*attributes,
+                          NEW_VARIANT(CIAttribute, gnu, gnu_attribute_rc));
+                FREE_RC(String, gnu_attribute_rc);
+
+                next_token__CIParser(self);
 
                 break;
             }

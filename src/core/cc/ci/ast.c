@@ -134,6 +134,10 @@ static VARIANT_DESTRUCTOR(CIAttributeStandard,
                           const CIAttributeStandard *self);
 
 /// @brief Free CIAttribute type (CI_ATTRIBUTE_KIND_STANDARD).
+/// @brief Free CIAttribute type (CI_ATTRIBUTE_KIND_GNU).
+static VARIANT_DESTRUCTOR(CIAttribute, gnu, CIAttribute *self);
+
+/// @brief Free CIAttribute type (CI_ATTRIBUTE_KIND_STANDARD).
 static VARIANT_DESTRUCTOR(CIAttribute, standard, CIAttribute *self);
 
 /// @brief Free CIDeclFUnctionParam type (CI_DECL_FUNCTION_PARAM_KIND_NORMAL).
@@ -3276,6 +3280,16 @@ DESTRUCTOR(CIAttributeStandard, const CIAttributeStandard *self)
     }
 }
 
+VARIANT_CONSTRUCTOR(CIAttribute *, CIAttribute, gnu, Rc *gnu)
+{
+    CIAttribute *self = lily_malloc(sizeof(CIAttribute));
+
+    self->kind = CI_ATTRIBUTE_KIND_GNU;
+    self->gnu = ref__Rc(gnu);
+
+    return self;
+}
+
 VARIANT_CONSTRUCTOR(CIAttribute *,
                     CIAttribute,
                     standard,
@@ -3294,6 +3308,10 @@ String *
 IMPL_FOR_DEBUG(to_string, CIAttribute, const CIAttribute *self)
 {
     switch (self->kind) {
+        case CI_ATTRIBUTE_KIND_GNU:
+            return format__String("CIAttribute{{ kind = {s}, gnu = {S} }",
+                                  to_string__Debug__CIAttributeKind(self->kind),
+                                  GET_PTR_RC(String, self->gnu));
         case CI_ATTRIBUTE_KIND_STANDARD:
             return format__String(
               "CIAttribute{{ kind = {s}, standard = {Sr} }",
@@ -3305,6 +3323,12 @@ IMPL_FOR_DEBUG(to_string, CIAttribute, const CIAttribute *self)
 }
 #endif
 
+VARIANT_DESTRUCTOR(CIAttribute, gnu, CIAttribute *self)
+{
+    FREE_RC(String, self->gnu);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(CIAttribute, standard, CIAttribute *self)
 {
     FREE(CIAttributeStandard, &self->standard);
@@ -3314,6 +3338,10 @@ VARIANT_DESTRUCTOR(CIAttribute, standard, CIAttribute *self)
 DESTRUCTOR(CIAttribute, CIAttribute *self)
 {
     switch (self->kind) {
+        case CI_ATTRIBUTE_KIND_GNU:
+            FREE_VARIANT(CIAttribute, gnu, self);
+
+            break;
         case CI_ATTRIBUTE_KIND_STANDARD:
             FREE_VARIANT(CIAttribute, standard, self);
 
@@ -4237,6 +4265,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->kind = CI_DECL_KIND_ENUM;
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = is_prototype;
+    self->attributes = NULL;
     self->ref_count = 0;
     self->enum_ = enum_;
 
@@ -4256,6 +4285,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->kind = CI_DECL_KIND_ENUM_VARIANT;
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = false;
+    self->attributes = NULL;
     self->ref_count = 0;
     self->enum_variant = enum_variant;
 
@@ -4276,6 +4306,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->kind = CI_DECL_KIND_FUNCTION;
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = is_prototype;
+    self->attributes = NULL;
     self->ref_count = 0;
     self->function = function;
 
@@ -4307,6 +4338,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->storage_class_flag =
       function_decl->storage_class_flag | CI_STORAGE_CLASS_STATIC;
     self->is_prototype = false;
+    self->attributes = NULL;
     self->ref_count = 0;
     self->function_gen = NEW(CIDeclFunctionGen,
                              f,
@@ -4329,6 +4361,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->kind = CI_DECL_KIND_LABEL;
     self->storage_class_flag = CI_STORAGE_CLASS_NONE;
     self->is_prototype = false;
+    self->attributes = NULL;
     self->ref_count = 0;
     self->label = label;
 
@@ -4349,6 +4382,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->kind = CI_DECL_KIND_STRUCT;
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = is_prototype;
+    self->attributes = NULL;
     self->ref_count = 0;
     self->struct_ = struct_;
 
@@ -4373,6 +4407,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->kind = CI_DECL_KIND_STRUCT_GEN;
     self->storage_class_flag = struct_decl->storage_class_flag;
     self->is_prototype = false;
+    self->attributes = NULL;
     self->ref_count = 0;
     self->struct_gen =
       NEW(CIDeclStructGen, s, NEW(Rc, name), called_generic_params, fields);
@@ -4392,6 +4427,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->kind = CI_DECL_KIND_TYPEDEF;
     self->storage_class_flag = CI_STORAGE_CLASS_NONE;
     self->is_prototype = true;
+    self->attributes = NULL;
     self->ref_count = 0;
     self->typedef_ = typedef_;
 
@@ -4416,6 +4452,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->kind = CI_DECL_KIND_TYPEDEF_GEN;
     self->storage_class_flag = CI_STORAGE_CLASS_NONE;
     self->is_prototype = true;
+    self->attributes = NULL;
     self->ref_count = 0;
     self->typedef_gen =
       NEW(CIDeclTypedefGen, t, NEW(Rc, name), called_generic_params, data_type);
@@ -4437,6 +4474,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->kind = CI_DECL_KIND_UNION;
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = is_prototype;
+    self->attributes = NULL;
     self->ref_count = 0;
     self->union_ = union_;
 
@@ -4461,6 +4499,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->kind = CI_DECL_KIND_UNION_GEN;
     self->storage_class_flag = union_decl->storage_class_flag;
     self->is_prototype = false;
+    self->attributes = NULL;
     self->ref_count = 0;
     self->union_gen =
       NEW(CIDeclUnionGen, u, NEW(Rc, name), called_generic_params, fields);
@@ -4482,6 +4521,7 @@ VARIANT_CONSTRUCTOR(CIDecl *,
     self->kind = CI_DECL_KIND_VARIABLE;
     self->storage_class_flag = storage_class_flag;
     self->is_prototype = is_prototype;
+    self->attributes = NULL;
     self->ref_count = 0;
     self->variable = variable;
 
@@ -5006,11 +5046,30 @@ VARIANT_DESTRUCTOR(CIDecl, variable, CIDecl *self)
     lily_free(self);
 }
 
+void
+add_attributes__CIDecl(CIDecl *self, Vec *attributes)
+{
+    if (self->attributes) {
+        append__Vec(self->attributes, attributes);
+        FREE(Vec, attributes);
+
+        return;
+    }
+
+    self->attributes = attributes;
+}
+
 DESTRUCTOR(CIDecl, CIDecl *self)
 {
     if (self->ref_count > 0) {
         --self->ref_count;
         return;
+    }
+
+    if (self->attributes) {
+        FREE_BUFFER_ITEMS(
+          self->attributes->buffer, self->attributes->len, CIAttribute);
+        FREE(Vec, self->attributes);
     }
 
     switch (self->kind) {

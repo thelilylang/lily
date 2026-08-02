@@ -2018,9 +2018,20 @@ typedef struct CIAttribute
     enum CIAttributeKind kind;
     union
     {
+        // What `__attribute__` is written with is laid out by the compiler the
+        // generated C is given to rather than by the standard, so it is kept
+        // as it is written and handed over the same way.
+        Rc *gnu; // Rc<String*>*
         CIAttributeStandard standard;
     };
 } CIAttribute;
+
+/**
+ *
+ * @brief Construct CIAttribute type (CI_ATTRIBUTE_KIND_GNU).
+ * @param gnu Rc<String*>* (&)
+ */
+VARIANT_CONSTRUCTOR(CIAttribute *, CIAttribute, gnu, Rc *gnu);
 
 /**
  *
@@ -2982,6 +2993,17 @@ IMPL_FOR_DEBUG(to_string, CIDeclVariable, const CIDeclVariable *self);
  */
 DESTRUCTOR(CIDeclVariable, const CIDeclVariable *self);
 
+struct CIDecl;
+
+/**
+ *
+ * @brief Add what `__attribute__` is written on the declaration with to what
+ * it already holds.
+ * @param attributes Vec<CIAttribute*>* What the declaration takes over.
+ */
+void
+add_attributes__CIDecl(struct CIDecl *self, Vec *attributes);
+
 typedef struct CIDecl
 {
     enum CIDeclKind kind;
@@ -2991,6 +3013,10 @@ typedef struct CIDecl
 
     int storage_class_flag;
     bool is_prototype;
+    // What `__attribute__` is written on a declaration with, whichever kind of
+    // declaration it is. A function holds the ones written on it in
+    // `CIDeclFunction` as well, as those are the ones the standard writes.
+    Vec *attributes; // Vec<CIAttribute*>*?
     Usize ref_count;
     union
     {
