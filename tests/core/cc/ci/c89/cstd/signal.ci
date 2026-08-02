@@ -1,4 +1,4 @@
-/*@compile_options -s c89 --no-state-check */
+/*@compile_options -s c89 */
 /*@expected_bin_stdout PASS\n*/
 
 /* NOTE: The state check is off here because the platform's <signal.h> declares
