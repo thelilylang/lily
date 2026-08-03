@@ -241,6 +241,16 @@ typecheck_call_params__CITypecheck(
   const Vec *called_params,
   struct CITypecheckContext *typecheck_ctx);
 
+/// @brief Write out what each param a param written on a pack stands for is
+/// expected to be, one per data type the pack is left.
+/// @param expected_data_types Vec<CIDataType*? (&)>* (&)
+/// @param decl_param const CIDeclFunctionParam* (&)
+static void
+push_pack_expected_data_types__CITypecheck(
+  Vec *expected_data_types,
+  const CIDeclFunctionParam *decl_param,
+  struct CITypecheckContext *typecheck_ctx);
+
 /// @param decl_params Vec<CIDeclFunctionParam*>* (&)
 /// @param called_params Vec<CIExpr*>* (&)
 static void
@@ -1379,6 +1389,39 @@ typecheck_initializer_expr__CITypecheck(
 }
 
 void
+push_pack_expected_data_types__CITypecheck(
+  Vec *expected_data_types,
+  const CIDeclFunctionParam *decl_param,
+  struct CITypecheckContext *typecheck_ctx)
+{
+    CIGenericParams *decl_generic_params =
+      typecheck_ctx->current_generic_params.decl;
+    CIGenericParams *called_generic_params =
+      typecheck_ctx->current_generic_params.called;
+
+    // A pack is only ever written on a generic declaration, which is only ever
+    // called through an instantiation of it.
+    ASSERT(decl_generic_params && called_generic_params);
+
+    CIGenericParamsRange range;
+
+    if (find_generic_range__CIGenericParams(
+          decl_generic_params,
+          called_generic_params,
+          GET_PTR_RC(String, decl_param->data_type->generic),
+          &range) != CI_GENERIC_PARAMS_RANGE_RESULT_OK) {
+        // The declaration is one nothing can be instantiated from, which the
+        // parser has already reported on.
+        return;
+    }
+
+    for (Usize i = 0; i < range.len; ++i) {
+        push__Vec(expected_data_types,
+                  get__Vec(called_generic_params->params, range.start + i));
+    }
+}
+
+void
 typecheck_call_params__CITypecheck(
   const CITypecheck *self,
   const CIDeclFunctionParams *decl_function_call_params,
@@ -1394,48 +1437,78 @@ typecheck_call_params__CITypecheck(
       decl_function_call_params ? decl_function_call_params->content->len : 0;
     Usize called_params_len = called_params->len;
 
-    if (decl_function_call_params_len != called_params_len &&
-        (is_variadic &&
-         called_params_len < decl_function_call_params_len - 1)) {
+    // A param written on a pack stands for as many params as the call site
+    // leaves it, so the declared params are not on their own what the call is
+    // read against. Writing out what each param the call gives is expected to
+    // be keeps the walk below indifferent to that.
+    //
+    // A NULL stands for a variadic param, which is expected to be anything.
+    Vec *expected_data_types = NEW(Vec); // Vec<CIDataType*? (&)>*
+
+    for (Usize i = 0; i < decl_function_call_params_len; ++i) {
+        const CIDeclFunctionParam *decl_param =
+          get__Vec(decl_function_call_params->content, i);
+
+        switch (decl_param->kind) {
+            case CI_DECL_FUNCTION_PARAM_KIND_NORMAL:
+                if (is_pack__CIDataType(decl_param->data_type)) {
+                    push_pack_expected_data_types__CITypecheck(
+                      expected_data_types, decl_param, typecheck_ctx);
+
+                    break;
+                }
+
+                push__Vec(expected_data_types, decl_param->data_type);
+
+                break;
+            case CI_DECL_FUNCTION_PARAM_KIND_VARIADIC:
+                push__Vec(expected_data_types, NULL);
+
+                break;
+            default:
+                UNREACHABLE("unknown variant");
+        }
+    }
+
+    Usize expected_data_types_len = expected_data_types->len;
+
+    if (expected_data_types_len != called_params_len &&
+        (is_variadic && called_params_len < expected_data_types_len - 1)) {
         FAILED_WITH_LOCATION__CITypecheck(
           self, location, CI_ERROR_KIND_PARAMS_COUNT_MISMATCH);
+
+        FREE(Vec, expected_data_types);
 
         return;
     }
 
     for (Usize i = 0; i < called_params_len; ++i) {
-        const CIDeclFunctionParam *decl_param = get__Vec(
-          decl_function_call_params->content,
-          i >= decl_function_call_params_len ? decl_function_call_params_len - 1
-                                             : i);
+        CIDataType *expected_data_type = get__Vec(
+          expected_data_types,
+          i >= expected_data_types_len ? expected_data_types_len - 1 : i);
         const CIExpr *called_param = get__Vec(called_params, i);
 
-        switch (decl_param->kind) {
-            case CI_DECL_FUNCTION_PARAM_KIND_NORMAL: {
-                typecheck_expr__CITypecheck(
-                  self, decl_param->data_type, called_param, typecheck_ctx);
+        if (expected_data_type) {
+            typecheck_expr__CITypecheck(
+              self, expected_data_type, called_param, typecheck_ctx);
 
-                break;
-            }
-            case CI_DECL_FUNCTION_PARAM_KIND_VARIADIC: {
-                // NOTE: Here, we expect any data type because a variadic
-                // parameter doesn't require a specific data type, but we do
-                // need to perform a typecheck on the child expression of the
-                // "called_param" expression.
-                CIDataType *expected_data_type = NEW(
-                  CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_ANY);
-
-                typecheck_expr__CITypecheck(
-                  self, expected_data_type, called_param, typecheck_ctx);
-
-                FREE(CIDataType, expected_data_type);
-
-                break;
-            }
-            default:
-                UNREACHABLE("unknown variant");
+            continue;
         }
+
+        // NOTE: Here, we expect any data type because a variadic
+        // parameter doesn't require a specific data type, but we do
+        // need to perform a typecheck on the child expression of the
+        // "called_param" expression.
+        CIDataType *any_data_type =
+          NEW(CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_ANY);
+
+        typecheck_expr__CITypecheck(
+          self, any_data_type, called_param, typecheck_ctx);
+
+        FREE(CIDataType, any_data_type);
     }
+
+    FREE(Vec, expected_data_types);
 }
 
 void

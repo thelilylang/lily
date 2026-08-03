@@ -280,6 +280,20 @@ static void
 generate_function_params__CIGenerator(CIGenerator *self,
                                       const CIDeclFunctionParams *params);
 
+/// @brief Write the separator a param is due, where anything has been written
+/// ahead of it.
+static void
+write_param_separator__CIGenerator(CIGenerator *self, Usize written);
+
+/// @brief Write the params a param written on a pack stands for, one per data
+/// type the pack is left.
+/// @param written the number of params written ahead of this one.
+/// @return the number of params written.
+static Usize
+generate_function_pack_param__CIGenerator(CIGenerator *self,
+                                          const CIDeclFunctionParam *param,
+                                          Usize written);
+
 static void
 generate_function_prototype__CIGenerator(CIGenerator *self,
                                          const CIDeclFunction *function);
@@ -1592,12 +1606,70 @@ generate_enum_decl__CIGenerator(CIGenerator *self, const CIDeclEnum *enum_)
 }
 
 void
+write_param_separator__CIGenerator(CIGenerator *self, Usize written)
+{
+    if (written > 0) {
+        write_str__CIGenerator(self, ", ");
+    }
+}
+
+Usize
+generate_function_pack_param__CIGenerator(CIGenerator *self,
+                                          const CIDeclFunctionParam *param,
+                                          Usize written)
+{
+    CIGenericParams *generic_params =
+      self->content.last_session->inherit_props.current_generic_params;
+    CIGenericParams *called_generic_params =
+      self->content.last_session->inherit_props.current_called_generic_params;
+
+    ASSERT(generic_params);
+    ASSERT(called_generic_params);
+
+    CIGenericParamsRange range;
+
+    if (find_generic_range__CIGenericParams(
+          generic_params,
+          called_generic_params,
+          GET_PTR_RC(String, param->data_type->generic),
+          &range) != CI_GENERIC_PARAMS_RANGE_RESULT_OK) {
+        // The declaration is one nothing can be instantiated from, which the
+        // parser has already reported on.
+        return 0;
+    }
+
+    for (Usize i = 0; i < range.len; ++i) {
+        CIDataType *pack_data_type =
+          get__Vec(called_generic_params->params, range.start + i);
+
+        write_param_separator__CIGenerator(self, written + i);
+        generate_data_type__CIGenerator(self, pack_data_type);
+
+        // The params a pack stands for are told apart by the rank they are
+        // written at, since the source only ever names the pack once.
+        if (param->name && !has_variable_name__CIDataType(pack_data_type)) {
+            write_String__CIGenerator(
+              self,
+              format__String(" {S}_{zu}", GET_PTR_RC(String, param->name), i));
+        }
+    }
+
+    return range.len;
+}
+
+void
 generate_function_params__CIGenerator(CIGenerator *self,
                                       const CIDeclFunctionParams *params)
 {
     write_str__CIGenerator(self, "(");
 
     if (params) {
+        // A pack stands for as many params as the call site leaves it, which
+        // may be none. What has been written so far is therefore what says
+        // whether a separator is due, rather than the rank of the declared
+        // param being written.
+        Usize written = 0;
+
         for (Usize i = 0; i < params->content->len; ++i) {
             const CIDeclFunctionParam *param = get__Vec(params->content, i);
 
@@ -1605,6 +1677,16 @@ generate_function_params__CIGenerator(CIGenerator *self,
                 case CI_DECL_FUNCTION_PARAM_KIND_NORMAL:
                     ASSERT(param->data_type);
 
+                    // A param written on a pack stands for one param per data
+                    // type the pack is left, rather than for one.
+                    if (is_pack__CIDataType(param->data_type)) {
+                        written += generate_function_pack_param__CIGenerator(
+                          self, param, written);
+
+                        break;
+                    }
+
+                    write_param_separator__CIGenerator(self, written);
                     generate_data_type__CIGenerator(self, param->data_type);
 
                     if (param->name &&
@@ -1615,17 +1697,18 @@ generate_function_params__CIGenerator(CIGenerator *self,
                                          GET_PTR_RC(String, param->name)));
                     }
 
+                    ++written;
+
                     break;
                 case CI_DECL_FUNCTION_PARAM_KIND_VARIADIC:
+                    write_param_separator__CIGenerator(self, written);
                     write_str__CIGenerator(self, "...");
+
+                    ++written;
 
                     break;
                 default:
                     UNREACHABLE("unknown variant");
-            }
-
-            if (i + 1 != params->content->len) {
-                write_str__CIGenerator(self, ", ");
             }
         }
     }

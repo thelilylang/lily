@@ -1,0 +1,17 @@
+//@expected_bin_stdout 5\n
+//@expected_bin_stdout 5:6\n
+
+// A pack left nothing stands for no param at all, so what is written ahead of
+// it must not be followed by a separator.
+
+#include <helper.h>
+
+int
+head.[@A, @T...](@A a, @T... rest) {
+	return a;
+}
+
+int main() {
+	printf("%d\n", head.[int](5));
+	printf("%d:%d\n", head.[int, int](5, 6), 6);
+}

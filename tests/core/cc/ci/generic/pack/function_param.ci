@@ -1,0 +1,18 @@
+//@expected_bin_stdout 0\n
+//@expected_bin_stdout 0\n
+
+// A param written on a pack stands for one param per data type the pack is
+// left, so the same declaration is called with as many params as the call site
+// writes data types.
+
+#include <helper.h>
+
+int
+count.[@T...](@T... xs) {
+	return 0;
+}
+
+int main() {
+	printf("%d\n", count.[int](1));
+	printf("%d\n", count.[int, char](1, 'a'));
+}
