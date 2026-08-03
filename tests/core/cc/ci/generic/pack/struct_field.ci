@@ -1,0 +1,27 @@
+//@expected_bin_stdout 10:20:30\n
+//@expected_bin_stdout 7:8\n
+
+// A member written on a pack stands for one member per data type the pack is
+// left. The members are told apart by the rank they are written at, since the
+// source only ever names the pack once.
+
+#include <helper.h>
+
+struct Tuple.[@T...] {
+	@T... item;
+};
+
+int main() {
+	struct Tuple.[int, int, int] a;
+	struct Tuple.[int, char] b;
+
+	a.item_0 = 10;
+	a.item_1 = 20;
+	a.item_2 = 30;
+
+	b.item_0 = 7;
+	b.item_1 = 8;
+
+	printf("%d:%d:%d\n", a.item_0, a.item_1, a.item_2);
+	printf("%d:%d\n", b.item_0, (int)b.item_1);
+}

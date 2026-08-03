@@ -1832,6 +1832,17 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other);
 
 /**
  *
+ * @brief Check if the data type is a generic written with `...`, that is one
+ * standing for however many data types the call site leaves it.
+ */
+inline bool
+is_pack__CIDataType(const CIDataType *self)
+{
+    return self->kind == CI_DATA_TYPE_KIND_GENERIC && self->generic_is_pack;
+}
+
+/**
+ *
  * @brief Check if the data type is an integer (signed or unsigned).
  * @note This function does not perform a deep check, it only checks whether the
  * first type cut corresponds to an integer.

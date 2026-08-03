@@ -1,0 +1,25 @@
+//@expected_bin_stdout 5\n
+//@expected_bin_stdout 5:6\n
+
+// A pack is left nothing where the fixed slots already account for the call
+// site, and so stands for no member at all.
+
+#include <helper.h>
+
+struct List.[@A, @T...] {
+	@A head;
+	@T... tail;
+};
+
+int main() {
+	struct List.[int] one;
+	struct List.[int, int] two;
+
+	one.head = 5;
+
+	two.head = 5;
+	two.tail_0 = 6;
+
+	printf("%d\n", one.head);
+	printf("%d:%d\n", two.head, two.tail_0);
+}

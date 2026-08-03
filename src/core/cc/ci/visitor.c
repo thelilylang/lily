@@ -115,6 +115,19 @@ visit_struct_or_union_field__CIVisitor(CIVisitor *self,
                                        CIGenericParams *generic_params,
                                        CIGenericParams *called_generic_params);
 
+/// @brief Write the members a field written on a pack stands for, one per data
+/// type the pack is left.
+/// @param current_field const CIDeclStructField* (&)
+static void
+visit_struct_or_union_pack_field__CIVisitor(
+  CIVisitor *self,
+  const CIDeclStructField *current_field,
+  CIDeclStructFields *gen_fields,
+  CIDeclStructField **prev_gen_field,
+  CIDeclStructField *parent_gen_field,
+  CIGenericParams *generic_params,
+  CIGenericParams *called_generic_params);
+
 /// @brief If the struct or union is not generic, this function will return
 /// NULL.
 /// @return the generated fields.
@@ -728,6 +741,59 @@ substitute_and_generate_from_data_type__CIVisitor(
 }
 
 void
+visit_struct_or_union_pack_field__CIVisitor(
+  CIVisitor *self,
+  const CIDeclStructField *current_field,
+  CIDeclStructFields *gen_fields,
+  CIDeclStructField **prev_gen_field,
+  CIDeclStructField *parent_gen_field,
+  CIGenericParams *generic_params,
+  CIGenericParams *called_generic_params)
+{
+    const CIDataType *field_dt = current_field->member.data_type;
+    CIGenericParamsRange range;
+
+    if (find_generic_range__CIGenericParams(
+          generic_params,
+          called_generic_params,
+          GET_PTR_RC(String, field_dt->generic),
+          &range) != CI_GENERIC_PARAMS_RANGE_RESULT_OK) {
+        // The declaration is one nothing can be instantiated from, which the
+        // parser has already reported on.
+        return;
+    }
+
+    for (Usize i = 0; i < range.len; ++i) {
+        CIDataType *gen_field_dt = clone__CIDataType(
+          get__Vec(called_generic_params->params, range.start + i));
+
+        generate_from_data_type__CIVisitor(
+          self, gen_field_dt, called_generic_params, generic_params);
+
+        // The members a pack stands for are told apart by the rank they are
+        // written at, since the source only ever names the pack once.
+        Rc *gen_field_name =
+          NEW(Rc,
+              format__String(
+                "{S}_{zu}", GET_PTR_RC(String, current_field->name), i));
+        CIDeclStructField *gen_field = NEW_VARIANT(
+          CIDeclStructField,
+          member,
+          gen_field_name,
+          parent_gen_field,
+          *prev_gen_field,
+          NEW(
+            CIDeclStructFieldMember, gen_field_dt, current_field->member.bit));
+
+        FREE_RC(String, gen_field_name);
+
+        ASSERT(add__CIDeclStructFields(gen_fields, gen_field, *prev_gen_field));
+
+        *prev_gen_field = gen_field;
+    }
+}
+
+void
 visit_struct_or_union_field__CIVisitor(CIVisitor *self,
                                        CIDeclStructField **current_field_ref,
                                        CIDeclStructFields *gen_fields,
@@ -741,6 +807,22 @@ visit_struct_or_union_field__CIVisitor(CIVisitor *self,
     switch (current_field->kind) {
         case CI_DECL_STRUCT_FIELD_KIND_MEMBER: {
             CIDataType *field_dt = current_field->member.data_type;
+
+            // A member written on a pack stands for one member per data type
+            // the pack is left, rather than for one.
+            if (is_pack__CIDataType(field_dt)) {
+                visit_struct_or_union_pack_field__CIVisitor(
+                  self,
+                  current_field,
+                  gen_fields,
+                  prev_gen_field,
+                  parent_gen_field,
+                  generic_params,
+                  called_generic_params);
+
+                break;
+            }
+
             CIDataType *subs_field_dt =
               substitute_and_generate_from_data_type__CIVisitor(
                 self, field_dt, generic_params, called_generic_params, NULL);
