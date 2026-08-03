@@ -44,6 +44,15 @@
                    error,                                             \
                    (self)->count_error)
 
+// Same, but located where the caller says rather than on the token the parser
+// is on, for what is reported once the parser has read past it.
+#define FAILED_WITH_LOCATION__CIParser(self, location, error)         \
+    EMIT_ERROR__CI(                                                   \
+      get_file_from_location__CIResultFile((self)->file, (location)), \
+      (location),                                                     \
+      error,                                                          \
+      (self)->count_error)
+
 // Same, but located on a data type rather than on the current token (used by
 // the substitution helpers, which run outside of the token stream).
 #define FAILED_ON_DATA_TYPE__CIParser(file, data_type, error)               \
@@ -4144,10 +4153,18 @@ build_binary_expr__CIParser(CIParser *self,
       unwrap_grouping__CIParser(left)->kind == CI_EXPR_KIND_DATA_TYPE;
     bool right_is_data_type =
       unwrap_grouping__CIParser(right)->kind == CI_EXPR_KIND_DATA_TYPE;
+    // What is reported on is the comparison, which is written from where the
+    // left of it is written to where the right of it ends. The parser has
+    // read past it by the time the two are put together, so the location is
+    // read from the operands rather than from where the parser stands.
+    Location location = clone__Location(&left->location);
+
+    END_LOCATION(&location, right->location);
 
     if (left_is_data_type != right_is_data_type) {
-        FAILED__CIParser(
+        FAILED_WITH_LOCATION__CIParser(
           self,
+          &location,
           NEW(CIError, CI_ERROR_KIND_COMPARISON_BETWEEN_DATA_TYPE_AND_VALUE));
     } else if (left_is_data_type) {
         switch (op) {
@@ -4155,17 +4172,16 @@ build_binary_expr__CIParser(CIParser *self,
             case CI_EXPR_BINARY_KIND_NE:
                 break;
             default:
-                FAILED__CIParser(
+                FAILED_WITH_LOCATION__CIParser(
                   self,
+                  &location,
                   NEW(CIError,
                       CI_ERROR_KIND_DATA_TYPES_ARE_ONLY_COMPARED_FOR_EQUALITY));
         }
     }
 
-    return NEW_VARIANT(CIExpr,
-                       binary,
-                       previous_location__CIParser(self),
-                       NEW(CIExprBinary, op, left, right));
+    return NEW_VARIANT(
+      CIExpr, binary, location, NEW(CIExprBinary, op, left, right));
 }
 
 CIExpr *
