@@ -320,7 +320,7 @@ visit_function__CIVisitor(CIVisitor *self,
                           const CIDeclFunctionBody *body);
 
 static void
-visit_non_generic_function__CIVisitor(CIVisitor *self, const CIDecl *decl);
+visit_non_generic_function__CIVisitor(CIVisitor *self, CIDecl *decl);
 
 static void
 visit_global_decl__CIVisitor(CIVisitor *self, CIDecl *decl);
@@ -1572,21 +1572,35 @@ resolve_comptime_data_type__CIVisitor(CIVisitor *self,
         return NULL;
     }
 
-    CIDataType *res = substitute_data_type__CIParser(self->file,
-                                                     expr->data_type,
-                                                     decl_generic_params,
-                                                     called_generic_params,
-                                                     NULL);
+    // A data type is only written in place of a generic where a declaration
+    // is written on generics and is called on types. Written anywhere else it
+    // stands for itself, and there is nothing to read in its place: the
+    // substitution is what reads the types a call is made on, and it is only
+    // written where both are.
+    if (decl_generic_params && called_generic_params) {
+        CIDataType *res = substitute_data_type__CIParser(self->file,
+                                                         expr->data_type,
+                                                         decl_generic_params,
+                                                         called_generic_params,
+                                                         NULL);
 
-    return res ? res : ref__CIDataType(expr->data_type);
+        if (res) {
+            return res;
+        }
+    }
+
+    return ref__CIDataType(expr->data_type);
 }
 
 /// @brief Read what a condition written on data types stands for, which is
 /// known once the types the declaration is written on are.
 ///
-/// A condition is only read here when a generic is written in it: what is
-/// written on no generic says the same thing in every declaration, so it is
-/// left to the C compiler to read, as it is in C.
+/// A comparison of data types is known wherever it is written, and not only
+/// where a generic is written in it: what a declaration written on no generic
+/// compares is already the two types themselves. C has nothing to read of such
+/// a comparison, so what it stands for is read here in every declaration
+/// rather than left to the C compiler. Only where a generic is written in it
+/// are the types the declaration is called on read in its place.
 ///
 /// @param is_true bool* (&) What the condition stands for, written only when
 /// true is returned.
@@ -1598,10 +1612,6 @@ resolve_comptime_cond__CIVisitor(CIVisitor *self,
                                  CIGenericParams *called_generic_params,
                                  bool *is_true)
 {
-    if (!decl_generic_params || !called_generic_params) {
-        return false;
-    }
-
     while (cond->kind == CI_EXPR_KIND_GROUPING) {
         cond = cond->grouping;
     }
@@ -1875,6 +1885,20 @@ select_comptime_paths__CIVisitor(CIVisitor *self,
             continue;
         }
 
+        // What a variable is given is read the same way as anything else
+        // written as an expression: a comparison of data types written there
+        // is known too, and is written as the 1 or the 0 it stands for.
+        if (item->kind == CI_DECL_FUNCTION_ITEM_KIND_DECL) {
+            if (item->decl->kind == CI_DECL_KIND_VARIABLE) {
+                fold_comptime_expr_slot__CIVisitor(self,
+                                                   &item->decl->variable.expr,
+                                                   decl_generic_params,
+                                                   called_generic_params);
+            }
+
+            continue;
+        }
+
         if (item->kind != CI_DECL_FUNCTION_ITEM_KIND_STMT) {
             continue;
         }
@@ -2041,11 +2065,19 @@ visit_function__CIVisitor(CIVisitor *self,
 }
 
 void
-visit_non_generic_function__CIVisitor(CIVisitor *self, const CIDecl *decl)
+visit_non_generic_function__CIVisitor(CIVisitor *self, CIDecl *decl)
 {
     self->current_decl = decl;
 
     ASSERT(decl->kind == CI_DECL_KIND_FUNCTION);
+
+    // A comparison of data types is known before the program runs wherever it
+    // is written, and C has nothing to read of it. A declaration written on no
+    // generic has one body, which is the one that is written out, so the paths
+    // it holds are read in it rather than in a body instantiated from it.
+    if (decl->function.body) {
+        select_comptime_paths__CIVisitor(self, decl->function.body, NULL, NULL);
+    }
 
     visit_function_return_data_type__CIVisitor(self, decl, NULL);
     visit_function_params__CIVisitor(self, decl, NULL);

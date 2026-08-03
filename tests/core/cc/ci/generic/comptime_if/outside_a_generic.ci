@@ -1,0 +1,42 @@
+//@expected_bin_stdout good\n
+//@expected_bin_stdout 0:1\n
+//@expected_bin_stdout 2\n
+
+#include <helper.h>
+
+/* A comparison of data types is known before the program runs wherever it is
+   written, and not only where a generic is written in it: what a declaration
+   written on no generic compares is already the two types themselves. C has
+   nothing to read of such a comparison, so it is read here in every
+   declaration rather than left as a comparison the C compiler is given. */
+
+static int
+rank(void) {
+	if (char == int) {
+		return 1;
+	} else if (int == int) {
+		return 2;
+	}
+
+	return 3;
+}
+
+int main() {
+	/* Written as the whole of a condition, only the path it holds is
+	   written. */
+	if (int == char) {
+		printf("bad\n");
+	} else {
+		printf("good\n");
+	}
+
+	/* Written as a part of one, it is written as the 1 or the 0 it stands
+	   for. */
+	int v = int == char;
+	int w = int != char;
+
+	printf("%d:%d\n", v, w);
+	printf("%d\n", rank());
+
+	return 0;
+}
