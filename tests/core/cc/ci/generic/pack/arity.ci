@@ -1,0 +1,18 @@
+//@expected_bin_stdout 7\n
+//@expected_bin_stdout 7\n
+
+// A pack takes however many data types the call site leaves it, so the same
+// declaration is instantiated once per number of params it is called on. The
+// pack is not read here: only the arity it binds is.
+
+#include <helper.h>
+
+int
+answer.[@T...]() {
+	return 7;
+}
+
+int main() {
+	printf("%d\n", answer.[int]());
+	printf("%d\n", answer.[int, char, float]());
+}

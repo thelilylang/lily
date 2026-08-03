@@ -1,0 +1,16 @@
+//@expected_compiler_error :10:25: \e[31merror\e[0m[0204]: the generic params hold more than one pack
+//@expected_compiler_error \e[34m10 |\e[0m two_packs.[@T..., @U...]() {
+
+// A second pack would leave no way of telling which of them a param given at
+// the call site belongs to.
+
+#include <helper.h>
+
+int
+two_packs.[@T..., @U...]() {
+	return 0;
+}
+
+int main() {
+	return two_packs.[int, char]();
+}

@@ -712,6 +712,25 @@ typedef enum CIGenericParamsRangeResult
 
 /**
  *
+ * @brief Number of slots written with `...`.
+ * @param self const CIGenericParams* (&)
+ */
+Usize
+count_packs__CIGenericParams(const CIGenericParams *self);
+
+/**
+ *
+ * @brief Whether the declared slots account for the params given at the call
+ * site, that is whether any slot can be mapped onto it at all.
+ * @param self const CIGenericParams* (&) the declared params.
+ * @param called const CIGenericParams* (&) the params given at the call site.
+ */
+bool
+accounts_for__CIGenericParams(const CIGenericParams *self,
+                              const CIGenericParams *called);
+
+/**
+ *
  * @brief Map the declared slot at `slot` onto the range of call site params it
  * stands for.
  * @param self const CIGenericParams* (&) the declared params.
@@ -1611,6 +1630,9 @@ typedef struct CIDataType
     struct CIExpr *alignment; // struct CIExpr*?
     // Whether `_BitInt` is written to hold a value with no sign.
     bool bitint_is_unsigned;
+    // Whether the generic is written with `...`, that is stands for however
+    // many data types the call site leaves it, rather than for one.
+    bool generic_is_pack;
     Usize ref_count;
     union
     {

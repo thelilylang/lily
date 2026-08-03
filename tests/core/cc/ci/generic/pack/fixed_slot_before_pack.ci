@@ -1,0 +1,21 @@
+//@expected_bin_stdout 1\n
+//@expected_bin_stdout 1\n
+//@expected_bin_stdout 8\n
+
+// A fixed slot written ahead of a pack keeps standing for one data type,
+// whatever the pack is left. `@A` is the first param the call site gives on
+// each of the three calls below, so the pack taking more of them must not move
+// what `@A` reads.
+
+#include <helper.h>
+
+int
+size_of.[@A, @T...]() {
+	return (int)sizeof(@A);
+}
+
+int main() {
+	printf("%d\n", size_of.[char]());
+	printf("%d\n", size_of.[char, int, float]());
+	printf("%d\n", size_of.[double, int]());
+}

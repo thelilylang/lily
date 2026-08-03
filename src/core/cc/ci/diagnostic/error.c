@@ -297,6 +297,8 @@ to_msg__CIError(const CIError *self)
         case CI_ERROR_KIND_GENERIC_PARAMS_COUNT_MISMATCH:
             return "the number of generic params does not correspond to its "
                    "declaration";
+        case CI_ERROR_KIND_GENERIC_PARAMS_HOLD_MORE_THAN_ONE_PACK:
+            return "the generic params hold more than one pack";
         case CI_ERROR_KIND_GENERIC_PARAMS_IN_VARIABLE_CONTEXT:
             return "generic params are not expected in a variable context";
         case CI_ERROR_KIND_GENERIC_PARAMS_NOT_EXPECTED_IN_THIS_CONTEXT:
@@ -890,6 +892,8 @@ to_code__CIError(const CIError *self)
             return "0202";
         case CI_ERROR_KIND_DATA_TYPES_ARE_ONLY_COMPARED_FOR_EQUALITY:
             return "0203";
+        case CI_ERROR_KIND_GENERIC_PARAMS_HOLD_MORE_THAN_ONE_PACK:
+            return "0204";
         default:
             UNREACHABLE("unknown variant");
     }

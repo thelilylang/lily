@@ -1372,8 +1372,9 @@ substitute_generic__CIParser(const CIResultFile *file,
 
     // The declared params must account for what the call site provided, or no
     // slot can be mapped onto it. This stays an up front check so that the
-    // mismatch is reported once, rather than once per slot looked up.
-    if (generic_params->params->len != called_generic_params->params->len) {
+    // mismatch is reported on the call site, rather than on the slot that
+    // happened to be looked up first.
+    if (!accounts_for__CIGenericParams(generic_params, called_generic_params)) {
         FAILED_ON_DATA_TYPE__CIParser(
           file,
           CAST(CIDataType *,
@@ -2789,6 +2790,14 @@ parse_pre_data_type__CIParser(CIParser *self)
             res = NEW_VARIANT(
               CIDataType, generic, previous_location__CIParser(self), generic);
 
+            // `@T...` stands for however many data types the call site leaves
+            // it, rather than for one.
+            if (self->current_token->kind == CI_TOKEN_KIND_DOT_DOT_DOT) {
+                next_token__CIParser(self);
+
+                res->generic_is_pack = true;
+            }
+
             break;
         }
         case CI_TOKEN_KIND_KEYWORD_BOOL:
@@ -3378,7 +3387,17 @@ parse_generic_params__CIParser(CIParser *self)
             UNREACHABLE("expected `]` or `EOF`");
     }
 
-    return params ? NEW(CIGenericParams, params) : NULL;
+    CIGenericParams *res = NEW(CIGenericParams, params);
+
+    // A second pack would leave no way of telling which of them a param given
+    // at the call site belongs to.
+    if (count_packs__CIGenericParams(res) > 1) {
+        FAILED__CIParser(
+          self,
+          NEW(CIError, CI_ERROR_KIND_GENERIC_PARAMS_HOLD_MORE_THAN_ONE_PACK));
+    }
+
+    return res;
 }
 
 CIExpr *

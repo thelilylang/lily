@@ -724,19 +724,48 @@ find_generic__CIGenericParams(const CIGenericParams *self, String *name)
     return -1;
 }
 
-/// @brief Number of call site params the declared slot at `slot` stands for.
+/// @brief Whether the declared slot at `slot` is written with `...`.
 /// @param self const CIGenericParams* (&)
-/// @note Every slot is a plain `@T` and so stands for exactly one param. A
-/// variadic generic (`@T...`) is the case that would return anything else: it
-/// takes what the fixed slots around it leave over, that is
-/// `called->params->len - (self->params->len - 1)`. This is the only place that
-/// answer belongs, which is what makes the callers below indifferent to it.
-static Usize
-slot_len__CIGenericParams(const CIGenericParams *self, Usize slot)
+static bool
+is_pack_slot__CIGenericParams(const CIGenericParams *self, Usize slot)
 {
-    ASSERT(slot < self->params->len);
+    const CIDataType *param = get__Vec(self->params, slot);
 
-    return 1;
+    return param->kind == CI_DATA_TYPE_KIND_GENERIC && param->generic_is_pack;
+}
+
+Usize
+count_packs__CIGenericParams(const CIGenericParams *self)
+{
+    Usize res = 0;
+
+    for (Usize i = 0; i < self->params->len; ++i) {
+        res += is_pack_slot__CIGenericParams(self, i);
+    }
+
+    return res;
+}
+
+bool
+accounts_for__CIGenericParams(const CIGenericParams *self,
+                              const CIGenericParams *called)
+{
+    Usize n_packs = count_packs__CIGenericParams(self);
+
+    // More than one pack would leave no way of telling which of them a param
+    // given at the call site belongs to.
+    if (n_packs > 1) {
+        return false;
+    }
+
+    Usize fixed_len = self->params->len - n_packs;
+
+    // The fixed slots each take one param, so the call site has to hold at
+    // least that many. What is left over is what the pack takes, which may be
+    // nothing - but with no pack to soak it up, a call site holding more than
+    // the fixed slots is one nothing accounts for.
+    return n_packs == 0 ? called->params->len == fixed_len
+                        : called->params->len >= fixed_len;
 }
 
 CIGenericParamsRangeResult
@@ -747,20 +776,23 @@ range_at__CIGenericParams(const CIGenericParams *self,
 {
     ASSERT(slot < self->params->len);
 
+    if (!accounts_for__CIGenericParams(self, called)) {
+        return CI_GENERIC_PARAMS_RANGE_RESULT_COUNT_MISMATCH;
+    }
+
+    Usize pack_len = called->params->len -
+                     (self->params->len - count_packs__CIGenericParams(self));
     Usize start = 0;
 
     for (Usize i = 0; i < slot; ++i) {
-        start += slot_len__CIGenericParams(self, i);
+        start += is_pack_slot__CIGenericParams(self, i) ? pack_len : 1;
     }
 
-    Usize len = slot_len__CIGenericParams(self, slot);
+    Usize len = is_pack_slot__CIGenericParams(self, slot) ? pack_len : 1;
 
-    // The declared slots are only a valid map onto the call site when they
-    // account for it exactly. Reading past that would take a data type the call
-    // site never gave.
-    if (start + len > called->params->len) {
-        return CI_GENERIC_PARAMS_RANGE_RESULT_COUNT_MISMATCH;
-    }
+    // The slots add up to the call site, which the arity check above has
+    // already made sure of.
+    ASSERT(start + len <= called->params->len);
 
     res->start = start;
     res->len = len;
@@ -2151,6 +2183,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
     self->alignment = NULL;
     self->bitint_is_unsigned = false;
+    self->generic_is_pack = false;
 
     return self;
 }
@@ -2171,6 +2204,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
     self->alignment = NULL;
     self->bitint_is_unsigned = false;
+    self->generic_is_pack = false;
 
     return self;
 }
@@ -2191,6 +2225,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
     self->alignment = NULL;
     self->bitint_is_unsigned = false;
+    self->generic_is_pack = false;
 
     return self;
 }
@@ -2211,6 +2246,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
     self->alignment = NULL;
     self->bitint_is_unsigned = false;
+    self->generic_is_pack = false;
 
     return self;
 }
@@ -2231,6 +2267,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
     self->alignment = NULL;
     self->bitint_is_unsigned = false;
+    self->generic_is_pack = false;
 
     return self;
 }
@@ -2251,6 +2288,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
     self->alignment = NULL;
     self->bitint_is_unsigned = false;
+    self->generic_is_pack = false;
 
     return self;
 }
@@ -2271,6 +2309,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
     self->alignment = NULL;
     self->bitint_is_unsigned = false;
+    self->generic_is_pack = false;
 
     return self;
 }
@@ -2291,6 +2330,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
     self->alignment = NULL;
     self->bitint_is_unsigned = false;
+    self->generic_is_pack = false;
 
     return self;
 }
@@ -2311,6 +2351,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
     self->alignment = NULL;
     self->bitint_is_unsigned = false;
+    self->generic_is_pack = false;
 
     return self;
 }
@@ -2331,6 +2372,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
     self->alignment = NULL;
     self->bitint_is_unsigned = false;
+    self->generic_is_pack = false;
 
     return self;
 }
@@ -2349,6 +2391,7 @@ CONSTRUCTOR(CIDataType *,
     self->qualifier = CI_DATA_TYPE_QUALIFIER_NONE;
     self->alignment = NULL;
     self->bitint_is_unsigned = false;
+    self->generic_is_pack = false;
 
     return self;
 }
@@ -2531,6 +2574,7 @@ clone__CIDataType(const CIDataType *self)
       res, self->alignment ? ref__CIExpr(self->alignment) : NULL);
 
     res->bitint_is_unsigned = self->bitint_is_unsigned;
+    res->generic_is_pack = self->generic_is_pack;
 
     return res;
 }
@@ -2778,7 +2822,8 @@ eq__CIDataType(const CIDataType *self, const CIDataType *other)
 
             return true;
         case CI_DATA_TYPE_KIND_GENERIC:
-            return !strcmp(GET_PTR_RC(String, self->generic)->buffer,
+            return self->generic_is_pack == other->generic_is_pack &&
+                   !strcmp(GET_PTR_RC(String, self->generic)->buffer,
                            GET_PTR_RC(String, other->generic)->buffer);
         case CI_DATA_TYPE_KIND_PTR:
             return eq__CIDataType(self->ptr.data_type, other->ptr.data_type);
