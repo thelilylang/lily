@@ -293,7 +293,8 @@ extern inline CONSTRUCTOR(CIDeclFunctionGen,
                           const CIDeclFunction *function,
                           Rc *name,
                           CIGenericParams *called_generic_params,
-                          CIDataType *return_data_type);
+                          CIDataType *return_data_type,
+                          CIDeclFunctionBody *body);
 
 extern inline CONSTRUCTOR(CIDeclLabel, CIDeclLabel, Rc *name);
 

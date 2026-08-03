@@ -3834,6 +3834,228 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunctionBody, const CIDeclFunctionBody *self)
 }
 #endif
 
+/// @brief Clone an operand an `asm` statement reads or writes.
+/// @return CIStmtAsmOperand*
+static CIStmtAsmOperand *
+clone__CIStmtAsmOperand(const CIStmtAsmOperand *self)
+{
+    return NEW(CIStmtAsmOperand,
+               self->name ? ref__Rc(self->name) : NULL,
+               ref__Rc(self->constraint),
+               ref__CIExpr(self->value));
+}
+
+/// @brief Clone a vector of what is counted rather than copied.
+/// @param self Vec<Rc<String*>*>*?
+/// @return Vec<Rc<String*>*>*?
+static Vec *
+clone_rc_strings__CIStmtAsm(const Vec *self)
+{
+    if (!self) {
+        return NULL;
+    }
+
+    Vec *res = NEW(Vec);
+
+    for (Usize i = 0; i < self->len; ++i) {
+        push__Vec(res, ref__Rc(get__Vec(self, i)));
+    }
+
+    return res;
+}
+
+/// @param self Vec<CIStmtAsmOperand*>*?
+/// @return Vec<CIStmtAsmOperand*>*?
+static Vec *
+clone_operands__CIStmtAsm(const Vec *self)
+{
+    if (!self) {
+        return NULL;
+    }
+
+    Vec *res = NEW(Vec);
+
+    for (Usize i = 0; i < self->len; ++i) {
+        push__Vec(res, clone__CIStmtAsmOperand(get__Vec(self, i)));
+    }
+
+    return res;
+}
+
+/// @brief Clone the branch of an `if` statement.
+/// @return CIStmtIfBranch*
+static CIStmtIfBranch *
+clone__CIStmtIfBranch(const CIStmtIfBranch *self)
+{
+    return NEW(CIStmtIfBranch,
+               ref__CIExpr(self->cond),
+               clone__CIDeclFunctionBody(self->body));
+}
+
+/// @brief Clone a statement, and the bodies it is written with.
+static CIStmt
+clone__CIStmt(const CIStmt *self)
+{
+    Location location = clone__Location(&self->location);
+
+    switch (self->kind) {
+        case CI_STMT_KIND_ASM:
+            return NEW_VARIANT(
+              CIStmt,
+              asm,
+              location,
+              NEW(CIStmtAsm,
+                  ref__Rc(self->asm_.template),
+                  clone_operands__CIStmtAsm(self->asm_.outputs),
+                  clone_operands__CIStmtAsm(self->asm_.inputs),
+                  clone_rc_strings__CIStmtAsm(self->asm_.clobbers),
+                  clone_rc_strings__CIStmtAsm(self->asm_.labels),
+                  self->asm_.is_volatile,
+                  self->asm_.is_inline,
+                  self->asm_.is_goto));
+        case CI_STMT_KIND_BLOCK:
+            return NEW_VARIANT(
+              CIStmt,
+              block,
+              location,
+              NEW(CIStmtBlock, clone__CIDeclFunctionBody(self->block.body)));
+        case CI_STMT_KIND_BREAK:
+            return NEW_VARIANT(CIStmt, break, location);
+        case CI_STMT_KIND_CASE:
+            return NEW_VARIANT(
+              CIStmt,
+              case,
+              location,
+              NEW(CIStmtSwitchCase, ref__CIExpr(self->case_.value)));
+        case CI_STMT_KIND_CONTINUE:
+            return NEW_VARIANT(CIStmt, continue, location);
+        case CI_STMT_KIND_DEFAULT:
+            return NEW_VARIANT(CIStmt, default, location);
+        case CI_STMT_KIND_DO_WHILE:
+            return NEW_VARIANT(
+              CIStmt,
+              do_while,
+              location,
+              NEW(CIStmtDoWhile,
+                  clone__CIDeclFunctionBody(self->do_while.body),
+                  ref__CIExpr(self->do_while.cond)));
+        case CI_STMT_KIND_FOR: {
+            Vec *init_clauses = NULL; // Vec<CIDeclFunctionItem*>*?
+            Vec *exprs2 = NULL;       // Vec<CIExpr*>*?
+
+            if (self->for_.init_clauses) {
+                init_clauses = NEW(Vec);
+
+                for (Usize i = 0; i < self->for_.init_clauses->len; ++i) {
+                    push__Vec(init_clauses,
+                              clone__CIDeclFunctionItem(
+                                get__Vec(self->for_.init_clauses, i)));
+                }
+            }
+
+            if (self->for_.exprs2) {
+                exprs2 = NEW(Vec);
+
+                for (Usize i = 0; i < self->for_.exprs2->len; ++i) {
+                    push__Vec(exprs2,
+                              ref__CIExpr(get__Vec(self->for_.exprs2, i)));
+                }
+            }
+
+            return NEW_VARIANT(CIStmt,
+                               for,
+                               location,
+                               NEW(CIStmtFor,
+                                   clone__CIDeclFunctionBody(self->for_.body),
+                                   init_clauses,
+                                   self->for_.expr1
+                                     ? ref__CIExpr(self->for_.expr1)
+                                     : NULL,
+                                   exprs2));
+        }
+        case CI_STMT_KIND_GOTO:
+            return NEW_VARIANT(CIStmt, goto, location, ref__Rc(self->goto_));
+        case CI_STMT_KIND_IF: {
+            Vec *else_ifs = NULL; // Vec<CIStmtIfBranch*>*?
+
+            if (self->if_.else_ifs) {
+                else_ifs = NEW(Vec);
+
+                for (Usize i = 0; i < self->if_.else_ifs->len; ++i) {
+                    push__Vec(
+                      else_ifs,
+                      clone__CIStmtIfBranch(get__Vec(self->if_.else_ifs, i)));
+                }
+            }
+
+            return NEW_VARIANT(
+              CIStmt,
+              if,
+              location,
+              NEW(CIStmtIf,
+                  clone__CIStmtIfBranch(self->if_.if_),
+                  else_ifs,
+                  self->if_.else_ ? clone__CIDeclFunctionBody(self->if_.else_)
+                                  : NULL));
+        }
+        case CI_STMT_KIND_RETURN:
+            return NEW_VARIANT(CIStmt,
+                               return,
+                               location,
+                               self->return_ ? ref__CIExpr(self->return_)
+                                             : NULL);
+        case CI_STMT_KIND_SWITCH:
+            return NEW_VARIANT(
+              CIStmt,
+              switch,
+              location,
+              NEW(CIStmtSwitch,
+                  ref__CIExpr(self->switch_.expr),
+                  clone__CIDeclFunctionBody(self->switch_.body)));
+        case CI_STMT_KIND_WHILE:
+            return NEW_VARIANT(
+              CIStmt,
+              while,
+              location,
+              NEW(CIStmtWhile,
+                  ref__CIExpr(self->while_.cond),
+                  clone__CIDeclFunctionBody(self->while_.body)));
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+CIDeclFunctionItem *
+clone__CIDeclFunctionItem(const CIDeclFunctionItem *self)
+{
+    switch (self->kind) {
+        case CI_DECL_FUNCTION_ITEM_KIND_DECL:
+            return NEW_VARIANT(
+              CIDeclFunctionItem, decl, ref__CIDecl(self->decl));
+        case CI_DECL_FUNCTION_ITEM_KIND_EXPR:
+            return NEW_VARIANT(
+              CIDeclFunctionItem, expr, ref__CIExpr(self->expr));
+        case CI_DECL_FUNCTION_ITEM_KIND_STMT:
+            return NEW_VARIANT(
+              CIDeclFunctionItem, stmt, clone__CIStmt(&self->stmt));
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
+CIDeclFunctionBody *
+clone__CIDeclFunctionBody(const CIDeclFunctionBody *self)
+{
+    CIDeclFunctionBody *res = NEW(CIDeclFunctionBody, self->scope_id);
+
+    for (Usize i = 0; i < self->content->len; ++i) {
+        add__CIDeclFunctionBody(
+          res, clone__CIDeclFunctionItem(get__Vec(self->content, i)));
+    }
+
+    return res;
+}
+
 DESTRUCTOR(CIDeclFunctionBody, CIDeclFunctionBody *self)
 {
     FREE_BUFFER_ITEMS(
@@ -3949,6 +4171,10 @@ DESTRUCTOR(CIDeclFunctionGen, const CIDeclFunctionGen *self)
     FREE_RC(String, self->name);
     FREE(CIGenericParams, self->called_generic_params);
     FREE(CIDataType, self->return_data_type);
+
+    if (self->body) {
+        FREE(CIDeclFunctionBody, self->body);
+    }
 }
 
 #ifdef ENV_DEBUG
@@ -4320,7 +4546,8 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl *function_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
-                    CIDataType *return_data_type)
+                    CIDataType *return_data_type,
+                    CIDeclFunctionBody *body)
 {
     ASSERT(function_decl->kind == CI_DECL_KIND_FUNCTION);
 
@@ -4344,7 +4571,8 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                              f,
                              NEW(Rc, name),
                              called_generic_params,
-                             return_data_type);
+                             return_data_type,
+                             body);
 
     return self;
 }

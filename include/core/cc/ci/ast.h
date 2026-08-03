@@ -2404,6 +2404,29 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunctionBody, const CIDeclFunctionBody *self);
 
 /**
  *
+ * @brief Clone an item of a function body.
+ * @return CIDeclFunctionItem*
+ */
+CIDeclFunctionItem *
+clone__CIDeclFunctionItem(const CIDeclFunctionItem *self);
+
+/**
+ *
+ * @brief Clone the body of a function.
+ *
+ * What a generic function is written as is read once, and each of the types it
+ * is called on is written a body of its own, since what a body holds is not
+ * always the same from one to the next. Only what the body is built of is
+ * duplicated: what hangs off it is counted rather than copied, as an
+ * expression or a declaration says the same thing whichever body holds it.
+ *
+ * @return CIDeclFunctionBody*
+ */
+CIDeclFunctionBody *
+clone__CIDeclFunctionBody(const CIDeclFunctionBody *self);
+
+/**
+ *
  * @brief Free CIDeclFunctionBody type.
  */
 DESTRUCTOR(CIDeclFunctionBody, CIDeclFunctionBody *self);
@@ -2497,24 +2520,32 @@ typedef struct CIDeclFunctionGen
     Rc *name;                               // Rc<String*>*
     CIGenericParams *called_generic_params; // CIGenericParams*
     CIDataType *return_data_type;
+    // What the function holds once it is written on the types it is called
+    // on. What a body holds is not always the same from one of them to the
+    // next, so each is written a body of its own rather than reading the one
+    // the generic function is written with.
+    CIDeclFunctionBody *body; // CIDeclFunctionBody*?
 } CIDeclFunctionGen;
 
 /**
  *
  * @brief Construct CIDeclFunctionGen type.
  * @param name Rc<String*>*
+ * @param body CIDeclFunctionBody*?
  */
 inline CONSTRUCTOR(CIDeclFunctionGen,
                    CIDeclFunctionGen,
                    const CIDeclFunction *function,
                    Rc *name,
                    CIGenericParams *called_generic_params,
-                   CIDataType *return_data_type)
+                   CIDataType *return_data_type,
+                   CIDeclFunctionBody *body)
 {
     return (CIDeclFunctionGen){ .function = function,
                                 .name = name,
                                 .called_generic_params = called_generic_params,
-                                .return_data_type = return_data_type };
+                                .return_data_type = return_data_type,
+                                .body = body };
 }
 
 /**
@@ -3082,7 +3113,8 @@ VARIANT_CONSTRUCTOR(CIDecl *,
                     CIDecl *function_decl,
                     CIGenericParams *called_generic_params,
                     String *name,
-                    CIDataType *return_data_type);
+                    CIDataType *return_data_type,
+                    CIDeclFunctionBody *body);
 
 /**
  *

@@ -394,17 +394,30 @@ generate_function_gen__CIVisitor(CIVisitor *self,
                 visit_function__CIVisitor(
                   self, function_decl, resolved_generic_params);
 
-                CIDecl *function_gen_decl =
-                  NEW_VARIANT(CIDecl,
-                              function_gen,
-                              clone__Location(&function_decl->location),
-                              (CIDecl *)function_decl,
-                              ref__CIGenericParams(resolved_generic_params),
-                              serialized_called_function_name,
-                              subs_return_data_type ? subs_return_data_type
-                                                    : ref__CIDataType(
-                                                        function_decl->function
-                                                          .return_data_type) /* Return a ref data type, when the substituted data type is NULL, to avoid an optional data type in the `return_data_type` field. */);
+                CIDecl *function_gen_decl = NEW_VARIANT(
+                  CIDecl,
+                  function_gen,
+                  clone__Location(&function_decl->location),
+                  (CIDecl *)function_decl,
+                  ref__CIGenericParams(resolved_generic_params),
+                  serialized_called_function_name,
+                  subs_return_data_type
+                    ? subs_return_data_type
+                    : ref__CIDataType(
+                        function_decl->function
+                          .return_data_type) /* Return a ref data type, when the
+                                                substituted data type is NULL,
+                                                to avoid an optional data type
+                                                in the `return_data_type` field.
+                                              */
+                  ,
+                  // What the function holds is written again for
+                  // the types it is called on, since what a body
+                  // holds is not always the same from one of them
+                  // to the next.
+                  function_decl->function.body
+                    ? clone__CIDeclFunctionBody(function_decl->function.body)
+                    : NULL);
 
                 add_decl_to_scope__CIResultFile(
                   self->file,

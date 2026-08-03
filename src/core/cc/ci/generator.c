@@ -2599,7 +2599,12 @@ generate_function_gen_decl__CIGenerator(CIGenerator *self,
       function_gen->function->generic_params,
       function_gen->called_generic_params);
     write_str__CIGenerator(self, " ");
-    generate_function_body__CIGenerator(self, function_gen->function->body);
+    // The body written for the types the function is called on is the one it
+    // holds, rather than the one the generic function is written with: what
+    // the two hold is not always the same.
+    generate_function_body__CIGenerator(
+      self,
+      function_gen->body ? function_gen->body : function_gen->function->body);
     reset_current_generic_params__CIGenerator(self);
 }
 
