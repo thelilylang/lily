@@ -456,6 +456,13 @@ to_msg__CIError(const CIError *self)
             return "a variable declaration is not expected in a label";
         case CI_ERROR_KIND_VARIABLE_IS_ALREADY_DEFINED:
             return "this variable is already defined";
+        case CI_ERROR_KIND_COMPARISON_BETWEEN_DATA_TYPE_AND_VALUE:
+            return "a data type is compared with a data type, and a value "
+                   "with a value: what one of them stands for is known "
+                   "before the program runs, and what the other stands for "
+                   "is read while it runs";
+        case CI_ERROR_KIND_DATA_TYPES_ARE_ONLY_COMPARED_FOR_EQUALITY:
+            return "data types are compared with `==` and `!=` alone";
         case CI_ERROR_KIND_VARIABLE_LENGTH_ARRAY_WITH_LINKAGE_OR_STATIC_STORAGE:
             return "a variable length array is written in a block or in a "
                    "function prototype, on an identifier with no linkage and "
@@ -879,6 +886,10 @@ to_code__CIError(const CIError *self)
             return "0200";
         case CI_ERROR_KIND_VARIABLE_LENGTH_ARRAY_WITH_LINKAGE_OR_STATIC_STORAGE:
             return "0201";
+        case CI_ERROR_KIND_COMPARISON_BETWEEN_DATA_TYPE_AND_VALUE:
+            return "0202";
+        case CI_ERROR_KIND_DATA_TYPES_ARE_ONLY_COMPARED_FOR_EQUALITY:
+            return "0203";
         default:
             UNREACHABLE("unknown variant");
     }

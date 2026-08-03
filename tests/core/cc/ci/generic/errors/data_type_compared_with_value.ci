@@ -1,0 +1,19 @@
+//@expected_compiler_error error\e[0m[0202]: a data type is compared with a data type, and a value with a value
+
+/* There is nothing to compare a data type with but another data type: what
+   one of them stands for is known before the program runs, and what a value
+   stands for is read while it runs. */
+
+#include <helper.h>
+
+static void
+check.[@T](@T x) {
+	if (x == char) {
+	}
+}
+
+int main() {
+	check.[char]('a');
+
+	return 0;
+}

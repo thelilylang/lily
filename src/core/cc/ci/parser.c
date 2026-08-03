@@ -4113,6 +4113,61 @@ parse_primary_expr__CIParser(CIParser *self)
     return parse_post_expr__CIParser(self, res);
 }
 
+/// @brief Read what an expression written between parentheses holds, which
+/// says the same thing as the parentheses do.
+/// @return const CIExpr* (&)
+static const CIExpr *
+unwrap_grouping__CIParser(const CIExpr *expr)
+{
+    while (expr->kind == CI_EXPR_KIND_GROUPING) {
+        expr = expr->grouping;
+    }
+
+    return expr;
+}
+
+/// @brief Build a binary expression, and read what it is written on.
+///
+/// A data type is written as an operand of a comparison, which is what a
+/// generic is written on a path of. There is nothing to compare a data type
+/// with but another data type, and nothing to read of the comparison but
+/// whether the two are the same, so a value written against a data type, or
+/// an operator that asks for more than that, is reported here rather than
+/// written out as C that says nothing.
+static CIExpr *
+build_binary_expr__CIParser(CIParser *self,
+                            enum CIExprBinaryKind op,
+                            CIExpr *left,
+                            CIExpr *right)
+{
+    bool left_is_data_type =
+      unwrap_grouping__CIParser(left)->kind == CI_EXPR_KIND_DATA_TYPE;
+    bool right_is_data_type =
+      unwrap_grouping__CIParser(right)->kind == CI_EXPR_KIND_DATA_TYPE;
+
+    if (left_is_data_type != right_is_data_type) {
+        FAILED__CIParser(
+          self,
+          NEW(CIError, CI_ERROR_KIND_COMPARISON_BETWEEN_DATA_TYPE_AND_VALUE));
+    } else if (left_is_data_type) {
+        switch (op) {
+            case CI_EXPR_BINARY_KIND_EQ:
+            case CI_EXPR_BINARY_KIND_NE:
+                break;
+            default:
+                FAILED__CIParser(
+                  self,
+                  NEW(CIError,
+                      CI_ERROR_KIND_DATA_TYPES_ARE_ONLY_COMPARED_FOR_EQUALITY));
+        }
+    }
+
+    return NEW_VARIANT(CIExpr,
+                       binary,
+                       previous_location__CIParser(self),
+                       NEW(CIExprBinary, op, left, right));
+}
+
 CIExpr *
 parse_binary_expr__CIParser(CIParser *self, CIExpr *expr)
 {
@@ -4188,10 +4243,7 @@ parse_binary_expr__CIParser(CIParser *self, CIExpr *expr)
 
             push__Vec(
               stack,
-              NEW_VARIANT(CIExpr,
-                          binary,
-                          previous_location__CIParser(self),
-                          NEW(CIExprBinary, top_op, top_left, top_right)));
+              build_binary_expr__CIParser(self, top_op, top_left, top_right));
         }
 
         push__Vec(stack, (int *)op);
@@ -4205,11 +4257,7 @@ parse_binary_expr__CIParser(CIParser *self, CIExpr *expr)
         enum CIExprBinaryKind op = (enum CIExprBinaryKind)(Uptr)pop__Vec(stack);
         CIExpr *lhs = pop__Vec(stack);
 
-        push__Vec(stack,
-                  NEW_VARIANT(CIExpr,
-                              binary,
-                              previous_location__CIParser(self),
-                              NEW(CIExprBinary, op, lhs, rhs)));
+        push__Vec(stack, build_binary_expr__CIParser(self, op, lhs, rhs));
     }
 
     CIExpr *res = pop__Vec(stack);

@@ -1,0 +1,18 @@
+//@expected_compiler_error error\e[0m[0203]: data types are compared with `==` and `!=` alone
+
+/* Nothing is read of a comparison of data types but whether the two are the
+   same, so nothing is asked of them but that. */
+
+#include <helper.h>
+
+static void
+check.[@T](@T x) {
+	if (@T < int) {
+	}
+}
+
+int main() {
+	check.[char]('a');
+
+	return 0;
+}

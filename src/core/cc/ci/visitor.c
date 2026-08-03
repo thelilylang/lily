@@ -1644,6 +1644,110 @@ resolve_comptime_cond__CIVisitor(CIVisitor *self,
     return true;
 }
 
+/// @brief Read what a comparison of data types stands for, wherever it is
+/// written, and write it as what it stands for.
+///
+/// A comparison of data types is known once the types the declaration is
+/// called on are, whether it is written as the whole of a condition or as a
+/// part of one. What is written as a part of one is not a path the
+/// declaration is written on, but it is still known, so it is written as the
+/// 1 or the 0 it stands for rather than left as a comparison C cannot read.
+///
+/// @return CIExpr*? What is written in place of the expression, which the
+/// caller takes over, or NULL when nothing in it is written on data types.
+static CIExpr *
+fold_comptime_exprs__CIVisitor(CIVisitor *self,
+                               CIExpr *expr,
+                               CIGenericParams *decl_generic_params,
+                               CIGenericParams *called_generic_params)
+{
+    bool is_true = false;
+
+    if (resolve_comptime_cond__CIVisitor(
+          self, expr, decl_generic_params, called_generic_params, &is_true)) {
+        return NEW_VARIANT(CIExpr,
+                           literal,
+                           clone__Location(&expr->location),
+                           NEW_VARIANT(CIExprLiteral, signed_int, is_true));
+    }
+
+    switch (expr->kind) {
+        case CI_EXPR_KIND_GROUPING: {
+            CIExpr *grouping = fold_comptime_exprs__CIVisitor(
+              self, expr->grouping, decl_generic_params, called_generic_params);
+
+            return grouping ? NEW_VARIANT(CIExpr,
+                                          grouping,
+                                          clone__Location(&expr->location),
+                                          grouping)
+                            : NULL;
+        }
+        case CI_EXPR_KIND_BINARY: {
+            CIExpr *left =
+              fold_comptime_exprs__CIVisitor(self,
+                                             expr->binary.left,
+                                             decl_generic_params,
+                                             called_generic_params);
+            CIExpr *right =
+              fold_comptime_exprs__CIVisitor(self,
+                                             expr->binary.right,
+                                             decl_generic_params,
+                                             called_generic_params);
+
+            if (!left && !right) {
+                return NULL;
+            }
+
+            return NEW_VARIANT(
+              CIExpr,
+              binary,
+              clone__Location(&expr->location),
+              NEW(CIExprBinary,
+                  expr->binary.kind,
+                  left ? left : ref__CIExpr(expr->binary.left),
+                  right ? right : ref__CIExpr(expr->binary.right)));
+        }
+        case CI_EXPR_KIND_UNARY: {
+            CIExpr *unary_expr =
+              fold_comptime_exprs__CIVisitor(self,
+                                             expr->unary.expr,
+                                             decl_generic_params,
+                                             called_generic_params);
+
+            return unary_expr
+                     ? NEW_VARIANT(
+                         CIExpr,
+                         unary,
+                         clone__Location(&expr->location),
+                         NEW(CIExprUnary, expr->unary.kind, unary_expr))
+                     : NULL;
+        }
+        default:
+            return NULL;
+    }
+}
+
+/// @brief Write what a comparison of data types stands for, in place of the
+/// expression the body holds.
+static void
+fold_comptime_expr_slot__CIVisitor(CIVisitor *self,
+                                   CIExpr **slot,
+                                   CIGenericParams *decl_generic_params,
+                                   CIGenericParams *called_generic_params)
+{
+    if (!*slot) {
+        return;
+    }
+
+    CIExpr *folded = fold_comptime_exprs__CIVisitor(
+      self, *slot, decl_generic_params, called_generic_params);
+
+    if (folded) {
+        FREE(CIExpr, *slot);
+        *slot = folded;
+    }
+}
+
 /// @brief Read which of the paths a statement is written with is the one the
 /// declaration holds, and keep that one alone.
 ///
@@ -1714,6 +1818,13 @@ select_comptime_paths__CIVisitor(CIVisitor *self,
     for (Usize i = 0; i < body->content->len; ++i) {
         CIDeclFunctionItem *item = get__Vec(body->content, i);
 
+        if (item->kind == CI_DECL_FUNCTION_ITEM_KIND_EXPR) {
+            fold_comptime_expr_slot__CIVisitor(
+              self, &item->expr, decl_generic_params, called_generic_params);
+
+            continue;
+        }
+
         if (item->kind != CI_DECL_FUNCTION_ITEM_KIND_STMT) {
             continue;
         }
@@ -1730,7 +1841,14 @@ select_comptime_paths__CIVisitor(CIVisitor *self,
 
                 if (!is_known) {
                     // The condition is read while the program runs, so both
-                    // paths are written and each is read on its own.
+                    // paths are written and each is read on its own. What is
+                    // written on data types in it is still known, so it is
+                    // written as what it stands for.
+                    fold_comptime_expr_slot__CIVisitor(
+                      self,
+                      &item->stmt.if_.if_->cond,
+                      decl_generic_params,
+                      called_generic_params);
                     select_comptime_paths__CIVisitor(self,
                                                      item->stmt.if_.if_->body,
                                                      decl_generic_params,
@@ -1739,9 +1857,14 @@ select_comptime_paths__CIVisitor(CIVisitor *self,
                     for (Usize j = 0; item->stmt.if_.else_ifs &&
                                       j < item->stmt.if_.else_ifs->len;
                          ++j) {
-                        const CIStmtIfBranch *else_if =
+                        CIStmtIfBranch *else_if =
                           get__Vec(item->stmt.if_.else_ifs, j);
 
+                        fold_comptime_expr_slot__CIVisitor(
+                          self,
+                          &else_if->cond,
+                          decl_generic_params,
+                          called_generic_params);
                         select_comptime_paths__CIVisitor(self,
                                                          else_if->body,
                                                          decl_generic_params,
@@ -1792,6 +1915,10 @@ select_comptime_paths__CIVisitor(CIVisitor *self,
 
                 break;
             case CI_STMT_KIND_DO_WHILE:
+                fold_comptime_expr_slot__CIVisitor(self,
+                                                   &item->stmt.do_while.cond,
+                                                   decl_generic_params,
+                                                   called_generic_params);
                 select_comptime_paths__CIVisitor(self,
                                                  item->stmt.do_while.body,
                                                  decl_generic_params,
@@ -1799,13 +1926,28 @@ select_comptime_paths__CIVisitor(CIVisitor *self,
 
                 break;
             case CI_STMT_KIND_FOR:
+                fold_comptime_expr_slot__CIVisitor(self,
+                                                   &item->stmt.for_.expr1,
+                                                   decl_generic_params,
+                                                   called_generic_params);
                 select_comptime_paths__CIVisitor(self,
                                                  item->stmt.for_.body,
                                                  decl_generic_params,
                                                  called_generic_params);
 
                 break;
+            case CI_STMT_KIND_RETURN:
+                fold_comptime_expr_slot__CIVisitor(self,
+                                                   &item->stmt.return_,
+                                                   decl_generic_params,
+                                                   called_generic_params);
+
+                break;
             case CI_STMT_KIND_SWITCH:
+                fold_comptime_expr_slot__CIVisitor(self,
+                                                   &item->stmt.switch_.expr,
+                                                   decl_generic_params,
+                                                   called_generic_params);
                 select_comptime_paths__CIVisitor(self,
                                                  item->stmt.switch_.body,
                                                  decl_generic_params,
@@ -1813,6 +1955,10 @@ select_comptime_paths__CIVisitor(CIVisitor *self,
 
                 break;
             case CI_STMT_KIND_WHILE:
+                fold_comptime_expr_slot__CIVisitor(self,
+                                                   &item->stmt.while_.cond,
+                                                   decl_generic_params,
+                                                   called_generic_params);
                 select_comptime_paths__CIVisitor(self,
                                                  item->stmt.while_.body,
                                                  decl_generic_params,
