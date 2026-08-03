@@ -1606,11 +1606,61 @@ resolve_comptime_cond__CIVisitor(CIVisitor *self,
         cond = cond->grouping;
     }
 
+    // What is written on either side of `&&` and `||` is read from the left,
+    // and what is written on the right of them is only read when the left
+    // does not say what the whole of it stands for. A condition that is only
+    // known while the program runs is left as it is written, since reading it
+    // is what the program does, and what it does may be more than say whether
+    // it holds.
+    if (cond->kind == CI_EXPR_KIND_UNARY &&
+        cond->unary.kind == CI_EXPR_UNARY_KIND_NOT) {
+        if (resolve_comptime_cond__CIVisitor(self,
+                                             cond->unary.expr,
+                                             decl_generic_params,
+                                             called_generic_params,
+                                             is_true)) {
+            *is_true = !*is_true;
+
+            return true;
+        }
+
+        return false;
+    }
+
     if (cond->kind != CI_EXPR_KIND_BINARY) {
         return false;
     }
 
     switch (cond->binary.kind) {
+        case CI_EXPR_BINARY_KIND_AND:
+        case CI_EXPR_BINARY_KIND_OR: {
+            bool left_is_true = false;
+
+            if (!resolve_comptime_cond__CIVisitor(self,
+                                                  cond->binary.left,
+                                                  decl_generic_params,
+                                                  called_generic_params,
+                                                  &left_is_true)) {
+                return false;
+            }
+
+            // `&&` says nothing more once the left of it does not hold, and
+            // `||` says nothing more once it does: what is written on the
+            // right is not read at all then, so the whole of it is known.
+            if (left_is_true == (cond->binary.kind == CI_EXPR_BINARY_KIND_OR)) {
+                *is_true = left_is_true;
+
+                return true;
+            }
+
+            // What the whole of it stands for is what is written on the right
+            // of it, which is read the same way.
+            return resolve_comptime_cond__CIVisitor(self,
+                                                    cond->binary.right,
+                                                    decl_generic_params,
+                                                    called_generic_params,
+                                                    is_true);
+        }
         case CI_EXPR_BINARY_KIND_EQ:
         case CI_EXPR_BINARY_KIND_NE:
             break;

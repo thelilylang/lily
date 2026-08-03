@@ -1,0 +1,32 @@
+//@expected_bin_stdout call\n
+//@expected_bin_stdout 0\n
+
+#include <helper.h>
+
+/* What is read while the program runs is read whether or not what follows it
+   says the whole of the condition: reading it is what the program does, and
+   what it does may be more than say whether the condition holds. So a
+   comparison of data types written on the right of one is not what the
+   condition is read from. */
+
+static int
+called(void) {
+	printf("call\n");
+
+	return 1;
+}
+
+static int
+right_hand.[@T](@T x) {
+	if (called() && @T == char) {
+		return 1;
+	}
+
+	return 0;
+}
+
+int main() {
+	printf("%d\n", right_hand.[int](0));
+
+	return 0;
+}

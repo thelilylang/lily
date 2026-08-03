@@ -1,0 +1,52 @@
+//@expected_bin_stdout 5:0\n
+//@expected_bin_stdout 1:0:1\n
+
+#include <helper.h>
+
+/* A condition is read from the left, as C reads one: `&&` says nothing more
+   once the left of it does not hold, and `||` says nothing more once it does.
+   So a comparison of data types written on the left says what the whole of it
+   stands for, and the path that is left is not one anything is read of. */
+
+static int
+read_when_ptr.[@T](@T x, int n) {
+	if (@T == int* && n > 0) {
+		/* Written on no type but a pointer. */
+		return *x;
+	}
+
+	return 0;
+}
+
+/* What is not known says the same thing as it is written with, and the part
+   of it that is known is written as what it stands for. */
+static int
+guarded.[@T](@T x, int n) {
+	if (@T == int && n > 0) {
+		return 1;
+	}
+
+	return 0;
+}
+
+/* `||` is read the same way. */
+static int
+either.[@T](@T x, int n) {
+	if (@T == char || n > 0) {
+		return 1;
+	}
+
+	return 0;
+}
+
+int main() {
+	int v = 5;
+
+	printf("%d:%d\n", read_when_ptr.[int*](&v, 1), read_when_ptr.[int](9, 1));
+	printf("%d:%d:%d\n",
+	       guarded.[int](1, 5),
+	       guarded.[char]('a', 5),
+	       either.[char]('a', 0));
+
+	return 0;
+}
