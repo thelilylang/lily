@@ -696,7 +696,13 @@ clone__CIGenericParams(const CIGenericParams *self)
     return NEW(CIGenericParams, params);
 }
 
-Isize
+/// @brief Find a declared generic slot from its name.
+/// @param self const CIGenericParams* (&)
+/// @return the index of the slot, or -1 when no slot carries that name.
+/// @note Deliberately not exposed: an index into the declared params is not on
+/// its own a valid index into the params given at the call site. Go through
+/// `range_at__CIGenericParams` to cross over.
+static Isize
 find_generic__CIGenericParams(const CIGenericParams *self, String *name)
 {
     for (Usize i = 0; i < self->params->len; ++i) {
@@ -716,6 +722,65 @@ find_generic__CIGenericParams(const CIGenericParams *self, String *name)
     }
 
     return -1;
+}
+
+/// @brief Number of call site params the declared slot at `slot` stands for.
+/// @param self const CIGenericParams* (&)
+/// @note Every slot is a plain `@T` and so stands for exactly one param. A
+/// variadic generic (`@T...`) is the case that would return anything else: it
+/// takes what the fixed slots around it leave over, that is
+/// `called->params->len - (self->params->len - 1)`. This is the only place that
+/// answer belongs, which is what makes the callers below indifferent to it.
+static Usize
+slot_len__CIGenericParams(const CIGenericParams *self, Usize slot)
+{
+    ASSERT(slot < self->params->len);
+
+    return 1;
+}
+
+CIGenericParamsRangeResult
+range_at__CIGenericParams(const CIGenericParams *self,
+                          const CIGenericParams *called,
+                          Usize slot,
+                          CIGenericParamsRange *res)
+{
+    ASSERT(slot < self->params->len);
+
+    Usize start = 0;
+
+    for (Usize i = 0; i < slot; ++i) {
+        start += slot_len__CIGenericParams(self, i);
+    }
+
+    Usize len = slot_len__CIGenericParams(self, slot);
+
+    // The declared slots are only a valid map onto the call site when they
+    // account for it exactly. Reading past that would take a data type the call
+    // site never gave.
+    if (start + len > called->params->len) {
+        return CI_GENERIC_PARAMS_RANGE_RESULT_COUNT_MISMATCH;
+    }
+
+    res->start = start;
+    res->len = len;
+
+    return CI_GENERIC_PARAMS_RANGE_RESULT_OK;
+}
+
+CIGenericParamsRangeResult
+find_generic_range__CIGenericParams(const CIGenericParams *self,
+                                    const CIGenericParams *called,
+                                    String *name,
+                                    CIGenericParamsRange *res)
+{
+    Isize slot = find_generic__CIGenericParams(self, name);
+
+    if (slot == -1) {
+        return CI_GENERIC_PARAMS_RANGE_RESULT_NAME_NOT_FOUND;
+    }
+
+    return range_at__CIGenericParams(self, called, slot, res);
 }
 
 bool

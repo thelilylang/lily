@@ -486,17 +486,33 @@ resolve_generic_data_type__CIResolverDataType(
     bool has_generic = called_generic_params && decl_generic_params;
 
     if (has_generic) {
-        Isize generic_params_index = find_generic__CIGenericParams(
-          decl_generic_params, GET_PTR_RC(String, data_type->generic));
+        CIGenericParamsRange range;
 
-        if (generic_params_index == -1) {
-            FAILED__CIResolverDataType(
-              file, data_type, CI_ERROR_KIND_GENERIC_PARAMS_ARE_NOT_FOUND);
-            return POISONED_DATA_TYPE__CIResolverDataType(data_type);
+        switch (find_generic_range__CIGenericParams(
+          decl_generic_params,
+          called_generic_params,
+          GET_PTR_RC(String, data_type->generic),
+          &range)) {
+            case CI_GENERIC_PARAMS_RANGE_RESULT_OK:
+                break;
+            case CI_GENERIC_PARAMS_RANGE_RESULT_NAME_NOT_FOUND:
+                FAILED__CIResolverDataType(
+                  file, data_type, CI_ERROR_KIND_GENERIC_PARAMS_ARE_NOT_FOUND);
+                return POISONED_DATA_TYPE__CIResolverDataType(data_type);
+            case CI_GENERIC_PARAMS_RANGE_RESULT_COUNT_MISMATCH:
+                FAILED__CIResolverDataType(
+                  file, data_type, CI_ERROR_KIND_GENERIC_PARAMS_COUNT_MISMATCH);
+                return POISONED_DATA_TYPE__CIResolverDataType(data_type);
         }
 
+        // A `@T` stands in for one data type, so it resolves to one. The day a
+        // slot can stand for several, this is where the caller has to be handed
+        // the whole range instead - the return type is what gives way, not the
+        // lookup.
+        ASSERT(range.len == 1);
+
         return ref__CIDataType(
-          get__Vec(called_generic_params->params, generic_params_index));
+          get__Vec(called_generic_params->params, range.start));
     }
 
     FAILED__CIResolverDataType(

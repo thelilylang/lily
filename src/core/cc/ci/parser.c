@@ -1370,10 +1370,9 @@ substitute_generic__CIParser(const CIResultFile *file,
 {
     Usize id = 0;
 
-    // The index of the matching declared param is used to reach the param given
-    // at the call site, so both must describe the same number of params.
-    // Otherwise the lookup below would read out of the bounds of what the call
-    // site provided.
+    // The declared params must account for what the call site provided, or no
+    // slot can be mapped onto it. This stays an up front check so that the
+    // mismatch is reported once, rather than once per slot looked up.
     if (generic_params->params->len != called_generic_params->params->len) {
         FAILED_ON_DATA_TYPE__CIParser(
           file,
@@ -1416,8 +1415,25 @@ substitute_generic__CIParser(const CIResultFile *file,
 
     return NULL;
 
-exit_loop:
-    return get__Vec(called_generic_params->params, id);
+exit_loop:;
+    CIGenericParamsRange range;
+
+    if (range_at__CIGenericParams(
+          generic_params, called_generic_params, id, &range) !=
+        CI_GENERIC_PARAMS_RANGE_RESULT_OK) {
+        FAILED_ON_DATA_TYPE__CIParser(
+          file,
+          CAST(CIDataType *, get__Vec(generic_params->params, id)),
+          NEW(CIError, CI_ERROR_KIND_GENERIC_PARAMS_COUNT_MISMATCH));
+
+        return NULL;
+    }
+
+    // A `@T` stands in for one data type, so it substitutes to one. A slot able
+    // to stand for several is what this single data type return cannot express.
+    ASSERT(range.len == 1);
+
+    return get__Vec(called_generic_params->params, range.start);
 }
 
 CIGenericParams *

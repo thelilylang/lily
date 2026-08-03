@@ -689,12 +689,56 @@ clone__CIGenericParams(const CIGenericParams *self);
 
 /**
  *
- * @brief Find a generic parameter from its name passed as a parameter.
- * @return the index of the location of the generic parameter. If no parameters
- * are found, the function returns -1.
+ * @brief The call site params a single declared generic slot stands for.
+ * @note `len` is always 1 as long as every slot is a plain `@T`. It is a range
+ * rather than an index so that a slot able to stand for several params at once
+ * (a variadic generic, `@T...`) does not have to change the shape of every
+ * substitution site.
  */
-Isize
-find_generic__CIGenericParams(const CIGenericParams *self, String *name);
+typedef struct CIGenericParamsRange
+{
+    Usize start;
+    Usize len;
+} CIGenericParamsRange;
+
+typedef enum CIGenericParamsRangeResult
+{
+    CI_GENERIC_PARAMS_RANGE_RESULT_OK,
+    CI_GENERIC_PARAMS_RANGE_RESULT_NAME_NOT_FOUND,
+    // The declared slots do not add up to what the call site provided, so no
+    // slot can be mapped onto it.
+    CI_GENERIC_PARAMS_RANGE_RESULT_COUNT_MISMATCH,
+} CIGenericParamsRangeResult;
+
+/**
+ *
+ * @brief Map the declared slot at `slot` onto the range of call site params it
+ * stands for.
+ * @param self const CIGenericParams* (&) the declared params.
+ * @param called const CIGenericParams* (&) the params given at the call site.
+ * @param res CIGenericParamsRange* (&) written to only on
+ * CI_GENERIC_PARAMS_RANGE_RESULT_OK.
+ */
+CIGenericParamsRangeResult
+range_at__CIGenericParams(const CIGenericParams *self,
+                          const CIGenericParams *called,
+                          Usize slot,
+                          CIGenericParamsRange *res);
+
+/**
+ *
+ * @brief Map the declared slot named `name` onto the range of call site params
+ * it stands for.
+ * @param self const CIGenericParams* (&) the declared params.
+ * @param called const CIGenericParams* (&) the params given at the call site.
+ * @param res CIGenericParamsRange* (&) written to only on
+ * CI_GENERIC_PARAMS_RANGE_RESULT_OK.
+ */
+CIGenericParamsRangeResult
+find_generic_range__CIGenericParams(const CIGenericParams *self,
+                                    const CIGenericParams *called,
+                                    String *name,
+                                    CIGenericParamsRange *res);
 
 /**
  *
