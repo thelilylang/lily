@@ -1,0 +1,41 @@
+//@expected_bin_stdout 5:9\n
+//@expected_bin_stdout 1:2:3\n
+
+#include <helper.h>
+
+/* A condition written on the types a generic is called on is known before the
+   program runs, so the declaration is written on one of its paths rather than
+   reading the condition while it runs. The path it does not hold is not
+   written, and nothing is read of it: that is what lets a path be written
+   with what only one of the types can be written with. */
+
+int
+read.[@T](@T x) {
+	if (@T == int*) {
+		/* Written on no type but a pointer. */
+		return *x;
+	} else {
+		return x;
+	}
+}
+
+/* What follows the first condition is read the same way. */
+int
+rank.[@T](@T x) {
+	if (@T == char) {
+		return 1;
+	} else if (@T == int) {
+		return 2;
+	} else {
+		return 3;
+	}
+}
+
+int main() {
+	int v = 5;
+
+	printf("%d:%d\n", read.[int*](&v), read.[int](9));
+	printf("%d:%d:%d\n", rank.[char]('a'), rank.[int](0), rank.[long](0));
+
+	return 0;
+}

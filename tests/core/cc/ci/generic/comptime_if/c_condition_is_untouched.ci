@@ -1,0 +1,32 @@
+//@expected_bin_stdout 2:4\n
+
+#include <helper.h>
+
+/* What is written on no type is read the way C reads it, whether or not what
+   it stands for is known before the program runs. Only a condition written on
+   data types is one the declaration is written on a path of, and such a
+   condition is not one C is written with. */
+
+static int
+zero_is_false(void) {
+	if (0) {
+		return 1;
+	} else {
+		return 2;
+	}
+}
+
+static int
+sizeof_is_known(void) {
+	if (sizeof(int) > 0) {
+		return 4;
+	} else {
+		return 8;
+	}
+}
+
+int main() {
+	printf("%d:%d\n", zero_is_false(), sizeof_is_known());
+
+	return 0;
+}

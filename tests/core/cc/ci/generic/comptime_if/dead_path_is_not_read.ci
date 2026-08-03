@@ -1,0 +1,26 @@
+//@expected_bin_stdout 1\n
+
+#include <helper.h>
+
+/* Nothing is read of the path a declaration does not hold, so what it calls
+   is not written either. */
+
+@T
+id.[@T](@T x) {
+	return x;
+}
+
+int
+pick.[@T](@T x) {
+	if (@T == int) {
+		return id.[int](1);
+	} else {
+		return (int)id.[char]('a');
+	}
+}
+
+int main() {
+	printf("%d\n", pick.[int](7));
+
+	return 0;
+}

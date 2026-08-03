@@ -1,0 +1,35 @@
+//@expected_bin_stdout 1:2:3\n
+
+#include <helper.h>
+
+/* A condition is read the same way wherever it is written, so one written
+   inside another is read once the one that holds it is. */
+
+int
+kind.[@T](@T x) {
+	if (@T == int) {
+		if (@T == int) {
+			return 1;
+		} else {
+			return *x;
+		}
+	} else {
+		while (0) {
+			if (@T == char) {
+				return 2;
+			}
+		}
+
+		if (@T == char) {
+			return 2;
+		}
+
+		return 3;
+	}
+}
+
+int main() {
+	printf("%d:%d:%d\n", kind.[int](0), kind.[char]('a'), kind.[long](0));
+
+	return 0;
+}

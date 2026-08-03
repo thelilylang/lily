@@ -1,0 +1,21 @@
+//@expected_bin_stdout 1:0\n
+
+#include <helper.h>
+
+/* A condition read while the program runs is written as it is, in a generic
+   as anywhere else: both of its paths are written, and each is read. */
+
+int
+sign.[@T](@T x) {
+	if (x > 0) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+int main() {
+	printf("%d:%d\n", sign.[int](5), sign.[int](-2));
+
+	return 0;
+}

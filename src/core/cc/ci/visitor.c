@@ -305,10 +305,19 @@ visit_function_params__CIVisitor(CIVisitor *self,
                                  const CIDecl *decl,
                                  CIGenericParams *called_generic_params);
 
+/// @brief Keep only the paths the declaration holds, of the statements
+/// written on a condition known once the types it is called on are.
+static void
+select_comptime_paths__CIVisitor(CIVisitor *self,
+                                 CIDeclFunctionBody *body,
+                                 CIGenericParams *decl_generic_params,
+                                 CIGenericParams *called_generic_params);
+
 static void
 visit_function__CIVisitor(CIVisitor *self,
                           const CIDecl *decl,
-                          CIGenericParams *called_generic_params);
+                          CIGenericParams *called_generic_params,
+                          const CIDeclFunctionBody *body);
 
 static void
 visit_non_generic_function__CIVisitor(CIVisitor *self, const CIDecl *decl);
@@ -391,8 +400,26 @@ generate_function_gen__CIVisitor(CIVisitor *self,
                     resolved_generic_params,
                     NULL);
 
-                visit_function__CIVisitor(
-                  self, function_decl, resolved_generic_params);
+                // The body is written for the types the function is called
+                // on before it is read, so a path the declaration does not
+                // hold is one nothing is instantiated from.
+                CIDeclFunctionBody *instantiated_body =
+                  function_decl->function.body
+                    ? clone__CIDeclFunctionBody(function_decl->function.body)
+                    : NULL;
+
+                if (instantiated_body) {
+                    select_comptime_paths__CIVisitor(
+                      self,
+                      instantiated_body,
+                      function_decl->function.generic_params,
+                      resolved_generic_params);
+                }
+
+                visit_function__CIVisitor(self,
+                                          function_decl,
+                                          resolved_generic_params,
+                                          instantiated_body);
 
                 CIDecl *function_gen_decl = NEW_VARIANT(
                   CIDecl,
@@ -411,13 +438,7 @@ generate_function_gen__CIVisitor(CIVisitor *self,
                                                 in the `return_data_type` field.
                                               */
                   ,
-                  // What the function holds is written again for
-                  // the types it is called on, since what a body
-                  // holds is not always the same from one of them
-                  // to the next.
-                  function_decl->function.body
-                    ? clone__CIDeclFunctionBody(function_decl->function.body)
-                    : NULL);
+                  instantiated_body);
 
                 add_decl_to_scope__CIResultFile(
                   self->file,
@@ -1532,18 +1553,293 @@ visit_function_params__CIVisitor(CIVisitor *self,
     }
 }
 
+/// @brief Read what a data type written as an expression stands for, with the
+/// types the declaration is written on read in place of the generics.
+/// @return CIDataType*? The caller takes it over.
+static CIDataType *
+resolve_comptime_data_type__CIVisitor(CIVisitor *self,
+                                      const CIExpr *expr,
+                                      CIGenericParams *decl_generic_params,
+                                      CIGenericParams *called_generic_params)
+{
+    // What is written between parentheses says the same thing as what it
+    // holds.
+    while (expr->kind == CI_EXPR_KIND_GROUPING) {
+        expr = expr->grouping;
+    }
+
+    if (expr->kind != CI_EXPR_KIND_DATA_TYPE) {
+        return NULL;
+    }
+
+    CIDataType *res = substitute_data_type__CIParser(self->file,
+                                                     expr->data_type,
+                                                     decl_generic_params,
+                                                     called_generic_params,
+                                                     NULL);
+
+    return res ? res : ref__CIDataType(expr->data_type);
+}
+
+/// @brief Read what a condition written on data types stands for, which is
+/// known once the types the declaration is written on are.
+///
+/// A condition is only read here when a generic is written in it: what is
+/// written on no generic says the same thing in every declaration, so it is
+/// left to the C compiler to read, as it is in C.
+///
+/// @param is_true bool* (&) What the condition stands for, written only when
+/// true is returned.
+/// @return true when the condition is known before the program runs.
+static bool
+resolve_comptime_cond__CIVisitor(CIVisitor *self,
+                                 const CIExpr *cond,
+                                 CIGenericParams *decl_generic_params,
+                                 CIGenericParams *called_generic_params,
+                                 bool *is_true)
+{
+    if (!decl_generic_params || !called_generic_params) {
+        return false;
+    }
+
+    while (cond->kind == CI_EXPR_KIND_GROUPING) {
+        cond = cond->grouping;
+    }
+
+    if (cond->kind != CI_EXPR_KIND_BINARY) {
+        return false;
+    }
+
+    switch (cond->binary.kind) {
+        case CI_EXPR_BINARY_KIND_EQ:
+        case CI_EXPR_BINARY_KIND_NE:
+            break;
+        default:
+            return false;
+    }
+
+    CIDataType *left = resolve_comptime_data_type__CIVisitor(
+      self, cond->binary.left, decl_generic_params, called_generic_params);
+
+    if (!left) {
+        return false;
+    }
+
+    CIDataType *right = resolve_comptime_data_type__CIVisitor(
+      self, cond->binary.right, decl_generic_params, called_generic_params);
+
+    if (!right) {
+        FREE(CIDataType, left);
+
+        return false;
+    }
+
+    bool eq = eq__CIDataType(left, right);
+
+    FREE(CIDataType, left);
+    FREE(CIDataType, right);
+
+    *is_true = cond->binary.kind == CI_EXPR_BINARY_KIND_EQ ? eq : !eq;
+
+    return true;
+}
+
+/// @brief Read which of the paths a statement is written with is the one the
+/// declaration holds, and keep that one alone.
+///
+/// A condition known before the program runs is one the declaration is
+/// written on either side of rather than one it reads while it runs. The path
+/// it does not hold is not written, and nothing is read of it: that is what
+/// makes a body written on a generic able to hold what only one of the types
+/// it is called on can be written with.
+///
+/// @return CIDeclFunctionBody*? The path the statement holds, which the caller
+/// takes over, or NULL when the statement holds none of them.
+static CIDeclFunctionBody *
+select_comptime_path__CIVisitor(CIVisitor *self,
+                                const CIStmtIf *if_,
+                                CIGenericParams *decl_generic_params,
+                                CIGenericParams *called_generic_params,
+                                bool *is_known)
+{
+    bool is_true = false;
+
+    *is_known = false;
+
+    if (!resolve_comptime_cond__CIVisitor(self,
+                                          if_->if_->cond,
+                                          decl_generic_params,
+                                          called_generic_params,
+                                          &is_true)) {
+        return NULL;
+    }
+
+    if (is_true) {
+        *is_known = true;
+
+        return clone__CIDeclFunctionBody(if_->if_->body);
+    }
+
+    // What follows is read the same way, and is only known when each of the
+    // conditions written before it is.
+    for (Usize i = 0; if_->else_ifs && i < if_->else_ifs->len; ++i) {
+        const CIStmtIfBranch *else_if = get__Vec(if_->else_ifs, i);
+
+        if (!resolve_comptime_cond__CIVisitor(self,
+                                              else_if->cond,
+                                              decl_generic_params,
+                                              called_generic_params,
+                                              &is_true)) {
+            return NULL;
+        }
+
+        if (is_true) {
+            *is_known = true;
+
+            return clone__CIDeclFunctionBody(else_if->body);
+        }
+    }
+
+    *is_known = true;
+
+    return if_->else_ ? clone__CIDeclFunctionBody(if_->else_) : NULL;
+}
+
+void
+select_comptime_paths__CIVisitor(CIVisitor *self,
+                                 CIDeclFunctionBody *body,
+                                 CIGenericParams *decl_generic_params,
+                                 CIGenericParams *called_generic_params)
+{
+    for (Usize i = 0; i < body->content->len; ++i) {
+        CIDeclFunctionItem *item = get__Vec(body->content, i);
+
+        if (item->kind != CI_DECL_FUNCTION_ITEM_KIND_STMT) {
+            continue;
+        }
+
+        switch (item->stmt.kind) {
+            case CI_STMT_KIND_IF: {
+                bool is_known = false;
+                CIDeclFunctionBody *path =
+                  select_comptime_path__CIVisitor(self,
+                                                  &item->stmt.if_,
+                                                  decl_generic_params,
+                                                  called_generic_params,
+                                                  &is_known);
+
+                if (!is_known) {
+                    // The condition is read while the program runs, so both
+                    // paths are written and each is read on its own.
+                    select_comptime_paths__CIVisitor(self,
+                                                     item->stmt.if_.if_->body,
+                                                     decl_generic_params,
+                                                     called_generic_params);
+
+                    for (Usize j = 0; item->stmt.if_.else_ifs &&
+                                      j < item->stmt.if_.else_ifs->len;
+                         ++j) {
+                        const CIStmtIfBranch *else_if =
+                          get__Vec(item->stmt.if_.else_ifs, j);
+
+                        select_comptime_paths__CIVisitor(self,
+                                                         else_if->body,
+                                                         decl_generic_params,
+                                                         called_generic_params);
+                    }
+
+                    if (item->stmt.if_.else_) {
+                        select_comptime_paths__CIVisitor(self,
+                                                         item->stmt.if_.else_,
+                                                         decl_generic_params,
+                                                         called_generic_params);
+                    }
+
+                    break;
+                }
+
+                Location location = clone__Location(&item->stmt.location);
+
+                FREE(CIDeclFunctionItem, item);
+
+                if (path) {
+                    // The path the statement holds is written as a block, so
+                    // what it declares is written where it was.
+                    select_comptime_paths__CIVisitor(
+                      self, path, decl_generic_params, called_generic_params);
+                    replace__Vec(
+                      body->content,
+                      i,
+                      NEW_VARIANT(
+                        CIDeclFunctionItem,
+                        stmt,
+                        NEW_VARIANT(
+                          CIStmt, block, location, NEW(CIStmtBlock, path))));
+                } else {
+                    // The statement holds no path at all, so nothing is
+                    // written where it was.
+                    remove__Vec(body->content, i);
+                    --i;
+                }
+
+                break;
+            }
+            case CI_STMT_KIND_BLOCK:
+                select_comptime_paths__CIVisitor(self,
+                                                 item->stmt.block.body,
+                                                 decl_generic_params,
+                                                 called_generic_params);
+
+                break;
+            case CI_STMT_KIND_DO_WHILE:
+                select_comptime_paths__CIVisitor(self,
+                                                 item->stmt.do_while.body,
+                                                 decl_generic_params,
+                                                 called_generic_params);
+
+                break;
+            case CI_STMT_KIND_FOR:
+                select_comptime_paths__CIVisitor(self,
+                                                 item->stmt.for_.body,
+                                                 decl_generic_params,
+                                                 called_generic_params);
+
+                break;
+            case CI_STMT_KIND_SWITCH:
+                select_comptime_paths__CIVisitor(self,
+                                                 item->stmt.switch_.body,
+                                                 decl_generic_params,
+                                                 called_generic_params);
+
+                break;
+            case CI_STMT_KIND_WHILE:
+                select_comptime_paths__CIVisitor(self,
+                                                 item->stmt.while_.body,
+                                                 decl_generic_params,
+                                                 called_generic_params);
+
+                break;
+            default:
+                break;
+        }
+    }
+}
+
 void
 visit_function__CIVisitor(CIVisitor *self,
                           const CIDecl *decl,
-                          CIGenericParams *called_generic_params)
+                          CIGenericParams *called_generic_params,
+                          const CIDeclFunctionBody *body)
 {
     ASSERT(decl->kind == CI_DECL_KIND_FUNCTION);
 
     visit_function_return_data_type__CIVisitor(
       self, decl, called_generic_params);
     visit_function_params__CIVisitor(self, decl, called_generic_params);
+    // The body the declaration holds is the one that is read, since a path
+    // it does not hold is one nothing is read of.
     visit_function_body__CIVisitor(self,
-                                   decl->function.body,
+                                   body ? body : decl->function.body,
                                    called_generic_params,
                                    decl->function.generic_params);
 }

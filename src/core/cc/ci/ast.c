@@ -5044,7 +5044,11 @@ get_function_body__CIDecl(const CIDecl *self)
         case CI_DECL_KIND_FUNCTION:
             return self->function.body;
         case CI_DECL_KIND_FUNCTION_GEN:
-            return self->function_gen.function->body;
+            // The body written for the types the function is called on is
+            // the one it holds: a path it does not hold is one nothing is
+            // read of.
+            return self->function_gen.body ? self->function_gen.body
+                                           : self->function_gen.function->body;
         default:
             UNREACHABLE("expected to have function or function gen");
     }

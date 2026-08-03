@@ -1,0 +1,21 @@
+//@expected_bin_stdout 7:0\n
+
+#include <helper.h>
+
+/* A condition written with no path to take when it does not hold is written
+   as nothing at all for the types it does not hold on. */
+
+int
+only_int.[@T](@T x) {
+	if (@T == int) {
+		return x;
+	}
+
+	return 0;
+}
+
+int main() {
+	printf("%d:%d\n", only_int.[int](7), only_int.[char]('a'));
+
+	return 0;
+}
