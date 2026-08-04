@@ -1,0 +1,39 @@
+//@compile_options -s c23
+//@expected_bin_stdout 10:2:z:1:6\n
+
+// A value that is known before the program runs is held as the literal it was
+// read as, whichever kind it was written with, so a param written `constexpr`
+// is written on a floating value, a character, a boolean or a string as much
+// as on a number. The declaration is instantiated on the value it is called
+// with, whichever of them it is.
+
+#include <helper.h>
+
+int
+scaled(constexpr double factor, int x) {
+	return (int)(factor * x);
+}
+
+char
+at(constexpr char c) {
+	return c;
+}
+
+int
+flagged(constexpr bool on) {
+	return on ? 1 : 0;
+}
+
+int
+size_of(constexpr char *s) {
+	return sizeof(s);
+}
+
+int main() {
+	printf("%d:%d:%c:%d:%d\n",
+	       scaled(2.5, 4),
+	       scaled(0.5, 4),
+	       at('z'),
+	       flagged(true),
+	       size_of("hello"));
+}

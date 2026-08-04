@@ -1940,6 +1940,93 @@ holds_comptime_param__CIVisitor(const CIDeclFunctionParams *self)
     return false;
 }
 
+/// @brief Write a value into the name a declaration is instantiated under.
+///
+/// What is written has to say the value and nothing else, since two values
+/// written the same would be the same instance: a kind is written ahead of
+/// every one of them, and what cannot be written as a name is written as the
+/// bytes it holds.
+static void
+put_comptime_value_into_name__CIVisitor(String *res, const CIExpr *value)
+{
+    if (value->kind != CI_EXPR_KIND_LITERAL) {
+        // Nothing but a literal is written here: what a value stands for has
+        // been read before it is written, and reading it is what gives one.
+        push_str__String(res, "u");
+
+        return;
+    }
+
+    switch (value->literal.kind) {
+        case CI_EXPR_LITERAL_KIND_BOOL:
+            push_str__String(res, value->literal.bool_ ? "b1" : "b0");
+
+            break;
+        case CI_EXPR_LITERAL_KIND_CHAR: {
+            String *code =
+              format__String("c{zu}", (Usize)(Uint8)value->literal.char_);
+
+            APPEND_AND_FREE(res, code);
+
+            break;
+        }
+        case CI_EXPR_LITERAL_KIND_FLOAT: {
+            // The bytes a floating value holds are what say it apart from
+            // every other one, which is what writing it as a number would
+            // not: two values written the same to a few figures are not the
+            // same value.
+            Uint64 bits = 0;
+
+            memcpy(&bits, &value->literal.float_, sizeof(bits));
+
+            String *hex = format__String("f{zu:x}", (Usize)bits);
+
+            APPEND_AND_FREE(res, hex);
+
+            break;
+        }
+        case CI_EXPR_LITERAL_KIND_SIGNED_INT: {
+            // A value written below zero is written `n` rather than `-`,
+            // which is no letter a name is written with.
+            String *digits =
+              value->literal.signed_int < 0
+                ? format__String("in{zu}", (Usize)-value->literal.signed_int)
+                : format__String("i{zu}", (Usize)value->literal.signed_int);
+
+            APPEND_AND_FREE(res, digits);
+
+            break;
+        }
+        case CI_EXPR_LITERAL_KIND_UNSIGNED_INT: {
+            String *digits =
+              format__String("u{zu}", value->literal.unsigned_int);
+
+            APPEND_AND_FREE(res, digits);
+
+            break;
+        }
+        case CI_EXPR_LITERAL_KIND_STRING: {
+            // Every byte is written as what it holds, so two strings written
+            // the same are the same instance and no two others are.
+            const String *str = GET_PTR_RC(String, value->literal.string);
+            String *len = format__String("s{zu}_", str->len);
+
+            APPEND_AND_FREE(res, len);
+
+            for (Usize i = 0; i < str->len; ++i) {
+                String *byte =
+                  format__String("{zu:x}", (Usize)(Uint8)str->buffer[i]);
+
+                APPEND_AND_FREE(res, byte);
+            }
+
+            break;
+        }
+        default:
+            UNREACHABLE("unknown variant");
+    }
+}
+
 /// @brief Write the name a declaration is instantiated on the given values
 /// under, which is the name it is written with and the values it is called
 /// on.
@@ -1953,18 +2040,7 @@ serialize_comptime_name__CIVisitor(const String *name, const Vec *values)
         const CIComptimeBinding *binding = get__Vec((Vec *)values, i);
 
         push_str__String(res, "_");
-
-        // A value written below zero is written `n` rather than `-`, which is
-        // no letter a name is written with.
-        if (binding->value < 0) {
-            push_str__String(res, "n");
-        }
-
-        String *digits = format__String(
-          "{zu}",
-          binding->value < 0 ? (Usize)-binding->value : (Usize)binding->value);
-
-        APPEND_AND_FREE(res, digits);
+        put_comptime_value_into_name__CIVisitor(res, binding->value);
     }
 
     return res;
@@ -2242,13 +2318,9 @@ fold_comptime_call__CIVisitor(CIVisitor *self,
             return NULL;
         }
 
-        push__Vec(
-          values,
-          NEW(CIComptimeBinding,
-              param->name,
-              to_literal_integer_value__CIResolverExpr(&resolver, resolved)));
-
-        FREE(CIExpr, resolved);
+        // The value is held as it was read, whichever kind of literal it
+        // was written with, so nothing here is written on numbers alone.
+        push__Vec(values, NEW(CIComptimeBinding, param->name, resolved));
     }
 
     String *name = serialize_comptime_name__CIVisitor(
@@ -2370,20 +2442,10 @@ fold_comptime_exprs__CIVisitor(CIVisitor *self,
             // The counter of an unrolled loop is written nowhere the program
             // reads: the loop is run here, so what is written on the counter
             // is written as the value the turn holds.
-            Isize value = 0;
+            CIExpr *value = search_comptime_binding__CIResolverExpr(
+              self->comptime_env, GET_PTR_RC(String, expr->identifier.value));
 
-            if (search_comptime_binding__CIResolverExpr(
-                  self->comptime_env,
-                  GET_PTR_RC(String, expr->identifier.value),
-                  &value)) {
-                return NEW_VARIANT(
-                  CIExpr,
-                  literal,
-                  clone__Location(&expr->location),
-                  NEW_VARIANT(CIExprLiteral, signed_int, value));
-            }
-
-            return NULL;
+            return value ? ref__CIExpr(value) : NULL;
         }
         case CI_EXPR_KIND_FUNCTION_CALL: {
             // A call made on a declaration that holds a param written
@@ -2426,6 +2488,80 @@ fold_comptime_exprs__CIVisitor(CIVisitor *self,
                                NEW(CIExprFunctionCall,
                                    ref__CIExpr(expr->function_call.callee),
                                    params));
+        }
+        case CI_EXPR_KIND_SIZEOF:
+        case CI_EXPR_KIND_ALIGNOF: {
+            // What the size or the alignment is read of is written the same
+            // way as anything else, so a value known before the program runs
+            // is written there as what it stands for.
+            CIExpr *operand = expr->kind == CI_EXPR_KIND_SIZEOF
+                                ? expr->sizeof_
+                                : expr->alignof_;
+            CIExpr *folded = fold_comptime_exprs__CIVisitor(
+              self, operand, decl_generic_params, called_generic_params);
+
+            if (!folded) {
+                return NULL;
+            }
+
+            return expr->kind == CI_EXPR_KIND_SIZEOF
+                     ? NEW_VARIANT(CIExpr,
+                                   sizeof,
+                                   clone__Location(&expr->location),
+                                   folded)
+                     : NEW_VARIANT(CIExpr,
+                                   alignof,
+                                   clone__Location(&expr->location),
+                                   folded);
+        }
+        case CI_EXPR_KIND_CAST: {
+            // What a cast is written on is read the same way as anything
+            // else: the data type says nothing that is read here, and the
+            // expression is what a value known before the program runs is
+            // written in.
+            CIExpr *cast_expr =
+              fold_comptime_exprs__CIVisitor(self,
+                                             expr->cast.expr,
+                                             decl_generic_params,
+                                             called_generic_params);
+
+            return cast_expr
+                     ? NEW_VARIANT(CIExpr,
+                                   cast,
+                                   clone__Location(&expr->location),
+                                   NEW(CIExprCast,
+                                       ref__CIDataType(expr->cast.data_type),
+                                       cast_expr))
+                     : NULL;
+        }
+        case CI_EXPR_KIND_TERNARY: {
+            CIExpr *cond =
+              fold_comptime_exprs__CIVisitor(self,
+                                             expr->ternary.cond,
+                                             decl_generic_params,
+                                             called_generic_params);
+            CIExpr *if_ = fold_comptime_exprs__CIVisitor(self,
+                                                         expr->ternary.if_,
+                                                         decl_generic_params,
+                                                         called_generic_params);
+            CIExpr *else_ =
+              fold_comptime_exprs__CIVisitor(self,
+                                             expr->ternary.else_,
+                                             decl_generic_params,
+                                             called_generic_params);
+
+            if (!cond && !if_ && !else_) {
+                return NULL;
+            }
+
+            return NEW_VARIANT(
+              CIExpr,
+              ternary,
+              clone__Location(&expr->location),
+              NEW(CIExprTernary,
+                  cond ? cond : ref__CIExpr(expr->ternary.cond),
+                  if_ ? if_ : ref__CIExpr(expr->ternary.if_),
+                  else_ ? else_ : ref__CIExpr(expr->ternary.else_)));
         }
         case CI_EXPR_KIND_GROUPING: {
             CIExpr *grouping = fold_comptime_exprs__CIVisitor(
@@ -2654,11 +2790,38 @@ bind_unroll_counter__CIVisitor(CIVisitor *self,
         return NULL;
     }
 
+    // The counter is what the turns of the loop are counted with, so it
+    // holds a number whatever else a value known before the program runs may
+    // be.
     Isize value = to_literal_integer_value__CIResolverExpr(resolver, resolved);
 
     FREE(CIExpr, resolved);
 
-    return NEW(CIComptimeBinding, init_clause->decl->variable.name, value);
+    return NEW(CIComptimeBinding,
+               init_clause->decl->variable.name,
+               NEW_VARIANT(CIExpr,
+                           literal,
+                           clone__Location(&stmt->location),
+                           NEW_VARIANT(CIExprLiteral, signed_int, value)));
+}
+
+/// @brief Write what the counter holds a step further on, which is a number
+/// however a value known before the program runs may be written.
+static void
+step_counter_value__CIVisitor(CIComptimeBinding *counter, Isize step)
+{
+    Isize value = counter->value->kind == CI_EXPR_KIND_LITERAL
+                    ? counter->value->literal.signed_int
+                    : 0;
+    Location location = clone__Location(&counter->value->location);
+
+    FREE(CIExpr, counter->value);
+
+    counter->value =
+      NEW_VARIANT(CIExpr,
+                  literal,
+                  location,
+                  NEW_VARIANT(CIExprLiteral, signed_int, value + step));
 }
 
 /// @brief Run the increment of an unrolled loop, and say what the counter
@@ -2686,12 +2849,12 @@ step_unroll_counter__CIVisitor(CIVisitor *self,
             switch (incr->unary.kind) {
                 case CI_EXPR_UNARY_KIND_PRE_INCREMENT:
                 case CI_EXPR_UNARY_KIND_POST_INCREMENT:
-                    ++counter->value;
+                    step_counter_value__CIVisitor(counter, 1);
 
                     return true;
                 case CI_EXPR_UNARY_KIND_PRE_DECREMENT:
                 case CI_EXPR_UNARY_KIND_POST_DECREMENT:
-                    --counter->value;
+                    step_counter_value__CIVisitor(counter, -1);
 
                     return true;
                 default:
@@ -2708,10 +2871,9 @@ step_unroll_counter__CIVisitor(CIVisitor *self,
                     return false;
                 }
 
-                counter->value =
-                  to_literal_integer_value__CIResolverExpr(resolver, resolved);
+                FREE(CIExpr, counter->value);
 
-                FREE(CIExpr, resolved);
+                counter->value = resolved;
 
                 return true;
             }

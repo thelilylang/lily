@@ -30,20 +30,26 @@
 
 // A name bound to the value it holds before the program runs, as the counter
 // of an unrolled loop is, or as a param written `constexpr` is.
+//
+// The value is held as the expression it was read as, which is a literal of
+// whichever kind it was written with: a number as much as a character, a
+// floating value or a string. Reading it is what says what it holds, so
+// nothing here is written on one kind of value alone.
 typedef struct CIComptimeBinding
 {
     const Rc *name; // Rc<String*>* (&)
-    Isize value;
+    CIExpr *value;  // CIExpr* A literal.
 } CIComptimeBinding;
 
 /**
  *
  * @brief Construct CIComptimeBinding type.
+ * @param value CIExpr* The binding takes it over.
  */
 CONSTRUCTOR(CIComptimeBinding *,
             CIComptimeBinding,
             const Rc *name,
-            Isize value);
+            CIExpr *value);
 
 /**
  *
@@ -82,12 +88,11 @@ set_comptime_env__CIResolverExpr(CIResolverExpr *self, const Vec *comptime_env)
  *
  * @brief Look for the value a name holds before the program runs.
  * @param self const Vec<CIComptimeBinding*>*? (&)
- * @return Whether the name is one that is known.
+ * @return CIExpr*? (&) The literal it holds, or NULL where the name is
+ * one nothing is known of.
  */
-bool
-search_comptime_binding__CIResolverExpr(const Vec *self,
-                                        const String *name,
-                                        Isize *res);
+CIExpr *
+search_comptime_binding__CIResolverExpr(const Vec *self, const String *name);
 
 /**
  *

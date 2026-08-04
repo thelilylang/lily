@@ -311,8 +311,6 @@ to_msg__CIError(const CIError *self)
         case CI_ERROR_KIND_UNROLLED_LOOP_COUNTER_IS_NOT_STEPPED:
             return "the counter of an unrolled loop is stepped with `++`, `--` "
                    "or an assignment of what is known";
-        case CI_ERROR_KIND_COMPTIME_PARAM_IS_NOT_AN_INTEGER:
-            return "a param written `constexpr` holds an integer value";
         case CI_ERROR_KIND_COMPTIME_PARAM_ON_A_GENERIC_DECLARATION:
             return "a param written `constexpr` is not written on a "
                    "declaration written on generics";
@@ -921,10 +919,8 @@ to_code__CIError(const CIError *self)
             return "0208";
         case CI_ERROR_KIND_UNROLLED_LOOP_COUNTER_IS_NOT_STEPPED:
             return "0209";
-        case CI_ERROR_KIND_COMPTIME_PARAM_IS_NOT_AN_INTEGER:
-            return "0210";
         case CI_ERROR_KIND_COMPTIME_PARAM_ON_A_GENERIC_DECLARATION:
-            return "0211";
+            return "0210";
         default:
             UNREACHABLE("unknown variant");
     }

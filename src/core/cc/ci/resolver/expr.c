@@ -1949,7 +1949,10 @@ determine_enum_variant_value__CIResolver(const CIResolverExpr *self,
                                    enum_variant_decl->enum_variant->value));
 }
 
-CONSTRUCTOR(CIComptimeBinding *, CIComptimeBinding, const Rc *name, Isize value)
+CONSTRUCTOR(CIComptimeBinding *,
+            CIComptimeBinding,
+            const Rc *name,
+            CIExpr *value)
 {
     CIComptimeBinding *self = lily_malloc(sizeof(CIComptimeBinding));
 
@@ -1961,16 +1964,15 @@ CONSTRUCTOR(CIComptimeBinding *, CIComptimeBinding, const Rc *name, Isize value)
 
 DESTRUCTOR(CIComptimeBinding, CIComptimeBinding *self)
 {
+    FREE(CIExpr, self->value);
     lily_free(self);
 }
 
-bool
-search_comptime_binding__CIResolverExpr(const Vec *self,
-                                        const String *name,
-                                        Isize *res)
+CIExpr *
+search_comptime_binding__CIResolverExpr(const Vec *self, const String *name)
 {
     if (!self) {
-        return false;
+        return NULL;
     }
 
     // The innermost name written on it is the one it holds, so what has been
@@ -1979,13 +1981,11 @@ search_comptime_binding__CIResolverExpr(const Vec *self,
         const CIComptimeBinding *binding = get__Vec((Vec *)self, i);
 
         if (!strcmp(GET_PTR_RC(String, binding->name)->buffer, name->buffer)) {
-            *res = binding->value;
-
-            return true;
+            return binding->value;
         }
     }
 
-    return false;
+    return NULL;
 }
 
 CIExpr *
@@ -2006,16 +2006,11 @@ resolve_identifier__CIResolver(const CIResolverExpr *self, CIExpr *identifier)
     // nowhere as a declaration, and a param written `constexpr` is one the
     // call site says the value of.
     {
-        Isize value = 0;
+        CIExpr *value = search_comptime_binding__CIResolverExpr(
+          self->comptime_env, GET_PTR_RC(String, identifier->identifier.value));
 
-        if (search_comptime_binding__CIResolverExpr(
-              self->comptime_env,
-              GET_PTR_RC(String, identifier->identifier.value),
-              &value)) {
-            return NEW_VARIANT(CIExpr,
-                               literal,
-                               clone__Location(&identifier->location),
-                               NEW_VARIANT(CIExprLiteral, signed_int, value));
+        if (value) {
+            return ref__CIExpr(value);
         }
     }
 
