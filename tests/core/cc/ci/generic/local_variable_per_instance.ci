@@ -1,0 +1,20 @@
+//@expected_bin_stdout 5:5\n
+
+// A declaration written in the body of a function written on generics is
+// written out once per set of types the body is instantiated for, since the
+// same declaration is what each of them holds. Written once, it would be
+// written in the body that was instantiated first and in no other, and the
+// bodies that follow would read a name nothing declares.
+
+#include <helper.h>
+
+int
+held.[@T](@T x) {
+	int total = 5;
+
+	return total;
+}
+
+int main() {
+	printf("%d:%d\n", held.[int](1), held.[char]('a'));
+}

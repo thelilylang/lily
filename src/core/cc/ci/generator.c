@@ -2914,13 +2914,24 @@ generate_decl__CIGenerator(CIGenerator *self, const CIDecl *decl)
     if (!has_generic__CIDecl(decl)) {
         start_session_with_default_scope__CIGenerator(self);
 
-        Usize decl_id = get_decl_id_from_decl__CIGenerator(self, decl);
+        // A declaration is written out once, however many times it is
+        // reached, since what names it is what every use of it reads.
+        //
+        // What is written in the body of a function is not one of those: the
+        // body of a declaration written on generics is written out once per
+        // set of types it is called on, and the same declaration is what each
+        // of them holds. Written once, it would be written in the body that
+        // was instantiated first and in no other, and the bodies that follow
+        // would read a name nothing declares.
+        if (!is_local__CIDecl(decl)) {
+            Usize decl_id = get_decl_id_from_decl__CIGenerator(self, decl);
 
-        if (has__VecBit(self->generated_decls, decl_id)) {
-            goto end_session;
+            if (has__VecBit(self->generated_decls, decl_id)) {
+                goto end_session;
+            }
+
+            add__VecBit(self->generated_decls, decl_id);
         }
-
-        add__VecBit(self->generated_decls, decl_id);
 
         if (is_prototype__CIDecl((CIDecl *)decl)) {
             goto end_session;
