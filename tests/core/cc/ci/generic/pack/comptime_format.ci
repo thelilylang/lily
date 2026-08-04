@@ -1,0 +1,53 @@
+//@compile_options -s c23
+//@expected_bin_stdout int 42, char z\n
+//@expected_bin_stdout a double 3.500000\n
+
+// A param written `constexpr` is written on a declaration written on a pack
+// as much as on any other: the declaration is instantiated on the types it is
+// called on and on the value it is given, and the body is read on both. The
+// body a declaration holds is written out once per instance, so what is
+// written on the value in one of them is not written in the others.
+
+#include <helper.h>
+
+static const char *
+write_until_conversion(const char *cur) {
+	while (*cur && *cur != '%') {
+		printf("%c", *cur);
+		++cur;
+	}
+
+	if (*cur == '%') {
+		++cur;
+	}
+
+	return cur;
+}
+
+void
+write_all.[@T...](constexpr const char *fmt, @T... xs) {
+	const char *cur = fmt;
+
+	inline for (int i = 0; i < _Countof(xs); ++i) {
+		cur = write_until_conversion(cur);
+
+		if (typeof(xs[i]) == int) {
+			printf("%d", xs[i]);
+		} else if (typeof(xs[i]) == char) {
+			printf("%c", xs[i]);
+		} else if (typeof(xs[i]) == double) {
+			printf("%f", xs[i]);
+		}
+
+		if (*cur) {
+			++cur;
+		}
+	}
+
+	printf("%s", cur);
+}
+
+int main() {
+	write_all.[int, char]("int %d, char %c\n", 42, 'z');
+	write_all.[double]("a double %f\n", 3.5);
+}

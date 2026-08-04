@@ -2198,18 +2198,6 @@ parse_function_declarator__CIParser(CIParser *self,
     CIDeclFunctionParams *params =
       parse_function_params__CIParser(self, parent_function_scope);
 
-    // A declaration written on generics is instantiated on the types it is
-    // called on, and one written with a param `constexpr` on the values it is
-    // called with. Nothing is written yet to instantiate on both at once, so
-    // the two are not written together, which is said where they are written
-    // rather than where the call is made.
-    if (has_new_name && name_ref->generic_params && params &&
-        has_comptime_param__CIDeclFunctionParams(params)) {
-        FAILED__CIParser(
-          self,
-          NEW(CIError, CI_ERROR_KIND_COMPTIME_PARAM_ON_A_GENERIC_DECLARATION));
-    }
-
     return NEW_VARIANT(CIDataType,
                        function,
                        previous_location__CIParser(self),

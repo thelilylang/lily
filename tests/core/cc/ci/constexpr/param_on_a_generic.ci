@@ -1,0 +1,24 @@
+//@compile_options -s c23
+//@expected_bin_stdout 15:130\n
+
+// A declaration written on generics is instantiated on the types it is called
+// on as much as on the values its params written `constexpr` are given, so
+// both are what say one instance from another and both are written into the
+// name it is instantiated under.
+
+#include <helper.h>
+
+int
+repeat.[@T](constexpr int n, @T x) {
+	int total = 0;
+
+	inline for (int i = 0; i < n; ++i) {
+		total += (int)x;
+	}
+
+	return total;
+}
+
+int main() {
+	printf("%d:%d\n", repeat.[int](3, 5), repeat.[char](2, 'A'));
+}

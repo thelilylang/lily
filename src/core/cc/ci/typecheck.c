@@ -1451,6 +1451,15 @@ typecheck_call_params__CITypecheck(
 
         switch (decl_param->kind) {
             case CI_DECL_FUNCTION_PARAM_KIND_NORMAL:
+                // A param written `constexpr` holds a value that is known
+                // before the program runs, and the declaration has been
+                // instantiated on it: the call is made on the instance, which
+                // is given no such param, so the call says nothing there for
+                // it to be read against.
+                if (decl_param->is_comptime) {
+                    break;
+                }
+
                 if (is_pack__CIDataType(decl_param->data_type)) {
                     push_pack_expected_data_types__CITypecheck(
                       expected_data_types, decl_param, typecheck_ctx);

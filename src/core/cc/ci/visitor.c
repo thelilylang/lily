@@ -48,7 +48,13 @@ generate_function_gen__CIVisitor(CIVisitor *self,
                                  String *function_name,
                                  CIGenericParams *unresolved_generic_params,
                                  CIGenericParams *called_generic_params,
-                                 CIGenericParams *decl_generic_params);
+                                 CIGenericParams *decl_generic_params,
+                                 const Vec *comptime_values);
+
+/// @brief Write the values a declaration is instantiated on into the name it
+/// is instantiated under.
+static void
+put_comptime_values_into_name__CIVisitor(String *res, const Vec *values);
 
 /// @brief Generate struct, union or typedef gen.
 /// @param name String* (&)
@@ -371,7 +377,8 @@ generate_function_gen__CIVisitor(CIVisitor *self,
                                  String *function_name,
                                  CIGenericParams *unresolved_generic_params,
                                  CIGenericParams *called_generic_params,
-                                 CIGenericParams *decl_generic_params)
+                                 CIGenericParams *decl_generic_params,
+                                 const Vec *comptime_values)
 {
     CIDecl *function_decl =
       search_function__CIResultFile(self->file, function_name);
@@ -402,6 +409,14 @@ generate_function_gen__CIVisitor(CIVisitor *self,
             String *serialized_called_function_name =
               serialize_name__CIDeclFunction(&function_decl->function,
                                              resolved_generic_params);
+
+            // A declaration is instantiated on the types it is called on and
+            // on the values its params written `constexpr` are given, so both
+            // are what say one instance from another.
+            if (comptime_values) {
+                put_comptime_values_into_name__CIVisitor(
+                  serialized_called_function_name, comptime_values);
+            }
             const CIDecl *function_gen = search_function__CIResultFile(
               self->file, serialized_called_function_name);
 
@@ -428,6 +443,27 @@ generate_function_gen__CIVisitor(CIVisitor *self,
                     // - which param is written on a pack, and how many data
                     // types it is left - is what is read of it.
                     const CIDecl *parent_decl = self->current_decl;
+                    Vec *parent_env = self->comptime_env;
+                    Vec *env = NULL;
+
+                    // The body is read on the values the params written
+                    // `constexpr` hold, so those names are known while it is
+                    // read.
+                    if (comptime_values) {
+                        env = NEW(Vec);
+
+                        if (parent_env) {
+                            for (Usize i = 0; i < parent_env->len; ++i) {
+                                push__Vec(env, get__Vec(parent_env, i));
+                            }
+                        }
+
+                        for (Usize i = 0; i < comptime_values->len; ++i) {
+                            push__Vec(env, get__Vec((Vec *)comptime_values, i));
+                        }
+
+                        self->comptime_env = env;
+                    }
 
                     self->current_decl = function_decl;
 
@@ -438,6 +474,11 @@ generate_function_gen__CIVisitor(CIVisitor *self,
                       resolved_generic_params);
 
                     self->current_decl = parent_decl;
+                    self->comptime_env = parent_env;
+
+                    if (env) {
+                        FREE(Vec, env);
+                    }
                 }
 
                 visit_function__CIVisitor(self,
@@ -1194,7 +1235,8 @@ visit_function_expr_function_call__CIVisitor(
           GET_PTR_RC(String, callee_identifier->value),
           callee_identifier->generic_params,
           called_generic_params,
-          decl_generic_params);
+          decl_generic_params,
+          NULL);
     } else if (!callee_identifier) {
         visit_function_expr__CIVisitor(self,
                                        function_call->callee,
@@ -2031,10 +2073,10 @@ put_comptime_value_into_name__CIVisitor(String *res, const CIExpr *value)
 /// under, which is the name it is written with and the values it is called
 /// on.
 /// @return String* The caller takes it over.
-static String *
-serialize_comptime_name__CIVisitor(const String *name, const Vec *values)
+void
+put_comptime_values_into_name__CIVisitor(String *res, const Vec *values)
 {
-    String *res = format__String("{S}__c", name);
+    push_str__String(res, "__c");
 
     for (Usize i = 0; i < values->len; ++i) {
         const CIComptimeBinding *binding = get__Vec((Vec *)values, i);
@@ -2042,6 +2084,14 @@ serialize_comptime_name__CIVisitor(const String *name, const Vec *values)
         push_str__String(res, "_");
         put_comptime_value_into_name__CIVisitor(res, binding->value);
     }
+}
+
+static String *
+serialize_comptime_name__CIVisitor(const String *name, const Vec *values)
+{
+    String *res = clone__String((String *)name);
+
+    put_comptime_values_into_name__CIVisitor(res, values);
 
     return res;
 }
@@ -2260,13 +2310,11 @@ fold_comptime_call__CIVisitor(CIVisitor *self,
     }
 
     // A declaration written on generics is instantiated on the types it is
-    // called on, and one written with a param `constexpr` on the values it is
-    // called with. Nothing is written yet to instantiate on both at once, so
-    // the two are not written together rather than instantiated on one and
-    // read on the other.
-    if (function_decl->function.generic_params) {
+    // called on as well as on the values it is called with, so a call made on
+    // one says the types it is made on.
+    if (function_decl->function.generic_params && !callee->generic_params) {
         FAILED__CIVisitor(
-          self, expr, CI_ERROR_KIND_COMPTIME_PARAM_ON_A_GENERIC_DECLARATION);
+          self, expr, CI_ERROR_KIND_GENERIC_PARAMS_ARE_NOT_FOUND);
 
         return NULL;
     }
@@ -2274,7 +2322,11 @@ fold_comptime_call__CIVisitor(CIVisitor *self,
     const Vec *decl_params = function_decl->function.params->content;
     const Vec *args = expr->function_call.params;
 
-    if (decl_params->len != args->len) {
+    // A param written on a pack stands for as many params as the call site
+    // leaves it, so what a declaration written with one is called with is
+    // read as at least what is written ahead of the pack.
+    if (decl_params->len != args->len &&
+        !function_decl->function.generic_params) {
         FAILED__CIVisitor(self, expr, CI_ERROR_KIND_PARAMS_COUNT_MISMATCH);
 
         return NULL;
@@ -2292,9 +2344,30 @@ fold_comptime_call__CIVisitor(CIVisitor *self,
     Vec *values = NEW(Vec);    // Vec<CIComptimeBinding*>*
     Vec *left_args = NEW(Vec); // Vec<CIExpr*>*
 
-    for (Usize i = 0; i < decl_params->len; ++i) {
+    for (Usize i = 0, arg_i = 0; i < decl_params->len; ++i) {
         const CIDeclFunctionParam *param = get__Vec((Vec *)decl_params, i);
-        CIExpr *arg = get__Vec((Vec *)args, i);
+
+        // A param written on a pack stands for as many params as the call
+        // site leaves it, so what is left of the call is what it is given.
+        if (param->data_type && is_pack__CIDataType(param->data_type)) {
+            for (; arg_i < args->len; ++arg_i) {
+                CIExpr *pack_arg = get__Vec((Vec *)args, arg_i);
+                CIExpr *folded_pack_arg = fold_comptime_exprs__CIVisitor(
+                  self, pack_arg, decl_generic_params, called_generic_params);
+
+                push__Vec(left_args,
+                          folded_pack_arg ? folded_pack_arg
+                                          : ref__CIExpr(pack_arg));
+            }
+
+            continue;
+        }
+
+        if (arg_i >= args->len) {
+            break;
+        }
+
+        CIExpr *arg = get__Vec((Vec *)args, arg_i++);
 
         if (!param->is_comptime) {
             CIExpr *folded_arg = fold_comptime_exprs__CIVisitor(
@@ -2323,18 +2396,50 @@ fold_comptime_call__CIVisitor(CIVisitor *self,
         push__Vec(values, NEW(CIComptimeBinding, param->name, resolved));
     }
 
-    String *name = serialize_comptime_name__CIVisitor(
-      GET_PTR_RC(String, function_decl->function.name), values);
+    String *name = NULL;
 
-    // A declaration is instantiated once per set of values it is called on,
-    // so one already written for these is the one the call is made on.
-    if (!search_function__CIResultFile(self->file, name)) {
-        generate_comptime_function__CIVisitor(self,
-                                              function_decl,
-                                              name,
-                                              values,
-                                              decl_generic_params,
-                                              called_generic_params);
+    if (function_decl->function.generic_params) {
+        // A declaration written on generics is instantiated on the types it
+        // is called on as much as on the values, so both are what say one
+        // instance from another and both are read of the call.
+        CIGenericParams *resolved_generic_params =
+          has_generic__CIGenericParams(callee->generic_params)
+            ? substitute_generic_params__CIParser(self->file,
+                                                  callee->generic_params,
+                                                  decl_generic_params,
+                                                  called_generic_params)
+            : ref__CIGenericParams(callee->generic_params);
+
+        name = serialize_name__CIDeclFunction(&function_decl->function,
+                                              resolved_generic_params);
+
+        put_comptime_values_into_name__CIVisitor(name, values);
+
+        if (!search_function__CIResultFile(self->file, name)) {
+            generate_function_gen__CIVisitor(self,
+                                             GET_PTR_RC(String, callee->value),
+                                             callee->generic_params,
+                                             called_generic_params,
+                                             decl_generic_params,
+                                             values);
+        }
+
+        FREE(CIGenericParams, resolved_generic_params);
+    } else {
+        name = serialize_comptime_name__CIVisitor(
+          GET_PTR_RC(String, function_decl->function.name), values);
+
+        // A declaration is instantiated once per set of values it is called
+        // on, so one already written for these is the one the call is made
+        // on.
+        if (!search_function__CIResultFile(self->file, name)) {
+            generate_comptime_function__CIVisitor(self,
+                                                  function_decl,
+                                                  name,
+                                                  values,
+                                                  decl_generic_params,
+                                                  called_generic_params);
+        }
     }
 
     Rc *name_rc = NEW(Rc, clone__String(name));
@@ -2637,6 +2742,26 @@ fold_comptime_expr_slot__CIVisitor(CIVisitor *self,
         FREE(CIExpr, *slot);
         *slot = folded;
     }
+}
+
+/// @brief Write a declaration of a variable the body holds on its own, so
+/// what is written on it in one instance is not written on the one every
+/// other instance holds.
+/// @return CIDecl* The caller takes it over.
+static CIDecl *
+own_variable_decl__CIVisitor(const CIDecl *self)
+{
+    return NEW_VARIANT(
+      CIDecl,
+      variable,
+      clone__Location(&self->location),
+      self->storage_class_flag,
+      self->is_prototype,
+      NEW(CIDeclVariable,
+          clone__CIDataType(self->variable.data_type),
+          self->variable.name,
+          self->variable.expr ? ref__CIExpr(self->variable.expr) : NULL,
+          self->variable.is_local));
 }
 
 /// @brief Write how long an array is written to be as what it stands for,
@@ -3046,6 +3171,18 @@ select_comptime_paths__CIVisitor(CIVisitor *self,
         // is known too, and is written as the 1 or the 0 it stands for.
         if (item->kind == CI_DECL_FUNCTION_ITEM_KIND_DECL) {
             if (item->decl->kind == CI_DECL_KIND_VARIABLE) {
+                // The body a declaration holds is written out once per set of
+                // types and values it is instantiated on, and the same
+                // declaration is what each of them holds. What is written on
+                // it is not the same from one instance to the next, so the
+                // body is given a declaration of its own to write on rather
+                // than writing on the one they share.
+                CIDecl *own = own_variable_decl__CIVisitor(item->decl);
+
+                FREE(CIDecl, item->decl);
+
+                item->decl = own;
+
                 fold_comptime_expr_slot__CIVisitor(self,
                                                    &item->decl->variable.expr,
                                                    decl_generic_params,
