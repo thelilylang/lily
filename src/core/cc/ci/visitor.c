@@ -2183,12 +2183,23 @@ fold_comptime_call__CIVisitor(CIVisitor *self,
         return NULL;
     }
 
+    // A declaration written on generics is instantiated on the types it is
+    // called on, and one written with a param `constexpr` on the values it is
+    // called with. Nothing is written yet to instantiate on both at once, so
+    // the two are not written together rather than instantiated on one and
+    // read on the other.
+    if (function_decl->function.generic_params) {
+        FAILED__CIVisitor(
+          self, expr, CI_ERROR_KIND_COMPTIME_PARAM_ON_A_GENERIC_DECLARATION);
+
+        return NULL;
+    }
+
     const Vec *decl_params = function_decl->function.params->content;
     const Vec *args = expr->function_call.params;
 
     if (decl_params->len != args->len) {
-        FAILED__CIVisitor(
-          self, expr, CI_ERROR_KIND_GENERIC_PARAMS_COUNT_MISMATCH);
+        FAILED__CIVisitor(self, expr, CI_ERROR_KIND_PARAMS_COUNT_MISMATCH);
 
         return NULL;
     }

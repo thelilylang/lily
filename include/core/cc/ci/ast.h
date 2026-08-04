@@ -2408,6 +2408,15 @@ typedef struct CIDeclFunctionParams
 
 /**
  *
+ * @brief Check if the params hold one written `constexpr`, that is one the
+ * call site says the value of.
+ * @param self const CIDeclFunctionParams*? (&)
+ */
+bool
+has_comptime_param__CIDeclFunctionParams(const CIDeclFunctionParams *self);
+
+/**
+ *
  * @brief Construct CIDeclFunctionParams type.
  */
 CONSTRUCTOR(CIDeclFunctionParams *, CIDeclFunctionParams, Vec *content);

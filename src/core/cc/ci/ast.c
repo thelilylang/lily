@@ -4983,10 +4983,7 @@ get_name__CIDecl(const CIDecl *self)
     return name_rc ? GET_PTR_RC(String, name_rc) : NULL;
 }
 
-/// @brief Say whether the declaration holds a param written `constexpr`,
-/// that is a param the call site says the value of.
-/// @param self const CIDeclFunctionParams*? (&)
-static bool
+bool
 has_comptime_param__CIDeclFunctionParams(const CIDeclFunctionParams *self)
 {
     if (!self) {

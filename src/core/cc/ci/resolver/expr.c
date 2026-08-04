@@ -2869,6 +2869,14 @@ run__CIResolverExpr(const CIResolverExpr *self, CIExpr *expr)
         }
         case CI_EXPR_KIND_UNARY:
             return resolve_unary_expr__CIResolverExpr(self, expr);
+        // How many data types a pack is left is said by the call site, which
+        // is read where the declaration is instantiated rather than here. It
+        // is written as the number it stands for there, so one reaching this
+        // point is one written where no pack is, which is reported on there.
+        case CI_EXPR_KIND_COUNTOF:
+            FAILED__CIResolverExpr(
+              self, expr, CI_ERROR_KIND_CANNOT_USE_NON_COMPTIME_VALUE);
+            return POISONED_EXPR__CIResolverExpr(expr);
         default:
             UNREACHABLE("unknown variant");
     }

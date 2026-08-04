@@ -1,0 +1,18 @@
+//@compile_options -s c23
+//@expected_compiler_error :12:34: \e[31merror\e[0m[0211]: a param written `constexpr` is not written on a declaration written on generics
+//@expected_compiler_error \e[34m12 |\e[0m held.[@T](constexpr int n, @T x) {
+
+// A declaration written on generics is instantiated on the types it is called
+// on, and one written with a param `constexpr` on the values it is called
+// with. Nothing is written yet to instantiate on both at once.
+
+#include <helper.h>
+
+int
+held.[@T](constexpr int n, @T x) {
+	return n;
+}
+
+int main() {
+	return held.[int](3, 1);
+}
