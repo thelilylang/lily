@@ -1,0 +1,21 @@
+//@compile_options -s c23
+//@expected_compiler_error :18:20: \e[31merror\e[0m[0035]: cannot use a non-comptime value
+//@expected_compiler_error \e[34m18 |\e[0m 	int held_v = held(runtime);
+
+// The body of a declaration written with a param `constexpr` is read on the
+// value the call site says, so a value that is only known while the program
+// runs is one nothing can be instantiated on.
+
+#include <helper.h>
+
+int
+held(constexpr int n) {
+	return n;
+}
+
+int main() {
+	int runtime = 3;
+	int held_v = held(runtime);
+
+	return held_v;
+}

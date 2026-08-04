@@ -1920,6 +1920,56 @@ get_pack_len__CIVisitor(const CIVisitor *self,
     return true;
 }
 
+/// @brief Say whether the declaration holds a param written `constexpr`.
+/// @param self const CIDeclFunctionParams*? (&)
+static bool
+holds_comptime_param__CIVisitor(const CIDeclFunctionParams *self)
+{
+    if (!self) {
+        return false;
+    }
+
+    for (Usize i = 0; i < self->content->len; ++i) {
+        const CIDeclFunctionParam *param = get__Vec(self->content, i);
+
+        if (param->is_comptime) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/// @brief Write the name a declaration is instantiated on the given values
+/// under, which is the name it is written with and the values it is called
+/// on.
+/// @return String* The caller takes it over.
+static String *
+serialize_comptime_name__CIVisitor(const String *name, const Vec *values)
+{
+    String *res = format__String("{S}__c", name);
+
+    for (Usize i = 0; i < values->len; ++i) {
+        const CIComptimeBinding *binding = get__Vec((Vec *)values, i);
+
+        push_str__String(res, "_");
+
+        // A value written below zero is written `n` rather than `-`, which is
+        // no letter a name is written with.
+        if (binding->value < 0) {
+            push_str__String(res, "n");
+        }
+
+        String *digits = format__String(
+          "{zu}",
+          binding->value < 0 ? (Usize)-binding->value : (Usize)binding->value);
+
+        APPEND_AND_FREE(res, digits);
+    }
+
+    return res;
+}
+
 /// @brief Read what `xs[i]` written on a pack stands for, which is the param
 /// of the rank `i` says.
 /// @return CIExpr*? NULL when it is no access made on a pack, or when the
@@ -1999,6 +2049,234 @@ fold_pack_access__CIVisitor(CIVisitor *self,
     return res;
 }
 
+/// @brief Write what a comparison of data types stands for, and what a param
+/// of a pack read at a rank stands for, in place of the expression.
+static CIExpr *
+fold_comptime_exprs__CIVisitor(CIVisitor *self,
+                               CIExpr *expr,
+                               CIGenericParams *decl_generic_params,
+                               CIGenericParams *called_generic_params);
+
+/// @brief Write a declaration instantiated on the values its params written
+/// `constexpr` are called with.
+static void
+generate_comptime_function__CIVisitor(CIVisitor *self,
+                                      const CIDecl *function_decl,
+                                      const String *name,
+                                      Vec *values,
+                                      CIGenericParams *decl_generic_params,
+                                      CIGenericParams *called_generic_params)
+{
+    if (!function_decl->function.body) {
+        FAILED__CIVisitor(
+          self, function_decl, CI_ERROR_KIND_EXPECTED_DECLARATION_DEFINITION);
+
+        return;
+    }
+
+    CIDeclFunctionBody *body =
+      clone__CIDeclFunctionBody(function_decl->function.body);
+
+    // The body is read on the values the params written `constexpr` hold, so
+    // those names are known while it is read, and what is written on them is
+    // written as the value it stands for.
+    Vec *parent_env = self->comptime_env;
+    const CIDecl *parent_decl = self->current_decl;
+    Vec *env = NEW(Vec);
+
+    if (parent_env) {
+        for (Usize i = 0; i < parent_env->len; ++i) {
+            push__Vec(env, get__Vec(parent_env, i));
+        }
+    }
+
+    for (Usize i = 0; i < values->len; ++i) {
+        push__Vec(env, get__Vec(values, i));
+    }
+
+    self->comptime_env = env;
+    self->current_decl = function_decl;
+
+    select_comptime_paths__CIVisitor(
+      self, body, decl_generic_params, called_generic_params);
+
+    self->comptime_env = parent_env;
+    self->current_decl = parent_decl;
+
+    FREE(Vec, env);
+
+    // A param written `constexpr` is written nowhere the program reads, and
+    // the instance is written on the value rather than given it: it holds the
+    // params that are left, which is also what says the instance is written
+    // out as it stands rather than instantiated again.
+    CIDeclFunctionParams *params = NULL;
+
+    if (function_decl->function.params) {
+        Vec *content = NEW(Vec); // Vec<CIDeclFunctionParam*>*
+
+        for (Usize i = 0; i < function_decl->function.params->content->len;
+             ++i) {
+            const CIDeclFunctionParam *param =
+              get__Vec(function_decl->function.params->content, i);
+
+            if (!param->is_comptime) {
+                push__Vec(content, clone__CIDeclFunctionParam(param));
+            }
+        }
+
+        params = NEW(CIDeclFunctionParams, content);
+    }
+
+    Rc *name_rc = NEW(Rc, clone__String((String *)name));
+    CIDecl *instance =
+      NEW_VARIANT(CIDecl,
+                  function,
+                  clone__Location(&function_decl->location),
+                  function_decl->storage_class_flag,
+                  false,
+                  NEW(CIDeclFunction,
+                      name_rc,
+                      ref__CIDataType(function_decl->function.return_data_type),
+                      NULL,
+                      params,
+                      body,
+                      NULL));
+
+    FREE_RC(String, name_rc);
+
+    add_decl_to_scope__CIResultFile(self->file,
+                                    &instance,
+                                    self->current_scope,
+                                    true,
+                                    is_in_function_body__CIVisitor(self));
+}
+
+/// @brief Instantiate a declaration on the values its params written
+/// `constexpr` are called with, and write the call as one made on it.
+///
+/// A param written `constexpr` holds a value the call site says, and the body
+/// is read on that value: it is written nowhere the program reads, so the
+/// declaration is instantiated on the value as it is on the types a generic
+/// is called on. Each value the declaration is called on is written a
+/// declaration of its own, named after the values it holds.
+///
+/// @return CIExpr*? The call as it is made on the instance, or NULL when the
+/// declaration holds no param written `constexpr`.
+static CIExpr *
+fold_comptime_call__CIVisitor(CIVisitor *self,
+                              const CIExpr *expr,
+                              CIGenericParams *decl_generic_params,
+                              CIGenericParams *called_generic_params)
+{
+    const CIExprIdentifier *callee =
+      get_callee_identifier__CIExprFunctionCall(&expr->function_call);
+
+    if (!callee) {
+        return NULL;
+    }
+
+    CIDecl *function_decl = search_function__CIResultFile(
+      self->file, GET_PTR_RC(String, callee->value));
+
+    if (!function_decl || function_decl->kind != CI_DECL_KIND_FUNCTION ||
+        !holds_comptime_param__CIVisitor(function_decl->function.params)) {
+        return NULL;
+    }
+
+    const Vec *decl_params = function_decl->function.params->content;
+    const Vec *args = expr->function_call.params;
+
+    if (decl_params->len != args->len) {
+        FAILED__CIVisitor(
+          self, expr, CI_ERROR_KIND_GENERIC_PARAMS_COUNT_MISMATCH);
+
+        return NULL;
+    }
+
+    CIResolverExpr resolver = NEW(CIResolverExpr,
+                                  NULL,
+                                  NULL,
+                                  self->file,
+                                  &self->file->file_analysis->count_error,
+                                  false);
+
+    set_comptime_env__CIResolverExpr(&resolver, self->comptime_env);
+
+    Vec *values = NEW(Vec);    // Vec<CIComptimeBinding*>*
+    Vec *left_args = NEW(Vec); // Vec<CIExpr*>*
+
+    for (Usize i = 0; i < decl_params->len; ++i) {
+        const CIDeclFunctionParam *param = get__Vec((Vec *)decl_params, i);
+        CIExpr *arg = get__Vec((Vec *)args, i);
+
+        if (!param->is_comptime) {
+            CIExpr *folded_arg = fold_comptime_exprs__CIVisitor(
+              self, arg, decl_generic_params, called_generic_params);
+
+            push__Vec(left_args, folded_arg ? folded_arg : ref__CIExpr(arg));
+
+            continue;
+        }
+
+        // What the call gives a param written `constexpr` has to be known
+        // here, since the body is read on it rather than given it.
+        CIExpr *resolved = run__CIResolverExpr(&resolver, arg);
+
+        if (!resolved) {
+            FREE_BUFFER_ITEMS(values->buffer, values->len, CIComptimeBinding);
+            FREE(Vec, values);
+            FREE_BUFFER_ITEMS(left_args->buffer, left_args->len, CIExpr);
+            FREE(Vec, left_args);
+
+            return NULL;
+        }
+
+        push__Vec(
+          values,
+          NEW(CIComptimeBinding,
+              param->name,
+              to_literal_integer_value__CIResolverExpr(&resolver, resolved)));
+
+        FREE(CIExpr, resolved);
+    }
+
+    String *name = serialize_comptime_name__CIVisitor(
+      GET_PTR_RC(String, function_decl->function.name), values);
+
+    // A declaration is instantiated once per set of values it is called on,
+    // so one already written for these is the one the call is made on.
+    if (!search_function__CIResultFile(self->file, name)) {
+        generate_comptime_function__CIVisitor(self,
+                                              function_decl,
+                                              name,
+                                              values,
+                                              decl_generic_params,
+                                              called_generic_params);
+    }
+
+    Rc *name_rc = NEW(Rc, clone__String(name));
+    CIExpr *res =
+      NEW_VARIANT(CIExpr,
+                  function_call,
+                  clone__Location(&expr->location),
+                  NEW(CIExprFunctionCall,
+                      NEW_VARIANT(CIExpr,
+                                  identifier,
+                                  clone__Location(&expr->location),
+                                  NEW(CIExprIdentifier,
+                                      name_rc,
+                                      NEW_VARIANT(CIExprIdentifierID, none),
+                                      NULL)),
+                      left_args));
+
+    FREE_RC(String, name_rc);
+    FREE(String, name);
+    FREE_BUFFER_ITEMS(values->buffer, values->len, CIComptimeBinding);
+    FREE(Vec, values);
+
+    return res;
+}
+
 static CIExpr *
 fold_comptime_exprs__CIVisitor(CIVisitor *self,
                                CIExpr *expr,
@@ -2022,8 +2300,39 @@ fold_comptime_exprs__CIVisitor(CIVisitor *self,
             // known once the index is. The rank is what says which data type
             // the param holds, so what is written on it is read on that type
             // rather than on one the whole of the pack shares.
-            return fold_pack_access__CIVisitor(
+            CIExpr *rank_access = fold_pack_access__CIVisitor(
               self, expr, decl_generic_params, called_generic_params);
+
+            if (rank_access) {
+                return rank_access;
+            }
+
+            // An access made on anything but a pack is one the program makes,
+            // and what it is written on is read the same way as anything
+            // else: an index written on the counter of an unrolled loop is
+            // written as the value the turn holds.
+            CIExpr *array =
+              fold_comptime_exprs__CIVisitor(self,
+                                             expr->array_access.array,
+                                             decl_generic_params,
+                                             called_generic_params);
+            CIExpr *access =
+              fold_comptime_exprs__CIVisitor(self,
+                                             expr->array_access.access,
+                                             decl_generic_params,
+                                             called_generic_params);
+
+            if (!array && !access) {
+                return NULL;
+            }
+
+            return NEW_VARIANT(
+              CIExpr,
+              array_access,
+              clone__Location(&expr->location),
+              NEW(CIExprArrayAccess,
+                  array ? array : ref__CIExpr(expr->array_access.array),
+                  access ? access : ref__CIExpr(expr->array_access.access)));
         }
         case CI_EXPR_KIND_COUNTOF: {
             Usize len = 0;
@@ -2066,6 +2375,16 @@ fold_comptime_exprs__CIVisitor(CIVisitor *self,
             return NULL;
         }
         case CI_EXPR_KIND_FUNCTION_CALL: {
+            // A call made on a declaration that holds a param written
+            // `constexpr` is made on the instance written for the values it
+            // gives them, rather than on the declaration itself.
+            CIExpr *comptime_call = fold_comptime_call__CIVisitor(
+              self, expr, decl_generic_params, called_generic_params);
+
+            if (comptime_call) {
+                return comptime_call;
+            }
+
             // What a call is made on is read the same way as anything else
             // written as an expression: a param of a pack read at a rank is
             // written there as much as anywhere.
@@ -2171,6 +2490,31 @@ fold_comptime_expr_slot__CIVisitor(CIVisitor *self,
         FREE(CIExpr, *slot);
         *slot = folded;
     }
+}
+
+/// @brief Write how long an array is written to be as what it stands for,
+/// where that is known before the program runs.
+/// @param data_type CIDataType*? (&)
+static void
+fold_array_size__CIVisitor(CIVisitor *self,
+                           CIDataType *data_type,
+                           CIGenericParams *decl_generic_params,
+                           CIGenericParams *called_generic_params)
+{
+    if (!data_type || data_type->kind != CI_DATA_TYPE_KIND_ARRAY) {
+        return;
+    }
+
+    fold_comptime_expr_slot__CIVisitor(self,
+                                       &data_type->array.size_expr,
+                                       decl_generic_params,
+                                       called_generic_params);
+
+    // An array written of arrays is written a length per dimension it holds.
+    fold_array_size__CIVisitor(self,
+                               data_type->array.data_type,
+                               decl_generic_params,
+                               called_generic_params);
 }
 
 /// @brief Read which of the paths a statement is written with is the one the
@@ -2533,6 +2877,14 @@ select_comptime_paths__CIVisitor(CIVisitor *self,
                                                    &item->decl->variable.expr,
                                                    decl_generic_params,
                                                    called_generic_params);
+                // How long an array is written to be is read the same way as
+                // anything else written as an expression, so a length written
+                // on a value that is known says the number it stands for
+                // rather than a length the program reads.
+                fold_array_size__CIVisitor(self,
+                                           item->decl->variable.data_type,
+                                           decl_generic_params,
+                                           called_generic_params);
             }
 
             continue;

@@ -1677,6 +1677,14 @@ generate_function_params__CIGenerator(CIGenerator *self,
                 case CI_DECL_FUNCTION_PARAM_KIND_NORMAL:
                     ASSERT(param->data_type);
 
+                    // A param written `constexpr` holds a value that is known
+                    // before the program runs, and what is written on it has
+                    // been written as what it stands for. Nothing is left of
+                    // it for the program to be given.
+                    if (param->is_comptime) {
+                        break;
+                    }
+
                     // A param written on a pack stands for one param per data
                     // type the pack is left, rather than for one.
                     if (is_pack__CIDataType(param->data_type)) {

@@ -3775,13 +3775,15 @@ VARIANT_CONSTRUCTOR(CIDeclFunctionParam *,
                     CIDeclFunctionParam,
                     normal,
                     Rc *name,
-                    CIDataType *data_type)
+                    CIDataType *data_type,
+                    bool is_comptime)
 {
     CIDeclFunctionParam *self = lily_malloc(sizeof(CIDeclFunctionParam));
 
     self->kind = CI_DECL_FUNCTION_PARAM_KIND_NORMAL;
     self->name = name ? ref__Rc(name) : NULL;
     self->data_type = data_type;
+    self->is_comptime = is_comptime;
 
     return self;
 }
@@ -3793,6 +3795,7 @@ VARIANT_CONSTRUCTOR(CIDeclFunctionParam *, CIDeclFunctionParam, variadic)
     self->kind = CI_DECL_FUNCTION_PARAM_KIND_VARIADIC;
     self->name = NULL;
     self->data_type = NULL;
+    self->is_comptime = false;
 
     return self;
 }
@@ -3806,7 +3809,8 @@ clone__CIDeclFunctionParam(const CIDeclFunctionParam *self)
               CIDeclFunctionParam,
               normal,
               self->name,
-              self->data_type ? clone__CIDataType(self->data_type) : NULL);
+              self->data_type ? clone__CIDataType(self->data_type) : NULL,
+              self->is_comptime);
         case CI_DECL_FUNCTION_PARAM_KIND_VARIADIC:
             return NEW_VARIANT(CIDeclFunctionParam, variadic);
         default:
@@ -4979,12 +4983,39 @@ get_name__CIDecl(const CIDecl *self)
     return name_rc ? GET_PTR_RC(String, name_rc) : NULL;
 }
 
+/// @brief Say whether the declaration holds a param written `constexpr`,
+/// that is a param the call site says the value of.
+/// @param self const CIDeclFunctionParams*? (&)
+static bool
+has_comptime_param__CIDeclFunctionParams(const CIDeclFunctionParams *self)
+{
+    if (!self) {
+        return false;
+    }
+
+    for (Usize i = 0; i < self->content->len; ++i) {
+        const CIDeclFunctionParam *param = get__Vec(self->content, i);
+
+        if (param->is_comptime) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool
 has_generic__CIDecl(const CIDecl *self)
 {
     switch (self->kind) {
         case CI_DECL_KIND_FUNCTION:
-            return self->function.generic_params;
+            // A declaration written with a param the call site says the value
+            // of is one nothing is written out of on its own, as a
+            // declaration written on generics is: what is written out is the
+            // instance held for the values it is called on.
+            return self->function.generic_params ||
+                   has_comptime_param__CIDeclFunctionParams(
+                     self->function.params);
         case CI_DECL_KIND_FUNCTION_GEN:
             return has_generic__CIDeclFunctionGen(&self->function_gen);
         case CI_DECL_KIND_ENUM:

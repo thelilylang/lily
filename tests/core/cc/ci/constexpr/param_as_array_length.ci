@@ -1,0 +1,25 @@
+//@compile_options -s c23
+//@expected_bin_stdout 14\n
+
+// A value that is known says how long an array is written to be, so a param
+// written `constexpr` is written there as the number it stands for and the
+// array is one of a length that is known rather than one the program reads.
+
+#include <helper.h>
+
+int
+sum_of_squares(constexpr int n) {
+	int a[n];
+	int total = 0;
+
+	inline for (int i = 0; i < n; ++i) {
+		a[i] = i * i;
+		total += a[i];
+	}
+
+	return total;
+}
+
+int main() {
+	printf("%d\n", sum_of_squares(4));
+}

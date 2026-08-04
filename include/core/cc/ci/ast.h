@@ -2349,6 +2349,12 @@ typedef struct CIDeclFunctionParam
     enum CIDeclFunctionParamKind kind;
     Rc *name;              // Rc<String*>*?
     CIDataType *data_type; // CIDataType*?
+    // Whether `constexpr` is written on it, that is the call site says the
+    // value it holds and the value is known before the program runs. Such a
+    // param is written out nowhere: the declaration is instantiated on the
+    // value, as it is on the types a generic is called on, and what is
+    // written on the param is written as what it stands for.
+    bool is_comptime;
 } CIDeclFunctionParam;
 
 /**
@@ -2361,7 +2367,8 @@ VARIANT_CONSTRUCTOR(CIDeclFunctionParam *,
                     CIDeclFunctionParam,
                     normal,
                     Rc *name,
-                    CIDataType *data_type);
+                    CIDataType *data_type,
+                    bool is_comptime);
 
 /**
  *

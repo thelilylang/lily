@@ -1695,7 +1695,8 @@ substitute_data_type__CIParser(const CIResultFile *file,
                                       NEW_VARIANT(CIDeclFunctionParam,
                                                   normal,
                                                   param->name,
-                                                  subs_data_type));
+                                                  subs_data_type,
+                                                  param->is_comptime));
                         }
 
                         break;
@@ -3305,14 +3306,29 @@ parse_function_params__CIParser(CIParser *self, CIScope *parent_function_scope)
                 break;
             }
             default: {
+                // `constexpr` written on a param says the call site is what
+                // gives it its value, and that the value is known before the
+                // program runs. It is no data type, so it is read ahead of
+                // one rather than as a part of one.
+                bool is_comptime = false;
+
+                if (self->current_token->kind ==
+                    CI_TOKEN_KIND_KEYWORD_CONSTEXPR) {
+                    is_comptime = true;
+
+                    next_token__CIParser(self);
+                }
+
                 struct CIName name = { 0 };
                 CIDataType *data_type =
                   parse_data_type__CIParser(self, &name, false, true, false);
 
-                push__Vec(
-                  params,
-                  NEW_VARIANT(
-                    CIDeclFunctionParam, normal, name.value, data_type));
+                push__Vec(params,
+                          NEW_VARIANT(CIDeclFunctionParam,
+                                      normal,
+                                      name.value,
+                                      data_type,
+                                      is_comptime));
 
                 if (parent_function_scope && name.value) {
                     CIDecl *param_decl =

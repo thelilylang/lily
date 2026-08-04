@@ -1,0 +1,25 @@
+//@compile_options -s c23
+//@expected_bin_stdout 6:3\n
+
+// A param written `constexpr` holds a value the call site says, and the body
+// is read on that value rather than given it. So the declaration is
+// instantiated on the value, as it is on the types a generic is called on,
+// and the param is written out nowhere: what C is given is one declaration
+// per value the call is made on, each holding no param at all.
+
+#include <helper.h>
+
+int
+triangle(constexpr int n) {
+	int total = 0;
+
+	inline for (int i = 0; i < n; ++i) {
+		total += i;
+	}
+
+	return total;
+}
+
+int main() {
+	printf("%d:%d\n", triangle(4), triangle(3));
+}
