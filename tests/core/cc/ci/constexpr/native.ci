@@ -1,0 +1,17 @@
+/*@compile_options -s c89*/
+/*@expected_bin_stdout 10\n*/
+
+/* What `constexpr` says is read before the program runs, whichever standard
+   the declaration is written for, so CI writes it on every one of them. C
+   writes it from C23 on, so what is generated for a standard written before
+   that says `const`, which is what is left of it once it is read. */
+
+#include <helper.h>
+
+int main() {
+	constexpr int n = 5;
+
+	printf("%d\n", n * 2);
+
+	return 0;
+}

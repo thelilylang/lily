@@ -566,7 +566,11 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                      .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_CONST] = { .since = CI_STANDARD_NONE,
                                       .until = CI_STANDARD_NONE },
-    [CI_TOKEN_KIND_KEYWORD_CONSTEXPR] = { .since = CI_STANDARD_23,
+    // What `constexpr` says is read before the program runs, whichever
+    // standard the declaration is written for, so it is written on no
+    // standard of its own. C writes it from C23 on, and what is generated for
+    // a standard written before that is written `const` instead.
+    [CI_TOKEN_KIND_KEYWORD_CONSTEXPR] = { .since = CI_STANDARD_NONE,
                                           .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD_CONTINUE] = { .since = CI_STANDARD_NONE,
                                          .until = CI_STANDARD_NONE },

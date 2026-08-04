@@ -3490,7 +3490,12 @@ to_string__CIStorageClass(int storage_class_flag, enum CIStandard standard)
     char *storage_classes[] = {
         "",
         "auto",
-        "constexpr",
+        // A value written `constexpr` is read before the program runs, and
+        // what is written on it is written as what it stands for. C writes
+        // `constexpr` from C23 on, so what is generated for a standard
+        // written before that says `const`, which is what is left of it once
+        // it is read.
+        standard >= CI_STANDARD_23 ? "constexpr" : "const",
         "extern",
         "inline",
         "register",
