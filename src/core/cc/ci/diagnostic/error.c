@@ -299,6 +299,18 @@ to_msg__CIError(const CIError *self)
                    "declaration";
         case CI_ERROR_KIND_GENERIC_PARAMS_HOLD_MORE_THAN_ONE_PACK:
             return "the generic params hold more than one pack";
+        case CI_ERROR_KIND_COUNTOF_IS_NOT_WRITTEN_ON_A_PACK:
+            return "`_Countof` is not written on a pack";
+        case CI_ERROR_KIND_PACK_ACCESS_IS_OUT_OF_RANGE:
+            return "the pack is not left as many data types as this rank";
+        case CI_ERROR_KIND_UNROLLED_LOOP_HOLDS_NO_COUNTER:
+            return "an unrolled loop holds exactly one counter, written as a "
+                   "variable given a value";
+        case CI_ERROR_KIND_UNROLLED_LOOP_DOES_NOT_END:
+            return "the unrolled loop does not end";
+        case CI_ERROR_KIND_UNROLLED_LOOP_COUNTER_IS_NOT_STEPPED:
+            return "the counter of an unrolled loop is stepped with `++`, `--` "
+                   "or an assignment of what is known";
         case CI_ERROR_KIND_GENERIC_PARAMS_IN_VARIABLE_CONTEXT:
             return "generic params are not expected in a variable context";
         case CI_ERROR_KIND_GENERIC_PARAMS_NOT_EXPECTED_IN_THIS_CONTEXT:
@@ -894,6 +906,16 @@ to_code__CIError(const CIError *self)
             return "0203";
         case CI_ERROR_KIND_GENERIC_PARAMS_HOLD_MORE_THAN_ONE_PACK:
             return "0204";
+        case CI_ERROR_KIND_COUNTOF_IS_NOT_WRITTEN_ON_A_PACK:
+            return "0205";
+        case CI_ERROR_KIND_PACK_ACCESS_IS_OUT_OF_RANGE:
+            return "0206";
+        case CI_ERROR_KIND_UNROLLED_LOOP_HOLDS_NO_COUNTER:
+            return "0207";
+        case CI_ERROR_KIND_UNROLLED_LOOP_DOES_NOT_END:
+            return "0208";
+        case CI_ERROR_KIND_UNROLLED_LOOP_COUNTER_IS_NOT_STEPPED:
+            return "0209";
         default:
             UNREACHABLE("unknown variant");
     }

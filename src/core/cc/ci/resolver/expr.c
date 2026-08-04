@@ -1949,6 +1949,45 @@ determine_enum_variant_value__CIResolver(const CIResolverExpr *self,
                                    enum_variant_decl->enum_variant->value));
 }
 
+CONSTRUCTOR(CIComptimeBinding *, CIComptimeBinding, const Rc *name, Isize value)
+{
+    CIComptimeBinding *self = lily_malloc(sizeof(CIComptimeBinding));
+
+    self->name = name;
+    self->value = value;
+
+    return self;
+}
+
+DESTRUCTOR(CIComptimeBinding, CIComptimeBinding *self)
+{
+    lily_free(self);
+}
+
+bool
+search_comptime_binding__CIResolverExpr(const Vec *self,
+                                        const String *name,
+                                        Isize *res)
+{
+    if (!self) {
+        return false;
+    }
+
+    // The innermost name written on it is the one it holds, so what has been
+    // written last is what is looked at first.
+    for (Usize i = self->len; i--;) {
+        const CIComptimeBinding *binding = get__Vec((Vec *)self, i);
+
+        if (!strcmp(GET_PTR_RC(String, binding->name)->buffer, name->buffer)) {
+            *res = binding->value;
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
 CIExpr *
 resolve_identifier__CIResolver(const CIResolverExpr *self, CIExpr *identifier)
 {
@@ -1962,10 +2001,32 @@ resolve_identifier__CIResolver(const CIResolverExpr *self, CIExpr *identifier)
                            NEW_VARIANT(CIExprLiteral, signed_int, 0));
     }
 
-    ASSERT(self->parser && self->scope);
+    // A name that is known before the program runs is what it is bound to,
+    // whatever it is declared as: the counter of an unrolled loop is written
+    // nowhere as a declaration, and a param written `constexpr` is one the
+    // call site says the value of.
+    {
+        Isize value = 0;
 
-    CIDecl *identifier_decl = get_decl__CIExprIdentifierID(
-      &identifier->identifier.id, self->parser->file);
+        if (search_comptime_binding__CIResolverExpr(
+              self->comptime_env,
+              GET_PTR_RC(String, identifier->identifier.value),
+              &value)) {
+            return NEW_VARIANT(CIExpr,
+                               literal,
+                               clone__Location(&identifier->location),
+                               NEW_VARIANT(CIExprLiteral, signed_int, value));
+        }
+    }
+
+    // What a name is written on is looked for in the file it is written in,
+    // which is held whether or not a parser is: a declaration is read here
+    // where the types a generic is called on are known, and no parser is
+    // written there.
+    ASSERT(self->file);
+
+    CIDecl *identifier_decl =
+      get_decl__CIExprIdentifierID(&identifier->identifier.id, self->file);
 
     if (!identifier_decl) {
         FAILED__CIResolverExpr(
@@ -1977,6 +2038,19 @@ resolve_identifier__CIResolver(const CIResolverExpr *self, CIExpr *identifier)
         case CI_DECL_KIND_ENUM_VARIANT:
             return determine_enum_variant_value__CIResolver(self,
                                                             identifier_decl);
+        // A variable written `constexpr` is one whose value is known where it
+        // is declared, so what it is given is what it stands for.
+        case CI_DECL_KIND_VARIABLE:
+            if (identifier_decl->storage_class_flag &
+                  CI_STORAGE_CLASS_CONSTEXPR &&
+                identifier_decl->variable.expr) {
+                return run__CIResolverExpr(self,
+                                           identifier_decl->variable.expr);
+            }
+
+            FAILED__CIResolverExpr(
+              self, identifier, CI_ERROR_KIND_CANNOT_USE_NON_COMPTIME_VALUE);
+            return POISONED_EXPR__CIResolverExpr(identifier);
         default:
             FAILED__CIResolverExpr(
               self, identifier, CI_ERROR_KIND_CANNOT_USE_NON_COMPTIME_VALUE);

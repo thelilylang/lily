@@ -1,0 +1,16 @@
+//@expected_compiler_error :11:13: \e[31merror\e[0m[0206]: the pack is not left as many data types as this rank
+//@expected_compiler_error \e[34m11 |\e[0m 	return xs[5];
+
+// A pack is left as many data types as the call site writes, so a rank
+// outside of them is one no param is written on.
+
+#include <helper.h>
+
+int
+at.[@A, @T...](@A a, @T... xs) {
+	return xs[5];
+}
+
+int main() {
+	return at.[int, int](0, 1);
+}

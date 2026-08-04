@@ -1633,6 +1633,10 @@ typedef struct CIDataType
     // Whether the generic is written with `...`, that is stands for however
     // many data types the call site leaves it, rather than for one.
     bool generic_is_pack;
+    // The rank of the data type a generic written on a pack is read at, as
+    // `typeof(xs[i])` is written on one. NULL where the generic stands for
+    // one data type, which is everywhere but a pack read at a rank.
+    struct CIExpr *generic_index; // CIExpr*?
     Usize ref_count;
     union
     {
@@ -4197,6 +4201,7 @@ enum CIExprKind
     CI_EXPR_KIND_ARRAY_ACCESS,
     CI_EXPR_KIND_BINARY,
     CI_EXPR_KIND_CAST,
+    CI_EXPR_KIND_COUNTOF,
     CI_EXPR_KIND_DATA_TYPE,
     CI_EXPR_KIND_FUNCTION_CALL,
     CI_EXPR_KIND_FUNCTION_CALL_BUILTIN,
@@ -4233,6 +4238,8 @@ struct CIExpr
         CIExprArrayAccess array_access;
         CIExprBinary binary;
         CIExprCast cast;
+        // The name of the param written on a pack `_Countof` is written on.
+        Rc *countof; // Rc<String*>*
         CIDataType *data_type;
         CIExprFunctionCall function_call;
         CIExprFunctionCallBuiltin function_call_builtin;
@@ -4261,6 +4268,13 @@ VARIANT_CONSTRUCTOR(CIExpr *,
                     alignof,
                     Location location,
                     CIExpr *alignof_);
+
+/**
+ *
+ * @brief Construct CIExpr type (CI_EXPR_KIND_COUNTOF).
+ * @param countof Rc<String*>* (&)
+ */
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, countof, Location location, Rc *countof);
 
 /**
  *
@@ -4437,6 +4451,7 @@ enum CIStmtKind
     CI_STMT_KIND_IF,
     CI_STMT_KIND_RETURN,
     CI_STMT_KIND_SWITCH,
+    CI_STMT_KIND_UNROLL,
     CI_STMT_KIND_WHILE,
 };
 
@@ -4623,6 +4638,9 @@ typedef struct CIStmtFor
     Vec *init_clauses; // Vec<CIDeclFunctionItem*>*?
     CIExpr *expr1;     // CIExpr*?
     Vec *exprs2;       // Vec<CIExpr*>*?
+    // Whether `inline` is written on it, which says the loop is run before
+    // the program is, and the body written once per turn it is run for.
+    bool is_unrolled;
 } CIStmtFor;
 
 /**
@@ -4634,12 +4652,14 @@ inline CONSTRUCTOR(CIStmtFor,
                    CIDeclFunctionBody *body,
                    Vec *init_clauses,
                    CIExpr *expr1,
-                   Vec *exprs2)
+                   Vec *exprs2,
+                   bool is_unrolled)
 {
     return (CIStmtFor){ .body = body,
                         .init_clauses = init_clauses,
                         .expr1 = expr1,
-                        .exprs2 = exprs2 };
+                        .exprs2 = exprs2,
+                        .is_unrolled = is_unrolled };
 }
 
 /**
@@ -4657,6 +4677,46 @@ IMPL_FOR_DEBUG(to_string, CIStmtFor, const CIStmtFor *self);
  * @brief Free CIStmtFor type.
  */
 DESTRUCTOR(CIStmtFor, const CIStmtFor *self);
+
+// `inline for (x : xs) { ... }`, where `xs` is a param written on a pack. The
+// body is written once per data type the pack is left, with `x` standing for
+// the param of that rank, so what is written on `x` is read on the type that
+// rank holds rather than on one type the whole of the pack shares.
+typedef struct CIStmtUnroll
+{
+    Rc *binding; // Rc<String*>*
+    Rc *pack;    // Rc<String*>*
+    CIDeclFunctionBody *body;
+} CIStmtUnroll;
+
+/**
+ *
+ * @brief Construct CIStmtUnroll type.
+ */
+inline CONSTRUCTOR(CIStmtUnroll,
+                   CIStmtUnroll,
+                   Rc *binding,
+                   Rc *pack,
+                   CIDeclFunctionBody *body)
+{
+    return (CIStmtUnroll){ .binding = binding, .pack = pack, .body = body };
+}
+
+/**
+ *
+ * @brief Convert CIStmtUnroll in String.
+ * @note This function is only used to debug.
+ */
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIStmtUnroll, const CIStmtUnroll *self);
+#endif
+
+/**
+ *
+ * @brief Free CIStmtUnroll type.
+ */
+DESTRUCTOR(CIStmtUnroll, const CIStmtUnroll *self);
 
 typedef struct CIStmtIfBranch
 {
@@ -4841,6 +4901,7 @@ typedef struct CIStmt
         CIStmtIf if_;
         CIExpr *return_; // CIExpr*?
         CIStmtSwitch switch_;
+        CIStmtUnroll unroll;
         CIStmtWhile while_;
     };
 } CIStmt;
@@ -4991,6 +5052,21 @@ inline VARIANT_CONSTRUCTOR(CIStmt,
     return (CIStmt){ .location = location,
                      .kind = CI_STMT_KIND_SWITCH,
                      .switch_ = switch_ };
+}
+
+/**
+ *
+ * @brief Construct CIStmt type (CI_STMT_KIND_UNROLL).
+ */
+inline VARIANT_CONSTRUCTOR(CIStmt,
+                           CIStmt,
+                           unroll,
+                           Location location,
+                           CIStmtUnroll unroll)
+{
+    return (CIStmt){ .location = location,
+                     .kind = CI_STMT_KIND_UNROLL,
+                     .unroll = unroll };
 }
 
 /**

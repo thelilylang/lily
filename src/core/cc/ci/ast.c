@@ -229,6 +229,9 @@ static VARIANT_DESTRUCTOR(CIExpr, cast, CIExpr *self);
 /// @brief Free CIExprLiteral (CI_EXPR_LITERAL_KIND_STRING).
 static VARIANT_DESTRUCTOR(CIExprLiteral, string, const CIExprLiteral *self);
 
+/// @brief Free CIExpr type (CI_EXPR_KIND_COUNTOF).
+static VARIANT_DESTRUCTOR(CIExpr, countof, CIExpr *self);
+
 /// @brief Free CIExpr type (CI_EXPR_KIND_DATA_TYPE).
 static VARIANT_DESTRUCTOR(CIExpr, data_type, CIExpr *self);
 
@@ -285,6 +288,9 @@ static VARIANT_DESTRUCTOR(CIStmt, return, const CIStmt *self);
 
 /// @brief Free CIStmt type (CI_STMT_KIND_SWITCH).
 static inline VARIANT_DESTRUCTOR(CIStmt, switch, const CIStmt *self);
+
+/// @brief Free CIStmt type (CI_STMT_KIND_UNROLL).
+static inline VARIANT_DESTRUCTOR(CIStmt, unroll, const CIStmt *self);
 
 /// @brief Free CIStmt type (CI_STMT_KIND_WHILE).
 static inline VARIANT_DESTRUCTOR(CIStmt, while, const CIStmt *self);
@@ -2184,6 +2190,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->alignment = NULL;
     self->bitint_is_unsigned = false;
     self->generic_is_pack = false;
+    self->generic_index = NULL;
 
     return self;
 }
@@ -2205,6 +2212,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->alignment = NULL;
     self->bitint_is_unsigned = false;
     self->generic_is_pack = false;
+    self->generic_index = NULL;
 
     return self;
 }
@@ -2226,6 +2234,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->alignment = NULL;
     self->bitint_is_unsigned = false;
     self->generic_is_pack = false;
+    self->generic_index = NULL;
 
     return self;
 }
@@ -2247,6 +2256,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->alignment = NULL;
     self->bitint_is_unsigned = false;
     self->generic_is_pack = false;
+    self->generic_index = NULL;
 
     return self;
 }
@@ -2268,6 +2278,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->alignment = NULL;
     self->bitint_is_unsigned = false;
     self->generic_is_pack = false;
+    self->generic_index = NULL;
 
     return self;
 }
@@ -2289,6 +2300,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->alignment = NULL;
     self->bitint_is_unsigned = false;
     self->generic_is_pack = false;
+    self->generic_index = NULL;
 
     return self;
 }
@@ -2310,6 +2322,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->alignment = NULL;
     self->bitint_is_unsigned = false;
     self->generic_is_pack = false;
+    self->generic_index = NULL;
 
     return self;
 }
@@ -2331,6 +2344,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->alignment = NULL;
     self->bitint_is_unsigned = false;
     self->generic_is_pack = false;
+    self->generic_index = NULL;
 
     return self;
 }
@@ -2352,6 +2366,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->alignment = NULL;
     self->bitint_is_unsigned = false;
     self->generic_is_pack = false;
+    self->generic_index = NULL;
 
     return self;
 }
@@ -2373,6 +2388,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->alignment = NULL;
     self->bitint_is_unsigned = false;
     self->generic_is_pack = false;
+    self->generic_index = NULL;
 
     return self;
 }
@@ -2392,6 +2408,7 @@ CONSTRUCTOR(CIDataType *,
     self->alignment = NULL;
     self->bitint_is_unsigned = false;
     self->generic_is_pack = false;
+    self->generic_index = NULL;
 
     return self;
 }
@@ -2575,6 +2592,8 @@ clone__CIDataType(const CIDataType *self)
 
     res->bitint_is_unsigned = self->bitint_is_unsigned;
     res->generic_is_pack = self->generic_is_pack;
+    res->generic_index =
+      self->generic_index ? ref__CIExpr(self->generic_index) : NULL;
 
     return res;
 }
@@ -3214,6 +3233,10 @@ VARIANT_DESTRUCTOR(CIDataType, generic, CIDataType *self)
 {
     if (self->generic) {
         FREE_RC(String, self->generic);
+    }
+
+    if (self->generic_index) {
+        FREE(CIExpr, self->generic_index);
     }
 
     lily_free(self);
@@ -4081,8 +4104,18 @@ clone__CIStmt(const CIStmt *self)
                                    self->for_.expr1
                                      ? ref__CIExpr(self->for_.expr1)
                                      : NULL,
-                                   exprs2));
+                                   exprs2,
+                                   self->for_.is_unrolled));
         }
+        case CI_STMT_KIND_UNROLL:
+            return NEW_VARIANT(
+              CIStmt,
+              unroll,
+              location,
+              NEW(CIStmtUnroll,
+                  ref__Rc(self->unroll.binding),
+                  ref__Rc(self->unroll.pack),
+                  clone__CIDeclFunctionBody(self->unroll.body)));
         case CI_STMT_KIND_GOTO:
             return NEW_VARIANT(CIStmt, goto, location, ref__Rc(self->goto_));
         case CI_STMT_KIND_IF: {
@@ -6197,6 +6230,8 @@ IMPL_FOR_DEBUG(to_string, CIExprKind, enum CIExprKind self)
             return "CI_EXPR_KIND_BINARY";
         case CI_EXPR_KIND_CAST:
             return "CI_EXPR_KIND_CAST";
+        case CI_EXPR_KIND_COUNTOF:
+            return "CI_EXPR_KIND_COUNTOF";
         case CI_EXPR_KIND_DATA_TYPE:
             return "CI_EXPR_KIND_DATA_TYPE";
         case CI_EXPR_KIND_FUNCTION_CALL:
@@ -6248,6 +6283,18 @@ VARIANT_CONSTRUCTOR(CIExpr *,
     self->kind = CI_EXPR_KIND_ALIGNOF;
     self->ref_count = 0;
     self->alignof_ = alignof_;
+
+    return self;
+}
+
+VARIANT_CONSTRUCTOR(CIExpr *, CIExpr, countof, Location location, Rc *countof)
+{
+    CIExpr *self = lily_malloc(sizeof(CIExpr));
+
+    self->location = location;
+    self->kind = CI_EXPR_KIND_COUNTOF;
+    self->ref_count = 0;
+    self->countof = ref__Rc(countof);
 
     return self;
 }
@@ -6479,6 +6526,10 @@ IMPL_FOR_DEBUG(to_string, CIExpr, const CIExpr *self)
             return format__String("CIExpr{{ kind = {s}, cast = {Sr} }",
                                   to_string__Debug__CIExprKind(self->kind),
                                   to_string__Debug__CIExprCast(&self->cast));
+        case CI_EXPR_KIND_COUNTOF:
+            return format__String("CIExpr{{ kind = {s}, countof = {S} }",
+                                  to_string__Debug__CIExprKind(self->kind),
+                                  GET_PTR_RC(String, self->countof));
         case CI_EXPR_KIND_DATA_TYPE:
             return format__String(
               "CIExpr{{ kind = {s}, data_type = {Sr} }",
@@ -6583,6 +6634,12 @@ VARIANT_DESTRUCTOR(CIExpr, cast, CIExpr *self)
     lily_free(self);
 }
 
+VARIANT_DESTRUCTOR(CIExpr, countof, CIExpr *self)
+{
+    FREE_RC(String, self->countof);
+    lily_free(self);
+}
+
 VARIANT_DESTRUCTOR(CIExpr, data_type, CIExpr *self)
 {
     FREE(CIDataType, self->data_type);
@@ -6663,6 +6720,9 @@ DESTRUCTOR(CIExpr, CIExpr *self)
         case CI_EXPR_KIND_CAST:
             FREE_VARIANT(CIExpr, cast, self);
             break;
+        case CI_EXPR_KIND_COUNTOF:
+            FREE_VARIANT(CIExpr, countof, self);
+            break;
         case CI_EXPR_KIND_DATA_TYPE:
             FREE_VARIANT(CIExpr, data_type, self);
             break;
@@ -6730,6 +6790,8 @@ IMPL_FOR_DEBUG(to_string, CIStmtKind, enum CIStmtKind self)
             return "CI_STMT_KIND_RETURN";
         case CI_STMT_KIND_SWITCH:
             return "CI_STMT_KIND_SWITCH";
+        case CI_STMT_KIND_UNROLL:
+            return "CI_STMT_KIND_UNROLL";
         case CI_STMT_KIND_WHILE:
             return "CI_STMT_KIND_WHILE";
         default:
@@ -6939,6 +7001,25 @@ DESTRUCTOR(CIStmtFor, const CIStmtFor *self)
     }
 }
 
+#ifdef ENV_DEBUG
+String *
+IMPL_FOR_DEBUG(to_string, CIStmtUnroll, const CIStmtUnroll *self)
+{
+    return format__String(
+      "CIStmtUnroll{{ binding = {S}, pack = {S}, body = {Sr} }",
+      GET_PTR_RC(String, self->binding),
+      GET_PTR_RC(String, self->pack),
+      to_string__Debug__CIDeclFunctionBody(self->body));
+}
+#endif
+
+DESTRUCTOR(CIStmtUnroll, const CIStmtUnroll *self)
+{
+    FREE_RC(String, self->binding);
+    FREE_RC(String, self->pack);
+    FREE(CIDeclFunctionBody, self->body);
+}
+
 CONSTRUCTOR(CIStmtIfBranch *,
             CIStmtIfBranch,
             CIExpr *cond,
@@ -7105,6 +7186,11 @@ IMPL_FOR_DEBUG(to_string, CIStmt, const CIStmt *self)
               "CIStmt{{ kind = {s}, switch_ = {Sr} }",
               to_string__Debug__CIStmtKind(self->kind),
               to_string__Debug__CIStmtSwitch(&self->switch_));
+        case CI_STMT_KIND_UNROLL:
+            return format__String(
+              "CIStmt{{ kind = {s}, unroll = {Sr} }",
+              to_string__Debug__CIStmtKind(self->kind),
+              to_string__Debug__CIStmtUnroll(&self->unroll));
         case CI_STMT_KIND_WHILE:
             return format__String("CIStmt{{ kind = {s}, while_ = {Sr} }",
                                   to_string__Debug__CIStmtKind(self->kind),
@@ -7138,6 +7224,11 @@ VARIANT_DESTRUCTOR(CIStmt, do_while, const CIStmt *self)
 VARIANT_DESTRUCTOR(CIStmt, for, const CIStmt *self)
 {
     FREE(CIStmtFor, &self->for_);
+}
+
+VARIANT_DESTRUCTOR(CIStmt, unroll, const CIStmt *self)
+{
+    FREE(CIStmtUnroll, &self->unroll);
 }
 
 VARIANT_DESTRUCTOR(CIStmt, goto, const CIStmt *self)
@@ -7200,6 +7291,9 @@ DESTRUCTOR(CIStmt, const CIStmt *self)
             break;
         case CI_STMT_KIND_SWITCH:
             FREE_VARIANT(CIStmt, switch, self);
+            break;
+        case CI_STMT_KIND_UNROLL:
+            FREE_VARIANT(CIStmt, unroll, self);
             break;
         case CI_STMT_KIND_WHILE:
             FREE_VARIANT(CIStmt, while, self);

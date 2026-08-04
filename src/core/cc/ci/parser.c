@@ -502,7 +502,7 @@ static CIDeclFunctionItem *
 parse_do_while_stmt__CIParser(CIParser *self, bool in_switch);
 
 static CIDeclFunctionItem *
-parse_for_stmt__CIParser(CIParser *self, bool in_switch);
+parse_for_stmt__CIParser(CIParser *self, bool in_switch, bool is_unrolled);
 
 static CIStmtIfBranch *
 parse_if_branch__CIParser(CIParser *self, bool in_loop, bool in_switch);
@@ -515,6 +515,15 @@ parse_if_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch);
 
 static CIDeclFunctionItem *
 parse_while_stmt__CIParser(CIParser *self, bool in_switch);
+
+/// @brief Read `xs[i]` written on a param of a pack as the data type of the
+/// rank `i`.
+static CIDataType *
+parse_pack_element_data_type__CIParser(CIParser *self, const CIExpr *expr);
+
+/// @brief Read `inline for (x : xs) { ... }`.
+static CIDeclFunctionItem *
+parse_unroll_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch);
 
 static CIDeclFunctionItem *
 parse_switch_stmt__CIParser(CIParser *self, bool in_loop);
@@ -3005,6 +3014,24 @@ parse_pre_data_type__CIParser(CIParser *self)
 
             expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
 
+            // `typeof(xs[i])` written on a pack says the data type of the
+            // rank `i`, which is only known once the call site says what the
+            // pack is left. There is nothing to infer here, so the generic
+            // the pack is written on is held with the rank, and the data type
+            // is read where the declaration is instantiated.
+            {
+                CIDataType *pack_element =
+                  parse_pack_element_data_type__CIParser(self, expr);
+
+                if (pack_element) {
+                    FREE(CIExpr, expr);
+
+                    res = pack_element;
+
+                    break;
+                }
+            }
+
             switch (typeof_or_typeof_unqual) {
                 case CI_TOKEN_KIND_KEYWORD_TYPEOF:
                     res = perform_typeof__CIInfer(
@@ -3838,6 +3865,27 @@ parse_primary_expr__CIParser(CIParser *self)
         case CI_TOKEN_KIND_KEYWORD__GENERIC:
             return parse_generic_selection_post_expr__CIParser(
               self, parse_generic_selection__CIParser(self));
+        case CI_TOKEN_KIND_KEYWORD__COUNTOF: {
+            // How many data types a pack is left is said by the call site, so
+            // the name of the param is what is held here and what it stands
+            // for is written where the declaration is instantiated.
+            expect__CIParser(self, CI_TOKEN_KIND_LPAREN, true);
+
+            Rc *pack = NULL; // Rc<String*>*
+
+            if (expect__CIParser(self, CI_TOKEN_KIND_IDENTIFIER, true)) {
+                pack = self->previous_token->identifier;
+            } else {
+                pack = generate_name_error__CIParser();
+            }
+
+            expect__CIParser(self, CI_TOKEN_KIND_RPAREN, true);
+
+            res = NEW_VARIANT(
+              CIExpr, countof, location_from__CIParser(self, &begin), pack);
+
+            break;
+        }
         case CI_TOKEN_KIND_KEYWORD_ALIGNOF:
         case CI_TOKEN_KIND_KEYWORD__ALIGNOF: {
             // The parentheses are taken here, as `sizeof` does, so that what
@@ -4656,7 +4704,7 @@ parse_case__CIParser(CIParser *self)
 }
 
 CIDeclFunctionItem *
-parse_for_stmt__CIParser(CIParser *self, bool in_switch)
+parse_for_stmt__CIParser(CIParser *self, bool in_switch, bool is_unrolled)
 {
     Vec *init_clauses = NULL; // Vec<CIDeclFunctionItem*>*?
     CIExpr *expr1 = NULL;
@@ -4766,7 +4814,7 @@ parse_for_stmt__CIParser(CIParser *self, bool in_switch)
         }
     }
 
-    return NEW_VARIANT(CIDeclFunctionItem, stmt, NEW_VARIANT(CIStmt, for, previous_location__CIParser(self), NEW(CIStmtFor, body, init_clauses, expr1, exprs2)));
+    return NEW_VARIANT(CIDeclFunctionItem, stmt, NEW_VARIANT(CIStmt, for, previous_location__CIParser(self), NEW(CIStmtFor, body, init_clauses, expr1, exprs2, is_unrolled)));
 }
 
 CIStmtIfBranch *
@@ -4920,6 +4968,48 @@ parse_while_stmt__CIParser(CIParser *self, bool in_switch)
                                    while,
                                    previous_location__CIParser(self),
                                    NEW(CIStmtWhile, cond, body)));
+}
+
+/// @brief Read `xs[i]` written on a param of a pack as the data type of the
+/// rank `i`, which is the generic the pack is written on held with that rank.
+/// @return CIDataType*? NULL when it is no access made on a pack, which is
+/// read as what it is written as.
+CIDataType *
+parse_pack_element_data_type__CIParser(CIParser *self, const CIExpr *expr)
+{
+    if (!current_scope || expr->kind != CI_EXPR_KIND_ARRAY_ACCESS) {
+        return NULL;
+    }
+
+    const CIExpr *array = expr->array_access.array;
+
+    while (array->kind == CI_EXPR_KIND_GROUPING) {
+        array = array->grouping;
+    }
+
+    if (array->kind != CI_EXPR_KIND_IDENTIFIER) {
+        return NULL;
+    }
+
+    // A param is written in the scope the body is read in, so what the name
+    // is written on is looked for there.
+    CIDecl *decl = search_variable__CIResultFile(
+      self->file, current_scope, GET_PTR_RC(String, array->identifier.value));
+
+    if (!decl || decl->kind != CI_DECL_KIND_VARIABLE ||
+        !decl->variable.data_type ||
+        !is_pack__CIDataType(decl->variable.data_type)) {
+        return NULL;
+    }
+
+    CIDataType *res = NEW_VARIANT(CIDataType,
+                                  generic,
+                                  clone__Location(&expr->location),
+                                  decl->variable.data_type->generic);
+
+    res->generic_index = ref__CIExpr(expr->array_access.access);
+
+    return res;
 }
 
 CIDeclFunctionItem *
@@ -5298,7 +5388,16 @@ parse_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch)
         case CI_TOKEN_KIND_KEYWORD_DO:
             return parse_do_while_stmt__CIParser(self, in_switch);
         case CI_TOKEN_KIND_KEYWORD_FOR:
-            return parse_for_stmt__CIParser(self, in_switch);
+            return parse_for_stmt__CIParser(self, in_switch, false);
+        // `inline` written on a loop says the loop is run before the program
+        // is, and the body written once per turn it is run for. Only `for` is
+        // written with it: a loop that is run before the program is has to be
+        // one whose turns are known, which is what the init clause and the
+        // increment of a `for` say.
+        case CI_TOKEN_KIND_KEYWORD_INLINE:
+            next_token__CIParser(self);
+
+            return parse_for_stmt__CIParser(self, in_switch, true);
         case CI_TOKEN_KIND_KEYWORD_GOTO: {
             Rc *label_identifier = NULL;
 
@@ -5393,6 +5492,19 @@ parse_function_body_item__CIParser(CIParser *self, bool in_loop, bool in_switch)
 
             if (peeked && peeked->kind == CI_TOKEN_KIND_COLON) {
                 goto parse_decl;
+            }
+
+            goto default_case;
+        }
+        case CI_TOKEN_KIND_KEYWORD_INLINE: {
+            // `inline` is written on a declaration everywhere else, so it is
+            // the `for` written after it that says a loop is what follows.
+            CIToken *peeked = peek_token__CIParser(self, 1);
+
+            if (peeked && peeked->kind == CI_TOKEN_KIND_KEYWORD_FOR) {
+                DISABLE_IN_LABEL();
+
+                return parse_stmt__CIParser(self, in_loop, in_switch);
             }
 
             goto default_case;

@@ -1,0 +1,27 @@
+//@compile_options -s c23
+//@expected_bin_stdout int:42\n
+//@expected_bin_stdout char:z\n
+//@expected_bin_stdout int:7\n
+
+// `typeof(xs[i])` written on a pack says the data type of the rank `i`, which
+// is known once the call site says what the pack is left. Written as a
+// condition it says which path the turn holds, so a body written on a pack of
+// data types that share nothing is read on one data type per turn, and the
+// path that turn does not hold is not written.
+
+#include <helper.h>
+
+void
+show.[@A, @T...](@A a, @T... xs) {
+	inline for (int i = 0; i < _Countof(xs); ++i) {
+		if (typeof(xs[i]) == int) {
+			printf("int:%d\n", xs[i]);
+		} else if (typeof(xs[i]) == char) {
+			printf("char:%c\n", xs[i]);
+		}
+	}
+}
+
+int main() {
+	show.[int, int, char, int](0, 42, 'z', 7);
+}

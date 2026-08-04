@@ -504,7 +504,8 @@ extern inline CONSTRUCTOR(CIStmtFor,
                           CIDeclFunctionBody *body,
                           Vec *init_clauses,
                           CIExpr *expr1,
-                          Vec *exprs2);
+                          Vec *exprs2,
+                          bool is_unrolled);
 
 extern inline CONSTRUCTOR(CIStmtIf,
                           CIStmtIf,
@@ -517,6 +518,12 @@ extern inline CONSTRUCTOR(CIStmtSwitchCase, CIStmtSwitchCase, CIExpr *value);
 extern inline CONSTRUCTOR(CIStmtSwitch,
                           CIStmtSwitch,
                           CIExpr *expr,
+                          CIDeclFunctionBody *body);
+
+extern inline CONSTRUCTOR(CIStmtUnroll,
+                          CIStmtUnroll,
+                          Rc *binding,
+                          Rc *pack,
                           CIDeclFunctionBody *body);
 
 extern inline CONSTRUCTOR(CIStmtWhile,
@@ -586,6 +593,12 @@ extern inline VARIANT_CONSTRUCTOR(CIStmt,
                                   switch,
                                   Location location,
                                   CIStmtSwitch switch_);
+
+extern inline VARIANT_CONSTRUCTOR(CIStmt,
+                                  CIStmt,
+                                  unroll,
+                                  Location location,
+                                  CIStmtUnroll unroll);
 
 extern inline VARIANT_CONSTRUCTOR(CIStmt,
                                   CIStmt,
@@ -702,6 +715,9 @@ extern inline CONSTRUCTOR(CIResolverExpr,
                           const CIResultFile *file,
                           Usize *count_error,
                           bool at_preprocessor_time);
+
+extern inline void
+set_comptime_env__CIResolverExpr(CIResolverExpr *self, const Vec *comptime_env);
 
 // <core/cc/ci/result.h>
 extern inline CIResultDefine *

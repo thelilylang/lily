@@ -1,0 +1,19 @@
+//@expected_bin_stdout 3\n
+//@expected_bin_stdout 1\n
+//@expected_bin_stdout 0\n
+
+// How many data types a pack is left is said by the call site, so `_Countof`
+// is known before the program runs and is written as the number it stands for.
+
+#include <helper.h>
+
+int
+how_many.[@A, @T...](@A a, @T... xs) {
+	return _Countof(xs);
+}
+
+int main() {
+	printf("%d\n", how_many.[int, int, char, float](0, 1, 'a', 2.0f));
+	printf("%d\n", how_many.[int, int](0, 1));
+	printf("%d\n", how_many.[int](0));
+}

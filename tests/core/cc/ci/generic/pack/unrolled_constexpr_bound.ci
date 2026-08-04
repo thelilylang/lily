@@ -1,0 +1,20 @@
+//@compile_options -s c23
+//@expected_bin_stdout 3\n
+
+// A variable written `constexpr` holds a value that is known where it is
+// declared, so it says how many turns an unrolled loop is run for. The
+// counter is known on every turn too, and is written as the value that turn
+// holds rather than left as a name the program reads.
+
+#include <helper.h>
+
+int main() {
+	constexpr int n = 3;
+	int total = 0;
+
+	inline for (int i = 0; i < n; ++i) {
+		total += i;
+	}
+
+	printf("%d\n", total);
+}

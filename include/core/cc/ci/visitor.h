@@ -35,6 +35,9 @@ typedef struct CIVisitor
     // reported when a declaration a visited one refers to cannot be found.
     const CIDecl *current_decl;   // const CIDecl*? (&)
     const CIScope *current_scope; // const CIScope*? (&)
+    // The names that are known before the program runs, which is what an
+    // unrolled loop binds its counter in. NULL where nothing is known.
+    Vec *comptime_env; // Vec<CIComptimeBinding*>*?
 } CIVisitor;
 
 /**
@@ -46,7 +49,8 @@ inline CONSTRUCTOR(CIVisitor, CIVisitor, const CIResult *result)
     return (CIVisitor){ .result = result,
                         .file = NULL,
                         .current_decl = NULL,
-                        .current_scope = NULL };
+                        .current_scope = NULL,
+                        .comptime_env = NULL };
 }
 
 /**

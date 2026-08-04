@@ -1,0 +1,38 @@
+//@expected_bin_stdout 6\n
+//@expected_bin_stdout 0\n
+
+// A loop written `inline` is run before the program is, and the body it holds
+// is written once per turn it is run for. The counter is known on every turn,
+// so a param of a pack read at that rank is read on the data type that rank
+// holds, and C is given no loop at all.
+
+#include <helper.h>
+
+int
+sum.[@A, @T...](@A a, @T... xs) {
+	int total = 0;
+
+	inline for (int i = 0; i < _Countof(xs); ++i) {
+		total += xs[i];
+	}
+
+	return total;
+}
+
+// A pack left nothing is a loop run no turns at all, so the body it holds is
+// not written even once.
+int
+sum_of_nothing.[@A, @T...](@A a, @T... xs) {
+	int total = 0;
+
+	inline for (int i = 0; i < _Countof(xs); ++i) {
+		total += xs[i];
+	}
+
+	return total;
+}
+
+int main() {
+	printf("%d\n", sum.[int, int, int, int](0, 1, 2, 3));
+	printf("%d\n", sum_of_nothing.[int](0));
+}

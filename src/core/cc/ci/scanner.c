@@ -648,6 +648,10 @@ static const CIFeature tokens_feature[CI_TOKEN_KIND_MAX] = {
                                         .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD__BOOL] = { .since = CI_STANDARD_99,
                                       .until = CI_STANDARD_23 },
+    // What a pack is left is said by the call site, whichever standard the
+    // declaration is written for, so it is written on no standard of its own.
+    [CI_TOKEN_KIND_KEYWORD__COUNTOF] = { .since = CI_STANDARD_NONE,
+                                         .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD__COMPLEX] = { .since = CI_STANDARD_99,
                                          .until = CI_STANDARD_NONE },
     [CI_TOKEN_KIND_KEYWORD__DECIMAL128] = { .since = CI_STANDARD_23,
@@ -846,6 +850,7 @@ static const SizedStr ci_keywords[CI_N_KEYWORD] = {
     SIZED_STR_FROM_RAW("_BitInt"),
     SIZED_STR_FROM_RAW("_Bool"),
     SIZED_STR_FROM_RAW("_Complex"),
+    SIZED_STR_FROM_RAW("_Countof"),
     SIZED_STR_FROM_RAW("_Decimal128"),
     SIZED_STR_FROM_RAW("_Decimal32"),
     SIZED_STR_FROM_RAW("_Decimal64"),
@@ -918,6 +923,7 @@ static const enum CITokenKind ci_keyword_ids[CI_N_KEYWORD] = {
     CI_TOKEN_KIND_KEYWORD__BITINT,
     CI_TOKEN_KIND_KEYWORD__BOOL,
     CI_TOKEN_KIND_KEYWORD__COMPLEX,
+    CI_TOKEN_KIND_KEYWORD__COUNTOF,
     CI_TOKEN_KIND_KEYWORD__DECIMAL128,
     CI_TOKEN_KIND_KEYWORD__DECIMAL32,
     CI_TOKEN_KIND_KEYWORD__DECIMAL64,

@@ -27,6 +27,7 @@
 
 #include <core/cc/ci/ast.h>
 #include <core/cc/ci/diagnostic/emit.h>
+#include <core/cc/ci/resolver/expr.h>
 #include <core/cc/ci/typecheck.h>
 #include <core/cc/ci/visitor.h>
 
@@ -422,11 +423,21 @@ generate_function_gen__CIVisitor(CIVisitor *self,
                     : NULL;
 
                 if (instantiated_body) {
+                    // The body is read as the declaration it is written in,
+                    // since what is written on the params of that declaration
+                    // - which param is written on a pack, and how many data
+                    // types it is left - is what is read of it.
+                    const CIDecl *parent_decl = self->current_decl;
+
+                    self->current_decl = function_decl;
+
                     select_comptime_paths__CIVisitor(
                       self,
                       instantiated_body,
                       function_decl->function.generic_params,
                       resolved_generic_params);
+
+                    self->current_decl = parent_decl;
                 }
 
                 visit_function__CIVisitor(self,
@@ -1654,6 +1665,55 @@ resolve_comptime_data_type__CIVisitor(CIVisitor *self,
         return NULL;
     }
 
+    // A generic written with a rank is one read on a pack, and what it stands
+    // for is the data type that rank holds rather than the one the generic
+    // itself is left. The rank is known before the program runs, since it is
+    // what an unrolled loop binds its counter to.
+    if (expr->data_type->kind == CI_DATA_TYPE_KIND_GENERIC &&
+        expr->data_type->generic_index && decl_generic_params &&
+        called_generic_params) {
+        CIResolverExpr resolver = NEW(CIResolverExpr,
+                                      NULL,
+                                      NULL,
+                                      self->file,
+                                      &self->file->file_analysis->count_error,
+                                      false);
+
+        set_comptime_env__CIResolverExpr(&resolver, self->comptime_env);
+
+        CIExpr *resolved =
+          run__CIResolverExpr(&resolver, expr->data_type->generic_index);
+
+        if (!resolved) {
+            return NULL;
+        }
+
+        Isize rank =
+          to_literal_integer_value__CIResolverExpr(&resolver, resolved);
+
+        FREE(CIExpr, resolved);
+
+        CIGenericParamsRange range;
+
+        if (find_generic_range__CIGenericParams(
+              decl_generic_params,
+              called_generic_params,
+              GET_PTR_RC(String, expr->data_type->generic),
+              &range) != CI_GENERIC_PARAMS_RANGE_RESULT_OK) {
+            return NULL;
+        }
+
+        if (rank < 0 || (Usize)rank >= range.len) {
+            FAILED__CIVisitor(
+              self, expr, CI_ERROR_KIND_PACK_ACCESS_IS_OUT_OF_RANGE);
+
+            return NULL;
+        }
+
+        return ref__CIDataType(
+          get__Vec(called_generic_params->params, range.start + (Usize)rank));
+    }
+
     // A data type is only written in place of a generic where a declaration
     // is written on generics and is called on types. Written anywhere else it
     // stands for itself, and there is nothing to read in its place: the
@@ -1797,6 +1857,148 @@ resolve_comptime_cond__CIVisitor(CIVisitor *self,
 ///
 /// @return CIExpr*? What is written in place of the expression, which the
 /// caller takes over, or NULL when nothing in it is written on data types.
+/// @brief Look for the param written on a pack the given name is written on.
+/// @return CIDataType*? (&) NULL when the name is written on no param, or on
+/// a param that is no pack.
+static const CIDataType *
+get_pack_param_data_type__CIVisitor(const CIVisitor *self, const String *name)
+{
+    if (!self->current_decl ||
+        self->current_decl->kind != CI_DECL_KIND_FUNCTION) {
+        return NULL;
+    }
+
+    const CIDeclFunctionParams *params = self->current_decl->function.params;
+
+    if (!params) {
+        return NULL;
+    }
+
+    for (Usize i = 0; i < params->content->len; ++i) {
+        const CIDeclFunctionParam *param = get__Vec(params->content, i);
+
+        if (param->kind == CI_DECL_FUNCTION_PARAM_KIND_NORMAL && param->name &&
+            !strcmp(GET_PTR_RC(String, param->name)->buffer, name->buffer) &&
+            param->data_type && is_pack__CIDataType(param->data_type)) {
+            return param->data_type;
+        }
+    }
+
+    return NULL;
+}
+
+/// @brief Read how many data types the pack the given name is written on is
+/// left.
+/// @return Whether the name is written on a pack the call site says the
+/// length of.
+static bool
+get_pack_len__CIVisitor(const CIVisitor *self,
+                        const String *name,
+                        CIGenericParams *decl_generic_params,
+                        CIGenericParams *called_generic_params,
+                        Usize *res)
+{
+    const CIDataType *pack_data_type =
+      get_pack_param_data_type__CIVisitor(self, name);
+
+    if (!pack_data_type || !decl_generic_params || !called_generic_params) {
+        return false;
+    }
+
+    CIGenericParamsRange range;
+
+    if (find_generic_range__CIGenericParams(
+          decl_generic_params,
+          called_generic_params,
+          GET_PTR_RC(String, pack_data_type->generic),
+          &range) != CI_GENERIC_PARAMS_RANGE_RESULT_OK) {
+        return false;
+    }
+
+    *res = range.len;
+
+    return true;
+}
+
+/// @brief Read what `xs[i]` written on a pack stands for, which is the param
+/// of the rank `i` says.
+/// @return CIExpr*? NULL when it is no access made on a pack, or when the
+/// index is only known while the program runs, which is left as it is
+/// written.
+static CIExpr *
+fold_pack_access__CIVisitor(CIVisitor *self,
+                            const CIExpr *expr,
+                            CIGenericParams *decl_generic_params,
+                            CIGenericParams *called_generic_params)
+{
+    const CIExpr *array = expr->array_access.array;
+
+    while (array->kind == CI_EXPR_KIND_GROUPING) {
+        array = array->grouping;
+    }
+
+    if (array->kind != CI_EXPR_KIND_IDENTIFIER) {
+        return NULL;
+    }
+
+    const String *pack_name = GET_PTR_RC(String, array->identifier.value);
+    Usize pack_len = 0;
+
+    if (!get_pack_len__CIVisitor(self,
+                                 pack_name,
+                                 decl_generic_params,
+                                 called_generic_params,
+                                 &pack_len)) {
+        return NULL;
+    }
+
+    // The index is read on what is known before the program runs, which is
+    // what an unrolled loop binds its counter in.
+    CIResolverExpr resolver = NEW(CIResolverExpr,
+                                  NULL,
+                                  NULL,
+                                  self->file,
+                                  &self->file->file_analysis->count_error,
+                                  false);
+
+    set_comptime_env__CIResolverExpr(&resolver, self->comptime_env);
+
+    // A pack is written out as one param per data type it is left, so it is
+    // no object anything is indexed on while the program runs: an index that
+    // is not known here is one nothing can be written for, which the resolver
+    // reports on.
+    CIExpr *resolved =
+      run__CIResolverExpr(&resolver, expr->array_access.access);
+
+    if (!resolved) {
+        return NULL;
+    }
+
+    Isize rank = to_literal_integer_value__CIResolverExpr(&resolver, resolved);
+
+    FREE(CIExpr, resolved);
+
+    // A pack is left as many data types as the call site writes, so a rank
+    // outside of them is one no param is written on.
+    if (rank < 0 || (Usize)rank >= pack_len) {
+        FAILED__CIVisitor(
+          self, expr, CI_ERROR_KIND_PACK_ACCESS_IS_OUT_OF_RANGE);
+
+        return NULL;
+    }
+
+    Rc *name = NEW(Rc, format__String("{S}_{zu}", pack_name, (Usize)rank));
+    CIExpr *res = NEW_VARIANT(
+      CIExpr,
+      identifier,
+      clone__Location(&expr->location),
+      NEW(CIExprIdentifier, name, NEW_VARIANT(CIExprIdentifierID, none), NULL));
+
+    FREE_RC(String, name);
+
+    return res;
+}
+
 static CIExpr *
 fold_comptime_exprs__CIVisitor(CIVisitor *self,
                                CIExpr *expr,
@@ -1814,6 +2016,87 @@ fold_comptime_exprs__CIVisitor(CIVisitor *self,
     }
 
     switch (expr->kind) {
+        case CI_EXPR_KIND_ARRAY_ACCESS: {
+            // `xs[i]` written on a pack is no access made while the program
+            // runs: what it stands for is the param of that rank, which is
+            // known once the index is. The rank is what says which data type
+            // the param holds, so what is written on it is read on that type
+            // rather than on one the whole of the pack shares.
+            return fold_pack_access__CIVisitor(
+              self, expr, decl_generic_params, called_generic_params);
+        }
+        case CI_EXPR_KIND_COUNTOF: {
+            Usize len = 0;
+
+            // How many data types the pack is left is said by the call site,
+            // so it is known here and written as the number it stands for.
+            if (!get_pack_len__CIVisitor(self,
+                                         GET_PTR_RC(String, expr->countof),
+                                         decl_generic_params,
+                                         called_generic_params,
+                                         &len)) {
+                FAILED__CIVisitor(
+                  self, expr, CI_ERROR_KIND_COUNTOF_IS_NOT_WRITTEN_ON_A_PACK);
+
+                return NULL;
+            }
+
+            return NEW_VARIANT(CIExpr,
+                               literal,
+                               clone__Location(&expr->location),
+                               NEW_VARIANT(CIExprLiteral, signed_int, len));
+        }
+        case CI_EXPR_KIND_IDENTIFIER: {
+            // The counter of an unrolled loop is written nowhere the program
+            // reads: the loop is run here, so what is written on the counter
+            // is written as the value the turn holds.
+            Isize value = 0;
+
+            if (search_comptime_binding__CIResolverExpr(
+                  self->comptime_env,
+                  GET_PTR_RC(String, expr->identifier.value),
+                  &value)) {
+                return NEW_VARIANT(
+                  CIExpr,
+                  literal,
+                  clone__Location(&expr->location),
+                  NEW_VARIANT(CIExprLiteral, signed_int, value));
+            }
+
+            return NULL;
+        }
+        case CI_EXPR_KIND_FUNCTION_CALL: {
+            // What a call is made on is read the same way as anything else
+            // written as an expression: a param of a pack read at a rank is
+            // written there as much as anywhere.
+            Vec *params = NEW(Vec); // Vec<CIExpr*>*
+            bool is_folded = false;
+
+            for (Usize i = 0; i < expr->function_call.params->len; ++i) {
+                CIExpr *param = get__Vec(expr->function_call.params, i);
+                CIExpr *folded_param = fold_comptime_exprs__CIVisitor(
+                  self, param, decl_generic_params, called_generic_params);
+
+                is_folded = is_folded || folded_param;
+
+                push__Vec(params,
+                          folded_param ? folded_param : ref__CIExpr(param));
+            }
+
+            if (!is_folded) {
+                FREE_BUFFER_ITEMS(params->buffer, params->len, CIExpr);
+                FREE(Vec, params);
+
+                return NULL;
+            }
+
+            return NEW_VARIANT(CIExpr,
+                               function_call,
+                               clone__Location(&expr->location),
+                               NEW(CIExprFunctionCall,
+                                   ref__CIExpr(expr->function_call.callee),
+                                   params));
+        }
         case CI_EXPR_KIND_GROUPING: {
             CIExpr *grouping = fold_comptime_exprs__CIVisitor(
               self, expr->grouping, decl_generic_params, called_generic_params);
@@ -1951,6 +2234,280 @@ select_comptime_path__CIVisitor(CIVisitor *self,
     return if_->else_ ? clone__CIDeclFunctionBody(if_->else_) : NULL;
 }
 
+// A loop that is run before the program is has to end, and nothing written in
+// it says that it does. What is written past this many turns is taken to be a
+// loop that does not end, and is reported on rather than run.
+#define CI_MAX_UNROLL_TURNS 4096
+
+/// @brief Write the items an unrolled loop stands for where the loop was
+/// written, and say how many were written.
+///
+/// `insert__Vec` is written on an index the body already holds, so what goes
+/// past the end of it is pushed instead: the loop may be the only thing the
+/// body is written with, and the body holds nothing at all once it is taken
+/// out.
+static Usize
+splice_items__CIVisitor(Vec *content, Vec *items, Usize at)
+{
+    for (Usize i = 0; i < items->len; ++i) {
+        void *item = get__Vec(items, i);
+
+        if (at + i < content->len) {
+            insert__Vec(content, item, at + i);
+        } else {
+            push__Vec(content, item);
+        }
+    }
+
+    return items->len;
+}
+
+/// @brief Read the name and the value the init clause of an unrolled loop is
+/// written with, which is what the counter is bound to on the first turn.
+/// @return CIComptimeBinding*? The caller takes it over.
+static CIComptimeBinding *
+bind_unroll_counter__CIVisitor(CIVisitor *self,
+                               const CIStmt *stmt,
+                               CIResolverExpr *resolver)
+{
+    const Vec *init_clauses = stmt->for_.init_clauses;
+
+    // The counter is what the turns of the loop are read from, so exactly one
+    // is written, and it is written as a variable given a value.
+    if (!init_clauses || init_clauses->len != 1) {
+        FAILED__CIVisitor(
+          self, stmt, CI_ERROR_KIND_UNROLLED_LOOP_HOLDS_NO_COUNTER);
+
+        return NULL;
+    }
+
+    const CIDeclFunctionItem *init_clause = get__Vec((Vec *)init_clauses, 0);
+
+    if (init_clause->kind != CI_DECL_FUNCTION_ITEM_KIND_DECL ||
+        init_clause->decl->kind != CI_DECL_KIND_VARIABLE ||
+        !init_clause->decl->variable.expr) {
+        FAILED__CIVisitor(
+          self, stmt, CI_ERROR_KIND_UNROLLED_LOOP_HOLDS_NO_COUNTER);
+
+        return NULL;
+    }
+
+    CIExpr *resolved =
+      run__CIResolverExpr(resolver, init_clause->decl->variable.expr);
+
+    if (!resolved) {
+        return NULL;
+    }
+
+    Isize value = to_literal_integer_value__CIResolverExpr(resolver, resolved);
+
+    FREE(CIExpr, resolved);
+
+    return NEW(CIComptimeBinding, init_clause->decl->variable.name, value);
+}
+
+/// @brief Run the increment of an unrolled loop, and say what the counter
+/// holds on the turn that follows.
+///
+/// Only what is written on the counter is run: `++i`, `i++`, `--i`, `i--` and
+/// `i = <what is known>` say the whole of what the next turn holds, and
+/// anything else is written on more than the loop is run from.
+///
+/// @return Whether the next turn is one the counter holds a known value on.
+static bool
+step_unroll_counter__CIVisitor(CIVisitor *self,
+                               const CIStmt *stmt,
+                               CIResolverExpr *resolver,
+                               CIComptimeBinding *counter)
+{
+    const CIExpr *incr = get__Vec(stmt->for_.exprs2, 0);
+
+    while (incr->kind == CI_EXPR_KIND_GROUPING) {
+        incr = incr->grouping;
+    }
+
+    switch (incr->kind) {
+        case CI_EXPR_KIND_UNARY:
+            switch (incr->unary.kind) {
+                case CI_EXPR_UNARY_KIND_PRE_INCREMENT:
+                case CI_EXPR_UNARY_KIND_POST_INCREMENT:
+                    ++counter->value;
+
+                    return true;
+                case CI_EXPR_UNARY_KIND_PRE_DECREMENT:
+                case CI_EXPR_UNARY_KIND_POST_DECREMENT:
+                    --counter->value;
+
+                    return true;
+                default:
+                    break;
+            }
+
+            break;
+        case CI_EXPR_KIND_BINARY:
+            if (incr->binary.kind == CI_EXPR_BINARY_KIND_ASSIGN) {
+                CIExpr *resolved =
+                  run__CIResolverExpr(resolver, incr->binary.right);
+
+                if (!resolved) {
+                    return false;
+                }
+
+                counter->value =
+                  to_literal_integer_value__CIResolverExpr(resolver, resolved);
+
+                FREE(CIExpr, resolved);
+
+                return true;
+            }
+
+            break;
+        default:
+            break;
+    }
+
+    FAILED__CIVisitor(
+      self, stmt, CI_ERROR_KIND_UNROLLED_LOOP_COUNTER_IS_NOT_STEPPED);
+
+    return false;
+}
+
+/// @brief Run an unrolled loop, and write the body it holds once per turn it
+/// is run for.
+///
+/// The loop is run here rather than left to C: the counter is known on every
+/// turn, so what is written on it is known too, and a param of a pack read at
+/// that rank is read on the data type that rank holds. What is written in
+/// place of the loop is the body it holds, once per turn, and C is given no
+/// loop at all.
+///
+/// @return Vec<CIDeclFunctionItem*>*? The caller takes it over.
+static Vec *
+expand_unrolled_for__CIVisitor(CIVisitor *self,
+                               const CIStmt *stmt,
+                               CIGenericParams *decl_generic_params,
+                               CIGenericParams *called_generic_params)
+{
+    CIResolverExpr resolver = NEW(CIResolverExpr,
+                                  NULL,
+                                  NULL,
+                                  self->file,
+                                  &self->file->file_analysis->count_error,
+                                  false);
+
+    set_comptime_env__CIResolverExpr(&resolver, self->comptime_env);
+
+    CIComptimeBinding *counter =
+      bind_unroll_counter__CIVisitor(self, stmt, &resolver);
+
+    if (!counter) {
+        return NULL;
+    }
+
+    // The counter is written on the loop alone, so what is known while it is
+    // run is what was known around it and the counter on top of it.
+    Vec *parent_env = self->comptime_env;
+    Vec *env = NEW(Vec);
+
+    if (parent_env) {
+        for (Usize i = 0; i < parent_env->len; ++i) {
+            push__Vec(env, get__Vec(parent_env, i));
+        }
+    }
+
+    Vec *res = NEW(Vec); // Vec<CIDeclFunctionItem*>*
+    Usize turns = 0;
+
+    // What the condition is written on is read here rather than by the
+    // resolver: `_Countof` is known once the types the declaration is called
+    // on are, and the resolver has nothing to read of it. It says the same
+    // thing on every turn, so it is read once - and it is read before the
+    // counter is one of the names that are known, since what the counter
+    // holds is what every turn reads of it rather than what the first one
+    // does.
+    CIExpr *cond = NULL;
+
+    if (stmt->for_.expr1) {
+        cond = fold_comptime_exprs__CIVisitor(
+          self, stmt->for_.expr1, decl_generic_params, called_generic_params);
+
+        if (!cond) {
+            cond = ref__CIExpr(stmt->for_.expr1);
+        }
+    }
+
+    push__Vec(env, counter);
+
+    self->comptime_env = env;
+    set_comptime_env__CIResolverExpr(&resolver, env);
+
+    while (true) {
+        // A loop written with no condition is one that does not end, as C
+        // reads it, and there is nothing to run it a known number of turns
+        // for.
+        if (!cond) {
+            FAILED__CIVisitor(
+              self, stmt, CI_ERROR_KIND_UNROLLED_LOOP_DOES_NOT_END);
+
+            break;
+        }
+
+        CIExpr *resolved_cond = run__CIResolverExpr(&resolver, cond);
+
+        if (!resolved_cond) {
+            break;
+        }
+
+        bool holds = is_true__CIResolverExpr(&resolver, resolved_cond);
+
+        FREE(CIExpr, resolved_cond);
+
+        if (!holds) {
+            break;
+        }
+
+        if (++turns > CI_MAX_UNROLL_TURNS) {
+            FAILED__CIVisitor(
+              self, stmt, CI_ERROR_KIND_UNROLLED_LOOP_DOES_NOT_END);
+
+            break;
+        }
+
+        CIDeclFunctionBody *copy = clone__CIDeclFunctionBody(stmt->for_.body);
+
+        // The body is written on the counter this turn holds, so what is
+        // written on it is read on that value rather than left to C.
+        select_comptime_paths__CIVisitor(
+          self, copy, decl_generic_params, called_generic_params);
+
+        push__Vec(res,
+                  NEW_VARIANT(CIDeclFunctionItem,
+                              stmt,
+                              NEW_VARIANT(CIStmt,
+                                          block,
+                                          clone__Location(&stmt->location),
+                                          NEW(CIStmtBlock, copy))));
+
+        // What the increment is written on is the counter, so running it is
+        // what says the value the next turn holds.
+        if (!stmt->for_.exprs2 || stmt->for_.exprs2->len != 1 ||
+            !step_unroll_counter__CIVisitor(self, stmt, &resolver, counter)) {
+            break;
+        }
+    }
+
+    self->comptime_env = parent_env;
+
+    if (cond) {
+        FREE(CIExpr, cond);
+    }
+
+    FREE(Vec, env);
+    FREE(CIComptimeBinding, counter);
+
+    return res;
+}
+
 void
 select_comptime_paths__CIVisitor(CIVisitor *self,
                                  CIDeclFunctionBody *body,
@@ -2081,7 +2638,34 @@ select_comptime_paths__CIVisitor(CIVisitor *self,
                                                  called_generic_params);
 
                 break;
-            case CI_STMT_KIND_FOR:
+            case CI_STMT_KIND_FOR: {
+                // A loop written `inline` is run here rather than by the
+                // program, and what is written in its place is the body it
+                // holds, once per turn it is run for.
+                if (item->stmt.for_.is_unrolled) {
+                    Vec *expanded =
+                      expand_unrolled_for__CIVisitor(self,
+                                                     &item->stmt,
+                                                     decl_generic_params,
+                                                     called_generic_params);
+
+                    remove__Vec(body->content, i);
+                    FREE(CIDeclFunctionItem, item);
+
+                    if (expanded) {
+                        // The turns have been read as they were written, and
+                        // what follows them is what is read next.
+                        i +=
+                          splice_items__CIVisitor(body->content, expanded, i);
+
+                        FREE(Vec, expanded);
+                    }
+
+                    --i;
+
+                    break;
+                }
+
                 fold_comptime_expr_slot__CIVisitor(self,
                                                    &item->stmt.for_.expr1,
                                                    decl_generic_params,
@@ -2092,6 +2676,7 @@ select_comptime_paths__CIVisitor(CIVisitor *self,
                                                  called_generic_params);
 
                 break;
+            }
             case CI_STMT_KIND_RETURN:
                 fold_comptime_expr_slot__CIVisitor(self,
                                                    &item->stmt.return_,

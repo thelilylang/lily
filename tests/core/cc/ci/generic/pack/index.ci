@@ -1,0 +1,16 @@
+//@expected_bin_stdout 42:7\n
+
+// `xs[i]` written on a pack is no access made while the program runs: what it
+// stands for is the param of the rank `i` says, which is known before the
+// program runs and holds the data type that rank is left.
+
+#include <helper.h>
+
+int
+at.[@A, @T...](@A a, @T... xs) {
+	return xs[0] + xs[2];
+}
+
+int main() {
+	printf("%d:%d\n", at.[int, int, int, int](0, 40, 100, 2), 7);
+}

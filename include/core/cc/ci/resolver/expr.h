@@ -28,6 +28,29 @@
 #include <core/cc/ci/ast.h>
 #include <core/cc/ci/parser.h>
 
+// A name bound to the value it holds before the program runs, as the counter
+// of an unrolled loop is, or as a param written `constexpr` is.
+typedef struct CIComptimeBinding
+{
+    const Rc *name; // Rc<String*>* (&)
+    Isize value;
+} CIComptimeBinding;
+
+/**
+ *
+ * @brief Construct CIComptimeBinding type.
+ */
+CONSTRUCTOR(CIComptimeBinding *,
+            CIComptimeBinding,
+            const Rc *name,
+            Isize value);
+
+/**
+ *
+ * @brief Free CIComptimeBinding type.
+ */
+DESTRUCTOR(CIComptimeBinding, CIComptimeBinding *self);
+
 typedef struct CIResolverExpr
 {
     const CIParser *parser; // const CIParser*? (&)
@@ -37,7 +60,34 @@ typedef struct CIResolverExpr
     const CIResultFile *file; // const CIResultFile* (&)
     Usize *count_error;       // Usize* (&)
     bool is_at_preprocessor_time;
+    // The names that are known before the program runs. A name is looked for
+    // here before it is looked for as a declaration, so the innermost one
+    // written on it is the one it holds. NULL where nothing is known, which
+    // is everywhere but an unrolled loop.
+    const Vec *comptime_env; // const Vec<CIComptimeBinding*>*? (&)
 } CIResolverExpr;
+
+/**
+ *
+ * @brief Say what the names known before the program runs are.
+ * @param comptime_env const Vec<CIComptimeBinding*>*? (&)
+ */
+inline void
+set_comptime_env__CIResolverExpr(CIResolverExpr *self, const Vec *comptime_env)
+{
+    self->comptime_env = comptime_env;
+}
+
+/**
+ *
+ * @brief Look for the value a name holds before the program runs.
+ * @param self const Vec<CIComptimeBinding*>*? (&)
+ * @return Whether the name is one that is known.
+ */
+bool
+search_comptime_binding__CIResolverExpr(const Vec *self,
+                                        const String *name,
+                                        Isize *res);
 
 /**
  *
