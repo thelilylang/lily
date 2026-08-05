@@ -1690,6 +1690,14 @@ visit_function_params__CIVisitor(CIVisitor *self,
 
 /// @brief Read what a data type written as an expression stands for, with the
 /// types the declaration is written on read in place of the generics.
+/// @brief Read what a generic written with a rank stands for.
+static CIDataType *
+resolve_pack_element_data_type__CIVisitor(
+  CIVisitor *self,
+  const CIDataType *data_type,
+  CIGenericParams *decl_generic_params,
+  CIGenericParams *called_generic_params);
+
 /// @return CIDataType*? The caller takes it over.
 static CIDataType *
 resolve_comptime_data_type__CIVisitor(CIVisitor *self,
@@ -1709,51 +1717,14 @@ resolve_comptime_data_type__CIVisitor(CIVisitor *self,
 
     // A generic written with a rank is one read on a pack, and what it stands
     // for is the data type that rank holds rather than the one the generic
-    // itself is left. The rank is known before the program runs, since it is
-    // what an unrolled loop binds its counter to.
-    if (expr->data_type->kind == CI_DATA_TYPE_KIND_GENERIC &&
-        expr->data_type->generic_index && decl_generic_params &&
-        called_generic_params) {
-        CIResolverExpr resolver = NEW(CIResolverExpr,
-                                      NULL,
-                                      NULL,
-                                      self->file,
-                                      &self->file->file_analysis->count_error,
-                                      false);
+    // itself is left.
+    {
+        CIDataType *rank_data_type = resolve_pack_element_data_type__CIVisitor(
+          self, expr->data_type, decl_generic_params, called_generic_params);
 
-        set_comptime_env__CIResolverExpr(&resolver, self->comptime_env);
-
-        CIExpr *resolved =
-          run__CIResolverExpr(&resolver, expr->data_type->generic_index);
-
-        if (!resolved) {
-            return NULL;
+        if (rank_data_type) {
+            return rank_data_type;
         }
-
-        Isize rank =
-          to_literal_integer_value__CIResolverExpr(&resolver, resolved);
-
-        FREE(CIExpr, resolved);
-
-        CIGenericParamsRange range;
-
-        if (find_generic_range__CIGenericParams(
-              decl_generic_params,
-              called_generic_params,
-              GET_PTR_RC(String, expr->data_type->generic),
-              &range) != CI_GENERIC_PARAMS_RANGE_RESULT_OK) {
-            return NULL;
-        }
-
-        if (rank < 0 || (Usize)rank >= range.len) {
-            FAILED__CIVisitor(
-              self, expr, CI_ERROR_KIND_PACK_ACCESS_IS_OUT_OF_RANGE);
-
-            return NULL;
-        }
-
-        return ref__CIDataType(
-          get__Vec(called_generic_params->params, range.start + (Usize)rank));
     }
 
     // A data type is only written in place of a generic where a declaration
@@ -1774,6 +1745,70 @@ resolve_comptime_data_type__CIVisitor(CIVisitor *self,
     }
 
     return ref__CIDataType(expr->data_type);
+}
+
+/// @brief Read what a generic written with a rank stands for, which is the
+/// data type the pack holds at that rank.
+///
+/// The rank is known before the program runs, since it is what an unrolled
+/// loop binds its counter to, so `typeof(xs[i])` says one data type wherever
+/// it is written: as what a condition compares as much as what a variable is
+/// declared on.
+///
+/// @param self CIDataType*? (&)
+/// @return CIDataType*? The caller takes it over, or NULL where it is no
+/// generic written with a rank.
+static CIDataType *
+resolve_pack_element_data_type__CIVisitor(
+  CIVisitor *self,
+  const CIDataType *data_type,
+  CIGenericParams *decl_generic_params,
+  CIGenericParams *called_generic_params)
+{
+    if (!data_type || data_type->kind != CI_DATA_TYPE_KIND_GENERIC ||
+        !data_type->generic_index || !decl_generic_params ||
+        !called_generic_params) {
+        return NULL;
+    }
+
+    CIResolverExpr resolver = NEW(CIResolverExpr,
+                                  NULL,
+                                  NULL,
+                                  self->file,
+                                  &self->file->file_analysis->count_error,
+                                  false);
+
+    set_comptime_env__CIResolverExpr(&resolver, self->comptime_env);
+
+    CIExpr *resolved = run__CIResolverExpr(&resolver, data_type->generic_index);
+
+    if (!resolved) {
+        return NULL;
+    }
+
+    Isize rank = to_literal_integer_value__CIResolverExpr(&resolver, resolved);
+
+    FREE(CIExpr, resolved);
+
+    CIGenericParamsRange range;
+
+    if (find_generic_range__CIGenericParams(
+          decl_generic_params,
+          called_generic_params,
+          GET_PTR_RC(String, data_type->generic),
+          &range) != CI_GENERIC_PARAMS_RANGE_RESULT_OK) {
+        return NULL;
+    }
+
+    if (rank < 0 || (Usize)rank >= range.len) {
+        FAILED__CIVisitor(
+          self, data_type, CI_ERROR_KIND_PACK_ACCESS_IS_OUT_OF_RANGE);
+
+        return NULL;
+    }
+
+    return ref__CIDataType(
+      get__Vec(called_generic_params->params, range.start + (Usize)rank));
 }
 
 /// @brief Read what a condition written on data types stands for, which is
@@ -3195,6 +3230,25 @@ select_comptime_paths__CIVisitor(CIVisitor *self,
                                            item->decl->variable.data_type,
                                            decl_generic_params,
                                            called_generic_params);
+
+                // `typeof(xs[i])` says the data type the pack holds at that
+                // rank, wherever it is written: what a variable is declared
+                // on as much as what a condition compares. C has nothing to
+                // read of a generic, so it is written as what it stands for
+                // here rather than left to the substitution, which is written
+                // on a generic that stands for one data type.
+                CIDataType *rank_data_type =
+                  resolve_pack_element_data_type__CIVisitor(
+                    self,
+                    item->decl->variable.data_type,
+                    decl_generic_params,
+                    called_generic_params);
+
+                if (rank_data_type) {
+                    FREE(CIDataType, item->decl->variable.data_type);
+
+                    item->decl->variable.data_type = rank_data_type;
+                }
             }
 
             continue;

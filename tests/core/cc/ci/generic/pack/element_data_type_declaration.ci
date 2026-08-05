@@ -1,0 +1,33 @@
+//@compile_options -s c23
+//@expected_bin_stdout 7:a:hi\n
+
+// `typeof(xs[i])` says the data type the pack holds at that rank wherever it
+// is written, so a variable is declared on it as much as a condition compares
+// it. C has nothing to read of a generic, so it is written as what it stands
+// for rather than left to the substitution, which is written on a generic
+// that stands for one data type and not on a pack.
+
+#include <helper.h>
+
+void
+show.[@T...](@T... xs) {
+	inline for (int i = 0; i < _Countof(xs); ++i) {
+		if (typeof(xs[i]) == int) {
+			typeof(xs[i]) item = xs[i];
+
+			printf("%d:", item);
+		} else if (typeof(xs[i]) == char) {
+			typeof(xs[i]) item = xs[i];
+
+			printf("%c:", item);
+		} else if (typeof(xs[i]) == const char *) {
+			typeof(xs[i]) item = xs[i];
+
+			printf("%s\n", item);
+		}
+	}
+}
+
+int main() {
+	show.[int, char, const char *](7, 'a', "hi");
+}
