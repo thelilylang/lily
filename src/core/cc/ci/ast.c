@@ -2458,7 +2458,13 @@ clone__CIDataType(const CIDataType *self)
                                   clone__CIDataType(self->array.data_type),
                                   self->array.name,
                                   self->array.size,
-                                  ref__CIExpr(self->array.size_expr),
+                                  // An array whose length is known is not
+                                  // always written with an expression saying
+                                  // it: one read of a string says how long it
+                                  // is and is written with none.
+                                  self->array.size_expr
+                                    ? ref__CIExpr(self->array.size_expr)
+                                    : NULL,
                                   self->array.is_static,
                                   self->array.qualifier));
 

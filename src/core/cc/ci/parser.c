@@ -1441,9 +1441,20 @@ exit_loop:;
         return NULL;
     }
 
-    // A `@T` stands in for one data type, so it substitutes to one. A slot able
-    // to stand for several is what this single data type return cannot express.
-    ASSERT(range.len == 1);
+    // A `@T` stands in for one data type, so it substitutes to one. A slot
+    // written on a pack stands for as many as the call site leaves it, which
+    // is what a single data type cannot say: it is written where one is
+    // expected, and reported on rather than read as the first of them.
+    if (range.len != 1) {
+        FAILED_ON_DATA_TYPE__CIParser(
+          file,
+          CAST(CIDataType *, get__Vec(generic_params->params, id)),
+          NEW(
+            CIError,
+            CI_ERROR_KIND_GENERIC_ON_A_PACK_STANDS_FOR_MORE_THAN_ONE_DATA_TYPE));
+
+        return NULL;
+    }
 
     return get__Vec(called_generic_params->params, range.start);
 }

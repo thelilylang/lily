@@ -1,0 +1,29 @@
+//@compile_options -s c23
+//@expected_bin_stdout a:98:\n
+
+// The call says the types it is made on where it is written with them, and
+// what it gives says them where it is not. A param written `constexpr` is no
+// reason to write what is already said by what the call is made with: the
+// declaration is instantiated on the values as well as on the types, and both
+// are read of the call.
+
+#include <helper.h>
+
+void
+show.[@T...](constexpr const char *sep, @T... xs) {
+	inline for (int i = 0; i < _Countof(xs); ++i) {
+		if (typeof_unqual(xs[i]) == char) {
+			printf("%c", xs[i]);
+		} else if (typeof_unqual(xs[i]) == int) {
+			printf("%d", xs[i]);
+		}
+
+		printf("%s", sep);
+	}
+
+	printf("\n");
+}
+
+int main() {
+	show(":", 'a', 98);
+}

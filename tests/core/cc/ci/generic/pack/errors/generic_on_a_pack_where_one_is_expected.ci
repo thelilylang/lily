@@ -1,0 +1,18 @@
+//@compile_options -s c23
+//@expected_compiler_error :12:8: \e[31merror\e[0m[0212]: a generic written on a pack stands for as many data types as the call leaves it, so it is not written where one is expected
+//@expected_compiler_error \e[34m12 |\e[0m make.[@T...](@T... xs) {
+
+// A generic written on a pack stands for as many data types as the call
+// leaves it, so it says nothing where one data type is expected: what the
+// declaration is written to give back is one, and a pack is not it.
+
+#include <helper.h>
+
+@T
+make.[@T...](@T... xs) {
+	return 0;
+}
+
+int main() {
+	return (int)make(1, 2);
+}

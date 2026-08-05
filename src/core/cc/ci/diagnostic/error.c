@@ -317,6 +317,10 @@ to_msg__CIError(const CIError *self)
         case CI_ERROR_KIND_GENERIC_PARAMS_ARE_NOT_READ_FROM_THE_CALL:
             return "the generic params are not read from what the call gives, "
                    "so the call is written with them";
+        case CI_ERROR_KIND_GENERIC_ON_A_PACK_STANDS_FOR_MORE_THAN_ONE_DATA_TYPE:
+            return "a generic written on a pack stands for as many data types "
+                   "as the call leaves it, so it is not written where one is "
+                   "expected";
         case CI_ERROR_KIND_GENERIC_PARAMS_IN_VARIABLE_CONTEXT:
             return "generic params are not expected in a variable context";
         case CI_ERROR_KIND_GENERIC_PARAMS_NOT_EXPECTED_IN_THIS_CONTEXT:
@@ -926,6 +930,8 @@ to_code__CIError(const CIError *self)
             return "0210";
         case CI_ERROR_KIND_GENERIC_PARAMS_ARE_NOT_READ_FROM_THE_CALL:
             return "0211";
+        case CI_ERROR_KIND_GENERIC_ON_A_PACK_STANDS_FOR_MORE_THAN_ONE_DATA_TYPE:
+            return "0212";
         default:
             UNREACHABLE("unknown variant");
     }

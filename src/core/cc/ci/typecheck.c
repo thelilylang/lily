@@ -1399,9 +1399,15 @@ push_pack_expected_data_types__CITypecheck(
     CIGenericParams *called_generic_params =
       typecheck_ctx->current_generic_params.called;
 
-    // A pack is only ever written on a generic declaration, which is only ever
-    // called through an instantiation of it.
-    ASSERT(decl_generic_params && called_generic_params);
+    // A pack is only ever written on a generic declaration, and what it
+    // stands for is said by the instantiation the call is made through. A
+    // call that is written on none of them is one nothing was instantiated
+    // of, which is reported where the call is read: what the call gives is
+    // left unread here rather than read against a pack nothing says the
+    // length of.
+    if (!decl_generic_params || !called_generic_params) {
+        return;
+    }
 
     CIGenericParamsRange range;
 

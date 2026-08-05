@@ -2686,13 +2686,26 @@ fold_comptime_call__CIVisitor(CIVisitor *self,
     }
 
     // A declaration written on generics is instantiated on the types it is
-    // called on as well as on the values it is called with, so a call made on
-    // one says the types it is made on.
-    if (function_decl->function.generic_params && !callee->generic_params) {
-        FAILED__CIVisitor(
-          self, expr, CI_ERROR_KIND_GENERIC_PARAMS_ARE_NOT_FOUND);
+    // called on as well as on the values it is called with. The call says the
+    // types where it is written with them, and what it gives says them where
+    // it is not: a param written `constexpr` is no reason to write what is
+    // already said by what the call is made with.
+    CIGenericParams *call_generic_params = callee->generic_params;
+    CIGenericParams *inferred_generic_params = NULL;
 
-        return NULL;
+    if (function_decl->function.generic_params && !call_generic_params) {
+        inferred_generic_params =
+          infer_generic_params__CIVisitor(self,
+                                          expr,
+                                          function_decl,
+                                          decl_generic_params,
+                                          called_generic_params);
+
+        if (!inferred_generic_params) {
+            return NULL;
+        }
+
+        call_generic_params = inferred_generic_params;
     }
 
     const Vec *decl_params = function_decl->function.params->content;
@@ -2779,12 +2792,12 @@ fold_comptime_call__CIVisitor(CIVisitor *self,
         // is called on as much as on the values, so both are what say one
         // instance from another and both are read of the call.
         CIGenericParams *resolved_generic_params =
-          has_generic__CIGenericParams(callee->generic_params)
+          has_generic__CIGenericParams(call_generic_params)
             ? substitute_generic_params__CIParser(self->file,
-                                                  callee->generic_params,
+                                                  call_generic_params,
                                                   decl_generic_params,
                                                   called_generic_params)
-            : ref__CIGenericParams(callee->generic_params);
+            : ref__CIGenericParams(call_generic_params);
 
         name = serialize_name__CIDeclFunction(&function_decl->function,
                                               resolved_generic_params);
@@ -2794,7 +2807,7 @@ fold_comptime_call__CIVisitor(CIVisitor *self,
         if (!search_function__CIResultFile(self->file, name)) {
             generate_function_gen__CIVisitor(self,
                                              GET_PTR_RC(String, callee->value),
-                                             callee->generic_params,
+                                             call_generic_params,
                                              called_generic_params,
                                              decl_generic_params,
                                              values);
@@ -2837,6 +2850,10 @@ fold_comptime_call__CIVisitor(CIVisitor *self,
     FREE(String, name);
     FREE_BUFFER_ITEMS(values->buffer, values->len, CIComptimeBinding);
     FREE(Vec, values);
+
+    if (inferred_generic_params) {
+        FREE(CIGenericParams, inferred_generic_params);
+    }
 
     return res;
 }
