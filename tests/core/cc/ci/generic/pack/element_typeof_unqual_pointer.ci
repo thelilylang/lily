@@ -1,0 +1,35 @@
+//@compile_options -s c23
+//@expected_bin_stdout cc:cc:c:\n
+
+// `typeof_unqual` says the non-atomic unqualified version of what `typeof`
+// says (C23 6.7.3.6p5), and what it removes is written on the type itself and
+// on nothing else. So a `const char *const` is read as a `const char *`, and
+// what is pointed to is const in both: reading a rank with it is no way of
+// reading a pointer to a character whatever it points to.
+//
+// N3220 6.7.3.6p7 writes the same thing of an array:
+//
+//   const char* const animals[] = { ... };
+//   typeof(animals)        animals_array;   // const char* const [3]
+//   typeof_unqual(animals) animals2_array;  // const char*       [3]
+
+#include <helper.h>
+
+void
+show.[@T...](@T... xs) {
+	inline for (int i = 0; i < _Countof(xs); ++i) {
+		if (typeof_unqual(xs[i]) == const char *) {
+			printf("cc:");
+		}
+
+		if (typeof_unqual(xs[i]) == char *) {
+			printf("c:");
+		}
+	}
+
+	printf("\n");
+}
+
+int main() {
+	show.[const char *const, const char *, char *]("a", "b", "c");
+}
