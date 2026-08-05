@@ -27,6 +27,7 @@
 
 #include <core/cc/ci/ast.h>
 #include <core/cc/ci/diagnostic/emit.h>
+#include <core/cc/ci/infer.h>
 #include <core/cc/ci/resolver/expr.h>
 #include <core/cc/ci/typecheck.h>
 #include <core/cc/ci/visitor.h>
@@ -2325,6 +2326,333 @@ generate_comptime_function__CIVisitor(CIVisitor *self,
                                     is_in_function_body__CIVisitor(self));
 }
 
+// A generic solved from what a call is made on, held while the params are
+// read one after another so that a generic written on more than one of them
+// is read as the same data type on every one.
+typedef struct CISolvedGeneric
+{
+    const Rc *name;  // Rc<String*>* (&)
+    Vec *data_types; // Vec<CIDataType* (&)>* What the generic is left.
+} CISolvedGeneric;
+
+/// @brief Look for what a generic has been solved as.
+/// @return CISolvedGeneric*? (&)
+static CISolvedGeneric *
+search_solved_generic__CIVisitor(Vec *solved, const String *name)
+{
+    for (Usize i = 0; i < solved->len; ++i) {
+        CISolvedGeneric *current = get__Vec(solved, i);
+
+        if (!strcmp(GET_PTR_RC(String, current->name)->buffer, name->buffer)) {
+            return current;
+        }
+    }
+
+    return NULL;
+}
+
+/// @brief Read the data type a call gives an argument.
+///
+/// A character constant has type `int` where C reads it (6.4.4.4p11), and a
+/// generic solved from one is written on what the call is made with rather
+/// than on what C promotes it to: `f('a')` is read on a character, and
+/// `f((int)'a')` on what the cast says, since what a cast says is what is
+/// read of it.
+///
+/// @return CIDataType*? The caller takes it over.
+static CIDataType *
+infer_argument_data_type__CIVisitor(CIVisitor *self,
+                                    const CIExpr *arg,
+                                    CIGenericParams *decl_generic_params,
+                                    CIGenericParams *called_generic_params)
+{
+    return perform_typeof__CIInfer(
+      self->file,
+      arg,
+      self->current_scope ? self->current_scope->scope_id : NULL,
+      called_generic_params,
+      decl_generic_params);
+}
+
+/// @brief Read what a generic written in a param stands for, from the data
+/// type the call gives it.
+///
+/// What is written on a generic is read into: a param written `@T *` says
+/// what `@T` is left from what is pointed to, as a param written `@T` says it
+/// from the whole of it.
+static void
+solve_generics__CIVisitor(Vec *solved,
+                          const CIDataType *param_data_type,
+                          CIDataType *arg_data_type)
+{
+    if (!param_data_type || !arg_data_type) {
+        return;
+    }
+
+    switch (param_data_type->kind) {
+        case CI_DATA_TYPE_KIND_GENERIC: {
+            CISolvedGeneric *current = search_solved_generic__CIVisitor(
+              solved, GET_PTR_RC(String, param_data_type->generic));
+
+            if (!current) {
+                current = lily_malloc(sizeof(CISolvedGeneric));
+                current->name = param_data_type->generic;
+                current->data_types = NEW(Vec);
+
+                push__Vec(solved, current);
+            }
+
+            push__Vec(current->data_types, arg_data_type);
+
+            break;
+        }
+        case CI_DATA_TYPE_KIND_PTR:
+            if (arg_data_type->kind == CI_DATA_TYPE_KIND_PTR) {
+                solve_generics__CIVisitor(solved,
+                                          param_data_type->ptr.data_type,
+                                          arg_data_type->ptr.data_type);
+            }
+
+            break;
+        case CI_DATA_TYPE_KIND_ARRAY:
+            if (arg_data_type->kind == CI_DATA_TYPE_KIND_ARRAY) {
+                solve_generics__CIVisitor(solved,
+                                          param_data_type->array.data_type,
+                                          arg_data_type->array.data_type);
+            }
+
+            break;
+        default:
+            break;
+    }
+}
+
+/// @brief Read the types a call is made on from what it is given, where the
+/// call says none of them.
+///
+/// A declaration written on generics is instantiated on the types it is
+/// called on, and those are what the call gives it: `abc(1, 2)` says as much
+/// as `abc.[int, int](1, 2)` wherever what is given says what each generic is
+/// left. A generic written on more than one param is left one data type, so
+/// what is given has to say the same one on every one of them.
+///
+/// @return CIGenericParams*? The caller takes it over, or NULL where what is
+/// given does not say them, which is reported on.
+static CIGenericParams *
+infer_generic_params__CIVisitor(CIVisitor *self,
+                                const CIExpr *expr,
+                                const CIDecl *function_decl,
+                                CIGenericParams *decl_generic_params,
+                                CIGenericParams *called_generic_params)
+{
+    const CIDeclFunctionParams *params = function_decl->function.params;
+    const Vec *args = expr->function_call.params;
+    Vec *solved = NEW(Vec);   // Vec<CISolvedGeneric*>*
+    Vec *inferred = NEW(Vec); // Vec<CIDataType*>* What is read of the args.
+
+    if (params) {
+        for (Usize i = 0, arg_i = 0; i < params->content->len; ++i) {
+            const CIDeclFunctionParam *param = get__Vec(params->content, i);
+
+            if (param->kind != CI_DECL_FUNCTION_PARAM_KIND_NORMAL ||
+                !param->data_type) {
+                continue;
+            }
+
+            // A param written on a pack stands for as many params as the
+            // call leaves it, so what is left of the call is what says the
+            // data types it is left.
+            bool is_pack = is_pack__CIDataType(param->data_type);
+
+            do {
+                if (arg_i >= args->len) {
+                    break;
+                }
+
+                CIDataType *arg_data_type = infer_argument_data_type__CIVisitor(
+                  self,
+                  get__Vec((Vec *)args, arg_i++),
+                  decl_generic_params,
+                  called_generic_params);
+
+                if (!arg_data_type) {
+                    break;
+                }
+
+                push__Vec(inferred, arg_data_type);
+                solve_generics__CIVisitor(
+                  solved, param->data_type, arg_data_type);
+            } while (is_pack);
+        }
+    }
+
+    // The generics are written out in the order the declaration writes them,
+    // since that is the order a call written with them is read in.
+    Vec *res = NEW(Vec); // Vec<CIDataType*>*
+    CIGenericParams *decl_params = function_decl->function.generic_params;
+
+    for (Usize i = 0; i < decl_params->params->len; ++i) {
+        const CIDataType *generic = get__Vec(decl_params->params, i);
+        CISolvedGeneric *current =
+          generic->kind == CI_DATA_TYPE_KIND_GENERIC
+            ? search_solved_generic__CIVisitor(
+                solved, GET_PTR_RC(String, generic->generic))
+            : NULL;
+
+        // A generic nothing given says is one the call has to be written
+        // with, since there is nothing to read it from.
+        if (!current || current->data_types->len == 0) {
+            FAILED__CIVisitor(
+              self,
+              expr,
+              CI_ERROR_KIND_GENERIC_PARAMS_ARE_NOT_READ_FROM_THE_CALL);
+
+            goto failed;
+        }
+
+        if (generic->generic_is_pack) {
+            for (Usize j = 0; j < current->data_types->len; ++j) {
+                push__Vec(res,
+                          clone__CIDataType(get__Vec(current->data_types, j)));
+            }
+
+            continue;
+        }
+
+        // A generic that stands for one data type is left one, so what is
+        // given has to say the same one wherever it is written.
+        for (Usize j = 1; j < current->data_types->len; ++j) {
+            if (!eq__CIDataType(get__Vec(current->data_types, 0),
+                                get__Vec(current->data_types, j))) {
+                FAILED__CIVisitor(
+                  self,
+                  expr,
+                  CI_ERROR_KIND_GENERIC_IS_LEFT_MORE_THAN_ONE_DATA_TYPE);
+
+                goto failed;
+            }
+        }
+
+        push__Vec(res, clone__CIDataType(get__Vec(current->data_types, 0)));
+    }
+
+    FREE_BUFFER_ITEMS(inferred->buffer, inferred->len, CIDataType);
+    FREE(Vec, inferred);
+
+    for (Usize i = 0; i < solved->len; ++i) {
+        CISolvedGeneric *current = get__Vec(solved, i);
+
+        FREE(Vec, current->data_types);
+        lily_free(current);
+    }
+
+    FREE(Vec, solved);
+
+    return NEW(CIGenericParams, res);
+
+failed:
+    FREE_BUFFER_ITEMS(res->buffer, res->len, CIDataType);
+    FREE(Vec, res);
+    FREE_BUFFER_ITEMS(inferred->buffer, inferred->len, CIDataType);
+    FREE(Vec, inferred);
+
+    for (Usize i = 0; i < solved->len; ++i) {
+        CISolvedGeneric *current = get__Vec(solved, i);
+
+        FREE(Vec, current->data_types);
+        lily_free(current);
+    }
+
+    FREE(Vec, solved);
+
+    return NULL;
+}
+
+/// @brief Write a call made on a declaration written on generics with none of
+/// them written as one made on the instance held for the types it gives.
+/// @return CIExpr*? NULL where the call is written with the types it is made
+/// on, or is made on a declaration written on no generic.
+static CIExpr *
+fold_inferred_generic_call__CIVisitor(CIVisitor *self,
+                                      const CIExpr *expr,
+                                      CIGenericParams *decl_generic_params,
+                                      CIGenericParams *called_generic_params)
+{
+    const CIExprIdentifier *callee =
+      get_callee_identifier__CIExprFunctionCall(&expr->function_call);
+
+    // A call written with the types it is made on says them already, and
+    // there is nothing to read of what it is given.
+    if (!callee || callee->generic_params) {
+        return NULL;
+    }
+
+    CIDecl *function_decl = search_function__CIResultFile(
+      self->file, GET_PTR_RC(String, callee->value));
+
+    if (!function_decl || function_decl->kind != CI_DECL_KIND_FUNCTION ||
+        !function_decl->function.generic_params) {
+        return NULL;
+    }
+
+    // A declaration written with a param `constexpr` is instantiated on the
+    // values as well, which is read where the call is made on the values.
+    if (has_comptime_param__CIDeclFunctionParams(
+          function_decl->function.params)) {
+        return NULL;
+    }
+
+    CIGenericParams *inferred_generic_params = infer_generic_params__CIVisitor(
+      self, expr, function_decl, decl_generic_params, called_generic_params);
+
+    if (!inferred_generic_params) {
+        return NULL;
+    }
+
+    String *name = serialize_name__CIDeclFunction(&function_decl->function,
+                                                  inferred_generic_params);
+
+    if (!search_function__CIResultFile(self->file, name)) {
+        generate_function_gen__CIVisitor(self,
+                                         GET_PTR_RC(String, callee->value),
+                                         inferred_generic_params,
+                                         called_generic_params,
+                                         decl_generic_params,
+                                         NULL);
+    }
+
+    Vec *args = NEW(Vec); // Vec<CIExpr*>*
+
+    for (Usize i = 0; i < expr->function_call.params->len; ++i) {
+        CIExpr *arg = get__Vec(expr->function_call.params, i);
+        CIExpr *folded_arg = fold_comptime_exprs__CIVisitor(
+          self, arg, decl_generic_params, called_generic_params);
+
+        push__Vec(args, folded_arg ? folded_arg : ref__CIExpr(arg));
+    }
+
+    Rc *name_rc = NEW(Rc, clone__String(name));
+    CIExpr *res =
+      NEW_VARIANT(CIExpr,
+                  function_call,
+                  clone__Location(&expr->location),
+                  NEW(CIExprFunctionCall,
+                      NEW_VARIANT(CIExpr,
+                                  identifier,
+                                  clone__Location(&expr->location),
+                                  NEW(CIExprIdentifier,
+                                      name_rc,
+                                      NEW_VARIANT(CIExprIdentifierID, none),
+                                      NULL)),
+                      args));
+
+    FREE_RC(String, name_rc);
+    FREE(String, name);
+    FREE(CIGenericParams, inferred_generic_params);
+
+    return res;
+}
+
 /// @brief Instantiate a declaration on the values its params written
 /// `constexpr` are called with, and write the call as one made on it.
 ///
@@ -2601,6 +2929,16 @@ fold_comptime_exprs__CIVisitor(CIVisitor *self,
             return value ? ref__CIExpr(value) : NULL;
         }
         case CI_EXPR_KIND_FUNCTION_CALL: {
+            // A call made on a declaration written on generics with none of
+            // them written is made on the instance held for the types it
+            // gives, which are read of what it is called with.
+            CIExpr *inferred_call = fold_inferred_generic_call__CIVisitor(
+              self, expr, decl_generic_params, called_generic_params);
+
+            if (inferred_call) {
+                return inferred_call;
+            }
+
             // A call made on a declaration that holds a param written
             // `constexpr` is made on the instance written for the values it
             // gives them, rather than on the declaration itself.

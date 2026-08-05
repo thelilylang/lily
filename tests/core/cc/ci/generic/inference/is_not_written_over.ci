@@ -1,0 +1,20 @@
+//@compile_options -s c23
+//@expected_bin_stdout 1:0\n
+
+// What a call is written with is what it is made on, so a call that says the
+// types it is made on is read on them rather than on what it is given.
+
+#include <helper.h>
+
+int
+is_int.[@T](@T x) {
+	if (@T == int) {
+		return 1;
+	}
+
+	return 0;
+}
+
+int main() {
+	printf("%d:%d\n", is_int(5), is_int.[char](5));
+}

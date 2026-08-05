@@ -725,9 +725,10 @@ infer_expr_literal_data_type__CIInfer(const CIResultFile *file,
         case CI_EXPR_LITERAL_KIND_CHAR:
             return NEW(
               CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_CHAR);
+        // An unsuffixed floating constant has type `double` (6.4.4.2p4).
         case CI_EXPR_LITERAL_KIND_FLOAT:
             return NEW(
-              CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_FLOAT);
+              CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_DOUBLE);
         case CI_EXPR_LITERAL_KIND_SIGNED_INT:
             return NEW(
               CIDataType, SYNTHETIC_LOCATION__CI(), CI_DATA_TYPE_KIND_INT);

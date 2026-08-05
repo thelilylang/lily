@@ -1,0 +1,17 @@
+//@compile_options -s c23
+//@expected_compiler_error :16:9: \e[31merror\e[0m[0210]: a generic is left more than one data type by what the call gives
+//@expected_compiler_error \e[34m16 |\e[0m 	return add(2, 'a');
+
+// A generic that stands for one data type is left one, so what the call gives
+// has to say the same one wherever the generic is written.
+
+#include <helper.h>
+
+int
+add.[@T](@T a, @T b) {
+	return (int)(a + b);
+}
+
+int main() {
+	return add(2, 'a');
+}

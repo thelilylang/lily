@@ -1,0 +1,17 @@
+//@compile_options -s c23
+//@expected_compiler_error :16:14: \e[31merror\e[0m[0211]: the generic params are not read from what the call gives, so the call is written with them
+//@expected_compiler_error \e[34m16 |\e[0m 	return (int)make(1);
+
+// A generic written on none of the params is one nothing the call gives says,
+// so the call is written with the types it is made on.
+
+#include <helper.h>
+
+@T
+make.[@T](int n) {
+	return (@T)n;
+}
+
+int main() {
+	return (int)make(1);
+}

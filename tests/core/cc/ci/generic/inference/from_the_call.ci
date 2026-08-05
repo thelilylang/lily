@@ -1,0 +1,41 @@
+//@compile_options -s c23
+//@expected_bin_stdout 5:97:5:7:3\n
+
+// A declaration written on generics is instantiated on the types it is called
+// on, and those are what the call gives it: `abc(1, 2)` says as much as
+// `abc.[int, int](1, 2)` wherever what is given says what each generic is
+// left. What is written on a generic is read into, so a param written `@T *`
+// says what `@T` is left from what is pointed to.
+
+#include <helper.h>
+
+int
+id.[@T](@T x) {
+	return (int)x;
+}
+
+int
+add.[@T](@T a, @T b) {
+	return (int)(a + b);
+}
+
+int
+first.[@T](@T *p) {
+	return (int)*p;
+}
+
+int
+count.[@T...](@T... xs) {
+	return _Countof(xs);
+}
+
+int main() {
+	int v = 7;
+
+	printf("%d:%d:%d:%d:%d\n",
+	       id(5),
+	       id('a'),
+	       add(2, 3),
+	       first(&v),
+	       count(1, 'a', 2.5));
+}
