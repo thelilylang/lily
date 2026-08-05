@@ -1807,8 +1807,21 @@ resolve_pack_element_data_type__CIVisitor(
         return NULL;
     }
 
-    return ref__CIDataType(
-      get__Vec(called_generic_params->params, range.start + (Usize)rank));
+    CIDataType *rank_data_type =
+      get__Vec(called_generic_params->params, range.start + (Usize)rank);
+
+    // `typeof_unqual` says what the rank holds with none of the qualifiers it
+    // is held with, so what is written is a data type of its own rather than
+    // the one the call site says.
+    if (data_type->generic_index_is_unqual) {
+        CIDataType *res = clone__CIDataType(rank_data_type);
+
+        set_qualifier__CIDataType(res, CI_DATA_TYPE_QUALIFIER_NONE);
+
+        return res;
+    }
+
+    return ref__CIDataType(rank_data_type);
 }
 
 /// @brief Read what a condition written on data types stands for, which is

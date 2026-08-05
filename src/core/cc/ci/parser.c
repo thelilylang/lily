@@ -519,7 +519,9 @@ parse_while_stmt__CIParser(CIParser *self, bool in_switch);
 /// @brief Read `xs[i]` written on a param of a pack as the data type of the
 /// rank `i`.
 static CIDataType *
-parse_pack_element_data_type__CIParser(CIParser *self, const CIExpr *expr);
+parse_pack_element_data_type__CIParser(CIParser *self,
+                                       const CIExpr *expr,
+                                       bool is_unqual);
 
 /// @brief Read `inline for (x : xs) { ... }`.
 static CIDeclFunctionItem *
@@ -3022,7 +3024,11 @@ parse_pre_data_type__CIParser(CIParser *self)
             // is read where the declaration is instantiated.
             {
                 CIDataType *pack_element =
-                  parse_pack_element_data_type__CIParser(self, expr);
+                  parse_pack_element_data_type__CIParser(
+                    self,
+                    expr,
+                    typeof_or_typeof_unqual ==
+                      CI_TOKEN_KIND_KEYWORD_TYPEOF_UNQUAL);
 
                 if (pack_element) {
                     FREE(CIExpr, expr);
@@ -4991,7 +4997,9 @@ parse_while_stmt__CIParser(CIParser *self, bool in_switch)
 /// @return CIDataType*? NULL when it is no access made on a pack, which is
 /// read as what it is written as.
 CIDataType *
-parse_pack_element_data_type__CIParser(CIParser *self, const CIExpr *expr)
+parse_pack_element_data_type__CIParser(CIParser *self,
+                                       const CIExpr *expr,
+                                       bool is_unqual)
 {
     if (!current_scope || expr->kind != CI_EXPR_KIND_ARRAY_ACCESS) {
         return NULL;
@@ -5024,6 +5032,7 @@ parse_pack_element_data_type__CIParser(CIParser *self, const CIExpr *expr)
                                   decl->variable.data_type->generic);
 
     res->generic_index = ref__CIExpr(expr->array_access.access);
+    res->generic_index_is_unqual = is_unqual;
 
     return res;
 }

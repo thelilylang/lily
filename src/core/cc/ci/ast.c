@@ -2191,6 +2191,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->bitint_is_unsigned = false;
     self->generic_is_pack = false;
     self->generic_index = NULL;
+    self->generic_index_is_unqual = false;
 
     return self;
 }
@@ -2213,6 +2214,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->bitint_is_unsigned = false;
     self->generic_is_pack = false;
     self->generic_index = NULL;
+    self->generic_index_is_unqual = false;
 
     return self;
 }
@@ -2235,6 +2237,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->bitint_is_unsigned = false;
     self->generic_is_pack = false;
     self->generic_index = NULL;
+    self->generic_index_is_unqual = false;
 
     return self;
 }
@@ -2257,6 +2260,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->bitint_is_unsigned = false;
     self->generic_is_pack = false;
     self->generic_index = NULL;
+    self->generic_index_is_unqual = false;
 
     return self;
 }
@@ -2279,6 +2283,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->bitint_is_unsigned = false;
     self->generic_is_pack = false;
     self->generic_index = NULL;
+    self->generic_index_is_unqual = false;
 
     return self;
 }
@@ -2301,6 +2306,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->bitint_is_unsigned = false;
     self->generic_is_pack = false;
     self->generic_index = NULL;
+    self->generic_index_is_unqual = false;
 
     return self;
 }
@@ -2323,6 +2329,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->bitint_is_unsigned = false;
     self->generic_is_pack = false;
     self->generic_index = NULL;
+    self->generic_index_is_unqual = false;
 
     return self;
 }
@@ -2345,6 +2352,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->bitint_is_unsigned = false;
     self->generic_is_pack = false;
     self->generic_index = NULL;
+    self->generic_index_is_unqual = false;
 
     return self;
 }
@@ -2367,6 +2375,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->bitint_is_unsigned = false;
     self->generic_is_pack = false;
     self->generic_index = NULL;
+    self->generic_index_is_unqual = false;
 
     return self;
 }
@@ -2389,6 +2398,7 @@ VARIANT_CONSTRUCTOR(CIDataType *,
     self->bitint_is_unsigned = false;
     self->generic_is_pack = false;
     self->generic_index = NULL;
+    self->generic_index_is_unqual = false;
 
     return self;
 }
@@ -2409,6 +2419,7 @@ CONSTRUCTOR(CIDataType *,
     self->bitint_is_unsigned = false;
     self->generic_is_pack = false;
     self->generic_index = NULL;
+    self->generic_index_is_unqual = false;
 
     return self;
 }
@@ -2594,6 +2605,7 @@ clone__CIDataType(const CIDataType *self)
     res->generic_is_pack = self->generic_is_pack;
     res->generic_index =
       self->generic_index ? ref__CIExpr(self->generic_index) : NULL;
+    res->generic_index_is_unqual = self->generic_index_is_unqual;
 
     return res;
 }

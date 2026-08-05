@@ -1633,6 +1633,10 @@ typedef struct CIDataType
     // Whether the generic is written with `...`, that is stands for however
     // many data types the call site leaves it, rather than for one.
     bool generic_is_pack;
+    // Whether the rank is read with `typeof_unqual` rather than `typeof`,
+    // that is whether what it stands for is written with the qualifiers the
+    // pack holds it with or with none of them.
+    bool generic_index_is_unqual;
     // The rank of the data type a generic written on a pack is read at, as
     // `typeof(xs[i])` is written on one. NULL where the generic stands for
     // one data type, which is everywhere but a pack read at a rank.

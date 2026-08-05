@@ -1,0 +1,33 @@
+//@compile_options -s c23
+//@expected_bin_stdout u1:u2:q2:\n
+
+// `typeof_unqual(xs[i])` says the data type the pack holds at that rank with
+// none of the qualifiers it is held with, and `typeof(xs[i])` says it with
+// the ones the call site wrote. So a rank left `const int` is read as `int`
+// by the one and as `const int` by the other, and only the first of them is
+// what a comparison with `int` holds.
+
+#include <helper.h>
+
+void
+show.[@T...](@T... xs) {
+	inline for (int i = 0; i < _Countof(xs); ++i) {
+		if (typeof_unqual(xs[i]) == int) {
+			typeof_unqual(xs[i]) item = xs[i];
+
+			printf("u%d:", item);
+		}
+
+		if (typeof(xs[i]) == int) {
+			typeof(xs[i]) item = xs[i];
+
+			printf("q%d:", item);
+		}
+	}
+
+	printf("\n");
+}
+
+int main() {
+	show.[const int, int](1, 2);
+}
