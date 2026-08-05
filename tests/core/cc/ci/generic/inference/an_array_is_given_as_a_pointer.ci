@@ -1,0 +1,30 @@
+//@compile_options -s c23
+//@expected_bin_stdout hi:5\n
+
+// What a call gives is read as what it is given, and an array is given as a
+// pointer to what it holds: a string says `char *` rather than the `char [N]`
+// it is written as, since that is what the call is made with.
+
+#include <helper.h>
+
+int
+len_of.[@T](@T s) {
+	int n = 0;
+
+	while (s[n]) {
+		++n;
+	}
+
+	return n;
+}
+
+void
+show.[@T](@T s) {
+	printf("%s:", s);
+}
+
+int main() {
+	show("hi");
+
+	printf("%d\n", len_of("hello"));
+}

@@ -1649,14 +1649,22 @@ substitute_data_type__CIParser(const CIResultFile *file,
                           CIDataType,
                           array,
                           clone__Location(&data_type->location),
-                          NEW_VARIANT(CIDataTypeArray,
-                                      sized,
-                                      subs,
-                                      new_array_dt_name,
-                                      data_type->array.size,
-                                      ref__CIExpr(data_type->array.size_expr),
-                                      data_type->array.is_static,
-                                      data_type->array.qualifier));
+                          NEW_VARIANT(
+                            CIDataTypeArray,
+                            sized,
+                            subs,
+                            new_array_dt_name,
+                            data_type->array.size,
+                            // An array whose length is known is not
+                            // always written with an expression
+                            // saying it: one read of a string says
+                            // how long it is and is written with
+                            // none.
+                            data_type->array.size_expr
+                              ? ref__CIExpr(data_type->array.size_expr)
+                              : NULL,
+                            data_type->array.is_static,
+                            data_type->array.qualifier));
 
                         break;
                     case CI_DATA_TYPE_ARRAY_KIND_NONE:

@@ -2366,12 +2366,26 @@ infer_argument_data_type__CIVisitor(CIVisitor *self,
                                     CIGenericParams *decl_generic_params,
                                     CIGenericParams *called_generic_params)
 {
-    return perform_typeof__CIInfer(
+    CIDataType *res = perform_typeof__CIInfer(
       self->file,
       arg,
       self->current_scope ? self->current_scope->scope_id : NULL,
       called_generic_params,
       decl_generic_params);
+
+    if (!res) {
+        return NULL;
+    }
+
+    // What a call gives is read as what it is given, and an array is given as
+    // a pointer to what it holds: a string is read as `char *` rather than as
+    // the `char [N]` it is written as, since that is what the call is made
+    // with.
+    CIDataType *converted = apply_lvalue_conversion__CIDataType(res);
+
+    FREE(CIDataType, res);
+
+    return converted;
 }
 
 /// @brief Read what a generic written in a param stands for, from the data
