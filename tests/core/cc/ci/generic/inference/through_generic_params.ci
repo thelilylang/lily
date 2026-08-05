@@ -1,0 +1,31 @@
+//@compile_options -s c23
+//@expected_bin_stdout 7:7\n
+
+// A struct, a union or a typedef is written on the types it is called on, and
+// a generic written there is read of what the call gives the same way: a param
+// written `Box.[@T] *` says what `@T` is left from the types the `Box` it is
+// given is called on, rather than saying nothing at all.
+
+#include <helper.h>
+
+typedef struct Box.[@T] {
+	@T held;
+} Box.[@T];
+
+void
+put.[@T](Box.[@T] *self, @T item) {
+	self->held = item;
+}
+
+@T
+get.[@T](Box.[@T] *self) {
+	return self->held;
+}
+
+int main() {
+	Box.[int] b;
+
+	put(&b, 7);
+
+	printf("%d:%d\n", get(&b), get.[int](&b));
+}

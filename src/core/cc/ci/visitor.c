@@ -2436,8 +2436,31 @@ solve_generics__CIVisitor(Vec *solved,
             }
 
             break;
-        default:
+        // A struct, a union or a typedef is written on the types it is called
+        // on, and a generic written there is read of what the call gives the
+        // same way: a param written `Vec.[@T] *` says what `@T` is left from
+        // the types the `Vec` it is given is called on.
+        default: {
+            const CIGenericParams *param_generic_params =
+              get_generic_params__CIDataType(param_data_type);
+            const CIGenericParams *arg_generic_params =
+              get_generic_params__CIDataType(arg_data_type);
+
+            if (!param_generic_params || !arg_generic_params ||
+                param_generic_params->params->len !=
+                  arg_generic_params->params->len) {
+                break;
+            }
+
+            for (Usize i = 0; i < param_generic_params->params->len; ++i) {
+                solve_generics__CIVisitor(
+                  solved,
+                  get__Vec(param_generic_params->params, i),
+                  get__Vec(arg_generic_params->params, i));
+            }
+
             break;
+        }
     }
 }
 
