@@ -159,12 +159,6 @@ expect__CIParser(CIParser *self, enum CITokenKind kind, bool emit_error);
 static bool
 expect_many__CIParser(CIParser *self, Usize n, ...);
 
-/// @brief Check if the current token has the same kind than an element in the
-/// list of kind (only one element needs to match for this function not to emit
-/// an error).
-static void
-expect_with_list__CIParser(CIParser *self, Usize n, ...);
-
 /// @brief Advance to n token(s).
 static void
 jump__CIParser(CIParser *self, Usize n);
@@ -277,38 +271,7 @@ parse_array_declarator__CIParser(CIParser *self,
 /// @brief Check whether the size of an array is only known while the program
 /// runs, which is what a variable written in it makes it.
 static bool
-is_variable_length__CIParser(const CIExpr *expr)
-{
-    if (!expr) {
-        return false;
-    }
-
-    switch (expr->kind) {
-        case CI_EXPR_KIND_IDENTIFIER:
-            return expr->identifier.id.kind ==
-                   CI_EXPR_IDENTIFIER_ID_KIND_VARIABLE;
-        case CI_EXPR_KIND_BINARY:
-            return is_variable_length__CIParser(expr->binary.left) ||
-                   is_variable_length__CIParser(expr->binary.right);
-        case CI_EXPR_KIND_UNARY:
-            return is_variable_length__CIParser(expr->unary.expr);
-        case CI_EXPR_KIND_GROUPING:
-            return is_variable_length__CIParser(expr->grouping);
-        case CI_EXPR_KIND_CAST:
-            return is_variable_length__CIParser(expr->cast.expr);
-        case CI_EXPR_KIND_TERNARY:
-            return is_variable_length__CIParser(expr->ternary.cond) ||
-                   is_variable_length__CIParser(expr->ternary.if_) ||
-                   is_variable_length__CIParser(expr->ternary.else_);
-        case CI_EXPR_KIND_ARRAY_ACCESS:
-            return true;
-        case CI_EXPR_KIND_FUNCTION_CALL:
-        case CI_EXPR_KIND_FUNCTION_CALL_BUILTIN:
-            return true;
-        default:
-            return false;
-    }
-}
+is_variable_length__CIParser(const CIExpr *expr);
 
 CIDataType *
 parse_ptr_declarator__CIParser(CIParser *self, CIDataType *pre_data_type);
@@ -488,13 +451,6 @@ search_decl__CIParser(const CIParser *self,
                       CIDecl *(*search_decl)(const CIResultFile *self,
                                              const String *name));
 
-/// @param called_generic_params CIGenericParams*? (&)
-/// @return CIDecl*? (&)
-static inline CIDecl *
-search_function__CIParser(const CIParser *self,
-                          const String *name,
-                          CIGenericParams *called_generic_params);
-
 static CIDeclFunctionItem *
 parse_case__CIParser(CIParser *self);
 
@@ -522,10 +478,6 @@ static CIDataType *
 parse_pack_element_data_type__CIParser(CIParser *self,
                                        const CIExpr *expr,
                                        bool is_unqual);
-
-/// @brief Read `inline for (x : xs) { ... }`.
-static CIDeclFunctionItem *
-parse_unroll_stmt__CIParser(CIParser *self, bool in_loop, bool in_switch);
 
 static CIDeclFunctionItem *
 parse_switch_stmt__CIParser(CIParser *self, bool in_loop);
@@ -1250,26 +1202,6 @@ expect_many__CIParser(CIParser *self, Usize n, ...)
 }
 
 void
-expect_with_list__CIParser(CIParser *self, Usize n, ...)
-{
-    ASSERT(n > 0);
-
-    va_list vl;
-
-    va_start(vl, n);
-
-    while (n--) {
-        if (expect__CIParser(self, va_arg(vl, enum CITokenKind), false)) {
-            return;
-        }
-    }
-
-    va_end(vl);
-
-    FAILED__CIParser(self, NEW(CIError, CI_ERROR_KIND_UNEXPECTED_TOKEN));
-}
-
-void
 jump__CIParser(CIParser *self, Usize n)
 {
     while (n--) {
@@ -1990,6 +1922,40 @@ add_decl_to_scope__CIParser(const CIParser *self,
 {
     return add_decl_to_scope__CIResultFile(
       self->file, decl_ref, scope, must_free, in_function_body);
+}
+
+bool
+is_variable_length__CIParser(const CIExpr *expr)
+{
+    if (!expr) {
+        return false;
+    }
+
+    switch (expr->kind) {
+        case CI_EXPR_KIND_IDENTIFIER:
+            return expr->identifier.id.kind ==
+                   CI_EXPR_IDENTIFIER_ID_KIND_VARIABLE;
+        case CI_EXPR_KIND_BINARY:
+            return is_variable_length__CIParser(expr->binary.left) ||
+                   is_variable_length__CIParser(expr->binary.right);
+        case CI_EXPR_KIND_UNARY:
+            return is_variable_length__CIParser(expr->unary.expr);
+        case CI_EXPR_KIND_GROUPING:
+            return is_variable_length__CIParser(expr->grouping);
+        case CI_EXPR_KIND_CAST:
+            return is_variable_length__CIParser(expr->cast.expr);
+        case CI_EXPR_KIND_TERNARY:
+            return is_variable_length__CIParser(expr->ternary.cond) ||
+                   is_variable_length__CIParser(expr->ternary.if_) ||
+                   is_variable_length__CIParser(expr->ternary.else_);
+        case CI_EXPR_KIND_ARRAY_ACCESS:
+            return true;
+        case CI_EXPR_KIND_FUNCTION_CALL:
+        case CI_EXPR_KIND_FUNCTION_CALL_BUILTIN:
+            return true;
+        default:
+            return false;
+    }
 }
 
 CIDataType *
@@ -4640,15 +4606,6 @@ CIDecl *
 search_enum__CIParser(const CIParser *self, const String *name)
 {
     return search_decl__CIParser(self, name, NULL, &search_enum__CIResultFile);
-}
-
-CIDecl *
-search_function__CIParser(const CIParser *self,
-                          const String *name,
-                          CIGenericParams *called_generic_params)
-{
-    return search_decl__CIParser(
-      self, name, called_generic_params, &search_function__CIResultFile);
 }
 
 CIDecl *
