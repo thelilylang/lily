@@ -55,7 +55,11 @@ typedef struct CISolvedGeneric
     Vec *data_types; // Vec<CIDataType* (&)>* What the generic is left.
 } CISolvedGeneric;
 
-inline bool
+static CONSTRUCTOR(CISolvedGeneric *, CISolvedGeneric, const Rc *name);
+
+static DESTRUCTOR(CISolvedGeneric, CISolvedGeneric *self);
+
+static inline bool
 is_in_function_body__CIVisitor(CIVisitor *self);
 
 static void
@@ -692,6 +696,22 @@ static void
 handler__CIVisitor([[maybe_unused]] void *entity,
                    const CIResultFile *file,
                    void *other_args);
+
+CONSTRUCTOR(CISolvedGeneric *, CISolvedGeneric, const Rc *name)
+{
+    CISolvedGeneric *self = lily_malloc(sizeof(CISolvedGeneric));
+
+    self->name = name;
+    self->data_types = NEW(Vec);
+
+    return self;
+}
+
+DESTRUCTOR(CISolvedGeneric, CISolvedGeneric *self)
+{
+    FREE(Vec, self->data_types);
+    lily_free(self);
+}
 
 bool
 is_in_function_body__CIVisitor(CIVisitor *self)
@@ -2631,9 +2651,7 @@ solve_generics__CIVisitor(Vec *solved,
               solved, GET_PTR_RC(String, param_data_type->generic));
 
             if (!current) {
-                current = lily_malloc(sizeof(CISolvedGeneric));
-                current->name = param_data_type->generic;
-                current->data_types = NEW(Vec);
+                current = NEW(CISolvedGeneric, param_data_type->generic);
 
                 push__Vec(solved, current);
             }
@@ -2787,13 +2805,7 @@ infer_generic_params__CIVisitor(CIVisitor *self,
     FREE_BUFFER_ITEMS(inferred->buffer, inferred->len, CIDataType);
     FREE(Vec, inferred);
 
-    for (Usize i = 0; i < solved->len; ++i) {
-        CISolvedGeneric *current = get__Vec(solved, i);
-
-        FREE(Vec, current->data_types);
-        lily_free(current);
-    }
-
+    FREE_BUFFER_ITEMS(solved->buffer, solved->len, CISolvedGeneric);
     FREE(Vec, solved);
 
     return NEW(CIGenericParams, res);
@@ -2801,16 +2813,11 @@ infer_generic_params__CIVisitor(CIVisitor *self,
 failed:
     FREE_BUFFER_ITEMS(res->buffer, res->len, CIDataType);
     FREE(Vec, res);
+
     FREE_BUFFER_ITEMS(inferred->buffer, inferred->len, CIDataType);
     FREE(Vec, inferred);
 
-    for (Usize i = 0; i < solved->len; ++i) {
-        CISolvedGeneric *current = get__Vec(solved, i);
-
-        FREE(Vec, current->data_types);
-        lily_free(current);
-    }
-
+    FREE_BUFFER_ITEMS(solved->buffer, solved->len, CISolvedGeneric);
     FREE(Vec, solved);
 
     return NULL;
