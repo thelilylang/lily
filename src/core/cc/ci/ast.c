@@ -51,6 +51,20 @@
 #define EXPR_PRECEDENCE_LEVEL_13 40
 #define EXPR_PRECEDENCE_LEVEL_14 35
 
+/// @brief Find a declared generic slot from its name.
+/// @param self const CIGenericParams* (&)
+/// @return the index of the slot, or -1 when no slot carries that name.
+/// @note Deliberately not exposed: an index into the declared params is not on
+/// its own a valid index into the params given at the call site. Go through
+/// `range_at__CIGenericParams` to cross over.
+static Isize
+find_generic__CIGenericParams(const CIGenericParams *self, String *name);
+
+/// @brief Whether the declared slot at `slot` is written with `...`.
+/// @param self const CIGenericParams* (&)
+static bool
+is_pack_slot__CIGenericParams(const CIGenericParams *self, Usize slot);
+
 static CIDeclStructField *
 clone_and_add_field__CIDeclStructFields(CIDeclStructFields *cloned_self,
                                         CIDeclStructField *field,
@@ -262,10 +276,35 @@ static VARIANT_DESTRUCTOR(CIExpr, ternary, CIExpr *self);
 /// @brief Free CIExpr type (CI_EXPR_KIND_UNARY).
 static VARIANT_DESTRUCTOR(CIExpr, unary, CIExpr *self);
 
-/// @brief Free CIStmt type (CI_STMT_KIND_BLOCK).
+/// @brief Clone an operand an `asm` statement reads or writes.
+/// @return CIStmtAsmOperand*
+static CIStmtAsmOperand *
+clone__CIStmtAsmOperand(const CIStmtAsmOperand *self);
+
+/// @brief Clone a vector of what is counted rather than copied.
+/// @param self Vec<Rc<String*>*>*?
+/// @return Vec<Rc<String*>*>*?
+static Vec *
+clone_rc_strings__CIStmtAsm(const Vec *self);
+
+/// @param self Vec<CIStmtAsmOperand*>*?
+/// @return Vec<CIStmtAsmOperand*>*?
+static Vec *
+clone_operands__CIStmtAsm(const Vec *self);
+
+/// @brief Clone the branch of an `if` statement.
+/// @return CIStmtIfBranch*
+static CIStmtIfBranch *
+clone__CIStmtIfBranch(const CIStmtIfBranch *self);
+
+/// @brief Clone a statement, and the bodies it is written with.
+static CIStmt
+clone__CIStmt(const CIStmt *self);
+
 /// @brief Free CIStmt type (CI_STMT_KIND_ASM).
 static inline VARIANT_DESTRUCTOR(CIStmt, asm, const CIStmt *self);
 
+/// @brief Free CIStmt type (CI_STMT_KIND_BLOCK).
 static inline VARIANT_DESTRUCTOR(CIStmt, block, const CIStmt *self);
 
 /// @brief Free CIStmt type (CI_STMT_KIND_CASE).
@@ -702,13 +741,7 @@ clone__CIGenericParams(const CIGenericParams *self)
     return NEW(CIGenericParams, params);
 }
 
-/// @brief Find a declared generic slot from its name.
-/// @param self const CIGenericParams* (&)
-/// @return the index of the slot, or -1 when no slot carries that name.
-/// @note Deliberately not exposed: an index into the declared params is not on
-/// its own a valid index into the params given at the call site. Go through
-/// `range_at__CIGenericParams` to cross over.
-static Isize
+Isize
 find_generic__CIGenericParams(const CIGenericParams *self, String *name)
 {
     for (Usize i = 0; i < self->params->len; ++i) {
@@ -730,9 +763,7 @@ find_generic__CIGenericParams(const CIGenericParams *self, String *name)
     return -1;
 }
 
-/// @brief Whether the declared slot at `slot` is written with `...`.
-/// @param self const CIGenericParams* (&)
-static bool
+bool
 is_pack_slot__CIGenericParams(const CIGenericParams *self, Usize slot)
 {
     const CIDataType *param = get__Vec(self->params, slot);
@@ -3994,9 +4025,7 @@ IMPL_FOR_DEBUG(to_string, CIDeclFunctionBody, const CIDeclFunctionBody *self)
 }
 #endif
 
-/// @brief Clone an operand an `asm` statement reads or writes.
-/// @return CIStmtAsmOperand*
-static CIStmtAsmOperand *
+CIStmtAsmOperand *
 clone__CIStmtAsmOperand(const CIStmtAsmOperand *self)
 {
     return NEW(CIStmtAsmOperand,
@@ -4005,10 +4034,7 @@ clone__CIStmtAsmOperand(const CIStmtAsmOperand *self)
                ref__CIExpr(self->value));
 }
 
-/// @brief Clone a vector of what is counted rather than copied.
-/// @param self Vec<Rc<String*>*>*?
-/// @return Vec<Rc<String*>*>*?
-static Vec *
+Vec *
 clone_rc_strings__CIStmtAsm(const Vec *self)
 {
     if (!self) {
@@ -4024,9 +4050,7 @@ clone_rc_strings__CIStmtAsm(const Vec *self)
     return res;
 }
 
-/// @param self Vec<CIStmtAsmOperand*>*?
-/// @return Vec<CIStmtAsmOperand*>*?
-static Vec *
+Vec *
 clone_operands__CIStmtAsm(const Vec *self)
 {
     if (!self) {
@@ -4042,9 +4066,7 @@ clone_operands__CIStmtAsm(const Vec *self)
     return res;
 }
 
-/// @brief Clone the branch of an `if` statement.
-/// @return CIStmtIfBranch*
-static CIStmtIfBranch *
+CIStmtIfBranch *
 clone__CIStmtIfBranch(const CIStmtIfBranch *self)
 {
     return NEW(CIStmtIfBranch,
@@ -4052,8 +4074,7 @@ clone__CIStmtIfBranch(const CIStmtIfBranch *self)
                clone__CIDeclFunctionBody(self->body));
 }
 
-/// @brief Clone a statement, and the bodies it is written with.
-static CIStmt
+CIStmt
 clone__CIStmt(const CIStmt *self)
 {
     Location location = clone__Location(&self->location);
