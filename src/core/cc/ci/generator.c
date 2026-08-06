@@ -371,6 +371,29 @@ static void
 generate_function_while_stmt__CIGenerator(CIGenerator *self,
                                           const CIStmtWhile *while_);
 
+/// @brief Write the operands one of the lists of an extended `asm` is written
+/// with.
+/// @param operands const Vec<CIStmtAsmOperand*>*? (&)
+static void
+generate_function_asm_operands__CIGenerator(CIGenerator *self,
+                                            const Vec *operands);
+
+/// @brief Write the strings one of the lists of an extended `asm` is written
+/// with.
+/// @param strings const Vec<Rc<String*>*>*? (&)
+static void
+generate_function_asm_strings__CIGenerator(CIGenerator *self,
+                                           const Vec *strings);
+
+/// @brief Write the labels an `asm goto` is written to jump to.
+/// @param labels const Vec<Rc<String*>*>*? (&)
+static void
+generate_function_asm_labels__CIGenerator(CIGenerator *self, const Vec *labels);
+
+static void
+generate_function_asm_stmt__CIGenerator(CIGenerator *self,
+                                        const CIStmtAsm *asm_);
+
 static void
 generate_function_stmt__CIGenerator(CIGenerator *self, const CIStmt *stmt);
 
@@ -2423,10 +2446,7 @@ generate_function_while_stmt__CIGenerator(CIGenerator *self,
     generate_function_body__CIGenerator(self, while_->body);
 }
 
-/// @brief Write the operands one of the lists of an extended `asm` is written
-/// with.
-/// @param operands const Vec<CIStmtAsmOperand*>*? (&)
-static void
+void
 generate_function_asm_operands__CIGenerator(CIGenerator *self,
                                             const Vec *operands)
 {
@@ -2452,10 +2472,7 @@ generate_function_asm_operands__CIGenerator(CIGenerator *self,
     }
 }
 
-/// @brief Write the strings one of the lists of an extended `asm` is written
-/// with.
-/// @param strings const Vec<Rc<String*>*>*? (&)
-static void
+void
 generate_function_asm_strings__CIGenerator(CIGenerator *self,
                                            const Vec *strings)
 {
@@ -2469,9 +2486,7 @@ generate_function_asm_strings__CIGenerator(CIGenerator *self,
     }
 }
 
-/// @brief Write the labels an `asm goto` is written to jump to.
-/// @param labels const Vec<Rc<String*>*>*? (&)
-static void
+void
 generate_function_asm_labels__CIGenerator(CIGenerator *self, const Vec *labels)
 {
     for (Usize i = 0; labels && i < labels->len; ++i) {
@@ -2484,7 +2499,7 @@ generate_function_asm_labels__CIGenerator(CIGenerator *self, const Vec *labels)
     }
 }
 
-static void
+void
 generate_function_asm_stmt__CIGenerator(CIGenerator *self,
                                         const CIStmtAsm *asm_)
 {
