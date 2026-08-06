@@ -41,6 +41,20 @@
       NEW(CIError, error_kind),                                              \
       &(self)->file->file_analysis->count_error)
 
+// A loop that is run before the program is has to end, and nothing written in
+// it says that it does. What is written past this many turns is taken to be a
+// loop that does not end, and is reported on rather than run.
+#define CI_MAX_UNROLL_TURNS 4096
+
+// A generic solved from what a call is made on, held while the params are
+// read one after another so that a generic written on more than one of them
+// is read as the same data type on every one.
+typedef struct CISolvedGeneric
+{
+    const Rc *name;  // Rc<String*>* (&)
+    Vec *data_types; // Vec<CIDataType* (&)>* What the generic is left.
+} CISolvedGeneric;
+
 inline bool
 is_in_function_body__CIVisitor(CIVisitor *self);
 
@@ -325,6 +339,320 @@ static void
 visit_function_params__CIVisitor(CIVisitor *self,
                                  const CIDecl *decl,
                                  CIGenericParams *called_generic_params);
+
+/// @return CIDataType*?
+static CIDataType *
+resolve_comptime_data_type__CIVisitor(CIVisitor *self,
+                                      const CIExpr *expr,
+                                      CIGenericParams *decl_generic_params,
+                                      CIGenericParams *called_generic_params);
+
+/// @brief Read what a generic written with a rank stands for, which is the
+/// data type the pack holds at that rank.
+///
+/// The rank is known before the program runs, since it is what an unrolled
+/// loop binds its counter to, so `typeof(xs[i])` says one data type wherever
+/// it is written: as what a condition compares as much as what a variable is
+/// declared on.
+///
+/// @param self CIDataType*? (&)
+/// @return CIDataType*? The caller takes it over, or NULL where it is no
+/// generic written with a rank.
+static CIDataType *
+resolve_pack_element_data_type__CIVisitor(
+  CIVisitor *self,
+  const CIDataType *data_type,
+  CIGenericParams *decl_generic_params,
+  CIGenericParams *called_generic_params);
+
+/// @brief Read what a condition written on data types stands for, which is
+/// known once the types the declaration is written on are.
+///
+/// A comparison of data types is known wherever it is written, and not only
+/// where a generic is written in it: what a declaration written on no generic
+/// compares is already the two types themselves. C has nothing to read of such
+/// a comparison, so what it stands for is read here in every declaration
+/// rather than left to the C compiler. Only where a generic is written in it
+/// are the types the declaration is called on read in its place.
+///
+/// @param is_true bool* (&) What the condition stands for, written only when
+/// true is returned.
+/// @return true when the condition is known before the program runs.
+static bool
+resolve_comptime_cond__CIVisitor(CIVisitor *self,
+                                 const CIExpr *cond,
+                                 CIGenericParams *decl_generic_params,
+                                 CIGenericParams *called_generic_params,
+                                 bool *is_true);
+
+/// @brief Read what a comparison of data types stands for, wherever it is
+/// written, and write it as what it stands for.
+///
+/// A comparison of data types is known once the types the declaration is
+/// called on are, whether it is written as the whole of a condition or as a
+/// part of one. What is written as a part of one is not a path the
+/// declaration is written on, but it is still known, so it is written as the
+/// 1 or the 0 it stands for rather than left as a comparison C cannot read.
+///
+/// @return CIExpr*? What is written in place of the expression, which the
+/// caller takes over, or NULL when nothing in it is written on data types.
+/// @brief Look for the param written on a pack the given name is written on.
+/// @return CIDataType*? (&) NULL when the name is written on no param, or on
+/// a param that is no pack.
+static const CIDataType *
+get_pack_param_data_type__CIVisitor(const CIVisitor *self, const String *name);
+
+/// @brief Read how many data types the pack the given name is written on is
+/// left.
+/// @return Whether the name is written on a pack the call site says the
+/// length of.
+static bool
+get_pack_len__CIVisitor(const CIVisitor *self,
+                        const String *name,
+                        CIGenericParams *decl_generic_params,
+                        CIGenericParams *called_generic_params,
+                        Usize *res);
+
+/// @brief Say whether the declaration holds a param written `constexpr`.
+/// @param self const CIDeclFunctionParams*? (&)
+static bool
+holds_comptime_param__CIVisitor(const CIDeclFunctionParams *self);
+
+/// @brief Write a value into the name a declaration is instantiated under.
+///
+/// What is written has to say the value and nothing else, since two values
+/// written the same would be the same instance: a kind is written ahead of
+/// every one of them, and what cannot be written as a name is written as the
+/// bytes it holds.
+static void
+put_comptime_value_into_name__CIVisitor(String *res, const CIExpr *value);
+
+/// @brief Write the name a declaration is instantiated on the given values
+/// under, which is the name it is written with and the values it is called
+/// on.
+/// @return String*
+static void
+put_comptime_values_into_name__CIVisitor(String *res, const Vec *values);
+
+/// @return String*
+static String *
+serialize_comptime_name__CIVisitor(const String *name, const Vec *values);
+
+/// @brief Read what `xs[i]` written on a pack stands for, which is the param
+/// of the rank `i` says.
+/// @return CIExpr*? NULL when it is no access made on a pack, or when the
+/// index is only known while the program runs, which is left as it is
+/// written.
+static CIExpr *
+fold_pack_access__CIVisitor(CIVisitor *self,
+                            const CIExpr *expr,
+                            CIGenericParams *decl_generic_params,
+                            CIGenericParams *called_generic_params);
+
+/// @brief Write a declaration instantiated on the values its params written
+/// `constexpr` are called with.
+static void
+generate_comptime_function__CIVisitor(CIVisitor *self,
+                                      const CIDecl *function_decl,
+                                      const String *name,
+                                      Vec *values,
+                                      CIGenericParams *decl_generic_params,
+                                      CIGenericParams *called_generic_params);
+
+/// @brief Look for what a generic has been solved as.
+/// @return CISolvedGeneric*? (&)
+static CISolvedGeneric *
+search_solved_generic__CIVisitor(Vec *solved, const String *name);
+
+/// @brief Read the data type a call gives an argument.
+///
+/// A character constant has type `int` where C reads it (6.4.4.4p11), and a
+/// generic solved from one is written on what the call is made with rather
+/// than on what C promotes it to: `f('a')` is read on a character, and
+/// `f((int)'a')` on what the cast says, since what a cast says is what is
+/// read of it.
+///
+/// @return CIDataType*?
+static CIDataType *
+infer_argument_data_type__CIVisitor(CIVisitor *self,
+                                    const CIExpr *arg,
+                                    CIGenericParams *decl_generic_params,
+                                    CIGenericParams *called_generic_params);
+
+/// @brief Read what a generic written in a param stands for, from the data
+/// type the call gives it.
+///
+/// What is written on a generic is read into: a param written `@T *` says
+/// what `@T` is left from what is pointed to, as a param written `@T` says it
+/// from the whole of it.
+static void
+solve_generics__CIVisitor(Vec *solved,
+                          const CIDataType *param_data_type,
+                          CIDataType *arg_data_type);
+
+/// @brief Read the types a call is made on from what it is given, where the
+/// call says none of them.
+///
+/// A declaration written on generics is instantiated on the types it is
+/// called on, and those are what the call gives it: `abc(1, 2)` says as much
+/// as `abc.[int, int](1, 2)` wherever what is given says what each generic is
+/// left. A generic written on more than one param is left one data type, so
+/// what is given has to say the same one on every one of them.
+///
+/// @return CIGenericParams*?
+static CIGenericParams *
+infer_generic_params__CIVisitor(CIVisitor *self,
+                                const CIExpr *expr,
+                                const CIDecl *function_decl,
+                                CIGenericParams *decl_generic_params,
+                                CIGenericParams *called_generic_params);
+
+/// @brief Write a call made on a declaration written on generics with none of
+/// them written as one made on the instance held for the types it gives.
+/// @return CIExpr*? NULL where the call is written with the types it is made
+/// on, or is made on a declaration written on no generic.
+static CIExpr *
+fold_inferred_generic_call__CIVisitor(CIVisitor *self,
+                                      const CIExpr *expr,
+                                      CIGenericParams *decl_generic_params,
+                                      CIGenericParams *called_generic_params);
+
+/// @brief Instantiate a declaration on the values its params written
+/// `constexpr` are called with, and write the call as one made on it.
+///
+/// A param written `constexpr` holds a value the call site says, and the body
+/// is read on that value: it is written nowhere the program reads, so the
+/// declaration is instantiated on the value as it is on the types a generic
+/// is called on. Each value the declaration is called on is written a
+/// declaration of its own, named after the values it holds.
+///
+/// @return CIExpr*? The call as it is made on the instance, or NULL when the
+/// declaration holds no param written `constexpr`.
+static CIExpr *
+fold_comptime_call__CIVisitor(CIVisitor *self,
+                              const CIExpr *expr,
+                              CIGenericParams *decl_generic_params,
+                              CIGenericParams *called_generic_params);
+
+/// @brief Write what a comparison of data types stands for, and what a param
+/// of a pack read at a rank stands for, in place of the expression.
+static CIExpr *
+fold_comptime_exprs__CIVisitor(CIVisitor *self,
+                               CIExpr *expr,
+                               CIGenericParams *decl_generic_params,
+                               CIGenericParams *called_generic_params);
+
+/// @brief Instantiate a declaration on the values its params written
+/// `constexpr` are called with, and write the call as one made on it.
+///
+/// A param written `constexpr` holds a value the call site says, and the body
+/// is read on that value: it is written nowhere the program reads, so the
+/// declaration is instantiated on the value as it is on the types a generic
+/// is called on. Each value the declaration is called on is written a
+/// declaration of its own, named after the values it holds.
+///
+/// @return CIExpr*? The call as it is made on the instance, or NULL when the
+/// declaration holds no param written `constexpr`.
+static CIExpr *
+fold_comptime_call__CIVisitor(CIVisitor *self,
+                              const CIExpr *expr,
+                              CIGenericParams *decl_generic_params,
+                              CIGenericParams *called_generic_params);
+
+/// @brief Write what a comparison of data types stands for, in place of the
+/// expression the body holds.
+static void
+fold_comptime_expr_slot__CIVisitor(CIVisitor *self,
+                                   CIExpr **slot,
+                                   CIGenericParams *decl_generic_params,
+                                   CIGenericParams *called_generic_params);
+
+/// @brief Write a declaration of a variable the body holds on its own, so
+/// what is written on it in one instance is not written on the one every
+/// other instance holds.
+/// @return CIDecl*
+static CIDecl *
+own_variable_decl__CIVisitor(const CIDecl *self);
+
+/// @brief Write how long an array is written to be as what it stands for,
+/// where that is known before the program runs.
+/// @param data_type CIDataType*? (&)
+static void
+fold_array_size__CIVisitor(CIVisitor *self,
+                           CIDataType *data_type,
+                           CIGenericParams *decl_generic_params,
+                           CIGenericParams *called_generic_params);
+
+/// @brief Read which of the paths a statement is written with is the one the
+/// declaration holds, and keep that one alone.
+///
+/// A condition known before the program runs is one the declaration is
+/// written on either side of rather than one it reads while it runs. The path
+/// it does not hold is not written, and nothing is read of it: that is what
+/// makes a body written on a generic able to hold what only one of the types
+/// it is called on can be written with.
+///
+/// @return CIDeclFunctionBody*? The path the statement holds, which the caller
+/// takes over, or NULL when the statement holds none of them.
+static CIDeclFunctionBody *
+select_comptime_path__CIVisitor(CIVisitor *self,
+                                const CIStmtIf *if_,
+                                CIGenericParams *decl_generic_params,
+                                CIGenericParams *called_generic_params,
+                                bool *is_known);
+
+/// @brief Write the items an unrolled loop stands for where the loop was
+/// written, and say how many were written.
+///
+/// `insert__Vec` is written on an index the body already holds, so what goes
+/// past the end of it is pushed instead: the loop may be the only thing the
+/// body is written with, and the body holds nothing at all once it is taken
+/// out.
+static Usize
+splice_items__CIVisitor(Vec *content, Vec *items, Usize at);
+
+/// @brief Read the name and the value the init clause of an unrolled loop is
+/// written with, which is what the counter is bound to on the first turn.
+/// @return CIComptimeBinding*? The caller takes it over.
+static CIComptimeBinding *
+bind_unroll_counter__CIVisitor(CIVisitor *self,
+                               const CIStmt *stmt,
+                               CIResolverExpr *resolver);
+
+/// @brief Write what the counter holds a step further on, which is a number
+/// however a value known before the program runs may be written.
+static void
+step_counter_value__CIVisitor(CIComptimeBinding *counter, Isize step);
+
+/// @brief Run the increment of an unrolled loop, and say what the counter
+/// holds on the turn that follows.
+///
+/// Only what is written on the counter is run: `++i`, `i++`, `--i`, `i--` and
+/// `i = <what is known>` say the whole of what the next turn holds, and
+/// anything else is written on more than the loop is run from.
+///
+/// @return Whether the next turn is one the counter holds a known value on.
+static bool
+step_unroll_counter__CIVisitor(CIVisitor *self,
+                               const CIStmt *stmt,
+                               CIResolverExpr *resolver,
+                               CIComptimeBinding *counter);
+
+/// @brief Run an unrolled loop, and write the body it holds once per turn it
+/// is run for.
+///
+/// The loop is run here rather than left to C: the counter is known on every
+/// turn, so what is written on it is known too, and a param of a pack read at
+/// that rank is read on the data type that rank holds. What is written in
+/// place of the loop is the body it holds, once per turn, and C is given no
+/// loop at all.
+///
+/// @return Vec<CIDeclFunctionItem*>*? The caller takes it over.
+static Vec *
+expand_unrolled_for__CIVisitor(CIVisitor *self,
+                               const CIStmt *stmt,
+                               CIGenericParams *decl_generic_params,
+                               CIGenericParams *called_generic_params);
 
 /// @brief Keep only the paths the declaration holds, of the statements
 /// written on a condition known once the types it is called on are.
@@ -1689,18 +2017,7 @@ visit_function_params__CIVisitor(CIVisitor *self,
     }
 }
 
-/// @brief Read what a data type written as an expression stands for, with the
-/// types the declaration is written on read in place of the generics.
-/// @brief Read what a generic written with a rank stands for.
-static CIDataType *
-resolve_pack_element_data_type__CIVisitor(
-  CIVisitor *self,
-  const CIDataType *data_type,
-  CIGenericParams *decl_generic_params,
-  CIGenericParams *called_generic_params);
-
-/// @return CIDataType*? The caller takes it over.
-static CIDataType *
+CIDataType *
 resolve_comptime_data_type__CIVisitor(CIVisitor *self,
                                       const CIExpr *expr,
                                       CIGenericParams *decl_generic_params,
@@ -1748,18 +2065,7 @@ resolve_comptime_data_type__CIVisitor(CIVisitor *self,
     return ref__CIDataType(expr->data_type);
 }
 
-/// @brief Read what a generic written with a rank stands for, which is the
-/// data type the pack holds at that rank.
-///
-/// The rank is known before the program runs, since it is what an unrolled
-/// loop binds its counter to, so `typeof(xs[i])` says one data type wherever
-/// it is written: as what a condition compares as much as what a variable is
-/// declared on.
-///
-/// @param self CIDataType*? (&)
-/// @return CIDataType*? The caller takes it over, or NULL where it is no
-/// generic written with a rank.
-static CIDataType *
+CIDataType *
 resolve_pack_element_data_type__CIVisitor(
   CIVisitor *self,
   const CIDataType *data_type,
@@ -1825,20 +2131,7 @@ resolve_pack_element_data_type__CIVisitor(
     return ref__CIDataType(rank_data_type);
 }
 
-/// @brief Read what a condition written on data types stands for, which is
-/// known once the types the declaration is written on are.
-///
-/// A comparison of data types is known wherever it is written, and not only
-/// where a generic is written in it: what a declaration written on no generic
-/// compares is already the two types themselves. C has nothing to read of such
-/// a comparison, so what it stands for is read here in every declaration
-/// rather than left to the C compiler. Only where a generic is written in it
-/// are the types the declaration is called on read in its place.
-///
-/// @param is_true bool* (&) What the condition stands for, written only when
-/// true is returned.
-/// @return true when the condition is known before the program runs.
-static bool
+bool
 resolve_comptime_cond__CIVisitor(CIVisitor *self,
                                  const CIExpr *cond,
                                  CIGenericParams *decl_generic_params,
@@ -1937,21 +2230,7 @@ resolve_comptime_cond__CIVisitor(CIVisitor *self,
     return true;
 }
 
-/// @brief Read what a comparison of data types stands for, wherever it is
-/// written, and write it as what it stands for.
-///
-/// A comparison of data types is known once the types the declaration is
-/// called on are, whether it is written as the whole of a condition or as a
-/// part of one. What is written as a part of one is not a path the
-/// declaration is written on, but it is still known, so it is written as the
-/// 1 or the 0 it stands for rather than left as a comparison C cannot read.
-///
-/// @return CIExpr*? What is written in place of the expression, which the
-/// caller takes over, or NULL when nothing in it is written on data types.
-/// @brief Look for the param written on a pack the given name is written on.
-/// @return CIDataType*? (&) NULL when the name is written on no param, or on
-/// a param that is no pack.
-static const CIDataType *
+const CIDataType *
 get_pack_param_data_type__CIVisitor(const CIVisitor *self, const String *name)
 {
     if (!self->current_decl ||
@@ -1978,11 +2257,7 @@ get_pack_param_data_type__CIVisitor(const CIVisitor *self, const String *name)
     return NULL;
 }
 
-/// @brief Read how many data types the pack the given name is written on is
-/// left.
-/// @return Whether the name is written on a pack the call site says the
-/// length of.
-static bool
+bool
 get_pack_len__CIVisitor(const CIVisitor *self,
                         const String *name,
                         CIGenericParams *decl_generic_params,
@@ -2011,9 +2286,7 @@ get_pack_len__CIVisitor(const CIVisitor *self,
     return true;
 }
 
-/// @brief Say whether the declaration holds a param written `constexpr`.
-/// @param self const CIDeclFunctionParams*? (&)
-static bool
+bool
 holds_comptime_param__CIVisitor(const CIDeclFunctionParams *self)
 {
     if (!self) {
@@ -2031,13 +2304,7 @@ holds_comptime_param__CIVisitor(const CIDeclFunctionParams *self)
     return false;
 }
 
-/// @brief Write a value into the name a declaration is instantiated under.
-///
-/// What is written has to say the value and nothing else, since two values
-/// written the same would be the same instance: a kind is written ahead of
-/// every one of them, and what cannot be written as a name is written as the
-/// bytes it holds.
-static void
+void
 put_comptime_value_into_name__CIVisitor(String *res, const CIExpr *value)
 {
     if (value->kind != CI_EXPR_KIND_LITERAL) {
@@ -2118,10 +2385,6 @@ put_comptime_value_into_name__CIVisitor(String *res, const CIExpr *value)
     }
 }
 
-/// @brief Write the name a declaration is instantiated on the given values
-/// under, which is the name it is written with and the values it is called
-/// on.
-/// @return String* The caller takes it over.
 void
 put_comptime_values_into_name__CIVisitor(String *res, const Vec *values)
 {
@@ -2135,7 +2398,7 @@ put_comptime_values_into_name__CIVisitor(String *res, const Vec *values)
     }
 }
 
-static String *
+String *
 serialize_comptime_name__CIVisitor(const String *name, const Vec *values)
 {
     String *res = clone__String((String *)name);
@@ -2145,12 +2408,7 @@ serialize_comptime_name__CIVisitor(const String *name, const Vec *values)
     return res;
 }
 
-/// @brief Read what `xs[i]` written on a pack stands for, which is the param
-/// of the rank `i` says.
-/// @return CIExpr*? NULL when it is no access made on a pack, or when the
-/// index is only known while the program runs, which is left as it is
-/// written.
-static CIExpr *
+CIExpr *
 fold_pack_access__CIVisitor(CIVisitor *self,
                             const CIExpr *expr,
                             CIGenericParams *decl_generic_params,
@@ -2224,17 +2482,7 @@ fold_pack_access__CIVisitor(CIVisitor *self,
     return res;
 }
 
-/// @brief Write what a comparison of data types stands for, and what a param
-/// of a pack read at a rank stands for, in place of the expression.
-static CIExpr *
-fold_comptime_exprs__CIVisitor(CIVisitor *self,
-                               CIExpr *expr,
-                               CIGenericParams *decl_generic_params,
-                               CIGenericParams *called_generic_params);
-
-/// @brief Write a declaration instantiated on the values its params written
-/// `constexpr` are called with.
-static void
+void
 generate_comptime_function__CIVisitor(CIVisitor *self,
                                       const CIDecl *function_decl,
                                       const String *name,
@@ -2326,18 +2574,7 @@ generate_comptime_function__CIVisitor(CIVisitor *self,
                                     is_in_function_body__CIVisitor(self));
 }
 
-// A generic solved from what a call is made on, held while the params are
-// read one after another so that a generic written on more than one of them
-// is read as the same data type on every one.
-typedef struct CISolvedGeneric
-{
-    const Rc *name;  // Rc<String*>* (&)
-    Vec *data_types; // Vec<CIDataType* (&)>* What the generic is left.
-} CISolvedGeneric;
-
-/// @brief Look for what a generic has been solved as.
-/// @return CISolvedGeneric*? (&)
-static CISolvedGeneric *
+CISolvedGeneric *
 search_solved_generic__CIVisitor(Vec *solved, const String *name)
 {
     for (Usize i = 0; i < solved->len; ++i) {
@@ -2351,16 +2588,7 @@ search_solved_generic__CIVisitor(Vec *solved, const String *name)
     return NULL;
 }
 
-/// @brief Read the data type a call gives an argument.
-///
-/// A character constant has type `int` where C reads it (6.4.4.4p11), and a
-/// generic solved from one is written on what the call is made with rather
-/// than on what C promotes it to: `f('a')` is read on a character, and
-/// `f((int)'a')` on what the cast says, since what a cast says is what is
-/// read of it.
-///
-/// @return CIDataType*? The caller takes it over.
-static CIDataType *
+CIDataType *
 infer_argument_data_type__CIVisitor(CIVisitor *self,
                                     const CIExpr *arg,
                                     CIGenericParams *decl_generic_params,
@@ -2388,13 +2616,7 @@ infer_argument_data_type__CIVisitor(CIVisitor *self,
     return converted;
 }
 
-/// @brief Read what a generic written in a param stands for, from the data
-/// type the call gives it.
-///
-/// What is written on a generic is read into: a param written `@T *` says
-/// what `@T` is left from what is pointed to, as a param written `@T` says it
-/// from the whole of it.
-static void
+void
 solve_generics__CIVisitor(Vec *solved,
                           const CIDataType *param_data_type,
                           CIDataType *arg_data_type)
@@ -2464,18 +2686,7 @@ solve_generics__CIVisitor(Vec *solved,
     }
 }
 
-/// @brief Read the types a call is made on from what it is given, where the
-/// call says none of them.
-///
-/// A declaration written on generics is instantiated on the types it is
-/// called on, and those are what the call gives it: `abc(1, 2)` says as much
-/// as `abc.[int, int](1, 2)` wherever what is given says what each generic is
-/// left. A generic written on more than one param is left one data type, so
-/// what is given has to say the same one on every one of them.
-///
-/// @return CIGenericParams*? The caller takes it over, or NULL where what is
-/// given does not say them, which is reported on.
-static CIGenericParams *
+CIGenericParams *
 infer_generic_params__CIVisitor(CIVisitor *self,
                                 const CIExpr *expr,
                                 const CIDecl *function_decl,
@@ -2605,11 +2816,7 @@ failed:
     return NULL;
 }
 
-/// @brief Write a call made on a declaration written on generics with none of
-/// them written as one made on the instance held for the types it gives.
-/// @return CIExpr*? NULL where the call is written with the types it is made
-/// on, or is made on a declaration written on no generic.
-static CIExpr *
+CIExpr *
 fold_inferred_generic_call__CIVisitor(CIVisitor *self,
                                       const CIExpr *expr,
                                       CIGenericParams *decl_generic_params,
@@ -2690,18 +2897,7 @@ fold_inferred_generic_call__CIVisitor(CIVisitor *self,
     return res;
 }
 
-/// @brief Instantiate a declaration on the values its params written
-/// `constexpr` are called with, and write the call as one made on it.
-///
-/// A param written `constexpr` holds a value the call site says, and the body
-/// is read on that value: it is written nowhere the program reads, so the
-/// declaration is instantiated on the value as it is on the types a generic
-/// is called on. Each value the declaration is called on is written a
-/// declaration of its own, named after the values it holds.
-///
-/// @return CIExpr*? The call as it is made on the instance, or NULL when the
-/// declaration holds no param written `constexpr`.
-static CIExpr *
+CIExpr *
 fold_comptime_call__CIVisitor(CIVisitor *self,
                               const CIExpr *expr,
                               CIGenericParams *decl_generic_params,
@@ -2895,7 +3091,7 @@ fold_comptime_call__CIVisitor(CIVisitor *self,
     return res;
 }
 
-static CIExpr *
+CIExpr *
 fold_comptime_exprs__CIVisitor(CIVisitor *self,
                                CIExpr *expr,
                                CIGenericParams *decl_generic_params,
@@ -3163,9 +3359,7 @@ fold_comptime_exprs__CIVisitor(CIVisitor *self,
     }
 }
 
-/// @brief Write what a comparison of data types stands for, in place of the
-/// expression the body holds.
-static void
+void
 fold_comptime_expr_slot__CIVisitor(CIVisitor *self,
                                    CIExpr **slot,
                                    CIGenericParams *decl_generic_params,
@@ -3184,11 +3378,7 @@ fold_comptime_expr_slot__CIVisitor(CIVisitor *self,
     }
 }
 
-/// @brief Write a declaration of a variable the body holds on its own, so
-/// what is written on it in one instance is not written on the one every
-/// other instance holds.
-/// @return CIDecl* The caller takes it over.
-static CIDecl *
+CIDecl *
 own_variable_decl__CIVisitor(const CIDecl *self)
 {
     return NEW_VARIANT(
@@ -3204,10 +3394,7 @@ own_variable_decl__CIVisitor(const CIDecl *self)
           self->variable.is_local));
 }
 
-/// @brief Write how long an array is written to be as what it stands for,
-/// where that is known before the program runs.
-/// @param data_type CIDataType*? (&)
-static void
+void
 fold_array_size__CIVisitor(CIVisitor *self,
                            CIDataType *data_type,
                            CIGenericParams *decl_generic_params,
@@ -3229,18 +3416,7 @@ fold_array_size__CIVisitor(CIVisitor *self,
                                called_generic_params);
 }
 
-/// @brief Read which of the paths a statement is written with is the one the
-/// declaration holds, and keep that one alone.
-///
-/// A condition known before the program runs is one the declaration is
-/// written on either side of rather than one it reads while it runs. The path
-/// it does not hold is not written, and nothing is read of it: that is what
-/// makes a body written on a generic able to hold what only one of the types
-/// it is called on can be written with.
-///
-/// @return CIDeclFunctionBody*? The path the statement holds, which the caller
-/// takes over, or NULL when the statement holds none of them.
-static CIDeclFunctionBody *
+CIDeclFunctionBody *
 select_comptime_path__CIVisitor(CIVisitor *self,
                                 const CIStmtIf *if_,
                                 CIGenericParams *decl_generic_params,
@@ -3290,19 +3466,7 @@ select_comptime_path__CIVisitor(CIVisitor *self,
     return if_->else_ ? clone__CIDeclFunctionBody(if_->else_) : NULL;
 }
 
-// A loop that is run before the program is has to end, and nothing written in
-// it says that it does. What is written past this many turns is taken to be a
-// loop that does not end, and is reported on rather than run.
-#define CI_MAX_UNROLL_TURNS 4096
-
-/// @brief Write the items an unrolled loop stands for where the loop was
-/// written, and say how many were written.
-///
-/// `insert__Vec` is written on an index the body already holds, so what goes
-/// past the end of it is pushed instead: the loop may be the only thing the
-/// body is written with, and the body holds nothing at all once it is taken
-/// out.
-static Usize
+Usize
 splice_items__CIVisitor(Vec *content, Vec *items, Usize at)
 {
     for (Usize i = 0; i < items->len; ++i) {
@@ -3318,10 +3482,7 @@ splice_items__CIVisitor(Vec *content, Vec *items, Usize at)
     return items->len;
 }
 
-/// @brief Read the name and the value the init clause of an unrolled loop is
-/// written with, which is what the counter is bound to on the first turn.
-/// @return CIComptimeBinding*? The caller takes it over.
-static CIComptimeBinding *
+CIComptimeBinding *
 bind_unroll_counter__CIVisitor(CIVisitor *self,
                                const CIStmt *stmt,
                                CIResolverExpr *resolver)
@@ -3370,9 +3531,7 @@ bind_unroll_counter__CIVisitor(CIVisitor *self,
                            NEW_VARIANT(CIExprLiteral, signed_int, value)));
 }
 
-/// @brief Write what the counter holds a step further on, which is a number
-/// however a value known before the program runs may be written.
-static void
+void
 step_counter_value__CIVisitor(CIComptimeBinding *counter, Isize step)
 {
     Isize value = counter->value->kind == CI_EXPR_KIND_LITERAL
@@ -3389,15 +3548,7 @@ step_counter_value__CIVisitor(CIComptimeBinding *counter, Isize step)
                   NEW_VARIANT(CIExprLiteral, signed_int, value + step));
 }
 
-/// @brief Run the increment of an unrolled loop, and say what the counter
-/// holds on the turn that follows.
-///
-/// Only what is written on the counter is run: `++i`, `i++`, `--i`, `i--` and
-/// `i = <what is known>` say the whole of what the next turn holds, and
-/// anything else is written on more than the loop is run from.
-///
-/// @return Whether the next turn is one the counter holds a known value on.
-static bool
+bool
 step_unroll_counter__CIVisitor(CIVisitor *self,
                                const CIStmt *stmt,
                                CIResolverExpr *resolver,
@@ -3454,17 +3605,7 @@ step_unroll_counter__CIVisitor(CIVisitor *self,
     return false;
 }
 
-/// @brief Run an unrolled loop, and write the body it holds once per turn it
-/// is run for.
-///
-/// The loop is run here rather than left to C: the counter is known on every
-/// turn, so what is written on it is known too, and a param of a pack read at
-/// that rank is read on the data type that rank holds. What is written in
-/// place of the loop is the body it holds, once per turn, and C is given no
-/// loop at all.
-///
-/// @return Vec<CIDeclFunctionItem*>*? The caller takes it over.
-static Vec *
+Vec *
 expand_unrolled_for__CIVisitor(CIVisitor *self,
                                const CIStmt *stmt,
                                CIGenericParams *decl_generic_params,
