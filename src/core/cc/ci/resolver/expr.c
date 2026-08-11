@@ -35,15 +35,20 @@
 // Emit an error located on `expr` and record it in the file's error count,
 // without stopping the resolve: the caller carries on with a poisoned value, so
 // that a single run can report more than one error.
-#define FAILED__CIResolverExpr(self, expr, error_kind)      \
-    emit__Diagnostic(NEW_VARIANT(Diagnostic,                \
-                                 simple_ci_error,           \
-                                 &(self)->file->file_input, \
-                                 &(expr)->location,         \
-                                 NEW(CIError, error_kind),  \
-                                 NULL,                      \
-                                 NULL,                      \
-                                 NULL),                     \
+// The source that is shown is read from the file the location names rather
+// than from the file being analysed: an expression written in a header is
+// resolved where the header is included, so the two are not the same file and
+// reading the line out of the wrong one shows the wrong line.
+#define FAILED__CIResolverExpr(self, expr, error_kind)                 \
+    emit__Diagnostic(NEW_VARIANT(Diagnostic,                           \
+                                 simple_ci_error,                      \
+                                 get_file_from_location__CIResultFile( \
+                                   (self)->file, &(expr)->location),   \
+                                 &(expr)->location,                    \
+                                 NEW(CIError, error_kind),             \
+                                 NULL,                                 \
+                                 NULL,                                 \
+                                 NULL),                                \
                      (self)->count_error)
 
 // Value a resolve function returns after having emitted an error.

@@ -1,0 +1,7 @@
+#ifndef CALL_IN_CONDITION_H
+#define CALL_IN_CONDITION_H
+
+#if UNKNOWN_MACRO(1)
+#endif
+
+#endif // CALL_IN_CONDITION_H

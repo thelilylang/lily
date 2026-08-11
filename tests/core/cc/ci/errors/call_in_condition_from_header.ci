@@ -1,0 +1,16 @@
+//@expected_compiler_error :4:5: \e[31merror\e[0m[0217]: a call is not something a preprocessor condition is written on: an identifier naming no macro is left as `0`, which is not something a call is made on
+//@expected_compiler_error \e[34m4 |\e[0m #if UNKNOWN_MACRO(1)
+
+// What is reported on is not always written in the file being read: a
+// condition is written where the header holding it is, and is resolved where
+// the header is included. The source shown is read from the file the location
+// was written in, so what is shown is the line of the header rather than the
+// line the file being read holds at that number.
+
+#include <helper.h>
+#include <call_in_condition.h>
+
+int main()
+{
+	return 0;
+}

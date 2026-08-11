@@ -29,11 +29,12 @@
 // Emit a located error on `data_type` and count it, without stopping the
 // resolve: the caller carries on with a poisoned data type, so that a single
 // run reports more than one error.
-#define FAILED__CIResolverDataType(file, data_type, error_kind) \
-    EMIT_ERROR__CI(&(file)->file_input,                         \
-                   &(data_type)->location,                      \
-                   NEW(CIError, error_kind),                    \
-                   &(file)->file_analysis->count_error)
+#define FAILED__CIResolverDataType(file, data_type, error_kind)             \
+    EMIT_ERROR__CI(                                                         \
+      get_file_from_location__CIResultFile((file), &(data_type)->location), \
+      &(data_type)->location,                                               \
+      NEW(CIError, error_kind),                                             \
+      &(file)->file_analysis->count_error)
 
 // Data type a resolve function returns after having emitted an error.
 #define POISONED_DATA_TYPE__CIResolverDataType(data_type) \

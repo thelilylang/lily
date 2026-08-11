@@ -988,7 +988,8 @@ check_standard__CIParser(CIParser *self, CIToken *token)
 
           emit__Diagnostic(NEW_VARIANT(Diagnostic,
                                        simple_ci_error,
-                                       &self->file->file_input,
+                                       get_file_from_location__CIResultFile(
+                                         self->file, &location_error),
                                        &location_error,
                                        NEW(CIError, error_kind),
                                        NULL,
@@ -1040,14 +1041,15 @@ check_standard__CIParser(CIParser *self, CIToken *token)
                   UNREACHABLE("unknown standard");
           }
 
-          emit_note__Diagnostic(NEW_VARIANT(Diagnostic,
-                                            simple_ci_note,
-                                            &self->file->file_input,
-                                            &location_error,
-                                            note,
-                                            NULL,
-                                            NULL,
-                                            NULL));
+          emit_note__Diagnostic(NEW_VARIANT(
+            Diagnostic,
+            simple_ci_note,
+            get_file_from_location__CIResultFile(self->file, &location_error),
+            &location_error,
+            note,
+            NULL,
+            NULL,
+            NULL));
       });
 }
 
@@ -6494,10 +6496,11 @@ parse_static_assert__CIParser(CIParser *self)
     CIExpr *resolved_expr = run__CIResolverExpr(&resolver_expr, expr);
 
     if (!is_true__CIResolverExpr(&resolver_expr, resolved_expr)) {
-        EMIT_ERROR__CI(&self->file->file_input,
-                       &location,
-                       NEW_VARIANT(CIError, static_assert_failed, msg),
-                       self->count_error);
+        EMIT_ERROR__CI(
+          get_file_from_location__CIResultFile(self->file, &location),
+          &location,
+          NEW_VARIANT(CIError, static_assert_failed, msg),
+          self->count_error);
     }
 
     FREE(CIExpr, resolved_expr);
