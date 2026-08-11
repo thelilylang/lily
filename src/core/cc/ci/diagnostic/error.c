@@ -507,6 +507,10 @@ to_msg__CIError(const CIError *self)
         case CI_ERROR_KIND_METHOD_RECEIVER_DOES_NOT_FIT:
             return "a method is called on what it takes first, and this one "
                    "is written to take nothing";
+        case CI_ERROR_KIND_UNEXPECTED_FUNCTION_CALL_AT_PREPROCESSOR_TIME:
+            return "a call is not something a preprocessor condition is "
+                   "written on: an identifier naming no macro is left as `0`, "
+                   "which is not something a call is made on";
         case CI_ERROR_KIND_PREPROCESSOR_ERROR:
             return self->preprocessor_error;
         case CI_ERROR_KIND_STATIC_ASSERT_FAILED:
@@ -953,6 +957,8 @@ to_code__CIError(const CIError *self)
             return "0215";
         case CI_ERROR_KIND_METHOD_RECEIVER_DOES_NOT_FIT:
             return "0216";
+        case CI_ERROR_KIND_UNEXPECTED_FUNCTION_CALL_AT_PREPROCESSOR_TIME:
+            return "0217";
         default:
             UNREACHABLE("unknown variant");
     }

@@ -2686,8 +2686,19 @@ run__CIResolverExpr(const CIResolverExpr *self, CIExpr *expr)
     switch (expr->kind) {
         case CI_EXPR_KIND_ALIGNOF:
             return resolve_alignof_expr__CIResolverExpr(self, expr);
+        // What is read at an index is read when the program runs and not
+        // before, and in a preprocessor condition there is nothing to read
+        // at one: what is left of an identifier naming no macro is `0`
+        // (6.10.1p4). It is written by whoever writes the program, so it is
+        // reported on rather than left as something to implement.
         case CI_EXPR_KIND_ARRAY_ACCESS:
-            TODO("array access");
+            FAILED__CIResolverExpr(
+              self,
+              expr,
+              self->is_at_preprocessor_time
+                ? CI_ERROR_KIND_EXPRESSION_NOT_RESOLVABLE_AT_PREPROCESSOR_TIME
+                : CI_ERROR_KIND_CANNOT_USE_NON_COMPTIME_VALUE);
+            return POISONED_EXPR__CIResolverExpr(expr);
         case CI_EXPR_KIND_BINARY: {
             switch (expr->binary.kind) {
                 case CI_EXPR_BINARY_KIND_ASSIGN:
@@ -2871,6 +2882,20 @@ run__CIResolverExpr(const CIResolverExpr *self, CIExpr *expr)
         case CI_EXPR_KIND_COUNTOF:
             FAILED__CIResolverExpr(
               self, expr, CI_ERROR_KIND_CANNOT_USE_NON_COMPTIME_VALUE);
+            return POISONED_EXPR__CIResolverExpr(expr);
+        // What a call returns is known when the program runs and not before,
+        // and in a preprocessor condition it is not even written as a call:
+        // what is left of an identifier naming no macro is `0` (6.10.1p4),
+        // which is not something a call is made on. A condition written on
+        // one is reported on, as it is written by whoever writes the program.
+        case CI_EXPR_KIND_FUNCTION_CALL:
+        case CI_EXPR_KIND_FUNCTION_CALL_BUILTIN:
+            FAILED__CIResolverExpr(
+              self,
+              expr,
+              self->is_at_preprocessor_time
+                ? CI_ERROR_KIND_UNEXPECTED_FUNCTION_CALL_AT_PREPROCESSOR_TIME
+                : CI_ERROR_KIND_CANNOT_USE_NON_COMPTIME_VALUE);
             return POISONED_EXPR__CIResolverExpr(expr);
         default:
             UNREACHABLE("unknown variant");

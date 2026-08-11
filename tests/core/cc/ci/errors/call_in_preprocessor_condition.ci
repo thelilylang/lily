@@ -1,0 +1,15 @@
+//@expected_compiler_error :9:5: \e[31merror\e[0m[0217]: a call is not something a preprocessor condition is written on: an identifier naming no macro is left as `0`, which is not something a call is made on
+//@expected_compiler_error \e[34m9 |\e[0m #if UNKNOWN_MACRO(1)
+
+#include <helper.h>
+
+// What is left of an identifier naming no macro is `0` (6.10.1p4), so this is
+// written as `0(1)` by the time the condition is read - which is not
+// something a call is made on, and is reported on rather than aborted on.
+#if UNKNOWN_MACRO(1)
+#endif
+
+int main()
+{
+	return 0;
+}

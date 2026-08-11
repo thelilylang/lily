@@ -1,0 +1,15 @@
+//@expected_compiler_error :9:20: \e[31merror\e[0m[0109]: this expression is not resolvable at preprocessor-time
+//@expected_compiler_error \e[34m9 |\e[0m #if UNKNOWN_MACRO[0]
+
+#include <helper.h>
+
+// What is left of an identifier naming no macro is `0` (6.10.1p4), so there
+// is nothing here to read at an index. What that is is reported on - it used
+// to be left unimplemented, which exited as though the file had compiled.
+#if UNKNOWN_MACRO[0]
+#endif
+
+int main()
+{
+	return 0;
+}
