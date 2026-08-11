@@ -1,7 +1,7 @@
 // Transpile this with a method convention, which is what makes a function
 // callable on what it takes first:
 //
-//     cic --std c23 --method-convention $type_$name -f examples/ci/vec.ci
+//     cic --std c23 --method-convention "\$type_\$name" -f examples/ci/vec.ci
 //
 // or with `method_convention: $type_$name` written in `CI.yaml`. Without one
 // nothing is a method, and the calls below are written as `Vec_push(&v, i)`.
