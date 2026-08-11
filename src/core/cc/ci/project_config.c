@@ -38,8 +38,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define CI_CONFIG "CI.yaml"
+
+// Length of `$type` and of `$name`, which a name convention is written with.
+#define PLACEHOLDER_LEN 5
 
 struct CIProjectConfigContext
 {
@@ -181,6 +185,14 @@ get_self_tests__CIProjectConfig(struct CIProjectConfigContext *ctx);
 
 static bool
 get_no_state_check__CIProjectConfig(struct CIProjectConfigContext *ctx);
+
+/// @return CIProjectConfigMethodConvention*?
+static CIProjectConfigMethodConvention *
+get_method_convention__CIProjectConfig(struct CIProjectConfigContext *ctx);
+
+/// @return CIProjectConfigTypeConvention*?
+static CIProjectConfigTypeConvention *
+get_type_convention__CIProjectConfig(struct CIProjectConfigContext *ctx);
 
 static CIProjectConfig
 parse_ci_self_test__CIProjectConfig(const CIConfigSelfTest *cli_config);
@@ -687,6 +699,46 @@ get_no_state_check__CIProjectConfig(struct CIProjectConfigContext *ctx)
       NO_STATE_CHECK_VALUE_FALSE);
 }
 
+CIProjectConfigMethodConvention *
+get_method_convention__CIProjectConfig(struct CIProjectConfigContext *ctx)
+{
+    // method_convention: $type_$name
+
+    String *pattern =
+      get_optional_scalar_value__CIProjectConfig(ctx, -1, "method_convention");
+
+    if (!pattern) {
+        return NULL;
+    }
+
+    CIProjectConfigMethodConvention *res =
+      NEW(CIProjectConfigMethodConvention, pattern->buffer);
+
+    FREE(String, pattern);
+
+    return res;
+}
+
+CIProjectConfigTypeConvention *
+get_type_convention__CIProjectConfig(struct CIProjectConfigContext *ctx)
+{
+    // type_convention: $name_t
+
+    String *pattern =
+      get_optional_scalar_value__CIProjectConfig(ctx, -1, "type_convention");
+
+    if (!pattern) {
+        return NULL;
+    }
+
+    CIProjectConfigTypeConvention *res =
+      NEW(CIProjectConfigTypeConvention, pattern->buffer);
+
+    FREE(String, pattern);
+
+    return res;
+}
+
 CONSTRUCTOR(CIProjectConfigLibrary *,
             CIProjectConfigLibrary,
             String *name,
@@ -744,6 +796,136 @@ DESTRUCTOR(CIProjectConfigSelfTest, CIProjectConfigSelfTest *self)
     lily_free(self);
 }
 
+/// @brief Take what a pattern holds between two indexes. What is taken is
+/// empty as often as not - `$type_$name` is written with neither a prefix nor
+/// a suffix - which is what `get_slice__String` is no use for, as it asserts
+/// that it is given something to take.
+static String *
+slice_pattern__CIProjectConfig(const char *pattern, Usize start, Usize end)
+{
+    String *res = NEW(String);
+
+    for (Usize i = start; i < end; ++i) {
+        push__String(res, pattern[i]);
+    }
+
+    return res;
+}
+
+CONSTRUCTOR(CIProjectConfigMethodConvention *,
+            CIProjectConfigMethodConvention,
+            const char *pattern)
+{
+    const char *type_pos = strstr(pattern, "$type");
+    const char *name_pos = strstr(pattern, "$name");
+
+    // `$type` and `$name` are what a name is built out of, so a pattern
+    // holding neither builds the same name for every method, and one holding
+    // either twice has no one name to build.
+    if (!type_pos || !name_pos || type_pos > name_pos ||
+        strstr(type_pos + PLACEHOLDER_LEN, "$type") ||
+        strstr(name_pos + PLACEHOLDER_LEN, "$name")) {
+        FATAL_ERROR__CI(NEW(CIError, CI_ERROR_KIND_INVALID_VALUE));
+    }
+
+    CIProjectConfigMethodConvention *self =
+      lily_malloc(sizeof(CIProjectConfigMethodConvention));
+    const Usize type_index = type_pos - pattern;
+    const Usize name_index = name_pos - pattern;
+
+    self->pattern = from__String((char *)pattern);
+    self->prefix = slice_pattern__CIProjectConfig(pattern, 0, type_index);
+    self->sep = slice_pattern__CIProjectConfig(
+      pattern, type_index + PLACEHOLDER_LEN, name_index);
+    self->suffix = slice_pattern__CIProjectConfig(
+      pattern, name_index + PLACEHOLDER_LEN, self->pattern->len);
+
+    return self;
+}
+
+String *
+build_name__CIProjectConfigMethodConvention(
+  const CIProjectConfigMethodConvention *self,
+  const String *type_name,
+  const String *method_name)
+{
+    String *res = NEW(String);
+
+    append__String(res, self->prefix);
+    append__String(res, type_name);
+    append__String(res, self->sep);
+    append__String(res, method_name);
+    append__String(res, self->suffix);
+
+    return res;
+}
+
+DESTRUCTOR(CIProjectConfigMethodConvention,
+           CIProjectConfigMethodConvention *self)
+{
+    FREE(String, self->pattern);
+    FREE(String, self->prefix);
+    FREE(String, self->sep);
+    FREE(String, self->suffix);
+    lily_free(self);
+}
+
+CONSTRUCTOR(CIProjectConfigTypeConvention *,
+            CIProjectConfigTypeConvention,
+            const char *pattern)
+{
+    const char *name_pos = strstr(pattern, "$name");
+
+    if (!name_pos || strstr(name_pos + PLACEHOLDER_LEN, "$name")) {
+        FATAL_ERROR__CI(NEW(CIError, CI_ERROR_KIND_INVALID_VALUE));
+    }
+
+    CIProjectConfigTypeConvention *self =
+      lily_malloc(sizeof(CIProjectConfigTypeConvention));
+    const Usize name_index = name_pos - pattern;
+
+    self->pattern = from__String((char *)pattern);
+    self->prefix = slice_pattern__CIProjectConfig(pattern, 0, name_index);
+    self->suffix = slice_pattern__CIProjectConfig(
+      pattern, name_index + PLACEHOLDER_LEN, self->pattern->len);
+
+    return self;
+}
+
+bool
+match__CIProjectConfigTypeConvention(const CIProjectConfigTypeConvention *self,
+                                     const String *type_name)
+{
+    // What the convention is written around is the name itself, so a type
+    // named by nothing more than the prefix and the suffix does not match it.
+    if (type_name->len <= self->prefix->len + self->suffix->len) {
+        return false;
+    }
+
+    for (Usize i = 0; i < self->prefix->len; ++i) {
+        if (get__String(type_name, i) != get__String(self->prefix, i)) {
+            return false;
+        }
+    }
+
+    for (Usize i = 0; i < self->suffix->len; ++i) {
+        if (get__String(type_name, type_name->len - self->suffix->len + i) !=
+            get__String(self->suffix, i)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+DESTRUCTOR(CIProjectConfigTypeConvention, CIProjectConfigTypeConvention *self)
+{
+    FREE(String, self->pattern);
+    FREE(String, self->prefix);
+    FREE(String, self->suffix);
+    lily_free(self);
+}
+
 CIProjectConfig
 parse_cic_cli__CIProjectConfig(const CIcConfig *cli_config)
 {
@@ -774,18 +956,25 @@ parse_cic_cli__CIProjectConfig(const CIcConfig *cli_config)
           0);
     }
 
-    return NEW_VARIANT(CIProjectConfig,
-                       cli,
-                       cli_config->standard,
-                       compiler,
-                       get_include_dirs__CIInclude(),
-                       NULL,
-                       init__Vec(1,
-                                 NEW(CIProjectConfigBin,
-                                     bin_name,
-                                     from__String((char *)cli_config->path))),
-                       NULL,
-                       cli_config->no_state_check);
+    return NEW_VARIANT(
+      CIProjectConfig,
+      cli,
+      cli_config->standard,
+      compiler,
+      get_include_dirs__CIInclude(),
+      NULL,
+      init__Vec(1,
+                NEW(CIProjectConfigBin,
+                    bin_name,
+                    from__String((char *)cli_config->path))),
+      NULL,
+      cli_config->no_state_check,
+      cli_config->method_convention
+        ? NEW(CIProjectConfigMethodConvention, cli_config->method_convention)
+        : NULL,
+      cli_config->type_convention
+        ? NEW(CIProjectConfigTypeConvention, cli_config->type_convention)
+        : NULL);
 }
 
 CIProjectConfig
@@ -802,7 +991,9 @@ parse_ci_self_test__CIProjectConfig(const CIConfigSelfTest *cli_config)
       init__Vec(
         1,
         NEW(CIProjectConfigSelfTest, from__String((char *)cli_config->path))),
-      false);
+      false,
+      NULL,
+      NULL);
 }
 
 CIProjectConfig
@@ -845,6 +1036,10 @@ parse_yaml__CIProjectConfig(const char *config_dir)
     Vec *bins = get_bins__CIProjectConfig(&ctx);
     Vec *self_tests = get_self_tests__CIProjectConfig(&ctx);
     bool no_state_check = get_no_state_check__CIProjectConfig(&ctx);
+    CIProjectConfigMethodConvention *method_convention =
+      get_method_convention__CIProjectConfig(&ctx);
+    CIProjectConfigTypeConvention *type_convention =
+      get_type_convention__CIProjectConfig(&ctx);
 
     FREE(String, path_ci_config);
     FREE(String, absolute_config_dir);
@@ -858,7 +1053,9 @@ parse_yaml__CIProjectConfig(const char *config_dir)
                        libraries,
                        bins,
                        self_tests,
-                       no_state_check);
+                       no_state_check,
+                       method_convention,
+                       type_convention);
 }
 
 DESTRUCTOR(CIProjectConfig, const CIProjectConfig *self)
@@ -894,5 +1091,13 @@ DESTRUCTOR(CIProjectConfig, const CIProjectConfig *self)
                           self->self_tests->len,
                           CIProjectConfigSelfTest);
         FREE(Vec, self->self_tests);
+    }
+
+    if (self->method_convention) {
+        FREE(CIProjectConfigMethodConvention, self->method_convention);
+    }
+
+    if (self->type_convention) {
+        FREE(CIProjectConfigTypeConvention, self->type_convention);
     }
 }

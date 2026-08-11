@@ -494,6 +494,19 @@ to_msg__CIError(const CIError *self)
         case CI_ERROR_KIND_VA_ARGS_IN_NON_VARIADIC_MACRO:
             return "`__VA_ARGS__` cannot be used in a macro which has no "
                    "variadic param";
+        case CI_ERROR_KIND_AMBIGUOUS_METHOD_RECEIVER:
+            return "this name is written on a tag and on a typedef which are "
+                   "not the same type, so there is no one type the method is "
+                   "looked for on";
+        case CI_ERROR_KIND_METHOD_IS_NOT_FOUND:
+            return "no method of this name is written on this type";
+        case CI_ERROR_KIND_METHOD_IS_SHADOWED_BY_MEMBER:
+            return "this type holds a member of this name which is called "
+                   "through, as well as a method of this name: write the call "
+                   "on the method by its name to make the call on the method";
+        case CI_ERROR_KIND_METHOD_RECEIVER_DOES_NOT_FIT:
+            return "a method is called on what it takes first, and this one "
+                   "is written to take nothing";
         case CI_ERROR_KIND_PREPROCESSOR_ERROR:
             return self->preprocessor_error;
         case CI_ERROR_KIND_STATIC_ASSERT_FAILED:
@@ -932,6 +945,14 @@ to_code__CIError(const CIError *self)
             return "0211";
         case CI_ERROR_KIND_GENERIC_ON_A_PACK_STANDS_FOR_MORE_THAN_ONE_DATA_TYPE:
             return "0212";
+        case CI_ERROR_KIND_AMBIGUOUS_METHOD_RECEIVER:
+            return "0213";
+        case CI_ERROR_KIND_METHOD_IS_NOT_FOUND:
+            return "0214";
+        case CI_ERROR_KIND_METHOD_IS_SHADOWED_BY_MEMBER:
+            return "0215";
+        case CI_ERROR_KIND_METHOD_RECEIVER_DOES_NOT_FIT:
+            return "0216";
         default:
             UNREACHABLE("unknown variant");
     }

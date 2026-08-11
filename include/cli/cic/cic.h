@@ -38,7 +38,9 @@ enum CIcOptionId
     CIC_OPTION_ID_STD,
     CIC_OPTION_ID_INCLUDE,
     CIC_OPTION_ID_INCLUDE0,
-    CIC_OPTION_ID_NO_STATE_CHECK
+    CIC_OPTION_ID_NO_STATE_CHECK,
+    CIC_OPTION_ID_METHOD_CONVENTION,
+    CIC_OPTION_ID_TYPE_CONVENTION
 };
 
 #define CIC_OPTIONS(self, add_option)                                          \
@@ -50,6 +52,10 @@ enum CIcOptionId
       NEW(CliOption, CIC_OPTION_ID_INCLUDE0, "--include0");                    \
     CliOption *no_state_check =                                                \
       NEW(CliOption, CIC_OPTION_ID_NO_STATE_CHECK, "--no-state-check");        \
+    CliOption *method_convention =                                             \
+      NEW(CliOption, CIC_OPTION_ID_METHOD_CONVENTION, "--method-convention");  \
+    CliOption *type_convention =                                               \
+      NEW(CliOption, CIC_OPTION_ID_TYPE_CONVENTION, "--type-convention");      \
                                                                                \
     value__CliOption(                                                          \
       help__CliOption(mode, "Specify transpilation mode (DEBUG | RELEASE)"),   \
@@ -76,13 +82,27 @@ enum CIcOptionId
     value__CliOption(include0,                                                 \
                      NEW(CliValue, CLI_VALUE_KIND_SINGLE, "DIR", true));       \
     help__CliOption(no_state_check, "Disable the state checker");              \
+    help__CliOption(method_convention,                                         \
+                    "Name convention a function follows to be callable as a "  \
+                    "method (e.g. `$type_$name`)");                            \
+    value__CliOption(                                                          \
+      method_convention,                                                       \
+      NEW(CliValue, CLI_VALUE_KIND_SINGLE, "CONVENTION", true));               \
+    help__CliOption(type_convention,                                           \
+                    "Name convention a type follows to be given methods "      \
+                    "(e.g. `$name_t`, default: any name)");                    \
+    value__CliOption(                                                          \
+      type_convention,                                                         \
+      NEW(CliValue, CLI_VALUE_KIND_SINGLE, "CONVENTION", true));               \
                                                                                \
     add_option(self, mode);                                                    \
     add_option(self, file);                                                    \
     add_option(self, standard);                                                \
     add_option(self, include);                                                 \
     add_option(self, include0);                                                \
-    add_option(self, no_state_check);
+    add_option(self, no_state_check);                                          \
+    add_option(self, method_convention);                                       \
+    add_option(self, type_convention);
 
 Cli
 build__CliCIc(Vec *args);

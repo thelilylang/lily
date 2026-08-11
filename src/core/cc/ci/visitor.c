@@ -28,6 +28,7 @@
 #include <core/cc/ci/ast.h>
 #include <core/cc/ci/diagnostic/emit.h>
 #include <core/cc/ci/infer.h>
+#include <core/cc/ci/method.h>
 #include <core/cc/ci/resolver/expr.h>
 #include <core/cc/ci/typecheck.h>
 #include <core/cc/ci/visitor.h>
@@ -1655,6 +1656,22 @@ visit_function_expr__CIVisitor(CIVisitor *self,
                                CIGenericParams *called_generic_params,
                                CIGenericParams *decl_generic_params)
 {
+    // A call written on a receiver is rewritten as the call it stands for
+    // before it is visited, so that a method written on generics is
+    // instantiated for what it is called on like any other call - the visitor
+    // instantiates what is written as a call, and an access is not one.
+    //
+    // What cannot be rewritten is left as it is written and reported on by
+    // the typecheck, which reads it again: there is nothing to instantiate
+    // for a call that is not made.
+    if (self->current_scope) {
+        rewrite_call__CIMethod(self->file,
+                               (CIExpr *)expr,
+                               self->current_scope->scope_id,
+                               called_generic_params,
+                               decl_generic_params);
+    }
+
     switch (expr->kind) {
         case CI_EXPR_KIND_ALIGNOF:
             visit_function_expr__CIVisitor(

@@ -50,6 +50,12 @@ typedef struct CIcConfig
     // Store values passed via the `--include0` option
     Vec *includes0; // Vec<char* (&)>*
     bool no_state_check;
+
+    // Name convention a function follows to be callable as a method, and the
+    // one a type follows to be given methods. Both are passed as written, as
+    // `CIProjectConfig` is what reads a convention out of them.
+    const char *method_convention; // const char* (&)?
+    const char *type_convention;   // const char* (&)?
 } CIcConfig;
 
 /**
@@ -64,7 +70,9 @@ inline CONSTRUCTOR(CIcConfig,
                    enum CIStandard standard,
                    Vec *includes,
                    Vec *includes0,
-                   bool no_state_check)
+                   bool no_state_check,
+                   const char *method_convention,
+                   const char *type_convention)
 {
     return (CIcConfig){ .path = path,
                         .mode = mode,
@@ -72,7 +80,9 @@ inline CONSTRUCTOR(CIcConfig,
                         .standard = standard,
                         .includes = includes,
                         .includes0 = includes0,
-                        .no_state_check = no_state_check };
+                        .no_state_check = no_state_check,
+                        .method_convention = method_convention,
+                        .type_convention = type_convention };
 }
 
 /**

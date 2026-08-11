@@ -1,0 +1,28 @@
+//@compile_options --method-convention $type_$name
+//@expected_bin_stdout 4\n4\n
+
+#include <helper.h>
+
+// A method named after a member it reads is ordinary C, and is what the
+// accessor of a type is usually written as. The member is what `v.len` is
+// read as, and the method is what `v.len()` is read as.
+typedef struct Vec {
+	size_t len;
+} Vec;
+
+size_t Vec_len(const Vec *self)
+{
+	return self->len;
+}
+
+int main()
+{
+	Vec v;
+
+	v.len = 4;
+
+	printf("%zu\n", v.len);
+	printf("%zu\n", v.len());
+
+	return 0;
+}

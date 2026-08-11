@@ -43,7 +43,9 @@ inline CONSTRUCTOR(CIConfigCompile,
                    enum CIStandard standard,
                    Vec *includes,
                    Vec *includes0,
-                   bool no_state_check)
+                   bool no_state_check,
+                   const char *method_convention,
+                   const char *type_convention)
 {
     return NEW(CIcConfig,
                path,
@@ -52,7 +54,9 @@ inline CONSTRUCTOR(CIConfigCompile,
                standard,
                includes,
                includes0,
-               no_state_check);
+               no_state_check,
+               method_convention,
+               type_convention);
 }
 
 /**

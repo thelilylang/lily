@@ -26,6 +26,7 @@
 
 #include <core/cc/ci/diagnostic/emit.h>
 #include <core/cc/ci/infer.h>
+#include <core/cc/ci/method.h>
 #include <core/cc/ci/resolver/data_type.h>
 #include <core/cc/ci/resolver/data_type_access.h>
 #include <core/cc/ci/typecheck.h>
@@ -1818,6 +1819,39 @@ typecheck_expr__CITypecheck(const CITypecheck *self,
             typecheck_ctx->current_generic_params.decl) ||
            (!typecheck_ctx->current_generic_params.called &&
             !typecheck_ctx->current_generic_params.decl));
+
+    // A call written on a receiver is rewritten as the call it stands for
+    // before anything is read of it, so what is typechecked - and what is
+    // generated afterwards - is the ordinary call and nothing else.
+    switch (
+      rewrite_call__CIMethod(self->file,
+                             (CIExpr *)given_expr,
+                             typecheck_ctx->current_scope_id,
+                             typecheck_ctx->current_generic_params.called,
+                             typecheck_ctx->current_generic_params.decl)) {
+        case CI_METHOD_REWRITE_STATUS_AMBIGUOUS_RECEIVER:
+            FAILED__CITypecheck(
+              self, given_expr, CI_ERROR_KIND_AMBIGUOUS_METHOD_RECEIVER);
+
+            return;
+        case CI_METHOD_REWRITE_STATUS_UNKNOWN_METHOD:
+            FAILED__CITypecheck(
+              self, given_expr, CI_ERROR_KIND_METHOD_IS_NOT_FOUND);
+
+            return;
+        case CI_METHOD_REWRITE_STATUS_SHADOWED_BY_FIELD:
+            FAILED__CITypecheck(
+              self, given_expr, CI_ERROR_KIND_METHOD_IS_SHADOWED_BY_MEMBER);
+
+            return;
+        case CI_METHOD_REWRITE_STATUS_RECEIVER_DOES_NOT_FIT:
+            FAILED__CITypecheck(
+              self, given_expr, CI_ERROR_KIND_METHOD_RECEIVER_DOES_NOT_FIT);
+
+            return;
+        default:
+            break;
+    }
 
     // Typecheck expression content.
     switch (given_expr->kind) {

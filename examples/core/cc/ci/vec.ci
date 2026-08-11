@@ -1,3 +1,11 @@
+// Transpile this with a method convention, which is what makes a function
+// callable on what it takes first:
+//
+//     cic --std c23 --method-convention $type_$name -f examples/ci/vec.ci
+//
+// or with `method_convention: $type_$name` written in `CI.yaml`. Without one
+// nothing is a method, and the calls below are written as `Vec_push(&v, i)`.
+
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -10,7 +18,9 @@ typedef struct Vec.[@T] {
 	size_t capacity;
 } Vec.[@T];
 
-Vec.[@T] new_vec.[@T]() {
+// A constructor is called on nothing, so it is not a method and is written by
+// its name like any other function.
+Vec.[@T] Vec_new.[@T]() {
 	return (Vec.[@T]){
 		.buffer = NULL,
 		.len = 0,
@@ -19,9 +29,9 @@ Vec.[@T] new_vec.[@T]() {
 }
 
 void
-push_vec.[@T](Vec.[@T] *self, @T item)
+Vec_push.[@T](Vec.[@T] *self, @T item)
 {
-	if (!self->buffer) {	
+	if (!self->buffer) {
 		self->buffer = malloc(sizeof(@T) * self->capacity);
 	}
 
@@ -35,13 +45,13 @@ push_vec.[@T](Vec.[@T] *self, @T item)
 }
 
 @T *
-get_vec.[@T](Vec.[@T] *self, size_t index)
+Vec_get.[@T](Vec.[@T] *self, size_t index)
 {
 	return index >= self->len ? NULL : &self->buffer[index];
 }
 
 void
-free_vec.[@T](Vec.[@T] *self)
+Vec_free.[@T](Vec.[@T] *self)
 {
 	if (self->buffer) {
 		free(self->buffer);
@@ -49,15 +59,18 @@ free_vec.[@T](Vec.[@T] *self)
 }
 
 int main() {
-	Vec.[int] v = new_vec.[int]();
+	Vec.[int] v = Vec_new.[int]();
 
+	// The address of `v` is taken by the call, as each of these is written on
+	// a `Vec.[@T] *`. The instance the call is made on is the one `v` is
+	// written with, which is `[int]`.
 	for (int i = 0; i < 100; ++i) {
-		push_vec.[int](&v, i);
+		v.push(i);
 	}
 
 	for (int j = 0; j < 100; ++j) {
-		printf("%d: %d\n", j, *get_vec.[int](&v, j));
+		printf("%d: %d\n", j, *v.get(j));
 	}
 
-	free_vec.[int](&v);
+	v.free();
 }

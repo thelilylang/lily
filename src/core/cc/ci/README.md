@@ -42,6 +42,59 @@ In my case, the CI advantage is that I can translate Lily's source code in a ver
 - C syntax support
 - Data type contexts
 - Built-in build system
+- Method call syntax
+
+## Method call syntax
+
+A function can be called as a method on what it takes first, so `s.len()` is
+written where `str_len(s)` is meant. Nothing is added to the syntax: `.` and
+`->` on anything but a structure or a union is a constraint violation in C
+(6.5.2.3p1), so what is read as a method is what C reads as nothing.
+
+What makes a function a method is the name it is declared by, which is written
+in `CI.yaml` as a convention:
+
+```yaml
+method_convention: $type_$name  # `str_len` is `len` on `str`
+type_convention: $name_t        # only `vec_t` and the like are given methods
+```
+
+`type_convention` is optional, and every type is given methods where none is
+written. Where no `method_convention` is written nothing is a method, so a
+project that writes none is left as it was. Both are passed to `cic` as
+`--method-convention` and `--type-convention` as well.
+
+```c
+typedef char *str;
+
+size_t str_len(str s) { return strlen(s); }
+
+int main() {
+	str s = "Hello";
+
+	printf("%zu\n", s.len()); // str_len(s)
+}
+```
+
+What the receiver is read as:
+
+- The name is built forward, out of the receiver and the method name, and
+  never read backwards out of the name of a function - `$type_$name` splits
+  `str__len` two ways.
+- A method is looked for on the name the receiver is **declared** as rather
+  than on what that name aliases, so a `typedef` is what gives a type its
+  methods. Two typedefs of the same type are given methods of their own, and a
+  cast is what says which of them is meant: `((str)raw).len()`.
+- What a method is called on is read as the first param it takes: the address
+  is taken of what is written as a value, and what is written as a pointer is
+  read through, so `v.size()` and `p->size()` both reach `Vec_size(const Vec *)`.
+  A method written to take nothing is written on nothing, and is reported on.
+- A method written on a generic type is instantiated for what its receiver is
+  written with, so `Vec_push.[@T]` called on a `Vec.[int]` is the instance for
+  `[int]` - see `examples/ci/vec.ci`.
+- Where C already reads the call as one made through a member holding a
+  function, that is what it is left as. A method of that name as well leaves
+  nothing to say which is called, and is reported on.
 
 ## Examples
 

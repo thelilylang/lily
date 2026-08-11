@@ -1,0 +1,26 @@
+//@compile_options --method-convention $type_$name --type-convention $name_t
+//@expected_bin_stdout 8\n
+
+#include <helper.h>
+
+// Only a type named as the convention is written is given methods, so a type
+// named anything else is left as C reads it.
+typedef struct vec_t {
+	size_t len;
+} vec_t;
+
+size_t vec_t_size(const vec_t *self)
+{
+	return self->len;
+}
+
+int main()
+{
+	vec_t v;
+
+	v.len = 8;
+
+	printf("%zu\n", v.size());
+
+	return 0;
+}

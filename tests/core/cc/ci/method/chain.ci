@@ -1,0 +1,38 @@
+//@compile_options --method-convention $type_$name
+//@expected_bin_stdout 12\n
+
+#include <helper.h>
+
+typedef struct Box {
+	size_t v;
+} Box;
+
+Box Box_twice(Box b)
+{
+	Box r;
+
+	r.v = b.v * 2;
+
+	return r;
+}
+
+size_t Box_get(Box b)
+{
+	return b.v;
+}
+
+Box make(void)
+{
+	Box b;
+
+	b.v = 3;
+
+	return b;
+}
+
+int main()
+{
+	printf("%zu\n", make().twice().twice().get());
+
+	return 0;
+}

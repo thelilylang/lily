@@ -1,0 +1,31 @@
+//@compile_options --method-convention $type_$name
+//@expected_compiler_error :28:14: \e[31merror\e[0m[0213]: this name is written on a tag and on a typedef which are not the same type, so there is no one type the method is looked for on
+//@expected_compiler_error \e[34m28 |\e[0m \tsize_t n = f.get();
+
+#include <helper.h>
+
+// A tag and a typedef are written in namespaces of their own, so one name
+// reaches both of them. What they name here are two types, and there is no
+// one of them a method is looked for on.
+struct Foo {
+	int a;
+};
+
+struct Bar {
+	int b;
+};
+
+typedef struct Bar Foo;
+
+size_t Foo_get(Foo f)
+{
+	return 1;
+}
+
+int main()
+{
+	Foo f;
+	size_t n = f.get();
+
+	return 0;
+}

@@ -51,6 +51,8 @@ run_base__CIcParseConfig(const Vec *results, enum CIcParseConfigPurpose purpose)
     Vec *includes = NEW(Vec);  // Vec<char* (&)>*
     Vec *includes0 = NEW(Vec); // Vec<char* (&)>*
     bool no_state_check = false;
+    const char *method_convention = NULL;
+    const char *type_convention = NULL;
 
     VecIter iter = NEW(VecIter, results);
     CliResult *current = NULL;
@@ -136,6 +138,22 @@ run_base__CIcParseConfig(const Vec *results, enum CIcParseConfigPurpose purpose)
                         no_state_check = true;
 
                         break;
+                    case CIC_OPTION_ID_METHOD_CONVENTION:
+                        ASSERT(current->option->value);
+                        ASSERT(current->option->value->kind ==
+                               CLI_RESULT_VALUE_KIND_SINGLE);
+
+                        method_convention = current->option->value->single;
+
+                        break;
+                    case CIC_OPTION_ID_TYPE_CONVENTION:
+                        ASSERT(current->option->value);
+                        ASSERT(current->option->value->kind ==
+                               CLI_RESULT_VALUE_KIND_SINGLE);
+
+                        type_convention = current->option->value->single;
+
+                        break;
                     default:
                         UNREACHABLE("unknown option");
                 }
@@ -169,7 +187,9 @@ run_base__CIcParseConfig(const Vec *results, enum CIcParseConfigPurpose purpose)
                standard,
                includes,
                includes0,
-               no_state_check);
+               no_state_check,
+               method_convention,
+               type_convention);
 }
 
 CIcConfig

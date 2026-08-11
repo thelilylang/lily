@@ -1,0 +1,42 @@
+//@compile_options --method-convention $type_$name
+//@expected_bin_stdout 2\n11\n
+
+#include <helper.h>
+
+// A method written on a generic type is instantiated for what its receiver is
+// written with, so `Vec_push.[@T]` called on a `Vec.[int]` is the instance
+// for `[int]`.
+typedef struct Vec.[@T] {
+	@T buffer[8];
+	size_t len;
+} Vec.[@T];
+
+void Vec_push.[@T](Vec.[@T] *self, @T item)
+{
+	self->buffer[self->len] = item;
+	++self->len;
+}
+
+@T Vec_get.[@T](Vec.[@T] *self, size_t index)
+{
+	return self->buffer[index];
+}
+
+size_t Vec_len.[@T](Vec.[@T] *self)
+{
+	return self->len;
+}
+
+int main()
+{
+	Vec.[int] v;
+
+	v.len = 0;
+	v.push(10);
+	v.push(11);
+
+	printf("%zu\n", v.len());
+	printf("%d\n", v.get(1));
+
+	return 0;
+}

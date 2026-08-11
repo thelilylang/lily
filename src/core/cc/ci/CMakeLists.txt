@@ -9,6 +9,7 @@ set(CI_SRC
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/generator.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/include.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/infer.c
+    ${CMAKE_SOURCE_DIR}/src/core/cc/ci/method.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/parser.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/predefined.c
     ${CMAKE_SOURCE_DIR}/src/core/cc/ci/project_config.c

@@ -629,28 +629,34 @@ extern inline DESTRUCTOR(CIProjectConfigCompiler,
 
 extern inline DESTRUCTOR(CIProjectConfigLibrary, CIProjectConfigLibrary *self);
 
-extern inline VARIANT_CONSTRUCTOR(CIProjectConfig,
-                                  CIProjectConfig,
-                                  cli,
-                                  enum CIStandard standard,
-                                  CIProjectConfigCompiler compiler,
-                                  const Vec *include_dirs,
-                                  Vec *libraries,
-                                  Vec *bins,
-                                  Vec *self_tests,
-                                  bool no_state_check);
+extern inline VARIANT_CONSTRUCTOR(
+  CIProjectConfig,
+  CIProjectConfig,
+  cli,
+  enum CIStandard standard,
+  CIProjectConfigCompiler compiler,
+  const Vec *include_dirs,
+  Vec *libraries,
+  Vec *bins,
+  Vec *self_tests,
+  bool no_state_check,
+  CIProjectConfigMethodConvention *method_convention,
+  CIProjectConfigTypeConvention *type_convention);
 
-extern inline VARIANT_CONSTRUCTOR(CIProjectConfig,
-                                  CIProjectConfig,
-                                  yaml,
-                                  YAMLLoadRes yaml_load_res,
-                                  enum CIStandard standard,
-                                  CIProjectConfigCompiler compiler,
-                                  const Vec *include_dirs,
-                                  Vec *libraries,
-                                  Vec *bins,
-                                  Vec *self_tests,
-                                  bool no_state_check);
+extern inline VARIANT_CONSTRUCTOR(
+  CIProjectConfig,
+  CIProjectConfig,
+  yaml,
+  YAMLLoadRes yaml_load_res,
+  enum CIStandard standard,
+  CIProjectConfigCompiler compiler,
+  const Vec *include_dirs,
+  Vec *libraries,
+  Vec *bins,
+  Vec *self_tests,
+  bool no_state_check,
+  CIProjectConfigMethodConvention *method_convention,
+  CIProjectConfigTypeConvention *type_convention);
 
 // <core/cc/ci/parser.h>
 extern inline CONSTRUCTOR(CIParserSpan, CIParserSpan, Usize line, Usize column);

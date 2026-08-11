@@ -49,7 +49,9 @@ extern inline CONSTRUCTOR(CIConfigCompile,
                           enum CIStandard standard,
                           Vec *includes,
                           Vec *includes0,
-                          bool no_state_check);
+                          bool no_state_check,
+                          const char *method_convention,
+                          const char *type_convention);
 
 extern inline DESTRUCTOR(CIConfigCompile, const CIConfigCompile *self);
 

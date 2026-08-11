@@ -1,0 +1,30 @@
+//@compile_options --method-convention $type_$name
+//@expected_bin_stdout 5\n99\n
+
+#include <helper.h>
+
+// Two typedefs of the very same type, which C reads as one type. What a
+// method is looked for on is the name the receiver is written as, so the cast
+// is what says which of the two is meant.
+typedef const char *str;
+typedef const char *name_t;
+
+size_t str_len(str s)
+{
+	return 5;
+}
+
+size_t name_t_len(name_t s)
+{
+	return 99;
+}
+
+int main()
+{
+	const char *raw = "Hello";
+
+	printf("%zu\n", ((str)raw).len());
+	printf("%zu\n", ((name_t)raw).len());
+
+	return 0;
+}
