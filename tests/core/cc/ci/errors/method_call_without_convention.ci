@@ -1,0 +1,25 @@
+//@expected_compiler_error :22:15: \e[31merror\e[0m[0029]: cannot infer the data type of this path
+//@expected_compiler_error \e[34m22 |\e[0m \tsize_t n = v.size();
+
+#include <helper.h>
+
+// Nothing is callable as a method where no method convention is written, so
+// what is written here is the C it looks like: a member of `Vec` which is
+// called, and `Vec` holds none. What that is is reported on - it is written
+// by whoever writes the program, so it is not something to assert.
+typedef struct Vec {
+	size_t len;
+} Vec;
+
+size_t Vec_size(const Vec *self)
+{
+	return self->len;
+}
+
+int main()
+{
+	Vec v;
+	size_t n = v.size();
+
+	return 0;
+}

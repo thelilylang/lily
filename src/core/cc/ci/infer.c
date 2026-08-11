@@ -59,7 +59,11 @@ infer_expr_access_data_type_array_access__CIInfer(
 /// @param current_expr_access CIExpr* (&)* (&)
 /// @param current_fields CIDeclStructFields* (&)* (&)
 /// @param current_infer_dt CIDataType*?* (&)
-static void
+/// @return Whether the access was walked. What is written on the left of a
+/// `.` is a name where the access is a path, and what is written as anything
+/// else is not one - which is reported on rather than asserted, as it is
+/// written by whoever writes the program.
+static bool
 infer_expr_access_data_type_arrow_or_dot__CIInfer(
   const CIResultFile *file,
   CIExpr **current_expr_access,
@@ -161,7 +165,7 @@ infer_expr_access_data_type_array_access__CIInfer(
     FREE(CIDataType, array_dt);
 }
 
-void
+bool
 infer_expr_access_data_type_arrow_or_dot__CIInfer(
   const CIResultFile *file,
   CIExpr **current_expr_access,
@@ -170,8 +174,12 @@ infer_expr_access_data_type_arrow_or_dot__CIInfer(
   const CIGenericParams *called_generic_params,
   const CIGenericParams *decl_generic_params)
 {
-    ASSERT((*current_expr_access)->binary.left->kind ==
-           CI_EXPR_KIND_IDENTIFIER);
+    // A member is read of a path written of names, so what is written on the
+    // left of a `.` is a name and nothing else. A call is not a name, and
+    // what it returns is read of the call rather than of the access.
+    if ((*current_expr_access)->binary.left->kind != CI_EXPR_KIND_IDENTIFIER) {
+        return false;
+    }
 
     infer_expr_access_data_type_identifier__CIInfer(
       file,
@@ -209,6 +217,8 @@ infer_expr_access_data_type_arrow_or_dot__CIInfer(
     }
 
     *current_expr_access = (*current_expr_access)->binary.right;
+
+    return true;
 }
 
 void
@@ -266,13 +276,23 @@ infer_expr_access_data_type__CIInfer(
                 switch (expr_access->binary.kind) {
                     case CI_EXPR_BINARY_KIND_ARROW:
                     case CI_EXPR_BINARY_KIND_DOT:
-                        infer_expr_access_data_type_arrow_or_dot__CIInfer(
-                          file,
-                          &current_expr_access,
-                          &current_fields,
-                          &current_infer_dt,
-                          called_generic_params,
-                          decl_generic_params);
+                        // What is written as no path is what the access
+                        // cannot be read of, so nothing is inferred of it and
+                        // it is reported on below.
+                        if (!infer_expr_access_data_type_arrow_or_dot__CIInfer(
+                              file,
+                              &current_expr_access,
+                              &current_fields,
+                              &current_infer_dt,
+                              called_generic_params,
+                              decl_generic_params)) {
+                            if (current_infer_dt) {
+                                FREE(CIDataType, current_infer_dt);
+                                current_infer_dt = NULL;
+                            }
+
+                            goto exit;
+                        }
 
                         break;
                     default:
